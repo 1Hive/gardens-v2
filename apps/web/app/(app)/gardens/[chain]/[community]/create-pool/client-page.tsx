@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Address } from "viem";
 import {
@@ -14,23 +14,29 @@ import { PoolForm } from "@/components/Forms/PoolForm";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { StreamingPoolGraphic } from "@/components/StreamingPoolGraphic";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { logOnce } from "@/utils/log";
 
 type ClientPageProps = {
-  params: { chain: string; garden: string; community: string };
+  params: { chain: string; community: string };
 };
 
 export default function ClientPage({
-  params: { garden, community },
+  params: { community },
 }: ClientPageProps) {
+  useEffect(() => {
+    logOnce(
+      "debug",
+      "Loading page: (app)/gardens/[chain]/[community]/create-pool/page.tsx",
+    );
+  }, []);
   const [selectedPoolType, setSelectedPoolType] = useState<number | null>(null);
   const { data: result } = useSubgraphQuery<getPoolCreationDataQuery>({
     query: getPoolCreationDataDocument,
     variables: {
       communityAddr: community.toLowerCase(),
-      tokenAddr: garden.toLowerCase(),
     },
   });
-  const token = result?.tokenGarden;
+  const token = result?.registryCommunity?.garden;
   const alloAddr = result?.allos[0]?.id as Address;
   const communityName = result?.registryCommunity?.communityName as string;
   const poolTypeOptions = [

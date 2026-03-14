@@ -50,7 +50,14 @@ export function useSubgraphQuery<
   changeScope?: ChangeEventScope[] | ChangeEventScope;
   enabled?: boolean;
   modifier?: (data: Data) => Data;
-}) {
+}): {
+  hasNext: boolean;
+  stale: boolean;
+  data: Data | undefined;
+  error: any | undefined;
+  refetch: () => Promise<Awaited<ReturnType<typeof fetch>>>;
+  fetching: boolean;
+} {
   const mounted = useIsMounted();
   const pathChainId = useChainIdFromPath();
   chainId = (chainId ?? pathChainId)!;
@@ -81,7 +88,10 @@ export function useSubgraphQuery<
   }
 
   const normalizedChangeScope = useMemo(() => {
-    if (!changeScope || (Array.isArray(changeScope) && changeScope.length === 0))
+    if (
+      !changeScope ||
+      (Array.isArray(changeScope) && changeScope.length === 0)
+    )
       return undefined;
     const scopes = Array.isArray(changeScope) ? changeScope : [changeScope];
     return scopes.map((scope) => ({
@@ -89,7 +99,6 @@ export function useSubgraphQuery<
       chainId: scope.chainId ?? chainId,
     }));
   }, [changeScope, chainId]);
-
   useEffect(() => {
     if (!normalizedChangeScope || normalizedChangeScope.length === 0) {
       return;
@@ -159,16 +168,16 @@ export function useSubgraphQuery<
     return modifier && res?.data ? { ...res, data: modifier(res.data) } : res;
   };
 
-  const refetchFromOutside = async () => {
+  const refetchFromOutside = async (): Promise<Awaited<ReturnType<typeof fetch>>> => {
     if (!enabled) {
       console.debug(
         "⚡ Query not enabled when refetching from outside, skipping",
       );
-      return;
+      return latestResponse.current.response as Awaited<ReturnType<typeof fetch>>;
     }
     if (fetchingRef.current) {
       console.debug("⚡ Already fetching, skipping refetch");
-      return;
+      return latestResponse.current.response as Awaited<ReturnType<typeof fetch>>;
     }
     setFetching(true);
     fetchingRef.current = true;
@@ -210,27 +219,37 @@ export function useSubgraphQuery<
 
     const result = await fetch();
 
+    if (retryCount >= CHANGE_EVENT_MAX_RETRIES || !mounted.current) {
+      if (retryCount >= CHANGE_EVENT_MAX_RETRIES) {
+        console.debug(
+          `⚡ Stopping retries after reaching max retries. (retry count: ${retryCount})`,
+        );
+      } else {
+        console.debug("⚡ Component unmounted, cancelling");
+      }
+      setFetching(false);
+      fetchingRef.current = false;
+      try {
+        if (toast.isActive(pendingRefreshToastId)) {
+          toast.dismiss(pendingRefreshToastId);
+        }
+      } catch (error) {
+        // ignore dismiss error
+      }
+      return result;
+    }
+
     if (result.error) {
       console.error("⚡ Error fetching subgraph data:", result.error);
       return result;
     }
     if (
       result.data &&
-      (!isEqual(result.data, latestResponse.current.response.data) ||
-        retryCount >= CHANGE_EVENT_MAX_RETRIES ||
-        !mounted.current)
+      !isEqual(result.data, latestResponse.current.response.data)
     ) {
-      if (retryCount >= CHANGE_EVENT_MAX_RETRIES) {
-        console.debug(
-          `⚡ Still not updated but max retries reached. (retry count: ${retryCount})`,
-        );
-      } else if (!mounted.current) {
-        console.debug("⚡ Component unmounted, cancelling");
-      } else {
-        console.debug(
-          `⚡ Subgraph result updated after ${retryCount} retries.`,
-        );
-      }
+      console.debug(
+        `⚡ Subgraph result updated after ${retryCount} retries.`,
+      );
       setFetching(false);
       fetchingRef.current = false;
       try {
@@ -288,7 +307,10 @@ export function useSubgraphQuery<
   }, [enabled, variables]);
 
   return {
-    ...response,
+    hasNext: response.hasNext,
+    stale: response.stale,
+    data: response.data,
+    error: response.error,
     refetch: () => {
       return refetchFromOutside();
     },

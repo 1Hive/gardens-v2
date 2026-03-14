@@ -135,12 +135,12 @@ async function loadProposal(
 
   const strategyAddress = await resolveStrategyAddress(
     params.chain,
-    params.poolId,
+    params.pool,
   );
 
   if (!strategyAddress) {
     console.error("Unable to resolve strategy for proposal OG image.", {
-      poolSlug: params.poolId,
+      strategySlug: params.pool,
     });
     return { chainId: resolvedChainId, data: null };
   }

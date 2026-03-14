@@ -39,6 +39,7 @@ import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
 import { LoupeButton } from "@/apps/web/components/LoupeButton";
 import { SuperfluidStream } from "@/assets";
+import { LoupeButton } from "@/components/LoupeButton";
 import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -46,7 +47,6 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useCouncil } from "@/hooks/useCouncil";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
-import { useFlag } from "@/hooks/useFlag";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
@@ -159,7 +159,6 @@ export default function PoolHeader({
     useState(false);
   const [isShareDropdownLocked, setIsShareDropdownLocked] = useState(false);
   const [toastId, setToastId] = useState<ReturnType<typeof toast>>();
-  const showLoupe = useFlag("loupe");
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
@@ -219,8 +218,6 @@ export default function PoolHeader({
 
   const communityAddr = strategy.registryCommunity.id as Address;
   const poolAddr = strategy.id as Address;
-  const getLoupeAdminHref = (address: Address) =>
-    `/admin?chainId=${chainId}&address=${address}`;
   const defaultResolution = arbitrableConfig.defaultRuling;
   const proposalCollateral = arbitrableConfig.submitterCollateralAmount;
   const disputeCollateral = arbitrableConfig.challengerCollateralAmount;
@@ -285,7 +282,7 @@ export default function PoolHeader({
   const poolConfig = [
     {
       label: "Spending limit",
-      value: `${spendingLimit > 99 ? "100" : roundToSignificant(spendingLimit, 2)} %`,
+      value: `${roundToSignificant(spendingLimit, 2, { showPrecisionMissIndicator: false })} %`,
       info: "Max percentage of the pool funds that can be spent in a single proposal.",
     },
     {
@@ -720,7 +717,7 @@ export default function PoolHeader({
                     textColor="var(--color-grey-800)"
                   />
                   <LoupeButton
-                    diamond={strategy.id as Address}
+                    diamond={poolAddr}
                     chainId={chainId}
                     className="px-2 py-1"
                   />
@@ -1010,7 +1007,7 @@ export default function PoolHeader({
             />
           )}
           {!isEnabled && (
-            <div className="banner">
+            <div className="banner mt-2">
               {isArchived ?
                 <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
               : <ClockIcon className="h-8 w-8 text-secondary-content" />}

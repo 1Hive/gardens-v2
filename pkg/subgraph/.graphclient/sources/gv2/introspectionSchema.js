@@ -121,6 +121,47 @@ const schemaAST = {
     },
     {
       "kind": "EnumTypeDefinition",
+      "description": {
+        "kind": "StringValue",
+        "value": "Indicates whether the current, partially filled bucket should be included in the response. Defaults to `exclude`",
+        "block": true
+      },
+      "name": {
+        "kind": "Name",
+        "value": "Aggregation_current"
+      },
+      "values": [
+        {
+          "kind": "EnumValueDefinition",
+          "description": {
+            "kind": "StringValue",
+            "value": "Exclude the current, partially filled bucket from the response",
+            "block": true
+          },
+          "name": {
+            "kind": "Name",
+            "value": "exclude"
+          },
+          "directives": []
+        },
+        {
+          "kind": "EnumValueDefinition",
+          "description": {
+            "kind": "StringValue",
+            "value": "Include the current, partially filled bucket in the response",
+            "block": true
+          },
+          "name": {
+            "kind": "Name",
+            "value": "include"
+          },
+          "directives": []
+        }
+      ],
+      "directives": []
+    },
+    {
+      "kind": "EnumTypeDefinition",
       "name": {
         "kind": "Name",
         "value": "Aggregation_interval"

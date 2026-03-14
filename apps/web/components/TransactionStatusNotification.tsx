@@ -47,7 +47,6 @@ export function TransactionStatusNotification({
   const chain = useChainFromPath();
   const icon = statusToIcon[status];
   const textColor = statusToTextColor[status];
-
   const textClass =
     showClickToExplorer ? textColor : "dark:text-neutral-inverted-content";
 

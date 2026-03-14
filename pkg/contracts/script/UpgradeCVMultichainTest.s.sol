@@ -551,23 +551,8 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         view
         returns (IDiamond.FacetCut[] memory removalCuts)
     {
-        address[] memory candidateFacets = new address[](desiredCuts.length * 8);
-        uint256 candidateCount = 0;
-
-        for (uint256 i = 0; i < desiredCuts.length; i++) {
-            bytes4[] memory selectors = desiredCuts[i].functionSelectors;
-            for (uint256 j = 0; j < selectors.length; j++) {
-                bytes4 selector = selectors[j];
-                address currentFacet = IDiamondLoupe(diamondProxy).facetAddress(selector);
-                if (
-                    currentFacet != address(0) && currentFacet != desiredCuts[i].facetAddress
-                        && !_containsAddress(candidateFacets, candidateCount, currentFacet)
-                ) {
-                    candidateFacets[candidateCount] = currentFacet;
-                    candidateCount++;
-                }
-            }
-        }
+        address[] memory candidateFacets = IDiamondLoupe(diamondProxy).facetAddresses();
+        uint256 candidateCount = candidateFacets.length;
 
         removalCuts = new IDiamond.FacetCut[](candidateCount);
         uint256 removalCount = 0;

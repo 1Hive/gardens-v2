@@ -53,6 +53,7 @@ import { alloABI, cvStrategyABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus, Column } from "@/types";
 
 import { useErrorDetails } from "@/utils/getErrorName";
+import { logOnce } from "@/utils/log";
 import {
   SEC_TO_MONTH,
   calculatePercentageBigInt,
@@ -71,9 +72,8 @@ const SYNC_STREAM_HIDE_WINDOW_SECONDS = 15 * 60;
 export type ProposalPageParams = {
   proposalId: string;
   community: string;
-  poolId: string;
+  pool: string;
   chain: string;
-  garden: string;
 };
 
 export type ClientPageProps = {
@@ -83,10 +83,17 @@ export type ClientPageProps = {
 export default function ClientPage({ params }: ClientPageProps) {
   const {
     proposalId: proposalSlug,
-    garden,
     community: communityAddr,
-    poolId: poolSlug,
+    pool: poolSlug,
   } = params;
+
+  useEffect(() => {
+    logOnce(
+      "debug",
+      "Loading page: (app)/gardens/[chain]/[community]/[pool]/[proposalId]/page.tsx",
+    );
+  }, []);
+
   const strategyAddress = poolSlug.toLowerCase();
   const [poolIdForScope, setPoolIdForScope] = useState<number | undefined>();
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
@@ -116,7 +123,6 @@ export default function ClientPage({ params }: ClientPageProps) {
   } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
-      garden: garden.toLowerCase(),
       proposalId: proposalEntityId.toLowerCase(),
       communityId: communityAddr.toLowerCase(),
     },
@@ -274,16 +280,26 @@ export default function ClientPage({ params }: ClientPageProps) {
   const isStreamingType = PoolTypes[proposalType] === "streaming";
   const requestedAmount = proposalData?.requestedAmount;
   const beneficiary = proposalData?.beneficiary as Address | undefined;
-  const streamingEscrowFromSubgraph = proposalData?.streamingEscrow as
-    | Address
-    | undefined;
+  const streamingEscrowFromSubgraph = (
+    (
+      proposalData as
+        | {
+            streamingEscrow?: Address | null;
+          }
+        | undefined
+    )?.streamingEscrow ?? undefined
+  ) as Address | undefined;
 
   const resolvedStreamingEscrow = streamingEscrowFromSubgraph;
-
   const submitter = proposalData?.submitter as Address | undefined;
   const superfluidExplorerBaseUrl =
     chainId != null ?
-      chainConfigMap[chainId]?.superfluidExplorerUrl
+      (
+        chainConfigMap as Record<
+          string | number,
+          { superfluidExplorerUrl?: string }
+        >
+      )[chainId]?.superfluidExplorerUrl
     : undefined;
   const superfluidExplorerUrl =
     (
@@ -363,12 +379,18 @@ export default function ClientPage({ params }: ClientPageProps) {
     : 0n;
   const proposalTotalStreamedBn =
     streamedUntilSnapshotBn + (proposalFlowRateBn * elapsedMs) / 1000n;
-  const { liveTotalStreamedBn: explorerTotalStreamedBn } = useSuperfluidStream({
+  const superfluidStreamResult = useSuperfluidStream({
     receiver: resolvedStreamingEscrow as Address,
     superToken: proposalData?.strategy?.config?.superfluidToken as Address,
     chainId,
     containerId: poolId ?? proposalSlug,
   });
+  const explorerTotalStreamedBn =
+    (
+      superfluidStreamResult as typeof superfluidStreamResult & {
+        liveTotalStreamedBn?: bigint | null;
+      }
+    )?.liveTotalStreamedBn;
   const shouldTickFallback = isStreamingType && explorerTotalStreamedBn == null;
 
   const proposalFlowPerMonth =
@@ -389,7 +411,16 @@ export default function ClientPage({ params }: ClientPageProps) {
     : null;
   const proposalTotalStreamedDisplay =
     poolToken ? (proposalTotalStreamed ?? 0).toFixed(4) : null;
-  const streamInfo = proposalData?.strategy?.stream;
+  const streamInfo =
+    (
+      proposalData?.strategy as
+        | {
+            stream?: {
+              maxFlowRate?: bigint | number | string | null;
+            };
+          }
+        | undefined
+    )?.stream;
   const superTokenAddress = proposalData?.strategy?.config?.superfluidToken as
     | Address
     | undefined;
@@ -407,7 +438,6 @@ export default function ClientPage({ params }: ClientPageProps) {
       chainId,
       enabled: isStreamingType && !!beneficiary && !!superTokenAddress,
     });
-
   const {
     currentConvictionPct,
     thresholdPct,
@@ -418,7 +448,7 @@ export default function ClientPage({ params }: ClientPageProps) {
   } = useConvictionRead({
     proposalData: proposalData as getProposalDataQuery["cvproposal"],
     strategyConfig: proposalData?.strategy?.config,
-    tokenData: data?.tokenGarden?.decimals,
+    tokenData: proposalData?.strategy?.registryCommunity?.garden?.decimals,
     enabled: proposalData?.proposalNumber != null && proposalData != null,
   });
 
@@ -511,12 +541,19 @@ export default function ClientPage({ params }: ClientPageProps) {
     missmatchUrl: isSyncStreamWrongNetwork,
   } = useDisableButtons();
 
+  const hasInsufficientPoolFunds =
+    !isSignalingType &&
+    !isStreamingType &&
+    requestedAmount != null &&
+    poolToken?.balance != null &&
+    BigInt(requestedAmount) > poolToken.balance;
+
   const disableExecuteButton = useMemo<ConditionObject[]>(
     () => [
       {
         condition:
           currentConvictionPct == null ||
-          thresholdPct == null ||
+          thresholdPct === undefined ||
           currentConvictionPct <= thresholdPct,
         message: "Proposal has not reached the threshold yet",
       },
@@ -524,8 +561,17 @@ export default function ClientPage({ params }: ClientPageProps) {
         condition: proposalStatus === "disputed",
         message: "Proposal is being disputed",
       },
+      {
+        condition: hasInsufficientPoolFunds,
+        message: "Not enough funds in the pool",
+      },
     ],
-    [address, thresholdPct, currentConvictionPct, proposalStatus],
+    [
+      thresholdPct,
+      currentConvictionPct,
+      proposalStatus,
+      hasInsufficientPoolFunds,
+    ],
   );
 
   const {
@@ -548,7 +594,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       functionName: "lastRebalanceAt",
       enabled: isStreamingType && !!proposalData?.strategy?.id,
       watch: true,
-    });
+    } as any);
   const lastRebalanceAt = Number(lastRebalanceAtValue ?? 0n);
   const hideSyncStreamButton =
     lastRebalanceAt > 0 &&
@@ -558,7 +604,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     useContractWriteWithConfirmations({
       address: proposalData?.strategy?.id as Address,
       abi: cvStrategyABI,
-      functionName: "rebalance",
+      functionName: "rebalance" as any,
       contractName: "CVStrategy",
       fallbackErrorMessage:
         "Failed to sync stream for this strategy. Please try again.",
@@ -568,7 +614,7 @@ export default function ClientPage({ params }: ClientPageProps) {
           topic: "stream",
           containerId: poolId,
           function: "rebalance",
-        });
+        } as any);
       },
     });
 
@@ -620,7 +666,6 @@ export default function ClientPage({ params }: ClientPageProps) {
     isConnected: isUnwrapConnected,
     missmatchUrl: isUnwrapWrongNetwork,
   } = useDisableButtons(disableUnwrapBtnConditions);
-
   if (isAwaitingProposal) {
     return (
       <div className="col-span-12 flex min-h-[60vh] flex-col items-center justify-center gap-6">
@@ -733,8 +778,7 @@ export default function ClientPage({ params }: ClientPageProps) {
               {/* Conviction Progress */}
               {proposalData.strategy?.isEnabled &&
                 currentConvictionPct != null &&
-                (isSignalingType ||
-                  (thresholdPct != null && totalSupportPct != null)) && (
+                totalSupportPct != null && (
                   <div className="">
                     {(status === "active" || status === "disputed") && (
                       <div className="flex flex-col gap-2">
@@ -1068,7 +1112,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                 )}
               {status !== "executed" && status !== "cancelled" && (
                 <Button
-                  onClick={() => setOpenSupportersModal(true)}
+                  onClick={() => setOpenSupportersModal(!openSupportersModal)}
                   btnStyle="outline"
                   color="tertiary"
                   className=""
@@ -1099,14 +1143,15 @@ export default function ClientPage({ params }: ClientPageProps) {
             </section>
           )}
 
-          {shouldShowSupportersTab && (
+          {filteredAndSortedProposalSupporters.length > 0 &&
+            totalSupportPct != null && (
               <section className="xl:max-h-10">
                 <ProposalSupportersTable
                   supporters={filteredAndSortedProposalSupporters}
                   beneficiary={beneficiary}
                   submitter={submitter}
-                  totalActivePoints={totalEffectiveActivePoints ?? 0}
-                  totalStakedAmount={totalSupportPct ?? 0}
+                  totalActivePoints={totalEffectiveActivePoints}
+                  totalStakedAmount={totalSupportPct}
                   openSupportersModal={openSupportersModal}
                   setOpenSupportersModal={setOpenSupportersModal}
                 />
@@ -1258,8 +1303,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                     {/* Conviction Progress */}
                     {proposalData.strategy.isEnabled &&
                       currentConvictionPct != null &&
-                      (isSignalingType ||
-                        (thresholdPct != null && totalSupportPct != null)) && (
+                      totalSupportPct != null && (
                         <div className="">
                           {(status === "active" || status === "disputed") && (
                             <div className="flex flex-col gap-2">
@@ -1623,13 +1667,16 @@ export default function ClientPage({ params }: ClientPageProps) {
             </>
           )}
 
-          {shouldShowSupportersTab && selectedTab === 3 && (
+          {shouldShowSupportersTab &&
+            selectedTab === 3 &&
+            filteredAndSortedProposalSupporters.length > 0 &&
+            totalSupportPct != null && (
               <ProposalSupportersTable
                 supporters={filteredAndSortedProposalSupporters}
                 beneficiary={beneficiary}
                 submitter={submitter}
-                totalActivePoints={totalEffectiveActivePoints ?? 0}
-                totalStakedAmount={totalSupportPct ?? 0}
+                totalActivePoints={totalEffectiveActivePoints}
+                totalStakedAmount={totalSupportPct}
                 openSupportersModal={openSupportersModal}
                 setOpenSupportersModal={setOpenSupportersModal}
                 withModal={false}

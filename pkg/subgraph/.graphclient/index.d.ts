@@ -72,6 +72,12 @@ export type Scalars = {
         output: any;
     };
 };
+/** Indicates whether the current, partially filled bucket should be included in the response. Defaults to `exclude` */
+export type Aggregation_current = 
+/** Exclude the current, partially filled bucket from the response */
+'exclude'
+/** Include the current, partially filled bucket in the response */
+ | 'include';
 export type Aggregation_interval = 'hour' | 'day';
 export type Allo = {
     id: Scalars['ID']['output'];
@@ -3678,6 +3684,7 @@ export type NextResolverFn<T> = () => Promise<T>;
 export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs = {}> = (next: NextResolverFn<TResult>, parent: TParent, args: TArgs, context: TContext, info: GraphQLResolveInfo) => TResult | Promise<TResult>;
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
+    Aggregation_current: Aggregation_current;
     Aggregation_interval: Aggregation_interval;
     Allo: ResolverTypeWrapper<Allo>;
     Allo_filter: Allo_filter;
@@ -4319,7 +4326,6 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     }>, options?: TOperationContext): Promise<getMemberQuery>;
     getPoolCreationData(variables: Exact<{
         communityAddr: Scalars["ID"]["input"];
-        tokenAddr: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getPoolCreationDataQuery>;
     getGlobalPauseState(variables?: Exact<{
         [key: string]: never;
@@ -4336,7 +4342,6 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     }>, options?: TOperationContext): Promise<getCommunitiesQuery>;
     getCommunity(variables: Exact<{
         communityAddr: Scalars["ID"]["input"];
-        tokenAddr: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getCommunityQuery>;
     getCommunityCreationData(variables?: Exact<{
         [key: string]: never;
@@ -4345,11 +4350,9 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getRegistryFactoryDataQuery>;
     getPoolData(variables: Exact<{
-        garden: Scalars["ID"]["input"];
         strategyId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getPoolDataQuery>;
     getProposalData(variables: Exact<{
-        garden: Scalars["ID"]["input"];
         proposalId: Scalars["ID"]["input"];
         communityId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getProposalDataQuery>;
@@ -4485,12 +4488,12 @@ export type getMemberQuery = {
 };
 export type getPoolCreationDataQueryVariables = Exact<{
     communityAddr: Scalars['ID']['input'];
-    tokenAddr: Scalars['ID']['input'];
 }>;
 export type getPoolCreationDataQuery = {
-    tokenGarden?: Maybe<Pick<TokenGarden, 'decimals' | 'id' | 'symbol'>>;
     allos: Array<Pick<Allo, 'id'>>;
-    registryCommunity?: Maybe<Pick<RegistryCommunity, 'communityName' | 'isValid'>>;
+    registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName' | 'isValid'> & {
+        garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
+    })>;
 };
 export type getGlobalPauseStateQueryVariables = Exact<{
     [key: string]: never;
@@ -4534,7 +4537,6 @@ export type getCommunitiesQuery = {
 };
 export type getCommunityQueryVariables = Exact<{
     communityAddr: Scalars['ID']['input'];
-    tokenAddr: Scalars['ID']['input'];
 }>;
 export type getCommunityQuery = {
     registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName' | 'id' | 'archived' | 'covenantIpfsHash' | 'communityFee' | 'protocolFee' | 'registerStakeAmount' | 'registerToken' | 'councilSafe' | 'membersCount'> & {
@@ -4545,8 +4547,8 @@ export type getCommunityQuery = {
             config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem'>;
         })>>;
         covenant?: Maybe<Pick<Covenant, 'text'>>;
+        garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals' | 'address' | 'chainId'>;
     })>;
-    tokenGarden?: Maybe<Pick<TokenGarden, 'symbol' | 'decimals' | 'id'>>;
 };
 export type getCommunityCreationDataQueryVariables = Exact<{
     [key: string]: never;
@@ -4561,12 +4563,10 @@ export type getRegistryFactoryDataQuery = {
     registryFactories: Array<Pick<RegistryFactory, 'id' | 'chainId'>>;
 };
 export type getPoolDataQueryVariables = Exact<{
-    garden: Scalars['ID']['input'];
     strategyId: Scalars['ID']['input'];
 }>;
 export type getPoolDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
-    tokenGarden?: Maybe<Pick<TokenGarden, 'address' | 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
     cvstrategies: Array<(Pick<CVStrategy, 'token' | 'metadataHash' | 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled' | 'maxCVSupply' | 'archived'> & {
         metadata?: Maybe<Pick<PoolMetadata, 'title' | 'description'>>;
         sybil?: Maybe<Pick<SybilProtection, 'id' | 'type'>>;
@@ -4574,7 +4574,7 @@ export type getPoolDataQuery = {
         config: Pick<CVStrategyConfig, 'id' | 'weight' | 'decay' | 'maxAmount' | 'maxRatio' | 'minThresholdPoints' | 'pointSystem' | 'proposalType' | 'allowlist' | 'superfluidToken'>;
         stream?: Maybe<Pick<StreamInfo, 'id' | 'contractAddress' | 'contractType' | 'superfluidToken' | 'maxFlowRate' | 'superfluidGDA' | 'streamLastFlowRate' | 'totalMemberUnits' | 'proposalStreamIds' | 'createdAt' | 'updatedAt'>>;
         registryCommunity: (Pick<RegistryCommunity, 'id' | 'councilSafe' | 'isValid'> & {
-            garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
+            garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals' | 'address' | 'chainId'>;
             members?: Maybe<Array<Pick<MemberCommunity, 'memberAddress'>>>;
         });
         proposals: Array<(Pick<CVProposal, 'id' | 'proposalNumber' | 'metadataHash' | 'beneficiary' | 'streamingEscrow' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedAmount' | 'convictionLast' | 'createdAt' | 'executedAt' | 'blockLast' | 'submitter'> & {
@@ -4588,13 +4588,11 @@ export type getPoolDataQuery = {
     arbitrableConfigs: Array<Pick<ArbitrableConfig, 'submitterCollateralAmount' | 'challengerCollateralAmount' | 'arbitrator' | 'defaultRuling' | 'defaultRulingTimeout' | 'tribunalSafe'>>;
 };
 export type getProposalDataQueryVariables = Exact<{
-    garden: Scalars['ID']['input'];
     proposalId: Scalars['ID']['input'];
     communityId: Scalars['ID']['input'];
 }>;
 export type getProposalDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
-    tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol' | 'decimals'>>;
     registryCommunity?: Maybe<Pick<RegistryCommunity, 'councilSafe'>>;
     cvproposal?: Maybe<(Pick<CVProposal, 'id' | 'proposalNumber' | 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadataHash' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedAmount' | 'submitter' | 'updatedAt' | 'executedAt' | 'version' | 'streamingEscrow'> & {
         metadata?: Maybe<Pick<ProposalMetadata, 'title' | 'description'>>;
@@ -4604,7 +4602,7 @@ export type getProposalDataQuery = {
         strategy: (Pick<CVStrategy, 'id' | 'token' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'poolId' | 'isEnabled'> & {
             stream?: Maybe<Pick<StreamInfo, 'id' | 'maxFlowRate' | 'streamLastFlowRate' | 'totalMemberUnits' | 'proposalStreamIds'>>;
             registryCommunity: (Pick<RegistryCommunity, 'id' | 'councilSafe' | 'isValid'> & {
-                garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
+                garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals' | 'address' | 'chainId'>;
                 members?: Maybe<Array<Pick<MemberCommunity, 'memberAddress'>>>;
             });
             config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem' | 'minThresholdPoints' | 'decay' | 'weight' | 'maxRatio' | 'maxAmount' | 'allowlist' | 'superfluidToken'>;
@@ -4644,7 +4642,7 @@ export type getCommunityTitlesQueryVariables = Exact<{
 }>;
 export type getCommunityTitlesQuery = {
     registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName'> & {
-        garden: Pick<TokenGarden, 'name'>;
+        garden: Pick<TokenGarden, 'name' | 'id'>;
     })>;
 };
 export type getPoolTitlesQueryVariables = Exact<{
@@ -4727,7 +4725,9 @@ export type getCommunityNameQueryVariables = Exact<{
     communityAddr: Scalars['ID']['input'];
 }>;
 export type getCommunityNameQuery = {
-    registryCommunity?: Maybe<Pick<RegistryCommunity, 'communityName'>>;
+    registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName'> & {
+        garden: Pick<TokenGarden, 'id'>;
+    })>;
 };
 export type getPoolTitleQueryVariables = Exact<{
     strategyId: Scalars['ID']['input'];

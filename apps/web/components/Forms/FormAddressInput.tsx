@@ -128,10 +128,13 @@ export const FormAddressInput = ({
     if (bypassSafeCheck || !getConfigByChain(publicClient.chain.id)?.safePrefix) {
       return true;
     }
+    if (!publicClient) {
+      return "Unable to validate Safe address without an RPC client.";
+    }
     try {
       setIsValidatingSafe(true);
       const isSafe = await Promise.all([
-        publicClient?.readContract({
+        publicClient.readContract({
           address: address as Address,
           abi: safeABI,
           functionName: "getOwners",

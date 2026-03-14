@@ -177,7 +177,6 @@ export function RegisterMember({
       missmatchUrl,
       disableRegMemberBtnCondition,
       tooltipMessage,
-      accountHasBalance,
     ],
   );
 

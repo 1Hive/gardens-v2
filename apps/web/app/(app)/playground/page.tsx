@@ -28,6 +28,7 @@ import { PoolCard } from "@/components/PoolCard";
 import { Skeleton } from "@/components/Skeleton";
 import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 import { WalletBalance } from "@/components/WalletBalance";
+import { logOnce } from "@/utils/log";
 
 const toastButtons = [
   {
@@ -198,6 +199,7 @@ const demoPoolCards: DemoPoolCard[] = [
 ];
 
 export default function DesignSystemPage() {
+  logOnce("debug", "Loading page: (app)/playground/page.tsx");
   const [radioValue, setRadioValue] = useState("option-a");
   const [textValue, setTextValue] = useState("100");
   const [errorTextValue, setErrorTextValue] = useState("");
@@ -706,3 +708,4 @@ function DemoCard({
     </div>
   );
 }
+

@@ -1,19 +1,23 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { getPoolTitleDocument } from "#/subgraph/.graphclient";
+import {
+  getCommunityNameDocument,
+  getPoolTitleDocument,
+} from "#/subgraph/.graphclient";
 import ClientPage from "./client-page";
 import { FALLBACK_TITLE, getDescriptionText } from "./opengraph-image";
 import { resolveStrategyAddress, stringifySearchParams } from "./route-helpers";
-import { chainConfigMap } from "@/configs/chains";
+import { chainConfigMap, type ChainData } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { PoolTypes } from "@/types";
+import { hasEthereumAddressFormat } from "@/utils/web3";
 
 type PageParams = {
   params: {
     chain: string;
-    garden: string;
     community: string;
-    poolId: string;
+    pool: string;
   };
 };
 
@@ -21,7 +25,7 @@ export const dynamic = "force-dynamic"; // keep metadata fresh for status-aware 
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
-const OG_IMAGE_TOKEN = "opengraph-image-12jbcu";
+const OG_IMAGE_TOKEN = "opengraph-image";
 const OG_IMAGE_VERSION = "v=4";
 
 function buildOgImagePath(
@@ -34,26 +38,66 @@ function buildOgImagePath(
   }
   queryParts.push(OG_IMAGE_VERSION);
   const query = queryParts.length ? `?${queryParts.join("&")}` : "";
-  return `/gardens/${params.chain}/${params.garden}/${params.community}/${params.poolId}/${OG_IMAGE_TOKEN}${query}`;
+  return `/gardens/${params.chain}/${params.community}/${params.pool}/${OG_IMAGE_TOKEN}${query}`;
+}
+
+function getRequestMetadataBase(): URL | undefined {
+  const requestHeaders = headers();
+  const host =
+    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  if (!host) return undefined;
+  const proto =
+    requestHeaders.get("x-forwarded-proto") ??
+    (host.includes("localhost") ? "http" : "https");
+  try {
+    return new URL(`${proto}://${host}`);
+  } catch {
+    return undefined;
+  }
 }
 
 const titlePrefix = "Gardens - ";
 
+async function communityExistsOnChain(
+  chainConfig: ChainData | undefined,
+  communityAddress: string | undefined,
+): Promise<boolean> {
+  if (!chainConfig || !communityAddress) {
+    return false;
+  }
+
+  if (!hasEthereumAddressFormat(communityAddress)) {
+    return false;
+  }
+
+  const result = await queryByChain(
+    chainConfig,
+    getCommunityNameDocument,
+    { communityAddr: communityAddress.toLowerCase() },
+    undefined,
+    true,
+  );
+
+  return !!result?.data?.registryCommunity;
+}
+
 export async function generateMetadata({
   params,
 }: PageParams): Promise<Metadata> {
+  const metadataBase = getRequestMetadataBase();
   const chainId = Number(params.chain);
   const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
   const strategyAddress = await resolveStrategyAddress(
     params.chain,
-    params.poolId,
+    params.pool,
   );
   const normalizedParams = {
     ...params,
-    poolId: strategyAddress ?? params.poolId,
+    pool: strategyAddress ?? params.pool,
   };
   let description = getDescriptionText(undefined);
   const fallbackMetadata: Metadata = {
+    metadataBase,
     title: titlePrefix + FALLBACK_TITLE,
     description,
     openGraph: {
@@ -78,7 +122,7 @@ export async function generateMetadata({
 
   if (!strategyAddress) {
     console.error("Missing strategy address for pool metadata generation.", {
-      poolSlug: params.poolId,
+      strategySlug: params.pool,
     });
     return fallbackMetadata;
   }
@@ -119,6 +163,7 @@ export async function generateMetadata({
     const actualDescription = getDescriptionText(poolType);
     const ogImageUrl = buildOgImagePath(normalizedParams, status);
     return {
+      metadataBase,
       title: poolTitle,
       description: actualDescription,
       openGraph: {
@@ -148,9 +193,31 @@ type PageProps = PageParams & {
 };
 
 export default async function Page(props: PageProps) {
+  const numericChain = Number(props.params.chain);
+  const chainConfig =
+    chainConfigMap[props.params.chain] ?? chainConfigMap[numericChain];
+
+  const currentCommunityExists = await communityExistsOnChain(
+    chainConfig,
+    props.params.community,
+  );
+
+  if (!currentCommunityExists) {
+    const legacyCommunityExists = await communityExistsOnChain(
+      chainConfig,
+      props.params.pool,
+    );
+
+    if (legacyCommunityExists) {
+      redirect(
+        `/gardens/${props.params.chain}/${props.params.pool}${stringifySearchParams(props.searchParams)}`,
+      );
+    }
+  }
+
   const strategyAddress = await resolveStrategyAddress(
     props.params.chain,
-    props.params.poolId,
+    props.params.pool,
   );
 
   if (!strategyAddress) {
@@ -158,9 +225,9 @@ export default async function Page(props: PageProps) {
   }
 
   const normalizedSlug = strategyAddress.toLowerCase();
-  if (props.params.poolId.toLowerCase() !== normalizedSlug) {
+  if (props.params.pool.toLowerCase() !== normalizedSlug) {
     redirect(
-      `/gardens/${props.params.chain}/${props.params.garden}/${props.params.community}/${normalizedSlug}${stringifySearchParams(props.searchParams)}`,
+      `/gardens/${props.params.chain}/${props.params.community}/${normalizedSlug}${stringifySearchParams(props.searchParams)}`,
     );
   }
 
@@ -168,8 +235,9 @@ export default async function Page(props: PageProps) {
     <ClientPage
       params={{
         ...props.params,
-        poolId: normalizedSlug,
+        pool: normalizedSlug,
       }}
     />
   );
 }
+

@@ -43,6 +43,7 @@ import {
 } from "@/components";
 import { Divider } from "@/components/Divider";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { LoupeButton } from "@/components/LoupeButton";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
@@ -61,6 +62,7 @@ import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { getProtopiansOwners } from "@/services/alchemy";
 import { registryCommunityABI } from "@/src/generated";
 import { Column, PoolTypes } from "@/types";
+import { logOnce } from "@/utils/log";
 import {
   calculatePercentageBigInt,
   formatCountWhenPlus1k,
@@ -86,14 +88,17 @@ type CommunityMetricsProps = {
 type MemberColumn = Column<MembersStaked>;
 
 export default function ClientPage({
-  params: { garden: tokenAddr, community: communityAddr },
+  params: { community: communityAddr },
 }: {
-  params: { garden: string; community: string };
+  params: { community: string };
 }) {
+  useEffect(() => {
+    logOnce("debug", "Loading page: (app)/gardens/[chain]/[community]/page.tsx");
+  }, []);
+
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const showArchived = useFlag("showArchived");
-  const showLoupe = useFlag("loupe");
   const isFetchingNFT = useRef<boolean>(false);
   const { publish } = usePubSubContext();
   const chain = useChainFromPath();
@@ -101,11 +106,6 @@ export default function ClientPage({
   const [selectedTab, setSelectedTab] = useState(0);
 
   const covenantSectionRef = useRef<HTMLDivElement>(null);
-
-  const { data: tokenGarden } = useToken({
-    address: tokenAddr as Address,
-    chainId: chain?.id,
-  });
 
   const {
     data: result,
@@ -115,7 +115,6 @@ export default function ClientPage({
     query: getCommunityDocument,
     variables: {
       communityAddr: communityAddr.toLowerCase(),
-      tokenAddr: tokenAddr.toLowerCase(),
     },
     changeScope: [
       { topic: "community", id: communityAddr },
@@ -124,6 +123,13 @@ export default function ClientPage({
   });
 
   const registryCommunity = result?.registryCommunity;
+  const tokenAddress = registryCommunity?.garden?.id;
+
+  const { data: tokenGarden } = useToken({
+    address: tokenAddress as Address,
+    chainId: chain?.id,
+    enabled: !!tokenAddress,
+  });
 
   const { data: covenantResult } = useIpfsFetch<{ covenant: string }>({
     hash: registryCommunity?.covenantIpfsHash,
@@ -220,11 +226,7 @@ export default function ClientPage({
 
   const { tooltipMessage, isConnected, missmatchUrl, isButtonDisabled } =
     useDisableButtons();
-  const createPoolHref = `/gardens/${chain?.id}/${tokenAddr}/${communityAddr}/create-pool`;
-  const adminLoupeHref =
-    chain?.id != null ?
-      `/admin?chainId=${chain.id}&address=${communityAddr}`
-    : undefined;
+  const createPoolHref = `/gardens/${chain?.id}/${communityAddr}/create-pool`;
 
   useEffect(() => {
     if (error) {
@@ -364,7 +366,7 @@ export default function ClientPage({
     if (!canSeeArchivedPools && poolStatusFilter === "archive") {
       setPoolStatusFilter("active");
     }
-  }, [canSeeArchivedPools, poolStatusFilter, setPoolStatusFilter]);
+  }, [canSeeArchivedPools, poolStatusFilter]);
 
   useEffect(() => {
     const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
@@ -640,9 +642,9 @@ export default function ClientPage({
                     />
                   ))}
                 </div>
-              : <div className=" p-6 flex flex-col items-center text-center gap-3">
-                  <p className="text-neutral-soft-content text-xs sm:text-sm">
-                    No pools found for this filter.
+              : <div className="rounded-xl border border-neutral-soft-content/20 p-6 flex flex-col items-center text-center gap-3">
+                  <p className="text-neutral-soft-content">
+                    No pools match the selected filters.
                   </p>
                 </div>
               }
@@ -1073,7 +1075,7 @@ const PoolFiltersUI = ({
           key={filter.key}
           type="button"
           onClick={() => onSelectFilter(filter.key)}
-          className={`rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out whitespace-nowrap flex items-center ${
+          className={`rounded-full px-3 py-1.5 font-semibold border transition-all duration-150 ease-out whitespace-nowrap ${
             selectedFilter === filter.key ?
               `${POOL_STATUS_FILTER_BADGE_STYLES[filter.key]} border-transparent shadow-sm ring-1 ring-black/10`
             : "bg-transparent border-neutral-soft-content/30 text-neutral-soft-content hover:border-neutral-soft-content hover:text-primary-content"

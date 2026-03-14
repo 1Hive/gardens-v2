@@ -15,6 +15,16 @@ creates a virtual field on the entity that may be queried but cannot be set manu
 """
 directive @derivedFrom(field: String!) on FIELD_DEFINITION
 
+"""
+Indicates whether the current, partially filled bucket should be included in the response. Defaults to `exclude`
+"""
+enum Aggregation_current {
+  """Exclude the current, partially filled bucket from the response"""
+  exclude
+  """Include the current, partially filled bucket in the response"""
+  include
+}
+
 enum Aggregation_interval {
   hour
   day

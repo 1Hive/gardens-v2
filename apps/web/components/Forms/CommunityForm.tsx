@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, isAddress, parseUnits } from "viem";
 import { erc20ABI, useNetwork, usePublicClient, useSwitchNetwork } from "wagmi";
@@ -83,7 +83,6 @@ export const CommunityForm = () => {
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
   const publicClient = usePublicClient();
   const { isConnected, tooltipMessage } = useDisableButtons();
   const { switchNetwork, data: switchNetworkData } = useSwitchNetwork();
@@ -215,14 +214,12 @@ export const CommunityForm = () => {
         containerId: getValues("tokenAddress"),
         id: newCommunityAddr,
       });
-      if (pathname) {
+      if (selectedChainId) {
         router.push(
-          pathname?.replace(
-            "/create-community",
-            `/${selectedChainId}/${tokenAddress}/${newCommunityAddr}?${QUERY_PARAMS.communityPage.newCommunity}=true`,
-          ),
+          `/gardens/${selectedChainId}/${newCommunityAddr.toLowerCase()}?${QUERY_PARAMS.communityPage.newCommunity}=true`,
         );
       }
+      setLoading(false);
     },
     chainId: selectedChainId,
   });
