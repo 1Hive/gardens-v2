@@ -22,10 +22,6 @@ contract PauseFacetBaseHarness is PauseFacetBase {
         LibDiamond.diamondStorage().facetAddressAndSelectorPosition[selector].facetAddress = facet;
     }
 
-    function coverageHook(uint256 seed) external pure returns (uint256) {
-        return _coverageHook(seed);
-    }
-
     function _pauseOwner() internal view override returns (address) {
         return owner;
     }
@@ -218,10 +214,5 @@ contract PauseFacetBaseTest is Test {
 
         assertEq(harness.getPauseController(), address(controller));
         assertEq(harness.getPauseFacet(), address(0xBEEF));
-    }
-
-    function test_coverageHook_executes() public {
-        uint256 result = facet.coverageHook(7);
-        assertGt(result, 0);
     }
 }
