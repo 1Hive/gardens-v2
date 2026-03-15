@@ -221,6 +221,11 @@ abstract contract PoCBase is Test, RegistrySetupFull, AlloSetup, CVStrategyHelpe
 
     // -------------------------------------------------------
 
+    function _registerFactoryContract(address target) internal {
+        vm.prank(factoryOwner);
+        registryFactory.registerContract(target);
+    }
+
     function _deployArbitrator(uint256 fee) internal {
         vm.prank(factoryOwner);
         safeArbitrator = SafeArbitrator(
@@ -276,6 +281,9 @@ abstract contract PoCBase is Test, RegistrySetupFull, AlloSetup, CVStrategyHelpe
         // createRegistry() applies community facets automatically via RegistryCommunity.initialize()
         registryCommunity = RegistryCommunity(payable(registryFactory.createRegistry(p)));
 
+        if (address(safeArbitrator) != address(0)) {
+            _registerFactoryContract(address(safeArbitrator));
+        }
         vm.startPrank(factoryOwner);
         registryFactory.setProtocolFee(address(registryCommunity), PROTOCOL_FEE_PCT);
         vm.stopPrank();
@@ -369,6 +377,7 @@ contract PoC_H1_DisputeProposalReentrancy is PoCBase {
 
         _deployArbitrator(ARB_FEE);
         _deployFactory(address(token));
+        _registerFactoryContract(address(malArb));
         _deployStrategy(ArbitrableConfig({
             arbitrator:                 IArbitrator(address(malArb)),
             tribunalSafe:               payable(makeAddr("tribunal")),

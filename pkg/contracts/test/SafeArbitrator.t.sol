@@ -159,6 +159,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
             address(diamondConfigurator.diamondInit()),
             abi.encodeCall(CVStrategyDiamondInit.init, ())
         );
+        factory.registerContract(address(safeArbitrator));
         vm.stopPrank();
         registryCommunity = RegistryCommunity(factory.createRegistry(params));
 

@@ -411,6 +411,10 @@ contract CVStreamingFacetHarness is CVStreamingFacet {
     function setDiamondOwner(address owner_) external {
         LibDiamond.setContractOwner(owner_);
     }
+
+    function setProxyOwner(address owner_) external {
+        _owner = owner_;
+    }
 }
 
 contract CVStreamingFacetTest is Test {
@@ -456,6 +460,7 @@ contract CVStreamingFacetTest is Test {
         facet.setupStreamingRatePerSecond(1);
         facet.setupTotalPointsActivated(1_000 * D);
         facet.setDiamondOwner(address(this));
+        facet.setProxyOwner(address(this));
         registry.setCouncilSafe(address(0xC011C1));
 
         allo.setPool(1, address(token));

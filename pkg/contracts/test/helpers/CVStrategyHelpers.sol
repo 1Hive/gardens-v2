@@ -311,6 +311,7 @@ contract CVStrategyBaseFacetHarness is CVStrategyBaseFacet {
 
     function setContractOwner(address owner_) external {
         LibDiamond.setContractOwner(owner_);
+        _owner = owner_;
     }
 
     function setPauseController(address controller) external {
