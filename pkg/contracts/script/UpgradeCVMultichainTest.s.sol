@@ -502,6 +502,10 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         view
         returns (IDiamond.FacetCut[] memory changedCuts)
     {
+        if (!_supportsLoupeIntrospection(diamondProxy)) {
+            return _cloneFacetCuts(desiredCuts);
+        }
+
         bytes4[][] memory selectorsByCut = new bytes4[][](desiredCuts.length);
         uint256[] memory selectorCountByCut = new uint256[](desiredCuts.length);
         uint256 changedCutCount = 0;
@@ -552,6 +556,10 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         view
         returns (IDiamond.FacetCut[] memory removalCuts)
     {
+        if (!_supportsLoupeIntrospection(diamondProxy)) {
+            return new IDiamond.FacetCut[](0);
+        }
+
         address[] memory candidateFacets = IDiamondLoupe(diamondProxy).facetAddresses();
         uint256 candidateCount = candidateFacets.length;
 
@@ -603,6 +611,29 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
             }
         }
         return false;
+    }
+
+    function _supportsLoupeIntrospection(address diamondProxy) internal view returns (bool) {
+        try IDiamondLoupe(diamondProxy).facetAddresses() returns (address[] memory) {
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    function _cloneFacetCuts(IDiamond.FacetCut[] memory source) internal pure returns (IDiamond.FacetCut[] memory copy) {
+        copy = new IDiamond.FacetCut[](source.length);
+        for (uint256 i = 0; i < source.length; i++) {
+            bytes4[] memory selectors = new bytes4[](source[i].functionSelectors.length);
+            for (uint256 j = 0; j < selectors.length; j++) {
+                selectors[j] = source[i].functionSelectors[j];
+            }
+            copy[i] = IDiamond.FacetCut({
+                facetAddress: source[i].facetAddress,
+                action: source[i].action,
+                functionSelectors: selectors
+            });
+        }
     }
 
     function _containsAddress(address[] memory values, uint256 length, address value) internal pure returns (bool) {

@@ -293,7 +293,7 @@ contract UpgradeCVMultichainProd is UpgradeCVMultichainTest {
         }
 
         if (factoryAction == FactoryAction.All || factoryAction == FactoryAction.SetPauseController) {
-            if (registryFactory.globalPauseController() != context.pauseController) {
+            if (_factoryGlobalPauseControllerOrZero(context.registryFactoryProxy) != context.pauseController) {
                 context.writer = _appendTransaction(
                     context.writer,
                     _createTransactionJson(
@@ -305,7 +305,7 @@ contract UpgradeCVMultichainProd is UpgradeCVMultichainTest {
 
             if (
                 context.streamingEscrowFactory != address(0)
-                    && registryFactory.streamingEscrowFactory() != context.streamingEscrowFactory
+                    && _factoryStreamingEscrowFactoryOrZero(context.registryFactoryProxy) != context.streamingEscrowFactory
             ) {
                 context.writer = _appendTransaction(
                     context.writer,
@@ -464,7 +464,7 @@ contract UpgradeCVMultichainProd is UpgradeCVMultichainTest {
         internal
         returns (UpgradeContext memory)
     {
-        if (target == address(0) || registryFactory.isContractRegistered(target)) {
+        if (target == address(0) || _factoryIsContractRegisteredOrFalse(context.registryFactoryProxy, target)) {
             return context;
         }
 
@@ -476,6 +476,30 @@ contract UpgradeCVMultichainProd is UpgradeCVMultichainTest {
             )
         );
         return context;
+    }
+
+    function _factoryGlobalPauseControllerOrZero(address factoryProxy) internal view returns (address controller) {
+        (bool ok, bytes memory data) =
+            factoryProxy.staticcall(abi.encodeWithSelector(bytes4(keccak256("globalPauseController()"))));
+        if (ok && data.length >= 32) {
+            controller = abi.decode(data, (address));
+        }
+    }
+
+    function _factoryStreamingEscrowFactoryOrZero(address factoryProxy) internal view returns (address escrowFactory) {
+        (bool ok, bytes memory data) =
+            factoryProxy.staticcall(abi.encodeWithSelector(bytes4(keccak256("streamingEscrowFactory()"))));
+        if (ok && data.length >= 32) {
+            escrowFactory = abi.decode(data, (address));
+        }
+    }
+
+    function _factoryIsContractRegisteredOrFalse(address factoryProxy, address target) internal view returns (bool isRegistered) {
+        (bool ok, bytes memory data) =
+            factoryProxy.staticcall(abi.encodeWithSelector(bytes4(keccak256("isContractRegistered(address)")), target));
+        if (ok && data.length >= 32) {
+            isRegistered = abi.decode(data, (bool));
+        }
     }
 
     function _writeCommunityUpgrades(UpgradeContext memory context, string memory networkJson)
