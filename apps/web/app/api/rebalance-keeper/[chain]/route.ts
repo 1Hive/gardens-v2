@@ -82,9 +82,10 @@ async function querySubgraph<T>(
     data?: T;
     errors?: Array<{ message?: string }>;
   };
-  if ((json.errors?.length ?? 0) > 0) {
+  const errors = json.errors ?? [];
+  if (errors.length > 0) {
     throw new Error(
-      `Subgraph query failed: ${json.errors.map((e) => e.message).join("; ")}`,
+      `Subgraph query failed: ${errors.map((e) => e.message).join("; ")}`,
     );
   }
   if (json.data == null) {
