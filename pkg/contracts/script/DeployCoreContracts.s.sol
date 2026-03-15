@@ -67,16 +67,16 @@ contract DeployCoreContracts is BaseMultiChain {
 
         (IDiamond.FacetCut[] memory communityCuts, address communityInit) = _deployCommunityFacets();
         (IDiamond.FacetCut[] memory strategyCuts, address strategyInit) = _deployStrategyFacets();
-        try RegistryFactory(payable(registryFactoryProxy)).initializeV2(
+        RegistryFactory(payable(registryFactoryProxy)).setCommunityFacets(
             communityCuts,
             communityInit,
-            abi.encodeCall(RegistryCommunityDiamondInit.init, ()),
+            abi.encodeCall(RegistryCommunityDiamondInit.init, ())
+        );
+        RegistryFactory(payable(registryFactoryProxy)).setStrategyFacets(
             strategyCuts,
             strategyInit,
             abi.encodeCall(CVStrategyDiamondInit.init, ())
-        ) {
-        } catch {
-        }
+        );
 
         address listManager = address(SENDER);
 

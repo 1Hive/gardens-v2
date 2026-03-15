@@ -193,7 +193,7 @@ all_cached_for_directory() {
         return 0
     fi
 
-    local skip_facets=("DiamondCutFacet" "DiamondLoupeFacet" "OwnershipFacet")
+    local skip_facets=("DiamondLoupeFacet")
     for facet_file in "$facets_dir"/*Facet.sol; do
         if [ ! -f "$facet_file" ]; then
             continue
@@ -260,7 +260,7 @@ process_directory() {
     local failed_facets=0
 
     # Standard diamond library facets to skip (don't share storage with main contract)
-    local skip_facets=("DiamondCutFacet" "DiamondLoupeFacet" "OwnershipFacet")
+    local skip_facets=("DiamondLoupeFacet")
 
     for facet_file in "$facets_dir"/*Facet.sol; do
         if [ ! -f "$facet_file" ]; then

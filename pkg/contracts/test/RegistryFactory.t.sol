@@ -77,8 +77,10 @@ contract RegistryFactoryTest is Test {
             action: IDiamond.FacetCutAction.Add,
             functionSelectors: selectors
         });
-        vm.prank(owner);
-        factory.initializeV2(dummyCuts, address(0), "", dummyCuts, address(0), "");
+        vm.startPrank(owner);
+        factory.setCommunityFacets(dummyCuts, address(0), "");
+        factory.setStrategyFacets(dummyCuts, address(0), "");
+        vm.stopPrank();
 
         params._allo = address(this);
         params._gardenToken = IERC20(address(0xBEEF));
@@ -296,7 +298,7 @@ contract RegistryFactoryTest is Test {
         factory.setStrategyFacets(dummyCuts, address(0), "");
     }
 
-    function test_initializeV2_onlyOwner() public {
+    function test_setFacets_onlyOwner() public {
         IDiamond.FacetCut[] memory dummyCuts = new IDiamond.FacetCut[](1);
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = bytes4(keccak256("dummy()"));
@@ -307,7 +309,10 @@ contract RegistryFactoryTest is Test {
         });
 
         vm.expectRevert();
-        factory.initializeV2(dummyCuts, address(0), "", dummyCuts, address(0), "");
+        factory.setCommunityFacets(dummyCuts, address(0), "");
+
+        vm.expectRevert();
+        factory.setStrategyFacets(dummyCuts, address(0), "");
     }
 
     function test_register_and_unregister_contracts_with_zero_address_guard() public {

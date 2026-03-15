@@ -149,10 +149,12 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
             )
         );
         vm.startPrank(factoryOwner);
-        factory.initializeV2(
+        factory.setCommunityFacets(
             communityDiamondConfigurator.getFacetCuts(),
             address(communityDiamondConfigurator.diamondInit()),
-            abi.encodeCall(RegistryCommunityDiamondInit.init, ()),
+            abi.encodeCall(RegistryCommunityDiamondInit.init, ())
+        );
+        factory.setStrategyFacets(
             diamondConfigurator.getFacetCuts(),
             address(diamondConfigurator.diamondInit()),
             abi.encodeCall(CVStrategyDiamondInit.init, ())

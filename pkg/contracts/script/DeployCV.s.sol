@@ -293,10 +293,12 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         CommunityDiamondConfigurator communityDiamondConfigurator = new CommunityDiamondConfigurator();
         StrategyDiamondConfigurator diamondConfigurator = new StrategyDiamondConfigurator();
-        registryFactory.initializeV2(
+        registryFactory.setCommunityFacets(
             communityDiamondConfigurator.getFacetCuts(),
             address(communityDiamondConfigurator.diamondInit()),
-            abi.encodeCall(RegistryCommunityDiamondInit.init, ()),
+            abi.encodeCall(RegistryCommunityDiamondInit.init, ())
+        );
+        registryFactory.setStrategyFacets(
             diamondConfigurator.getFacetCuts(),
             address(diamondConfigurator.diamondInit()),
             abi.encodeCall(CVStrategyDiamondInit.init, ())

@@ -38,18 +38,13 @@ contract UpgradeCVMultichainProd is UpgradeCVMultichainTest {
         bool doFactory = phaseSelection == Phase.All || phaseSelection == Phase.Factory;
         bool doCommunities = phaseSelection == Phase.All || phaseSelection == Phase.Communities;
         bool doStrategies = phaseSelection == Phase.All || phaseSelection == Phase.Strategies;
+        bool deployFactoryImplementation = doFactory && _isFactoryAction(FactoryAction.UpgradeImpl);
+        bool deployRegistryImplementation =
+            doCommunities || (doFactory && _isFactoryAction(FactoryAction.SetRegistryTemplate));
+        bool deployStrategyImplementation =
+            doStrategies || (doFactory && _isFactoryAction(FactoryAction.SetStrategyTemplate));
 
         UpgradeContext memory context;
-        context.registryFactoryImplementation =
-            (doFactory && _isFactoryAction(FactoryAction.UpgradeImpl)) ? address(new RegistryFactory()) : address(0);
-        context.registryImplementation = (doCommunities
-                || (doFactory && _isFactoryAction(FactoryAction.SetRegistryTemplate)))
-            ? address(new RegistryCommunity())
-            : address(0);
-        context.strategyImplementation = (doStrategies
-                || (doFactory && _isFactoryAction(FactoryAction.SetStrategyTemplate)))
-            ? address(new CVStrategy())
-            : address(0);
 
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
         context.pauseController = networkJson.readAddress(getKeyNetwork(".ENVS.PAUSE_CONTROLLER"));
@@ -61,17 +56,27 @@ contract UpgradeCVMultichainProd is UpgradeCVMultichainTest {
         context.registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
 
         if (!vm.envOr("SKIP_PREFLIGHT", false)) {
-            _runPreflightChecks(context, networkJson, proxyOwner, doFactory, doCommunities, doStrategies);
             vm.stopBroadcast();
-            _runPostUpgradeUpgradeabilityChecks(context, networkJson, doFactory, doCommunities, doStrategies);
+            _runPreflightChecks(context, networkJson, proxyOwner, doFactory, doCommunities, doStrategies);
+            _runPostUpgradeUpgradeabilityChecks(
+                context,
+                networkJson,
+                deployFactoryImplementation,
+                deployRegistryImplementation,
+                deployStrategyImplementation
+            );
             vm.startBroadcast(pool_admin());
         }
+
+        context.registryFactoryImplementation = deployFactoryImplementation ? address(new RegistryFactory()) : address(0);
+        context.registryImplementation = deployRegistryImplementation ? address(new RegistryCommunity()) : address(0);
+        context.strategyImplementation = deployStrategyImplementation ? address(new CVStrategy()) : address(0);
 
         bool needFactoryFacetCuts = doFactory
             && (_isFactoryAction(FactoryAction.SetCommunityFacets) || _isFactoryAction(FactoryAction.SetStrategyFacets));
 
         if (doCommunities) {
-            FacetCuts memory facetCuts = _buildFacetCuts();
+            FacetCuts memory facetCuts = _buildFacetCutsFromSnapshot();
             context.cvCuts = facetCuts.cvCuts;
             context.communityCuts = facetCuts.communityCuts;
         } else if (needFactoryFacetCuts) {
@@ -168,14 +173,14 @@ contract UpgradeCVMultichainProd is UpgradeCVMultichainTest {
     function _runPostUpgradeUpgradeabilityChecks(
         UpgradeContext memory context,
         string memory networkJson,
-        bool doFactory,
-        bool doCommunities,
-        bool doStrategies
+        bool deployFactoryImplementation,
+        bool deployRegistryImplementation,
+        bool deployStrategyImplementation
     ) internal {
         uint256 forkId = vm.createFork(_rpcUrlForUpgradePreflight());
         vm.selectFork(forkId);
 
-        if (doFactory && context.registryFactoryImplementation != address(0)) {
+        if (deployFactoryImplementation) {
             address forkRegistryFactoryImplementation = address(new RegistryFactory());
             _assertUpgradeableAfterUpgrade(
                 context.registryFactoryProxy,
@@ -185,7 +190,7 @@ contract UpgradeCVMultichainProd is UpgradeCVMultichainTest {
             );
         }
 
-        if (doCommunities && context.registryImplementation != address(0)) {
+        if (deployRegistryImplementation) {
             address[] memory registryCommunityProxies =
                 networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
             address forkRegistryImplementation = address(new RegistryCommunity());
@@ -200,7 +205,7 @@ contract UpgradeCVMultichainProd is UpgradeCVMultichainTest {
             }
         }
 
-        if (doStrategies && context.strategyImplementation != address(0)) {
+        if (deployStrategyImplementation) {
             address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
             address forkStrategyImplementation = address(new CVStrategy());
             address probeStrategyImplementation = address(new CVStrategy());

@@ -129,18 +129,6 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         // setReceiverAddress(_gardensFeeReceiver); //onlyOwner
     }
 
-    function initializeV2(
-        IDiamondCut.FacetCut[] memory communityFacetCuts_,
-        address communityInit_,
-        bytes memory communityInitCalldata_,
-        IDiamondCut.FacetCut[] memory strategyFacetCuts_,
-        address strategyInit_,
-        bytes memory strategyInitCalldata_
-    ) public reinitializer(2) onlyOwner {
-        setCommunityFacets(communityFacetCuts_, communityInit_, communityInitCalldata_);
-        setStrategyFacets(strategyFacetCuts_, strategyInit_, strategyInitCalldata_);
-    }
-
     function setCommunityFacets(
         IDiamondCut.FacetCut[] memory communityFacetCuts_,
         address communityInit_,
@@ -207,18 +195,17 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         return _createRegistry(params);
     }
 
-    function _createRegistry(RegistryCommunityInitializeParams memory params) internal returns (address _createdRegistryAddress) {
+    function _createRegistry(RegistryCommunityInitializeParams memory params)
+        internal
+        returns (address _createdRegistryAddress)
+    {
         params._nonce = nonce++;
         params._registryFactory = address(this);
 
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(registryCommunityTemplate),
             abi.encodeWithSelector(
-                RegistryCommunity.initialize.selector,
-                params,
-                strategyTemplate,
-                collateralVaultTemplate,
-                proxyOwner()
+                RegistryCommunity.initialize.selector, params, strategyTemplate, collateralVaultTemplate, proxyOwner()
             )
         );
 

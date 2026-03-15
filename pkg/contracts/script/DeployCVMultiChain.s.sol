@@ -191,15 +191,16 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
         CommunityDiamondConfigurator communityDiamondConfigurator = new CommunityDiamondConfigurator();
         StrategyDiamondConfigurator diamondConfigurator = new StrategyDiamondConfigurator();
-        try REGISTRY_FACTORY.initializeV2(
+        REGISTRY_FACTORY.setCommunityFacets(
             communityDiamondConfigurator.getFacetCuts(),
             address(communityDiamondConfigurator.diamondInit()),
-            abi.encodeCall(RegistryCommunityDiamondInit.init, ()),
+            abi.encodeCall(RegistryCommunityDiamondInit.init, ())
+        );
+        REGISTRY_FACTORY.setStrategyFacets(
             diamondConfigurator.getFacetCuts(),
             address(diamondConfigurator.diamondInit()),
             abi.encodeCall(CVStrategyDiamondInit.init, ())
-        ) {}
-            catch {}
+        );
 
         assertTrue(REGISTRY_FACTORY.registryCommunityTemplate() != address(0x0), "Registry Community Template not set");
         assertTrue(REGISTRY_FACTORY.collateralVaultTemplate() != address(0x0), "Collateral Vault Template not set");

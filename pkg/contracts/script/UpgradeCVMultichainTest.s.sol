@@ -156,7 +156,6 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
             } else {
                 facetCuts = _buildFacetCuts();
             }
-            cvCuts = facetCuts.cvCuts;
             communityCuts = facetCuts.communityCuts;
         } else if (needFactoryFacetCuts) {
             if (factoryAction == FactoryAction.SetCommunityFacets) {
@@ -182,9 +181,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         }
 
         if (doCommunities) {
-            _upgradeRegistryCommunities(
-                networkJson, registryImplementation, strategyImplementation, cvCuts, communityCuts
-            );
+            _upgradeRegistryCommunities(networkJson, registryImplementation, strategyImplementation, communityCuts);
         }
 
         if (doStrategies) {
@@ -308,7 +305,6 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         string memory networkJson,
         address registryImplementation,
         address strategyImplementation,
-        IDiamond.FacetCut[] memory cvCuts,
         IDiamond.FacetCut[] memory communityCuts
     ) internal {
         address[] memory registryCommunityProxies = networkJson.readAddressArray(
