@@ -19,7 +19,6 @@
 [submodule "lib/__safe-smart-account"]
 	path = lib/__safe-smart-account
 	url = https://github.com/safe-global/safe-smart-account
-
-[submodule "pkg/contracts/lib/protocol-monorepo"]
-	path = pkg/contracts/lib/protocol-monorepo
+[submodule "lib/protocol-monorepo"]
+	path = lib/protocol-monorepo
 	url = https://github.com/superfluid-org/protocol-monorepo
