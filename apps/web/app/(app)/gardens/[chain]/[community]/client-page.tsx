@@ -101,6 +101,7 @@ export default function ClientPage({
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const showArchived = useFlag("showArchived");
+  const showStreamingPools = useFlag("showStreamingPools");
   const isFetchingNFT = useRef<boolean>(false);
   const { publish } = usePubSubContext();
   const chain = useChainFromPath();
@@ -242,7 +243,21 @@ export default function ClientPage({
       0n,
     ) ?? 0;
 
-  const communityStrategies = strategies ?? [];
+  const strategyPoolType = (strategy: {
+    config?: { proposalType?: unknown } | null;
+  }) => {
+    const proposalType = Number(strategy.config?.proposalType ?? -1);
+    return PoolTypes[proposalType];
+  };
+
+  const communityStrategies = useMemo(
+    () =>
+      (strategies ?? []).filter(
+        (strategy) =>
+          showStreamingPools || strategyPoolType(strategy) !== "streaming",
+      ),
+    [strategies, showStreamingPools],
+  );
 
   const canSeeArchivedPools =
     !!isCouncilMember || isCouncilSafe || showArchived;
@@ -294,10 +309,7 @@ export default function ClientPage({
 
   const activePoolsSorted = useMemo(() => {
     const poolTypeRank = (pool: (typeof activePools)[number]) => {
-      const proposalType = Number(
-        (pool.config as { proposalType?: unknown })?.proposalType ?? -1,
-      );
-      const poolType = PoolTypes[proposalType];
+      const poolType = strategyPoolType(pool);
       if (poolType === "funding") return 0;
       if (poolType === "streaming") return 1;
       if (poolType === "signaling") return 2;

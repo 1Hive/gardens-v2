@@ -208,6 +208,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         if (pauseController == address(0)) {
             revert("PAUSE_CONTROLLER not set in networks.json");
         }
+        address streamingEscrowFactory = _readAddressOrZero(".ENVS.STREAMING_ESCROW_FACTORY");
 
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
         RegistryFactory registryFactory = RegistryFactory(payable(address(registryFactoryProxy)));
@@ -286,6 +287,10 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
 
         if (factoryAction == FactoryAction.All || factoryAction == FactoryAction.SetPauseController) {
             registryFactory.setGlobalPauseController(pauseController);
+        }
+
+        if (streamingEscrowFactory != address(0) && registryFactory.streamingEscrowFactory() != streamingEscrowFactory) {
+            registryFactory.setStreamingEscrowFactory(streamingEscrowFactory);
         }
 
         if (factoryAction == FactoryAction.All || factoryAction == FactoryAction.SetRegistryTemplate) {

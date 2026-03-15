@@ -5,9 +5,11 @@ import "./UpgradeCVMultichainTest.s.sol";
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
+import {ProxyOwnableUpgrader} from "../src/ProxyOwnableUpgrader.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
+import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
 import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 
@@ -26,6 +28,7 @@ contract UpgradeCVMultichainProd is UpgradeCVMultichainTest {
         address registryFactoryProxy;
         address safeOwner;
         address pauseController;
+        address streamingEscrowFactory;
         IDiamond.FacetCut[] cvCuts;
         IDiamond.FacetCut[] communityCuts;
         JsonWriter writer;
@@ -53,8 +56,16 @@ contract UpgradeCVMultichainProd is UpgradeCVMultichainTest {
         if (context.pauseController == address(0)) {
             revert("PAUSE_CONTROLLER not set in networks.json");
         }
+        context.streamingEscrowFactory = _readAddressOrZero(".ENVS.STREAMING_ESCROW_FACTORY");
         context.safeOwner = ProxyOwner(proxyOwner).owner();
         context.registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
+
+        if (!vm.envOr("SKIP_PREFLIGHT", false)) {
+            _runPreflightChecks(context, networkJson, proxyOwner, doFactory, doCommunities, doStrategies);
+            vm.stopBroadcast();
+            _runPostUpgradeUpgradeabilityChecks(context, networkJson, doFactory, doCommunities, doStrategies);
+            vm.startBroadcast(pool_admin());
+        }
 
         bool needFactoryFacetCuts = doFactory
             && (_isFactoryAction(FactoryAction.SetCommunityFacets) || _isFactoryAction(FactoryAction.SetStrategyFacets));
@@ -92,6 +103,147 @@ contract UpgradeCVMultichainProd is UpgradeCVMultichainTest {
         _finalizePayloadWriter(context.writer);
     }
 
+    function _runPreflightChecks(
+        UpgradeContext memory context,
+        string memory networkJson,
+        address proxyOwner,
+        bool doFactory,
+        bool doCommunities,
+        bool doStrategies
+    ) internal view {
+        if (context.registryFactoryProxy.code.length == 0) {
+            revert("registry factory proxy has no code");
+        }
+        if (proxyOwner.code.length == 0) {
+            revert("proxy owner has no code");
+        }
+        if (context.safeOwner == address(0)) {
+            revert("proxy owner owner() is zero");
+        }
+        if (context.pauseController.code.length == 0) {
+            revert("pause controller has no code");
+        }
+        if (context.streamingEscrowFactory != address(0) && context.streamingEscrowFactory.code.length == 0) {
+            revert("streaming escrow factory has no code");
+        }
+
+        bool upgradesFactoryImpl = factoryAction == FactoryAction.All || factoryAction == FactoryAction.UpgradeImpl;
+        if (doFactory && !upgradesFactoryImpl && !_isRegistryFactoryProxyAbiCompatible(context.registryFactoryProxy)) {
+            revert("factory impl mismatch, run factory upgrade impl first");
+        }
+
+        if (doCommunities) {
+            address[] memory registryCommunityProxies =
+                networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
+            for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
+                address proxy = registryCommunityProxies[i];
+                if (proxy.code.length == 0) {
+                    revert("registry community proxy has no code");
+                }
+                if (!_isDiamondLoupeCompatible(proxy)) {
+                    revert("registry community loupe mismatch");
+                }
+            }
+        }
+
+        if (doStrategies) {
+            address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
+            for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
+                address proxy = cvStrategyProxies[i];
+                if (proxy.code.length == 0) {
+                    revert("cv strategy proxy has no code");
+                }
+                if (!_isDiamondLoupeCompatible(proxy)) {
+                    revert("cv strategy loupe mismatch");
+                }
+            }
+        }
+    }
+
+    function _isDiamondLoupeCompatible(address proxy) internal view returns (bool) {
+        (bool ok,) = proxy.staticcall(abi.encodeWithSelector(IDiamondLoupe.facetAddresses.selector));
+        return ok;
+    }
+
+    function _runPostUpgradeUpgradeabilityChecks(
+        UpgradeContext memory context,
+        string memory networkJson,
+        bool doFactory,
+        bool doCommunities,
+        bool doStrategies
+    ) internal {
+        uint256 forkId = vm.createFork(_rpcUrlForUpgradePreflight());
+        vm.selectFork(forkId);
+
+        if (doFactory && context.registryFactoryImplementation != address(0)) {
+            address forkRegistryFactoryImplementation = address(new RegistryFactory());
+            _assertUpgradeableAfterUpgrade(
+                context.registryFactoryProxy,
+                context.safeOwner,
+                forkRegistryFactoryImplementation,
+                address(new RegistryFactory())
+            );
+        }
+
+        if (doCommunities && context.registryImplementation != address(0)) {
+            address[] memory registryCommunityProxies =
+                networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
+            address forkRegistryImplementation = address(new RegistryCommunity());
+            address probeRegistryImplementation = address(new RegistryCommunity());
+            for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
+                _assertUpgradeableAfterUpgrade(
+                    registryCommunityProxies[i],
+                    context.safeOwner,
+                    forkRegistryImplementation,
+                    probeRegistryImplementation
+                );
+            }
+        }
+
+        if (doStrategies && context.strategyImplementation != address(0)) {
+            address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
+            address forkStrategyImplementation = address(new CVStrategy());
+            address probeStrategyImplementation = address(new CVStrategy());
+            for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
+                _assertUpgradeableAfterUpgrade(
+                    cvStrategyProxies[i], context.safeOwner, forkStrategyImplementation, probeStrategyImplementation
+                );
+            }
+        }
+    }
+
+    function _assertUpgradeableAfterUpgrade(
+        address proxy,
+        address owner,
+        address nextImplementation,
+        address probeImplementation
+    ) internal {
+        vm.startPrank(owner);
+        ProxyOwnableUpgrader(payable(proxy)).upgradeTo(nextImplementation);
+        if (_proxyImplementationAddress(proxy) != nextImplementation) {
+            revert("preflight upgradeTo failed");
+        }
+        ProxyOwnableUpgrader(payable(proxy)).upgradeTo(probeImplementation);
+        if (_proxyImplementationAddress(proxy) != probeImplementation) {
+            revert("preflight future upgradeTo failed");
+        }
+        vm.stopPrank();
+    }
+
+    function _rpcUrlForUpgradePreflight() internal view returns (string memory) {
+        bytes32 networkHash = keccak256(bytes(CURRENT_NETWORK));
+        if (networkHash == keccak256(bytes("ethsepolia"))) return vm.envString("RPC_URL_SEP_TESTNET");
+        if (networkHash == keccak256(bytes("arbsepolia"))) return vm.envString("RPC_URL_ARB_TESTNET");
+        if (networkHash == keccak256(bytes("opsepolia"))) return vm.envString("RPC_URL_OP_TESTNET");
+        if (networkHash == keccak256(bytes("arbitrum"))) return vm.envString("RPC_URL_ARB");
+        if (networkHash == keccak256(bytes("optimism"))) return vm.envString("RPC_URL_OPT");
+        if (networkHash == keccak256(bytes("polygon"))) return vm.envString("RPC_URL_POLYGON");
+        if (networkHash == keccak256(bytes("gnosis"))) return vm.envString("RPC_URL_GNOSIS");
+        if (networkHash == keccak256(bytes("base"))) return vm.envString("RPC_URL_BASE");
+        if (networkHash == keccak256(bytes("celo"))) return vm.envString("RPC_URL_CELO");
+        revert("missing rpc url for preflight");
+    }
+
     function _writeRegistryFactoryUpgrades(UpgradeContext memory context)
         internal
         returns (UpgradeContext memory)
@@ -112,8 +264,6 @@ contract UpgradeCVMultichainProd is UpgradeCVMultichainTest {
                 );
             }
         }
-
-        context = _appendRequiredContractRegistrations(context, registryFactory);
 
         if (factoryAction == FactoryAction.All || factoryAction == FactoryAction.SetCommunityFacets) {
             bytes32 communityCutsDigest = _facetCutsDigest(context.communityCuts);
@@ -147,7 +297,22 @@ contract UpgradeCVMultichainProd is UpgradeCVMultichainTest {
                     )
                 );
             }
+
+            if (
+                context.streamingEscrowFactory != address(0)
+                    && registryFactory.streamingEscrowFactory() != context.streamingEscrowFactory
+            ) {
+                context.writer = _appendTransaction(
+                    context.writer,
+                    _createTransactionJson(
+                        context.registryFactoryProxy,
+                        abi.encodeCall(registryFactory.setStreamingEscrowFactory, (context.streamingEscrowFactory))
+                    )
+                );
+            }
         }
+
+        context = _appendRequiredContractRegistrations(context, registryFactory);
 
         if (factoryAction == FactoryAction.All || factoryAction == FactoryAction.SetRegistryTemplate) {
             if (context.registryImplementation == address(0)) revert("missing registry community implementation");

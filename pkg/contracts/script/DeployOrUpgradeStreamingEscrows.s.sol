@@ -13,14 +13,6 @@ interface IStreamingEscrowUUPS {
     function reinitializeV2Migrate() external;
 }
 
-interface ICVStrategySuperToken {
-    function superfluidToken() external view returns (address);
-}
-
-interface ISuperTokenWithHost {
-    function getHost() external view returns (address);
-}
-
 contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
     using stdJson for string;
 
@@ -39,20 +31,23 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
     }
 
     function runCurrentNetwork(string memory networkJson) public override {
+        bool deployOnly = vm.envOr("DEPLOY_ONLY", false);
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
         require(proxyOwner != address(0), "PROXY_OWNER is zero");
 
         address factoryProxy = _readAddressOrZero(".ENVS.STREAMING_ESCROW_FACTORY");
+        address configuredHost = _readAddressOrZero(".ENVS.SUPERFLUID_HOST");
+        require(configuredHost != address(0), "SUPERFLUID_HOST is zero");
         StreamingEscrowFactory factory;
+        address currentFactoryImplementation = address(0);
+        address targetFactoryImplementation;
+
+        if (factoryProxy != address(0) && factoryProxy.code.length == 0) {
+            console2.log("Configured STREAMING_ESCROW_FACTORY has no code, redeploying", factoryProxy);
+            factoryProxy = address(0);
+        }
 
         if (factoryProxy == address(0)) {
-            address[] memory strategies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
-            require(strategies.length > 0, "missing CV_STRATEGIES to derive Superfluid host");
-            address superToken = ICVStrategySuperToken(strategies[0]).superfluidToken();
-            require(superToken != address(0), "strategy superToken is zero");
-            address host = ISuperTokenWithHost(superToken).getHost();
-            require(host != address(0), "superToken host is zero");
-
             address initialEscrowImplementation = _resolveEscrowImplementation(address(0));
             address factoryImplementation = address(new StreamingEscrowFactory());
             factoryProxy = address(
@@ -61,7 +56,7 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
                     abi.encodeWithSelector(
                         StreamingEscrowFactory.initialize.selector,
                         proxyOwner,
-                        ISuperfluid(host),
+                        ISuperfluid(configuredHost),
                         initialEscrowImplementation
                     )
                 )
@@ -77,23 +72,33 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
             console2.log("Escrow implementation", initialEscrowImplementation);
         } else {
             factory = StreamingEscrowFactory(factoryProxy);
-            _upgradeFactoryIfChanged(factory, factoryProxy);
+            currentFactoryImplementation = _implementationOf(factoryProxy);
+            targetFactoryImplementation = _resolveFactoryImplementation(currentFactoryImplementation);
+            if (!deployOnly && _codehash(currentFactoryImplementation) != _codehash(targetFactoryImplementation)) {
+                factory.upgradeTo(targetFactoryImplementation);
+            }
         }
 
         address targetEscrowImplementation = _resolveEscrowImplementation(factory.escrowImplementation());
-        if (_codehash(factory.escrowImplementation()) != _codehash(targetEscrowImplementation)) {
+        if (!deployOnly && _codehash(factory.escrowImplementation()) != _codehash(targetEscrowImplementation)) {
             factory.setEscrowImplementation(targetEscrowImplementation);
         }
 
-        _writeNetworkAddress(".IMPLEMENTATIONS.STREAMING_ESCROW_FACTORY", _implementationOf(factoryProxy));
+        if (factoryProxy != address(0) && targetFactoryImplementation == address(0)) {
+            targetFactoryImplementation = _implementationOf(factoryProxy);
+        }
+
+        _writeNetworkAddress(".IMPLEMENTATIONS.STREAMING_ESCROW_FACTORY", targetFactoryImplementation);
         _writeNetworkAddress(".IMPLEMENTATIONS.STREAMING_ESCROW", targetEscrowImplementation);
         _writeNetworkAddress(".ENVS.STREAMING_ESCROW_FACTORY", factoryProxy);
 
         uint256 total = factory.escrowsLength();
         console2.log("Factory", factoryProxy);
         console2.log("Factory implementation", _implementationOf(factoryProxy));
+        console2.log("Superfluid host", configuredHost);
         console2.log("Escrow implementation", targetEscrowImplementation);
         console2.log("Escrows", total);
+        console2.log("Deploy only", deployOnly);
 
         // NOTE: Existing escrow proxies are intentionally NOT upgraded here.
         // This keeps current storage/layout untouched for already-deployed escrows.
@@ -102,19 +107,12 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
         console2.log("Existing escrows left untouched", total);
     }
 
-    function _upgradeFactoryIfChanged(StreamingEscrowFactory factory, address factoryProxy) internal {
-        address currentFactoryImplementation = _implementationOf(factoryProxy);
-        address newFactoryImplementation = address(new StreamingEscrowFactory());
-        bool factoryUpgraded = false;
-
-        if (_codehash(currentFactoryImplementation) != _codehash(newFactoryImplementation)) {
-            factory.upgradeTo(newFactoryImplementation);
-            factoryUpgraded = true;
+    function _resolveFactoryImplementation(address currentFactoryImplementation) internal returns (address) {
+        address candidate = address(new StreamingEscrowFactory());
+        if (currentFactoryImplementation != address(0) && _codehash(candidate) == _codehash(currentFactoryImplementation)) {
+            return currentFactoryImplementation;
         }
-
-        console2.log("Factory implementation (current)", currentFactoryImplementation);
-        console2.log("Factory implementation (new)", newFactoryImplementation);
-        console2.log("Factory upgraded", factoryUpgraded);
+        return candidate;
     }
 
     function _resolveEscrowImplementation(address currentEscrowImplementation) internal returns (address) {

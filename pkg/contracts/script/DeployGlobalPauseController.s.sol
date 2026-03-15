@@ -24,8 +24,9 @@ contract DeployGlobalPauseController is BaseMultiChain {
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public override {
+        bool deployOnly = vm.envOr("DEPLOY_ONLY", false);
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
-        address controller = networkJson.readAddress(getKeyNetwork(".ENVS.PAUSE_CONTROLLER"));
+        address controller = _readAddressOrZero(".ENVS.PAUSE_CONTROLLER");
         address controllerImplementation = address(new GlobalPauseController());
 
         if (controller == address(0)) {
@@ -38,9 +39,19 @@ contract DeployGlobalPauseController is BaseMultiChain {
 
             _writeNetworkAddress(".ENVS.PAUSE_CONTROLLER", controller);
         } else {
-            IUUPSUpgradeableProxy(payable(controller)).upgradeTo(controllerImplementation);
+            if (!deployOnly) {
+                IUUPSUpgradeableProxy(payable(controller)).upgradeTo(controllerImplementation);
+            }
         }
         _writeNetworkAddress(".IMPLEMENTATIONS.PAUSE_CONTROLLER", controllerImplementation);
+
+        if (deployOnly) {
+            console2.log("DEPLOY_ONLY enabled");
+            console2.log("Pause controller", controller);
+            console2.log("Pause controller implementation", controllerImplementation);
+            console2.log("Onchain pause-controller wiring skipped");
+            return;
+        }
 
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
@@ -101,6 +112,69 @@ contract DeployGlobalPauseController is BaseMultiChain {
         inputs[1] = "-c";
         inputs[2] = command;
         vm.ffi(inputs);
+    }
+
+    function _readAddressOrZero(string memory key) internal returns (address) {
+        string memory root = vm.projectRoot();
+        string memory path = string.concat(root, "/pkg/contracts/config/networks.json");
+        string memory command = string.concat(
+            "jq -r '(.networks[] | select(.name==\"", CURRENT_NETWORK, "\") | ", key, " // empty)' ", path
+        );
+
+        string[] memory inputs = new string[](3);
+        inputs[0] = "bash";
+        inputs[1] = "-c";
+        inputs[2] = command;
+        bytes memory result = vm.ffi(inputs);
+
+        if (result.length == 20) {
+            return address(bytes20(result));
+        }
+
+        string memory value = _trim(string(result));
+        if (bytes(value).length == 0 || keccak256(bytes(value)) == keccak256(bytes("null"))) {
+            return address(0);
+        }
+        return _parseAddress(value);
+    }
+
+    function _trim(string memory input) internal pure returns (string memory) {
+        bytes memory inputBytes = bytes(input);
+        uint256 start = 0;
+        uint256 end = inputBytes.length;
+        while (start < end && _isWhitespace(inputBytes[start])) start++;
+        while (end > start && _isWhitespace(inputBytes[end - 1])) end--;
+
+        bytes memory trimmed = new bytes(end - start);
+        for (uint256 i = 0; i < trimmed.length; i++) {
+            trimmed[i] = inputBytes[start + i];
+        }
+        return string(trimmed);
+    }
+
+    function _isWhitespace(bytes1 char) internal pure returns (bool) {
+        return char == 0x20 || char == 0x0a || char == 0x0d || char == 0x09;
+    }
+
+    function _parseAddress(string memory value) internal pure returns (address) {
+        bytes memory data = bytes(value);
+        if (data.length != 42 || data[0] != "0" || data[1] != "x") {
+            return address(0);
+        }
+        uint160 result = 0;
+        for (uint256 i = 2; i < 42; i++) {
+            uint8 nibble = _fromHexChar(data[i]);
+            result = (result << 4) | uint160(nibble);
+        }
+        return address(result);
+    }
+
+    function _fromHexChar(bytes1 c) internal pure returns (uint8) {
+        uint8 b = uint8(c);
+        if (b >= 48 && b <= 57) return b - 48;
+        if (b >= 65 && b <= 70) return b - 55;
+        if (b >= 97 && b <= 102) return b - 87;
+        revert("invalid hex");
     }
 
     function _addressToString(address _addr) internal pure returns (string memory) {

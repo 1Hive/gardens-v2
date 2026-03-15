@@ -13,6 +13,7 @@ import { Button } from "@/components/Button";
 import { PoolForm } from "@/components/Forms/PoolForm";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { StreamingPoolGraphic } from "@/components/StreamingPoolGraphic";
+import { useFlag } from "@/hooks/useFlag";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { logOnce } from "@/utils/log";
 
@@ -23,6 +24,8 @@ type ClientPageProps = {
 export default function ClientPage({
   params: { community },
 }: ClientPageProps) {
+  const showStreamingPools = useFlag("showStreamingPools");
+
   useEffect(() => {
     logOnce(
       "debug",
@@ -30,6 +33,13 @@ export default function ClientPage({
     );
   }, []);
   const [selectedPoolType, setSelectedPoolType] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!showStreamingPools && selectedPoolType === 2) {
+      setSelectedPoolType(null);
+    }
+  }, [selectedPoolType, showStreamingPools]);
+
   const { data: result } = useSubgraphQuery<getPoolCreationDataQuery>({
     query: getPoolCreationDataDocument,
     variables: {
@@ -62,6 +72,9 @@ export default function ClientPage({
       image: grass,
     },
   ];
+  const visiblePoolTypeOptions = poolTypeOptions.filter(
+    (option) => showStreamingPools || option.type !== 2,
+  );
 
   if (!token || result == null) {
     return (
@@ -83,7 +96,7 @@ export default function ClientPage({
               Choose a pool type to continue.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {poolTypeOptions.map((option) => (
+              {visiblePoolTypeOptions.map((option) => (
                 <button
                   key={option.type}
                   type="button"

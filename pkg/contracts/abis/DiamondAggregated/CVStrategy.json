@@ -3081,6 +3081,17 @@
     },
     {
       "type": "error",
+      "name": "ArbitratorNotAllowed",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
       "name": "BShouldBeLessTwo_128",
       "inputs": []
     },
@@ -3692,6 +3703,17 @@
           "name": "_result",
           "type": "int256",
           "internalType": "int256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "SybilScorerNotAllowed",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "address",
+          "internalType": "address"
         }
       ]
     },
@@ -4795,6 +4817,17 @@
           "name": "maxAllowed",
           "type": "uint256",
           "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "SyncDisabledForInternalRegistry",
+      "inputs": [
+        {
+          "name": "registryCommunity",
+          "type": "address",
+          "internalType": "address"
         }
       ]
     }

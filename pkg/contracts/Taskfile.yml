@@ -500,13 +500,18 @@ tasks:
     desc: Deploy streaming escrow factory ethsep (set on registry factory)
     cmds:
       - cmd: |
-          forge script script/DeployStreamingEscrowFactory.s.sol:DeployStreamingEscrowFactory \
+          RESUME_FLAG=""
+          if [ "${RESUME:-false}" = "true" ]; then
+            RESUME_FLAG="--resume"
+          fi
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
           --private-key ${PRIVATE_KEY} \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,uint256)" 'ethsepolia' ${P} \
+          --sig "run(string,address)" 'ethsepolia' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
           --broadcast \
+          ${RESUME_FLAG} \
           --verify \
           --chain-id 11155111 \
           -vvv
@@ -529,13 +534,18 @@ tasks:
     desc: Deploy streaming escrow factory arbsep (set on registry factory)
     cmds:
       - cmd: |
-          forge script script/DeployStreamingEscrowFactory.s.sol:DeployStreamingEscrowFactory \
+          RESUME_FLAG=""
+          if [ "${RESUME:-false}" = "true" ]; then
+            RESUME_FLAG="--resume"
+          fi
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --private-key ${PRIVATE_KEY} \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,uint256)" 'arbsepolia' ${P} \
+          --sig "run(string,address)" 'arbsepolia' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
           --broadcast \
+          ${RESUME_FLAG} \
           --verify \
           --chain-id 421614 \
           -vvv
@@ -974,13 +984,18 @@ tasks:
     desc: Deploy streaming escrow factory opsep (set on registry factory)
     cmds:
       - cmd: |
-          forge script script/DeployStreamingEscrowFactory.s.sol:DeployStreamingEscrowFactory \
+          RESUME_FLAG=""
+          if [ "${RESUME:-false}" = "true" ]; then
+            RESUME_FLAG="--resume"
+          fi
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --private-key ${PRIVATE_KEY} \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,uint256)" 'opsepolia' ${P} \
+          --sig "run(string,address)" 'opsepolia' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
           --broadcast \
+          ${RESUME_FLAG} \
           --verify \
           --chain-id 11155420 \
           -vvv
@@ -1644,6 +1659,30 @@ tasks:
           -vvv \
           --slow
         ignore_error: true
+  verify-deploy-blockscout-arbitrum:
+    desc: Verify deploy blockscout arbitrum
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string)" 'arbitrum' \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://arbitrum.blockscout.com/api/ \
+          --ffi \
+          --chain-id 42161 \
+          --legacy \
+          --verify \
+          -vvv \
+          --slow
+        ignore_error: true
+      - task: sync-abis
+  deploy-and-verify-arbitrum:
+    desc: Deploy and verify arbitrum
+    deps:
+      - deploy-arbitrum
+      - verify-deploy-blockscout-arbitrum
+    cmds: []
   upgrade-and-verify-arbitrum:
     desc: Upgrade and verify arbitrum
     deps:
@@ -1696,6 +1735,31 @@ tasks:
           -vv
         ignore_error: true
       - task: sync-abis
+  deploy-or-upgrade-global-pause-controller-arbitrum:
+    desc: Deploy or upgrade global pause controller arbitrum
+    cmds:
+      - cmd: |
+          forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string)" 'arbitrum' \
+          --chain-id 42161 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --broadcast \
+          -vv \
+          --verify
+        ignore_error: true
+      - task: sync-abis
+  verify-global-pause-controller-arbitrum:
+    desc: Verify global pause controller arbitrum
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-global-pause-controller.sh \
+          --network arbitrum \
+          --rpc-url ${RPC_URL_ARB} \
+          --chain-id 42161 \
+          --etherscan-key ${ETHERSCAN_API_KEY} \
+          --verifier-url https://arbitrum.blockscout.com/api/
   deploy-or-upgrade-if-exists-safe-arbitrator-arbitrum:
     desc: Deploy or upgrade if exists safe arbitrator arbitrum
     cmds:
@@ -1711,6 +1775,51 @@ tasks:
           -vv
         ignore_error: true
       - task: sync-abis
+  deploy-streaming-escrow-factory-arbitrum:
+    desc: Deploy streaming escrow factory arbitrum (set on registry factory)
+    cmds:
+      - cmd: |
+          RESUME_FLAG=""
+          if [ "${RESUME:-false}" = "true" ]; then
+            RESUME_FLAG="--resume"
+          fi
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
+          --rpc-url ${RPC_URL_ARB} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,address)" 'arbitrum' ${I:-0x0000000000000000000000000000000000000000} \
+          --ffi \
+          --broadcast \
+          ${RESUME_FLAG} \
+          --verify \
+          --legacy \
+          --chain-id 42161 \
+          -vvv
+  verify-streaming-escrow-factory-arbitrum:
+    desc: Verify streaming escrow factory arbitrum
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-streaming-escrow-factory.sh \
+          --network arbitrum \
+          --rpc-url ${RPC_URL_ARB} \
+          --chain-id 42161 \
+          --etherscan-key ${ETHERSCAN_API_KEY} \
+          --verifier-url https://arbitrum.blockscout.com/api/
+  upgrade-streaming-escrows-arbitrum:
+    desc: Deploy or upgrade streaming escrows on arbitrum (networks.json managed in script, optional I implementation)
+    cmds:
+      - cmd: |
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
+          --rpc-url ${RPC_URL_ARB} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,address)" 'arbitrum' ${I:-0x0000000000000000000000000000000000000000} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 42161 \
+          -vvv
+      - task: verify-diamond-facets-arbitrum
   deploy-or-upgrade-good-dollar-sybil-arbitrum:
     desc: Deploy or upgrade good dollar sybil arbitrum
     cmds:
@@ -1828,6 +1937,30 @@ tasks:
           -vvv \
           --slow
         ignore_error: true
+  verify-deploy-blockscout-optimism:
+    desc: Verify deploy blockscout optimism
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://optimism.blockscout.com/api/ \
+          --ffi \
+          --chain-id 10 \
+          --legacy \
+          --verify \
+          -vvv \
+          --slow
+        ignore_error: true
+      - task: sync-abis
+  deploy-and-verify-optimism:
+    desc: Deploy and verify optimism
+    deps:
+      - deploy-optimism
+      - verify-deploy-blockscout-optimism
+    cmds: []
   upgrade-and-verify-optimism:
     desc: Upgrade and verify optimism
     deps:
@@ -1880,6 +2013,31 @@ tasks:
           -vv
         ignore_error: true
       - task: sync-abis
+  deploy-or-upgrade-global-pause-controller-optimism:
+    desc: Deploy or upgrade global pause controller optimism
+    cmds:
+      - cmd: |
+          forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --chain-id 10 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --broadcast \
+          -vv \
+          --verify
+        ignore_error: true
+      - task: sync-abis
+  verify-global-pause-controller-optimism:
+    desc: Verify global pause controller optimism
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-global-pause-controller.sh \
+          --network optimism \
+          --rpc-url ${RPC_URL_OPT} \
+          --chain-id 10 \
+          --etherscan-key ${ETHERSCAN_API_KEY} \
+          --verifier-url https://optimism.blockscout.com/api/
   deploy-or-upgrade-if-exists-safe-arbitrator-optimism:
     desc: Deploy or upgrade if exists safe arbitrator optimism
     cmds:
@@ -1895,6 +2053,51 @@ tasks:
           -vv
         ignore_error: true
       - task: sync-abis
+  deploy-streaming-escrow-factory-optimism:
+    desc: Deploy streaming escrow factory optimism (set on registry factory)
+    cmds:
+      - cmd: |
+          RESUME_FLAG=""
+          if [ "${RESUME:-false}" = "true" ]; then
+            RESUME_FLAG="--resume"
+          fi
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
+          --rpc-url ${RPC_URL_OPT} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,address)" 'optimism' ${I:-0x0000000000000000000000000000000000000000} \
+          --ffi \
+          --broadcast \
+          ${RESUME_FLAG} \
+          --verify \
+          --legacy \
+          --chain-id 10 \
+          -vvv
+  verify-streaming-escrow-factory-optimism:
+    desc: Verify streaming escrow factory optimism
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-streaming-escrow-factory.sh \
+          --network optimism \
+          --rpc-url ${RPC_URL_OPT} \
+          --chain-id 10 \
+          --etherscan-key ${ETHERSCAN_API_KEY} \
+          --verifier-url https://optimism.blockscout.com/api/
+  upgrade-streaming-escrows-optimism:
+    desc: Deploy or upgrade streaming escrows on optimism (networks.json managed in script, optional I implementation)
+    cmds:
+      - cmd: |
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
+          --rpc-url ${RPC_URL_OPT} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,address)" 'optimism' ${I:-0x0000000000000000000000000000000000000000} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 10 \
+          -vvv
+      - task: verify-diamond-facets-optimism
   deploy-or-upgrade-good-dollar-sybil-optimism:
     desc: Deploy or upgrade good dollar sybil optimism
     cmds:
@@ -2052,6 +2255,30 @@ tasks:
           -vvv \
           --slow
         ignore_error: true
+  verify-deploy-blockscout-polygon:
+    desc: Verify deploy blockscout polygon
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://polygon.blockscout.com/api/ \
+          --ffi \
+          --chain-id 137 \
+          --legacy \
+          --verify \
+          -vvv \
+          --slow
+        ignore_error: true
+      - task: sync-abis
+  deploy-and-verify-polygon:
+    desc: Deploy and verify polygon
+    deps:
+      - deploy-polygon
+      - verify-deploy-blockscout-polygon
+    cmds: []
   upgrade-and-verify-polygon:
     desc: Upgrade and verify polygon
     deps:
@@ -2104,6 +2331,31 @@ tasks:
           -vv
         ignore_error: true
       - task: sync-abis
+  deploy-or-upgrade-global-pause-controller-polygon:
+    desc: Deploy or upgrade global pause controller polygon
+    cmds:
+      - cmd: |
+          forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --chain-id 137 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --broadcast \
+          -vv \
+          --verify
+        ignore_error: true
+      - task: sync-abis
+  verify-global-pause-controller-polygon:
+    desc: Verify global pause controller polygon
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-global-pause-controller.sh \
+          --network polygon \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --chain-id 137 \
+          --etherscan-key ${ETHERSCAN_API_KEY} \
+          --verifier-url https://polygon.blockscout.com/api/
   deploy-or-upgrade-if-exists-safe-arbitrator-polygon:
     desc: Deploy or upgrade if exists safe arbitrator polygon
     cmds:
@@ -2119,6 +2371,51 @@ tasks:
           -vv
         ignore_error: true
       - task: sync-abis
+  deploy-streaming-escrow-factory-polygon:
+    desc: Deploy streaming escrow factory polygon (set on registry factory)
+    cmds:
+      - cmd: |
+          RESUME_FLAG=""
+          if [ "${RESUME:-false}" = "true" ]; then
+            RESUME_FLAG="--resume"
+          fi
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,address)" 'polygon' ${I:-0x0000000000000000000000000000000000000000} \
+          --ffi \
+          --broadcast \
+          ${RESUME_FLAG} \
+          --verify \
+          --legacy \
+          --chain-id 137 \
+          -vvv
+  verify-streaming-escrow-factory-polygon:
+    desc: Verify streaming escrow factory polygon
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-streaming-escrow-factory.sh \
+          --network polygon \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --chain-id 137 \
+          --etherscan-key ${ETHERSCAN_API_KEY} \
+          --verifier-url https://polygon.blockscout.com/api/
+  upgrade-streaming-escrows-polygon:
+    desc: Deploy or upgrade streaming escrows on polygon (networks.json managed in script, optional I implementation)
+    cmds:
+      - cmd: |
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,address)" 'polygon' ${I:-0x0000000000000000000000000000000000000000} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 137 \
+          -vvv
+      - task: verify-diamond-facets-polygon
   deploy-or-upgrade-good-dollar-sybil-polygon:
     desc: Deploy or upgrade good dollar sybil polygon
     cmds:
@@ -2239,6 +2536,24 @@ tasks:
           -vvv \
           --slow
         ignore_error: true
+  verify-deploy-blockscout-gnosis:
+    desc: Verify deploy blockscout gnosis
+    cmds:
+      - cmd: |
+          forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --private-key ${PRIVATE_KEY} \
+          --verifier blockscout \
+          --verifier-url https://gnosis.blockscout.com/api/ \
+          --ffi \
+          --chain-id 100 \
+          --legacy \
+          --verify \
+          -vvv \
+          --slow
+        ignore_error: true
+      - task: sync-abis
   deploy-passport-scorer-gnosis:
     desc: Deploy passport scorer gnosis
     cmds:
@@ -2269,6 +2584,31 @@ tasks:
           -vv
         ignore_error: true
       - task: sync-abis
+  deploy-or-upgrade-global-pause-controller-gnosis:
+    desc: Deploy or upgrade global pause controller gnosis
+    cmds:
+      - cmd: |
+          forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --chain-id 100 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --broadcast \
+          -vv \
+          --verify
+        ignore_error: true
+      - task: sync-abis
+  verify-global-pause-controller-gnosis:
+    desc: Verify global pause controller gnosis
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-global-pause-controller.sh \
+          --network gnosis \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --chain-id 100 \
+          --etherscan-key ${ETHERSCAN_API_KEY} \
+          --verifier-url https://gnosis.blockscout.com/api/
   deploy-or-upgrade-if-exists-safe-arbitrator-gnosis:
     desc: Deploy or upgrade if exists safe arbitrator gnosis
     cmds:
@@ -2297,6 +2637,12 @@ tasks:
     cmds:
       - task: upgrade-gnosis
       - task: verify-blockscout-gnosis
+  deploy-and-verify-gnosis:
+    desc: Deploy and verify gnosis
+    deps:
+      - deploy-gnosis
+      - verify-deploy-blockscout-gnosis
+    cmds: []
   change-passport-manager-gnosis:
     desc: Change passport manager gnosis
     cmds:
@@ -2326,6 +2672,51 @@ tasks:
           -vv
         ignore_error: true
       - task: sync-abis
+  deploy-streaming-escrow-factory-gnosis:
+    desc: Deploy streaming escrow factory gnosis (set on registry factory)
+    cmds:
+      - cmd: |
+          RESUME_FLAG=""
+          if [ "${RESUME:-false}" = "true" ]; then
+            RESUME_FLAG="--resume"
+          fi
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,address)" 'gnosis' ${I:-0x0000000000000000000000000000000000000000} \
+          --ffi \
+          --broadcast \
+          ${RESUME_FLAG} \
+          --verify \
+          --legacy \
+          --chain-id 100 \
+          -vvv
+  verify-streaming-escrow-factory-gnosis:
+    desc: Verify streaming escrow factory gnosis
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-streaming-escrow-factory.sh \
+          --network gnosis \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --chain-id 100 \
+          --etherscan-key ${ETHERSCAN_API_KEY} \
+          --verifier-url https://gnosis.blockscout.com/api/
+  upgrade-streaming-escrows-gnosis:
+    desc: Deploy or upgrade streaming escrows on gnosis (networks.json managed in script, optional I implementation)
+    cmds:
+      - cmd: |
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,address)" 'gnosis' ${I:-0x0000000000000000000000000000000000000000} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 100 \
+          -vvv
+      - task: verify-diamond-facets-gnosis
   transfer-ownership-base:
     desc: Transfer ownership base
     cmds:
@@ -2505,6 +2896,31 @@ tasks:
           -vv
         ignore_error: true
       - task: sync-abis
+  deploy-or-upgrade-global-pause-controller-base:
+    desc: Deploy or upgrade global pause controller base
+    cmds:
+      - cmd: |
+          forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --chain-id 8453 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --broadcast \
+          -vv \
+          --verify
+        ignore_error: true
+      - task: sync-abis
+  verify-global-pause-controller-base:
+    desc: Verify global pause controller base
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-global-pause-controller.sh \
+          --network base \
+          --rpc-url ${RPC_URL_BASE} \
+          --chain-id 8453 \
+          --etherscan-key ${ETHERSCAN_API_KEY} \
+          --verifier-url https://base.blockscout.com/api/
   deploy-or-upgrade-if-exists-safe-arbitrator-base:
     desc: Deploy or upgrade if exists safe arbitrator base
     cmds:
@@ -2550,6 +2966,51 @@ tasks:
           -vv
         ignore_error: true
       - task: sync-abis
+  deploy-streaming-escrow-factory-base:
+    desc: Deploy streaming escrow factory base (set on registry factory)
+    cmds:
+      - cmd: |
+          RESUME_FLAG=""
+          if [ "${RESUME:-false}" = "true" ]; then
+            RESUME_FLAG="--resume"
+          fi
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
+          --rpc-url ${RPC_URL_BASE} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,address)" 'base' ${I:-0x0000000000000000000000000000000000000000} \
+          --ffi \
+          --broadcast \
+          ${RESUME_FLAG} \
+          --verify \
+          --legacy \
+          --chain-id 8453 \
+          -vvv
+  verify-streaming-escrow-factory-base:
+    desc: Verify streaming escrow factory base
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-streaming-escrow-factory.sh \
+          --network base \
+          --rpc-url ${RPC_URL_BASE} \
+          --chain-id 8453 \
+          --etherscan-key ${ETHERSCAN_API_KEY} \
+          --verifier-url https://base.blockscout.com/api/
+  upgrade-streaming-escrows-base:
+    desc: Deploy or upgrade streaming escrows on base (networks.json managed in script, optional I implementation)
+    cmds:
+      - cmd: |
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
+          --rpc-url ${RPC_URL_BASE} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,address)" 'base' ${I:-0x0000000000000000000000000000000000000000} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 8453 \
+          -vvv
+      - task: verify-diamond-facets-base
   transfer-ownership-celo:
     desc: Transfer ownership celo
     cmds:
@@ -2659,7 +3120,7 @@ tasks:
       - cmd: |
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
           --rpc-url ${RPC_URL_CELO} \
-          --sig "run(string)" 'base' \
+          --sig "run(string)" 'celo' \
           --private-key ${PRIVATE_KEY} \
           --verifier blockscout \
           --verifier-url https://celo.blockscout.com/api/ \
@@ -2806,6 +3267,135 @@ tasks:
             echo "All networks succeeded."
           fi
           exit 0
+
+  upgrade-all-mainnets:
+    desc: Upgrade arbitrum, optimism, polygon, gnosis, base, celo with end-of-run success report
+    deps:
+      - verify-storage
+      - task: refresh-facets-base
+      - task: refresh-facets-gnosis
+      - task: refresh-facets-polygon
+      - task: refresh-facets-optimism
+      - task: refresh-facets-arbitrum
+      - task: refresh-facets-celo
+    cmds:
+      - cmd: |
+          set +e
+          failed=0
+
+          for network in arbitrum optimism polygon gnosis base celo; do
+            if task "upgrade-${network}"; then
+              echo "✅ ${network}: success"
+            else
+              echo "❌ ${network}: failed"
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "One or more networks failed."
+          else
+            echo "All networks succeeded."
+          fi
+          exit 0
+
+  deploy-or-upgrade-global-pause-controller-all-mainnets:
+    desc: Deploy or upgrade global pause controller on arbitrum, optimism, polygon, gnosis, base, celo
+    cmds:
+      - cmd: |
+          set +e
+          failed=0
+
+          for network in arbitrum optimism polygon gnosis base celo; do
+            if task "deploy-or-upgrade-global-pause-controller-${network}"; then
+              echo "✅ ${network}: success"
+            else
+              echo "❌ ${network}: failed"
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "One or more networks failed."
+          else
+            echo "All networks succeeded."
+          fi
+          exit 0
+
+  deploy-streaming-escrow-factory-all-mainnets:
+    desc: Deploy streaming escrow factory on arbitrum, optimism, polygon, gnosis, base, celo
+    cmds:
+      - cmd: |
+          set +e
+          failed=0
+
+          for network in arbitrum optimism polygon gnosis base celo; do
+            if task "deploy-streaming-escrow-factory-${network}"; then
+              echo "✅ ${network}: success"
+            else
+              echo "❌ ${network}: failed"
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "One or more networks failed."
+          else
+            echo "All networks succeeded."
+          fi
+          exit 0
+
+  verify-global-pause-controller-all-mainnets:
+    desc: Verify global pause controller on arbitrum, optimism, polygon, gnosis, base, celo
+    cmds:
+      - cmd: |
+          set +e
+          failed=0
+
+          for network in arbitrum optimism polygon gnosis base celo; do
+            if task "verify-global-pause-controller-${network}"; then
+              echo "✅ ${network}: success"
+            else
+              echo "❌ ${network}: failed"
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "One or more networks failed."
+          else
+            echo "All networks succeeded."
+          fi
+          exit 0
+
+  verify-streaming-escrow-factory-all-mainnets:
+    desc: Verify streaming escrow factory on arbitrum, optimism, polygon, gnosis, base, celo
+    cmds:
+      - cmd: |
+          set +e
+          failed=0
+
+          for network in arbitrum optimism polygon gnosis base celo; do
+            if task "verify-streaming-escrow-factory-${network}"; then
+              echo "✅ ${network}: success"
+            else
+              echo "❌ ${network}: failed"
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "One or more networks failed."
+          else
+            echo "All networks succeeded."
+          fi
+          exit 0
+
+  verify-global-deployments-all-mainnets:
+    desc: Verify pause controllers and streaming escrow factories on arbitrum, optimism, polygon, gnosis, base, celo
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-global-deployments.sh
 
   pause-all-networks-with-pause-controller:
     desc: Pause factory, communities and strategies on every network with ENVS.PAUSE_CONTROLLER set
@@ -3113,6 +3703,31 @@ tasks:
           -vv
         ignore_error: true
       - task: sync-abis
+  deploy-or-upgrade-global-pause-controller-celo:
+    desc: Deploy or upgrade global pause controller celo
+    cmds:
+      - cmd: |
+          forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --chain-id 42220 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --private-key ${PRIVATE_KEY} \
+          --broadcast \
+          -vv \
+          --verify
+        ignore_error: true
+      - task: sync-abis
+  verify-global-pause-controller-celo:
+    desc: Verify global pause controller celo
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-global-pause-controller.sh \
+          --network celo \
+          --rpc-url ${RPC_URL_CELO} \
+          --chain-id 42220 \
+          --etherscan-key ${ETHERSCAN_API_KEY} \
+          --verifier-url https://celo.blockscout.com/api/
   verify-blockscout-passport-scorer-celo:
     desc: Verify blockscout passport scorer celo
     cmds:
@@ -3173,3 +3788,48 @@ tasks:
           -vv
         ignore_error: true
       - task: sync-abis
+  deploy-streaming-escrow-factory-celo:
+    desc: Deploy streaming escrow factory celo (set on registry factory)
+    cmds:
+      - cmd: |
+          RESUME_FLAG=""
+          if [ "${RESUME:-false}" = "true" ]; then
+            RESUME_FLAG="--resume"
+          fi
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
+          --rpc-url ${RPC_URL_CELO} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,address)" 'celo' ${I:-0x0000000000000000000000000000000000000000} \
+          --ffi \
+          --broadcast \
+          ${RESUME_FLAG} \
+          --verify \
+          --legacy \
+          --chain-id 42220 \
+          -vvv
+  verify-streaming-escrow-factory-celo:
+    desc: Verify streaming escrow factory celo
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-streaming-escrow-factory.sh \
+          --network celo \
+          --rpc-url ${RPC_URL_CELO} \
+          --chain-id 42220 \
+          --etherscan-key ${ETHERSCAN_API_KEY} \
+          --verifier-url https://celo.blockscout.com/api/
+  upgrade-streaming-escrows-celo:
+    desc: Deploy or upgrade streaming escrows on celo (networks.json managed in script, optional I implementation)
+    cmds:
+      - cmd: |
+          forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
+          --rpc-url ${RPC_URL_CELO} \
+          --private-key ${PRIVATE_KEY} \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --sig "run(string,address)" 'celo' ${I:-0x0000000000000000000000000000000000000000} \
+          --ffi \
+          --broadcast \
+          --verify \
+          --chain-id 42220 \
+          -vvv
+      - task: verify-diamond-facets-celo
