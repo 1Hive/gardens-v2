@@ -82,6 +82,7 @@ abstract contract CVStrategyBaseFacet {
     uint256[50] private __gap_init;
 
     /// @dev Slots 51-100: OwnableUpgradeable (from BaseStrategyUpgradeable)
+    // slither-disable-next-line uninitialized-state
     address internal _owner;
     uint256[49] private __gap_ownable;
 
@@ -113,6 +114,7 @@ abstract contract CVStrategyBaseFacet {
     uint64 public disputeCount;
 
     /// @notice Counter for proposal IDs - Slot 110
+    // slither-disable-next-line uninitialized-state
     uint256 public proposalCounter;
 
     /// @notice Current version of arbitrable configuration - Slot 111
@@ -161,6 +163,7 @@ abstract contract CVStrategyBaseFacet {
 
     /// @notice Mapping of proposal ID to Proposal struct
     /// @dev Slot 124+
+    // slither-disable-next-line uninitialized-state
     mapping(uint256 => Proposal) internal proposals;
 
     /// @notice Mapping of voter address to total staked percentage

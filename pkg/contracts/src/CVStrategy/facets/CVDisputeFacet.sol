@@ -51,6 +51,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
 
     // Sig: 0xb41596ec
+    // slither-disable-next-line reentrancy-eth
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
         external
         payable
