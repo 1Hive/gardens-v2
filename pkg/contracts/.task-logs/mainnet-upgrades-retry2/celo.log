@@ -66,13 +66,13 @@ Script ran successfully.
 
 ==========================
 
-Chain 42161
+Chain 42220
 
-Estimated gas price: 0.040000001 gwei
+Estimated gas price: 50.001099976 gwei
 
-Estimated total gas used for script: 40282029
+Estimated total gas used for script: 17598550
 
-Estimated amount required: 0.001611281200282029 ETH
+Estimated amount required: 0.8799468579826348 CELO
 
 ==========================
 
@@ -81,9 +81,9 @@ Estimated amount required: 0.001611281200282029 ETH
 
 ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
 
-Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/RefreshFacetSnapshots.s.sol/42161/run-latest.json
+Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/RefreshFacetSnapshots.s.sol/42220/run-latest.json
 
-Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/cache/RefreshFacetSnapshots.s.sol/42161/run-latest.json
+Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/cache/RefreshFacetSnapshots.s.sol/42220/run-latest.json
 
 No files changed, compilation skipped
 Script ran successfully.
@@ -92,22 +92,22 @@ Script ran successfully.
 
 ==========================
 
-Chain 42161
+Chain 42220
 
-Estimated gas price: 0.040052001 gwei
+Estimated gas price: 25.001 gwei
 
-Estimated total gas used for script: 45397289
+Estimated total gas used for script: 47423675
 
-Estimated amount required: 0.001818252264425289 ETH
+Estimated amount required: 1.185639298675 CELO
 
 ==========================
 
-Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/UpgradeCVMultichainProd.s.sol/42161/run-latest.json
+Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/UpgradeCVMultichainProd.s.sol/42220/run-latest.json
 
-Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/cache/UpgradeCVMultichainProd.s.sol/42161/run-latest.json
+Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/cache/UpgradeCVMultichainProd.s.sol/42220/run-latest.json
 
-Error: Failed to send transaction after 4 attempts Err(EOA nonce changed unexpectedly while sending transactions. Expected 912 got 915 from provider.)
+Error: Failed to send transaction after 4 attempts Err(EOA nonce changed unexpectedly while sending transactions. Expected 669 got 672 from provider.)
 
 Context:
-- server returned an error response: error code -32000: nonce too low: address 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD, tx: 912 state: 915
-task: Failed to run task "upgrade-arbitrum": exit status 1
+- server returned an error response: error code -32000: error_forwarding_sequencer: nonce too low: next nonce 672, tx nonce 669
+task: Failed to run task "upgrade-celo": exit status 1
