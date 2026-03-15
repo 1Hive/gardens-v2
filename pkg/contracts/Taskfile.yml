@@ -1620,7 +1620,7 @@ tasks:
           --ffi \
           --chain-id 42161 \
           --broadcast \
-          --verify \
+          --slow \
           -vvv
       - task: verify-diamond-facets-arbitrum
   upgrade-atomic-diamond-arbitrum:
@@ -1638,7 +1638,6 @@ tasks:
           --chain-id 42161 \
           --broadcast \
           --ffi \
-          --verify \
           --slow \
           --via-ir
       - task: verify-diamond-facets-arbitrum
@@ -1816,7 +1815,6 @@ tasks:
           --sig "run(string,address)" 'arbitrum' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
           --broadcast \
-          --verify \
           --chain-id 42161 \
           -vvv
       - task: verify-diamond-facets-arbitrum
@@ -1879,6 +1877,7 @@ tasks:
           --chain-id 10 \
           --broadcast \
           --legacy \
+          --slow \
           --verify \
           -vvv
         ignore_error: true
@@ -1899,7 +1898,6 @@ tasks:
           --chain-id 10 \
           --broadcast \
           --legacy \
-          --verify \
           -vvv
       - task: verify-diamond-facets-optimism
   upgrade-atomic-diamond-optimism:
@@ -1917,7 +1915,6 @@ tasks:
           --chain-id 10 \
           --broadcast \
           --ffi \
-          --verify \
           --slow \
           --via-ir
       - task: verify-diamond-facets-optimism
@@ -2094,7 +2091,6 @@ tasks:
           --sig "run(string,address)" 'optimism' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
           --broadcast \
-          --verify \
           --chain-id 10 \
           -vvv
       - task: verify-diamond-facets-optimism
@@ -2128,7 +2124,6 @@ tasks:
           --chain-id 137 \
           --broadcast \
           --ffi \
-          --verify \
           --slow \
           -vvv
       - task: verify-diamond-facets-polygon
@@ -2148,7 +2143,6 @@ tasks:
           --broadcast \
           --legacy \
           --ffi \
-          --verify \
           --slow \
           -vvv
       - task: verify-diamond-facets-polygon
@@ -2168,7 +2162,6 @@ tasks:
           --broadcast \
           --legacy \
           --ffi \
-          --verify \
           --slow \
           --via-ir \
           -vvv
@@ -2235,7 +2228,7 @@ tasks:
           --chain-id 137 \
           --broadcast \
           --legacy \
-          --verify \
+          --slow \
           -vvv
       - task: verify-diamond-facets-polygon
   verify-blockscout-polygon:
@@ -2412,7 +2405,6 @@ tasks:
           --sig "run(string,address)" 'polygon' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
           --broadcast \
-          --verify \
           --chain-id 137 \
           -vvv
       - task: verify-diamond-facets-polygon
@@ -2476,6 +2468,7 @@ tasks:
           --chain-id 100 \
           --broadcast \
           --legacy \
+          --slow \
           --verify \
           -vvv
         ignore_error: true
@@ -2496,7 +2489,6 @@ tasks:
           --chain-id 100 \
           --broadcast \
           --legacy \
-          --verify \
           --gas-price 20000000000 \
           -vvv
       - task: verify-diamond-facets-gnosis
@@ -2515,7 +2507,6 @@ tasks:
           --chain-id 100 \
           --broadcast \
           --ffi \
-          --verify \
           --slow \
           --via-ir
       - task: verify-diamond-facets-gnosis
@@ -2713,7 +2704,6 @@ tasks:
           --sig "run(string,address)" 'gnosis' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
           --broadcast \
-          --verify \
           --chain-id 100 \
           -vvv
       - task: verify-diamond-facets-gnosis
@@ -2781,7 +2771,7 @@ tasks:
           --chain-id 8453 \
           --broadcast \
           --legacy \
-          --verify \
+          --slow \
           -vvv
       - task: verify-diamond-facets-base
   upgrade-atomic-diamond-base:
@@ -2799,7 +2789,6 @@ tasks:
           --chain-id 8453 \
           --broadcast \
           --ffi \
-          --verify \
           --slow \
           --via-ir
       - task: verify-diamond-facets-base
@@ -3007,7 +2996,6 @@ tasks:
           --sig "run(string,address)" 'base' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
           --broadcast \
-          --verify \
           --chain-id 8453 \
           -vvv
       - task: verify-diamond-facets-base
@@ -3075,7 +3063,7 @@ tasks:
           --chain-id 42220 \
           --broadcast \
           --legacy \
-          --verify \
+          --slow \
           -vvv
       - task: verify-diamond-facets-celo
   upgrade-atomic-diamond-celo:
@@ -3093,7 +3081,6 @@ tasks:
           --chain-id 42220 \
           --broadcast \
           --ffi \
-          --verify \
           --slow \
           --via-ir
       - task: verify-diamond-facets-celo
@@ -3179,7 +3166,6 @@ tasks:
           --ffi \
           --chain-id 1 \
           --broadcast \
-          --verify \
           -vvv
       - task: verify-diamond-facets-mainnet
 
@@ -3198,7 +3184,6 @@ tasks:
           --chain-id 1 \
           --broadcast \
           --ffi \
-          --verify \
           --slow \
           --via-ir
       - task: verify-diamond-facets-mainnet
@@ -3228,29 +3213,105 @@ tasks:
       - task: upgrade-mainnet
       - task: verify-etherscan-mainnet
 
-  upgrade-and-verify-all-mainnets:
-    desc: Upgrade and verify arbitrum, optimism, polygon, gnosis, base, celo
+  upgrade-all-mainnets:
+    desc: Upgrade arbitrum, optimism, polygon, gnosis, base, celo in parallel, then verify global deployments
     deps:
       - verify-storage
-      - task: refresh-facets-base
-      - task: refresh-facets-gnosis
-      - task: refresh-facets-polygon
-      - task: refresh-facets-optimism
-      - task: refresh-facets-arbitrum
-      - task: refresh-facets-celo
     cmds:
       - cmd: |
           set +e
+          for network in arbitrum optimism polygon gnosis base celo; do
+            if ! task "refresh-facets-${network}"; then
+              echo "❌ refresh ${network}: failed"
+              exit 1
+            fi
+          done
+
           declare -a pids
           declare -a names
           failed=0
 
-          task upgrade-arbitrum & pids+=($!); names+=("arbitrum")
-          task upgrade-optimism & pids+=($!); names+=("optimism")
-          task upgrade-polygon & pids+=($!); names+=("polygon")
-          task upgrade-gnosis & pids+=($!); names+=("gnosis")
-          task upgrade-base & pids+=($!); names+=("base")
-          task upgrade-celo & pids+=($!); names+=("celo")
+          (
+            forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+            --rpc-url ${RPC_URL_ARB} \
+            --sig "run(string)" 'arbitrum' \
+            --private-key ${PRIVATE_KEY} \
+            --etherscan-api-key ${ETHERSCAN_API_KEY} \
+            --ffi \
+            --chain-id 42161 \
+            --broadcast \
+            --slow \
+            -vvv
+          ) & pids+=($!); names+=("arbitrum")
+
+          (
+            forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+            --rpc-url ${RPC_URL_OPT} \
+            --sig "run(string)" 'optimism' \
+            --private-key ${PRIVATE_KEY} \
+            --etherscan-api-key ${ETHERSCAN_API_KEY} \
+            --ffi \
+            --chain-id 10 \
+            --broadcast \
+            --legacy \
+            -vvv
+          ) & pids+=($!); names+=("optimism")
+
+          (
+            forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+            --rpc-url ${RPC_URL_POLYGON} \
+            --sig "run(string)" 'polygon' \
+            --private-key ${PRIVATE_KEY} \
+            --etherscan-api-key ${ETHERSCAN_API_KEY} \
+            --ffi \
+            --chain-id 137 \
+            --broadcast \
+            --legacy \
+            --slow \
+            -vvv
+          ) & pids+=($!); names+=("polygon")
+
+          (
+            forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+            --rpc-url ${RPC_URL_GNOSIS} \
+            --sig "run(string)" 'gnosis' \
+            --private-key ${PRIVATE_KEY} \
+            --etherscan-api-key ${ETHERSCAN_API_KEY} \
+            --ffi \
+            --chain-id 100 \
+            --broadcast \
+            --legacy \
+            --gas-price 20000000000 \
+            -vvv
+          ) & pids+=($!); names+=("gnosis")
+
+          (
+            forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+            --rpc-url ${RPC_URL_BASE} \
+            --sig "run(string)" 'base' \
+            --private-key ${PRIVATE_KEY} \
+            --etherscan-api-key ${ETHERSCAN_API_KEY} \
+            --ffi \
+            --chain-id 8453 \
+            --broadcast \
+            --legacy \
+            --slow \
+            -vvv
+          ) & pids+=($!); names+=("base")
+
+          (
+            forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+            --rpc-url ${RPC_URL_CELO} \
+            --sig "run(string)" 'celo' \
+            --private-key ${PRIVATE_KEY} \
+            --etherscan-api-key ${ETHERSCAN_API_KEY} \
+            --ffi \
+            --chain-id 42220 \
+            --broadcast \
+            --legacy \
+            --slow \
+            -vvv
+          ) & pids+=($!); names+=("celo")
 
           for i in "${!pids[@]}"; do
             if wait "${pids[$i]}"; then
@@ -3261,36 +3322,12 @@ tasks:
             fi
           done
 
-          if [ "$failed" -ne 0 ]; then
-            echo "One or more networks failed."
+          if task verify-global-deployments-all-mainnets; then
+            echo "✅ global verification: success"
           else
-            echo "All networks succeeded."
+            echo "❌ global verification: failed"
+            failed=1
           fi
-          exit 0
-
-  upgrade-all-mainnets:
-    desc: Upgrade arbitrum, optimism, polygon, gnosis, base, celo with end-of-run success report
-    deps:
-      - verify-storage
-      - task: refresh-facets-base
-      - task: refresh-facets-gnosis
-      - task: refresh-facets-polygon
-      - task: refresh-facets-optimism
-      - task: refresh-facets-arbitrum
-      - task: refresh-facets-celo
-    cmds:
-      - cmd: |
-          set +e
-          failed=0
-
-          for network in arbitrum optimism polygon gnosis base celo; do
-            if task "upgrade-${network}"; then
-              echo "✅ ${network}: success"
-            else
-              echo "❌ ${network}: failed"
-              failed=1
-            fi
-          done
 
           if [ "$failed" -ne 0 ]; then
             echo "One or more networks failed."
@@ -3392,10 +3429,16 @@ tasks:
           exit 0
 
   verify-global-deployments-all-mainnets:
-    desc: Verify pause controllers and streaming escrow factories on arbitrum, optimism, polygon, gnosis, base, celo
+    desc: Verify deployments on arbitrum, optimism, polygon, gnosis, base, celo; pass SCOPE=global|pause|escrow|factory|communities|strategies|facets|all
     cmds:
       - cmd: |
-          bash ./scripts/verify-global-deployments.sh
+          bash ./scripts/verify-all-deployments.sh --scope "${SCOPE:-global}"
+
+  verify-all-mainnets:
+    desc: Verify all deployments on arbitrum, optimism, polygon, gnosis, base, celo; pass SCOPE=global|pause|escrow|factory|communities|strategies|facets|all
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-all-deployments.sh --scope "${SCOPE:-all}"
 
   pause-all-networks-with-pause-controller:
     desc: Pause factory, communities and strategies on every network with ENVS.PAUSE_CONTROLLER set
@@ -3829,7 +3872,6 @@ tasks:
           --sig "run(string,address)" 'celo' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
           --broadcast \
-          --verify \
           --chain-id 42220 \
           -vvv
       - task: verify-diamond-facets-celo

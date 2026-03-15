@@ -64,8 +64,8 @@ export const FormAddressInput = ({
   const chainIdFromPath = useChainIdFromPath();
   const validationChain = useMemo(
     () =>
-      (chainIdFromPath ? getChain(chainIdFromPath) : undefined) ??
-      (connectedChain?.id ? getChain(connectedChain.id) : undefined) ??
+      (chainIdFromPath != null ? getChain(chainIdFromPath) : undefined) ??
+      (connectedChain?.id != null ? getChain(connectedChain.id) : undefined) ??
       connectedChain,
     [chainIdFromPath, connectedChain],
   );
@@ -125,11 +125,11 @@ export const FormAddressInput = ({
       return "Unable to validate Safe address without an RPC client.";
     }
 
-    if (bypassSafeCheck || !getConfigByChain(publicClient.chain.id)?.safePrefix) {
+    if (
+      bypassSafeCheck ||
+      getConfigByChain(publicClient.chain.id)?.safePrefix == null
+    ) {
       return true;
-    }
-    if (!publicClient) {
-      return "Unable to validate Safe address without an RPC client.";
     }
     try {
       setIsValidatingSafe(true);

@@ -23,13 +23,6 @@ type Strategy = {
   config: { superfluidToken?: Address | null; proposalType?: string | null };
 };
 
-type StreamEntry = {
-  sender: { id: Address };
-  currentFlowRate: string;
-  createdAtTimestamp: string;
-  updatedAtTimestamp: string;
-};
-
 type FlowUpdate = {
   sender: { id: Address };
   flowRate: string;
@@ -142,19 +135,6 @@ const COMMUNITY_QUERY = gql`
           proposalType
         }
       }
-    }
-  }
-`;
-
-const STREAMS_QUERY = gql`
-  query streamToPool($receiver: String!, $token: String!) {
-    streams(where: { receiver: $receiver, token: $token }, first: 1000) {
-      sender {
-        id
-      }
-      currentFlowRate
-      createdAtTimestamp
-      updatedAtTimestamp
     }
   }
 `;
@@ -804,7 +784,7 @@ const fetchGardensFid = async (): Promise<number | null> => {
     console.warn("[superfluid-points] Farcaster auth header missing");
     return null;
   }
-  if (farcasterGardensFid) return farcasterGardensFid;
+  if (farcasterGardensFid != null) return farcasterGardensFid;
   try {
     const res = await fetch(
       `https://api.farcaster.xyz/v2/user-by-username?username=${encodeURIComponent(FARCASTER_GARDENS_USERNAME)}`,
@@ -1136,7 +1116,7 @@ const ensureLatestTransferCacheCid = async (): Promise<string | null> => {
       pageOffset: 0,
     } as any;
     let data = await pinataClient?.pinList(query);
-    if (!data || !data.rows || data.rows.length === 0) {
+    if (data == null || data.rows.length === 0) {
       // fallback to any latest if no matching campaignVersion
       data = await pinataClient?.pinList({
         status: "pinned",
@@ -1319,7 +1299,7 @@ const cacheHydrationPromise = Promise.all([
     const cid =
       latestPriceCacheCid ??
       (await (async () => {
-        if (latestPriceCacheCid || !CAN_WRITE_PINATA) return null;
+        if (latestPriceCacheCid != null || !CAN_WRITE_PINATA) return null;
         try {
           const data = await pinataClient?.pinList({
             status: "pinned",
@@ -1488,17 +1468,18 @@ const findContractCreationBlock = async ({
   if (
     cached !== undefined &&
     cached !== null &&
-    (!searchStart || cached >= searchStart)
+    (searchStart == null || cached >= searchStart)
   ) {
     return cached;
   }
 
   const latestBlock = await publicClient.getBlockNumber();
   const upperBound =
-    searchEnd && searchEnd > 0n && searchEnd < latestBlock ?
+    searchEnd != null && searchEnd > 0n && searchEnd < latestBlock ?
       searchEnd
     : latestBlock;
-  const lowerBound = searchStart && searchStart > 0n ? searchStart : 0n;
+  const lowerBound =
+    searchStart != null && searchStart > 0n ? searchStart : 0n;
 
   let hasCode = false;
   try {
@@ -2074,32 +2055,6 @@ const resolveSuperToken = async (
   };
 };
 
-const fetchStreams = async (
-  client: Client,
-  {
-    receiver,
-    token,
-  }: {
-    receiver: Address;
-    token: Address;
-  },
-): Promise<StreamEntry[]> => {
-  console.log("[superfluid-points] Fetching streams", { receiver, token });
-  const result = await client
-    .query<{ streams: StreamEntry[] }>(STREAMS_QUERY, {
-      receiver: receiver.toLowerCase(),
-      token: token.toLowerCase(),
-    })
-    .toPromise();
-  if (result.error) {
-    throw new Error(
-      `Failed to fetch streams for receiver ${receiver} token ${token}: ${result.error.message}`,
-    );
-  }
-  if (!result.data?.streams) return [];
-  return result.data.streams;
-};
-
 const fetchFlowUpdates = async (
   client: Client,
   {
@@ -2456,7 +2411,6 @@ const processChain = async ({
 
   const userTotals = new Map<string, { fundUsd: number; streamUsd: number }>();
   const missingPrices: { address: Address; symbol: string }[] = [];
-  const farcasterPoints = new Map<string, number>();
   const fetchedPrices: { token: Address; symbol: string; priceUsd: number }[] =
     [];
   const walletActivities = new Map<string, WalletActivity[]>();
@@ -2655,7 +2609,9 @@ const processChain = async ({
       searchStart: startBlock,
     });
     const poolStartBlock =
-      creationBlock && creationBlock > startBlock ? creationBlock : startBlock;
+      creationBlock != null && creationBlock > startBlock ?
+        creationBlock
+      : startBlock;
     if (poolStartBlock > endBlock) {
       console.warn(
         `Skipping pool ${poolAddress} on ${chainId}: created after window`,
@@ -3130,7 +3086,7 @@ export async function GET(req: Request) {
 
     if (!FARCASTER_DISABLED) {
       const gardensFid = await fetchGardensFid();
-      if (gardensFid) {
+      if (gardensFid != null) {
         const followerFids = await fetchFarcasterFollowerFids(gardensFid);
         const {
           primary: followerWallets,
