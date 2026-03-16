@@ -1,4 +1,3 @@
-import { gql } from "urql";
 import { getGlobalPauseStateDocument } from "#/subgraph/.graphclient";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useSubgraphQuery } from "./useSubgraphQuery";

@@ -53,7 +53,7 @@ export type ChainData = {
   explorer: string;
   blockTime: number;
   confirmations: number;
-  rpcUrl: string;
+  rpcUrl?: string;
   subgraphUrl: string;
   publishedSubgraphUrl?: string;
   superfluidSubgraphUrl?: string;
@@ -87,7 +87,7 @@ const getAlchemyRpcUrl = (network: string) => {
 };
 
 const getRpcUrl = (serverUrl: string | undefined, alchemyUrl?: string) =>
-  serverUrl ?? alchemyUrl ?? "";
+  serverUrl?.trim() || alchemyUrl?.trim() || undefined;
 
 const getSuperfluidSubgraphUrls = (publishedId: string) => {
   const gatewayKey = getGatewayKey();

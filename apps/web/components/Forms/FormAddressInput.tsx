@@ -74,9 +74,14 @@ export const FormAddressInput = ({
       return undefined;
     }
 
+    const rpcUrl = getConfigByChain(validationChain.id)?.rpcUrl?.trim();
+    if (!rpcUrl) {
+      return undefined;
+    }
+
     return createPublicClient({
       chain: validationChain,
-      transport: http(getConfigByChain(validationChain.id)?.rpcUrl),
+      transport: http(rpcUrl),
     });
   }, [validationChain]);
 

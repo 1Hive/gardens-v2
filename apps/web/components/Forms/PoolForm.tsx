@@ -436,10 +436,11 @@ export function PoolForm({
 
     const maxAmountStr = (previewData?.maxAmount ?? 0).toString();
 
-    const monthlyBudget = Number(previewData.monthlyBudget ?? 0);
+    const monthlyBudget = (previewData.monthlyBudget ?? 0).toString().trim();
     const streamingRatePerSecond =
       isStreamingPool ?
-        safeParseUnits(monthlyBudget * MONTH_TO_SEC, governanceToken.decimals)
+        safeParseUnits(monthlyBudget, governanceToken.decimals) /
+          BigInt(MONTH_TO_SEC)
       : 0n;
 
     const tribunalSafeAddress =

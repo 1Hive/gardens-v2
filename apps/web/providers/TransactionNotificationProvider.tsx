@@ -302,39 +302,52 @@ const parseErrorMessage = (entry: TransactionToastPayload): React.ReactNode => {
   return renderMultilineMessage("Transaction failed.\nPlease report a bug");
 };
 
-const PAUSE_ERROR_TOKENS = [
+const PAUSE_ERROR_NAMES = new Set([
   "strategypaused",
   "communitypaused",
   "strategyselectorpaused",
   "communityselectorpaused",
-  "paused",
+]);
+const PAUSE_ERROR_MESSAGE_TOKENS = [
+  "strategy paused",
+  "community paused",
+  "strategyselectorpaused",
+  "communityselectorpaused",
 ];
 
 function isContractsPausedError(error: unknown): boolean {
   let current: any = error;
   let depth = 0;
   while (current != null && depth < 5) {
-    const parts = [
+    const exactNames = [
       current?.name,
-      current?.message,
-      current?.shortMessage,
-      current?.details,
       current?.reason,
       current?.errorName,
       current?.data?.errorName,
-      current?.cause?.message,
+    ]
+      .filter(Boolean)
+      .map((value) => String(value).toLowerCase());
+
+    if (exactNames.some((name) => PAUSE_ERROR_NAMES.has(name))) {
+      return true;
+    }
+
+    const structuredText = [
+      current?.shortMessage,
+      current?.details,
       current?.cause?.shortMessage,
       current?.cause?.details,
-      current?.cause?.errorName,
-      current?.cause?.data?.errorName,
     ]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
 
-    if (PAUSE_ERROR_TOKENS.some((token) => parts.includes(token))) {
+    if (
+      PAUSE_ERROR_MESSAGE_TOKENS.some((token) => structuredText.includes(token))
+    ) {
       return true;
     }
+
     current = current?.cause;
     depth++;
   }

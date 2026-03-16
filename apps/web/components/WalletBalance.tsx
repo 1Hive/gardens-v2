@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef } from "react";
+import { FC, useEffect } from "react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { formatEther } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
@@ -30,7 +30,6 @@ export const WalletBalance: FC<Props> = ({
   setIsEnoughBalance,
 }) => {
   const { address, isDisconnected } = useAccount();
-  const isEnoughBalanceRef = useRef(false);
   const chainId = useChainIdFromPath();
 
   const { data } = useBalance({
@@ -43,19 +42,15 @@ export const WalletBalance: FC<Props> = ({
 
   const balance = data && data.value;
   const askedFormated = (+formatEther(askedAmount)).toFixed(4);
+  const isEnoughBalance = balance != null && balance >= askedAmount;
 
   useEffect(() => {
-    if (balance != null) {
-      isEnoughBalanceRef.current = balance != null && balance >= askedAmount;
-      setIsEnoughBalance(isEnoughBalanceRef.current);
-    }
+    setIsEnoughBalance(isEnoughBalance);
   }, [balance, askedAmount, setIsEnoughBalance]);
-
-  const isEnoughBalance = askedAmount != null && isEnoughBalanceRef.current;
 
   return (
     <div>
-      {!data || !isEnoughBalanceRef.current ?
+      {!data ?
         isDisconnected ?
           <div />
         : <div className="skeleton h-14 w-56 [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#353535]" />

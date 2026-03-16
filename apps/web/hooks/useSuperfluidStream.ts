@@ -124,7 +124,10 @@ export function useSuperfluidStream({
     return `${flowRate.toString()}|${totalDistributed?.toString() ?? "null"}|${streamsSig}|${poolMembersSig}`;
   };
 
-  const computeLiveTotalStreamed = (streams: ReceiverStreamSnapshot[]) => {
+  const computeLiveTotalStreamed = (
+    streams: ReceiverStreamSnapshot[],
+    poolMembers: PoolMemberSnapshot[],
+  ) => {
     const nowInMs = BigInt(Date.now());
     const streamsTotal = streams.reduce((acc, stream) => {
       const updatedAtMs = stream.updatedAtTimestamp * 1000n;
@@ -135,7 +138,7 @@ export function useSuperfluidStream({
         (stream.currentFlowRate * elapsedMs) / 1000n
       );
     }, 0n);
-    const membersTotal = poolMembersSnapshot.reduce((acc, member) => {
+    const membersTotal = poolMembers.reduce((acc, member) => {
       const updatedAtMs = member.updatedAtTimestamp * 1000n;
       const elapsedMs = nowInMs > updatedAtMs ? nowInMs - updatedAtMs : 0n;
       return (
@@ -144,7 +147,7 @@ export function useSuperfluidStream({
         (member.currentFlowRate * elapsedMs) / 1000n
       );
     }, 0n);
-    if (!streams.length && !poolMembersSnapshot.length) return null;
+    if (!streams.length && !poolMembers.length) return null;
     return streamsTotal + membersTotal;
   };
 
@@ -260,7 +263,10 @@ export function useSuperfluidStream({
     setReceiverStreamsSnapshot(receiverStreamsSnapshotData);
     setPoolMembersSnapshot(poolMemberSnapshotsData);
     setLiveTotalStreamedBn(
-      computeLiveTotalStreamed(receiverStreamsSnapshotData),
+      computeLiveTotalStreamed(
+        receiverStreamsSnapshotData,
+        poolMemberSnapshotsData,
+      ),
     );
     setTotalAmountDistributedBn(totalAmountDistributed);
 
@@ -367,9 +373,11 @@ export function useSuperfluidStream({
       return;
     }
     const update = () =>
-      setLiveTotalStreamedBn(computeLiveTotalStreamed(receiverStreamsSnapshot));
+      setLiveTotalStreamedBn(
+        computeLiveTotalStreamed(receiverStreamsSnapshot, poolMembersSnapshot),
+      );
     update();
-    const interval = setInterval(update, 100);
+    const interval = setInterval(update, 1000);
     return () => {
       clearInterval(interval);
     };
