@@ -1,0 +1,99 @@
+{
+  "version": "1.0",
+  "chainId": "137",
+  "createdAt": 1773693119356,
+  "meta": {
+    "name": "Set Voting Power Registry Batch",
+    "description": "Safe Transaction Builder payload to reset votingPowerRegistry to registryCommunity for all strategies owned by this council safe.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "0xc0c300a304b160870f855150d3e0efd2a0bef38b",
+    "createdFromOwnerAddress": "0xc0c300a304b160870f855150d3e0efd2a0bef38b",
+    "hash": "3cc806655fc51e9ca0e871d6aa23c77d88145689"
+  },
+  "transactions": [
+    {
+      "to": "0x6138338450c5bfbd646e49cf9f8c68a9152cad17",
+      "value": "0",
+      "data": "0xc6cdc9800000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x81745dba1273411825f18b50ead84a3fc2c8fd2c",
+      "value": "0",
+      "data": "0xc6cdc9800000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xe8216b6a9e8b87560dbeb0f4dc0f256fb9fedf1b",
+      "value": "0",
+      "data": "0xc6cdc9800000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x8848552c193d426c3cd5f1efe19155bfef13be61",
+      "value": "0",
+      "data": "0xc6cdc9800000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xb63c9a22adea83fd095f3e6e418f80ffb3226959",
+      "value": "0",
+      "data": "0xc6cdc9800000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xdf8d1bc90799d32429205e0ae85de79a14ee1e2d",
+      "value": "0",
+      "data": "0xc6cdc9800000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x511776b742df6edcfe386c397e75b4feb256036f",
+      "value": "0",
+      "data": "0xc6cdc9800000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    }
+  ]
+}

@@ -896,7 +896,7 @@ export default function ClientPage({
                 </ul>
               </InfoBox>
 
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col items-end gap-4">
                 <CheckSybil
                   strategy={strategy}
                   enableCheck={!memberActivatedStrategy}

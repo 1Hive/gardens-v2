@@ -87,7 +87,7 @@ const getAlchemyRpcUrl = (network: string) => {
 };
 
 const getRpcUrl = (serverUrl: string | undefined, alchemyUrl?: string) =>
-  serverUrl?.trim() || alchemyUrl?.trim() || undefined;
+  serverUrl?.trim() ?? alchemyUrl?.trim() ?? undefined;
 
 const getSuperfluidSubgraphUrls = (publishedId: string) => {
   const gatewayKey = getGatewayKey();
@@ -225,7 +225,10 @@ export const chainConfigMap: {
     explorer: "https://arbiscan.io",
     blockTime: 12,
     confirmations: 2, // 7
-    rpcUrl: process.env.RPC_URL_ARBITRUM!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_ARBITRUM,
+      getAlchemyRpcUrl("arb-mainnet"),
+    ),
     ...getSubgraphUrls(
       "9ejruFicuLT6hfuXNTnS8UCwxTWrHz4uinesdZu1dKmk",
       "gardens-v2---arbitrum",
@@ -250,7 +253,10 @@ export const chainConfigMap: {
     explorer: "http://optimistic.etherscan.io",
     blockTime: 2,
     confirmations: 2, // 2
-    rpcUrl: process.env.RPC_URL_OPTIMISM!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_OPTIMISM,
+      getAlchemyRpcUrl("opt-mainnet"),
+    ),
     ...getSubgraphUrls(
       "FmcVWeR9xdJyjM53DPuCvEdH24fSXARdq4K5K8EZRZVp",
       "gardens-v2---optimism",
@@ -275,7 +281,10 @@ export const chainConfigMap: {
     explorer: "https://polygonscan.com",
     blockTime: 2.1,
     confirmations: 2, // 4
-    rpcUrl: process.env.RPC_URL_MATIC!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_MATIC,
+      getAlchemyRpcUrl("polygon-mainnet"),
+    ),
     ...getSubgraphUrls(
       "4vsznmRkUGm9DZFBwvC6PDvGPVfVLQcUUr5ExdTNZiUc",
       "gardens-v2---polygon",
@@ -300,7 +309,10 @@ export const chainConfigMap: {
     explorer: "https://gnosisscan.io",
     blockTime: 5.2,
     confirmations: 2, // 4
-    rpcUrl: process.env.RPC_URL_GNOSIS!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_GNOSIS,
+      getAlchemyRpcUrl("gnosis-mainnet"),
+    ),
     ...getSubgraphUrls(
       "ELGHrYhvJJQrYkVsYWS5iDuFpQ1p834Q2k2kBmUAVZAi",
       "gardens-v2---gnosis",
@@ -325,7 +337,10 @@ export const chainConfigMap: {
     explorer: "https://basescan.org",
     blockTime: 2,
     confirmations: 2, // 4
-    rpcUrl: process.env.RPC_URL_BASE!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_BASE,
+      getAlchemyRpcUrl("base-mainnet"),
+    ),
     ...getSubgraphUrls(
       "HAjsxiYJEkV8oDZgVTaJE9NQ2XzgqekFbY99tMGu53eJ",
       "gardens-v2---base",
@@ -350,7 +365,10 @@ export const chainConfigMap: {
     explorer: "https://celoscan.io/",
     blockTime: 1,
     confirmations: 4, // 4
-    rpcUrl: process.env.RPC_URL_CELO!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_CELO,
+      getAlchemyRpcUrl("celo-mainnet"),
+    ),
     ...getSubgraphUrls(
       "BsXEnGaXdj3CkGRn95bswGcv2mQX7m8kNq7M7WBxxPx8",
       "gardens-v2---celo",
@@ -375,7 +393,10 @@ export const chainConfigMap: {
     explorer: "https://etherscan.io",
     blockTime: 12,
     confirmations: 3,
-    rpcUrl: process.env.RPC_URL_MAINNET!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_MAINNET,
+      getAlchemyRpcUrl("eth-mainnet"),
+    ),
     subgraphUrl:
       process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM ?
         `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`

@@ -192,7 +192,7 @@ export default function DiamondAdminPage() {
   const [addressInput, setAddressInput] = useState("");
   const [diamondAddress, setDiamondAddress] = useState<Address>();
   const [selectedChainId, setSelectedChainId] = useState<number>(
-    CHAINS[0]?.id ?? 42161,
+    42161,
   );
   const [signatureMap, setSignatureMap] = useState<SignatureMap>({});
   const [isResolvingSignatures, setIsResolvingSignatures] = useState(false);
@@ -205,8 +205,10 @@ export default function DiamondAdminPage() {
   const [valueInput, setValueInput] = useState("0");
   const [executionError, setExecutionError] = useState<string | null>(null);
   const [readOutput, setReadOutput] = useState<string | null>(null);
+  const [simulationOutput, setSimulationOutput] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [isExecutingRead, setIsExecutingRead] = useState(false);
+  const [isSimulatingWrite, setIsSimulatingWrite] = useState(false);
   const [isExecutingWrite, setIsExecutingWrite] = useState(false);
   const didApplyQueryParamsRef = useRef(false);
   const queryParams = useCollectQueryParams();
@@ -281,6 +283,16 @@ export default function DiamondAdminPage() {
       const selector = selectorFromSignature(toCanonicalSignature(fn));
       const list = map.get(selector) ?? [];
       map.set(selector, [...list, fn]);
+    });
+    return map;
+  }, [knownAbiFunctions]);
+
+  const localSignatureMap = useMemo<SignatureMap>(() => {
+    const map: SignatureMap = {};
+    knownAbiFunctions.forEach((fn) => {
+      const signature = toCanonicalSignature(fn);
+      const selector = selectorFromSignature(signature);
+      map[selector] = [...(map[selector] ?? []), signature];
     });
     return map;
   }, [knownAbiFunctions]);
@@ -416,7 +428,17 @@ export default function DiamondAdminPage() {
           selectors?: SignatureMap;
         };
         if (isActive) {
-          setSignatureMap(payload.selectors ?? {});
+          const resolvedSelectors = payload.selectors ?? {};
+          const mergedMap = allSelectors.reduce<SignatureMap>((acc, selector) => {
+            const localSignatures = localSignatureMap[selector] ?? [];
+            const resolvedSignatures = resolvedSelectors[selector] ?? [];
+            acc[selector] =
+              localSignatures.length > 0 ?
+                localSignatures
+              : resolvedSignatures;
+            return acc;
+          }, {});
+          setSignatureMap(mergedMap);
         }
       } catch (resolveError) {
         if (isActive) {
@@ -425,6 +447,15 @@ export default function DiamondAdminPage() {
               resolveError.message
             : "Unknown resolver error";
           setSignatureResolveError(message);
+          setSignatureMap(
+            allSelectors.reduce<SignatureMap>((acc, selector) => {
+              const localSignatures = localSignatureMap[selector] ?? [];
+              if (localSignatures.length > 0) {
+                acc[selector] = localSignatures;
+              }
+              return acc;
+            }, {}),
+          );
         }
       } finally {
         if (isActive) {
@@ -437,7 +468,7 @@ export default function DiamondAdminPage() {
     return () => {
       isActive = false;
     };
-  }, [allSelectors]);
+  }, [allSelectors, localSignatureMap]);
 
   useEffect(() => {
     if (!allSelectors.length) {
@@ -455,14 +486,33 @@ export default function DiamondAdminPage() {
       setSelectedSignature("");
       return;
     }
-    const candidates = signatureMap[selectedSelector] ?? [];
+    const localCandidates = localSignatureMap[selectedSelector] ?? [];
+    const candidates =
+      localCandidates.length > 0 ?
+        localCandidates
+      : (signatureMap[selectedSelector] ?? []);
     if (!candidates.length) {
       return;
     }
     if (!selectedSignature || !candidates.includes(selectedSignature)) {
       setSelectedSignature(candidates[0]);
     }
-  }, [selectedSelector, selectedSignature, signatureMap]);
+  }, [localSignatureMap, selectedSelector, selectedSignature, signatureMap]);
+
+  useEffect(() => {
+    if (!selectedSignature.trim()) {
+      return;
+    }
+    try {
+      const parsed = parseFunctionFromSignature(selectedSignature);
+      const selector = selectorFromSignature(toCanonicalSignature(parsed));
+      if (selector !== selectedSelector) {
+        setSelectedSelector(selector);
+      }
+    } catch {
+      // Ignore invalid signatures while typing.
+    }
+  }, [selectedSelector, selectedSignature]);
 
   const handleInspectClick = () => {
     if (!isAddressValid) return;
@@ -480,7 +530,7 @@ export default function DiamondAdminPage() {
     setDiamondAddress(normalized);
   };
 
-  const executeFunction = async (mode: "read" | "write") => {
+  const executeFunction = async (mode: "read" | "simulate" | "write") => {
     if (!diamondAddress) {
       setExecutionError("Set a valid diamond address first.");
       return;
@@ -491,11 +541,14 @@ export default function DiamondAdminPage() {
     }
     if (mode === "read") {
       setIsExecutingRead(true);
+    } else if (mode === "simulate") {
+      setIsSimulatingWrite(true);
     } else {
       setIsExecutingWrite(true);
     }
     setExecutionError(null);
     setReadOutput(null);
+    setSimulationOutput(null);
     setTxHash(null);
 
     try {
@@ -541,6 +594,50 @@ export default function DiamondAdminPage() {
         return;
       }
 
+      if (mode === "simulate") {
+        if (!walletClient?.account) {
+          throw new Error(
+            "Connect a wallet on the selected chain to simulate write transactions.",
+          );
+        }
+        if (selectedFunctionKind === "read") {
+          throw new Error(
+            "Detected read-only function. Use Call (eth_call), no simulation needed.",
+          );
+        }
+
+        const sanitizedValue = valueInput.trim();
+        const value =
+          sanitizedValue && DECIMAL_REGEX.test(sanitizedValue) ?
+            BigInt(sanitizedValue)
+          : 0n;
+
+        const response = await publicClient.call({
+          account: walletClient.account.address,
+          to: diamondAddress,
+          data,
+          value,
+        });
+        const rawResult = response.data ?? "0x";
+        if ((functionAbi.outputs ?? []).length === 0) {
+          setSimulationOutput(
+            rawResult !== "0x" ?
+              `Simulation succeeded.\nRaw return data:\n${rawResult}`
+            : "Simulation succeeded (no return value).",
+          );
+          return;
+        }
+        const decoded = decodeFunctionResult({
+          abi,
+          functionName: functionAbi.name,
+          data: rawResult,
+        });
+        setSimulationOutput(
+          `Simulation succeeded.\n${stringifyResult(decoded)}`,
+        );
+        return;
+      }
+
       if (!walletClient?.account) {
         throw new Error("Connect a wallet on the selected chain to write.");
       }
@@ -580,6 +677,7 @@ export default function DiamondAdminPage() {
       setExecutionError(message);
     } finally {
       setIsExecutingRead(false);
+      setIsSimulatingWrite(false);
       setIsExecutingWrite(false);
     }
   };
@@ -887,6 +985,22 @@ export default function DiamondAdminPage() {
                       Call (eth_call)
                     </Button>
                     <Button
+                      btnStyle="outline"
+                      color="primary"
+                      className="sm:w-auto"
+                      onClick={() => void executeFunction("simulate")}
+                      isLoading={isSimulatingWrite}
+                      disabled={
+                        !diamondAddress ||
+                        !selectedSignature.trim() ||
+                        selectedFunctionKind === "read" ||
+                        !isConnected ||
+                        !walletClient?.account
+                      }
+                    >
+                      Simulate transaction
+                    </Button>
+                    <Button
                       btnStyle="filled"
                       color="primary"
                       className="sm:w-auto"
@@ -944,6 +1058,17 @@ export default function DiamondAdminPage() {
                       <p className="text-xs text-neutral-muted">Call result</p>
                       <pre className="overflow-auto rounded-lg border border-border-neutral/50 bg-neutral/30 p-3 text-xs text-neutral-content">
                         {readOutput}
+                      </pre>
+                    </div>
+                  )}
+
+                  {simulationOutput && (
+                    <div className="space-y-1">
+                      <p className="text-xs text-neutral-muted">
+                        Simulation result
+                      </p>
+                      <pre className="overflow-auto rounded-lg border border-border-neutral/50 bg-neutral/30 p-3 text-xs text-neutral-content">
+                        {simulationOutput}
                       </pre>
                     </div>
                   )}

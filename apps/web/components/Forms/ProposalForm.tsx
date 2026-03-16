@@ -203,6 +203,7 @@ export const ProposalForm = ({
     abi: alloABI,
     contractName: "Allo",
     functionName: "registerRecipient",
+    confirmations: 1,
     fallbackErrorMessage: "Error creating Proposal, please report a bug.",
     value: arbitrableConfig?.submitterCollateralAmount,
     onError: () => {
@@ -478,7 +479,7 @@ export const ProposalForm = ({
           )}
         </div>
         {showPreview ?
-          <div className="flex items-center gap-10">
+          <div className="flex items-center justify-end gap-10">
             <Button
               type="button"
               onClick={() => {

@@ -450,7 +450,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
     function _getOrDeployCommunityDiamondInit() internal returns (address) {
         string memory key = ".INITS.REGISTRY_COMMUNITY_DIAMOND_INIT";
         address cached = _readAddressOrZero(key);
-        if (cached != address(0) && cached.code.length > 0) {
+        if (_hasExpectedRuntimeCode(cached, type(RegistryCommunityDiamondInit).runtimeCode)) {
             return cached;
         }
 
@@ -462,13 +462,21 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
     function _getOrDeployStrategyDiamondInit() internal returns (address) {
         string memory key = ".INITS.CV_STRATEGY_DIAMOND_INIT";
         address cached = _readAddressOrZero(key);
-        if (cached != address(0) && cached.code.length > 0) {
+        if (_hasExpectedRuntimeCode(cached, type(CVStrategyDiamondInit).runtimeCode)) {
             return cached;
         }
 
         CVStrategyDiamondInit deployed = new CVStrategyDiamondInit();
         _writeNetworkAddress(key, address(deployed));
         return address(deployed);
+    }
+
+    function _hasExpectedRuntimeCode(address candidate, bytes memory expectedRuntimeCode) internal view returns (bool) {
+        if (candidate == address(0) || candidate.code.length == 0) {
+            return false;
+        }
+
+        return candidate.codehash == keccak256(expectedRuntimeCode);
     }
 
     function _buildUpgradedCommunityFacetCuts() internal returns (IDiamond.FacetCut[] memory cuts) {

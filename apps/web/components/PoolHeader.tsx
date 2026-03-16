@@ -388,19 +388,20 @@ export default function PoolHeader({
         </div>
       ),
     },
-    {
-      label: "Max monthly streaming",
-      info: "Target flow rate once 100% conviction has been reached.",
-      value:
-        (
-          streamingRatePerMonth != null &&
-          PoolTypes[proposalType] === "streaming"
-        ) ?
-          `${roundToSignificant(streamingRatePerMonth, 4)} ${
-            poolToken?.symbol
-          }/m`
-        : null,
-    },
+    ...(PoolTypes[proposalType] === "streaming" ?
+      [
+        {
+          label: "Max monthly streaming",
+          info: "Target flow rate once 100% conviction has been reached.",
+          value:
+            streamingRatePerMonth != null ?
+              `${roundToSignificant(streamingRatePerMonth, 4)} ${
+                poolToken?.symbol
+              }/m`
+            : null,
+        },
+      ]
+    : []),
   ] as const;
 
   const filteredPoolConfig =

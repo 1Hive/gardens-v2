@@ -43,7 +43,11 @@ export function TransactionModal({
         {transactions.map((props, index) => {
           return (
             <React.Fragment key={`${props.contractName + "_" + index + 1}`}>
-              <TransactionStatusNotification {...props} index={index + 1} />
+              <TransactionStatusNotification
+                {...props}
+                index={index + 1}
+                showContractName={true}
+              />
               {index < transactions.length - 1 && (
                 <div className="h-[50px] w-0.5 bg-gray-300 ml-[19px] my-2" />
               )}

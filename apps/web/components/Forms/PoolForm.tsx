@@ -1256,9 +1256,9 @@ export function PoolForm({
           </div>
         </div>
       }
-      <div className="flex w-full items-center justify-center py-6">
+      <div className="flex w-full items-center justify-end py-6">
         {showPreview ?
-          <div className="flex items-center gap-10">
+          <div className="flex items-center justify-end gap-10">
             <Button
               onClick={() => {
                 setShowPreview(false);
