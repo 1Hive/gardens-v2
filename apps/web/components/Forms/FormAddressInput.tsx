@@ -8,6 +8,7 @@ import {
   useEnsAvatar,
   useEnsName,
   useNetwork,
+  usePublicClient,
 } from "wagmi";
 import { FormInput } from "./FormInput";
 import { LoadingSpinner } from "../LoadingSpinner";
@@ -69,6 +70,9 @@ export const FormAddressInput = ({
       connectedChain,
     [chainIdFromPath, connectedChain],
   );
+  const fallbackPublicClient = usePublicClient({
+    chainId: validationChain?.id,
+  });
   const publicClient = useMemo(() => {
     if (!validationChain) {
       return undefined;
@@ -84,6 +88,7 @@ export const FormAddressInput = ({
       transport: http(rpcUrl),
     });
   }, [validationChain]);
+  const validationClient = publicClient ?? fallbackPublicClient;
 
   const [inputValue, setInputValue] = useState<string>(value ?? "");
   const [isValidatingSafe, setIsValidatingSafe] = useState<boolean>(false);
@@ -126,20 +131,20 @@ export const FormAddressInput = ({
   }, [ensAddress]);
 
   const validateSafeAddress = async (address: string) => {
-    if (!publicClient) {
+    if (!validationClient) {
       return "Unable to validate Safe address without an RPC client.";
     }
 
     if (
       bypassSafeCheck ||
-      getConfigByChain(publicClient.chain.id)?.safePrefix == null
+      getConfigByChain(validationClient.chain.id)?.safePrefix == null
     ) {
       return true;
     }
     try {
       setIsValidatingSafe(true);
       const isSafe = await Promise.all([
-        publicClient.readContract({
+        validationClient.readContract({
           address: address as Address,
           abi: safeABI,
           functionName: "getOwners",
@@ -169,7 +174,7 @@ export const FormAddressInput = ({
       return true;
     }
 
-    const client = publicClient;
+    const client = validationClient;
     if (!client) {
       return "Unable to validate token address without an RPC client.";
     }
