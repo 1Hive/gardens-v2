@@ -8,7 +8,6 @@ import {
   useEnsAvatar,
   useEnsName,
   useNetwork,
-  usePublicClient,
 } from "wagmi";
 import { FormInput } from "./FormInput";
 import { LoadingSpinner } from "../LoadingSpinner";
@@ -70,25 +69,18 @@ export const FormAddressInput = ({
       connectedChain,
     [chainIdFromPath, connectedChain],
   );
-  const fallbackPublicClient = usePublicClient({
-    chainId: validationChain?.id,
-  });
-  const publicClient = useMemo(() => {
+  const validationClient = useMemo(() => {
     if (!validationChain) {
       return undefined;
     }
 
     const rpcUrl = getConfigByChain(validationChain.id)?.rpcUrl?.trim();
-    if (!rpcUrl) {
-      return undefined;
-    }
 
     return createPublicClient({
       chain: validationChain,
-      transport: http(rpcUrl),
+      transport: rpcUrl ? http(rpcUrl) : http(),
     });
   }, [validationChain]);
-  const validationClient = publicClient ?? fallbackPublicClient;
 
   const [inputValue, setInputValue] = useState<string>(value ?? "");
   const [isValidatingSafe, setIsValidatingSafe] = useState<boolean>(false);
