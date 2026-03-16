@@ -50,6 +50,9 @@ export function TransactionStatusNotification({
   const chain = useChainFromPath();
   const icon = statusToIcon[status];
   const textColor = statusToTextColor[status];
+  const hasContractName =
+    contractName !== undefined && contractName !== null && contractName !== false;
+  const hasMessage = message !== undefined && message !== null && message !== false;
   const textClass =
     showClickToExplorer ? textColor : "dark:text-neutral-inverted-content";
   const contractNameClass =
@@ -76,14 +79,14 @@ export function TransactionStatusNotification({
         </div>
       )}
       <div className="flex flex-col gap-1 min-w-0">
-        {showContractName && contractName && (
+        {showContractName && hasContractName && (
           <div
             className={`font-medium text-base break-words whitespace-normal ${contractNameClass}`}
           >
             {contractName}
           </div>
         )}
-        {message && (
+        {hasMessage && (
           <div className={`${textClass} text-sm break-words whitespace-normal`}>
             {message}
           </div>
