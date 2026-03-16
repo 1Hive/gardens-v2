@@ -19,6 +19,7 @@ import { AddrethConfig } from "addreth";
 import { Bounce, ToastContainer } from "react-toastify";
 import { Address, createWalletClient, custom, isAddress } from "viem";
 import { base } from "viem/chains";
+import { usePathname } from "next/navigation";
 import {
   Chain,
   Config,
@@ -56,6 +57,7 @@ const dedupeChains = (chainList: Chain[]) =>
 const createCustomConfig = (
   chain: Chain | undefined,
   simulatedWallet?: Address,
+  includeAllChains: boolean = false,
 ) => {
   let usedChains: Chain[] = [];
   if (chain) {
@@ -69,7 +71,7 @@ const createCustomConfig = (
 
     const usedChainIds = Object.entries(chainConfigMap)
       .filter(([_, chainConfig]) =>
-        queryAllChains ? true
+        includeAllChains || queryAllChains ? true
         : isProd ? !chainConfig.isTestnet
         : !!chainConfig.isTestnet,
       )
@@ -82,10 +84,10 @@ const createCustomConfig = (
   }
 
   const { publicClient, chains } = configureChains(usedChains, [
-    publicProvider(),
     alchemyProvider({
       apiKey: process.env.NEXT_PUBLIC_ALCHEMY_KEY ?? "",
     }),
+    publicProvider(),
   ]);
   const baseConnectors = connectorsForWallets([
     {
@@ -166,7 +168,10 @@ const Providers = ({ children }: Props) => {
 const ProvidersWithQueryParams = ({ children }: Props) => {
   const [mounted, setMounted] = useState(false);
   const chain = useChainFromPath() as Chain | undefined;
+  const pathname = usePathname();
   const queryParams = useCollectQueryParams();
+  const includeAllChains =
+    pathname === "/loupe" || pathname === "/admin";
 
   const simulatedWallet = useMemo(() => {
     const walletFromQuery = queryParams?.[QUERY_PARAMS.simulatedWallet];
@@ -192,11 +197,11 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
 
   useEffect(() => {
     const { config, simulatedConnector: newSimulatedConnector } =
-      createCustomConfig(chain, simulatedWallet);
+      createCustomConfig(chain, simulatedWallet, includeAllChains);
     setWagmiConfig(config);
     setSimulatedConnector(newSimulatedConnector ?? null);
     setMounted(true);
-  }, [chain, simulatedWallet]);
+  }, [chain, simulatedWallet, includeAllChains]);
 
   useEffect(() => {
     if (!wagmiConfig) {

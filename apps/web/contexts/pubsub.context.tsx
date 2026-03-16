@@ -63,7 +63,8 @@ export type ChangeEventTopic =
   | "garden"
   | "pool"
   | "proposal"
-  | "member";
+  | "member"
+  | "stream";
 
 type Native = string | number | boolean | null | undefined;
 
@@ -196,7 +197,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       const subscriptionId = uniqueId();
       console.debug(`⚡ WS: subscribe ${subscriptionId}`, scope);
       subMap.set(subscriptionId, {
-        scopes: (scope.length ? scope : [scope]) as ChangeEventScope[],
+        scopes: (Array.isArray(scope) ? scope : [scope]) as ChangeEventScope[],
         onChangeEvent,
       });
       return subscriptionId;
@@ -205,7 +206,10 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   );
 
   const unsubscribe = (subscriptionId: SubscriptionId) => {
-    console.debug(`⚡ WS: unsubscribe ${subscriptionId}`);
+    console.debug(
+      `⚡ WS: unsubscribe ${subscriptionId}`,
+      subMap.get(subscriptionId)?.scopes,
+    );
     subMap.delete(subscriptionId);
   };
 

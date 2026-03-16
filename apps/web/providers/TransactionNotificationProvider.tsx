@@ -288,10 +288,11 @@ const renderMultilineMessage = (message: string) => {
   );
 };
 
-const parseErrorMessage = (
-  entry: TransactionToastPayload,
-): React.ReactNode => {
+const parseErrorMessage = (entry: TransactionToastPayload): React.ReactNode => {
   const error = entry.transactionError;
+  if (isContractsPausedError(error)) {
+    return "Contracts are in maintenance, please come back later.";
+  }
   if (error?.cause instanceof UserRejectedRequestError) {
     return "User rejected the request";
   }
@@ -300,6 +301,58 @@ const parseErrorMessage = (
   }
   return renderMultilineMessage("Transaction failed.\nPlease report a bug");
 };
+
+const PAUSE_ERROR_NAMES = new Set([
+  "strategypaused",
+  "communitypaused",
+  "strategyselectorpaused",
+  "communityselectorpaused",
+]);
+const PAUSE_ERROR_MESSAGE_TOKENS = [
+  "strategy paused",
+  "community paused",
+  "strategyselectorpaused",
+  "communityselectorpaused",
+];
+
+function isContractsPausedError(error: unknown): boolean {
+  let current: any = error;
+  let depth = 0;
+  while (current != null && depth < 5) {
+    const exactNames = [
+      current?.name,
+      current?.reason,
+      current?.errorName,
+      current?.data?.errorName,
+    ]
+      .filter(Boolean)
+      .map((value) => String(value).toLowerCase());
+
+    if (exactNames.some((name) => PAUSE_ERROR_NAMES.has(name))) {
+      return true;
+    }
+
+    const structuredText = [
+      current?.shortMessage,
+      current?.details,
+      current?.cause?.shortMessage,
+      current?.cause?.details,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    if (
+      PAUSE_ERROR_MESSAGE_TOKENS.some((token) => structuredText.includes(token))
+    ) {
+      return true;
+    }
+
+    current = current?.cause;
+    depth++;
+  }
+  return false;
+}
 
 const TransactionStatusWatcher = ({
   entry,

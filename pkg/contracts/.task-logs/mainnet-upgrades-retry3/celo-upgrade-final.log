@@ -1,0 +1,26 @@
+No files changed, compilation skipped
+Script ran successfully.
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 42220
+
+Estimated gas price: 25.001 gwei
+
+Estimated total gas used for script: 47423675
+
+Estimated amount required: 1.185639298675 CELO
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/UpgradeCVMultichainProd.s.sol/42220/run-latest.json
+
+Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/cache/UpgradeCVMultichainProd.s.sol/42220/run-latest.json
+

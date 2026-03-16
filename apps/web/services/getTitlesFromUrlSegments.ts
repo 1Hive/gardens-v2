@@ -46,7 +46,7 @@ interface QueryMapItem {
 export const queryMap: Record<number, QueryMapItem> = {
   2: {
     document: getCommunityTitlesDocument,
-    getVariables: (communityAddr: string) => ({
+    getVariables: (communityAddr: string, _segments: string[]) => ({
       communityAddr: communityAddr.toLowerCase(),
     }),
     parseResult: async (

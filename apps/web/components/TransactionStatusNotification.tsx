@@ -18,6 +18,7 @@ type Props = {
   message: React.ReactNode;
   status: TransactionStatus;
   contractName?: React.ReactNode;
+  showContractName?: boolean;
   showClickToExplorer?: boolean;
   index?: number;
 };
@@ -41,6 +42,8 @@ const statusToTextColor: Record<TransactionStatus, string> = {
 export function TransactionStatusNotification({
   message,
   status,
+  contractName,
+  showContractName = false,
   showClickToExplorer,
   index,
 }: Props) {
@@ -49,6 +52,10 @@ export function TransactionStatusNotification({
   const textColor = statusToTextColor[status];
   const textClass =
     showClickToExplorer ? textColor : "dark:text-neutral-inverted-content";
+  const contractNameClass =
+    status === "idle" ?
+      "text-neutral-content/70 dark:text-neutral-inverted-content/70"
+    : "text-neutral-content dark:text-neutral-inverted-content";
 
   return (
     <div className="flex flex-row items-center gap-2">
@@ -69,9 +76,18 @@ export function TransactionStatusNotification({
         </div>
       )}
       <div className="flex flex-col gap-1 min-w-0">
-        <div className={`${textClass} font-medium text-base break-words whitespace-normal`}>
-          {message}
-        </div>
+        {showContractName && contractName && (
+          <div
+            className={`font-medium text-base break-words whitespace-normal ${contractNameClass}`}
+          >
+            {contractName}
+          </div>
+        )}
+        {message && (
+          <div className={`${textClass} text-sm break-words whitespace-normal`}>
+            {message}
+          </div>
+        )}
         {chain?.blockExplorers?.default.url && showClickToExplorer && (
           <div className="w-full text-sm italic">
             Click to see in block explorer

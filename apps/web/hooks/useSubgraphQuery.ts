@@ -99,7 +99,6 @@ export function useSubgraphQuery<
       chainId: scope.chainId ?? chainId,
     }));
   }, [changeScope, chainId]);
-
   useEffect(() => {
     if (!normalizedChangeScope || normalizedChangeScope.length === 0) {
       return;

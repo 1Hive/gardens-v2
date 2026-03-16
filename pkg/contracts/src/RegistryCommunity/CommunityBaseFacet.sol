@@ -16,6 +16,8 @@ import {ISafe} from "../interfaces/ISafe.sol";
 import {FAllo} from "../interfaces/FAllo.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
+import {IPauseController} from "../interfaces/IPauseController.sol";
+import {LibPauseStorage} from "../pausing/LibPauseStorage.sol";
 
 /// @notice Member struct for storing member information
 struct Member {
@@ -51,10 +53,18 @@ abstract contract CommunityBaseFacet is ProxyOwnableUpgrader, ReentrancyGuardUpg
     address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     /// @notice The precision scale used in the contract to avoid loss of precision
     uint256 public constant PRECISION_SCALE = 10 ** 4;
+    /// @notice Safety cap to keep per-member strategy iteration bounded.
+    uint256 public constant MAX_STRATEGIES_PER_MEMBER = 64;
     /// @notice The maximum fee that can be charged to the community
     uint256 public constant MAX_FEE = 10 * PRECISION_SCALE;
     /// @notice Role to council safe members
     bytes32 public constant COUNCIL_MEMBER = keccak256("COUNCIL_MEMBER");
+
+    /*|--------------------------------------------|*/
+    /*|              ERRORS                        |*/
+    /*|--------------------------------------------|*/
+    error CommunityPaused(address controller);
+    error CommunitySelectorPaused(bytes4 selector, address controller);
 
     /*|--------------------------------------------|*/
     /*|              STORAGE VARIABLES             |*/
@@ -127,4 +137,50 @@ abstract contract CommunityBaseFacet is ProxyOwnableUpgrader, ReentrancyGuardUpg
     bytes internal strategyInitCalldata;
 
     uint256[46] private __gap;
+
+    /*|--------------------------------------------|*/
+    /*|              PAUSE HELPERS                 |*/
+    /*|--------------------------------------------|*/
+    modifier whenNotPaused() {
+        _enforceNotPaused(msg.sig);
+        _;
+    }
+
+    modifier whenSelectorNotPaused(bytes4 selector) {
+        _enforceSelectorNotPaused(selector);
+        _;
+    }
+
+    function _enforceNotPaused(bytes4 selector) internal view {
+        if (_isPauseSelector(selector)) {
+            return;
+        }
+        address controller = LibPauseStorage.layout().pauseController;
+        if (controller != address(0) && IPauseController(controller).isPaused(address(this))) {
+            revert CommunityPaused(controller);
+        }
+    }
+
+    function _enforceSelectorNotPaused(bytes4 selector) internal view {
+        if (_isPauseSelector(selector)) {
+            return;
+        }
+        address controller = LibPauseStorage.layout().pauseController;
+        if (controller != address(0) && IPauseController(controller).isPaused(address(this), selector)) {
+            revert CommunitySelectorPaused(selector, controller);
+        }
+    }
+
+    function _isPauseSelector(bytes4 selector) internal pure returns (bool) {
+        return selector == bytes4(keccak256("setPauseController(address)"))
+            || selector == bytes4(keccak256("pause(uint256)"))
+            || selector == bytes4(keccak256("pause(bytes4,uint256)"))
+            || selector == bytes4(keccak256("unpause()"))
+            || selector == bytes4(keccak256("unpause(bytes4)"))
+            || selector == bytes4(keccak256("pauseController()"))
+            || selector == bytes4(keccak256("isPaused()"))
+            || selector == bytes4(keccak256("isPaused(bytes4)"))
+            || selector == bytes4(keccak256("pausedUntil()"))
+            || selector == bytes4(keccak256("pausedSelectorUntil(bytes4)"));
+    }
 }

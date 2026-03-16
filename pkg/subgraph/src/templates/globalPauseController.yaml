@@ -1,0 +1,30 @@
+- kind: ethereum/contract
+    name: {{name}}
+    network: {{network}}
+    context:
+      chainId:
+        type: Int
+        data: {{chainId}}
+    source:
+      address: "{{address}}"
+      abi: {{name}}
+      startBlock: {{startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - GlobalPauseController
+      abis:
+        - name: {{name}}
+          file: ../contracts/abis/{{name}}.sol/{{name}}.json
+      eventHandlers:
+        - event: ContractPaused(indexed address,uint64,indexed address)
+          handler: handleContractPaused
+        - event: ContractUnpaused(indexed address,indexed address)
+          handler: handleContractUnpaused
+        - event: SelectorPaused(indexed address,indexed bytes4,uint64,indexed address)
+          handler: handleSelectorPaused
+        - event: SelectorUnpaused(indexed address,indexed bytes4,indexed address)
+          handler: handleSelectorUnpaused
+      file: ./src/mappings/global-pause-controller.ts

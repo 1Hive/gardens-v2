@@ -175,6 +175,21 @@ query getPoolCreationData($communityAddr: ID!) {
   }
 }
 
+query getGlobalPauseState {
+  globalPauseControllers(
+    first: 1
+    where: { pausedUntil_not: null }
+    orderBy: updatedAt
+    orderDirection: desc
+  ) {
+    id
+    pausedUntil
+    pausedSelectors
+    createdAt
+    updatedAt
+  }
+}
+
 query getProposalSupporters($proposalId: String!) {
   members(first: 1000) {
     id
@@ -358,6 +373,19 @@ query getPoolData($strategyId: ID!) {
       allowlist
       superfluidToken
     }
+    stream {
+      id
+      contractAddress
+      contractType
+      superfluidToken
+      maxFlowRate
+      superfluidGDA
+      streamLastFlowRate
+      totalMemberUnits
+      proposalStreamIds
+      createdAt
+      updatedAt
+    }
     registryCommunity {
       id
       councilSafe
@@ -382,6 +410,7 @@ query getPoolData($strategyId: ID!) {
         description
       }
       beneficiary
+      streamingEscrow
       requestedAmount
       requestedToken
       proposalStatus
@@ -395,6 +424,20 @@ query getPoolData($strategyId: ID!) {
         id
         maxCVSupply
         totalEffectiveActivePoints
+      }
+      proposalStream {
+        id
+        proposal {
+          id
+        }
+        escrow
+        currentUnits
+        currentFlowRate
+        streamedUntilSnapshot
+        lastSnapshotAt
+        isStopped
+        createdAt
+        updatedAt
       }
     }
   }
@@ -442,6 +485,21 @@ query getProposalData($proposalId: ID!, $communityId: ID!) {
     updatedAt
     executedAt
     version
+    streamingEscrow
+    proposalStream {
+      id
+      proposal {
+        id
+      }
+      escrow
+      currentUnits
+      currentFlowRate
+      streamedUntilSnapshot
+      lastSnapshotAt
+      isStopped
+      createdAt
+      updatedAt
+    }
     strategy {
       id
       token
@@ -449,6 +507,13 @@ query getProposalData($proposalId: ID!, $communityId: ID!) {
       totalEffectiveActivePoints
       poolId
       isEnabled
+      stream {
+        id
+        maxFlowRate
+        streamLastFlowRate
+        totalMemberUnits
+        proposalStreamIds
+      }
       registryCommunity {
         id
         councilSafe

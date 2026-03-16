@@ -23,13 +23,6 @@ type Strategy = {
   config: { superfluidToken?: Address | null; proposalType?: string | null };
 };
 
-type StreamEntry = {
-  sender: { id: Address };
-  currentFlowRate: string;
-  createdAtTimestamp: string;
-  updatedAtTimestamp: string;
-};
-
 type FlowUpdate = {
   sender: { id: Address };
   flowRate: string;
@@ -146,19 +139,6 @@ const COMMUNITY_QUERY = gql`
   }
 `;
 
-const STREAMS_QUERY = gql`
-  query streamToPool($receiver: String!, $token: String!) {
-    streams(where: { receiver: $receiver, token: $token }, first: 1000) {
-      sender {
-        id
-      }
-      currentFlowRate
-      createdAtTimestamp
-      updatedAtTimestamp
-    }
-  }
-`;
-
 const FLOW_UPDATES_QUERY = gql`
   query flowUpdates($receiver: String!, $token: String!) {
     flowUpdatedEvents(
@@ -183,6 +163,11 @@ const transferAbi = parseAbi([
 const toLower = (addr?: string | null) => addr?.toLowerCase() ?? "";
 const isValidAddr = (addr?: string | null) =>
   typeof addr === "string" && addr.toLowerCase().startsWith("0x");
+const parseBooleanParam = (value?: string | null) => {
+  if (!value) return false;
+  const normalized = value.trim().toLowerCase();
+  return ["1", "true", "yes", "on"].includes(normalized);
+};
 const safeStringify = (value: unknown) => {
   try {
     return JSON.stringify(value, (_key, val) =>
@@ -799,7 +784,7 @@ const fetchGardensFid = async (): Promise<number | null> => {
     console.warn("[superfluid-points] Farcaster auth header missing");
     return null;
   }
-  if (farcasterGardensFid) return farcasterGardensFid;
+  if (farcasterGardensFid != null) return farcasterGardensFid;
   try {
     const res = await fetch(
       `https://api.farcaster.xyz/v2/user-by-username?username=${encodeURIComponent(FARCASTER_GARDENS_USERNAME)}`,
@@ -1131,7 +1116,7 @@ const ensureLatestTransferCacheCid = async (): Promise<string | null> => {
       pageOffset: 0,
     } as any;
     let data = await pinataClient?.pinList(query);
-    if (!data || !data.rows || data.rows.length === 0) {
+    if (data == null || data.rows.length === 0) {
       // fallback to any latest if no matching campaignVersion
       data = await pinataClient?.pinList({
         status: "pinned",
@@ -1314,7 +1299,7 @@ const cacheHydrationPromise = Promise.all([
     const cid =
       latestPriceCacheCid ??
       (await (async () => {
-        if (latestPriceCacheCid || !CAN_WRITE_PINATA) return null;
+        if (latestPriceCacheCid != null || !CAN_WRITE_PINATA) return null;
         try {
           const data = await pinataClient?.pinList({
             status: "pinned",
@@ -1375,10 +1360,7 @@ const cacheHydrationPromise = Promise.all([
 const ensureLatestPointsSnapshotCid = async (
   snapshotName = PINATA_POINTS_SNAPSHOT_NAME,
 ): Promise<string | null> => {
-  if (
-    snapshotName === PINATA_POINTS_SNAPSHOT_NAME &&
-    latestPointsSnapshotCid
-  ) {
+  if (snapshotName === PINATA_POINTS_SNAPSHOT_NAME && latestPointsSnapshotCid) {
     return latestPointsSnapshotCid;
   }
   if (!CAN_WRITE_PINATA) return null;
@@ -1486,17 +1468,18 @@ const findContractCreationBlock = async ({
   if (
     cached !== undefined &&
     cached !== null &&
-    (!searchStart || cached >= searchStart)
+    (searchStart == null || cached >= searchStart)
   ) {
     return cached;
   }
 
   const latestBlock = await publicClient.getBlockNumber();
   const upperBound =
-    searchEnd && searchEnd > 0n && searchEnd < latestBlock ?
+    searchEnd != null && searchEnd > 0n && searchEnd < latestBlock ?
       searchEnd
     : latestBlock;
-  const lowerBound = searchStart && searchStart > 0n ? searchStart : 0n;
+  const lowerBound =
+    searchStart != null && searchStart > 0n ? searchStart : 0n;
 
   let hasCode = false;
   try {
@@ -2072,32 +2055,6 @@ const resolveSuperToken = async (
   };
 };
 
-const fetchStreams = async (
-  client: Client,
-  {
-    receiver,
-    token,
-  }: {
-    receiver: Address;
-    token: Address;
-  },
-): Promise<StreamEntry[]> => {
-  console.log("[superfluid-points] Fetching streams", { receiver, token });
-  const result = await client
-    .query<{ streams: StreamEntry[] }>(STREAMS_QUERY, {
-      receiver: receiver.toLowerCase(),
-      token: token.toLowerCase(),
-    })
-    .toPromise();
-  if (result.error) {
-    throw new Error(
-      `Failed to fetch streams for receiver ${receiver} token ${token}: ${result.error.message}`,
-    );
-  }
-  if (!result.data?.streams) return [];
-  return result.data.streams;
-};
-
 const fetchFlowUpdates = async (
   client: Client,
   {
@@ -2454,7 +2411,6 @@ const processChain = async ({
 
   const userTotals = new Map<string, { fundUsd: number; streamUsd: number }>();
   const missingPrices: { address: Address; symbol: string }[] = [];
-  const farcasterPoints = new Map<string, number>();
   const fetchedPrices: { token: Address; symbol: string; priceUsd: number }[] =
     [];
   const walletActivities = new Map<string, WalletActivity[]>();
@@ -2653,7 +2609,9 @@ const processChain = async ({
       searchStart: startBlock,
     });
     const poolStartBlock =
-      creationBlock && creationBlock > startBlock ? creationBlock : startBlock;
+      creationBlock != null && creationBlock > startBlock ?
+        creationBlock
+      : startBlock;
     if (poolStartBlock > endBlock) {
       console.warn(
         `Skipping pool ${poolAddress} on ${chainId}: created after window`,
@@ -2930,10 +2888,15 @@ export async function GET(req: Request) {
   }
   const url = new URL(req.url);
   const campaignIdParam = url.searchParams.get("campaignId")?.trim() ?? "";
+  const walletParam = url.searchParams.get("wallet")?.trim() ?? "";
+  const targetWallet = walletParam ? toLower(walletParam) : null;
+  const traceOnlyRequested = parseBooleanParam(
+    url.searchParams.get("traceOnly"),
+  );
+  const traceOnly = traceOnlyRequested || Boolean(targetWallet);
   const hasCampaignIdOverride = campaignIdParam.length > 0;
   const parsedCampaignId = hasCampaignIdOverride ? Number(campaignIdParam) : 0;
-  const campaignIdOverride =
-    hasCampaignIdOverride ? parsedCampaignId : null;
+  const campaignIdOverride = hasCampaignIdOverride ? parsedCampaignId : null;
   if (
     hasCampaignIdOverride &&
     (!Number.isInteger(parsedCampaignId) || parsedCampaignId <= 0)
@@ -2943,6 +2906,15 @@ export async function GET(req: Request) {
     console.error = originalConsole.error;
     return NextResponse.json(
       { error: "campaignId must be a positive integer" },
+      { status: 400 },
+    );
+  }
+  if (targetWallet && !isValidAddr(targetWallet)) {
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
+    return NextResponse.json(
+      { error: "wallet must be a valid 0x address" },
       { status: 400 },
     );
   }
@@ -2979,7 +2951,9 @@ export async function GET(req: Request) {
   // Reset transient state each run
   notionDisabled = false;
   await cacheHydrationPromise;
-  await hydratePointsSnapshotFromIpfs(snapshotName);
+  if (!traceOnly) {
+    await hydratePointsSnapshotFromIpfs(snapshotName);
+  }
   // Invalidate caches if campaign window changed since last hydration
   if (
     creationCacheCampaignVersion &&
@@ -2999,6 +2973,13 @@ export async function GET(req: Request) {
   }
 
   const flushCaches = async () => {
+    if (traceOnly) {
+      return {
+        creationBlockCacheCid: null,
+        transferLogCacheCid: null,
+        priceCacheCid: null,
+      };
+    }
     const [creationPin, transferPin, pricePin] = await Promise.all([
       persistCreationBlockCache(),
       persistTransferLogCache(),
@@ -3105,7 +3086,7 @@ export async function GET(req: Request) {
 
     if (!FARCASTER_DISABLED) {
       const gardensFid = await fetchGardensFid();
-      if (gardensFid) {
+      if (gardensFid != null) {
         const followerFids = await fetchFarcasterFollowerFids(gardensFid);
         const {
           primary: followerWallets,
@@ -3252,9 +3233,15 @@ export async function GET(req: Request) {
       ...farcasterDiscardedWallets.values(),
       ...walletActivitiesByWallet.keys(),
     ]);
+    const scopedAddresses =
+      targetWallet ?
+        new Set<string>(
+          [targetWallet].filter((address) => allAddresses.has(address)),
+        )
+      : allAddresses;
 
     if (!SKIP_IDENTITY_RESOLUTION) {
-      for (const address of allAddresses) {
+      for (const address of scopedAddresses) {
         if (ensNameByWallet.has(address) && ensAvatarByWallet.has(address)) {
           continue;
         }
@@ -3279,7 +3266,7 @@ export async function GET(req: Request) {
       streamUsd: number;
     }> = [];
 
-    for (const address of allAddresses) {
+    for (const address of scopedAddresses) {
       if (EXCLUDED_WALLETS.has(address)) continue;
       const value = totals.get(address) ?? { fundUsd: 0, streamUsd: 0 };
       const fundPoints = value.fundUsd >= 10 ? Math.floor(value.fundUsd) : 0;
@@ -3370,7 +3357,10 @@ export async function GET(req: Request) {
       event: string;
       payload: { account: string; points: number; metadata?: any };
     }> = [];
-    const existingTotalsByAddress = await fetchExistingTotalsByAddress();
+    const existingTotalsByAddress =
+      traceOnly ?
+        new Map<string, Record<string, number>>()
+      : await fetchExistingTotalsByAddress();
 
     const emptyCategoryTotals = Array.from(eventNames).reduce(
       (acc, n) => {
@@ -3495,7 +3485,11 @@ export async function GET(req: Request) {
       });
     }
 
-    if (allEventPayloads.length && !STACK_DRY_RUN) {
+    if (traceOnly) {
+      console.log("[superfluid-points] TRACE ONLY - skipping event diff sync", {
+        wallet: targetWallet,
+      });
+    } else if (allEventPayloads.length && !STACK_DRY_RUN) {
       console.log("[superfluid-points] stack sendEvents request", {
         count: allEventPayloads.length,
       });
@@ -3522,7 +3516,7 @@ export async function GET(req: Request) {
     // Export as CSV (Notion sync runs when configured; CSV remains fallback)
     const walletBreakdownCsv = buildWalletCsv(walletBreakdown);
     const pointsSnapshotPromise =
-      walletBreakdown.length && CAN_WRITE_PINATA ?
+      !traceOnly && walletBreakdown.length && CAN_WRITE_PINATA ?
         pinPointsSnapshotToIpfs(walletBreakdown, snapshotName)
       : null;
 
@@ -3533,7 +3527,7 @@ export async function GET(req: Request) {
       failed: 0,
     };
 
-    if (notionClient && NOTION_DB_ID_TRIMMED && !notionDisabled) {
+    if (!traceOnly && notionClient && NOTION_DB_ID_TRIMMED && !notionDisabled) {
       notionSync.attempted = true;
       try {
         // Fetch existing pages to update in place
@@ -3670,20 +3664,31 @@ export async function GET(req: Request) {
       responsePointsCid = await pointsSnapshotPromise;
     }
 
+    const responseTotals =
+      targetWallet ?
+        Object.fromEntries(
+          Array.from(totals.entries()).filter(
+            ([address]) => address === targetWallet,
+          ),
+        )
+      : Object.fromEntries(totals.entries());
+
     const pinned = await flushCaches();
     responseCreationCid = pinned.creationBlockCacheCid;
     responseTransferCid = pinned.transferLogCacheCid;
     pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
-    responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
-    logPinnedArtifacts({
-      pointsSnapshotCid: responsePointsCid,
-      runLogsCid: responseRunLogsCid,
-    });
-    if (responseRunLogsCid) {
-      console.log("[superfluid-points] run logs pinned", {
-        cid: responseRunLogsCid,
-        url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
+    if (!traceOnly) {
+      responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
+      logPinnedArtifacts({
+        pointsSnapshotCid: responsePointsCid,
+        runLogsCid: responseRunLogsCid,
       });
+      if (responseRunLogsCid) {
+        console.log("[superfluid-points] run logs pinned", {
+          cid: responseRunLogsCid,
+          url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
+        });
+      }
     }
     console.log = originalConsole.log;
     console.warn = originalConsole.warn;
@@ -3692,9 +3697,12 @@ export async function GET(req: Request) {
     return NextResponse.json(
       {
         csv: walletBreakdownCsv,
-        message: "Superfluid stack sync completed",
+        message:
+          traceOnly ?
+            "Superfluid wallet trace completed"
+          : "Superfluid stack sync completed",
         updated: updates,
-        totals: Object.fromEntries(totals.entries()),
+        totals: responseTotals,
         missingPrices: missingPriceEntries,
         overrideTemplate: missingPriceEntries.reduce(
           (acc, curr) => {
@@ -3719,13 +3727,15 @@ export async function GET(req: Request) {
         pointsSnapshotCid: responsePointsCid,
         campaignId: effectiveCampaignId,
         runLogsCid: responseRunLogsCid,
+        targetWallet,
         campaignWindow: {
           start,
           end,
           startIso: new Date(start * 1000).toISOString(),
           endIso: new Date(end * 1000).toISOString(),
         },
-        dryRun: STACK_DRY_RUN,
+        dryRun: STACK_DRY_RUN || traceOnly,
+        traceOnly,
         debug: chainDebug,
       },
       { status: 200 },
@@ -3735,16 +3745,18 @@ export async function GET(req: Request) {
     responseCreationCid = pinned.creationBlockCacheCid;
     responseTransferCid = pinned.transferLogCacheCid;
     pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
-    responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
-    logPinnedArtifacts({
-      pointsSnapshotCid: responsePointsCid,
-      runLogsCid: responseRunLogsCid,
-    });
-    if (responseRunLogsCid) {
-      console.log("[superfluid-points] run logs pinned", {
-        cid: responseRunLogsCid,
-        url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
+    if (!traceOnly) {
+      responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
+      logPinnedArtifacts({
+        pointsSnapshotCid: responsePointsCid,
+        runLogsCid: responseRunLogsCid,
       });
+      if (responseRunLogsCid) {
+        console.log("[superfluid-points] run logs pinned", {
+          cid: responseRunLogsCid,
+          url: `https://gateway.pinata.cloud/ipfs/${responseRunLogsCid}`,
+        });
+      }
     }
     console.log = originalConsole.log;
     console.warn = originalConsole.warn;

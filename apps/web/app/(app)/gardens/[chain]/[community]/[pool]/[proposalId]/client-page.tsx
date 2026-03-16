@@ -59,7 +59,10 @@ import {
   calculatePercentageBigInt,
   roundToSignificant,
 } from "@/utils/numbers";
-import { buildProposalEntityId, extractProposalNumber } from "@/utils/proposals";
+import {
+  buildProposalEntityId,
+  extractProposalNumber,
+} from "@/utils/proposals";
 import { prettyTimestamp } from "@/utils/text";
 
 type ProposalSupporter = {
@@ -112,10 +115,7 @@ export default function ClientPage({ params }: ClientPageProps) {
   });
 
   const proposalNumber = extractProposalNumber(proposalSlug);
-  const proposalEntityId = buildProposalEntityId(
-    strategyAddress,
-    proposalSlug,
-  );
+  const proposalEntityId = buildProposalEntityId(strategyAddress, proposalSlug);
   const {
     data,
     fetching,
@@ -268,30 +268,20 @@ export default function ClientPage({ params }: ClientPageProps) {
       })()
     : undefined;
 
-  const isAwaitingProposal = !!pendingProposalParam && proposalData == null;
-
-  useEffect(() => {
-    if (fetching || !isAwaitingProposal) return;
-    refetchProposal();
-  }, [fetching, isAwaitingProposal]);
-
   const proposalType = proposalData?.strategy?.config?.proposalType;
   const isSignalingType = PoolTypes[proposalType] === "signaling";
   const isStreamingType = PoolTypes[proposalType] === "streaming";
   const requestedAmount = proposalData?.requestedAmount;
   const beneficiary = proposalData?.beneficiary as Address | undefined;
-  const streamingEscrowFromSubgraph = (
-    (
-      proposalData as
-        | {
-            streamingEscrow?: Address | null;
-          }
-        | undefined
-    )?.streamingEscrow ?? undefined
-  ) as Address | undefined;
+  const streamingEscrowFromSubgraph = ((
+    proposalData as
+      | {
+          streamingEscrow?: Address | null;
+        }
+      | undefined
+  )?.streamingEscrow ?? undefined) as Address | undefined;
 
   const resolvedStreamingEscrow = streamingEscrowFromSubgraph;
-
   const submitter = proposalData?.submitter as Address | undefined;
   const superfluidExplorerBaseUrl =
     chainId != null ?
@@ -384,13 +374,13 @@ export default function ClientPage({ params }: ClientPageProps) {
     receiver: resolvedStreamingEscrow as Address,
     superToken: proposalData?.strategy?.config?.superfluidToken as Address,
     chainId,
+    containerId: poolId ?? proposalSlug,
   });
-  const explorerTotalStreamedBn =
-    (
-      superfluidStreamResult as typeof superfluidStreamResult & {
-        liveTotalStreamedBn?: bigint | null;
-      }
-    )?.liveTotalStreamedBn;
+  const explorerTotalStreamedBn = (
+    superfluidStreamResult as typeof superfluidStreamResult & {
+      liveTotalStreamedBn?: bigint | null;
+    }
+  )?.liveTotalStreamedBn;
   const shouldTickFallback = isStreamingType && explorerTotalStreamedBn == null;
 
   const proposalFlowPerMonth =
@@ -411,16 +401,15 @@ export default function ClientPage({ params }: ClientPageProps) {
     : null;
   const proposalTotalStreamedDisplay =
     poolToken ? (proposalTotalStreamed ?? 0).toFixed(4) : null;
-  const streamInfo =
-    (
-      proposalData?.strategy as
-        | {
-            stream?: {
-              maxFlowRate?: bigint | number | string | null;
-            };
-          }
-        | undefined
-    )?.stream;
+  const streamInfo = (
+    proposalData?.strategy as
+      | {
+          stream?: {
+            maxFlowRate?: bigint | number | string | null;
+          };
+        }
+      | undefined
+  )?.stream;
   const superTokenAddress = proposalData?.strategy?.config?.superfluidToken as
     | Address
     | undefined;
@@ -438,7 +427,6 @@ export default function ClientPage({ params }: ClientPageProps) {
       chainId,
       enabled: isStreamingType && !!beneficiary && !!superTokenAddress,
     });
-
   const {
     currentConvictionPct,
     thresholdPct,
@@ -452,6 +440,20 @@ export default function ClientPage({ params }: ClientPageProps) {
     tokenData: proposalData?.strategy?.registryCommunity?.garden?.decimals,
     enabled: proposalData?.proposalNumber != null && proposalData != null,
   });
+
+  const isAwaitingProposal =
+    !!pendingProposalParam &&
+    (!proposalData ||
+      !supportersData ||
+      !metadata ||
+      proposalIdNumber == null ||
+      updatedConviction == null ||
+      poolId == null);
+
+  useEffect(() => {
+    if (fetching || !isAwaitingProposal) return;
+    refetchProposal();
+  }, [fetching, isAwaitingProposal]);
 
   useEffect(() => {
     if (!shouldTickFallback) return;
@@ -667,7 +669,6 @@ export default function ClientPage({ params }: ClientPageProps) {
     isConnected: isUnwrapConnected,
     missmatchUrl: isUnwrapWrongNetwork,
   } = useDisableButtons(disableUnwrapBtnConditions);
-
   if (isAwaitingProposal) {
     return (
       <div className="col-span-12 flex min-h-[60vh] flex-col items-center justify-center gap-6">
@@ -797,6 +798,11 @@ export default function ClientPage({ params }: ClientPageProps) {
                             onReadyToExecute={triggerConvictionRefetch}
                             defaultChartMaxValue
                             proposalStatus={proposalStatus}
+                            proposalType={
+                              PoolTypes[
+                                proposalData.strategy.config.proposalType
+                              ]
+                            }
                           />
                         </div>
                       </div>
@@ -1062,41 +1068,39 @@ export default function ClientPage({ params }: ClientPageProps) {
                 </li>
               </ul>
             )}
-            <div>
-              <div className="flex flex-col gap-2">
-                {!isSignalingType && status === "cancelled" && (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <XMarkIcon className="w-5 h-5 text-error-content" />
-                      <p className="text-error-content subtitle2">Cancelled</p>
-                    </div>
-                  </>
-                )}
-                {status !== "executed" &&
-                  status !== "cancelled" &&
-                  status !== "disputed" && (
-                    <InfoBox
-                      title="Information"
-                      infoBoxType="info"
-                      content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
-                    />
-                  )}
-                {status === "disputed" && (
+            <div className="flex flex-col gap-2">
+              {!isSignalingType && status === "cancelled" && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <XMarkIcon className="w-5 h-5 text-error-content" />
+                    <p className="text-error-content subtitle2">Cancelled</p>
+                  </div>
+                </>
+              )}
+              {status !== "executed" &&
+                status !== "cancelled" &&
+                status !== "disputed" && (
                   <InfoBox
-                    title={
-                      isStreamingType ?
-                        "Streaming During Dispute"
-                      : "Proposal Disputed"
-                    }
-                    infoBoxType="warning"
-                    content={
-                      isStreamingType ?
-                        "Stream funds are accumulated while this proposal is disputed. When the dispute is ruled, accumulated funds are sent to the beneficiary if approved, or returned to the pool if rejected."
-                      : "This proposal is currently disputed. It cannot be executed until the dispute is ruled."
-                    }
+                    title="Information"
+                    infoBoxType="info"
+                    content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
                   />
                 )}
-              </div>
+              {status === "disputed" && (
+                <InfoBox
+                  title={
+                    isStreamingType ?
+                      "Streaming During Dispute"
+                    : "Proposal Disputed"
+                  }
+                  infoBoxType="warning"
+                  content={
+                    isStreamingType ?
+                      "Stream funds are accumulated while this proposal is disputed. When the dispute is ruled, accumulated funds are sent to the beneficiary if approved, or returned to the pool if rejected."
+                    : "This proposal is currently disputed. It cannot be executed until the dispute is ruled."
+                  }
+                />
+              )}
             </div>
             <div className="flex flex-col gap-4">
               {(status === "active" || status === "disputed") &&
@@ -1306,19 +1310,24 @@ export default function ClientPage({ params }: ClientPageProps) {
                             <div className="flex flex-col gap-2">
                               <div className="w-full h-[0.10px] bg-neutral-soft-content" />
                               <h4 className="mt-4">Progress</h4>
-                        <div className="flex flex-col gap-2">
-                          <ConvictionBarChart
-                            currentConvictionPct={currentConvictionPct}
-                            thresholdPct={thresholdPct ?? 0}
-                            proposalSupportPct={totalSupportPct ?? 0}
-                            isSignalingType={isSignalingType}
-                            proposalNumber={Number(proposalIdNumber)}
-                            timeToPass={Number(timeToPass)}
-                            onReadyToExecute={triggerConvictionRefetch}
-                            defaultChartMaxValue
-                            proposalStatus={proposalStatus}
-                          />
-                        </div>
+                              <div className="flex flex-col gap-2">
+                                <ConvictionBarChart
+                                  currentConvictionPct={currentConvictionPct}
+                                  thresholdPct={thresholdPct ?? 0}
+                                  proposalSupportPct={totalSupportPct ?? 0}
+                                  isSignalingType={isSignalingType}
+                                  proposalNumber={Number(proposalIdNumber)}
+                                  timeToPass={Number(timeToPass)}
+                                  onReadyToExecute={triggerConvictionRefetch}
+                                  defaultChartMaxValue
+                                  proposalStatus={proposalStatus}
+                                  proposalType={
+                                    PoolTypes[
+                                      proposalData.strategy.config.proposalType
+                                    ]
+                                  }
+                                />
+                              </div>
                             </div>
                           )}
                         </div>

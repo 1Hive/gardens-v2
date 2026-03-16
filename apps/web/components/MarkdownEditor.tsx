@@ -260,7 +260,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
             ref={editorRef}
             markdown={value ?? ""}
             readOnly={readOnly || disabled}
-            className={`rounded-2xl !h-full mdxeditor-theme ${resolvedTheme === "darkTheme" ? "dark-theme dark-editor" : ""} ${
+            className={`rounded-2xl mdxeditor-theme ${isFullscreenActive ? "!h-full" : ""} ${resolvedTheme === "darkTheme" ? "dark-theme dark-editor" : ""} ${
               readOnly || disabled ?
                 "pointer-events-none !bg-transparent dark:!bg-primary-soft-dark"
               : ""

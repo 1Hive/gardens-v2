@@ -8,6 +8,7 @@ import {
   createWalletClient,
   custom,
   Address,
+  Hex,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import {
@@ -21,7 +22,9 @@ import { passportScorerABI } from "@/src/generated";
 import { fetchPassportScore } from "@/utils/gitcoin-passport";
 import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
 import { getViemChain } from "@/utils/web3";
-const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
+const PASSPORT_KEEPER_PRIVATE_KEY = (
+  process.env.LIST_MANAGER_PRIVATE_KEY ?? process.env.KEEPER_WALLET_PK
+)?.trim() as Hex | undefined;
 const LOCAL_RPC = "http://127.0.0.1:8545";
 
 export async function POST(req: Request, { params }: Params) {
@@ -128,15 +131,21 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   try {
+    if (!PASSPORT_KEEPER_PRIVATE_KEY) {
+      console.error("Passport keeper private key is missing");
+      return NextResponse.json(
+        { error: "Passport keeper is not configured" },
+        { status: 500 },
+      );
+    }
+
     const client = createPublicClient({
       chain: chain,
       transport: http(chainConfig?.rpcUrl ?? LOCAL_RPC),
     });
 
     const walletClient = createWalletClient({
-      account: privateKeyToAccount(
-        (`${LIST_MANAGER_PRIVATE_KEY}` as Address) || "",
-      ),
+      account: privateKeyToAccount(PASSPORT_KEEPER_PRIVATE_KEY),
       chain: chain,
       transport: custom(client.transport),
     });
