@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ReentrancyGuardUpgradeable} from
     "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
-// import {console} from "forge-std/console.sol";
 import {ICollateralVault} from "./interfaces/ICollateralVault.sol";
 
 contract CollateralVault is ReentrancyGuard, ICollateralVault {

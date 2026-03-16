@@ -6,6 +6,7 @@ import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol"
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
 import {CommunityMemberFacet} from "../src/RegistryCommunity/facets/CommunityMemberFacet.sol";
+import {CommunityPauseFacet} from "../src/RegistryCommunity/facets/CommunityPauseFacet.sol";
 import {CommunityPoolFacet} from "../src/RegistryCommunity/facets/CommunityPoolFacet.sol";
 import {CommunityPowerFacet} from "../src/RegistryCommunity/facets/CommunityPowerFacet.sol";
 import {CommunityStrategyFacet} from "../src/RegistryCommunity/facets/CommunityStrategyFacet.sol";
@@ -16,7 +17,6 @@ import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
 import {CommunityDiamondConfiguratorBase} from "../test/helpers/CommunityDiamondConfigurator.sol";
-import "forge-std/console2.sol";
 
 /**
  * @title UpgradeRegistryCommunityDiamond
@@ -31,6 +31,7 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
     // Deployed facet addresses
     CommunityAdminFacet public adminFacet;
     CommunityMemberFacet public memberFacet;
+    CommunityPauseFacet public pauseFacet;
     CommunityPoolFacet public poolFacet;
     CommunityPowerFacet public powerFacet;
     CommunityStrategyFacet public strategyFacet;
@@ -41,38 +42,23 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
         // Testnets with "no-safe": true will use direct broadcast
         // Production networks will generate Safe Transaction Builder JSON
         bool directBroadcast = directBroadcastOverride || networkJson.readBool(getKeyNetwork(".no-safe"));
-        console2.log(
-            directBroadcast
-                ? "=== Starting RegistryCommunity Diamond Pattern Upgrade (Direct Broadcast) ==="
-                : "=== Starting RegistryCommunity Diamond Pattern Upgrade (Safe Transaction Builder) ==="
-        );
 
         // 1. Deploy new implementation and facets
-        console2.log(
-            directBroadcast
-                ? "\n[1/3] Deploying new RegistryCommunity implementation and facets..."
-                : "\n[1/4] Deploying new RegistryCommunity implementation and facets..."
-        );
         address communityImplementation = address(new RegistryCommunity());
-        console2.log("  RegistryCommunity impl:", communityImplementation);
 
         adminFacet = new CommunityAdminFacet();
-        console2.log("  CommunityAdminFacet:", address(adminFacet));
 
         memberFacet = new CommunityMemberFacet();
-        console2.log("  CommunityMemberFacet:", address(memberFacet));
+
+        pauseFacet = new CommunityPauseFacet();
 
         poolFacet = new CommunityPoolFacet();
-        console2.log("  CommunityPoolFacet:", address(poolFacet));
 
         powerFacet = new CommunityPowerFacet();
-        console2.log("  CommunityPowerFacet:", address(powerFacet));
 
         strategyFacet = new CommunityStrategyFacet();
-        console2.log("  CommunityStrategyFacet:", address(strategyFacet));
 
         loupeFacet = new DiamondLoupeFacet();
-        console2.log("  DiamondLoupeFacet:", address(loupeFacet));
 
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
         RegistryFactory registryFactory = RegistryFactory(payable(address(registryFactoryProxy)));
@@ -99,11 +85,7 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
             );
         }
 
-        console2.log("\n=== Summary ===");
-        console2.log("Registry Factory: %s", registryFactoryProxy);
-        console2.log("Registry Communities: %s", registryCommunityProxies.length);
         if (!directBroadcast) {
-            console2.log("Total transactions: %s", 1 + (registryCommunityProxies.length * 2));
         }
     }
 
@@ -114,19 +96,14 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
         address communityImplementation,
         IDiamond.FacetCut[] memory cuts
     ) internal {
-        console2.log("\n[2/3] Updating RegistryFactory community template...");
         registryFactory.setRegistryCommunityTemplate(communityImplementation);
-        console2.log("  RegistryFactory template updated:", registryFactoryProxy);
 
-        console2.log("\n[3/3] Upgrading RegistryCommunity proxies and applying diamond cuts...");
         RegistryCommunityDiamondInit initContract = new RegistryCommunityDiamondInit();
-        console2.log("  RegistryCommunityDiamondInit deployed:", address(initContract));
 
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
             RegistryCommunity community = RegistryCommunity(payable(address(registryCommunityProxies[i])));
             community.upgradeTo(communityImplementation);
             community.diamondCut(cuts, address(initContract), abi.encodeCall(RegistryCommunityDiamondInit.init, ()));
-            console2.log("  Community", i + 1, "upgraded with diamond facets:", registryCommunityProxies[i]);
         }
     }
 
@@ -139,7 +116,6 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
         address safeOwner,
         string memory networkJson
     ) internal {
-        console2.log("\n[2/4] Building RegistryFactory community template update transaction...");
         string memory json = string(abi.encodePacked("["));
         {
             bytes memory setTemplate =
@@ -147,9 +123,7 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
             json = string(abi.encodePacked(json, _createTransactionJson(registryFactoryProxy, setTemplate), ","));
         }
 
-        console2.log("\n[3/4] Building RegistryCommunity upgrade + diamond cut transactions...");
         RegistryCommunityDiamondInit initContract = new RegistryCommunityDiamondInit();
-        console2.log("  RegistryCommunityDiamondInit deployed:", address(initContract));
 
         bytes memory diamondCutCalldata = abi.encodeWithSelector(
             RegistryCommunity.diamondCut.selector, cuts, address(initContract), abi.encodeCall(RegistryCommunityDiamondInit.init, ())
@@ -167,26 +141,25 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
                 abi.encodePacked(json, _createTransactionJson(registryCommunityProxies[i], diamondCutCalldata), ",")
             );
 
-            console2.log("  Community", i + 1, "added to batch:", registryCommunityProxies[i]);
         }
 
         json = string(abi.encodePacked(_removeLastChar(json), "]"));
 
         _writePayloadFile(json, safeOwner, networkJson);
 
-        console2.log("\n[4/4] Safe Transaction Builder JSON generated!");
     }
 
     /**
-     * @notice Build all facet cuts including DiamondLoupeFacet (6 total)
+     * @notice Build all facet cuts including DiamondLoupeFacet (7 total)
      */
     function _buildAllFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
-        IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(adminFacet, memberFacet, poolFacet, powerFacet, strategyFacet);
-        cuts = new IDiamond.FacetCut[](6);
-        for (uint256 i = 0; i < 5; i++) {
+        IDiamond.FacetCut[] memory baseCuts =
+            _buildFacetCuts(adminFacet, memberFacet, pauseFacet, poolFacet, powerFacet, strategyFacet);
+        cuts = new IDiamond.FacetCut[](7);
+        for (uint256 i = 0; i < 6; i++) {
             cuts[i] = baseCuts[i];
         }
-        cuts[5] = _buildLoupeFacetCut(loupeFacet);
+        cuts[6] = _buildLoupeFacetCut(loupeFacet);
     }
 
     /**
@@ -207,7 +180,7 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
             ",",
             '"meta":{',
             '"name":"RegistryCommunity Diamond Pattern Upgrade",',
-            '"description":"Upgrades RegistryCommunity contracts to diamond pattern with 5 facets (Admin, Member, Pool, Power, Strategy)",',
+            '"description":"Upgrades RegistryCommunity contracts to diamond pattern with 6 facets (Admin, Member, Pause, Pool, Power, Strategy)",',
             '"txBuilderVersion":"1.18.0",',
             '"createdFromSafeAddress":"',
             _addressToString(safeOwner),
@@ -233,7 +206,6 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
         );
 
         vm.writeFile(path, payload);
-        console2.log("  File: %s", path);
     }
 
     /**

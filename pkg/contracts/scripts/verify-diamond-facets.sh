@@ -182,6 +182,12 @@ load_proxies_for_network() {
     "$CONTRACTS_DIR/config/networks.json"
 }
 
+load_facets_for_network() {
+  local network="$1"
+  jq -r ".networks[] | select(.name==\"$network\") | .FACETS | to_entries[]? | .value" \
+    "$CONTRACTS_DIR/config/networks.json"
+}
+
 get_prod_networks() {
   jq -r '.networks[].name | select(test("sepolia|testnet") | not)' \
     "$CONTRACTS_DIR/config/networks.json"
@@ -194,21 +200,40 @@ verify_network() {
   shift 3
   local proxies=("$@")
   local -A seen=()
+  local -A expected_facets=()
   local display_name="${network:-custom}"
+  local unknown_facet_count=0
+
+  if [[ -n "$network" ]]; then
+    while read -r facet_impl; do
+      [[ -z "$facet_impl" ]] && continue
+      expected_facets["$(echo "$facet_impl" | tr '[:upper:]' '[:lower:]')"]="$facet_impl"
+    done < <(load_facets_for_network "$network")
+  fi
 
   echo "Network: $display_name"
   echo "  - Using RPC: $rpc_url"
   echo "  - Using chain-id: $chain_id"
   echo "  - Inspecting ${#proxies[@]} proxy(s)"
+  if [[ ${#expected_facets[@]} -gt 0 ]]; then
+    echo "  - Checking against ${#expected_facets[@]} facet implementation(s) from config/networks.json"
+  fi
 
   for proxy in "${proxies[@]}"; do
     echo "  - Inspecting proxy: $proxy"
     while read -r facet; do
       [[ -z "$facet" ]] && continue
-      if [[ -n "${seen[$facet]:-}" ]]; then
+      facet_lc=$(echo "$facet" | tr '[:upper:]' '[:lower:]')
+      if [[ -n "${seen[$facet_lc]:-}" ]]; then
         continue
       fi
-      seen["$facet"]=1
+      seen["$facet_lc"]="$facet"
+
+      if [[ ${#expected_facets[@]} -gt 0 && -z "${expected_facets[$facet_lc]:-}" ]]; then
+        echo "    - ERROR: facet $facet is not declared in config/networks.json FACETS for $network"
+        unknown_facet_count=$((unknown_facet_count + 1))
+        continue
+      fi
 
       echo "    - Fetching codehash for $facet"
       codehash=$(cast codehash --rpc-url "$rpc_url" "$facet")
@@ -227,9 +252,39 @@ verify_network() {
     done < <(get_facet_addresses "$proxy" | sort -u)
   done
 
+  if [[ ${#expected_facets[@]} -gt 0 ]]; then
+    echo "  - Verifying all ${#expected_facets[@]} facet implementation(s) declared in config/networks.json"
+    for facet_lc in "${!expected_facets[@]}"; do
+      facet="${expected_facets[$facet_lc]}"
+      if [[ -n "${seen[$facet_lc]:-}" ]]; then
+        continue
+      fi
+
+      echo "    - Fetching codehash for declared facet $facet"
+      codehash=$(cast codehash --rpc-url "$rpc_url" "$facet")
+      contract=${HASH_TO_CONTRACT[$codehash]:-}
+      if [[ -z "$contract" ]]; then
+        echo "    - Unknown facet codehash for declared facet $facet (skipping)"
+        continue
+      fi
+
+      echo "    - Verifying declared facet $facet as $contract"
+      forge verify-contract \
+        --chain-id "$chain_id" \
+        --etherscan-api-key "$ETHERSCAN_API_KEY" \
+        "$facet" \
+        "$contract"
+      seen["$facet_lc"]="$facet"
+    done
+  fi
+
   local total
   total=$(printf '%s\n' "${!seen[@]}" | wc -l | tr -d ' ')
   echo "  - Done. Verified ${total} unique facet address(es)."
+  if [[ "$unknown_facet_count" -gt 0 ]]; then
+    echo "  - ERROR: Found ${unknown_facet_count} facet address(es) missing from config/networks.json FACETS." >&2
+    return 1
+  fi
 }
 
 build_contract_map

@@ -158,6 +158,8 @@ export const ProposalsModalSupport = forwardRef<
 
     const isSignalingType =
       PoolTypes[strategyConfig.proposalType] === "signaling";
+    const isStreamingType =
+      PoolTypes[strategyConfig.proposalType] === "streaming";
 
     const alreadyExecuted = ProposalStatus[proposalStatus] === "executed";
 
@@ -205,8 +207,13 @@ export const ProposalsModalSupport = forwardRef<
           ) ?
             `At least ${supportNeededToPass}% needed`
           : proposalWillPass ?
-            "Estimated time to pass:"
-          : !alreadyExecuted && readyToBeExecuted && !isSignalingType ?
+            PoolTypes[strategyConfig.proposalType] === "funding" ?
+              "Estimated time to pass:"
+            : "Before stream start:"
+          : !alreadyExecuted &&
+            readyToBeExecuted &&
+            !isSignalingType &&
+            !isStreamingType ?
             "Ready to be executed"
           : ""}
         </div>

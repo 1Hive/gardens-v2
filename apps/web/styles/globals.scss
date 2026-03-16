@@ -519,10 +519,16 @@ dialog * {
 }
 
 .mdxeditor-toolbar {
-  background: transparent !important;
+  background-color: var(--baseBase) !important;
+  position: relative;
+  z-index: 1;
   button {
     cursor: pointer;
   }
+}
+
+[data-theme="darkTheme"] .mdxeditor-toolbar {
+  background-color: var(--baseBase) !important;
 }
 
 .mdxeditor-select-content {

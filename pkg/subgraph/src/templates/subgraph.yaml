@@ -25,13 +25,13 @@ templates:
         - Member
       abis:
         - name: RegistryCommunity
-          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
+          file: ../contracts/abis/DiamondAggregated/RegistryCommunity.json
         - name: ERC20
-          file: ../contracts/out/ERC20.sol/ERC20.json
+          file: ../contracts/abis/ERC20.sol/ERC20.json
         - name: CVStrategy
-          file: ../contracts/out/DiamondAggregated/CVStrategy.json
+          file: ../contracts/abis/DiamondAggregated/CVStrategy.json
         - name: RegistryFactory
-          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
+          file: ../contracts/abis/RegistryFactory.sol/RegistryFactory.json
      
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
@@ -95,14 +95,17 @@ templates:
         - CVStrategy
         - CVStrategyConfig
         - CVProposal
+        - StreamInfo
+        - ProposalStream
+        - ProposalEscrowIndex
         - Allo
       abis:
         - name: CVStrategy
-          file: ../contracts/out/DiamondAggregated/CVStrategy.json
+          file: ../contracts/abis/DiamondAggregated/CVStrategy.json
         - name: RegistryCommunity
-          file: ../contracts/out/DiamondAggregated/RegistryCommunity.json
+          file: ../contracts/abis/DiamondAggregated/RegistryCommunity.json
         - name: Allo
-          file: ../contracts/out/Allo.sol/Allo.json
+          file: ../contracts/abis/Allo.sol/Allo.json
       eventHandlers:
         - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address))
           handler: handleInitialized
@@ -110,8 +113,12 @@ templates:
           handler: handleInitializedV2
         - event: InitializedCV3(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address))
           handler: handleInitializedV3
+        - event: InitializedCV4(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address,uint256,address[],address,uint256))
+          handler: handleInitializedV4
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
+        - event: ProposalCreated(uint256,uint256,address)
+          handler: handleProposalCreatedWithEscrow
         - event: SupportAdded(address,uint256,uint256,uint256,uint256)
           handler: handleSupportAdded
         - event: Distributed(uint256,address,uint256)
@@ -140,10 +147,20 @@ templates:
           handler: handleSybilScorerUpdated
         - event: SuperfluidTokenUpdated(address)
           handler: handleSuperfluidTokenUpdated
+        - event: SuperfluidPoolCreated(indexed address,indexed address,uint256)
+          handler: handleSuperfluidPoolCreated
+        - event: SuperfluidStreamingRateUpdated(uint256)
+          handler: handleSuperfluidStreamingRateUpdated
         - event: SuperfluidGDAConnected(indexed address,indexed address)
           handler: handleSuperfluidGDAConnected
         - event: SuperfluidGDADisconnected(indexed address,indexed address)
           handler: handleSuperfluidGDADisconnected
+        - event: StreamRateUpdated(indexed address,uint256)
+          handler: handleStreamRateUpdated
+        - event: StreamMemberUnitUpdated(indexed address,int96)
+          handler: handleStreamMemberUnitUpdated
+        - event: EscrowStreamStopped(indexed address,indexed address)
+          handler: handleEscrowStreamStopped
         - event: ProposalEdited(uint256,(uint256,string),address,uint256)
           handler: handleProposalEdited
 
@@ -163,7 +180,7 @@ templates:
         - CollateralVaultDeposit
       abis:
         - name: CollateralVault
-          file: ../contracts/out/CollateralVault.sol/CollateralVault.json
+          file: ../contracts/abis/CollateralVault.sol/CollateralVault.json
       eventHandlers:
         - event: CollateralDeposited(uint256,indexed address,uint256)
           handler: handleCollateralDeposited
@@ -184,7 +201,7 @@ templates:
         - ProposalDisputeMetadata
       abis:
         - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+          file: ../contracts/abis/CVStrategy.sol/CVStrategy.json
   
   - name: ProposalMetadata
     kind: file/ipfs
@@ -197,7 +214,7 @@ templates:
         - ProposalMetadata
       abis:
         - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+          file: ../contracts/abis/CVStrategy.sol/CVStrategy.json
   
   - name: PoolMetadata
     kind: file/ipfs
@@ -210,7 +227,7 @@ templates:
         - PoolMetadata
       abis:
         - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+          file: ../contracts/abis/CVStrategy.sol/CVStrategy.json
 
   - name: Covenant
     kind: file/ipfs
@@ -223,4 +240,4 @@ templates:
         - Covenant
       abis:
         - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+          file: ../contracts/abis/CVStrategy.sol/CVStrategy.json

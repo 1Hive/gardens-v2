@@ -2,11 +2,15 @@
 pragma solidity ^0.8.19;
 
 import {CVParams} from "./ICVStrategy.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 library ConvictionsUtils {
     uint256 public constant D = 10000000; // 10**7
     uint256 internal constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
     uint256 internal constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
+    error AShouldBeUnderTwo_128();
+    error AShouldBeUnderOrEqTwo_128();
+    error BShouldBeLessTwo_128();
 
     /**
      * @dev Conviction formula: a^t * y(0) + x * (1 - a^t) / (1 - a)
@@ -50,8 +54,10 @@ library ConvictionsUtils {
         uint256 _minThresholdPoints
     ) public pure returns (uint256 _threshold) {
         uint256 denom = (_maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / _poolAmount;
-        _threshold =
-            ((((((_weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - _decay)) * _totalPointsActivated) >> 64;
+        uint256 weightScaled = (_weight << 128) / D;
+        uint256 ratioTerm = Math.mulDiv(weightScaled, D, (denom * denom) >> 64);
+        uint256 decayAdjusted = ratioTerm / (D - _decay);
+        _threshold = Math.mulDiv(decayAdjusted, _totalPointsActivated, 2 ** 64);
 
         if (_totalPointsActivated != 0) {
             uint256 thresholdOverride = (
@@ -73,10 +79,9 @@ library ConvictionsUtils {
      * @return _result (_a / 2^128)^_b * 2^128
      */
     function _pow(uint256 _a, uint256 _b) internal pure returns (uint256 _result) {
-        // TODO: Uncomment when contract size fixed with diamond
-        // if (_a >= TWO_128) {
-        //     revert AShouldBeUnderTwo_128();
-        // }
+        if (_a >= TWO_128) {
+            revert AShouldBeUnderTwo_128();
+        }
 
         uint256 a = _a;
         uint256 b = _b;
@@ -100,13 +105,12 @@ library ConvictionsUtils {
      * @return _result _a * _b / 2^128
      */
     function _mul(uint256 _a, uint256 _b) internal pure returns (uint256 _result) {
-        // TODO: Uncomment when contract size fixed with diamond
-        // if (_a > TWO_128) {
-        //     revert AShouldBeUnderOrEqTwo_128();
-        // }
-        // if (_b > TWO_128) {
-        //     revert BShouldBeLessTwo_128();
-        // }
+        if (_a > TWO_128) {
+            revert AShouldBeUnderOrEqTwo_128();
+        }
+        if (_b >= TWO_128) {
+            revert BShouldBeLessTwo_128();
+        }
 
         return ((_a * _b) + TWO_127) >> 128;
     }

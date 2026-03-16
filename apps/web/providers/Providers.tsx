@@ -82,10 +82,10 @@ const createCustomConfig = (
   }
 
   const { publicClient, chains } = configureChains(usedChains, [
-    publicProvider(),
     alchemyProvider({
       apiKey: process.env.NEXT_PUBLIC_ALCHEMY_KEY ?? "",
     }),
+    publicProvider(),
   ]);
   const baseConnectors = connectorsForWallets([
     {

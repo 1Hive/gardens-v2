@@ -21,8 +21,6 @@ import { mainnet } from "wagmi";
 import { FormAddressInput } from "./FormAddressInput";
 import { Button } from "../Button";
 import { InfoWrapper } from "../InfoWrapper";
-import { useFlag } from "@/hooks/useFlag";
-import { PointSystems } from "@/types";
 import { isENS } from "@/utils/web3";
 
 type AddressListInputProps = {
@@ -38,7 +36,6 @@ type AddressListInputProps = {
   registerOptions?: RegisterOptions;
   className?: string;
   tooltip?: string;
-  pointSystemType: number;
 };
 
 export function AddressListInput({
@@ -53,7 +50,6 @@ export function AddressListInput({
   registerOptions,
   className,
   tooltip,
-  pointSystemType,
 }: AddressListInputProps) {
   const [addresses, setAddresses] = useState<Address[]>(
     Array.isArray(initialAddresses) ? initialAddresses : [],
@@ -63,10 +59,6 @@ export function AddressListInput({
   const [inputMode, setInputMode] = useState<"single" | "bulk">("single");
   const [errorMessage, setErrorMessage] = useState("");
   const [ensLoading, setEnsLoading] = useState(false);
-  const allowNoProtectionCheat = useFlag("allowNoProtection");
-
-  const allowNoProtection =
-    PointSystems[pointSystemType] === "unlimited" || allowNoProtectionCheat;
 
   const isValidEthereumAddress = (address: string) => {
     return /^0x[a-fA-F0-9]{40}$/.test(address);
@@ -359,13 +351,8 @@ export function AddressListInput({
             btnStyle="outline"
             className={"font-normal text-[14px] leading-4"}
             onClick={handleAllowEveryone}
-            disabled={!allowNoProtection}
             icon={<UserGroupIcon className="w-4 h-4" />}
-            tooltip={
-              !allowNoProtection ?
-                "Only unlimited points system pools\n can allow everyone"
-              : "Allow everyone in the pool"
-            }
+            tooltip="Allow everyone in the pool"
           >
             Everyone
           </Button>

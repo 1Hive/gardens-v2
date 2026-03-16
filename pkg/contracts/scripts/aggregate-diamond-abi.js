@@ -21,16 +21,21 @@
  *   --help          Show this help message
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
+const CONTRACTS_ROOT = path.resolve(__dirname, "..");
+const SRC_DIR = path.join(CONTRACTS_ROOT, "src");
+const OUT_DIR = path.join(CONTRACTS_ROOT, "out");
+const ABI_DIR = path.join(CONTRACTS_ROOT, "abis");
+const AGGREGATED_ABI_DIR = path.join(ABI_DIR, "DiamondAggregated");
 
 // Colors for console output
 const colors = {
-  reset: '\x1b[0m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
+  reset: "\x1b[0m",
+  red: "\x1b[31m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  blue: "\x1b[34m",
 };
 
 function log(color, message) {
@@ -46,13 +51,13 @@ const options = {
 
 for (let i = 0; i < args.length; i++) {
   switch (args[i]) {
-    case '--path':
+    case "--path":
       options.specificPath = args[++i];
       break;
-    case '--verbose':
+    case "--verbose":
       options.verbose = true;
       break;
-    case '--help':
+    case "--help":
       console.log(__doc__);
       process.exit(0);
     default:
@@ -64,11 +69,37 @@ for (let i = 0; i < args.length; i++) {
 // Check if file contains fallback() function
 function hasFallback(filePath) {
   try {
-    const content = fs.readFileSync(filePath, 'utf8');
-    return content.includes('fallback()');
+    const content = fs.readFileSync(filePath, "utf8");
+    return content.includes("fallback()");
   } catch (error) {
     return false;
   }
+}
+
+// Rename overloaded "Distributed" from Allo strategy base to avoid The Graph
+// generating Distributed/Distributed1 and breaking mapping type imports.
+function normalizeAbiItem(item) {
+  if (item.type !== "event" || item.name !== "Distributed") {
+    return item;
+  }
+
+  const isAlloDistributed =
+    Array.isArray(item.inputs) &&
+    item.inputs.length === 4 &&
+    item.inputs[0]?.type === "address" &&
+    item.inputs[0]?.indexed === true &&
+    item.inputs[1]?.type === "address" &&
+    item.inputs[2]?.type === "uint256" &&
+    item.inputs[3]?.type === "address";
+
+  if (!isAlloDistributed) {
+    return item;
+  }
+
+  return {
+    ...item,
+    name: "AlloDistributed",
+  };
 }
 
 // Aggregate ABIs for a diamond contract
@@ -76,19 +107,22 @@ function aggregateDiamondABI(mainContract, facets) {
   log(colors.blue, `\nProcessing ${mainContract}...`);
 
   // Create output directory
-  const outputDir = 'out/DiamondAggregated';
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
+  if (!fs.existsSync(AGGREGATED_ABI_DIR)) {
+    fs.mkdirSync(AGGREGATED_ABI_DIR, { recursive: true });
   }
 
   // Load main contract ABI
-  const mainABIPath = `out/${mainContract}.sol/${mainContract}.json`;
+  const mainABIPath = path.join(
+    OUT_DIR,
+    `${mainContract}.sol`,
+    `${mainContract}.json`,
+  );
   if (!fs.existsSync(mainABIPath)) {
     log(colors.red, `  ✗ Main contract ABI not found: ${mainABIPath}`);
     return false;
   }
 
-  const mainJSON = JSON.parse(fs.readFileSync(mainABIPath, 'utf8'));
+  const mainJSON = JSON.parse(fs.readFileSync(mainABIPath, "utf8"));
 
   // Start with main contract functions and events
   const functionNames = new Set();
@@ -96,23 +130,24 @@ function aggregateDiamondABI(mainContract, facets) {
   const errorNames = new Set();
   const aggregatedABI = [];
 
-  for (const item of mainJSON.abi) {
-    if (item.type === 'function') {
+  for (const rawItem of mainJSON.abi) {
+    const item = normalizeAbiItem(rawItem);
+    if (item.type === "function") {
       functionNames.add(item.name);
       aggregatedABI.push(item);
       continue;
     }
-    if (item.type === 'event') {
+    if (item.type === "event") {
       eventNames.add(item.name);
       aggregatedABI.push(item);
       continue;
     }
-    if (item.type === 'error') {
+    if (item.type === "error") {
       errorNames.add(item.name);
       aggregatedABI.push(item);
       continue;
     }
-    if (item.type === 'fallback' || item.type === 'receive') {
+    if (item.type === "fallback" || item.type === "receive") {
       aggregatedABI.push(item);
     }
   }
@@ -121,29 +156,34 @@ function aggregateDiamondABI(mainContract, facets) {
 
   // Add each facet's unique functions
   for (const facetName of facets) {
-    const facetABIPath = `out/${facetName}.sol/${facetName}.json`;
+    const facetABIPath = path.join(
+      OUT_DIR,
+      `${facetName}.sol`,
+      `${facetName}.json`,
+    );
 
     if (!fs.existsSync(facetABIPath)) {
       log(colors.yellow, `  ⚠ Facet ABI not found: ${facetABIPath}`);
       continue;
     }
 
-    const facetJSON = JSON.parse(fs.readFileSync(facetABIPath, 'utf8'));
+    const facetJSON = JSON.parse(fs.readFileSync(facetABIPath, "utf8"));
 
     // Add functions and events that don't already exist
     let functionsAdded = 0;
     let eventsAdded = 0;
     let errorsAdded = 0;
-    for (const item of facetJSON.abi) {
-      if (item.type === 'function' && !functionNames.has(item.name)) {
+    for (const rawItem of facetJSON.abi) {
+      const item = normalizeAbiItem(rawItem);
+      if (item.type === "function" && !functionNames.has(item.name)) {
         aggregatedABI.push(item);
         functionNames.add(item.name);
         functionsAdded++;
-      } else if (item.type === 'event' && !eventNames.has(item.name)) {
+      } else if (item.type === "event" && !eventNames.has(item.name)) {
         aggregatedABI.push(item);
         eventNames.add(item.name);
         eventsAdded++;
-      } else if (item.type === 'error' && !errorNames.has(item.name)) {
+      } else if (item.type === "error" && !errorNames.has(item.name)) {
         aggregatedABI.push(item);
         errorNames.add(item.name);
         errorsAdded++;
@@ -155,21 +195,23 @@ function aggregateDiamondABI(mainContract, facets) {
     if (options.verbose) {
       log(
         colors.green,
-        `  ✓ Merged ${facetName} (${functionsAdded} new functions, ${eventsAdded} new events, ${errorsAdded} new errors)`
+        `  ✓ Merged ${facetName} (${functionsAdded} new functions, ${eventsAdded} new events, ${errorsAdded} new errors)`,
       );
     }
   }
 
   // Write aggregated ABI
-  const outputPath = `${outputDir}/${mainContract}.json`;
-  fs.writeFileSync(
-    outputPath,
-    JSON.stringify({ abi: aggregatedABI }, null, 2)
+  const outputPath = path.join(AGGREGATED_ABI_DIR, `${mainContract}.json`);
+  fs.writeFileSync(outputPath, JSON.stringify({ abi: aggregatedABI }, null, 2));
+
+  const functionCount = aggregatedABI.filter(
+    (item) => item.type === "function",
+  ).length;
+
+  log(
+    colors.green,
+    `✓ ${mainContract}: Aggregated ${facetsProcessed} facets, ${functionCount} total functions`,
   );
-
-  const functionCount = aggregatedABI.filter(item => item.type === 'function').length;
-
-  log(colors.green, `✓ ${mainContract}: Aggregated ${facetsProcessed} facets, ${functionCount} total functions`);
   log(colors.blue, `  Output: ${outputPath}`);
 
   return true;
@@ -187,10 +229,10 @@ function processDirectory(dirPath) {
   try {
     const files = fs.readdirSync(dirPath);
     for (const file of files) {
-      if (file.endsWith('.sol')) {
+      if (file.endsWith(".sol")) {
         const filePath = path.join(dirPath, file);
         if (hasFallback(filePath)) {
-          mainContract = file.replace('.sol', '');
+          mainContract = file.replace(".sol", "");
           break;
         }
       }
@@ -201,28 +243,28 @@ function processDirectory(dirPath) {
   }
 
   if (!mainContract) {
-    log(colors.yellow, '  No main contract with fallback() found, skipping');
+    log(colors.yellow, "  No main contract with fallback() found, skipping");
     return;
   }
 
   log(colors.blue, `  Main contract: ${mainContract}`);
 
   // Check if facets directory exists
-  const facetsDir = path.join(dirPath, 'facets');
+  const facetsDir = path.join(dirPath, "facets");
   if (!fs.existsSync(facetsDir)) {
-    log(colors.yellow, '  No facets directory found, skipping');
+    log(colors.yellow, "  No facets directory found, skipping");
     return;
   }
 
   // Discover all facets
   const facetNames = [];
-  const skipFacets = ['DiamondCutFacet', 'DiamondLoupeFacet', 'OwnershipFacet'];
+  const skipFacets = ["DiamondLoupeFacet"];
 
   try {
     const files = fs.readdirSync(facetsDir);
     for (const file of files) {
-      if (file.endsWith('Facet.sol')) {
-        const facetName = file.replace('.sol', '');
+      if (file.endsWith("Facet.sol")) {
+        const facetName = file.replace(".sol", "");
 
         if (skipFacets.includes(facetName)) {
           log(colors.yellow, `  Skipping standard diamond facet: ${facetName}`);
@@ -239,7 +281,7 @@ function processDirectory(dirPath) {
   }
 
   if (facetNames.length === 0) {
-    log(colors.yellow, '  No custom facets found to aggregate');
+    log(colors.yellow, "  No custom facets found to aggregate");
     return;
   }
 
@@ -249,7 +291,7 @@ function processDirectory(dirPath) {
 
 // Main execution
 function main() {
-  log(colors.blue, 'Starting diamond ABI aggregation...');
+  log(colors.blue, "Starting diamond ABI aggregation...");
 
   if (options.specificPath) {
     if (!fs.existsSync(options.specificPath)) {
@@ -259,20 +301,23 @@ function main() {
     processDirectory(options.specificPath);
   } else {
     // Auto-discover all directories with facets
-    const srcDir = 'src';
+    const srcDir = SRC_DIR;
 
     try {
       const dirs = fs.readdirSync(srcDir);
       for (const dir of dirs) {
         const dirPath = path.join(srcDir, dir);
-        const facetsPath = path.join(dirPath, 'facets');
+        const facetsPath = path.join(dirPath, "facets");
 
         // Skip diamonds directory and non-directories
-        if (dir === 'diamonds' || !fs.statSync(dirPath).isDirectory()) {
+        if (dir === "diamonds" || !fs.statSync(dirPath).isDirectory()) {
           continue;
         }
 
-        if (fs.existsSync(facetsPath) && fs.statSync(facetsPath).isDirectory()) {
+        if (
+          fs.existsSync(facetsPath) &&
+          fs.statSync(facetsPath).isDirectory()
+        ) {
           processDirectory(dirPath);
         }
       }
@@ -282,9 +327,12 @@ function main() {
     }
   }
 
-  log(colors.blue, '\n=== Summary ===');
-  log(colors.green, '✓ Diamond ABI aggregation complete!');
-  log(colors.green, '  Aggregated ABIs available in: out/DiamondAggregated/');
+  log(colors.blue, "\n=== Summary ===");
+  log(colors.green, "✓ Diamond ABI aggregation complete!");
+  log(
+    colors.green,
+    `  Aggregated ABIs available in: ${path.relative(process.cwd(), AGGREGATED_ABI_DIR) || AGGREGATED_ABI_DIR}/`,
+  );
 }
 
 // Run

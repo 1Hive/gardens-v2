@@ -25,7 +25,6 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { CHAINS } from "@/configs/chains";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
-import { logOnce } from "@/utils/log";
 import { shortenAddress } from "@/utils/text";
 
 type DiamondFacet = {
@@ -35,9 +34,6 @@ type DiamondFacet = {
 
 type SignatureMap = Record<string, string[]>;
 const EMPTY_FACETS: DiamondFacet[] = [];
-type AggregatedAbiEntry =
-  | (typeof registryCommunityABI)[number]
-  | (typeof cvStrategyABI)[number];
 
 const FACETS_ABI = [
   {
@@ -89,7 +85,7 @@ const parseFunctionFromSignature = (signature: string) =>
   parseAbiItem(`function ${signature.trim()}`) as AbiFunction;
 
 const toCanonicalSignature = (abiFunction: AbiFunction) =>
-  `${abiFunction.name}(${(abiFunction.inputs ?? []).map((input) => input.type).join(",")})`;
+  `${abiFunction.name}(${(abiFunction.inputs ?? []).map((input: AbiParameter) => input.type).join(",")})`;
 
 const selectorFromSignature = (signature: string) =>
   keccak256(stringToHex(signature)).slice(0, 10).toLowerCase();
@@ -118,6 +114,20 @@ const parseBoolish = (value: unknown) => {
   return value;
 };
 
+const isTupleParameter = (
+  parameter: AbiParameter,
+): parameter is AbiParameter & { components: readonly AbiParameter[] } =>
+  "components" in parameter && Array.isArray(parameter.components);
+
+const isAbiFunctionItem = (item: unknown): item is AbiFunction =>
+  Boolean(
+    item &&
+      typeof item === "object" &&
+      "type" in item &&
+      "name" in item &&
+      (item as { type?: unknown }).type === "function",
+  );
+
 const normalizeValueForParameter = (
   value: unknown,
   parameter: AbiParameter,
@@ -131,7 +141,7 @@ const normalizeValueForParameter = (
       ...parameter,
       type: `${getTypeWithoutArraySuffix(parameter.type)}`,
     };
-    return value.map((entry: unknown) =>
+    return value.map((entry) =>
       normalizeValueForParameter(entry, nestedParameter),
     );
   }
@@ -145,11 +155,7 @@ const normalizeValueForParameter = (
   }
 
   if (parameter.type === "tuple") {
-    const components = (
-      "components" in parameter && Array.isArray(parameter.components) ?
-        parameter.components
-      : []
-    ) as AbiParameter[];
+    const components = isTupleParameter(parameter) ? parameter.components : [];
     if (Array.isArray(value)) {
       return components.map((component: AbiParameter, index: number) =>
         normalizeValueForParameter(value[index], component),
@@ -178,12 +184,11 @@ const normalizeArgsForInputs = (
   rawArgs: unknown[],
   inputs: readonly AbiParameter[],
 ) =>
-  inputs.map((input: AbiParameter, index: number) =>
+  inputs.map((input, index) =>
     normalizeValueForParameter(rawArgs[index], input),
   );
 
 export default function DiamondAdminPage() {
-  logOnce("debug", "Loading page: (app)/loupe/page.tsx");
   const [addressInput, setAddressInput] = useState("");
   const [diamondAddress, setDiamondAddress] = useState<Address>();
   const [selectedChainId, setSelectedChainId] = useState<number>(
@@ -245,7 +250,7 @@ export default function DiamondAdminPage() {
       Array.from(
         new Set(
           facets.flatMap((facet) =>
-            facet.functionSelectors.filter((selector) =>
+            facet.functionSelectors.filter((selector: string) =>
               SELECTOR_REGEX.test(selector),
             ),
           ),
@@ -255,26 +260,18 @@ export default function DiamondAdminPage() {
   );
 
   const selectedChain = CHAINS.find((entry) => entry.id === selectedChainId);
-  const knownAbiFunctions = useMemo(() => {
-    const combined = [
-      ...registryCommunityABI,
-      ...cvStrategyABI,
-    ] as AggregatedAbiEntry[];
-    return combined
-      .filter(
-        (
-          item,
-        ): item is Extract<AggregatedAbiEntry, { type: "function" }> =>
-          item.type === "function",
-      )
-      .map((item) => item as unknown as AbiFunction);
-  }, []);
+  const knownAbiFunctions = useMemo<AbiFunction[]>(
+    () =>
+      [...registryCommunityABI, ...cvStrategyABI]
+        .filter(isAbiFunctionItem)
+        .map((item) => item as AbiFunction),
+    [],
+  );
 
   const knownFunctionBySignature = useMemo(() => {
-    const entries = knownAbiFunctions.map((fn) => [
-      toCanonicalSignature(fn),
-      fn,
-    ] as const);
+    const entries = knownAbiFunctions.map(
+      (fn) => [toCanonicalSignature(fn), fn] as const,
+    );
     return new Map(entries);
   }, []);
 
@@ -529,7 +526,9 @@ export default function DiamondAdminPage() {
         const rawResult = response.data ?? "0x";
         if ((functionAbi.outputs ?? []).length === 0) {
           setReadOutput(
-            rawResult !== "0x" ? `Raw return data:\n${rawResult}` : "No return value (0x)",
+            rawResult !== "0x" ?
+              `Raw return data:\n${rawResult}`
+            : "No return value (0x)",
           );
           return;
         }
@@ -575,7 +574,9 @@ export default function DiamondAdminPage() {
       setTxHash(hash);
     } catch (runError) {
       const message =
-        runError instanceof Error ? runError.message : "Unknown execution error";
+        runError instanceof Error ?
+          runError.message
+        : "Unknown execution error";
       setExecutionError(message);
     } finally {
       setIsExecutingRead(false);
@@ -653,9 +654,7 @@ export default function DiamondAdminPage() {
         {isError && (
           <InfoBox infoBoxType="error" title="Unable to read facets">
             {error?.message ?
-              error?.message
-                .split("\n")
-                .map((line) => <p key={line}>{line}</p>)
+              error?.message.split("\n").map((line) => <p key={line}>{line}</p>)
             : "The diamond does not expose loupe data."}
           </InfoBox>
         )}
@@ -875,7 +874,11 @@ export default function DiamondAdminPage() {
                   <div className="flex flex-wrap gap-2">
                     <Button
                       btnStyle="outline"
-                      color={selectedFunctionKind === "read" ? "primary" : "secondary"}
+                      color={
+                        selectedFunctionKind === "read" ? "primary" : (
+                          "secondary"
+                        )
+                      }
                       className="sm:w-auto"
                       onClick={() => void executeFunction("read")}
                       isLoading={isExecutingRead}
@@ -972,4 +975,3 @@ export default function DiamondAdminPage() {
     </div>
   );
 }
-

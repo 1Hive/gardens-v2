@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
   InformationCircleIcon,
   PowerIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
-import { Address } from "viem";
+import { Address, formatUnits } from "viem";
 import { useBalance, useAccount, useChainId, useContractRead } from "wagmi";
 import {
   getAlloQuery,
@@ -23,7 +25,10 @@ import {
 } from "#/subgraph/.graphclient";
 import {
   ActivatePoints,
+  Button,
   CheckSybil,
+  DisplayNumber,
+  EthAddress,
   InfoBox,
   PoolGovernance,
   PoolMetrics,
@@ -32,25 +37,31 @@ import {
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";
+import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { chainConfigMap } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
-import { registryCommunityABI } from "@/src/generated";
+import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { logOnce } from "@/utils/log";
 import {
   calculatePercentageBigInt,
   formatTokenAmount,
+  SEC_TO_MONTH,
   SCALE_PRECISION,
 } from "@/utils/numbers";
 
 export type AlloQuery = getAlloQuery["allos"][number];
+const SYNC_STREAM_HIDE_WINDOW_SECONDS = 15 * 60;
 
 export default function ClientPage({
   params: { chain, pool: poolSlug, community: _community },
@@ -147,7 +158,6 @@ export default function ClientPage({
       setPoolIdForScope(resolvedPoolId);
     }
   }, [resolvedPoolId, poolIdForScope]);
-
   const communityAddress = strategy?.registryCommunity.id as Address;
 
   const { address: wallet } = useAccount();
@@ -181,17 +191,17 @@ export default function ClientPage({
 
   const { data: isMemberResult, fetching: isMemberFetching } =
     useSubgraphQuery<isMemberQuery>({
-    query: isMemberDocument,
-    variables: {
-      me: wallet?.toLowerCase(),
-      comm: _community.toLowerCase(),
-    },
-    changeScope: [
-      { topic: "community", id: communityAddress },
-      { topic: "member", containerId: communityAddress },
-    ],
-    enabled: wallet !== undefined,
-  });
+      query: isMemberDocument,
+      variables: {
+        me: wallet?.toLowerCase(),
+        comm: _community.toLowerCase(),
+      },
+      changeScope: [
+        { topic: "community", id: communityAddress },
+        { topic: "member", containerId: communityAddress },
+      ],
+      enabled: wallet !== undefined,
+    });
 
   const registryCommunity = result?.registryCommunity;
   let { communityName, communityFee, registerStakeAmount, protocolFee } =
@@ -219,36 +229,41 @@ export default function ClientPage({
   const [triggerSybilCheckModalClose, setTriggerSybilCheckModalClose] =
     useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
-  const [hasStartedMembershipLookup, setHasStartedMembershipLookup] =
-    useState(() => !wallet);
-  const [hasStartedActivationLookup, setHasStartedActivationLookup] =
-    useState(() => !wallet);
+  const [hasStartedMembershipLookup, setHasStartedMembershipLookup] = useState(
+    () => !wallet,
+  );
+  const [hasStartedActivationLookup, setHasStartedActivationLookup] = useState(
+    () => !wallet,
+  );
   const [hasJustJoinedCommunity, setHasJustJoinedCommunity] = useState(false);
 
-  const { data: memberData, error: errorMemberData, fetching: memberDataFetching } =
-    useSubgraphQuery<isMemberQuery>({
-      query: isMemberDocument,
-      variables: {
-        me: wallet?.toLowerCase(),
-        comm: communityAddress?.toLowerCase(),
-      },
-      changeScope:
-        poolId != null ?
-          [
-            {
-              topic: "member",
-              id: wallet,
-              containerId: strategy?.registryCommunity?.id,
-            },
-            {
-              topic: "proposal",
-              containerId: poolId,
-              function: "allocate",
-            },
-          ]
-        : undefined,
-      enabled: !!wallet && !!strategy?.registryCommunity?.id,
-    });
+  const {
+    data: memberData,
+    error: errorMemberData,
+    fetching: memberDataFetching,
+  } = useSubgraphQuery<isMemberQuery>({
+    query: isMemberDocument,
+    variables: {
+      me: wallet?.toLowerCase(),
+      comm: communityAddress?.toLowerCase(),
+    },
+    changeScope:
+      poolId != null ?
+        [
+          {
+            topic: "member",
+            id: wallet,
+            containerId: strategy?.registryCommunity?.id,
+          },
+          {
+            topic: "proposal",
+            containerId: poolId,
+            function: "allocate",
+          },
+        ]
+      : undefined,
+    enabled: !!wallet && !!strategy?.registryCommunity?.id,
+  });
 
   const { data: memberStrategyData, fetching: memberStrategyFetching } =
     useSubgraphQuery<getMemberStrategyQuery>({
@@ -270,13 +285,11 @@ export default function ClientPage({
       enabled: !!wallet && !!strategy?.id,
     });
 
-  const isMemberCommunityResult =
-    isMemberResult?.member?.memberCommunity?.[0];
+  const isMemberCommunityResult = isMemberResult?.member?.memberCommunity?.[0];
   const memberCommunityFromPoolResult =
     memberData?.member?.memberCommunity?.[0];
   const memberCommunityData =
-    isMemberCommunityResult?.isRegistered ?
-      isMemberCommunityResult
+    isMemberCommunityResult?.isRegistered ? isMemberCommunityResult
     : memberCommunityFromPoolResult?.isRegistered ?
       memberCommunityFromPoolResult
     : isMemberCommunityResult ?? memberCommunityFromPoolResult;
@@ -314,7 +327,8 @@ export default function ClientPage({
     memberActivatedOnChain ||
     memberStrategyData?.memberStrategy?.activatedPoints > 0n;
   const hasResolvedMembershipState =
-    !wallet || (hasStartedMembershipLookup && !isMemberFetching && !memberDataFetching);
+    !wallet ||
+    (hasStartedMembershipLookup && !isMemberFetching && !memberDataFetching);
   const hasResolvedActivationState =
     !wallet || (hasStartedActivationLookup && !memberStrategyFetching);
   const showJoinCommunitySection =
@@ -355,7 +369,10 @@ export default function ClientPage({
       return;
     }
 
-    if (previousResolvedMembershipState.current === false && isMemberCommunity) {
+    if (
+      previousResolvedMembershipState.current === false &&
+      isMemberCommunity
+    ) {
       setHasJustJoinedCommunity(true);
     }
 
@@ -366,7 +383,7 @@ export default function ClientPage({
     previousResolvedMembershipState.current = isMemberCommunity;
   }, [hasResolvedMembershipState, isMemberCommunity, memberActivatedStrategy]);
 
-  const { subscribe, unsubscribe, connected } = usePubSubContext();
+  const { subscribe, unsubscribe, connected, publish } = usePubSubContext();
 
   const subscriptionId = useRef<SubscriptionId>();
   useEffect(() => {
@@ -519,6 +536,84 @@ export default function ClientPage({
     !hasResolvedInitialNewPoolLookup;
   const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
 
+  const [nowTs, setNowTs] = useState(() => Math.floor(Date.now() / 1000));
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setNowTs(Math.floor(Date.now() / 1000));
+    }, 15000);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  const { data: lastRebalanceAtValue, refetch: refetchLastRebalanceAt } =
+    useContractRead({
+      address: strategy?.id as Address,
+      abi: cvStrategyABI,
+      functionName: "lastRebalanceAt",
+      enabled: isStreamingPool && !!strategy?.id,
+      watch: true,
+    });
+  const lastRebalanceAt = Number(lastRebalanceAtValue ?? 0n);
+  const hideSyncStreamButton =
+    lastRebalanceAt > 0 &&
+    nowTs - lastRebalanceAt < SYNC_STREAM_HIDE_WINDOW_SECONDS;
+
+  const {
+    tooltipMessage: syncStreamTooltipMessage,
+    isConnected: isSyncStreamConnected,
+    missmatchUrl: isSyncStreamWrongNetwork,
+  } = useDisableButtons();
+  const { write: writeRebalance, isLoading: isRebalanceLoading } =
+    useContractWriteWithConfirmations({
+      address: strategy?.id as Address,
+      abi: cvStrategyABI,
+      functionName: "rebalance",
+      contractName: "CVStrategy",
+      fallbackErrorMessage:
+        "Failed to sync stream for this strategy. Please try again.",
+      onConfirmations: () => {
+        void refetchLastRebalanceAt();
+        publish({
+          topic: "proposal",
+          containerId: poolId,
+          function: "rebalance",
+        });
+      },
+    });
+
+  const streamInfo = strategy?.stream;
+  const superfluidExplorerBaseUrl =
+    chainId != null ?
+      chainConfigMap[chainId]?.superfluidExplorerUrl
+    : undefined;
+  const poolStreamExplorerUrl =
+    (
+      superfluidExplorerBaseUrl != null &&
+      superfluidExplorerBaseUrl !== "" &&
+      streamInfo?.superfluidGDA != null &&
+      streamInfo.superfluidGDA !== ""
+    ) ?
+      `${superfluidExplorerBaseUrl}/pools/${streamInfo.superfluidGDA}`
+    : undefined;
+  const streamTokenDecimals =
+    superTokenInfo?.decimals ?? poolToken?.decimals ?? 18;
+  const maxFlowRateForDisplay = streamInfo?.maxFlowRate as
+    | bigint
+    | null
+    | undefined;
+  const currentFlowRateForDisplay = streamInfo?.streamLastFlowRate as
+    | bigint
+    | null
+    | undefined;
+  const { totalAmountDistributedBn: totalStreamedFromGDA } =
+    useSuperfluidStream({
+      receiver: streamInfo?.superfluidGDA as Address,
+      superToken: effectiveSuperToken as Address,
+      chainId,
+      containerId: poolId ?? strategyAddress,
+    });
+
   useEffect(() => {
     if (isMissingFundingToken && strategy && !error) {
       const timer = window.setTimeout(() => {
@@ -603,6 +698,103 @@ export default function ClientPage({
         BigInt(strategy.totalEffectiveActivePoints),
       )
     : undefined;
+
+  const formatFlowPerMonth = (flowRate?: bigint | null) => {
+    if (flowRate == null) return "--";
+    const monthlyFlow =
+      Number(formatUnits(flowRate, streamTokenDecimals)) * SEC_TO_MONTH;
+    if (!Number.isFinite(monthlyFlow)) return "--";
+    const value = monthlyFlow.toLocaleString(undefined, {
+      maximumFractionDigits: 4,
+    });
+    return poolToken?.symbol ? `${value} ${poolToken.symbol}` : value;
+  };
+  const formatTotalStreamed = (amount?: bigint | null) => {
+    if (amount == null) return "--";
+    const value = Number(formatUnits(amount, streamTokenDecimals));
+    if (!Number.isFinite(value)) return "--";
+    return value.toLocaleString(undefined, {
+      maximumFractionDigits: 5,
+    });
+  };
+
+  const StreamingInfoCard = () => {
+    if (!isStreamingPool) return null;
+
+    return (
+      <section className="section-layout">
+        <div className="flex flex-col gap-3">
+          <h4>Stream Info</h4>
+          <div className="rounded-lg border border-neutral-soft-content/20 p-3 flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <p className="subtitle2">Budget</p>
+              <p className="text-right">
+                {formatFlowPerMonth(maxFlowRateForDisplay)}/m
+              </p>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <p className="subtitle2">Streaming</p>
+              <p className="text-right">
+                {formatFlowPerMonth(currentFlowRateForDisplay)}/m
+              </p>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <p className="subtitle2">Total</p>
+              <div className="flex items-center gap-2">
+                <DisplayNumber
+                  number={formatTotalStreamed(totalStreamedFromGDA)}
+                  valueClassName="text-right"
+                />
+                {poolToken?.address && poolToken?.symbol && (
+                  <EthAddress
+                    address={poolToken.address}
+                    label={poolToken.symbol}
+                    shortenAddress={false}
+                    icon={false}
+                    actions="none"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+          {poolStreamExplorerUrl != null && poolStreamExplorerUrl !== "" && (
+            <a
+              href={poolStreamExplorerUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-sm underline underline-offset-2 w-fit inline-flex items-center gap-1"
+            >
+              View on Superfluid Explorer
+              <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+            </a>
+          )}
+          {(currentFlowRateForDisplay ?? 0n) === 0n && (
+            <InfoBox
+              infoBoxType="info"
+              className="w-full"
+              title="No active stream"
+            >
+              This pool currently has no active outflow.
+            </InfoBox>
+          )}
+          {!hideSyncStreamButton && (
+            <Button
+              btnStyle="outline"
+              color="primary"
+              className="sm:w-full"
+              disabled={!isSyncStreamConnected || isSyncStreamWrongNetwork}
+              tooltip={syncStreamTooltipMessage}
+              isLoading={isRebalanceLoading}
+              onClick={() => writeRebalance?.()}
+              icon={<ArrowPathIcon className="h-4 w-4" />}
+            >
+              Sync Stream
+            </Button>
+          )}
+        </div>
+      </section>
+    );
+  };
 
   const registerAndActivateFromPool = (
     <>
@@ -726,21 +918,6 @@ export default function ClientPage({
     </>
   );
 
-  const StreamingPoolInfo = () => {
-    if (!isStreamingPool) return null;
-
-    return (
-      <InfoBox
-        infoBoxType="info"
-        title="Streaming pool"
-        className="rounded-xl bg-neutral sm:p-4"
-      >
-        This pool supports continuous funding via Superfluid streams. Pool
-        balances and proposal execution can change over time as streams flow in.
-      </InfoBox>
-    );
-  };
-
   return effectiveStrategy ?
       <>
         {showMissingFundingTokenWarning && (
@@ -750,6 +927,16 @@ export default function ClientPage({
             </InfoBox>
           </div>
         )}
+        {poolToken && tokenDecimals && (
+          <TokenGardenFaucet
+            token={{
+              address: poolToken.address,
+              decimals: tokenDecimals,
+              symbol: poolToken.symbol,
+            }}
+          />
+        )}
+
         {/* ================= DESKTOP ================= */}
 
         {/*  Join community - Activate governace path and description from pool page */}
@@ -774,7 +961,6 @@ export default function ClientPage({
             minThGtTotalEffPoints={minThGtTotalEffPoints}
             communityName={communityName ?? ""}
           />
-          <StreamingPoolInfo />
           {registerAndActivateFromPool}
         </div>
 
@@ -813,6 +999,8 @@ export default function ClientPage({
                 : undefined
               }
             />
+
+            <StreamingInfoCard />
           </div>
         )}
 
@@ -875,7 +1063,6 @@ export default function ClientPage({
                   minThGtTotalEffPoints={minThGtTotalEffPoints}
                   communityName={communityName ?? ""}
                 />
-                <StreamingPoolInfo />
                 {poolToken && PoolTypes[proposalType] !== "signaling" && (
                   <PoolMetrics
                     communityAddress={communityAddress}

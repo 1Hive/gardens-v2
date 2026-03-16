@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
@@ -117,6 +117,12 @@ export const ProposalForm = ({
   const chainId = alloInfo.chainId;
   const beneficiary = watch("beneficiary");
 
+  useEffect(() => {
+    if (!connectedWallet) return;
+    if (getValues("beneficiary")) return;
+    setValue("beneficiary", connectedWallet);
+  }, [connectedWallet, getValues, setValue]);
+
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {
       label: "Requested amount:",
@@ -216,7 +222,6 @@ export const ProposalForm = ({
         id: proposalId.toString(), // proposalId is a bigint
         chainId,
       });
-      setLoading(false);
       if (pathname) {
         const proposalSlug = formatProposalSlug(proposalId.toString());
         const newPath = pathname.replace(
@@ -287,7 +292,6 @@ export const ProposalForm = ({
 
     const strAmount = previewData.amount?.toString() || "";
     const amount = parseUnits(strAmount, poolToken?.decimals ?? 0);
-
     const encodedData = encodeAbiParameters(abiParameters, [
       [
         poolId,

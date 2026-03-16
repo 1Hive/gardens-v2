@@ -40,4 +40,3 @@ export default function Page({
 }: PageParams) {
   return <ClientPage params={params} />;
 }
-

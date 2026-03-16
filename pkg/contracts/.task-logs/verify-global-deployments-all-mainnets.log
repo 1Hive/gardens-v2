@@ -1,0 +1,249 @@
+### arbitrum
+Verifying GlobalPauseController implementation on arbitrum: 0xf984b7c773eb1eedd3df0ef70a14a036a84c23af
+Start verifying contract `0xf984b7c773eb1EeDD3dF0Ef70A14A036a84c23aF` deployed on arbitrum
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/pausing/GlobalPauseController.sol:GlobalPauseController] "0xf984b7c773eb1EeDD3dF0Ef70A14A036a84c23aF" is already verified. Skipping verification.
+Verifying GlobalPauseController proxy on arbitrum: 0xaf6d2cb32d20101433960285574f0bb4d98e4cf9
+Start verifying contract `0xaf6D2Cb32D20101433960285574F0bb4d98e4cf9` deployed on arbitrum
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+Constructor args: 0x000000000000000000000000f984b7c773eb1eedd3df0ef70a14a036a84c23af00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000024c4d66de80000000000000000000000005bbeb8eba98ddb8fd0d91965748d23ca5c8bbad600000000000000000000000000000000000000000000000000000000
+
+Contract [lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy] "0xaf6D2Cb32D20101433960285574F0bb4d98e4cf9" is already verified. Skipping verification.
+✅ arbitrum pause
+Verifying StreamingEscrow implementation on arbitrum: 0x488549Ee1703353c84b301b3C2128D01725888AE
+Start verifying contract `0x488549Ee1703353c84b301b3C2128D01725888AE` deployed on arbitrum
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] "0x488549Ee1703353c84b301b3C2128D01725888AE" is already verified. Skipping verification.
+Verifying StreamingEscrowFactory implementation on arbitrum: 0x1968c229716779090db6231f6dfd9bb7b5807be7
+Start verifying contract `0x1968C229716779090DB6231f6DFD9Bb7b5807Be7` deployed on arbitrum
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] "0x1968C229716779090DB6231f6DFD9Bb7b5807Be7" is already verified. Skipping verification.
+Verifying StreamingEscrowFactory proxy on arbitrum: 0xbe52a852eaf824cd221aa55c3ee054f6c8c712df
+Start verifying contract `0xbe52a852eAF824cd221AA55c3Ee054f6c8c712Df` deployed on arbitrum
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+Constructor args: 0x0000000000000000000000001968c229716779090db6231f6dfd9bb7b5807be700000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000064c0c53b8b0000000000000000000000005bbeb8eba98ddb8fd0d91965748d23ca5c8bbad6000000000000000000000000cf8acb4ef033eff16e8080aed4c7d5b9285d2192000000000000000000000000488549ee1703353c84b301b3c2128d01725888ae00000000000000000000000000000000000000000000000000000000
+
+Contract [lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy] "0xbe52a852eAF824cd221AA55c3Ee054f6c8c712Df" is already verified. Skipping verification.
+✅ arbitrum escrow
+### optimism
+Verifying GlobalPauseController implementation on optimism: 0xe0aea380c479f8ecec48b701e7d49bed318a48ac
+Start verifying contract `0xe0aEa380C479f8ECec48B701E7d49bed318A48AC` deployed on optimism
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/pausing/GlobalPauseController.sol:GlobalPauseController] "0xe0aEa380C479f8ECec48B701E7d49bed318A48AC" is already verified. Skipping verification.
+Verifying GlobalPauseController proxy on optimism: 0x6c675a9a711200c51941e0d8dd1748d2594c37fe
+Start verifying contract `0x6c675a9A711200c51941E0d8dD1748d2594C37Fe` deployed on optimism
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+Constructor args: 0x000000000000000000000000e0aea380c479f8ecec48b701e7d49bed318a48ac00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000024c4d66de8000000000000000000000000129f253f78e33a0312ef8e59fae7699ef6e8dbef00000000000000000000000000000000000000000000000000000000
+
+Contract [lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy] "0x6c675a9A711200c51941E0d8dD1748d2594C37Fe" is already verified. Skipping verification.
+✅ optimism pause
+Verifying StreamingEscrow implementation on optimism: 0xBcC2DEd2cEBf5f28459334642404708E2BeEfad5
+Start verifying contract `0xBcC2DEd2cEBf5f28459334642404708E2BeEfad5` deployed on optimism
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] "0xBcC2DEd2cEBf5f28459334642404708E2BeEfad5" is already verified. Skipping verification.
+Verifying StreamingEscrowFactory implementation on optimism: 0x360894b003675b46907e10985a8e9fab2cf34036
+Start verifying contract `0x360894b003675b46907e10985A8E9FAb2cF34036` deployed on optimism
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x360894b003675b46907e10985A8E9FAb2cF34036.
+Warning: Could not detect deployment: Unable to locate ContractCode at 0x360894b003675b46907e10985a8e9fab2cf34036; waiting 5 seconds before trying again (4 tries remaining)
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x360894b003675b46907e10985A8E9FAb2cF34036.
+Warning: Could not detect deployment: Unable to locate ContractCode at 0x360894b003675b46907e10985a8e9fab2cf34036; waiting 5 seconds before trying again (3 tries remaining)
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x360894b003675b46907e10985A8E9FAb2cF34036.
+Warning: Could not detect deployment: Unable to locate ContractCode at 0x360894b003675b46907e10985a8e9fab2cf34036; waiting 5 seconds before trying again (2 tries remaining)
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x360894b003675b46907e10985A8E9FAb2cF34036.
+Warning: Could not detect deployment: Unable to locate ContractCode at 0x360894b003675b46907e10985a8e9fab2cf34036; waiting 5 seconds before trying again (1 tries remaining)
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x360894b003675b46907e10985A8E9FAb2cF34036.
+Warning: Could not detect deployment: Unable to locate ContractCode at 0x360894b003675b46907e10985a8e9fab2cf34036; waiting 5 seconds before trying again (0 tries remaining)
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x360894b003675b46907e10985A8E9FAb2cF34036.
+Error: Could not detect deployment: Unable to locate ContractCode at 0x360894b003675b46907e10985a8e9fab2cf34036
+❌ optimism escrow
+### polygon
+Verifying GlobalPauseController implementation on polygon: 0x9fd8ee20d4152505fa6a50343c81a5ac68ba1606
+Start verifying contract `0x9Fd8eE20D4152505Fa6A50343c81A5AC68Ba1606` deployed on polygon
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/pausing/GlobalPauseController.sol:GlobalPauseController] "0x9Fd8eE20D4152505Fa6A50343c81A5AC68Ba1606" is already verified. Skipping verification.
+Verifying GlobalPauseController proxy on polygon: 0xf3c2827978ab416f2d569477a0933cf0d731cf29
+Start verifying contract `0xf3C2827978aB416f2D569477a0933CF0D731cf29` deployed on polygon
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+Constructor args: 0x0000000000000000000000009fd8ee20d4152505fa6a50343c81a5ac68ba160600000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000024c4d66de80000000000000000000000007d0e4223f987fbede709842bfd273f7cea393f2400000000000000000000000000000000000000000000000000000000
+
+Contract [lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy] "0xf3C2827978aB416f2D569477a0933CF0D731cf29" is already verified. Skipping verification.
+✅ polygon pause
+Verifying StreamingEscrow implementation on polygon: 0x04D734E66B5010b410Cd6cb0C19537ADfB9632c4
+Start verifying contract `0x04D734E66B5010b410Cd6cb0C19537ADfB9632c4` deployed on polygon
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] "0x04D734E66B5010b410Cd6cb0C19537ADfB9632c4" is already verified. Skipping verification.
+Verifying StreamingEscrowFactory implementation on polygon: 0xc68d186fcdee9bef363a4ed33f873963c9cd0c9d
+Start verifying contract `0xC68d186FCdeE9BEf363a4eD33f873963c9CD0c9d` deployed on polygon
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] "0xC68d186FCdeE9BEf363a4eD33f873963c9CD0c9d" is already verified. Skipping verification.
+Verifying StreamingEscrowFactory proxy on polygon: 0x856a184c5547a0945f66d0583d4c223813be1651
+Start verifying contract `0x856a184C5547A0945F66D0583d4C223813bE1651` deployed on polygon
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+Constructor args: 0x000000000000000000000000c68d186fcdee9bef363a4ed33f873963c9cd0c9d00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000064c0c53b8b0000000000000000000000007d0e4223f987fbede709842bfd273f7cea393f240000000000000000000000003e14dc1b13c488a8d5d310918780c983bd5982e700000000000000000000000004d734e66b5010b410cd6cb0c19537adfb9632c400000000000000000000000000000000000000000000000000000000
+
+Contract [lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy] "0x856a184C5547A0945F66D0583d4C223813bE1651" is already verified. Skipping verification.
+✅ polygon escrow
+### gnosis
+Verifying GlobalPauseController implementation on gnosis: 0xdd1f2f6cd5461f0b66fad64d8b33828168d748d1
+Start verifying contract `0xdd1F2f6cD5461F0b66FaD64D8B33828168d748d1` deployed on xdai
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/pausing/GlobalPauseController.sol:GlobalPauseController] "0xdd1F2f6cD5461F0b66FaD64D8B33828168d748d1" is already verified. Skipping verification.
+Verifying GlobalPauseController proxy on gnosis: 0xce853207ce3e16e268f572ea982801b8045f0afc
+Start verifying contract `0xce853207ce3e16E268f572eA982801b8045f0aFc` deployed on xdai
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+Constructor args: 0x000000000000000000000000dd1f2f6cd5461f0b66fad64d8b33828168d748d100000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000024c4d66de800000000000000000000000091ab7a20cc3aee799df908fa1b2571fe8e07394a00000000000000000000000000000000000000000000000000000000
+
+Contract [lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy] "0xce853207ce3e16E268f572eA982801b8045f0aFc" is already verified. Skipping verification.
+✅ gnosis pause
+Verifying StreamingEscrow implementation on gnosis: 0x7294Fbd4448d8Ecbbb8C0FE2EF792445DD35a7bf
+Start verifying contract `0x7294Fbd4448d8Ecbbb8C0FE2EF792445DD35a7bf` deployed on xdai
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] "0x7294Fbd4448d8Ecbbb8C0FE2EF792445DD35a7bf" is already verified. Skipping verification.
+Verifying StreamingEscrowFactory implementation on gnosis: 0x0eba20145edaf166b692e6caa1e373cfee0a4ebb
+Start verifying contract `0x0eBa20145edaf166B692E6CAa1E373cfeE0A4EbB` deployed on xdai
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] "0x0eBa20145edaf166B692E6CAa1E373cfeE0A4EbB" is already verified. Skipping verification.
+Verifying StreamingEscrowFactory proxy on gnosis: 0x7472b2197b38233a97d0134d62ccd38aa4b93112
+Start verifying contract `0x7472b2197b38233A97d0134d62cCD38aa4b93112` deployed on xdai
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+Constructor args: 0x0000000000000000000000000eba20145edaf166b692e6caa1e373cfee0a4ebb00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000064c0c53b8b00000000000000000000000091ab7a20cc3aee799df908fa1b2571fe8e07394a0000000000000000000000002dfe937cd98ab92e59cf3139138f18c823a4efe70000000000000000000000007294fbd4448d8ecbbb8c0fe2ef792445dd35a7bf00000000000000000000000000000000000000000000000000000000
+
+Contract [lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy] "0x7472b2197b38233A97d0134d62cCD38aa4b93112" is already verified. Skipping verification.
+✅ gnosis escrow
+### base
+Verifying GlobalPauseController implementation on base: 0x68217750281073b56293aa60a27c35a345a02fe8
+Start verifying contract `0x68217750281073B56293aA60A27c35a345a02fE8` deployed on base
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/pausing/GlobalPauseController.sol:GlobalPauseController] "0x68217750281073B56293aA60A27c35a345a02fE8" is already verified. Skipping verification.
+Verifying GlobalPauseController proxy on base: 0xb32991c77ff0a57a1fb04b76bba03970198dcdbf
+Start verifying contract `0xB32991C77ff0a57a1fb04b76BBa03970198DcdBF` deployed on base
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+Constructor args: 0x00000000000000000000000068217750281073b56293aa60a27c35a345a02fe800000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000024c4d66de800000000000000000000000099ebef5e196a9e8e39d92b18663c9236661607b100000000000000000000000000000000000000000000000000000000
+
+Contract [lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy] "0xB32991C77ff0a57a1fb04b76BBa03970198DcdBF" is already verified. Skipping verification.
+✅ base pause
+Verifying StreamingEscrow implementation on base: 0x5Fa107F0cc00E83B730a120c1A1E4b3Ac4c625A4
+Start verifying contract `0x5Fa107F0cc00E83B730a120c1A1E4b3Ac4c625A4` deployed on base
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] "0x5Fa107F0cc00E83B730a120c1A1E4b3Ac4c625A4" is already verified. Skipping verification.
+Verifying StreamingEscrowFactory implementation on base: 0x3ff252b6c9c5e874a3fa539719ef3ed90d1dd59d
+Start verifying contract `0x3ff252B6C9c5E874A3fa539719eF3Ed90D1dd59d` deployed on base
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] "0x3ff252B6C9c5E874A3fa539719eF3Ed90D1dd59d" is already verified. Skipping verification.
+Verifying StreamingEscrowFactory proxy on base: 0x3b3333665de09494c2491171c06a6a161f319032
+Start verifying contract `0x3B3333665DE09494C2491171c06A6A161F319032` deployed on base
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+Constructor args: 0x0000000000000000000000003ff252b6c9c5e874a3fa539719ef3ed90d1dd59d00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000064c0c53b8b00000000000000000000000099ebef5e196a9e8e39d92b18663c9236661607b10000000000000000000000004c073b3bab6d8826b8c5b229f3cfdc1ec6e47e740000000000000000000000005fa107f0cc00e83b730a120c1a1e4b3ac4c625a400000000000000000000000000000000000000000000000000000000
+
+Contract [lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy] "0x3B3333665DE09494C2491171c06A6A161F319032" is already verified. Skipping verification.
+✅ base escrow
+### celo
+Verifying GlobalPauseController implementation on celo: 0xb715a23535d7456bfd3cb45beb756a50fc4f12e3
+Start verifying contract `0xB715a23535d7456bfd3cB45beb756A50fC4f12E3` deployed on celo
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/pausing/GlobalPauseController.sol:GlobalPauseController] "0xB715a23535d7456bfd3cB45beb756A50fC4f12E3" is already verified. Skipping verification.
+Verifying GlobalPauseController proxy on celo: 0x161b21548731875e38b6f0821debfe7b0e23f204
+Start verifying contract `0x161B21548731875e38B6F0821deBfe7B0e23F204` deployed on celo
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+Constructor args: 0x000000000000000000000000b715a23535d7456bfd3cb45beb756a50fc4f12e300000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000024c4d66de800000000000000000000000099ebef5e196a9e8e39d92b18663c9236661607b100000000000000000000000000000000000000000000000000000000
+
+Contract [lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy] "0x161B21548731875e38B6F0821deBfe7B0e23F204" is already verified. Skipping verification.
+✅ celo pause
+Verifying StreamingEscrow implementation on celo: 0xaF086A6e8a26b9F34730c84C9ac7c9FC2084201C
+Start verifying contract `0xaF086A6e8a26b9F34730c84C9ac7c9FC2084201C` deployed on celo
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] "0xaF086A6e8a26b9F34730c84C9ac7c9FC2084201C" is already verified. Skipping verification.
+Verifying StreamingEscrowFactory implementation on celo: 0x6bef3d14d222031ebbb977173a5bb46ea2b643f2
+Start verifying contract `0x6BEF3d14d222031EbBb977173a5bb46EA2b643F2` deployed on celo
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] "0x6BEF3d14d222031EbBb977173a5bb46EA2b643F2" is already verified. Skipping verification.
+Verifying StreamingEscrowFactory proxy on celo: 0xa2e7637a6ffd7576b7352ec7a34b9ee38e7e7e6c
+Start verifying contract `0xA2e7637A6Ffd7576b7352ec7A34b9EE38E7E7E6C` deployed on celo
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+Constructor args: 0x0000000000000000000000006bef3d14d222031ebbb977173a5bb46ea2b643f200000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000064c0c53b8b00000000000000000000000099ebef5e196a9e8e39d92b18663c9236661607b1000000000000000000000000a4ff07cf81c02cfd356184879d953970ca957585000000000000000000000000af086a6e8a26b9f34730c84c9ac7c9fc2084201c00000000000000000000000000000000000000000000000000000000
+
+Contract [lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy] "0xA2e7637A6Ffd7576b7352ec7A34b9EE38E7E7E6C" is already verified. Skipping verification.
+✅ celo escrow
+One or more verifications failed.

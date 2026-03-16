@@ -55,10 +55,11 @@ export const WalletBalance: FC<Props> = ({
 
   return (
     <div>
-      {!data ?
+      {!data || !isEnoughBalanceRef.current ?
         isDisconnected ?
           <div />
-        : <div className="skeleton h-14 w-56 bg-neutral" />
+        : <div className="skeleton h-14 w-56 [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#353535]" />
+
       : <div className="flex flex-col gap-1">
           <div className="flex">
             <p className="font-medium">{label}:</p>

@@ -7,7 +7,6 @@ celo = { key = "${CELOSCAN_API_KEY}", url = "https://api.celoscan.io/api"}
 celo = "https://forno.celo.org"
 
 [profile.default]
-# solc-version = "0.8.19"
 src = 'pkg/contracts/src'
 script = 'pkg/contracts/script'
 test = 'pkg/contracts/test'
@@ -22,6 +21,7 @@ optimizer = true
 optimizer-runs = 0
 # prompt_timeout = 120
 fs_permissions = [{ access = "read-write", path = "./"}]
+auto_detect_solc = true
 
 bytecode_hash = "none"
 

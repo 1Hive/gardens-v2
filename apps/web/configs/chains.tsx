@@ -1,5 +1,10 @@
 import React, { FC } from "react";
-import { Arbitrum, Optimism, Polygon } from "@thirdweb-dev/chain-icons";
+import {
+  Arbitrum,
+  Ethereum,
+  Optimism,
+  Polygon,
+} from "@thirdweb-dev/chain-icons";
 import { Address } from "viem";
 import {
   arbitrum,
@@ -8,6 +13,7 @@ import {
   celo,
   Chain,
   gnosis,
+  mainnet,
   optimism,
   optimismSepolia,
   polygon,
@@ -33,7 +39,7 @@ export const CHAINS: Chain[] = [
   gnosis,
   base,
   celo,
-  // mainnet,
+  mainnet,
 ];
 
 // if (process.env.NODE_ENV === "development") {
@@ -52,6 +58,7 @@ export type ChainData = {
   publishedSubgraphUrl?: string;
   superfluidSubgraphUrl?: string;
   publishedSuperfluidSubgraphUrl?: string;
+  superfluidExplorerUrl?: string;
   globalTribunal?: Address;
   arbitrator: Address;
   passportScorer: Address;
@@ -64,6 +71,7 @@ export type ChainData = {
 
 const SUBGRAPH_ARBSEP_VERSION = Subgraph.VERSION_ARBSEP;
 const SUBGRAPH_OPSEP_VERSION = Subgraph.VERSION_OPSEP;
+const SUBGRAPH_ETHSEP_VERSION = Subgraph.VERSION_ETHSEP;
 const SUBGRAPH_PRODNET_VERSION = Subgraph.VERSION_PROD;
 
 const getGatewayKey = () => {
@@ -72,6 +80,14 @@ const getGatewayKey = () => {
   // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
   return serverKey || process.env.NEXT_PUBLIC_SUBGRAPH_KEY || "";
 };
+
+const getAlchemyRpcUrl = (network: string) => {
+  const apiKey = process.env.NEXT_PUBLIC_ALCHEMY_KEY;
+  return apiKey ? `https://${network}.g.alchemy.com/v2/${apiKey}` : undefined;
+};
+
+const getRpcUrl = (serverUrl: string | undefined, alchemyUrl?: string) =>
+  serverUrl ?? alchemyUrl ?? "";
 
 const getSuperfluidSubgraphUrls = (publishedId: string) => {
   const gatewayKey = getGatewayKey();
@@ -82,6 +98,9 @@ const getSuperfluidSubgraphUrls = (publishedId: string) => {
       : undefined,
   };
 };
+
+const getSuperfluidExplorerUrl = (networkSlug: string) =>
+  `https://explorer.superfluid.org/${networkSlug}`;
 
 const getSubgraphUrls = (
   publishedId: string,
@@ -125,13 +144,17 @@ export const chainConfigMap: {
     explorer: "https://sepolia.arbiscan.io/",
     blockTime: 12,
     confirmations: 2,
-    rpcUrl: process.env.RPC_URL_ARB_TESTNET!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_ARB_TESTNET,
+      getAlchemyRpcUrl("arb-sepolia"),
+    ),
     ...getSubgraphUrls(
       "BfZYwhZ1rTb22Nah1u6YyXtUtAdgGNtZhW1EBb4mFzAU",
       "gardens-v2---arbitrum-sepolia",
       SUBGRAPH_ARBSEP_VERSION,
       70985,
     ),
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("arbitrum-sepolia"),
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x49222C53695C77a0F8b78Eb42606B893E98DfE6a",
@@ -146,7 +169,10 @@ export const chainConfigMap: {
     explorer: "https://sepolia-optimism.etherscan.io/",
     blockTime: 2,
     confirmations: 1,
-    rpcUrl: process.env.RPC_URL_OP_TESTNET!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_OP_TESTNET,
+      getAlchemyRpcUrl("opt-sepolia"),
+    ),
     ...getSubgraphUrls(
       "5B7swx86RJEpywgvS63kMLVx9U6RKfERfU5tWYnUuGXe",
       "gardens-v-2-optimism-sepolia",
@@ -155,6 +181,7 @@ export const chainConfigMap: {
     ),
     superfluidSubgraphUrl:
       "https://subgraph-endpoints.superfluid.dev/optimism-sepolia/protocol-v1",
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("optimism-sepolia"),
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xCcbAc15Eb0D8C241D4b6A74E650dE089c292D131",
@@ -162,21 +189,33 @@ export const chainConfigMap: {
     goodDollar: "0xb01AC9015E04ecC424E646eBAb32dfa7670Ae8a6",
     isTestnet: true,
   },
-  // 11155111: {
-  //   id: 11155111,
-  //   name: sepolia.name,
-  //   icon: Ethereum,
-  //   explorer: "https://eth-sepolia.blockscout.com",
-  //   blockTime: 12,
-  //   confirmations: 1, // 3
-  //   rpcUrl: process.env.RPC_URL_ETH_TESTNET!,
-  //   subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP?.replace("/version/latest", "")}/${SUBGRAPH_TESTNET_VERSION}`,
-  //   globalTribunal: "0xc6Eaf449f79B081300F5317122B2Dff3f039ad0b",
-  //   allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
-  //   arbitrator: "0x",
-  //   passportScorer: "0xc137c30ac0f21ce75bb484e88fb8701024f82d25",
-  //   isTestnet: true,
-  // },
+  11155111: {
+    id: 11155111,
+    name: sepolia.name,
+    icon: Ethereum,
+    explorer: "https://sepolia.etherscan.io/",
+    blockTime: 12,
+    confirmations: 1, // 3
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_ETH_TESTNET,
+      getAlchemyRpcUrl("eth-sepolia"),
+    ),
+    ...getSubgraphUrls(
+      "5xWqmgdaKXziaJg4EuV5pzWFCNmX2eRLsHKBissnbDNx",
+      "gardens-v-2-sepolia",
+      SUBGRAPH_ETHSEP_VERSION,
+      70985,
+    ),
+    superfluidSubgraphUrl:
+      "https://subgraph-endpoints.superfluid.dev/eth-sepolia/protocol-v1",
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("eth-sepolia"),
+    globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+    allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+    arbitrator: "0x3678d8f5d4f04cb033b8ab4d85df384d0df9cb08",
+    passportScorer: "0xd58ff588177f02cc535a0e235a4c002a17e27202",
+    goodDollar: "0xa50ec350146e42b1ad15705da04c7cb6929e1f2a",
+    isTestnet: true,
+  },
 
   // Prodnets
   42161: {
@@ -195,6 +234,7 @@ export const chainConfigMap: {
     ...getSuperfluidSubgraphUrls(
       "7hoLgMuj3LcWkUfH5iNWqVn69rmVbk4mrdgx1FX3sa3M",
     ),
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("arbitrum-one"),
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x1c62F449058BbeeD546823A1a581D28233f7A69c",
@@ -219,6 +259,7 @@ export const chainConfigMap: {
     ...getSuperfluidSubgraphUrls(
       "48YRvi7PHbX4RJChq4nF8DpmJGZxcvUgwfdf8QoHBXxT",
     ),
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("optimism-mainnet"),
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xaf6628d7347fc4D65F1D5C69663C875a00c56d9F",
@@ -243,6 +284,7 @@ export const chainConfigMap: {
     ...getSuperfluidSubgraphUrls(
       "CvVf1MiypnZhwWZjbxMH9A8nR2qdcfTozC5DQ1cw4X9n",
     ),
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("matic"),
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x8D9EAed9D3D23EF30ADAA706c8352c5655AEd814",
@@ -267,6 +309,7 @@ export const chainConfigMap: {
     ...getSuperfluidSubgraphUrls(
       "CFe2JWsPy9eiT9B49m2E2gwxdCzWdm5kfYHRXi5VseXV",
     ),
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("xdai"),
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x92bc0af737f55FF7B677cd942Aafd52934Fc751d",
@@ -291,6 +334,7 @@ export const chainConfigMap: {
     ...getSuperfluidSubgraphUrls(
       "5P6vRdU8BQUKMSc9v5sVDMczBRvURyK7hnrQCKf24PXW",
     ),
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("base-mainnet"),
     globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xab98D1D6Ce18e537715126614278d1A4D26bbc7d",
@@ -315,6 +359,7 @@ export const chainConfigMap: {
     ...getSuperfluidSubgraphUrls(
       "DnAAo2aA676F8DYkcUPrRTgpH4smc1Yo7D7BnzC3ErBh",
     ),
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("celo"),
     globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd",
@@ -323,21 +368,27 @@ export const chainConfigMap: {
     isTestnet: false,
     safePrefix: "celo",
   },
-  // 1: {
-  //   id: 1,
-  //   name: mainnet.name,
-  //   icon: Ethereum,
-  //   explorer: "https://eth.blockscout.com",
-  //   blockTime: 12,
-  //   confirmations: 3, // 3
-  //   rpcUrl: process.env.RPC_URL_ETHEREUM!,
-  //   subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
-  //   globalTribunal: "0x",
-  //   allo: "0x",
-  //   arbitrator: "0x",
-  //   passportScorer: "0x",
-  //   isTestnet: false,
-  // },
+  1: {
+    id: 1,
+    name: mainnet.name,
+    icon: Ethereum,
+    explorer: "https://etherscan.io",
+    blockTime: 12,
+    confirmations: 3,
+    rpcUrl: process.env.RPC_URL_MAINNET!,
+    subgraphUrl:
+      process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM ?
+        `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`
+      : "",
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("eth-mainnet"),
+    globalTribunal: "0x0000000000000000000000000000000000000000",
+    allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+    arbitrator: "0x0000000000000000000000000000000000000000",
+    passportScorer: "0x0000000000000000000000000000000000000000",
+    goodDollar: "0x0000000000000000000000000000000000000000",
+    isTestnet: false,
+    safePrefix: "eth",
+  },
 };
 
 export function getConfigByChain(chainId: ChainId): ChainData | undefined {

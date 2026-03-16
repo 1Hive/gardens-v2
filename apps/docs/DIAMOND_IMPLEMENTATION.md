@@ -159,9 +159,7 @@ pkg/contracts/src/diamonds/
 ├── libraries/
 │   └── LibDiamond.sol (core diamond storage logic)
 └── facets/ (standard diamond facets)
-    ├── DiamondCutFacet.sol
-    ├── DiamondLoupeFacet.sol
-    └── OwnershipFacet.sol
+    └── DiamondLoupeFacet.sol
 ```
 
 ---
@@ -485,9 +483,7 @@ d2b20398 - build: add postbuild hook for diamond ABI aggregation and fix contrac
 - `src/diamonds/interfaces/IDiamond.sol` - Diamond interface
 - `src/diamonds/interfaces/IDiamondCut.sol` - DiamondCut interface
 - `src/diamonds/interfaces/IDiamondLoupe.sol` - DiamondLoupe interface
-- `src/diamonds/facets/DiamondCutFacet.sol` - Standard diamond cut facet
 - `src/diamonds/facets/DiamondLoupeFacet.sol` - Standard loupe facet
-- `src/diamonds/facets/OwnershipFacet.sol` - Standard ownership facet
 
 ### New Script Files
 

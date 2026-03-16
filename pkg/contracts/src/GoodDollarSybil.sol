@@ -11,6 +11,7 @@ contract GoodDollarSybil is ISybilScorer, ProxyOwnableUpgrader {
 
     mapping(address => bool) public userValidity;
     mapping(address => Strategy) public strategies;
+    uint256[50] private __gap;
 
     event UserValidated(address user);
     event UserInvalidated(address indexed user);
@@ -107,5 +108,4 @@ contract GoodDollarSybil is ISybilScorer, ProxyOwnableUpgrader {
         isUserValid = userValidity[_user];
     }
 
-    uint256[50] private __gap;
 }
