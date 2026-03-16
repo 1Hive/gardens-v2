@@ -5,13 +5,14 @@
   "scripts": {
     "dev": "make deploy",
     "fork": "make fork",
-    "build": "forge build --sizes",
+    "build": "forge build --sizes --root ../.. pkg/contracts/src",
     "postbuild": "node scripts/aggregate-diamond-abi.js",
     "build:ir": "forge build --sizes --via-ir",
     "lint": "forge fmt",
     "test": "forge test -vvv",
     "test:force": "forge test -vvv --force",
     "format": "forge fmt",
-    "coverage": "forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --exclude-tests --report lcov -r lcov.info && sed -i 's|^SF:pkg/contracts/|SF:|g' lcov.info"
+    "coverage": "forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --exclude-tests --report lcov -r lcov.info && sed -i 's|^SF:pkg/contracts/|SF:|g' lcov.info",
+    "sync:abis": "bash scripts/sync-abis.sh"
   }
 }

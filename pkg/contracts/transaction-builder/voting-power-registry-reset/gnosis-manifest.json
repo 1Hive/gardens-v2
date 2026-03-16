@@ -1,0 +1,540 @@
+{
+  "chain": "gnosis",
+  "chainId": "100",
+  "payloads": [
+    {
+      "file": "gnosis-set-voting-power-registry-0xc1b0d081ba54e70a5ad2e321b7a78d0bec0edec1.json",
+      "safe": "0xc1b0d081ba54e70a5ad2e321b7a78d0bec0edec1",
+      "strategyCount": 14,
+      "strategies": [
+        {
+          "strategy": "0x1f6fd908db173f591aa6ea4a037d157ea4e31f68",
+          "poolId": "9",
+          "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+          "communityName": "Paul's Testing Garden"
+        },
+        {
+          "strategy": "0xb48fe96fcb6b3f7228247690f6a0f21d60002e52",
+          "poolId": "15",
+          "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+          "communityName": "Paul's Testing Garden"
+        },
+        {
+          "strategy": "0x0fd15b2142a257fa8713cad2c14ec52c00f71865",
+          "poolId": "16",
+          "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+          "communityName": "Paul's Testing Garden"
+        },
+        {
+          "strategy": "0x5f7e9967b940f47623ad7fce9d59c899a1a114e7",
+          "poolId": "17",
+          "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+          "communityName": "Paul's Testing Garden"
+        },
+        {
+          "strategy": "0x7de5cd9bccd6d15ca7ebfd9cd37aafbef6b8d1ad",
+          "poolId": "18",
+          "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+          "communityName": "Paul's Testing Garden"
+        },
+        {
+          "strategy": "0x0108617ca2e05546c49383d9392ed8db5d12304c",
+          "poolId": "28",
+          "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+          "communityName": "Paul's Testing Garden"
+        },
+        {
+          "strategy": "0x6d5accc797cc20414f1206ceb2e7665ef777480a",
+          "poolId": "32",
+          "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+          "communityName": "Paul's Testing Garden"
+        },
+        {
+          "strategy": "0x36f9176031e7de875659a3d1044cb62d1c2a9d2d",
+          "poolId": "33",
+          "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+          "communityName": "Paul's Testing Garden"
+        },
+        {
+          "strategy": "0x681d02f86578922d33a5e3b7954abdedf4e3064d",
+          "poolId": "42",
+          "community": "0x4d7a042b2fb2504dd98e4c871cc134a8ded712da",
+          "communityName": "No Cap, All dApps Hackathon"
+        },
+        {
+          "strategy": "0xe8320380d56c4319aab593e45de868b002b3e357",
+          "poolId": "43",
+          "community": "0x62ce2d154d34b5aefb9be02525cfffdbf934ff27",
+          "communityName": "First Community"
+        },
+        {
+          "strategy": "0x149e1d84858993b6ec3a41e11488c86c289620ef",
+          "poolId": "56",
+          "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+          "communityName": "Paul's Testing Garden"
+        },
+        {
+          "strategy": "0x7336ab83ec05ccb0d328390e50ac8b59b1229da1",
+          "poolId": "57",
+          "community": "0xaeb5c6c69cc5b9c10dd5c5176af83e632320fcea",
+          "communityName": "Paul"
+        },
+        {
+          "strategy": "0xd7cd912eed8e0d8b9f16f362b5239e9419ce9db9",
+          "poolId": "68",
+          "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+          "communityName": "Paul's Testing Garden"
+        },
+        {
+          "strategy": "0x0421da9346e4dcb1f9dacd64dd791d13e5ce2a8f",
+          "poolId": "69",
+          "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+          "communityName": "Paul's Testing Garden"
+        }
+      ]
+    },
+    {
+      "file": "gnosis-set-voting-power-registry-0x623c495c77bd089085675ceadc3fed750aca3518.json",
+      "safe": "0x623c495c77bd089085675ceadc3fed750aca3518",
+      "strategyCount": 1,
+      "strategies": [
+        {
+          "strategy": "0x051e8d96d4e9cde57d584b8d59a5116784f0d3c7",
+          "poolId": "46",
+          "community": "0xa8935addabca48a9fc63a009f9313fc59417b20c",
+          "communityName": "Zuzalu Software (zuzalu.city)"
+        }
+      ]
+    },
+    {
+      "file": "gnosis-set-voting-power-registry-0xd8a63b2f234b487ceaddc422c8246add2c814203.json",
+      "safe": "0xd8a63b2f234b487ceaddc422c8246add2c814203",
+      "strategyCount": 28,
+      "strategies": [
+        {
+          "strategy": "0x5ccb743c930271ebd7f254f3ccf909097532c7be",
+          "poolId": "19",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x6e7e8b56d16c577ee9c765a756deb5e6959088af",
+          "poolId": "20",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x105900650fff3cf4fe52bce72f26572fe4fa1faf",
+          "poolId": "21",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x5ab65facfc0ae022f65a5c64cb3bf38812bd042a",
+          "poolId": "22",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x67fea1ec7ed0adfb4026923b4779e4f830af8e1c",
+          "poolId": "24",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x107fbe971a1457a7a442a7fe3e2124d689a66e92",
+          "poolId": "25",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x6cc78e32004429b39c1fb8d7c6620e8511832cc4",
+          "poolId": "26",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x2b64e4838bb7e0f4794fe3e40ad5cb71c2beddb5",
+          "poolId": "29",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x0a2ecc1f687ec4e1c19d337a5ac926865e30e818",
+          "poolId": "30",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x7fe71a32d39954844d1954acae5191116ad116ac",
+          "poolId": "31",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0xa774b5c30fc203811d41dfc6edbc5d295f2aff86",
+          "poolId": "34",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x6d3e7d4271cdc083609fae18461ea1e1589e4e8d",
+          "poolId": "35",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0xfb075fad5f629124f27787fda26a774c727661c9",
+          "poolId": "36",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0xa840a7506b866ee71d487bf76a8f698249ea9836",
+          "poolId": "37",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x7c86c9a368324f51c6ef2fe88a1f5a332cac3c2d",
+          "poolId": "38",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x1c265d5392dbfc0f43c85384c925f8d147e4d6bc",
+          "poolId": "39",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x6e7ed4a6ac5665d55ed779595f2cdb689f205f0f",
+          "poolId": "40",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0xcdd52a838b602910d582ebebe91f24cf284fddd2",
+          "poolId": "41",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0xa8116d32a742e2323de416808a9768ebc2a8d179",
+          "poolId": "44",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x61cbd792c9310fc2d9fa03e99118bd163301cd0a",
+          "poolId": "45",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x69bcabc41dae5ddc5cb2370f7ba472612115e8ce",
+          "poolId": "47",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0xf1ec3cb9a862844aad68df495955832a242e39e7",
+          "poolId": "48",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x777ddf053fb46a48cccf5b91d3417d4daf3ec9e2",
+          "poolId": "49",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x48fdb39d6dc7064f6a3f5f48369fe26f2e434f5b",
+          "poolId": "50",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0xa7ff31bba33d421c2fb3aa3688cf64ea60ab4199",
+          "poolId": "51",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x2e3ab6f45e407283e719da6eeb7844a2f6bccd07",
+          "poolId": "52",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0x1e595cd639d9a835e3cf5dcef8e740e2bfe15494",
+          "poolId": "53",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        },
+        {
+          "strategy": "0xa65228c5661bba89532b2941ea86853eeba8a4b9",
+          "poolId": "54",
+          "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+          "communityName": "Blockscout"
+        }
+      ]
+    },
+    {
+      "file": "gnosis-set-voting-power-registry-0xa4ba214f690ae05f0748744af5455e0f9a86af20.json",
+      "safe": "0xa4ba214f690ae05f0748744af5455e0f9a86af20",
+      "strategyCount": 5,
+      "strategies": [
+        {
+          "strategy": "0x6fbb932dc0645ef63ca0a65340e390498a817d57",
+          "poolId": "60",
+          "community": "0xe33e18b5887cf16ad4e351e98980eb5f50727c31",
+          "communityName": "Bread Cooperative Network"
+        },
+        {
+          "strategy": "0xd59884c190277f56a3dbf4b094e5fe9327150c24",
+          "poolId": "61",
+          "community": "0xe33e18b5887cf16ad4e351e98980eb5f50727c31",
+          "communityName": "Bread Cooperative Network"
+        },
+        {
+          "strategy": "0x1bd2212c9aa332d22d61a0be6bcc55b2a1de6c63",
+          "poolId": "76",
+          "community": "0xe33e18b5887cf16ad4e351e98980eb5f50727c31",
+          "communityName": "Bread Cooperative Network"
+        },
+        {
+          "strategy": "0x7cc039c127d2e655974f9106567cdb86f7895c87",
+          "poolId": "78",
+          "community": "0xe33e18b5887cf16ad4e351e98980eb5f50727c31",
+          "communityName": "Bread Cooperative Network"
+        },
+        {
+          "strategy": "0x4082579717ebff10d8b7ffd2ee6582a9274dbeec",
+          "poolId": "79",
+          "community": "0xe33e18b5887cf16ad4e351e98980eb5f50727c31",
+          "communityName": "Bread Cooperative Network"
+        }
+      ]
+    },
+    {
+      "file": "gnosis-set-voting-power-registry-0x2d6eb2d15345abac63b7d7e5d632532d631d2a02.json",
+      "safe": "0x2d6eb2d15345abac63b7d7e5d632532d631d2a02",
+      "strategyCount": 5,
+      "strategies": [
+        {
+          "strategy": "0x873360fbebbd5b074bca9e49433cc2052037b2dd",
+          "poolId": "71",
+          "community": "0xd1762a765cd0abac9a004fb95194aa022da76abe",
+          "communityName": "LaborToken"
+        },
+        {
+          "strategy": "0x3d62928a1b27cd21fbc2633020c5b7c53d8c123d",
+          "poolId": "72",
+          "community": "0xd1762a765cd0abac9a004fb95194aa022da76abe",
+          "communityName": "LaborToken"
+        },
+        {
+          "strategy": "0x56e020883204ea163bd610272fc3ae66b3462c6f",
+          "poolId": "73",
+          "community": "0xd1762a765cd0abac9a004fb95194aa022da76abe",
+          "communityName": "LaborToken"
+        },
+        {
+          "strategy": "0xb26d40c2dc96f35010e9bd1b044e0bdb4224dfb1",
+          "poolId": "74",
+          "community": "0xd1762a765cd0abac9a004fb95194aa022da76abe",
+          "communityName": "LaborToken"
+        },
+        {
+          "strategy": "0x1f768f218f214339616d7f368114401d66ee2219",
+          "poolId": "75",
+          "community": "0xd1762a765cd0abac9a004fb95194aa022da76abe",
+          "communityName": "LaborToken"
+        }
+      ]
+    },
+    {
+      "file": "gnosis-set-voting-power-registry-0x03e10f36668edf848ac60e4bafd6097e14d6a8b3.json",
+      "safe": "0x03e10f36668edf848ac60e4bafd6097e14d6a8b3",
+      "strategyCount": 2,
+      "strategies": [
+        {
+          "strategy": "0x8a26d8290a65f952f945734fce1c5dab23c5ff29",
+          "poolId": "58",
+          "community": "0xb1c68994c857c76a0edd8e4fa2ba77fbcc8a8199",
+          "communityName": "dummy"
+        },
+        {
+          "strategy": "0x2833d75f02af58d3cd96e22685d2e4ae774e999d",
+          "poolId": "59",
+          "community": "0xb1c68994c857c76a0edd8e4fa2ba77fbcc8a8199",
+          "communityName": "dummy"
+        }
+      ]
+    },
+    {
+      "file": "gnosis-set-voting-power-registry-0x2cf187b2cf1517d04ff897b35773521d39152a91.json",
+      "safe": "0x2cf187b2cf1517d04ff897b35773521d39152a91",
+      "strategyCount": 1,
+      "strategies": [
+        {
+          "strategy": "0x2945dac39a380bcf6d82334c75bfb15e569dd38e",
+          "poolId": "70",
+          "community": "0xdc58b6a18e343cde31ea070def9f950141d71865",
+          "communityName": "MeansOfProduction"
+        }
+      ]
+    },
+    {
+      "file": "gnosis-set-voting-power-registry-0xc6c2e9efb898a42db4137b07b727b45e0c353d81.json",
+      "safe": "0xc6c2e9efb898a42db4137b07b727b45e0c353d81",
+      "strategyCount": 13,
+      "strategies": [
+        {
+          "strategy": "0xac948bca716b080df41afc70f37b7a9f6f3d9c9a",
+          "poolId": "5",
+          "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+          "communityName": "1hive"
+        },
+        {
+          "strategy": "0xbf1d2e31fa3d927673d2e95bfb2d940f5cc8890e",
+          "poolId": "6",
+          "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+          "communityName": "1hive"
+        },
+        {
+          "strategy": "0xd12f4faab3a770175f5d7e19bd32b1a7aadc0a31",
+          "poolId": "7",
+          "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+          "communityName": "1hive"
+        },
+        {
+          "strategy": "0xaa0195986ffe8f3371444fa77ee3ed04ac787eea",
+          "poolId": "8",
+          "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+          "communityName": "1hive"
+        },
+        {
+          "strategy": "0xb1a275419c817273f470ee1a102cad7507a25b6f",
+          "poolId": "11",
+          "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+          "communityName": "1hive"
+        },
+        {
+          "strategy": "0x74545010e013e5601009305288193cbd5c8702b4",
+          "poolId": "12",
+          "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+          "communityName": "1hive"
+        },
+        {
+          "strategy": "0xfbad687a935390ff59b36cd6c9462d0b1948e378",
+          "poolId": "13",
+          "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+          "communityName": "1hive"
+        },
+        {
+          "strategy": "0xba5c9429472e9e0aa1d4f0276c7fb45374e2af6c",
+          "poolId": "14",
+          "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+          "communityName": "1hive"
+        },
+        {
+          "strategy": "0x831fa1bbcdfe199d56213c40340544aeb7912349",
+          "poolId": "23",
+          "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+          "communityName": "1hive"
+        },
+        {
+          "strategy": "0x9fb2f1813228a97f559e29a6492ee27357faf8a2",
+          "poolId": "27",
+          "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+          "communityName": "1hive"
+        },
+        {
+          "strategy": "0x48ed3db635557079f8e1d0b83b37097abe78d6f1",
+          "poolId": "55",
+          "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+          "communityName": "1hive"
+        },
+        {
+          "strategy": "0x8ba5d67c25422d59db51f8ababb62c4623b80143",
+          "poolId": "66",
+          "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+          "communityName": "1hive"
+        },
+        {
+          "strategy": "0x96dee4849a6ab9e51ae36712794318001515dc91",
+          "poolId": "67",
+          "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+          "communityName": "1hive"
+        }
+      ]
+    },
+    {
+      "file": "gnosis-set-voting-power-registry-0x90ec40d4dd501b0a33b58d9574b7a60d2916f6a2.json",
+      "safe": "0x90ec40d4dd501b0a33b58d9574b7a60d2916f6a2",
+      "strategyCount": 1,
+      "strategies": [
+        {
+          "strategy": "0x561989f8f5f2bcae9c25bab1448efb8e2674ebe6",
+          "poolId": "77",
+          "community": "0xc071cf74624e3c810d73c60025f15d4891a7d8bf",
+          "communityName": "UrbitDAO"
+        }
+      ]
+    },
+    {
+      "file": "gnosis-set-voting-power-registry-0xceb9b600b72352ae7045afb3f83b7ee0671d727a.json",
+      "safe": "0xceb9b600b72352ae7045afb3f83b7ee0671d727a",
+      "strategyCount": 3,
+      "strategies": [
+        {
+          "strategy": "0x728333c30444294cbea2c2f1a19c84e6ee77d96b",
+          "poolId": "62",
+          "community": "0x99a454785c9859e5b61647d77a05be1fa53f4d04",
+          "communityName": "Safe Guardians of Gardens"
+        },
+        {
+          "strategy": "0xaee688d041859839ea3918a6dfc0165848ace6eb",
+          "poolId": "64",
+          "community": "0x99a454785c9859e5b61647d77a05be1fa53f4d04",
+          "communityName": "Safe Guardians of Gardens"
+        },
+        {
+          "strategy": "0x5ee0aaa1d51c4284dfcd2ead9d14ba7561b83000",
+          "poolId": "65",
+          "community": "0x99a454785c9859e5b61647d77a05be1fa53f4d04",
+          "communityName": "Safe Guardians of Gardens"
+        }
+      ]
+    },
+    {
+      "file": "gnosis-set-voting-power-registry-0x1b8c7f06f537711a7caf6770051a43b4f3e69a7e.json",
+      "safe": "0x1b8c7f06f537711a7caf6770051a43b4f3e69a7e",
+      "strategyCount": 1,
+      "strategies": [
+        {
+          "strategy": "0x94a2df1dd41580478ff7cd26b86c555aa0220469",
+          "poolId": "63",
+          "community": "0xb8ad4b6ba0fde413fdee6f84fc989858c2894092",
+          "communityName": "Gardens 🌱"
+        }
+      ]
+    },
+    {
+      "file": "gnosis-set-voting-power-registry-0xca040c158effbbb149232965ddd353ba9ce92384.json",
+      "safe": "0xca040c158effbbb149232965ddd353ba9ce92384",
+      "strategyCount": 1,
+      "strategies": [
+        {
+          "strategy": "0xe652081deb52afa56fb2958994427c662356007b",
+          "poolId": "10",
+          "community": "0x8f3112bcee3fb967a06dcb245f78f25e638ad56a",
+          "communityName": "Web3 Unilag"
+        }
+      ]
+    }
+  ]
+}

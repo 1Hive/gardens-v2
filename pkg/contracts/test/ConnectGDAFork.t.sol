@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import {console} from "forge-std/console.sol";
 import {CVStrategy, ArbitrableConfig, CVParams} from "../src/CVStrategy/CVStrategy.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {StrategyDiamondConfigurator} from "./helpers/StrategyDiamondConfigurator.sol";

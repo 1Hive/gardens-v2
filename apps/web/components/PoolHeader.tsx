@@ -19,7 +19,7 @@ import sfMeta from "@superfluid-finance/metadata";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { Address, zeroAddress } from "viem";
+import { formatUnits, Address, zeroAddress } from "viem";
 import {
   ArbitrableConfig,
   getPassportStrategyDocument,
@@ -38,6 +38,7 @@ import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
 import { SuperfluidStream } from "@/assets";
+import { LoupeButton } from "@/components/LoupeButton";
 import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -45,7 +46,6 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useCouncil } from "@/hooks/useCouncil";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
-import { useFlag } from "@/hooks/useFlag";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
@@ -65,6 +65,7 @@ import {
   CV_PASSPORT_THRESHOLD_SCALE,
   CV_SCALE_PRECISION,
   formatTokenAmount,
+  SEC_TO_MONTH,
   MAX_RATIO_CONSTANT,
   roundToSignificant,
 } from "@/utils/numbers";
@@ -157,7 +158,6 @@ export default function PoolHeader({
     useState(false);
   const [isShareDropdownLocked, setIsShareDropdownLocked] = useState(false);
   const [toastId, setToastId] = useState<ReturnType<typeof toast>>();
-  const showLoupe = useFlag("loupe");
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
@@ -217,8 +217,6 @@ export default function PoolHeader({
 
   const communityAddr = strategy.registryCommunity.id as Address;
   const poolAddr = strategy.id as Address;
-  const getLoupeAdminHref = (address: Address) =>
-    `/admin?chainId=${chainId}&address=${address}`;
   const defaultResolution = arbitrableConfig.defaultRuling;
   const proposalCollateral = arbitrableConfig.submitterCollateralAmount;
   const disputeCollateral = arbitrableConfig.challengerCollateralAmount;
@@ -227,6 +225,16 @@ export default function PoolHeader({
   const pointSystem = strategy.config.pointSystem;
   const allowList = strategy.config.allowlist;
   const rulingTime = arbitrableConfig.defaultRulingTimeout;
+  const streamingRatePerSecond = strategy.stream?.maxFlowRate;
+  const streamingRatePerMonth =
+    streamingRatePerSecond != null ?
+      Number(
+        formatUnits(
+          BigInt(streamingRatePerSecond),
+          superToken?.decimals ?? poolToken?.decimals ?? 18,
+        ),
+      ) * SEC_TO_MONTH
+    : null;
 
   const proposalOnDispute = strategy.proposals?.some(
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
@@ -273,13 +281,13 @@ export default function PoolHeader({
   const poolConfig = [
     {
       label: "Spending limit",
-      value: `${spendingLimitPct.toFixed(0)} %`,
+      value: `${roundToSignificant(spendingLimit, 2, { showPrecisionMissIndicator: false })} %`,
       info: "Max percentage of the pool funds that can be spent in a single proposal.",
     },
     {
       label: "Min conviction",
       value: `${roundToSignificant(minimumConviction, 2, { showPrecisionMissIndicator: false })} %`,
-      info: "% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass.",
+      info: `Minimum conviction required for a proposal ${PoolTypes[proposalType] === "streaming" ? "to start the stream" : " to be executed"}, regardless of the number of the requested amount.`,
     },
     {
       label: "Conviction growth",
@@ -336,7 +344,10 @@ export default function PoolHeader({
 
     {
       label: "Token",
-      info: "The token used in this pool to fund proposals.",
+      info:
+        PoolTypes[proposalType] === "streaming" ?
+          "The token used in this pool for streaming."
+        : "The token used in this pool to fund proposals.",
       value: (
         <div className="flex items-center">
           <EthAddress
@@ -349,7 +360,7 @@ export default function PoolHeader({
           {superToken && (
             <div
               className="tooltip"
-              data-tip={`Stream funding enabled on this pool. \nYou can stream ${superToken.symbol} tokens to this pool. Click to copy address.`}
+              data-tip={`${PoolTypes[proposalType] === "streaming" ? "Streaming" : "Stream funding"} enabled on this pool. \nYou can stream ${superToken.symbol} tokens to this pool. Click to copy address.`}
             >
               <button
                 className="btn btn-ghost btn-xs p-0"
@@ -377,6 +388,20 @@ export default function PoolHeader({
         </div>
       ),
     },
+    ...(PoolTypes[proposalType] === "streaming" ?
+      [
+        {
+          label: "Max monthly streaming",
+          info: "Target flow rate once 100% conviction has been reached.",
+          value:
+            streamingRatePerMonth != null ?
+              `${roundToSignificant(streamingRatePerMonth, 4)} ${
+                poolToken?.symbol
+              }/m`
+            : null,
+        },
+      ]
+    : []),
   ] as const;
 
   const filteredPoolConfig =
@@ -683,42 +708,19 @@ export default function PoolHeader({
 
             <div className="flex flex-col gap-4">
               {/* Addresses */}
-              <div className="flex flex-col sm:flex-row items-baseline justify-between">
-                <div className="flex items-center gap-1">
+              <div className="flex flex-col sm:flex-row items-baseline justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-2">
                   <EthAddress
                     icon={false}
-                    address={poolAddr}
+                    address={strategy.id as Address}
                     label="Pool Address:"
                     textColor="var(--color-grey-800)"
                   />
-                  {showLoupe && (
-                    <a
-                      href={getLoupeAdminHref(poolAddr)}
-                      className="text-lg leading-none"
-                      title="Open pool address in diamond facet diagnostics"
-                      aria-label="Open pool address in diamond facet diagnostics"
-                    >
-                      🔎
-                    </a>
-                  )}
-                </div>
-                <div className="flex items-center gap-1">
-                  <EthAddress
-                    icon={false}
-                    address={communityAddr}
-                    label="Community Address:"
-                    textColor="var(--color-grey-800)"
+                  <LoupeButton
+                    diamond={poolAddr}
+                    chainId={chainId}
+                    className="px-2 py-1"
                   />
-                  {showLoupe && (
-                    <a
-                      href={getLoupeAdminHref(communityAddr)}
-                      className="text-lg leading-none"
-                      title="Open community address in diamond facet diagnostics"
-                      aria-label="Open community address in diamond facet diagnostics"
-                    >
-                      🔎
-                    </a>
-                  )}
                 </div>
                 <div className="flex">
                   <a
@@ -1001,11 +1003,11 @@ export default function PoolHeader({
               title="Min threshold"
               infoBoxType="warning"
               content="Not enough eligible members in this pool have activated their governance. No proposals will pass until more members do. You can still create and support proposals."
-              className="mb-4"
+              className="my-4"
             />
           )}
           {!isEnabled && (
-            <div className="banner">
+            <div className="banner mt-2">
               {isArchived ?
                 <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
               : <ClockIcon className="h-8 w-8 text-secondary-content" />}

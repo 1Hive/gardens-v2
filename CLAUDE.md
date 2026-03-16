@@ -308,7 +308,7 @@ make verify-storage-quick  # Skip build (faster if already compiled)
 - Finds main contracts by detecting `fallback()` functions
 - Discovers all `*Facet.sol` files in `facets/` subdirectories
 - Skips `src/diamonds` directory (generic diamond utilities)
-- Skips standard diamond facets (DiamondCutFacet, DiamondLoupeFacet, OwnershipFacet)
+- Skips standard diamond facets (DiamondLoupeFacet)
 
 **Architecture**:
 

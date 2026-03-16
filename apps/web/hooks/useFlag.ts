@@ -5,6 +5,7 @@ import { logOnce } from "@/utils/log";
 
 export const cheats = [
   "showArchived",
+  "showStreamingPools",
   "bypassSafeCheck",
   "allowNoProtection",
   "skipPublished",
@@ -22,6 +23,8 @@ const getFlagFromEnv = (flag: CheatName) => {
   switch (flag) {
     case "showArchived":
       return process.env.NEXT_PUBLIC_FLAG_SHOWARCHIVED;
+    case "showStreamingPools":
+      return process.env.NEXT_PUBLIC_FLAG_SHOWSTREAMINGPOOLS;
     case "bypassSafeCheck":
       return process.env.NEXT_PUBLIC_FLAG_BYPASSSAFECHECK;
     case "allowNoProtection":

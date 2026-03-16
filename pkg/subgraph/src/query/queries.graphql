@@ -160,18 +160,33 @@ query getMember($me: ID!) {
   }
 }
 
-query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
-  tokenGarden(id: $tokenAddr) {
-    decimals
-    id
-    symbol
-  }
+query getPoolCreationData($communityAddr: ID!) {
   allos(first: 1000) {
     id
   }
   registryCommunity(id: $communityAddr) {
     communityName
     isValid
+    garden {
+      id
+      symbol
+      decimals
+    }
+  }
+}
+
+query getGlobalPauseState {
+  globalPauseControllers(
+    first: 1
+    where: { pausedUntil_not: null }
+    orderBy: updatedAt
+    orderDirection: desc
+  ) {
+    id
+    pausedUntil
+    pausedSelectors
+    createdAt
+    updatedAt
   }
 }
 
@@ -253,7 +268,7 @@ query getCommunities {
   }
 }
 
-query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
+query getCommunity($communityAddr: ID!) {
   registryCommunity(id: $communityAddr) {
     communityName
     id
@@ -297,11 +312,13 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
     registerToken
     councilSafe
     membersCount
-  }
-  tokenGarden(id: $tokenAddr) {
-    symbol
-    decimals
-    id
+    garden {
+      id
+      symbol
+      decimals
+      address
+      chainId
+    }
   }
 }
 
@@ -318,22 +335,13 @@ query getRegistryFactoryData {
   }
 }
 
-query getPoolData($garden: ID!, $poolId: BigInt!) {
+query getPoolData($strategyId: ID!) {
   allos(first: 1000) {
     id
     chainId
     tokenNative
   }
-  tokenGarden(id: $garden) {
-    address
-    name
-    symbol
-    description
-    totalBalance
-    ipfsCovenant
-    decimals
-  }
-  cvstrategies(first: 1000, where: { poolId: $poolId }) {
+  cvstrategies(first: 1000, where: { id: $strategyId }) {
     token
     metadataHash
     metadata {
@@ -365,6 +373,19 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       allowlist
       superfluidToken
     }
+    stream {
+      id
+      contractAddress
+      contractType
+      superfluidToken
+      maxFlowRate
+      superfluidGDA
+      streamLastFlowRate
+      totalMemberUnits
+      proposalStreamIds
+      createdAt
+      updatedAt
+    }
     registryCommunity {
       id
       councilSafe
@@ -373,6 +394,8 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
         id
         symbol
         decimals
+        address
+        chainId
       }
       members(first: 1000) {
         memberAddress
@@ -387,6 +410,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
         description
       }
       beneficiary
+      streamingEscrow
       requestedAmount
       requestedToken
       proposalStatus
@@ -401,13 +425,27 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
         maxCVSupply
         totalEffectiveActivePoints
       }
+      proposalStream {
+        id
+        proposal {
+          id
+        }
+        escrow
+        currentUnits
+        currentFlowRate
+        streamedUntilSnapshot
+        lastSnapshotAt
+        isStopped
+        createdAt
+        updatedAt
+      }
     }
   }
   arbitrableConfigs(
     first: 1
     orderBy: version
     orderDirection: desc
-    where: { strategy_: { poolId: $poolId } }
+    where: { strategy_: { id: $strategyId } }
   ) {
     submitterCollateralAmount
     challengerCollateralAmount
@@ -418,16 +456,11 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
   }
 }
 
-query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
+query getProposalData($proposalId: ID!, $communityId: ID!) {
   allos(first: 1000) {
     id
     chainId
     tokenNative
-  }
-  tokenGarden(id: $garden) {
-    name
-    symbol
-    decimals
   }
   registryCommunity(id: $communityId) {
     councilSafe
@@ -452,6 +485,21 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
     updatedAt
     executedAt
     version
+    streamingEscrow
+    proposalStream {
+      id
+      proposal {
+        id
+      }
+      escrow
+      currentUnits
+      currentFlowRate
+      streamedUntilSnapshot
+      lastSnapshotAt
+      isStopped
+      createdAt
+      updatedAt
+    }
     strategy {
       id
       token
@@ -459,6 +507,13 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
       totalEffectiveActivePoints
       poolId
       isEnabled
+      stream {
+        id
+        maxFlowRate
+        streamLastFlowRate
+        totalMemberUnits
+        proposalStreamIds
+      }
       registryCommunity {
         id
         councilSafe
@@ -467,6 +522,8 @@ query getProposalData($garden: ID!, $proposalId: ID!, $communityId: ID!) {
           id
           symbol
           decimals
+          address
+          chainId
         }
         members(first: 1000) {
           memberAddress
@@ -556,12 +613,13 @@ query getCommunityTitles($communityAddr: ID!) {
     communityName
     garden {
       name
+      id
     }
   }
 }
 
-query getPoolTitles($poolId: BigInt!) {
-  cvstrategies(first: 1000, where: { poolId: $poolId }) {
+query getPoolTitles($strategyId: ID!) {
+  cvstrategies(first: 1000, where: { id: $strategyId }) {
     poolId
     metadataHash
     metadata {
@@ -699,11 +757,14 @@ query getMemberPassportAndCommunities($memberId: ID!) {
 query getCommunityName($communityAddr: ID!) {
   registryCommunity(id: $communityAddr) {
     communityName
+    garden {
+      id
+    }
   }
 }
 
-query getPoolTitle($poolId: BigInt!) {
-  cvstrategies(first: 1, where: { poolId: $poolId }) {
+query getPoolTitle($strategyId: ID!) {
+  cvstrategies(first: 1, where: { id: $strategyId }) {
     metadata {
       title
     }

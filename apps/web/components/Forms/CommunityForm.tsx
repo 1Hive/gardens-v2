@@ -3,10 +3,10 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { Address, isAddress, parseUnits } from "viem";
-import { erc20ABI, useNetwork, usePublicClient, useSwitchNetwork } from "wagmi";
+import { Address, createPublicClient, http, isAddress, parseUnits } from "viem";
+import { erc20ABI, useNetwork, useSwitchNetwork } from "wagmi";
 import { getRegistryFactoryDataDocument } from "#/subgraph/.graphclient";
 import { getRegistryFactoryDataQuery } from "#/subgraph/.graphclient";
 import FormAddressInput from "./FormAddressInput";
@@ -16,7 +16,12 @@ import { FormPreview, FormRow } from "./FormPreview";
 import { FormSelect } from "./FormSelect";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { Button } from "@/components";
-import { chainConfigMap, ChainIcon } from "@/configs/chains";
+import {
+  chainConfigMap,
+  ChainIcon,
+  getChain,
+  getConfigByChain,
+} from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -83,8 +88,23 @@ export const CommunityForm = () => {
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
-  const publicClient = usePublicClient();
+  const publicClient = useMemo(() => {
+    if (!selectedChainId) {
+      return undefined;
+    }
+
+    const selectedChain = getChain(selectedChainId);
+    if (!selectedChain) {
+      return undefined;
+    }
+
+    const rpcUrl = getConfigByChain(selectedChainId)?.rpcUrl?.trim();
+
+    return createPublicClient({
+      chain: selectedChain,
+      transport: rpcUrl ? http(rpcUrl) : http(),
+    });
+  }, [selectedChainId]);
   const { isConnected, tooltipMessage } = useDisableButtons();
   const { switchNetwork, data: switchNetworkData } = useSwitchNetwork();
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
@@ -215,15 +235,12 @@ export const CommunityForm = () => {
         containerId: getValues("tokenAddress"),
         id: newCommunityAddr,
       });
-      if (pathname) {
+      if (selectedChainId) {
         router.push(
-          pathname?.replace(
-            "/create-community",
-            `/${selectedChainId}/${tokenAddress}/${newCommunityAddr}?${QUERY_PARAMS.communityPage.newCommunity}=true`,
-          ),
+          `/gardens/${selectedChainId}/${newCommunityAddr.toLowerCase()}?${QUERY_PARAMS.communityPage.newCommunity}=true`,
         );
-        setLoading(false);
       }
+      setLoading(false);
     },
     chainId: selectedChainId,
   });
@@ -577,7 +594,11 @@ export const CommunityForm = () => {
           </div>
         </div>
       }
-      <div className="flex w-full items-center justify-center py-6">
+      <div
+        className={`flex w-full items-center py-6 ${
+          showPreview ? "justify-center" : "justify-end"
+        }`}
+      >
         {showPreview ?
           <div className="flex items-center gap-10">
             <Button onClick={handleBackToEdit} btnStyle="outline">

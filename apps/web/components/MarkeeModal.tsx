@@ -290,7 +290,7 @@ export default function MarkeeModal({
               <p className="text-xs text-neutral-content/60">
                 62% to Gardens Treasury · 38% to{" "}
                 <a
-                  href="https://app.gardens.fund/gardens/8453/0xee3027f1e021b09d629922d40436c5dea3c6cb38/0xce6b968c8bd130ca08f1fcc97b509a824380d867"
+                  href="https://app.gardens.fund/gardens/8453/0xce6b968c8bd130ca08f1fcc97b509a824380d867"
                   target="_blank"
                   rel="noreferrer"
                   className="underline underline-offset-2 hover:text-primary-content transition-colors"

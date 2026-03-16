@@ -60,8 +60,8 @@ export const useConvictionRead = ({
   if (errorConviction) {
     logOnce("error", "Error reading conviction", errorConviction);
   }
-  const shouldReadThreshold =
-    enabled && PoolTypes[strategyConfig?.proposalType] === "funding";
+  const poolType = PoolTypes[strategyConfig?.proposalType];
+  const shouldReadThreshold = enabled && poolType !== "signaling";
 
   const {
     data: thresholdFromContract,
@@ -86,7 +86,7 @@ export const useConvictionRead = ({
     );
   }
 
-  //calculate time to pass for proposal te be executed
+  // calculate time to pass for proposal te be executed
   const alphaDecay = +strategyConfig?.decay / CV_SCALE_PRECISION;
 
   const remainingBlocksToPass = useMemo(

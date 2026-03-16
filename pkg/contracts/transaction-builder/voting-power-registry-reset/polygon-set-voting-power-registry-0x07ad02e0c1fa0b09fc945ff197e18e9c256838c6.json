@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "chainId": "137",
+  "createdAt": 1773693119356,
+  "meta": {
+    "name": "Set Voting Power Registry Batch",
+    "description": "Safe Transaction Builder payload to reset votingPowerRegistry to registryCommunity for all strategies owned by this council safe.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "0x07ad02e0c1fa0b09fc945ff197e18e9c256838c6",
+    "createdFromOwnerAddress": "0x07ad02e0c1fa0b09fc945ff197e18e9c256838c6",
+    "hash": "3300d0e6b2f477888272e9ae18451bf34a83998f"
+  },
+  "transactions": [
+    {
+      "to": "0x67a1d8955fa9d1e83de9f3f5394ce83f02a4d250",
+      "value": "0",
+      "data": "0xc6cdc9800000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xac3f6fd7ece00c43526d455b779056bf2a53721f",
+      "value": "0",
+      "data": "0xc6cdc9800000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xc93fa6150f31524b3db1fcbcc94e58eac7ebf4e4",
+      "value": "0",
+      "data": "0xc6cdc9800000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    }
+  ]
+}

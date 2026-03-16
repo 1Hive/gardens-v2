@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
@@ -12,7 +12,6 @@ import {
   CVStrategyConfig,
   Maybe,
   MemberCommunity,
-  TokenGarden,
 } from "#/subgraph/.graphclient";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormInput } from "./FormInput";
@@ -34,6 +33,7 @@ import {
   calculatePercentageBigInt,
   convertSecondsToReadableTime,
 } from "@/utils/numbers";
+import { formatProposalSlug } from "@/utils/proposals";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -60,7 +60,6 @@ type ProposalFormProps = {
   proposalType: number;
   poolParams: Pick<CVStrategyConfig, "decay">;
   alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
-  tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
   spendingLimit: number | string | undefined;
   spendingLimitPct: number;
   poolBalance: string | undefined;
@@ -117,6 +116,12 @@ export const ProposalForm = ({
 
   const chainId = alloInfo.chainId;
   const beneficiary = watch("beneficiary");
+
+  useEffect(() => {
+    if (!connectedWallet) return;
+    if (getValues("beneficiary")) return;
+    setValue("beneficiary", connectedWallet);
+  }, [connectedWallet, getValues, setValue]);
 
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {
@@ -198,6 +203,7 @@ export const ProposalForm = ({
     abi: alloABI,
     contractName: "Allo",
     functionName: "registerRecipient",
+    confirmations: 1,
     fallbackErrorMessage: "Error creating Proposal, please report a bug.",
     value: arbitrableConfig?.submitterCollateralAmount,
     onError: () => {
@@ -217,11 +223,11 @@ export const ProposalForm = ({
         id: proposalId.toString(), // proposalId is a bigint
         chainId,
       });
-      setLoading(false);
       if (pathname) {
+        const proposalSlug = formatProposalSlug(proposalId.toString());
         const newPath = pathname.replace(
           "/create-proposal",
-          `/${strategy.id}-${proposalId}`,
+          `/${proposalSlug}`,
         );
         const searchParams = new URLSearchParams();
         searchParams.set(
@@ -287,7 +293,6 @@ export const ProposalForm = ({
 
     const strAmount = previewData.amount?.toString() || "";
     const amount = parseUnits(strAmount, poolToken?.decimals ?? 0);
-
     const encodedData = encodeAbiParameters(abiParameters, [
       [
         poolId,
@@ -474,7 +479,7 @@ export const ProposalForm = ({
           )}
         </div>
         {showPreview ?
-          <div className="flex items-center gap-10">
+          <div className="flex items-center justify-end gap-10">
             <Button
               type="button"
               onClick={() => {

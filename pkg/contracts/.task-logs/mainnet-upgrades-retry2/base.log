@@ -1,0 +1,113 @@
+🔍 Verifying diamond storage layouts...
+[0;34mAll storage layouts cached in cache/storage-layout; skipping build.[0m
+[0;34mStarting storage layout verification...[0m
+
+[0;34m=== Processing CVStrategy ===[0m
+  Main contract: [0;34mCVStrategy[0m
+  Checking CVAdminFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVAdminFacet-405082e64fda29edd19aa9d3d402217825ba39a4774b988361f9995e7f54100c.txt
+[0;32m✓ MATCH[0m
+  Checking CVAllocationFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVAllocationFacet-74516ece933c38ebfc8e91c9a384b254616a0c0a8f4fe611afbcf692f8d4b788.txt
+[0;32m✓ MATCH[0m
+  Checking CVDisputeFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVDisputeFacet-4cea66d303d30816e34fbb088b26f92caaa0e6b084298359efa1805fad46f396.txt
+[0;32m✓ MATCH[0m
+  Checking CVPauseFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVPauseFacet-c60f6fc43d99959369444d6e7bf4c1fe1c356ea2be13215b87ed8290aa6376df.txt
+[0;32m✓ MATCH[0m
+  Checking CVPowerFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVPowerFacet-645557d813a8663fa395d18686138542b301fe29ef67a4638eecfd7123de85ab.txt
+[0;32m✓ MATCH[0m
+  Checking CVProposalFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVProposalFacet-27398445f568b8161a5a26f694461a0a2b9a80958805be668e17f19304cb20c5.txt
+[0;32m✓ MATCH[0m
+  Checking CVStreamingFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVStreamingFacet-5691a93fe150536303b9108b9f844aa15b1b181f9bd2caeec73b7da317c581e6.txt
+[0;32m✓ MATCH[0m
+  Checking CVSyncPowerFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVSyncPowerFacet-5dab80e5dabbddd595acffd99230f5075c505a899129ab674a77e246da2de788.txt
+[0;32m✓ MATCH[0m
+
+[1;33mSkipping src/diamonds (generic diamond utilities)[0m
+
+[0;34m=== Processing RegistryCommunity ===[0m
+  Main contract: [0;34mRegistryCommunity[0m
+  Checking CommunityAdminFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityAdminFacet-21328e4c5d04da2b927925acf69e59d1b80b1adc88cd9bc06e49aa07bbca662a.txt
+[0;32m✓ MATCH[0m
+  Checking CommunityMemberFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityMemberFacet-2df90697b14c68814cb3bef5d6f8cbcebe4d05007216e332162598cdb661e892.txt
+[0;32m✓ MATCH[0m
+  Checking CommunityPauseFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityPauseFacet-fccfdd45d13a69d9c7eeddbbadf3a8759034ac38a3e8bbb0189e5de5ef380685.txt
+[0;32m✓ MATCH[0m
+  Checking CommunityPoolFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityPoolFacet-b25bf00e5a3a093466fb37e8079605417b6f86e70629b0863de9a35694d9e25e.txt
+[0;32m✓ MATCH[0m
+  Checking CommunityPowerFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityPowerFacet-be6a53ab48ada11dd8e78b6d13370b1a11c63e48d9758f89cb0dec011e7778fe.txt
+[0;32m✓ MATCH[0m
+  Checking CommunityStrategyFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityStrategyFacet-6ee42d273c3961872afa04f5b966f89923a0deb1961632bd7cc0fa8dd7c08bd3.txt
+[0;32m✓ MATCH[0m
+
+[0;34m=== Processing RegistryFactory ===[0m
+  Checking storage layout invariants... No files changed, compilation skipped
+[0;32m✓ MATCH[0m
+
+[0;34m=== Summary ===[0m
+[0;32m✓ All storage layouts match![0m
+[0;32m  Storage alignment verified (diamond facets + RegistryFactory).[0m
+✅ Storage verification passed
+Script ran successfully.
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 8453
+
+Estimated gas price: 0.010000001 gwei
+
+Estimated total gas used for script: 17598550
+
+Estimated amount required: 0.00017598551759855 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/RefreshFacetSnapshots.s.sol/8453/run-latest.json
+
+Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/cache/RefreshFacetSnapshots.s.sol/8453/run-latest.json
+
+No files changed, compilation skipped
+Script ran successfully.
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 8453
+
+Estimated gas price: 0.006 gwei
+
+Estimated total gas used for script: 41898159
+
+Estimated amount required: 0.000251388954 ETH
+
+==========================
+
+Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/UpgradeCVMultichainProd.s.sol/8453/run-latest.json
+
+Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/cache/UpgradeCVMultichainProd.s.sol/8453/run-latest.json
+
+Error: Failed to send transaction after 4 attempts Err(EOA nonce changed unexpectedly while sending transactions. Expected 517 got 520 from provider.)
+
+Context:
+- server returned an error response: error code -32000: nonce too low: next nonce 520, tx nonce 517
+task: Failed to run task "upgrade-base": exit status 1

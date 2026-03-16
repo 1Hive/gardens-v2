@@ -1,4 +1,5 @@
 type SupportedPlatform =
+  | "ethereum"
   | "polygon-pos"
   | "celo"
   | "base"
@@ -20,6 +21,7 @@ const getBaseUrl = () => {
 };
 
 const PLATFORM_BY_CHAIN: Record<number, SupportedPlatform> = {
+  1: "ethereum",
   137: "polygon-pos",
   42220: "celo",
   8453: "base",

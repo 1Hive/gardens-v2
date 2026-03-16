@@ -3,7 +3,7 @@ import ClientPage from "./client-page";
 
 const TITLE = "Gardens";
 const DESCRIPTION = "Create, govern, and fund communities together.";
-const OG_IMAGE_PATH = "/gardens/opengraph-image-1sk5tc";
+const OG_IMAGE_PATH = "/gardens/opengraph-image?v=1";
 
 export function generateMetadata(): Metadata {
   return {
@@ -26,3 +26,4 @@ export function generateMetadata(): Metadata {
 export default function Page() {
   return <ClientPage />;
 }
+

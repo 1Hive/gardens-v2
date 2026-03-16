@@ -4,10 +4,11 @@ pragma solidity ^0.8.19;
 import {CommunityBaseFacet} from "../CommunityBaseFacet.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
-import {CVStrategyInitializeParamsV0_2} from "../../CVStrategy/ICVStrategy.sol";
+import {CVStrategyInitializeParamsV0_3} from "../../CVStrategy/ICVStrategy.sol";
 import {CVStrategy} from "../../CVStrategy/CVStrategy.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {IDiamondCut} from "../../diamonds/interfaces/IDiamondCut.sol";
+import {IRegistryFactory} from "../../IRegistryFactory.sol";
 
 /// @notice Initialize parameters for the contract
 struct RegistryCommunityInitializeParams {
@@ -23,6 +24,11 @@ struct RegistryCommunityInitializeParams {
     string _communityName;
     bool _isKickEnabled;
     string covenantIpfsHash;
+}
+
+interface IPauseFacet {
+    // Sig: 0x1add1a0d
+    function setPauseController(address controller) external;
 }
 
 /**
@@ -48,7 +54,8 @@ contract CommunityPoolFacet is CommunityBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
-    function createPool(address _token, CVStrategyInitializeParamsV0_2 memory _params, Metadata memory _metadata)
+    // Sig: 0xce7e2cd3
+    function createPool(address _token, CVStrategyInitializeParamsV0_3 memory _params, Metadata memory _metadata)
         public
         returns (uint256 poolId, address strategy)
     {
@@ -79,16 +86,23 @@ contract CommunityPoolFacet is CommunityBaseFacet {
     }
 
     function _configureStrategyFacets(address strategyProxy) internal {
-        if (strategyFacetCuts.length > 0 || strategyInit != address(0)) {
-            IDiamondCut(strategyProxy).diamondCut(strategyFacetCuts, strategyInit, strategyInitCalldata);
+        (IDiamondCut.FacetCut[] memory strategyFacetCuts_, address strategyInit_, bytes memory strategyInitCalldata_) =
+            IRegistryFactory(registryFactory).getStrategyFacets();
+        if (strategyFacetCuts_.length > 0 || strategyInit_ != address(0)) {
+            IDiamondCut(strategyProxy).diamondCut(strategyFacetCuts_, strategyInit_, strategyInitCalldata_);
+        }
+        address pauseController = IRegistryFactory(registryFactory).globalPauseController();
+        if (pauseController != address(0)) {
+            IPauseFacet(strategyProxy).setPauseController(pauseController);
         }
         CVStrategy(payable(strategyProxy)).transferOwnership(proxyOwner());
     }
 
+    // Sig: 0x82b18ef4
     function createPool(
         address _strategy,
         address _token,
-        CVStrategyInitializeParamsV0_2 memory _params,
+        CVStrategyInitializeParamsV0_3 memory _params,
         Metadata memory _metadata
     ) public returns (uint256 poolId, address strategy) {
         address token = NATIVE;

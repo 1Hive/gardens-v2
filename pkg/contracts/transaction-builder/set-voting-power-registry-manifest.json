@@ -1,0 +1,56 @@
+[
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-payload.json",
+    "strategyCount": 27,
+    "safe": "0x9a17de1f0cad0c592f656410997e4b685d339029",
+    "councilSafesPresent": 15,
+    "selector": "0x170aba0d"
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-payload.json",
+    "strategyCount": 82,
+    "safe": "0x9a17de1f0cad0c592f656410997e4b685d339029",
+    "councilSafesPresent": 15,
+    "selector": "0x170aba0d"
+  },
+  {
+    "chain": "polygon",
+    "chainId": "137",
+    "file": "polygon-set-voting-power-registry-payload.json",
+    "strategyCount": 21,
+    "safe": "0x9a17de1f0cad0c592f656410997e4b685d339029",
+    "councilSafesPresent": 5,
+    "selector": "0x170aba0d"
+  },
+  {
+    "chain": "base",
+    "chainId": "8453",
+    "file": "base-set-voting-power-registry-payload.json",
+    "strategyCount": 21,
+    "safe": "0x9a17de1f0cad0c592f656410997e4b685d339029",
+    "councilSafesPresent": 10,
+    "selector": "0x170aba0d"
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-payload.json",
+    "strategyCount": 60,
+    "safe": "0x9a17de1f0cad0c592f656410997e4b685d339029",
+    "councilSafesPresent": 19,
+    "selector": "0x170aba0d"
+  },
+  {
+    "chain": "gnosis",
+    "chainId": "100",
+    "file": "gnosis-set-voting-power-registry-payload.json",
+    "strategyCount": 75,
+    "safe": "0x9a17de1f0cad0c592f656410997e4b685d339029",
+    "councilSafesPresent": 12,
+    "selector": "0x170aba0d"
+  }
+]

@@ -12,6 +12,10 @@ contract ProxyOwner is OwnableUpgradeable, UUPSUpgradeable {
 
     error OwnableUnauthorizedAccount(address account);
 
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(address initialOwner) public initializer {
         _transferOwnership(initialOwner);
     }

@@ -26,6 +26,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
     error DecreaseUnderMinimum(); // 0x9c47d02e
     error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower); // 0x8a11f318
     error PointsDeactivated(); // 0xd4d3290e
+    error TooManyMemberStrategies(address member, uint256 current, uint256 maxAllowed);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -39,20 +40,18 @@ contract CommunityPowerFacet is CommunityBaseFacet {
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
-    function isMember(address _member) internal view returns (bool) {
+    function isRegisteredMember(address _member) public view returns (bool) {
         return addressToMemberInfo[_member].isRegistered;
     }
 
     function onlyRegistryMemberSender() internal view {
-        if (!isMember(msg.sender)) {
+        if (!isRegisteredMember(msg.sender)) {
             revert UserNotInRegistry();
         }
     }
 
     function onlyRegistryMemberAddress(address _sender) internal view {
-        if (!isMember(_sender)) {
-            revert UserNotInRegistry();
-        }
+        if (!isRegisteredMember(_sender)) { revert UserNotInRegistry(); }
     }
 
     function onlyStrategyEnabled(address _strategy) internal view {
@@ -71,21 +70,40 @@ contract CommunityPowerFacet is CommunityBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0xeb5cbe43
+    function ercAddress() public view returns (address) {
+        return address(gardenToken);
+    }
+
+    // Sig: 0x7817ee4f
     function getMemberPowerInStrategy(address _member, address _strategy) public view returns (uint256) {
         return memberPowerInStrategy[_member][_strategy];
     }
 
+    // Sig: 0x2c611c4a
     function getMemberStakedAmount(address _member) public view returns (uint256) {
         return addressToMemberInfo[_member].stakedAmount;
     }
 
+    // Sig: 0x0d4a8b49
     function activateMemberInStrategy(address _member, address _strategy) public {
         onlyRegistryMemberAddress(_member);
         onlyStrategyEnabled(_strategy);
         onlyStrategyAddress(msg.sender, _strategy);
 
         if (memberActivatedInStrategies[_member][_strategy]) {
-            revert UserAlreadyActivated();
+            bool isListed;
+            for (uint256 i = 0; i < strategiesByMember[_member].length; i++) {
+                if (strategiesByMember[_member][i] == _strategy) {
+                    isListed = true;
+                    break;
+                }
+            }
+            if (isListed || memberPowerInStrategy[_member][_strategy] == 0) {
+                revert UserAlreadyActivated();
+            }
+            // Recover stale activation flags left behind by historical unregister flows.
+            memberActivatedInStrategies[_member][_strategy] = false;
         }
 
         Member memory member = addressToMemberInfo[_member];
@@ -93,9 +111,13 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         uint256 totalStakedAmount = member.stakedAmount;
         uint256 pointsToIncrease = registerStakeAmount;
 
-        if (CVStrategy(payable(_strategy)).getPointSystem() == PointSystem.Quadratic) {
+        PointSystem ps = CVStrategy(payable(_strategy)).getPointSystem();
+        if (ps == PointSystem.Custom) {
+            // Custom: registry is the source of truth, power set via activatePoints() in CVPowerFacet
             pointsToIncrease = CVStrategy(payable(_strategy)).increasePower(_member, 0);
-        } else if (CVStrategy(payable(_strategy)).getPointSystem() != PointSystem.Fixed) {
+        } else if (ps == PointSystem.Quadratic) {
+            pointsToIncrease = CVStrategy(payable(_strategy)).increasePower(_member, 0);
+        } else if (ps != PointSystem.Fixed) {
             pointsToIncrease = CVStrategy(payable(_strategy)).increasePower(_member, totalStakedAmount);
         }
 
@@ -110,24 +132,30 @@ contract CommunityPowerFacet is CommunityBaseFacet {
             }
         }
         if (!alreadyListed) {
+            uint256 current = strategiesByMember[_member].length;
+            if (current >= MAX_STRATEGIES_PER_MEMBER) {
+                revert TooManyMemberStrategies(_member, current, MAX_STRATEGIES_PER_MEMBER);
+            }
             strategiesByMember[_member].push(_strategy);
         }
 
         emit MemberActivatedStrategy(_member, _strategy, pointsToIncrease);
     }
 
+    // Sig: 0x22bcf999
     function deactivateMemberInStrategy(address _member, address _strategy) public {
         onlyStrategyAddress(msg.sender, _strategy);
-        onlyRegistryMemberAddress(_member);
         if (!memberActivatedInStrategies[_member][_strategy]) {
-            revert PointsDeactivated();
+            return;
         }
 
         memberActivatedInStrategies[_member][_strategy] = false;
         memberPowerInStrategy[_member][_strategy] = 0;
+        removeStrategyFromMember(_member, _strategy);
         emit MemberDeactivatedStrategy(_member, _strategy);
     }
 
+    // Sig: 0x559de05d
     function increasePower(uint256 _amountStaked) public {
         onlyRegistryMemberSender();
         address member = msg.sender;
@@ -141,33 +169,34 @@ contract CommunityPowerFacet is CommunityBaseFacet {
             }
         }
 
-        gardenToken.safeTransferFrom(member, address(this), _amountStaked);
-        addressToMemberInfo[member].stakedAmount += _amountStaked;
+        gardenToken.safeTransferFrom(member, address(this), _amountStaked); addressToMemberInfo[member].stakedAmount += _amountStaked;
         emit MemberPowerIncreased(member, _amountStaked);
     }
 
-    function decreasePower(uint256 _amountUnstaked) public {
+    // Sig: 0x5ecf71c5
+    function decreasePower(uint256 _amountUnstaked) public nonReentrant {
         onlyRegistryMemberSender();
         address member = msg.sender;
         address[] storage memberStrategies = strategiesByMember[member];
+        uint256 currentStake = addressToMemberInfo[member].stakedAmount;
 
-        uint256 pointsToDecrease;
-
-        if (addressToMemberInfo[member].stakedAmount - _amountUnstaked < registerStakeAmount) {
+        if (currentStake - _amountUnstaked < registerStakeAmount) {
             revert DecreaseUnderMinimum();
         }
-        gardenToken.safeTransfer(member, _amountUnstaked);
+
+        addressToMemberInfo[member].stakedAmount = currentStake - _amountUnstaked;
+
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             address strategy = memberStrategies[i];
-            pointsToDecrease = CVStrategy(payable(strategy)).decreasePower(member, _amountUnstaked);
-            uint256 currentPower = memberPowerInStrategy[member][memberStrategies[i]];
+            uint256 pointsToDecrease = CVStrategy(payable(strategy)).decreasePower(member, _amountUnstaked);
+            uint256 currentPower = memberPowerInStrategy[member][strategy];
             if (pointsToDecrease > currentPower) {
                 revert CantDecreaseMoreThanPower(pointsToDecrease, currentPower);
-            } else {
-                memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
             }
+            memberPowerInStrategy[member][strategy] = currentPower - pointsToDecrease;
         }
-        addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
+
+        gardenToken.safeTransfer(member, _amountUnstaked);
         emit MemberPowerDecreased(member, _amountUnstaked);
     }
 
@@ -181,6 +210,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
             if (memberStrategies[i] == _strategy) {
                 memberStrategies[i] = memberStrategies[memberStrategies.length - 1];
                 memberStrategies.pop();
+                break;
             }
         }
     }

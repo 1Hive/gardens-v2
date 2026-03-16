@@ -25,6 +25,7 @@ import {
   useEnsName,
   useSwitchNetwork,
 } from "wagmi";
+import { getCommunityNameDocument } from "#/subgraph/.graphclient";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import { isSafeAvatarUrl } from "@/app/api/utils";
 import { BeeKeeperNFT, FirstHolderNFT, ProtopianNFT } from "@/assets";
@@ -33,6 +34,7 @@ import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chains";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { formatAddress } from "@/utils/formatAddress";
 
 export function ConnectWallet() {
@@ -40,7 +42,24 @@ export function ConnectWallet() {
   const account = useAccount();
   const chainFromPath = useChainFromPath();
   const urlChainId = chainFromPath?.id;
-  const tokenUrlAddress = path.split("/")[3];
+  const pathSegments = useMemo(
+    () => path.split("/").filter((segment) => segment !== ""),
+    [path],
+  );
+  const communitySegment =
+    pathSegments[0] === "gardens" ? pathSegments[2] : undefined;
+  const communityAddress =
+    communitySegment && isAddress(communitySegment) ?
+      communitySegment
+    : undefined;
+
+  const { data: communityData } = useSubgraphQuery({
+    query: getCommunityNameDocument,
+    variables: { communityAddr: communityAddress ?? "" },
+    enabled: !!communityAddress,
+  });
+
+  const tokenUrlAddress = communityData?.registryCommunity?.garden?.id;
 
   const { switchNetwork } = useSwitchNetwork();
   const { disconnect } = useDisconnect();
@@ -92,7 +111,7 @@ export function ConnectWallet() {
     address: account?.address,
     token: tokenUrlAddress as `0x${string}` | undefined,
     chainId: urlChainId,
-    enabled: !!account.address && urlChainId != null,
+    enabled: !!account.address && urlChainId != null && !!tokenUrlAddress,
   });
 
   const { data: ensName } = useEnsName({
@@ -264,10 +283,14 @@ export function ConnectWallet() {
                               </div>
                               <div className="flex justify-between py-1">
                                 <p className="subtitle2">Balance</p>
-                                <DisplayNumber
-                                  number={(token?.formatted ?? 0).toString()}
-                                  tokenSymbol={token?.symbol}
-                                />
+                                {token ?
+                                  <DisplayNumber
+                                    number={(token.formatted ?? 0).toString()}
+                                    tokenSymbol={token.symbol}
+                                  />
+                                : <span className="subtitle2 text-neutral-soft-content">
+                                    Unavailable
+                                  </span>}
                               </div>
                             </Menu.Item>
 

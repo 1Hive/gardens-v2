@@ -26,6 +26,7 @@ import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { useTheme } from "@/providers/ThemeProvider";
 import { getProtopiansOwners } from "@/services/alchemy";
 import { safeABI } from "@/src/customAbis";
+import { logOnce } from "@/utils/log";
 
 const Header = () => {
   const { tooltipMessage, isConnected } = useDisableButtons();
@@ -114,6 +115,10 @@ export default function ClientPage() {
   );
 
   const showArchived = useFlag("showArchived");
+
+  useEffect(() => {
+    logOnce("debug", "Loading page: (app)/gardens/page.tsx");
+  }, []);
 
   useEffect(() => {
     getProtopiansOwners()

@@ -1,0 +1,499 @@
+{
+  "chain": "celo",
+  "chainId": "42220",
+  "payloads": [
+    {
+      "file": "celo-set-voting-power-registry-0x68060388c7d97b4bf779a2ead46c86e5588f073f.json",
+      "safe": "0x68060388c7d97b4bf779a2ead46c86e5588f073f",
+      "strategyCount": 2,
+      "strategies": [
+        {
+          "strategy": "0xcb857f1f2e36e0ee393125efa39802ece6363f80",
+          "poolId": "48",
+          "community": "0x13e71c56c5b048e9b8b6a9dbb4a4f346b5dab986",
+          "communityName": "ReFi DAO Garden"
+        },
+        {
+          "strategy": "0x0f52002482c3188575f2e751dc948ab2fdd39d10",
+          "poolId": "49",
+          "community": "0x13e71c56c5b048e9b8b6a9dbb4a4f346b5dab986",
+          "communityName": "ReFi DAO Garden"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0x26746ddb7a853ddb5b12677da60f40fa7e8f794a.json",
+      "safe": "0x26746ddb7a853ddb5b12677da60f40fa7e8f794a",
+      "strategyCount": 11,
+      "strategies": [
+        {
+          "strategy": "0x3764607a0a721981780b798a02c2b1691d6baa39",
+          "poolId": "80",
+          "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+          "communityName": "GoodDollar Builders"
+        },
+        {
+          "strategy": "0x4d28599ddcba0b041dca0cfee3337048120405cf",
+          "poolId": "81",
+          "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+          "communityName": "GoodDollar Builders"
+        },
+        {
+          "strategy": "0xf917f955ca02eb7455a399cd4e1b2ca7ed1b84b4",
+          "poolId": "85",
+          "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+          "communityName": "GoodDollar Builders"
+        },
+        {
+          "strategy": "0x86888c171c280676b15d63ae443a901640f182c1",
+          "poolId": "86",
+          "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+          "communityName": "GoodDollar Builders"
+        },
+        {
+          "strategy": "0xd20a0c8f6ec1026a1960c6f0f4a6df1a381d9938",
+          "poolId": "94",
+          "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+          "communityName": "GoodDollar Builders"
+        },
+        {
+          "strategy": "0xe38e44de6b3537aa74081b6c3120f512a06fdd8d",
+          "poolId": "98",
+          "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+          "communityName": "GoodDollar Builders"
+        },
+        {
+          "strategy": "0xbbe2a2a0e48bace7271325f5501c01fdda7f3d54",
+          "poolId": "99",
+          "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+          "communityName": "GoodDollar Builders"
+        },
+        {
+          "strategy": "0xc3ec9d39fb870d077b58f567f92dc2f5de7520af",
+          "poolId": "100",
+          "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+          "communityName": "GoodDollar Builders"
+        },
+        {
+          "strategy": "0x0fd1b99da7a2802934b16373d1a3cb2f9db50b08",
+          "poolId": "101",
+          "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+          "communityName": "GoodDollar Builders"
+        },
+        {
+          "strategy": "0x4aff6d90e295360a012d2f1f42d9c7ccab44e5f4",
+          "poolId": "102",
+          "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+          "communityName": "GoodDollar Builders"
+        },
+        {
+          "strategy": "0xc7cf1a0496c358a3b51ac1822bf878ff7a93b76f",
+          "poolId": "104",
+          "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+          "communityName": "GoodDollar Builders"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0x90458fb74e8ca7861b5cf8b1d1cd79e4b394bfdd.json",
+      "safe": "0x90458fb74e8ca7861b5cf8b1d1cd79e4b394bfdd",
+      "strategyCount": 3,
+      "strategies": [
+        {
+          "strategy": "0x4db6295640c3d87e3fae7bd150b4ac58e33870fa",
+          "poolId": "55",
+          "community": "0x2ac2b63689a33fe0c8d3d4f70a45cf589ecdd0ac",
+          "communityName": "GoodGov"
+        },
+        {
+          "strategy": "0x186660411ef4b1975834f29b5912b64de91252a2",
+          "poolId": "59",
+          "community": "0x2ac2b63689a33fe0c8d3d4f70a45cf589ecdd0ac",
+          "communityName": "GoodGov"
+        },
+        {
+          "strategy": "0x255ced14c5380a4995338491c85ce7de8558f1a0",
+          "poolId": "79",
+          "community": "0x2ac2b63689a33fe0c8d3d4f70a45cf589ecdd0ac",
+          "communityName": "GoodGov"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0xfcb81c1b0e0d4fea01e5a0fbf0aebb91e78a67e1.json",
+      "safe": "0xfcb81c1b0e0d4fea01e5a0fbf0aebb91e78a67e1",
+      "strategyCount": 4,
+      "strategies": [
+        {
+          "strategy": "0xe67566f8cdd30d426668d84189550c64289a1867",
+          "poolId": "57",
+          "community": "0x0eec46f8431bbd669cbb6dae4655006ba650cbba",
+          "communityName": "Regen Coordination Garden 🌿"
+        },
+        {
+          "strategy": "0x3f39af5c2d5356c1c0a8d0d67c2c4cf68374b59e",
+          "poolId": "58",
+          "community": "0x0eec46f8431bbd669cbb6dae4655006ba650cbba",
+          "communityName": "Regen Coordination Garden 🌿"
+        },
+        {
+          "strategy": "0x57db3264a363379b2c66a6914c0bf1d70f4763f6",
+          "poolId": "69",
+          "community": "0x0eec46f8431bbd669cbb6dae4655006ba650cbba",
+          "communityName": "Regen Coordination Garden 🌿"
+        },
+        {
+          "strategy": "0x1ef2c3a529af71b575c788bfe5300161c1861b79",
+          "poolId": "95",
+          "community": "0x0eec46f8431bbd669cbb6dae4655006ba650cbba",
+          "communityName": "Regen Coordination Garden 🌿"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0x705a58f9c33d0a5be425b87dc34b157c508fe467.json",
+      "safe": "0x705a58f9c33d0a5be425b87dc34b157c508fe467",
+      "strategyCount": 7,
+      "strategies": [
+        {
+          "strategy": "0xdc1567c66c63eefd1cfba84720e3bad73d0df930",
+          "poolId": "111",
+          "community": "0x299ed29ebef17309d3e86638a7879485cd09dd59",
+          "communityName": "GoodDollar Ecosystem"
+        },
+        {
+          "strategy": "0x8adec3abe2b44480a1094d50830676971e06049d",
+          "poolId": "112",
+          "community": "0x299ed29ebef17309d3e86638a7879485cd09dd59",
+          "communityName": "GoodDollar Ecosystem"
+        },
+        {
+          "strategy": "0xa3162a0ec1dd06f7f7c1b54748836757ca64ea7b",
+          "poolId": "113",
+          "community": "0x299ed29ebef17309d3e86638a7879485cd09dd59",
+          "communityName": "GoodDollar Ecosystem"
+        },
+        {
+          "strategy": "0xdaeeed0e9f48e5efd023d774ab19415de8aedd8f",
+          "poolId": "114",
+          "community": "0x299ed29ebef17309d3e86638a7879485cd09dd59",
+          "communityName": "GoodDollar Ecosystem"
+        },
+        {
+          "strategy": "0xa25c5756ee48211185bcffa9e12d219be151d29d",
+          "poolId": "115",
+          "community": "0x299ed29ebef17309d3e86638a7879485cd09dd59",
+          "communityName": "GoodDollar Ecosystem"
+        },
+        {
+          "strategy": "0x20454a1d4613529c8e1947217241910848664413",
+          "poolId": "116",
+          "community": "0x299ed29ebef17309d3e86638a7879485cd09dd59",
+          "communityName": "GoodDollar Ecosystem"
+        },
+        {
+          "strategy": "0xd339c8f96e25743733a2019ece30b1c15c00ce55",
+          "poolId": "117",
+          "community": "0x299ed29ebef17309d3e86638a7879485cd09dd59",
+          "communityName": "GoodDollar Ecosystem"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0x85641ebdce97c27ef424e17d2be81ae6d40776c7.json",
+      "safe": "0x85641ebdce97c27ef424e17d2be81ae6d40776c7",
+      "strategyCount": 2,
+      "strategies": [
+        {
+          "strategy": "0x2085aa46b04ba20f93f24cc51e26e4fc3f0b631d",
+          "poolId": "53",
+          "community": "0xb499593950aa6b45afdad3dc237c72da09292bbb",
+          "communityName": "AgroforestDAO"
+        },
+        {
+          "strategy": "0xd251c52c091c54a14e00ad1a31a4cffb9e6c8197",
+          "poolId": "60",
+          "community": "0xb499593950aa6b45afdad3dc237c72da09292bbb",
+          "communityName": "AgroforestDAO"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0x2d454e659fe9422c953807c80bf40dd06d55a3ca.json",
+      "safe": "0x2d454e659fe9422c953807c80bf40dd06d55a3ca",
+      "strategyCount": 1,
+      "strategies": [
+        {
+          "strategy": "0x33080d27f98747f092021bdee4a006eda42ff2f7",
+          "poolId": "54",
+          "community": "0xb5f19cef9efda3cec99ea0242e972d04cea44e87",
+          "communityName": "GreenPill Toronto"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0xacd59e854adf632d2322404198624f757c868c97.json",
+      "safe": "0xacd59e854adf632d2322404198624f757c868c97",
+      "strategyCount": 2,
+      "strategies": [
+        {
+          "strategy": "0xb90cabb1863ed341babe31a2d0126a5985e4c770",
+          "poolId": "91",
+          "community": "0xbd62f4bbf704d34b7de0247155157b4552aaa70f",
+          "communityName": "test 3"
+        },
+        {
+          "strategy": "0x3911cf457544cdbf949a58e592b0e4964e4a0c53",
+          "poolId": "92",
+          "community": "0xbd62f4bbf704d34b7de0247155157b4552aaa70f",
+          "communityName": "test 3"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0x50afcd6ce9e3ae15ae5731ff8c1d255289ca203b.json",
+      "safe": "0x50afcd6ce9e3ae15ae5731ff8c1d255289ca203b",
+      "strategyCount": 1,
+      "strategies": [
+        {
+          "strategy": "0x432952e34729f92b08443a573b8a9cd60557cea7",
+          "poolId": "61",
+          "community": "0x2ce7c24c2bfe110872381af57a1e3eb161f01650",
+          "communityName": "Kokonut Green Gardens"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0xd7d5aedb6faf61cd17e395d586a7c9b365e685cd.json",
+      "safe": "0xd7d5aedb6faf61cd17e395d586a7c9b365e685cd",
+      "strategyCount": 7,
+      "strategies": [
+        {
+          "strategy": "0x8fa3af336d9c22a403840c4014e594606af3c0c2",
+          "poolId": "82",
+          "community": "0xa76525f22ccf391b66b7bb2990a238de97785cfa",
+          "communityName": "Gossman on celo"
+        },
+        {
+          "strategy": "0x8c5f9fece33dea4958a9fd794a549129b2e88742",
+          "poolId": "83",
+          "community": "0xa76525f22ccf391b66b7bb2990a238de97785cfa",
+          "communityName": "Gossman on celo"
+        },
+        {
+          "strategy": "0xab40bcfcfe2d742a7e4eeb9c6d0a66bf322177de",
+          "poolId": "87",
+          "community": "0xa76525f22ccf391b66b7bb2990a238de97785cfa",
+          "communityName": "Gossman on celo"
+        },
+        {
+          "strategy": "0xd9720538780f5f8043667e57fb17cbd714b2aae7",
+          "poolId": "88",
+          "community": "0xa76525f22ccf391b66b7bb2990a238de97785cfa",
+          "communityName": "Gossman on celo"
+        },
+        {
+          "strategy": "0xa16b7532cce9fee3eff390682055b48c7a485af7",
+          "poolId": "89",
+          "community": "0xa76525f22ccf391b66b7bb2990a238de97785cfa",
+          "communityName": "Gossman on celo"
+        },
+        {
+          "strategy": "0x4c3925ea9996923025d951498c18691d785fbf21",
+          "poolId": "90",
+          "community": "0xa76525f22ccf391b66b7bb2990a238de97785cfa",
+          "communityName": "Gossman on celo"
+        },
+        {
+          "strategy": "0xc4b8e51858df30123b3c4f74f6e4a1daee946c99",
+          "poolId": "93",
+          "community": "0xa76525f22ccf391b66b7bb2990a238de97785cfa",
+          "communityName": "Gossman on celo"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0x2ab91dc857c07aefe33877b9ba0c2ce28e59a41d.json",
+      "safe": "0x2ab91dc857c07aefe33877b9ba0c2ce28e59a41d",
+      "strategyCount": 6,
+      "strategies": [
+        {
+          "strategy": "0xbcea5d6c19303e4f3eba367ca87aa4d0df063544",
+          "poolId": "76",
+          "community": "0x2eb49e06ba584079ef797ecf2118f73f6527adb4",
+          "communityName": "Greenpill Brasil"
+        },
+        {
+          "strategy": "0x523b362913b56e10e9dde785952e5e0efdab4aad",
+          "poolId": "105",
+          "community": "0x2eb49e06ba584079ef797ecf2118f73f6527adb4",
+          "communityName": "Greenpill Brasil"
+        },
+        {
+          "strategy": "0x4ce39a977961befa4d4bd546f8454ab798f1ec1d",
+          "poolId": "106",
+          "community": "0x2eb49e06ba584079ef797ecf2118f73f6527adb4",
+          "communityName": "Greenpill Brasil"
+        },
+        {
+          "strategy": "0xa8558a901d12a72492d8716b6e02c7c6ef324f5e",
+          "poolId": "107",
+          "community": "0x2eb49e06ba584079ef797ecf2118f73f6527adb4",
+          "communityName": "Greenpill Brasil"
+        },
+        {
+          "strategy": "0xdfd5ca1beef648999c5691e815ee5c27bbc1d8c6",
+          "poolId": "108",
+          "community": "0x2eb49e06ba584079ef797ecf2118f73f6527adb4",
+          "communityName": "Greenpill Brasil"
+        },
+        {
+          "strategy": "0x6f09f999fe1af06738a0b12678ef2df2fc0635e6",
+          "poolId": "109",
+          "community": "0x2eb49e06ba584079ef797ecf2118f73f6527adb4",
+          "communityName": "Greenpill Brasil"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0x9a17de1f0cad0c592f656410997e4b685d339029.json",
+      "safe": "0x9a17de1f0cad0c592f656410997e4b685d339029",
+      "strategyCount": 3,
+      "strategies": [
+        {
+          "strategy": "0xf26cb186de2a5637ff5873bf0f4b3fb67a7ce462",
+          "poolId": "36",
+          "community": "0x7f7a53514f9f9e83ffd15228579dc51e9ef8ae71",
+          "communityName": "Gardens on Celo"
+        },
+        {
+          "strategy": "0x78c316103297b2ccacd01e422804ded636709826",
+          "poolId": "43",
+          "community": "0x6f9074a0bc5b92e839da4fd52f84be9d50e065a9",
+          "communityName": "Gardens on Celo"
+        },
+        {
+          "strategy": "0x6a8c3a4da74b18e01594be66d43fdc32762456fd",
+          "poolId": "64",
+          "community": "0x6f9074a0bc5b92e839da4fd52f84be9d50e065a9",
+          "communityName": "Gardens on Celo"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0x614d630f3d2506f65e7562fe36818d0f1bfea4a2.json",
+      "safe": "0x614d630f3d2506f65e7562fe36818d0f1bfea4a2",
+      "strategyCount": 2,
+      "strategies": [
+        {
+          "strategy": "0x8a8e6ac00d93ac766a25b7d6bbf0ca2e873f7725",
+          "poolId": "56",
+          "community": "0xc42b34e33160fd5d5257d89e283436df2c71f1f0",
+          "communityName": "Greenpill NYC Garden"
+        },
+        {
+          "strategy": "0x6f98919fcff18a1fa82585090a61e6678ca38826",
+          "poolId": "110",
+          "community": "0xc42b34e33160fd5d5257d89e283436df2c71f1f0",
+          "communityName": "Greenpill NYC Garden"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0x03f053094ea292a9f94ae0f6f98ff26436344163.json",
+      "safe": "0x03f053094ea292a9f94ae0f6f98ff26436344163",
+      "strategyCount": 3,
+      "strategies": [
+        {
+          "strategy": "0x76ffd1d4317d351c3834a60818a9e5784b523154",
+          "poolId": "44",
+          "community": "0xa236d7443caefbdab26ebf261ce6f05660b51b95",
+          "communityName": "FarmBlock"
+        },
+        {
+          "strategy": "0x9c5ffaac33968b64f38fadccaed353be626e4042",
+          "poolId": "45",
+          "community": "0x60558c002f0d08451a5f5ea983b3ea44e35f6500",
+          "communityName": "0xFarmBlock"
+        },
+        {
+          "strategy": "0x9aa0c8e231f2bfd6e50f658c10fedfc9624131de",
+          "poolId": "46",
+          "community": "0x60558c002f0d08451a5f5ea983b3ea44e35f6500",
+          "communityName": "0xFarmBlock"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0x4a6b2a509b1b0262fd0d789548b290ca12aac992.json",
+      "safe": "0x4a6b2a509b1b0262fd0d789548b290ca12aac992",
+      "strategyCount": 2,
+      "strategies": [
+        {
+          "strategy": "0x7789ad82b8c0e8726325fba6363600de56eb60a0",
+          "poolId": "50",
+          "community": "0x910318a9203df4be96a19a60c34f0ffb32cd69ee",
+          "communityName": "Infinite Fountain"
+        },
+        {
+          "strategy": "0xc07652ad0f4c8ec5a613ff54afbbb3bcae59e46a",
+          "poolId": "51",
+          "community": "0x910318a9203df4be96a19a60c34f0ffb32cd69ee",
+          "communityName": "Infinite Fountain"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0xb805bc9511b9c398354a020447421ac516708a16.json",
+      "safe": "0xb805bc9511b9c398354a020447421ac516708a16",
+      "strategyCount": 1,
+      "strategies": [
+        {
+          "strategy": "0x93c3858432cd9cbf4b7e0c5e74cb8026bde472cf",
+          "poolId": "103",
+          "community": "0x7a3a5607e4109aa39fc0c86f94f490812722ea61",
+          "communityName": "Recy"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0xa1094be4563973caadcd893710600f352f7f735c.json",
+      "safe": "0xa1094be4563973caadcd893710600f352f7f735c",
+      "strategyCount": 1,
+      "strategies": [
+        {
+          "strategy": "0xa6a408914dc6e1ac9a8db8ce472923374b1b6beb",
+          "poolId": "84",
+          "community": "0xe0713cffc8fd5ecbe9c5cd0ca71b662d948c35bd",
+          "communityName": "Peer to Peer - The Commons Manifesto Chinese study group"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0xcc5437c25cad0b23dd88118d054da19dbec52cea.json",
+      "safe": "0xcc5437c25cad0b23dd88118d054da19dbec52cea",
+      "strategyCount": 1,
+      "strategies": [
+        {
+          "strategy": "0xabbdc98302a55dfad457843b2c0f2e9306854267",
+          "poolId": "78",
+          "community": "0x01f43aafd844bbbaf0e9277bcf25d155cc88d9eb",
+          "communityName": "DeSci Asia on Celo"
+        }
+      ]
+    },
+    {
+      "file": "celo-set-voting-power-registry-0xfefd649407f63c301929b7bc6f93fdf02f1c9797.json",
+      "safe": "0xfefd649407f63c301929b7bc6f93fdf02f1c9797",
+      "strategyCount": 1,
+      "strategies": [
+        {
+          "strategy": "0xf3d67757c2a3b68c090572962113d7e5db530425",
+          "poolId": "52",
+          "community": "0x5045aa46eb1ebd6882d6981c25a2c091d966b4b1",
+          "communityName": "Web3 Institute (W3I)"
+        }
+      ]
+    }
+  ]
+}
