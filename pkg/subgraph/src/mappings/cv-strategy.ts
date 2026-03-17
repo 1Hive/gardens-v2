@@ -49,6 +49,8 @@ import {
   SuperfluidGDADisconnected,
   StreamRateUpdated
 } from "../../generated/templates/CVStrategy/CVStrategy";
+import { CVStrategyV0_1 as CVStrategyContractV0_1 } from "../../generated/templates/CVStrategyV0_1/CVStrategyV0_1";
+import { CVStrategy as CVStrategyContractV0_0 } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
 import { Allo as AlloContract } from "../../generated/templates/CVStrategy/Allo";
 
@@ -80,6 +82,42 @@ const D = BigInt.fromI32(10000000);
 
 function getMaxConviction(staked: BigInt, _decay: BigInt): BigInt {
   return staked.times(D).div(D.minus(_decay));
+}
+
+function getProposalMetadataPointerCompat(
+  address: Address,
+  proposalNumber: BigInt
+): string {
+  const current = CVStrategyContract.bind(address);
+  const currentPointer = current.try_getProposalMetadataPointer(proposalNumber);
+  if (!currentPointer.reverted && currentPointer.value.length > 0) {
+    return currentPointer.value;
+  }
+
+  const v01 = CVStrategyContractV0_1.bind(address);
+  const v01Metadata = v01.try_getMetadata(proposalNumber);
+  if (!v01Metadata.reverted && v01Metadata.value.pointer.length > 0) {
+    return v01Metadata.value.pointer;
+  }
+
+  const v01Proposal = v01.try_proposals(proposalNumber);
+  if (!v01Proposal.reverted) {
+    const pointer = v01Proposal.value.getMetadata().pointer;
+    if (pointer.length > 0) {
+      return pointer;
+    }
+  }
+
+  const v00 = CVStrategyContractV0_0.bind(address);
+  const v00Proposal = v00.try_proposals(proposalNumber);
+  if (!v00Proposal.reverted) {
+    const pointer = v00Proposal.value.getMetadata().pointer;
+    if (pointer.length > 0) {
+      return pointer;
+    }
+  }
+
+  return "";
 }
 
 export function handleInitialized(event: InitializedCV): void {
@@ -146,11 +184,14 @@ function handleProposalCreatedCore(
       existingProposal.metadataHash.length == 0 ||
       existingProposal.metadata == null
     ) {
-      const pointerResult = cvc.try_getProposalMetadataPointer(proposalNumber);
-      if (!pointerResult.reverted && pointerResult.value.length > 0) {
-        existingProposal.metadataHash = pointerResult.value;
-        existingProposal.metadata = pointerResult.value;
-        ProposalMetadataTemplate.create(pointerResult.value);
+      const pointer = getProposalMetadataPointerCompat(
+        event.address,
+        proposalNumber
+      );
+      if (pointer.length > 0) {
+        existingProposal.metadataHash = pointer;
+        existingProposal.metadata = pointer;
+        ProposalMetadataTemplate.create(pointer);
       }
     }
     if (escrow != null) {
@@ -211,13 +252,10 @@ function handleProposalCreatedCore(
   // newProposal.voterStakedPointsPct = proposal.getVoterStakedPointsPct();
   // newProposal.agreementActionId = proposal.getAgreementActionId();
 
-  let pointer = "";
-  const metadataPointerResult = cvc.try_getProposalMetadataPointer(
+  const pointer = getProposalMetadataPointerCompat(
+    event.address,
     proposalNumber
   );
-  if (!metadataPointerResult.reverted) {
-    pointer = metadataPointerResult.value;
-  }
 
   newProposal.metadataHash = pointer;
   newProposal.metadata = pointer;
