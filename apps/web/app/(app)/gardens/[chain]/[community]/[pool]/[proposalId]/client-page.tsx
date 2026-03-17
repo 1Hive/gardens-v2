@@ -225,10 +225,17 @@ export default function ClientPage({ params }: ClientPageProps) {
   const { publish } = usePubSubContext();
   const { data: ipfsResult } = useMetadataIpfsFetch({
     hash: proposalData?.metadataHash,
-    enabled: !proposalData?.metadata,
+    enabled: !!proposalData?.metadataHash && !proposalData?.metadata,
   });
   const path = usePathname();
-  const metadata = proposalData?.metadata ?? ipfsResult ?? null;
+  const metadata: MetadataV1 | null =
+    proposalData ?
+      proposalData.metadata ??
+      ipfsResult ?? {
+        title: `Proposal #${proposalData.proposalNumber ?? proposalNumber}`,
+        description: "",
+      }
+    : null;
   const metadataForActions: MetadataV1 = (metadata ?? {
     title: undefined,
     description: undefined,
@@ -445,7 +452,6 @@ export default function ClientPage({ params }: ClientPageProps) {
     !!pendingProposalParam &&
     (!proposalData ||
       !supportersData ||
-      !metadata ||
       proposalIdNumber == null ||
       updatedConviction == null ||
       poolId == null);
@@ -686,7 +692,6 @@ export default function ClientPage({ params }: ClientPageProps) {
   if (
     !proposalData ||
     !supportersData ||
-    !metadata ||
     proposalIdNumber == null ||
     updatedConviction == null ||
     poolId == null
