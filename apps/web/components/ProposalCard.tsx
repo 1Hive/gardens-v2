@@ -123,10 +123,14 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
   ) => {
     const { data: metadataResult } = useMetadataIpfsFetch({
       hash: proposalData.metadataHash,
-      enabled: !proposalData.metadata,
+      enabled: !!proposalData.metadataHash && !proposalData.metadata,
     });
 
-    const metadata = proposalData.metadata ?? metadataResult;
+    const metadata =
+      proposalData.metadata ??
+      metadataResult ?? {
+        title: `Proposal #${proposalData.proposalNumber}`,
+      };
 
     const {
       proposalNumber,
