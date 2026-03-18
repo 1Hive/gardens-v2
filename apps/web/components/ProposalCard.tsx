@@ -34,6 +34,7 @@ import {
 } from "@/hooks/useConvictionRead";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
+import { cvStrategyABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 import {
   SEC_TO_MONTH,
@@ -121,10 +122,41 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     },
     ref,
   ) => {
-    const { data: metadataResult } = useMetadataIpfsFetch({
-      hash: proposalData.metadataHash,
-      enabled: !!proposalData.metadataHash && !proposalData.metadata,
+    const chainId = useChainIdFromPath();
+    const shouldReadOnchainMetadataHash =
+      !!proposalData?.strategy?.id &&
+      proposalData?.proposalNumber != null &&
+      !proposalData.metadata &&
+      !proposalData.metadataHash;
+    const proposalIdNumber =
+      proposalData?.proposalNumber != null ?
+        BigInt(proposalData.proposalNumber)
+      : undefined;
+    const {
+      data: onchainMetadataHash,
+      isLoading: isOnchainMetadataHashLoading,
+      isFetched: isOnchainMetadataHashFetched,
+    } = useContractRead({
+      address: proposalData?.strategy?.id as Address,
+      abi: cvStrategyABI,
+      functionName: "getProposalMetadataPointer",
+      args:
+        proposalIdNumber != null ? [proposalIdNumber] : ([0n] as const),
+      chainId,
+      enabled: shouldReadOnchainMetadataHash,
     });
+    const resolvedMetadataHash =
+      proposalData.metadataHash || onchainMetadataHash || undefined;
+    const { data: metadataResult, fetching: isMetadataIpfsFetching } =
+      useMetadataIpfsFetch({
+        hash: resolvedMetadataHash,
+        enabled: !!resolvedMetadataHash && !proposalData.metadata,
+      });
+    const isMetadataLoading =
+      !proposalData.metadata &&
+      ((shouldReadOnchainMetadataHash &&
+        (isOnchainMetadataHashLoading || !isOnchainMetadataHashFetched)) ||
+        (!!resolvedMetadataHash && isMetadataIpfsFetching));
 
     const metadata =
       proposalData.metadata ??
@@ -142,7 +174,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     } = proposalData;
     const pathname = usePathname();
     const proposalSlug = formatProposalSlug(proposalNumber);
-    const chainId = useChainIdFromPath();
     const searchParams = useCollectQueryParams();
     const isNewProposal =
       searchParams[QUERY_PARAMS.poolPage.newProposal] ==
@@ -440,7 +471,10 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             <header className="flex-1 justify-between items-start gap-3">
               <div className="flex-1 items-start flex flex-col gap-1 sm:gap-2">
                 <div className="flex items-center justify-between w-full">
-                  <Skeleton isLoading={!metadata}>
+                  <Skeleton
+                    isLoading={isMetadataLoading}
+                    className="max-w-[500px] w-full"
+                  >
                     <h3 className="flex items-start  max-w-[150px] sm:max-w-md">
                       <TooltipIfOverflow>{metadata?.title}</TooltipIfOverflow>
                     </h3>
