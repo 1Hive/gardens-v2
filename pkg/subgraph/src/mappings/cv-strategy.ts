@@ -49,7 +49,10 @@ import {
   SuperfluidGDADisconnected,
   StreamRateUpdated
 } from "../../generated/templates/CVStrategy/CVStrategy";
-import { CVStrategyLegacy as LegacyCVStrategyContract } from "../../generated/templates/CVStrategy/CVStrategyLegacy";
+import {
+  CVStrategyLegacy as LegacyCVStrategyContract,
+  CVStrategyLegacy__proposalsResult
+} from "../../generated/templates/CVStrategy/CVStrategyLegacy";
 import { Allo as AlloContract } from "../../generated/templates/CVStrategy/Allo";
 
 import {
@@ -106,6 +109,14 @@ function getProposalMetadataPointer(
     [address.toHexString(), proposalNumber.toString()]
   );
   return "";
+}
+
+function getLegacyProposal(
+  address: Address,
+  proposalNumber: BigInt
+): ethereum.CallResult<CVStrategyLegacy__proposalsResult> {
+  const legacy = LegacyCVStrategyContract.bind(address);
+  return legacy.try_proposals(proposalNumber);
 }
 
 export function handleInitialized(event: InitializedCV): void {
@@ -196,16 +207,46 @@ function handleProposalCreatedCore(
   }
 
   let p = cvc.try_getProposal(proposalNumber);
-  if (p.reverted) {
-    log.error(
-      "CvStrategy: handleProposalCreated getProposal reverted:{} (block:{})",
-      [proposalIdString, event.block.number.toString()]
-    );
-    return;
-  }
-  let proposal = p.value;
+  let beneficiary: string;
+  let requestedToken: Address;
+  let blockLast: BigInt;
+  let convictionLast: BigInt;
+  let proposalStakedAmount: BigInt;
+  let requestedAmount: BigInt;
+  let arbitrableConfigVersion: BigInt;
+  let submitter: string;
 
-  const proposalStakedAmount = proposal.getStakedAmount();
+  if (p.reverted) {
+    const legacyProposal = getLegacyProposal(event.address, proposalNumber);
+    if (legacyProposal.reverted) {
+      log.error(
+        "CvStrategy: handleProposalCreated proposal lookup reverted:{} (block:{})",
+        [proposalIdString, event.block.number.toString()]
+      );
+      return;
+    }
+
+    const legacyValue = legacyProposal.value;
+    beneficiary = legacyValue.getBeneficiary().toHex();
+    requestedToken = legacyValue.getRequestedToken();
+    blockLast = legacyValue.getBlockLast();
+    convictionLast = legacyValue.getConvictionLast();
+    proposalStakedAmount = legacyValue.getStakedAmount();
+    requestedAmount = legacyValue.getRequestedAmount();
+    arbitrableConfigVersion = legacyValue.getArbitrableConfigVersion();
+    submitter = legacyValue.getSubmitter().toHex();
+  } else {
+    const proposal = p.value;
+    beneficiary = proposal.getBeneficiary().toHex();
+    requestedToken = proposal.getRequestedToken();
+    blockLast = proposal.getBlockLast();
+    convictionLast = proposal.getConvictionLast();
+    proposalStakedAmount = proposal.getStakedAmount();
+    requestedAmount = proposal.getRequestedAmount();
+    arbitrableConfigVersion = proposal.getArbitrableConfigVersion();
+    submitter = proposal.getSubmitter().toHex();
+  }
+
   const maxConviction = getMaxConviction(
     proposalStakedAmount,
     cvc.cvParams().getDecay()
@@ -215,17 +256,16 @@ function handleProposalCreatedCore(
   newProposal.strategy = cvsId;
   newProposal.proposalNumber = proposalNumber;
 
-  newProposal.beneficiary = proposal.getBeneficiary().toHex();
-  let requestedToken = proposal.getRequestedToken();
+  newProposal.beneficiary = beneficiary;
   newProposal.requestedToken = requestedToken.toHex();
 
-  newProposal.blockLast = proposal.getBlockLast();
-  newProposal.convictionLast = proposal.getConvictionLast();
-  newProposal.stakedAmount = proposal.getStakedAmount();
+  newProposal.blockLast = blockLast;
+  newProposal.convictionLast = convictionLast;
+  newProposal.stakedAmount = proposalStakedAmount;
 
-  newProposal.requestedAmount = proposal.getRequestedAmount();
+  newProposal.requestedAmount = requestedAmount;
   newProposal.maxCVStaked = maxConviction;
-  newProposal.arbitrableConfig = `${event.address.toHex()}-${proposal.getArbitrableConfigVersion().toString()}`;
+  newProposal.arbitrableConfig = `${event.address.toHex()}-${arbitrableConfigVersion.toString()}`;
 
   newProposal.proposalStatus = getProposalStatus(
     event.address,
@@ -233,7 +273,7 @@ function handleProposalCreatedCore(
     PROPOSAL_STATUS_ACTIVE
   );
   // newProposal.proposalType = BigInt.fromI32(proposal.proposalType());
-  newProposal.submitter = proposal.getSubmitter().toHex();
+  newProposal.submitter = submitter;
   // newProposal.voterStakedPointsPct = proposal.getVoterStakedPointsPct();
   // newProposal.agreementActionId = proposal.getAgreementActionId();
 
