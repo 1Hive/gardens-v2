@@ -1,0 +1,755 @@
+{
+  "version": "1.0",
+  "chainId": "100",
+  "createdAt": 1773694805094,
+  "meta": {
+    "name": "Set Voting Power Registry Batch Part 2",
+    "description": "Safe Transaction Builder payload to call setVotingPowerRegistry(address(0)) on all indexed strategies for this chain. Part 2 of 2.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "0x9a17de1f0cad0c592f656410997e4b685d339029",
+    "createdFromOwnerAddress": "0x9a17de1f0cad0c592f656410997e4b685d339029",
+    "hash": "c0162db21f4669b00fe41be81fbc1b8f6534b1a9"
+  },
+  "transactions": [
+    {
+      "to": "0xe8320380d56c4319aab593e45de868b002b3e357",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0xa8116d32a742e2323de416808a9768ebc2a8d179",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x61cbd792c9310fc2d9fa03e99118bd163301cd0a",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x051e8d96d4e9cde57d584b8d59a5116784f0d3c7",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x69bcabc41dae5ddc5cb2370f7ba472612115e8ce",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0xf1ec3cb9a862844aad68df495955832a242e39e7",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x777ddf053fb46a48cccf5b91d3417d4daf3ec9e2",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x48fdb39d6dc7064f6a3f5f48369fe26f2e434f5b",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0xa7ff31bba33d421c2fb3aa3688cf64ea60ab4199",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x2e3ab6f45e407283e719da6eeb7844a2f6bccd07",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x1e595cd639d9a835e3cf5dcef8e740e2bfe15494",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0xa65228c5661bba89532b2941ea86853eeba8a4b9",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x48ed3db635557079f8e1d0b83b37097abe78d6f1",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x149e1d84858993b6ec3a41e11488c86c289620ef",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x7336ab83ec05ccb0d328390e50ac8b59b1229da1",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x8a26d8290a65f952f945734fce1c5dab23c5ff29",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x2833d75f02af58d3cd96e22685d2e4ae774e999d",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x6fbb932dc0645ef63ca0a65340e390498a817d57",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0xd59884c190277f56a3dbf4b094e5fe9327150c24",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x728333c30444294cbea2c2f1a19c84e6ee77d96b",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x94a2df1dd41580478ff7cd26b86c555aa0220469",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0xaee688d041859839ea3918a6dfc0165848ace6eb",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x5ee0aaa1d51c4284dfcd2ead9d14ba7561b83000",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x8ba5d67c25422d59db51f8ababb62c4623b80143",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x96dee4849a6ab9e51ae36712794318001515dc91",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0xd7cd912eed8e0d8b9f16f362b5239e9419ce9db9",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x0421da9346e4dcb1f9dacd64dd791d13e5ce2a8f",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x2945dac39a380bcf6d82334c75bfb15e569dd38e",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x873360fbebbd5b074bca9e49433cc2052037b2dd",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x3d62928a1b27cd21fbc2633020c5b7c53d8c123d",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x56e020883204ea163bd610272fc3ae66b3462c6f",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0xb26d40c2dc96f35010e9bd1b044e0bdb4224dfb1",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x1f768f218f214339616d7f368114401d66ee2219",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x1bd2212c9aa332d22d61a0be6bcc55b2a1de6c63",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x561989f8f5f2bcae9c25bab1448efb8e2674ebe6",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x7cc039c127d2e655974f9106567cdb86f7895c87",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "to": "0x4082579717ebff10d8b7ffd2ee6582a9274dbeec",
+      "value": "0",
+      "data": "0x170aba0d0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_registry",
+            "type": "address"
+          }
+        ],
+        "name": "setVotingPowerRegistry",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_registry": "0x0000000000000000000000000000000000000000"
+      }
+    }
+  ]
+}

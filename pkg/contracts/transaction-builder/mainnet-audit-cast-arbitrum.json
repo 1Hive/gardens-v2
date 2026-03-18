@@ -1,0 +1,218 @@
+{
+  "chain": "arbitrum",
+  "factory": {
+    "registryCommunityTemplate": {
+      "value": "0xc895e3075EBB4B0899979da5D51E112f858605B3",
+      "matchesExpected": true,
+      "error": null
+    },
+    "strategyTemplate": {
+      "value": "0xee99DBf0BFFfc9C811d109a3e4a1eED857463127",
+      "matchesExpected": true,
+      "error": null
+    }
+  },
+  "communityMismatch": [
+    {
+      "address": "0x01a2c3c4e7c38885bf3d01e38847184ff2368fea",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x050ebb32303a724b0b3ef84c917da5b76b772d51",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x072c84bd770a9f2b527237a0b7dbd3908e2cb9fc",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x0f143af46eef341b3f0dbf98c3ecb47f57067fef",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x110f4a8153c04eace288e712eb4b975b46376b8c",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x2789f2d1b8050c724d3fc8258faf7f1e45f5707c",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x2851b7e3d1ad8ba5637afe196968f1a4a9875e03",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x2e8b031ae32debce51126b17356f122e4c07e941",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x2ed599a96ea90c5c777abb0a13dfb6af1d5fbe76",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x3056c5f59994b8c1d2949c38758d0672a5cb7cc9",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x374874383fca7e1236fa5db8bb89d62fab9252e7",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x3f69323378e45f8d1d90e24e4ad7b772d8afa2e0",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x400b3316447a4362abe36206c145550080046831",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x40f44e992cc53eff241f51c825c7a1853eedaeb0",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x41a9ed5de7998583cd20bf738ca38e649e0eafe3",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x46cbcf5879c0279119512b621be056755f99e836",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x5396c94ea47916f5661734fee769d0d7cc8b14c6",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x561f7c4c65f42af17eab52b7065a5d2c080a3904",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x5a48adf540cb5c79edb027bef3ebf551ce63661f",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x625cb91ad17cf9b4a2b6b20b2b494ddf123c290c",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x68a2dc70d3fa0ff990979c5467d62bdcd2e6e9b4",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x6a34be42b61698ba8a103cf9c3d022f59bf8f4f2",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x6dd6b0a9a9b94aa169e5ce31cff34a46c7bea9cd",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x7508c3bcc2ce964ef858762cfbfa8bbbcf406ec9",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x7c31db900d9c0db7cf005a862c12a0c298d47220",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x8281fd9c5f709a681813c49843a253a05d9b837c",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x8619e82a70fc412602e51f5056769ddb27d1b412",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x8c3e27f075bb82e8730660828a1159c9438f3e58",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x9082908714e7119854da2dfa20fd8f268356f3ad",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x98d84697794f4aae7540c1f85433e2ab39ab1206",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0x9c90920df8051340bd7250bce83e6770d634a132",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xa50d2ce829ea7b731c3b0a244032b639ff94cb92",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xab90f7d562edac4fdfcac4d1cd93a45ac4a1fdab",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xb747bf0e9bc114c2ed63b3e5cdac9c5afdc93ea3",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xbb8b8ddc3775d825b6cf33bfa9ddcd771b88c6ee",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xc3ba42da1d9f6b09d4d1315ac04f873a5ba64d3c",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xd6c828e18114683208d24be26494b038357a829e",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xdd65d3eac26d91f1040fe3beca11863cd354788e",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xe0902356a984540ca097021dbd9e0650974c7f7d",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xe2e9da541d8bcff895444e7c001ffd5e7192b87d",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xe5937a5d9ef051643c0b7cb8226b61ef82f7a20b",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xe8cb705f0f29c554e71972af1bfbe16bb2673683",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xee843ac13f23ce668845f7e82384730f5e6721c0",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xee9cc69179697f3bf8172624c5803b58bf6bf73f",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xf62a2e4ecf3bf73313b3bbbfb1563cb4433c8933",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xfa1d8bdb95e0288779df13f40ff32567647e7ffa",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    },
+    {
+      "address": "0xfc2bb6b0824805cee6d7a4af90bd395f663651c8",
+      "strategyTemplate": "0xB79f193abf5Ef85aB5b138135Bf2f6D275FaBD48"
+    }
+  ],
+  "communityErrors": [],
+  "ownerMismatch": [],
+  "vprZero": [],
+  "resetNonCallable": [],
+  "strategyErrors": [],
+  "summary": {
+    "communityMismatch": 47,
+    "communityErrors": 0,
+    "ownerMismatch": 0,
+    "vprZero": 0,
+    "resetNonCallable": 0,
+    "strategyErrors": 0
+  }
+}

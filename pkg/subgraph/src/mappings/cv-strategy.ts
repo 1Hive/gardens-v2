@@ -49,9 +49,7 @@ import {
   SuperfluidGDADisconnected,
   StreamRateUpdated
 } from "../../generated/templates/CVStrategy/CVStrategy";
-import { CVStrategyV0_1 as CVStrategyContractV0_1 } from "../../generated/templates/CVStrategyV0_1/CVStrategyV0_1";
-import { CVStrategy as CVStrategyContractV0_0 } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
-
+import { CVStrategyLegacy as LegacyCVStrategyContract } from "../../generated/templates/CVStrategy/CVStrategyLegacy";
 import { Allo as AlloContract } from "../../generated/templates/CVStrategy/Allo";
 
 import {
@@ -84,39 +82,29 @@ function getMaxConviction(staked: BigInt, _decay: BigInt): BigInt {
   return staked.times(D).div(D.minus(_decay));
 }
 
-function getProposalMetadataPointerCompat(
+function getProposalMetadataPointer(
   address: Address,
   proposalNumber: BigInt
 ): string {
   const current = CVStrategyContract.bind(address);
-  const currentPointer = current.try_getProposalMetadataPointer(proposalNumber);
-  if (!currentPointer.reverted && currentPointer.value.length > 0) {
-    return currentPointer.value;
+  const pointerResult = current.try_getProposalMetadataPointer(proposalNumber);
+  if (!pointerResult.reverted && pointerResult.value.length > 0) {
+    return pointerResult.value;
   }
 
-  const v01 = CVStrategyContractV0_1.bind(address);
-  const v01Metadata = v01.try_getMetadata(proposalNumber);
-  if (!v01Metadata.reverted && v01Metadata.value.pointer.length > 0) {
-    return v01Metadata.value.pointer;
-  }
-
-  const v01Proposal = v01.try_proposals(proposalNumber);
-  if (!v01Proposal.reverted) {
-    const pointer = v01Proposal.value.getMetadata().pointer;
+  const legacy = LegacyCVStrategyContract.bind(address);
+  const legacyProposal = legacy.try_proposals(proposalNumber);
+  if (!legacyProposal.reverted) {
+    const pointer = legacyProposal.value.getMetadata().pointer;
     if (pointer.length > 0) {
       return pointer;
     }
   }
 
-  const v00 = CVStrategyContractV0_0.bind(address);
-  const v00Proposal = v00.try_proposals(proposalNumber);
-  if (!v00Proposal.reverted) {
-    const pointer = v00Proposal.value.getMetadata().pointer;
-    if (pointer.length > 0) {
-      return pointer;
-    }
-  }
-
+  log.error(
+    "CVStrategy: metadata pointer lookup failed for strategy:{} proposal:{}",
+    [address.toHexString(), proposalNumber.toString()]
+  );
   return "";
 }
 
@@ -184,10 +172,7 @@ function handleProposalCreatedCore(
       existingProposal.metadataHash.length == 0 ||
       existingProposal.metadata == null
     ) {
-      const pointer = getProposalMetadataPointerCompat(
-        event.address,
-        proposalNumber
-      );
+      const pointer = getProposalMetadataPointer(event.address, proposalNumber);
       if (pointer.length > 0) {
         existingProposal.metadataHash = pointer;
         existingProposal.metadata = pointer;
@@ -252,10 +237,7 @@ function handleProposalCreatedCore(
   // newProposal.voterStakedPointsPct = proposal.getVoterStakedPointsPct();
   // newProposal.agreementActionId = proposal.getAgreementActionId();
 
-  const pointer = getProposalMetadataPointerCompat(
-    event.address,
-    proposalNumber
-  );
+  const pointer = getProposalMetadataPointer(event.address, proposalNumber);
 
   newProposal.metadataHash = pointer;
   newProposal.metadata = pointer;
@@ -1386,6 +1368,34 @@ function getOrCreateStrategyStreamInfo(
     streamInfo.totalMemberUnits = ZERO;
     streamInfo.proposalStreamIds = [];
     streamInfo.createdAt = timestamp;
+    streamInfo.updatedAt = timestamp;
+    return streamInfo;
+  }
+
+  // Backfill required fields for entities created before streaming
+  // snapshot data was added to the schema.
+  if (streamInfo.get("contractAddress") == null) {
+    streamInfo.contractAddress = strategyAddress.toHexString();
+  }
+  if (streamInfo.get("contractType") == null) {
+    streamInfo.contractType = "CVStrategy";
+  }
+  if (streamInfo.get("strategy") == null) {
+    streamInfo.strategy = strategyAddress.toHexString();
+  }
+  if (streamInfo.get("superfluidGDA") == null) {
+    streamInfo.superfluidGDA = Address.zero().toHexString();
+  }
+  if (streamInfo.get("totalMemberUnits") == null) {
+    streamInfo.totalMemberUnits = ZERO;
+  }
+  if (streamInfo.get("proposalStreamIds") == null) {
+    streamInfo.proposalStreamIds = [];
+  }
+  if (streamInfo.get("createdAt") == null) {
+    streamInfo.createdAt = timestamp;
+  }
+  if (streamInfo.get("updatedAt") == null) {
     streamInfo.updatedAt = timestamp;
   }
 

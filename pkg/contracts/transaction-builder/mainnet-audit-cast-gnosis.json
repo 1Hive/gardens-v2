@@ -1,0 +1,29 @@
+{
+  "chain": "gnosis",
+  "factory": {
+    "registryCommunityTemplate": {
+      "value": "0x4341A09D7057894a43dcc9f095cC6bE3b7078136",
+      "matchesExpected": true,
+      "error": null
+    },
+    "strategyTemplate": {
+      "value": "0xfff175cE31FE597c4bae31D7260f535692a9a4AA",
+      "matchesExpected": true,
+      "error": null
+    }
+  },
+  "communityMismatch": [],
+  "communityErrors": [],
+  "ownerMismatch": [],
+  "vprZero": [],
+  "resetNonCallable": [],
+  "strategyErrors": [],
+  "summary": {
+    "communityMismatch": 0,
+    "communityErrors": 0,
+    "ownerMismatch": 0,
+    "vprZero": 0,
+    "resetNonCallable": 0,
+    "strategyErrors": 0
+  }
+}

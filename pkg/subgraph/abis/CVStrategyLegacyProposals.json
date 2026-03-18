@@ -1,0 +1,112 @@
+{
+  "abi": [
+    {
+      "type": "function",
+      "name": "proposals",
+      "stateMutability": "view",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "requestedAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "stakedAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "convictionLast",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "beneficiary",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "submitter",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "requestedToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "blockLast",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "proposalStatus",
+          "type": "uint8",
+          "internalType": "enum ProposalStatus"
+        },
+        {
+          "name": "metadata",
+          "type": "tuple",
+          "internalType": "struct Metadata",
+          "components": [
+            {
+              "name": "protocol",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "pointer",
+              "type": "string",
+              "internalType": "string"
+            }
+          ]
+        },
+        {
+          "name": "disputeInfo",
+          "type": "tuple",
+          "internalType": "struct ProposalDisputeInfo",
+          "components": [
+            {
+              "name": "challengeTimestamp",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "proposalId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "challenger",
+              "type": "address",
+              "internalType": "address"
+            }
+          ]
+        },
+        {
+          "name": "lastDisputeCompletion",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "arbitrableConfigVersion",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    }
+  ]
+}

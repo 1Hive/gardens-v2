@@ -19,12 +19,6 @@
         "startBlock": 125112015,
         "address": "0x5820D4e62A0EF69B1CCDAFB7729ACc8B0E93d845",
         "customTemplate": "goodDollarSybil"
-      },
-      {
-        "name": "GlobalPauseController",
-        "startBlock": 125112015,
-        "address": "0x6c675a9a711200c51941e0d8dd1748d2594c37fe",
-        "customTemplate": "globalPauseController"
       }
     ]
   }

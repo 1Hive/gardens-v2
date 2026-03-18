@@ -1,0 +1,83 @@
+{
+  "chain": "celo",
+  "factory": {
+    "implementation": "0xcba1fb3bab610fc8800164eaa6d58d219517e587",
+    "expectedImplementationFromPayload": "0xcba1fb3bab610fc8800164eaa6d58d219517e587",
+    "implementationMatchesPayload": true,
+    "communityInit": {
+      "value": "0x71520d667f5ab45f68c4e8455ffa1f9a7f792eac",
+      "expected": "0x71520d667f5ab45f68c4e8455ffa1f9a7f792eac",
+      "matches": true,
+      "calldata": "0xe1c7392a"
+    },
+    "communityFacets": {
+      "value": [
+        "0x314c20bbb756ffe422c980f83b8ed3b62aef469b",
+        "0xc1ecdfaafaa520492c8c84c66e75affb5b5db55f",
+        "0x8e0fa847c81acdff1969f36f26c7268bd0b0c9c6",
+        "0x6b2d0e2f541d7f694a6900f54d498dbf7d3fd522",
+        "0x371663c79f1c43bacbdd9c73ba267f4308963047",
+        "0xbcc2ded2cebf5f28459334642404708e2beefad5",
+        "0x4324b2485b7a7ef69c8ab6adfb4d4ceac338df7a"
+      ],
+      "expected": [
+        "0x314c20bbb756ffe422c980f83b8ed3b62aef469b",
+        "0xc1ecdfaafaa520492c8c84c66e75affb5b5db55f",
+        "0x8e0fa847c81acdff1969f36f26c7268bd0b0c9c6",
+        "0x6b2d0e2f541d7f694a6900f54d498dbf7d3fd522",
+        "0x371663c79f1c43bacbdd9c73ba267f4308963047",
+        "0xbcc2ded2cebf5f28459334642404708e2beefad5",
+        "0x4324b2485b7a7ef69c8ab6adfb4d4ceac338df7a"
+      ],
+      "matches": true
+    },
+    "strategyInit": {
+      "value": "0xd6e4b0e094c5ae63cdd3f6e622ed22030a3a908b",
+      "expected": "0xd6e4b0e094c5ae63cdd3f6e622ed22030a3a908b",
+      "matches": true,
+      "calldata": "0xe1c7392a"
+    },
+    "strategyFacets": {
+      "value": [
+        "0x314c20bbb756ffe422c980f83b8ed3b62aef469b",
+        "0x156272eee5de4f746de6b36ec39ca8a78739ac56",
+        "0xc481818588c2dce6900f34370a987ec52c93e4c3",
+        "0xf889ea054397d6f9980b87c6ec057fa55e705e92",
+        "0x676825eef541f5e4972ae66882cbd06c85a19b62",
+        "0x4057cde7b82245434f8c0b33c78d2c4553b437aa",
+        "0x52d94bb0bb2b0db0e3fb95de45282c2dbc376324",
+        "0xa9183f39624da07cd4416e70c43080a7563a77e3",
+        "0x9d30db12794335c2372ee8967f5925c93b0c8a1e"
+      ],
+      "expected": [
+        "0x314c20bbb756ffe422c980f83b8ed3b62aef469b",
+        "0x156272eee5de4f746de6b36ec39ca8a78739ac56",
+        "0xc481818588c2dce6900f34370a987ec52c93e4c3",
+        "0xf889ea054397d6f9980b87c6ec057fa55e705e92",
+        "0x676825eef541f5e4972ae66882cbd06c85a19b62",
+        "0x4057cde7b82245434f8c0b33c78d2c4553b437aa",
+        "0x52d94bb0bb2b0db0e3fb95de45282c2dbc376324",
+        "0xa9183f39624da07cd4416e70c43080a7563a77e3",
+        "0x9d30db12794335c2372ee8967f5925c93b0c8a1e"
+      ],
+      "matches": true
+    }
+  },
+  "communityImplementations": {
+    "total": 29,
+    "mismatch": []
+  },
+  "strategyImplementations": {
+    "total": 60,
+    "mismatch": []
+  },
+  "summary": {
+    "factoryCommunityInitMatch": true,
+    "factoryStrategyInitMatch": true,
+    "factoryCommunityFacetsMatch": true,
+    "factoryStrategyFacetsMatch": true,
+    "factoryImplementationMatchesPayload": true,
+    "communityImplementationMismatches": 0,
+    "strategyImplementationMismatches": 0
+  }
+}

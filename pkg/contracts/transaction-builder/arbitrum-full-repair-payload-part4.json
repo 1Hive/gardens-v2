@@ -1,0 +1,27 @@
+{
+  "version": "1.0",
+  "chainId": "42161",
+  "createdAt": 1773789032896,
+  "meta": {
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "0x9a17De1f0caD0c592F656410997E4B685d339029",
+    "createdFromOwnerAddress": "",
+    "checksum": "",
+    "name": "Arbitrum full repair part 4",
+    "description": "Slice of Arbitrum full repair payload"
+  },
+  "transactions": [
+    {
+      "to": "0xfa7299335e6b6d1305ec968ef23471d27002d682",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    }
+  ]
+}

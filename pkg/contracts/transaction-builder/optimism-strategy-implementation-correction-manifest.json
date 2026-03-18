@@ -1,0 +1,43 @@
+{
+  "strategyImplementation": "0x1ea21536ccccff14ab1f95b5f5eecefb61afa2b6",
+  "templatePayload": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/optimism-strategy-template-correction-payload.json",
+  "strategyUpgradeCombined": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/optimism-strategy-implementation-correction-payload.json",
+  "strategyUpgradeParts": [
+    {
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/optimism-strategy-implementation-correction-payload-part1.json",
+      "txCount": 40
+    },
+    {
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/optimism-strategy-implementation-correction-payload-part2.json",
+      "txCount": 40
+    },
+    {
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/optimism-strategy-implementation-correction-payload-part3.json",
+      "txCount": 2
+    }
+  ],
+  "followupResetPayload": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/optimism-set-voting-power-registry-payload.json",
+  "executionOrder": [
+    "optimism-strategy-template-correction-payload.json",
+    "optimism-strategy-implementation-correction-payload-part1.json",
+    "optimism-strategy-implementation-correction-payload-part2.json",
+    "optimism-strategy-implementation-correction-payload-part3.json",
+    "optimism-set-voting-power-registry-payload.json"
+  ],
+  "strategyUpgradePartsV2": [
+    {
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/optimism-strategy-implementation-correction-payload-part1.json",
+      "txCount": 40
+    },
+    {
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/optimism-strategy-implementation-correction-payload-part2-remaining.json",
+      "txCount": 42
+    }
+  ],
+  "executionOrderV2": [
+    "optimism-strategy-implementation-correction-payload-part1.json",
+    "optimism-strategy-implementation-correction-payload-part2-remaining.json",
+    "optimism-set-voting-power-registry-payload.json",
+    "optimism-strategy-template-correction-payload.json"
+  ]
+}

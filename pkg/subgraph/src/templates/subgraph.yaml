@@ -102,6 +102,8 @@ templates:
       abis:
         - name: CVStrategy
           file: ../contracts/abis/DiamondAggregated/CVStrategy.json
+        - name: CVStrategyLegacy
+          file: ./abis/CVStrategyLegacyProposals.json
         - name: RegistryCommunity
           file: ../contracts/abis/DiamondAggregated/RegistryCommunity.json
         - name: Allo

@@ -1,0 +1,495 @@
+{
+  "version": "1.0",
+  "chainId": "42161",
+  "createdAt": 1773789032896,
+  "meta": {
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "0x9a17De1f0caD0c592F656410997E4B685d339029",
+    "createdFromOwnerAddress": "",
+    "checksum": "",
+    "name": "Arbitrum full repair part 2",
+    "description": "Slice of Arbitrum full repair payload"
+  },
+  "transactions": [
+    {
+      "to": "0x68a2dc70d3fa0ff990979c5467d62bdcd2e6e9b4",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x68a2dc70d3fa0ff990979c5467d62bdcd2e6e9b4",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x6a34be42b61698ba8a103cf9c3d022f59bf8f4f2",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x6a34be42b61698ba8a103cf9c3d022f59bf8f4f2",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x6dd6b0a9a9b94aa169e5ce31cff34a46c7bea9cd",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x6dd6b0a9a9b94aa169e5ce31cff34a46c7bea9cd",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x7508c3bcc2ce964ef858762cfbfa8bbbcf406ec9",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x7508c3bcc2ce964ef858762cfbfa8bbbcf406ec9",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x7c31db900d9c0db7cf005a862c12a0c298d47220",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x7c31db900d9c0db7cf005a862c12a0c298d47220",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x8281fd9c5f709a681813c49843a253a05d9b837c",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x8281fd9c5f709a681813c49843a253a05d9b837c",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x8619e82a70fc412602e51f5056769ddb27d1b412",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x8619e82a70fc412602e51f5056769ddb27d1b412",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x8c3e27f075bb82e8730660828a1159c9438f3e58",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x8c3e27f075bb82e8730660828a1159c9438f3e58",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x9082908714e7119854da2dfa20fd8f268356f3ad",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x9082908714e7119854da2dfa20fd8f268356f3ad",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x98d84697794f4aae7540c1f85433e2ab39ab1206",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x98d84697794f4aae7540c1f85433e2ab39ab1206",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x9c90920df8051340bd7250bce83e6770d634a132",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0x9c90920df8051340bd7250bce83e6770d634a132",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xa50d2ce829ea7b731c3b0a244032b639ff94cb92",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xa50d2ce829ea7b731c3b0a244032b639ff94cb92",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xab90f7d562edac4fdfcac4d1cd93a45ac4a1fdab",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xab90f7d562edac4fdfcac4d1cd93a45ac4a1fdab",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xb747bf0e9bc114c2ed63b3e5cdac9c5afdc93ea3",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xb747bf0e9bc114c2ed63b3e5cdac9c5afdc93ea3",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xbb8b8ddc3775d825b6cf33bfa9ddcd771b88c6ee",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xbb8b8ddc3775d825b6cf33bfa9ddcd771b88c6ee",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xc3ba42da1d9f6b09d4d1315ac04f873a5ba64d3c",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xc3ba42da1d9f6b09d4d1315ac04f873a5ba64d3c",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xd6c828e18114683208d24be26494b038357a829e",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xd6c828e18114683208d24be26494b038357a829e",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xdd65d3eac26d91f1040fe3beca11863cd354788e",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xdd65d3eac26d91f1040fe3beca11863cd354788e",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xe0902356a984540ca097021dbd9e0650974c7f7d",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xe0902356a984540ca097021dbd9e0650974c7f7d",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xe2e9da541d8bcff895444e7c001ffd5e7192b87d",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c895e3075ebb4b0899979da5d51e112f858605b3",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    },
+    {
+      "to": "0xe2e9da541d8bcff895444e7c001ffd5e7192b87d",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000ee99dbf0bfffc9c811d109a3e4a1eed857463127",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    }
+  ]
+}
