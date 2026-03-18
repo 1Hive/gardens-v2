@@ -219,14 +219,41 @@ export default function ClientPage({ params }: ClientPageProps) {
     : undefined;
   const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
   const chainId = useChainIdFromPath();
+  const shouldReadOnchainMetadataHash =
+    !!proposalData?.strategy?.id &&
+    proposalIdNumber != null &&
+    !proposalData?.metadata &&
+    !proposalData?.metadataHash;
 
   const poolTokenAddr = proposalData?.strategy?.token as Address;
 
   const { publish } = usePubSubContext();
-  const { data: ipfsResult } = useMetadataIpfsFetch({
-    hash: proposalData?.metadataHash,
-    enabled: !!proposalData?.metadataHash && !proposalData?.metadata,
+  const {
+    data: onchainMetadataHash,
+    isLoading: isOnchainMetadataHashLoading,
+    isFetched: isOnchainMetadataHashFetched,
+  } = useContractRead({
+    address: proposalData?.strategy?.id as Address,
+    abi: cvStrategyABI,
+    functionName: "getProposalMetadataPointer",
+    args:
+      proposalIdNumber != null ? [proposalIdNumber] : ([0n] as const),
+    chainId,
+    enabled: shouldReadOnchainMetadataHash,
   });
+  const resolvedMetadataHash =
+    proposalData?.metadataHash || onchainMetadataHash || undefined;
+  const { data: ipfsResult, fetching: isIpfsMetadataFetching } =
+    useMetadataIpfsFetch({
+    hash: resolvedMetadataHash,
+    enabled: !!resolvedMetadataHash && !proposalData?.metadata,
+  });
+  const isMetadataLoading =
+    !!proposalData &&
+    !proposalData.metadata &&
+    ((shouldReadOnchainMetadataHash &&
+      (isOnchainMetadataHashLoading || !isOnchainMetadataHashFetched)) ||
+      (!!resolvedMetadataHash && isIpfsMetadataFetching));
   const path = usePathname();
   const metadata: MetadataV1 | null =
     proposalData ?
@@ -1170,7 +1197,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       <section className="hidden section-layout col-span-12 xl:col-span-9 mt-6 sm:flex flex-col gap-6">
         <h3>Proposal Description</h3>
         <div>
-          <Skeleton rows={5} isLoading={!Boolean(metadata)}>
+          <Skeleton rows={5} isLoading={isMetadataLoading}>
             <MarkdownWrapper source={metadata?.description} />
           </Skeleton>
         </div>
@@ -1401,7 +1428,7 @@ export default function ClientPage({ params }: ClientPageProps) {
           {selectedTab === 1 && (
             <section className="section-layout">
               <h3 className="mb-4">Proposal Description</h3>
-              <Skeleton rows={5} isLoading={!Boolean(metadata)}>
+              <Skeleton rows={5} isLoading={isMetadataLoading}>
                 <MarkdownWrapper source={metadata?.description} />
               </Skeleton>
             </section>
