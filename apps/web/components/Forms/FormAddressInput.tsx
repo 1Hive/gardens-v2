@@ -3,12 +3,7 @@ import { blo } from "blo";
 import Image from "next/image";
 import { RegisterOptions } from "react-hook-form";
 import { Address, createPublicClient, http, isAddress } from "viem";
-import {
-  useEnsAddress,
-  useEnsAvatar,
-  useEnsName,
-  useNetwork,
-} from "wagmi";
+import { useEnsAddress, useEnsAvatar, useEnsName, useNetwork } from "wagmi";
 import { FormInput } from "./FormInput";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { getChain, getConfigByChain } from "@/configs/chains";
@@ -31,6 +26,7 @@ type Props = {
   className?: string;
   value?: string;
   tooltip?: string;
+  tooltipClassName?: string;
   validateSafe?: boolean;
   validateERC20?: boolean;
   registerOptions?: RegisterOptions;
@@ -51,6 +47,7 @@ export const FormAddressInput = ({
   className,
   value,
   tooltip,
+  tooltipClassName,
   validateSafe = false,
   validateERC20 = false,
   onChange,
@@ -237,6 +234,7 @@ export const FormAddressInput = ({
         {...rest}
         label={label}
         tooltip={tooltip}
+        tooltipClassName={tooltipClassName}
         type="text"
         registerKey={registerKey}
         register={register}

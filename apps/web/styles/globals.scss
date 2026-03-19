@@ -395,6 +395,10 @@ dialog * {
   height: 100% !important;
 }
 
+.markdown-editor-shell .mdxeditor-theme {
+  min-height: 100%;
+}
+
 .mdxeditor-root-contenteditable,
 .wmde-markdown {
   @apply leading-7 text-base;
@@ -520,8 +524,10 @@ dialog * {
 
 .mdxeditor-toolbar {
   background-color: var(--baseBase) !important;
-  position: relative;
-  z-index: 1;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid color-mix(in srgb, var(--baseBase) 70%, #808080 30%);
   button {
     cursor: pointer;
   }
@@ -572,6 +578,14 @@ dialog * {
 }
 
 .mdxeditor-theme {
+  height: auto;
+  min-height: 100%;
+
+  .mdxeditor-root-contenteditable {
+    min-height: 12rem;
+    height: auto;
+  }
+
   ._placeholder_1e2ox_1106 {
     top: 0;
     left: 0;

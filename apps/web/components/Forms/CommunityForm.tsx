@@ -75,7 +75,13 @@ export const CommunityForm = () => {
     setValue,
     trigger,
     watch,
-  } = useForm<FormInputs>({ mode: "onBlur" });
+  } = useForm<FormInputs>({
+    mode: "onBlur",
+    defaultValues: {
+      feeReceiver: "",
+      councilSafe: "",
+    },
+  });
 
   // States and contexts
   const selectedChainId = watch("chainId");
@@ -83,6 +89,8 @@ export const CommunityForm = () => {
   const connectedChainId = chain?.id;
   const tokenAddress = watch("tokenAddress");
   const councilSafe = watch("councilSafe");
+  const feeAmount = watch("feeAmount");
+  const feeReceiver = watch("feeReceiver");
   const { publish } = usePubSubContext();
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
@@ -116,6 +124,15 @@ export const CommunityForm = () => {
       trigger("tokenAddress");
     }
   }, [switchNetworkData?.id, connectedChainId, selectedChainId]);
+
+  useEffect(() => {
+    if (!councilSafe || feeReceiver?.trim().length) return;
+    setValue("feeReceiver", councilSafe, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
+  }, [councilSafe, feeReceiver, setValue]);
 
   // Registry factory data query
   const { data: registryFactoryData } =
@@ -359,7 +376,13 @@ export const CommunityForm = () => {
     }
 
     return Object.entries(previewData)
-      .filter(([key]) => formRowTypes[key])
+      .filter(([key]) => {
+        if (!formRowTypes[key]) return false;
+        if (key === "feeReceiver") {
+          return Number(previewData.feeAmount || 0) > 0;
+        }
+        return true;
+      })
       .map(([key, value]) => {
         const formRow = formRowTypes[key];
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
@@ -521,23 +544,25 @@ export const CommunityForm = () => {
               tooltip="A percentage fee applied from the membership stake amount when joining a community."
             />
           </div>
-          <div className="flex flex-col">
-            <FormInput
-              label="Community fee Receiver address"
-              register={register}
-              registerOptions={{
-                pattern: {
-                  value: ethAddressRegEx,
-                  message: "Invalid Eth Address",
-                },
-              }}
-              errors={errors}
-              registerKey="feeReceiver"
-              placeholder="0x.."
-              type="text"
-              tooltip="Safe or Ethereum address that receives the fees paid by members."
-            />
-          </div>
+          {Number(feeAmount || 0) > 0 && (
+            <div className="flex flex-col">
+              <FormInput
+                label="Community fee Receiver address"
+                register={register}
+                registerOptions={{
+                  pattern: {
+                    value: ethAddressRegEx,
+                    message: "Invalid Eth Address",
+                  },
+                }}
+                errors={errors}
+                registerKey="feeReceiver"
+                placeholder="0x.."
+                type="text"
+                tooltip="Safe or Ethereum address that receives the fees paid by members."
+              />
+            </div>
+          )}
           <div className="flex flex-col">
             <FormAddressInput
               tooltip="The moderators of the community. Choose a Safe address that can create pools and manage settings in the community."
