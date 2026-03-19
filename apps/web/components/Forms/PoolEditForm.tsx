@@ -809,7 +809,8 @@ export default function PoolEditForm({
                   setShowPreview(false);
                   setLoading(false);
                 }}
-                btnStyle="outline"
+                btnStyle="ghost"
+                color="secondary"
               >
                 Edit
               </Button>
@@ -820,8 +821,8 @@ export default function PoolEditForm({
           : <div className="flex items-center gap-4">
               <Button
                 className="flex-1"
-                btnStyle="outline"
-                color="danger"
+                btnStyle="ghost"
+                color="secondary"
                 onClick={() => setModalOpen(false)}
               >
                 Cancel

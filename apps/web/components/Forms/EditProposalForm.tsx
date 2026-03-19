@@ -500,7 +500,8 @@ export const EditProposalForm = ({
                   setShowPreview(false);
                   setLoading(false);
                 }}
-                btnStyle="outline"
+                btnStyle="ghost"
+                color="secondary"
               >
                 Edit
               </Button>

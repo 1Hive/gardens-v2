@@ -31,7 +31,7 @@ import {
   Button,
   CommunityStakingLeaderboard,
   DisplayNumber,
-  EditCommunityButton,
+  EditCommunityModal,
   EthAddress,
   IncreasePower,
   InfoWrapper,
@@ -66,12 +66,15 @@ import {
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
+import { shortenAddress } from "@/utils/text";
 
 type MembersStaked = {
   id: string;
   memberAddress: string;
   stakedTokens: string;
 };
+
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 export default function ClientPage({
   params: { community: communityAddr },
@@ -127,6 +130,10 @@ export default function ClientPage({
 
   const covenant =
     registryCommunity?.covenant?.text ?? covenantResult?.covenant;
+  const effectivePendingCouncilSafe =
+    registryCommunity?.pendingNewCouncilSafe as Address | undefined;
+  const effectiveCouncilSafe =
+    registryCommunity?.councilSafe as Address | undefined;
 
   const { isCouncilSafe, isCouncilMember, councilMembers } = useCouncil({
     strategyOrCommunity: registryCommunity,
@@ -213,9 +220,43 @@ export default function ClientPage({
       },
     });
 
+  const {
+    write: writeAcceptCouncilSafe,
+    isLoading: isAcceptCouncilSafeLoading,
+  } = useContractWriteWithConfirmations({
+    address: registryCommunity?.id as Address,
+    abi: registryCommunityABI,
+    contractName: "Registry Community",
+    functionName: "acceptCouncilSafe",
+    onConfirmations: () => {
+      publish({
+        topic: "community",
+        type: "update",
+        id: communityAddr,
+        function: "acceptCouncilSafe",
+        containerId: communityAddr,
+      });
+    },
+  });
+
   const { tooltipMessage, isConnected, missmatchUrl, isButtonDisabled } =
     useDisableButtons();
   const createPoolHref = `/gardens/${chain?.id}/${communityAddr}/create-pool`;
+
+  const normalizedPendingCouncilSafe =
+    effectivePendingCouncilSafe != null &&
+    effectivePendingCouncilSafe.toLowerCase() !== ZERO_ADDRESS ?
+      effectivePendingCouncilSafe.toLowerCase()
+    : null;
+  const hasPendingCouncilSafe = normalizedPendingCouncilSafe != null;
+  const isPendingCouncilSafeWallet =
+    accountAddress != null &&
+    normalizedPendingCouncilSafe != null &&
+    accountAddress.toLowerCase() === normalizedPendingCouncilSafe;
+  const acceptHandoverTooltip =
+    !isPendingCouncilSafeWallet && effectivePendingCouncilSafe != null ?
+      `Connect with pending council safe ${shortenAddress(effectivePendingCouncilSafe)}`
+    : tooltipMessage;
 
   useEffect(() => {
     if (error) {
@@ -504,10 +545,10 @@ export default function ClientPage({
                       className="px-2 py-1"
                     />
                   </div>
-                  {registryCommunity?.councilSafe && (
+                  {effectiveCouncilSafe && (
                     <EthAddress
                       icon={false}
-                      address={registryCommunity.councilSafe as Address}
+                      address={effectiveCouncilSafe}
                       label="Council safe"
                       textColor="var(--color-grey-900)"
                     />
@@ -545,14 +586,13 @@ export default function ClientPage({
                   </div>
                   <div className="absolute top-12 md:top-7 right-5 flex items-center gap-2 z-50">
                     {(isCouncilMember || isCouncilSafe) && (
-                      <EditCommunityButton
+                      <EditCommunityModal
                         communityAddress={registryCommunity.id as Address}
                         communityName={communityName ?? "Community"}
                         communityMembersCount={Number(membersCount ?? 0)}
                         currentCommunityName={communityName ?? ""}
-                        currentCouncilSafe={
-                          registryCommunity.councilSafe as Address
-                        }
+                        currentCouncilSafe={effectiveCouncilSafe as Address}
+                        pendingCouncilSafe={effectivePendingCouncilSafe}
                         currentCovenant={covenant ?? ""}
                         tokenDecimals={tokenGarden.decimals}
                         tokenSymbol={tokenGarden.symbol}
@@ -583,10 +623,26 @@ export default function ClientPage({
                           })
                         }
                         isLoading={isSetArchiveLoading}
+                        >
+                          {result.registryCommunity?.archived ?
+                            "Unarchive"
+                          : "Archive"}
+                      </Button>
+                    )}
+                    {hasPendingCouncilSafe && (
+                      <Button
+                        btnStyle="filled"
+                        color="tertiary"
+                        disabled={
+                          isButtonDisabled ||
+                          missmatchUrl ||
+                          !isPendingCouncilSafeWallet
+                        }
+                        tooltip={acceptHandoverTooltip}
+                        onClick={() => writeAcceptCouncilSafe()}
+                        isLoading={isAcceptCouncilSafeLoading}
                       >
-                        {result.registryCommunity?.archived ?
-                          "Unarchive"
-                        : "Archive"}
+                        Accept Handover
                       </Button>
                     )}
                     <RegisterMember
@@ -821,14 +877,13 @@ export default function ClientPage({
                     {/* Action Buttons */}
                     <div className="flex flex-col gap-2 mt-4">
                       {(isCouncilMember || isCouncilSafe) && (
-                        <EditCommunityButton
+                        <EditCommunityModal
                           communityAddress={registryCommunity.id as Address}
                           communityName={communityName ?? "Community"}
                           communityMembersCount={Number(membersCount ?? 0)}
                           currentCommunityName={communityName ?? ""}
-                          currentCouncilSafe={
-                            registryCommunity.councilSafe as Address
-                          }
+                          currentCouncilSafe={effectiveCouncilSafe as Address}
+                          pendingCouncilSafe={effectivePendingCouncilSafe}
                           currentCovenant={covenant ?? ""}
                           tokenDecimals={tokenGarden.decimals}
                           tokenSymbol={tokenGarden.symbol}
@@ -865,6 +920,23 @@ export default function ClientPage({
                           {result.registryCommunity?.archived ?
                             "Unarchive"
                           : "Archive"}
+                        </Button>
+                      )}
+                      {hasPendingCouncilSafe && (
+                        <Button
+                          btnStyle="filled"
+                          color="tertiary"
+                          disabled={
+                            isButtonDisabled ||
+                            missmatchUrl ||
+                            !isPendingCouncilSafeWallet
+                          }
+                          tooltip={acceptHandoverTooltip}
+                          onClick={() => writeAcceptCouncilSafe()}
+                          isLoading={isAcceptCouncilSafeLoading}
+                          className="w-full"
+                        >
+                          Accept Handover
                         </Button>
                       )}
                       <RegisterMember

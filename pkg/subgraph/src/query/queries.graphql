@@ -311,6 +311,7 @@ query getCommunity($communityAddr: ID!) {
     registerStakeAmount
     registerToken
     councilSafe
+    pendingNewCouncilSafe
     membersCount
     garden {
       id

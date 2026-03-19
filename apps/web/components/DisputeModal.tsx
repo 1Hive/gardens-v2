@@ -458,8 +458,8 @@ export const DisputeModal: FC<Props> = ({
           <div className="flex gap-2">
             <Button
               onClick={() => setIsModalOpened(false)}
-              color="danger"
-              btnStyle="outline"
+              color="secondary"
+              btnStyle="ghost"
             >
               Cancel
             </Button>

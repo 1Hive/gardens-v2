@@ -5,7 +5,7 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, isAddress, parseUnits } from "viem";
 import { useContractRead } from "wagmi";
-import { Button, InfoBox, Modal } from "@/components";
+import { Button, EthAddress, InfoBox, Modal } from "@/components";
 import { FormAddressInput } from "@/components/Forms/FormAddressInput";
 import { FormCheckBox } from "@/components/Forms/FormCheckBox";
 import { FormInput } from "@/components/Forms/FormInput";
@@ -36,6 +36,7 @@ type Props = {
   communityMembersCount: number;
   currentCommunityName: string;
   currentCouncilSafe: Address;
+  pendingCouncilSafe?: Address;
   currentCovenant: string;
   tokenDecimals: number;
   tokenSymbol: string;
@@ -44,12 +45,13 @@ type Props = {
   className?: string;
 };
 
-export function EditCommunityButton({
+export function EditCommunityModal({
   communityAddress,
   communityName,
   communityMembersCount,
   currentCommunityName,
   currentCouncilSafe,
+  pendingCouncilSafe,
   currentCovenant,
   tokenDecimals,
   tokenSymbol,
@@ -78,6 +80,7 @@ export function EditCommunityButton({
         communityMembersCount={communityMembersCount}
         currentCommunityName={currentCommunityName}
         currentCouncilSafe={currentCouncilSafe}
+        pendingCouncilSafe={pendingCouncilSafe}
         currentCovenant={currentCovenant}
         tokenDecimals={tokenDecimals}
         tokenSymbol={tokenSymbol}
@@ -96,6 +99,7 @@ function CommunityEditModal({
   communityMembersCount,
   currentCommunityName,
   currentCouncilSafe,
+  pendingCouncilSafe,
   currentCovenant,
   tokenDecimals,
   tokenSymbol,
@@ -156,7 +160,7 @@ function CommunityEditModal({
     reset,
     setValue,
     watch,
-    formState: { errors, isDirty },
+    formState: { errors },
   } = useForm<CommunityEditFormValues>({
     mode: "onBlur",
     defaultValues: {
@@ -176,6 +180,15 @@ function CommunityEditModal({
   const fallbackCommunityFee =
     communityFeeData != null ? formatUnits(communityFeeData, 4) : "0";
   const fallbackCouncilSafe = councilSafeData ?? currentCouncilSafe;
+  const hasPendingCouncilSafe =
+    pendingCouncilSafe != null &&
+    pendingCouncilSafe.toLowerCase() !== ZERO_ADDRESS.toLowerCase();
+  const displayedCouncilSafe = hasPendingCouncilSafe ?
+      pendingCouncilSafe
+    : fallbackCouncilSafe;
+  const councilSafeLabel = hasPendingCouncilSafe ?
+      "Council safe (pending)"
+    : "Council safe";
   const fallbackFeeReceiver =
     (
       feeReceiverData != null &&
@@ -207,7 +220,9 @@ function CommunityEditModal({
       feeReceiver:
         values?.feeReceiver ?? currentValues.feeReceiver ?? fallbackFeeReceiver,
       councilSafe:
-        values?.councilSafe ?? currentValues.councilSafe ?? fallbackCouncilSafe,
+        values?.councilSafe ??
+        currentValues.councilSafe ??
+        displayedCouncilSafe,
       registerStakeAmount:
         values?.registerStakeAmount ??
         currentValues.registerStakeAmount ??
@@ -230,7 +245,7 @@ function CommunityEditModal({
       communityName: currentCommunityName,
       communityFee: fallbackCommunityFee,
       feeReceiver: fallbackFeeReceiver,
-      councilSafe: fallbackCouncilSafe,
+      councilSafe: displayedCouncilSafe,
       registerStakeAmount: fallbackRegisterStakeAmount,
       isKickEnabled: fallbackKickEnabled,
       covenant: fallbackCovenant,
@@ -240,6 +255,7 @@ function CommunityEditModal({
     fallbackCommunityFee,
     fallbackCouncilSafe,
     fallbackCovenant,
+    displayedCouncilSafe,
     fallbackFeeReceiver,
     fallbackKickEnabled,
     fallbackRegisterStakeAmount,
@@ -251,7 +267,7 @@ function CommunityEditModal({
   const watchedCovenant = watch("covenant", fallbackCovenant);
   const watchedCommunityFee = watch("communityFee", fallbackCommunityFee);
   const watchedFeeReceiver = watch("feeReceiver", fallbackFeeReceiver);
-  const watchedCouncilSafe = watch("councilSafe", fallbackCouncilSafe);
+  const watchedCouncilSafe = watch("councilSafe", displayedCouncilSafe);
   const watchedCommunityName = watch("communityName", currentCommunityName);
   const watchedRegisterStakeAmount = watch(
     "registerStakeAmount",
@@ -268,6 +284,7 @@ function CommunityEditModal({
   const {
     write: writeSetCommunityParams,
     isLoading: isSetCommunityParamsLoading,
+    transactionStatus,
   } = useContractWriteWithConfirmations({
     address: communityAddress,
     abi: registryCommunityABI,
@@ -282,12 +299,17 @@ function CommunityEditModal({
         function: "setCommunityParams",
         containerId: communityAddress,
       });
-      onClose();
     },
     onError: () => {
       setIsSubmitting(false);
     },
   });
+
+  useEffect(() => {
+    if (!isSubmitting) return;
+    if (transactionStatus !== "success" && transactionStatus !== "error") return;
+    onClose();
+  }, [isSubmitting, onClose, transactionStatus]);
 
   useEffect(() => {
     if (!shouldShowFeeReceiverField) return;
@@ -308,18 +330,23 @@ function CommunityEditModal({
     watchedFeeReceiver.trim().length > 0 ? watchedFeeReceiver : ZERO_ADDRESS;
   const normalizedFallbackFeeReceiver =
     fallbackFeeReceiver.trim().length > 0 ? fallbackFeeReceiver : ZERO_ADDRESS;
+  const councilSafeChanged =
+    watchedCouncilSafe.toLowerCase() !== fallbackCouncilSafe.toLowerCase();
   const hasChanges =
     watchedCommunityName.trim() !== currentCommunityName.trim() ||
     watchedCommunityFee !== fallbackCommunityFee ||
     normalizedWatchedFeeReceiver.toLowerCase() !==
       normalizedFallbackFeeReceiver.toLowerCase() ||
-    watchedCouncilSafe.toLowerCase() !== fallbackCouncilSafe.toLowerCase() ||
+    councilSafeChanged ||
     watchedRegisterStakeAmount !== fallbackRegisterStakeAmount ||
     watchedKickEnabled !== fallbackKickEnabled ||
     watchedCovenant.trim() !== fallbackCovenant.trim();
 
   const submitDisabled =
-    isButtonDisabled || isReadonlyForCouncilMember || !hasChanges || isSubmitting;
+    isButtonDisabled ||
+    isReadonlyForCouncilMember ||
+    !hasChanges ||
+    isSubmitting;
   const submitTooltip =
     isReadonlyForCouncilMember ? "Connect with Council Safe" : tooltipMessage;
 
@@ -378,6 +405,12 @@ function CommunityEditModal({
     }
   }
 
+  const previewCouncilSafeLabel =
+    previewData != null &&
+    previewData.councilSafe.toLowerCase() !== fallbackCouncilSafe.toLowerCase() ?
+      "Council safe (pending)"
+    : councilSafeLabel;
+
   const previewRows: FormRow[] =
     previewData == null ?
       []
@@ -395,7 +428,17 @@ function CommunityEditModal({
             },
           ]
         : []),
-        { label: "Council safe", data: previewData.councilSafe },
+        {
+          label: previewCouncilSafeLabel,
+          data: (
+            <EthAddress
+              address={previewData.councilSafe as Address}
+              icon="ens"
+              showPopup={false}
+              shortenAddress={false}
+            />
+          ),
+        },
         {
           label: `Registration stake (${tokenSymbol})`,
           data: previewData.registerStakeAmount || "0",
@@ -418,10 +461,10 @@ function CommunityEditModal({
             <>
               <Button
                 btnStyle="ghost"
-                color="tertiary"
+                color="secondary"
                 onClick={() => setShowPreview(false)}
               >
-                Back to edit
+                Edit
               </Button>
               <Button
                 btnStyle="filled"
@@ -438,7 +481,7 @@ function CommunityEditModal({
               </Button>
             </>
           : <>
-              <Button btnStyle="ghost" color="tertiary" onClick={onClose}>
+              <Button btnStyle="ghost" color="secondary" onClick={onClose}>
                 Cancel
               </Button>
               <Button
@@ -530,7 +573,7 @@ function CommunityEditModal({
             )}
             <div className="w-full">
               <FormAddressInput
-                label="Council safe"
+                label={councilSafeLabel}
                 register={register}
                 registerKey="councilSafe"
                 errors={errors}
@@ -542,9 +585,16 @@ function CommunityEditModal({
                   validate: (value: string) =>
                     isAddress(value) || "Enter a valid address.",
                 }}
-                tooltip="If changed, the new council safe will need to accept the handover."
-                tooltipClassName="tooltip-top-right text-warning-content"
               />
+              {councilSafeChanged && (
+                <p className="mt-2 text-sm leading-relaxed text-neutral-content/80">
+                  The new council safe will need to{" "}
+                  <span className="font-semibold whitespace-nowrap text-tertiary-content">
+                    Accept Handover
+                  </span>{" "}
+                  from the community page.
+                </p>
+              )}
             </div>
           </div>
 
