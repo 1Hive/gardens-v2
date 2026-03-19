@@ -100,11 +100,12 @@ export function CommunityStakingLeaderboard({
           textColor="var(--color-grey-900)"
         />
       ),
+      className: "w-[55%] text-left",
     },
     {
       header: "Staked tokens",
       render: (memberData: MembersStaked) => (
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-baseline justify-end gap-2">
           <p className="text-xs">
             (
             {calculatePercentageBigInt(
@@ -120,7 +121,7 @@ export function CommunityStakingLeaderboard({
           />
         </div>
       ),
-      className: "flex justify-end",
+      className: "w-[25%] text-right [&_h6]:text-right",
     },
   ];
 
@@ -128,39 +129,41 @@ export function CommunityStakingLeaderboard({
     columns.push({
       header: "Actions",
       render: (memberData: MembersStaked) => (
-        <Button
-          btnStyle="ghost"
-          color="danger"
-          disabled={
-            isButtonDisabled ||
-            (isCouncilMember && !isCouncilSafe) ||
-            !isKickEnabled
-          }
-          tooltip={
-            !isKickEnabled ?
-              "Kick is disabled for this community"
-            : kickTooltip
-          }
-          isLoading={
-            isKickMemberLoading &&
-            kickingMemberAddress?.toLowerCase() ===
-              memberData.memberAddress.toLowerCase()
-          }
-          className="!w-auto whitespace-nowrap px-3 py-1.5"
-          onClick={() => {
-            setKickingMemberAddress(memberData.memberAddress);
-            writeKickMember({
-              args: [
-                memberData.memberAddress as Address,
-                memberData.memberAddress as Address,
-              ],
-            });
-          }}
-        >
-          Kick
-        </Button>
+        <div className="flex justify-end">
+          <Button
+            btnStyle="ghost"
+            color="danger"
+            disabled={
+              isButtonDisabled ||
+              (isCouncilMember && !isCouncilSafe) ||
+              !isKickEnabled
+            }
+            tooltip={
+              !isKickEnabled ?
+                "Kick is disabled for this community"
+              : kickTooltip
+            }
+            isLoading={
+              isKickMemberLoading &&
+              kickingMemberAddress?.toLowerCase() ===
+                memberData.memberAddress.toLowerCase()
+            }
+            className="!w-auto whitespace-nowrap px-3 py-1.5"
+            onClick={() => {
+              setKickingMemberAddress(memberData.memberAddress);
+              writeKickMember({
+                args: [
+                  memberData.memberAddress as Address,
+                  memberData.memberAddress as Address,
+                ],
+              });
+            }}
+          >
+            Kick
+          </Button>
+        </div>
       ),
-      className: "flex justify-end",
+      className: "w-[20%] text-right [&_h6]:text-right",
     });
   }
 
