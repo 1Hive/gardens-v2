@@ -10,7 +10,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { CheckIcon } from "@heroicons/react/24/solid";
 
-import { FetchTokenResult } from "@wagmi/core";
 import { Dnum, multiply } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
@@ -63,8 +62,6 @@ import { registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { logOnce } from "@/utils/log";
 import {
-  calculatePercentageBigInt,
-  formatCountWhenPlus1k,
   parseToken,
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
@@ -74,13 +71,6 @@ type MembersStaked = {
   id: string;
   memberAddress: string;
   stakedTokens: string;
-};
-
-type CommunityMetricsProps = {
-  membersStaked: MembersStaked[] | undefined;
-  tokenGarden: FetchTokenResult;
-  communityName: string;
-  communityStakedTokens: number | bigint;
 };
 
 export default function ClientPage({
@@ -560,7 +550,9 @@ export default function ClientPage({
                         communityName={communityName ?? "Community"}
                         communityMembersCount={Number(membersCount ?? 0)}
                         currentCommunityName={communityName ?? ""}
-                        currentCouncilSafe={registryCommunity.councilSafe as Address}
+                        currentCouncilSafe={
+                          registryCommunity.councilSafe as Address
+                        }
                         currentCovenant={covenant ?? ""}
                         tokenDecimals={tokenGarden.decimals}
                         tokenSymbol={tokenGarden.symbol}
@@ -572,13 +564,17 @@ export default function ClientPage({
                       <Button
                         btnStyle="outline"
                         color="secondary"
-                        disabled={isButtonDisabled || (isCouncilMember && !isCouncilSafe)}
+                        disabled={
+                          isButtonDisabled ||
+                          (isCouncilMember && !isCouncilSafe)
+                        }
                         tooltip={
                           isCouncilMember && !isCouncilSafe ?
                             "Connect with Council Safe"
                           : tooltipMessage ?
                             tooltipMessage
                           : "Archive this community will hide it from being listed in the home page but will remain accessible through a link."
+
                         }
                         forceShowTooltip={result.registryCommunity?.archived}
                         onClick={() =>
@@ -830,7 +826,9 @@ export default function ClientPage({
                           communityName={communityName ?? "Community"}
                           communityMembersCount={Number(membersCount ?? 0)}
                           currentCommunityName={communityName ?? ""}
-                          currentCouncilSafe={registryCommunity.councilSafe as Address}
+                          currentCouncilSafe={
+                            registryCommunity.councilSafe as Address
+                          }
                           currentCovenant={covenant ?? ""}
                           tokenDecimals={tokenGarden.decimals}
                           tokenSymbol={tokenGarden.symbol}
@@ -843,13 +841,17 @@ export default function ClientPage({
                         <Button
                           btnStyle="outline"
                           color="secondary"
-                          disabled={isButtonDisabled || (isCouncilMember && !isCouncilSafe)}
+                          disabled={
+                            isButtonDisabled ||
+                            (isCouncilMember && !isCouncilSafe)
+                          }
                           tooltip={
                             isCouncilMember && !isCouncilSafe ?
                               "Connect with Council Safe"
                             : tooltipMessage ?
                               tooltipMessage
                             : "Archive this community will hide it from being listed in the home page but will remain accessible through a link."
+
                           }
                           forceShowTooltip={result.registryCommunity?.archived}
                           onClick={() =>
