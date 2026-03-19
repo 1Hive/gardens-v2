@@ -14,6 +14,7 @@ import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useFlag } from "@/hooks/useFlag";
 import { registryCommunityABI } from "@/src/generated";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 
@@ -57,8 +58,9 @@ export function EditCommunityButton({
   className,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
+  const showEditCommunity = useFlag("showEditCommunity");
 
-  if (!isCouncilMember && !isCouncilSafe) return null;
+  if (!showEditCommunity || (!isCouncilMember && !isCouncilSafe)) return null;
 
   return (
     <>
@@ -250,6 +252,11 @@ function CommunityEditModal({
   const watchedCommunityFee = watch("communityFee", fallbackCommunityFee);
   const watchedFeeReceiver = watch("feeReceiver", fallbackFeeReceiver);
   const watchedCouncilSafe = watch("councilSafe", fallbackCouncilSafe);
+  const watchedCommunityName = watch("communityName", currentCommunityName);
+  const watchedRegisterStakeAmount = watch(
+    "registerStakeAmount",
+    fallbackRegisterStakeAmount,
+  );
   const shouldShowFeeReceiverField = (() => {
     try {
       return parseUnits(watchedCommunityFee || "0", 4) > 0n;
@@ -297,13 +304,27 @@ function CommunityEditModal({
     watchedFeeReceiver,
   ]);
 
+  const normalizedWatchedFeeReceiver =
+    watchedFeeReceiver.trim().length > 0 ? watchedFeeReceiver : ZERO_ADDRESS;
+  const normalizedFallbackFeeReceiver =
+    fallbackFeeReceiver.trim().length > 0 ? fallbackFeeReceiver : ZERO_ADDRESS;
+  const hasChanges =
+    watchedCommunityName.trim() !== currentCommunityName.trim() ||
+    watchedCommunityFee !== fallbackCommunityFee ||
+    normalizedWatchedFeeReceiver.toLowerCase() !==
+      normalizedFallbackFeeReceiver.toLowerCase() ||
+    watchedCouncilSafe.toLowerCase() !== fallbackCouncilSafe.toLowerCase() ||
+    watchedRegisterStakeAmount !== fallbackRegisterStakeAmount ||
+    watchedKickEnabled !== fallbackKickEnabled ||
+    watchedCovenant.trim() !== fallbackCovenant.trim();
+
   const submitDisabled =
-    isButtonDisabled || isReadonlyForCouncilMember || !isDirty || isSubmitting;
+    isButtonDisabled || isReadonlyForCouncilMember || !hasChanges || isSubmitting;
   const submitTooltip =
     isReadonlyForCouncilMember ? "Connect with Council Safe" : tooltipMessage;
 
   const handlePreview = () => {
-    if (!isDirty) return;
+    if (!hasChanges) return;
     setPreviewData(buildCompleteValues());
     setShowPreview(true);
   };
@@ -423,7 +444,7 @@ function CommunityEditModal({
               <Button
                 btnStyle="filled"
                 color="primary"
-                disabled={!isDirty}
+                disabled={!hasChanges}
                 onClick={handleSubmit(handlePreview)}
               >
                 Preview

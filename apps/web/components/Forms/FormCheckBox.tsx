@@ -56,7 +56,7 @@ export function FormCheckBox({
     "bg-transparent",
     "dark:bg-transparent",
     disabled || readOnly ?
-      "cursor-not-allowed !opacity-100 border-neutral-soft-content bg-neutral/70 dark:bg-neutral/40"
+      "cursor-not-allowed opacity-10 border-neutral-soft-content bg-neutral/70 dark:bg-neutral/40"
     : "",
     "disabled:!opacity-100",
     "disabled:border-neutral-soft-content",
