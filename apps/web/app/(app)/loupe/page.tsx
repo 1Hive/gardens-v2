@@ -2,8 +2,27 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { AbiFunction, AbiParameter } from "abitype";
+import { useSearchParams } from "next/navigation";
+import communityAdminFacetArtifact from "#/contracts/abis/CommunityAdminFacet.sol/CommunityAdminFacet.json";
+import communityMemberFacetArtifact from "#/contracts/abis/CommunityMemberFacet.sol/CommunityMemberFacet.json";
+import communityPoolFacetArtifact from "#/contracts/abis/CommunityPoolFacet.sol/CommunityPoolFacet.json";
+import communityPowerFacetArtifact from "#/contracts/abis/CommunityPowerFacet.sol/CommunityPowerFacet.json";
+import communityStrategyFacetArtifact from "#/contracts/abis/CommunityStrategyFacet.sol/CommunityStrategyFacet.json";
+import communityPauseFacetArtifact from "#/contracts/abis/CommunityPauseFacet.sol/CommunityPauseFacet.json";
+import cvAdminFacetArtifact from "#/contracts/abis/CVAdminFacet.sol/CVAdminFacet.json";
+import cvAllocationFacetArtifact from "#/contracts/abis/CVAllocationFacet.sol/CVAllocationFacet.json";
+import cvDisputeFacetArtifact from "#/contracts/abis/CVDisputeFacet.sol/CVDisputeFacet.json";
+import cvPowerFacetArtifact from "#/contracts/abis/CVPowerFacet.sol/CVPowerFacet.json";
+import cvProposalFacetArtifact from "#/contracts/abis/CVProposalFacet.sol/CVProposalFacet.json";
+import cvPauseFacetArtifact from "#/contracts/abis/CVPauseFacet.sol/CVPauseFacet.json";
+import cvStreamingFacetArtifact from "#/contracts/abis/CVStreamingFacet.sol/CVStreamingFacet.json";
+import cvSyncPowerFacetArtifact from "#/contracts/abis/CVSyncPowerFacet.sol/CVSyncPowerFacet.json";
+import diamondCutFacetArtifact from "#/contracts/abis/DiamondCutFacet.sol/DiamondCutFacet.json";
+import diamondLoupeFacetArtifact from "#/contracts/abis/DiamondLoupeFacet.sol/DiamondLoupeFacet.json";
+import ownershipFacetArtifact from "#/contracts/abis/OwnershipFacet.sol/OwnershipFacet.json";
 import {
   Address,
+  decodeErrorResult,
   decodeFunctionResult,
   encodeFunctionData,
   isAddress,
@@ -23,7 +42,6 @@ import { Button } from "@/components/Button";
 import { InfoBox } from "@/components/InfoBox";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { CHAINS } from "@/configs/chains";
-import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { shortenAddress } from "@/utils/text";
 
@@ -33,7 +51,45 @@ type DiamondFacet = {
 };
 
 type SignatureMap = Record<string, string[]>;
+type GeneratedArgField = {
+  key: string;
+  label: string;
+  kind: "text" | "textarea" | "checkbox" | "group";
+  placeholder: string;
+  helper: string;
+  value: unknown;
+  path: number[];
+  parameter: AbiParameter;
+  children?: GeneratedArgField[];
+};
+type KnownFacetDefinition = {
+  label: string;
+  selectors: string[];
+};
 const EMPTY_FACETS: DiamondFacet[] = [];
+const KNOWN_ABI_CATALOG = [
+  { label: "RegistryCommunity", abi: registryCommunityABI },
+  { label: "CVStrategy", abi: cvStrategyABI },
+] as const;
+const KNOWN_FACET_ABI_CATALOG = [
+  { label: "CommunityAdminFacet", abi: communityAdminFacetArtifact.abi },
+  { label: "CommunityMemberFacet", abi: communityMemberFacetArtifact.abi },
+  { label: "CommunityPoolFacet", abi: communityPoolFacetArtifact.abi },
+  { label: "CommunityPowerFacet", abi: communityPowerFacetArtifact.abi },
+  { label: "CommunityStrategyFacet", abi: communityStrategyFacetArtifact.abi },
+  { label: "CommunityPauseFacet", abi: communityPauseFacetArtifact.abi },
+  { label: "CVAdminFacet", abi: cvAdminFacetArtifact.abi },
+  { label: "CVAllocationFacet", abi: cvAllocationFacetArtifact.abi },
+  { label: "CVDisputeFacet", abi: cvDisputeFacetArtifact.abi },
+  { label: "CVPowerFacet", abi: cvPowerFacetArtifact.abi },
+  { label: "CVProposalFacet", abi: cvProposalFacetArtifact.abi },
+  { label: "CVPauseFacet", abi: cvPauseFacetArtifact.abi },
+  { label: "CVStreamingFacet", abi: cvStreamingFacetArtifact.abi },
+  { label: "CVSyncPowerFacet", abi: cvSyncPowerFacetArtifact.abi },
+  { label: "DiamondCutFacet", abi: diamondCutFacetArtifact.abi },
+  { label: "DiamondLoupeFacet", abi: diamondLoupeFacetArtifact.abi },
+  { label: "OwnershipFacet", abi: ownershipFacetArtifact.abi },
+] as const;
 
 const FACETS_ABI = [
   {
@@ -81,6 +137,30 @@ const stringifyResult = (value: unknown) => {
   }
 };
 
+const extractRevertData = (error: unknown): `0x${string}` | null => {
+  if (error == null || typeof error !== "object") return null;
+
+  const candidate = error as Record<string, unknown>;
+  const directData = candidate.data;
+  if (
+    typeof directData === "string" &&
+    directData.startsWith("0x") &&
+    directData.length >= 10
+  ) {
+    return directData as `0x${string}`;
+  }
+
+  const details = candidate.details;
+  if (typeof details === "string") {
+    const match = details.match(/0x[a-fA-F0-9]{8,}/);
+    if (match) {
+      return match[0] as `0x${string}`;
+    }
+  }
+
+  return extractRevertData(candidate.cause);
+};
+
 const parseFunctionFromSignature = (signature: string) =>
   parseAbiItem(`function ${signature.trim()}`) as AbiFunction;
 
@@ -94,6 +174,80 @@ const getTypeWithoutArraySuffix = (type: string) => type.replace(/\[\]$/g, "");
 
 const getArrayDepth = (type: string) => (type.match(/\[\]/g) ?? []).length;
 
+const stringifyFieldValue = (value: unknown) => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "bigint") return value.toString();
+  if (typeof value === "string") return value;
+  if (value == null) return "";
+  try {
+    return JSON.stringify(
+      value,
+      (_, item) => (typeof item === "bigint" ? item.toString() : item),
+      2,
+    );
+  } catch {
+    return String(value);
+  }
+};
+
+const getTupleChildValue = (
+  value: unknown,
+  component: AbiParameter,
+  index: number,
+) => {
+  if (Array.isArray(value)) {
+    return value[index];
+  }
+  if (value != null && typeof value === "object") {
+    const source = value as Record<string, unknown>;
+    if (component.name && source[component.name] !== undefined) {
+      return source[component.name];
+    }
+    return source[String(index)];
+  }
+  return undefined;
+};
+
+const getParameterInputKind = (
+  parameter: AbiParameter,
+): GeneratedArgField["kind"] => {
+  if (parameter.type === "bool") return "checkbox";
+  if (parameter.type === "tuple" && !parameter.type.includes("[")) {
+    return "group";
+  }
+  if (parameter.type.includes("[") || parameter.type === "tuple") {
+    return "textarea";
+  }
+  return "text";
+};
+
+const getParameterPlaceholder = (parameter: AbiParameter) => {
+  if (parameter.type === "address") return "0x...";
+  if (parameter.type === "bool") return "";
+  if (parameter.type.startsWith("uint") || parameter.type.startsWith("int")) {
+    return "0";
+  }
+  if (parameter.type === "string") return "text";
+  if (parameter.type.startsWith("bytes")) return "0x";
+  if (parameter.type.includes("[") || parameter.type === "tuple") {
+    return parameter.type.includes("[") ? '["value1","value2"]' : '{"field":"value"}';
+  }
+  return parameter.type;
+};
+
+const getParameterHelper = (parameter: AbiParameter) => {
+  if (parameter.type === "bool") return "Boolean toggle";
+  if (parameter.type.startsWith("uint") || parameter.type.startsWith("int")) {
+    return "Enter an integer value";
+  }
+  if (parameter.type === "address") return "Ethereum address";
+  if (parameter.type.startsWith("bytes")) return "Hex value";
+  if (parameter.type.includes("[") || parameter.type === "tuple") {
+    return "Provide JSON matching the ABI type";
+  }
+  return parameter.type;
+};
+
 const parseNumberish = (value: unknown) => {
   if (typeof value === "bigint") return value;
   if (typeof value === "number" && Number.isInteger(value)) {
@@ -103,6 +257,46 @@ const parseNumberish = (value: unknown) => {
     return BigInt(value.trim());
   }
   return value;
+};
+
+const parseFieldValueForParameter = (
+  rawValue: unknown,
+  parameter: AbiParameter,
+): unknown => {
+  if (parameter.type === "tuple" && isTupleParameter(parameter)) {
+    if (Array.isArray(rawValue)) {
+      return parameter.components.map((component, index) =>
+        parseFieldValueForParameter(rawValue[index], component),
+      );
+    }
+    if (rawValue != null && typeof rawValue === "object") {
+      return parameter.components.map((component, index) =>
+        parseFieldValueForParameter(
+          getTupleChildValue(rawValue, component, index),
+          component,
+        ),
+      );
+    }
+  }
+
+  if (parameter.type === "bool") {
+    return Boolean(rawValue);
+  }
+
+  if (typeof rawValue !== "string") return rawValue;
+
+  const trimmed = rawValue.trim();
+  if (trimmed === "") return trimmed;
+
+  if (parameter.type.includes("[") || parameter.type === "tuple") {
+    return JSON.parse(trimmed);
+  }
+
+  if (parameter.type.startsWith("uint") || parameter.type.startsWith("int")) {
+    return BigInt(trimmed);
+  }
+
+  return trimmed;
 };
 
 const parseBoolish = (value: unknown) => {
@@ -188,6 +382,193 @@ const normalizeArgsForInputs = (
     normalizeValueForParameter(rawArgs[index], input),
   );
 
+const buildGeneratedArgFields = (
+  parameters: readonly AbiParameter[],
+  values: unknown[],
+  pathPrefix: number[] = [],
+): GeneratedArgField[] =>
+  parameters.map((input, index) => {
+    const path = [...pathPrefix, index];
+    const value = values[index];
+    const kind = getParameterInputKind(input);
+
+    if (kind === "group" && isTupleParameter(input)) {
+      const childValues = input.components.map((component, childIndex) => {
+        const childValue = getTupleChildValue(value, component, childIndex);
+        if (childValue === undefined) {
+          return component.type === "bool" ? false : "";
+        }
+        if (component.type === "tuple" && !component.type.includes("[")) {
+          return childValue;
+        }
+        return stringifyFieldValue(childValue);
+      });
+
+      return {
+        key: `${input.name || "arg"}-${path.join("-")}`,
+        label:
+          input.name?.trim() ?
+            `${input.name} (${input.type})`
+          : `arg${index} (${input.type})`,
+        kind,
+        placeholder: getParameterPlaceholder(input),
+        helper: getParameterHelper(input),
+        value,
+        path,
+        parameter: input,
+        children: buildGeneratedArgFields(
+          input.components,
+          childValues,
+          path,
+        ),
+      };
+    }
+
+    return {
+      key: `${input.name || "arg"}-${path.join("-")}`,
+      label:
+        input.name?.trim() ?
+          `${input.name} (${input.type})`
+        : `arg${index} (${input.type})`,
+      kind,
+      placeholder: getParameterPlaceholder(input),
+      helper: getParameterHelper(input),
+      value,
+      path,
+      parameter: input,
+    };
+  });
+
+const setNestedPathValue = (
+  values: unknown[],
+  path: number[],
+  nextValue: unknown,
+): unknown[] => {
+  const [head, ...tail] = path;
+  const cloned = [...values];
+
+  if (tail.length === 0) {
+    cloned[head] = nextValue;
+    return cloned;
+  }
+
+  const current = cloned[head];
+  const container =
+    current != null && typeof current === "object" ?
+      { ...(current as Record<string, unknown>) }
+    : {};
+
+  let cursor: Record<string, unknown> = container;
+  for (let index = 0; index < tail.length - 1; index += 1) {
+    const segment = String(tail[index]);
+    const currentValue =
+      cursor[segment] != null && typeof cursor[segment] === "object" ?
+        { ...(cursor[segment] as Record<string, unknown>) }
+      : {};
+    cursor[segment] = currentValue;
+    cursor = currentValue;
+  }
+  cursor[String(tail[tail.length - 1])] = nextValue;
+  cloned[head] = container;
+  return cloned;
+};
+
+const GeneratedArgFieldEditor = ({
+  field,
+  onChange,
+}: {
+  field: GeneratedArgField;
+  onChange: (path: number[], value: unknown) => void;
+}) => {
+  const [customZeroCount, setCustomZeroCount] = useState("6");
+
+  if (field.kind === "group") {
+    return (
+      <div className="rounded-xl border border-border-neutral/40 bg-neutral/20 p-3">
+        <div className="mb-3">
+          <p className="text-xs font-semibold text-neutral-content">
+            {field.label}
+          </p>
+          <p className="text-[10px] text-neutral-muted">{field.helper}</p>
+        </div>
+        <div className="grid gap-3 pl-3">
+          {(field.children ?? []).map((child) => (
+            <GeneratedArgFieldEditor
+              key={child.key}
+              field={child}
+              onChange={onChange}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <label className="flex flex-col gap-1 text-xs text-neutral-muted">
+      <span>{field.label}</span>
+      {field.kind === "checkbox" ?
+        <input
+          type="checkbox"
+          className="checkbox checkbox-info h-5 w-5 rounded-md border-2 border-neutral-soft-content"
+          checked={Boolean(field.value)}
+          onChange={(event) => onChange(field.path, event.target.checked)}
+        />
+      : field.kind === "textarea" ?
+        <textarea
+          className="min-h-[88px] rounded-lg border border-border-neutral bg-neutral px-3 py-2 font-mono text-xs text-neutral-content placeholder:text-neutral-muted focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
+          value={String(field.value ?? "")}
+          placeholder={field.placeholder}
+          onChange={(event) => onChange(field.path, event.target.value)}
+        />
+      : <input
+          className="rounded-lg border border-border-neutral bg-neutral px-3 py-2 font-mono text-xs text-neutral-content placeholder:text-neutral-muted focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
+          value={String(field.value ?? "")}
+          placeholder={field.placeholder}
+          onChange={(event) => onChange(field.path, event.target.value)}
+        />
+      }
+      {field.parameter.type.match(/^(u?int)([0-9]+)?$/) && field.kind === "text" && (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="rounded border border-border-neutral/60 px-2 py-1 font-mono text-[10px] text-neutral-content hover:border-primary-content hover:text-primary-content"
+            onClick={() =>
+              onChange(field.path, `${String(field.value ?? "")}${"0".repeat(18)}`)
+            }
+          >
+            +18 decimals
+          </button>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min="1"
+              className="w-16 rounded border border-border-neutral bg-neutral px-2 py-1 font-mono text-[10px] text-neutral-content placeholder:text-neutral-muted focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
+              value={customZeroCount}
+              onChange={(event) => setCustomZeroCount(event.target.value)}
+            />
+            <button
+              type="button"
+              className="rounded border border-border-neutral/60 px-2 py-1 font-mono text-[10px] text-neutral-content hover:border-primary-content hover:text-primary-content"
+              onClick={() => {
+                const zeroCount = Number(customZeroCount);
+                if (!Number.isInteger(zeroCount) || zeroCount <= 0) return;
+                onChange(
+                  field.path,
+                  `${String(field.value ?? "")}${"0".repeat(zeroCount)}`,
+                );
+              }}
+            >
+              +custom decimals
+            </button>
+          </div>
+        </div>
+      )}
+      <span className="text-[10px] text-neutral-muted">{field.helper}</span>
+    </label>
+  );
+};
+
 export default function DiamondAdminPage() {
   const [addressInput, setAddressInput] = useState("");
   const [diamondAddress, setDiamondAddress] = useState<Address>();
@@ -202,6 +583,7 @@ export default function DiamondAdminPage() {
   const [selectedSelector, setSelectedSelector] = useState("");
   const [selectedSignature, setSelectedSignature] = useState("");
   const [argsInput, setArgsInput] = useState("[]");
+  const [argFieldValues, setArgFieldValues] = useState<unknown[]>([]);
   const [valueInput, setValueInput] = useState("0");
   const [executionError, setExecutionError] = useState<string | null>(null);
   const [readOutput, setReadOutput] = useState<string | null>(null);
@@ -211,7 +593,7 @@ export default function DiamondAdminPage() {
   const [isSimulatingWrite, setIsSimulatingWrite] = useState(false);
   const [isExecutingWrite, setIsExecutingWrite] = useState(false);
   const didApplyQueryParamsRef = useRef(false);
-  const queryParams = useCollectQueryParams();
+  const searchParams = useSearchParams();
 
   const isAddressValid = Boolean(addressInput) && isAddress(addressInput);
   const publicClient = usePublicClient({ chainId: selectedChainId });
@@ -270,6 +652,131 @@ export default function DiamondAdminPage() {
     [],
   );
 
+  const inferredProxyAbi = useMemo(() => {
+    const facetSelectorSet = new Set(allSelectors.map((selector) => selector.toLowerCase()));
+
+    const candidates = KNOWN_ABI_CATALOG.map(({ label, abi }) => {
+      const functions = abi
+        .filter(isAbiFunctionItem)
+        .map((item) => item as AbiFunction);
+      const uniqueFunctions = Array.from(
+        new Map(
+          functions.map((fn) => [toCanonicalSignature(fn), fn] as const),
+        ).values(),
+      );
+      const selectors = uniqueFunctions.map((fn) =>
+        selectorFromSignature(toCanonicalSignature(fn)),
+      );
+      const overlapCount = selectors.filter((selector) =>
+        facetSelectorSet.has(selector),
+      ).length;
+
+      return {
+        label,
+        functions: uniqueFunctions,
+        overlapCount,
+      };
+    });
+
+    return candidates.sort((a, b) => b.overlapCount - a.overlapCount)[0] ?? null;
+  }, [allSelectors]);
+
+  const proxyFunctions = useMemo(() => {
+    if (!inferredProxyAbi) return [];
+
+    return Array.from(
+      new Map(
+        inferredProxyAbi.functions.map(
+          (fn) => [toCanonicalSignature(fn), fn] as const,
+        ),
+      ).values(),
+    )
+      .filter((fn) => {
+        const selector = selectorFromSignature(toCanonicalSignature(fn));
+        return !allSelectors.includes(selector);
+      })
+      .sort((a, b) => {
+        if (a.name === b.name) {
+          return toCanonicalSignature(a).localeCompare(toCanonicalSignature(b));
+        }
+        return a.name.localeCompare(b.name);
+      });
+  }, [allSelectors, inferredProxyAbi]);
+
+  const availableSelectors = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...allSelectors,
+          ...proxyFunctions.map((fn) =>
+            selectorFromSignature(toCanonicalSignature(fn)),
+          ),
+        ]),
+      ).sort(),
+    [allSelectors, proxyFunctions],
+  );
+
+  const knownFacetCatalog = useMemo<KnownFacetDefinition[]>(
+    () =>
+      KNOWN_FACET_ABI_CATALOG.map(({ label, abi }) => ({
+        label,
+        selectors: Array.from(
+          new Set(
+            (abi as readonly unknown[])
+              .filter(isAbiFunctionItem)
+              .map((item) => toCanonicalSignature(item as AbiFunction))
+              .map(selectorFromSignature),
+          ),
+        ),
+      })),
+    [],
+  );
+
+  const knownErrorAbi = useMemo(
+    () =>
+      [
+        ...KNOWN_ABI_CATALOG.flatMap(
+          ({ abi }) => abi as readonly unknown[],
+        ),
+        ...KNOWN_FACET_ABI_CATALOG.flatMap(
+          ({ abi }) => abi as readonly unknown[],
+        ),
+      ].filter(
+        (item) =>
+          item != null &&
+          typeof item === "object" &&
+          "type" in item &&
+          (item as { type?: unknown }).type === "error",
+      ) as readonly unknown[],
+    [],
+  );
+
+  const facetsWithNames = useMemo(
+    () =>
+      facets.map((facet) => {
+        const selectorSet = new Set(
+          facet.functionSelectors.map((selector) => selector.toLowerCase()),
+        );
+        const bestMatch = knownFacetCatalog
+          .map((knownFacet) => ({
+            label: knownFacet.label,
+            overlap: knownFacet.selectors.filter((selector) =>
+              selectorSet.has(selector),
+            ).length,
+          }))
+          .sort((a, b) => b.overlap - a.overlap)[0];
+
+        return {
+          ...facet,
+          inferredName:
+            bestMatch != null && bestMatch.overlap > 0 ?
+              bestMatch.label
+            : undefined,
+        };
+      }),
+    [facets, knownFacetCatalog],
+  );
+
   const knownFunctionBySignature = useMemo(() => {
     const entries = knownAbiFunctions.map(
       (fn) => [toCanonicalSignature(fn), fn] as const,
@@ -292,7 +799,9 @@ export default function DiamondAdminPage() {
     knownAbiFunctions.forEach((fn) => {
       const signature = toCanonicalSignature(fn);
       const selector = selectorFromSignature(signature);
-      map[selector] = [...(map[selector] ?? []), signature];
+      map[selector] = Array.from(
+        new Set([...(map[selector] ?? []), signature]),
+      );
     });
     return map;
   }, [knownAbiFunctions]);
@@ -354,6 +863,102 @@ export default function DiamondAdminPage() {
       return selectedSignature.trim();
     }
   }, [selectedKnownFunction, selectedSignature]);
+
+  const availableSignaturesForSelectedSelector = useMemo(
+    () => Array.from(new Set(signatureMap[selectedSelector] ?? [])),
+    [selectedSelector, signatureMap],
+  );
+
+  const selectedAbiFunction = useMemo(() => {
+    if (selectedKnownFunction) return selectedKnownFunction;
+    if (!selectedSignature.trim()) return null;
+    try {
+      return parseFunctionFromSignature(selectedSignature);
+    } catch {
+      return null;
+    }
+  }, [selectedKnownFunction, selectedSignature]);
+
+  const generatedArgFields = useMemo<GeneratedArgField[]>(() => {
+    if (!selectedAbiFunction) return [];
+    const inputValues = (selectedAbiFunction.inputs ?? []).map((input, index) => {
+      const current = argFieldValues[index];
+      if (current !== undefined) return current;
+      return input.type === "bool" ? false : "";
+    });
+
+    return buildGeneratedArgFields(
+      selectedAbiFunction.inputs ?? [],
+      inputValues,
+    );
+  }, [argFieldValues, selectedAbiFunction]);
+
+  const syncArgTextareaFromFields = (
+    nextValues: unknown[],
+    functionAbi: AbiFunction | null,
+  ) => {
+    if (!functionAbi) return;
+
+    try {
+      const parsedArgs = (functionAbi.inputs ?? []).map((input, index) =>
+        parseFieldValueForParameter(nextValues[index] ?? "", input),
+      );
+      setArgsInput(
+        JSON.stringify(
+          parsedArgs,
+          (_, item) => (typeof item === "bigint" ? item.toString() : item),
+          2,
+        ),
+      );
+    } catch {
+      // Keep the current raw JSON while the user is typing invalid input.
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedAbiFunction) {
+      setArgFieldValues([]);
+      return;
+    }
+
+    const inputs = selectedAbiFunction.inputs ?? [];
+    let parsedArgs: unknown[] = [];
+    try {
+      const maybeArgs = JSON.parse(argsInput || "[]");
+      if (Array.isArray(maybeArgs)) {
+        parsedArgs = maybeArgs;
+      }
+    } catch {
+      parsedArgs = [];
+    }
+
+    setArgFieldValues(
+      inputs.map((input, index) => {
+        const current = parsedArgs[index];
+        if (current === undefined) {
+          return input.type === "bool" ? false : "";
+        }
+        if (input.type === "tuple" && !input.type.includes("[")) {
+          return current;
+        }
+        return stringifyFieldValue(current);
+      }),
+    );
+  }, [argsInput, selectedAbiFunction]);
+
+  const queryParams = useMemo(
+    () => ({
+      chainId: searchParams.get("chainId") ?? undefined,
+      chain: searchParams.get("chain") ?? undefined,
+      address: searchParams.get("address") ?? undefined,
+      diamond: searchParams.get("diamond") ?? undefined,
+      selector: searchParams.get("selector") ?? undefined,
+      signature: searchParams.get("signature") ?? undefined,
+      args: searchParams.get("args") ?? undefined,
+      value: searchParams.get("value") ?? undefined,
+    }),
+    [searchParams],
+  );
 
   useEffect(() => {
     if (didApplyQueryParamsRef.current) return;
@@ -471,15 +1076,15 @@ export default function DiamondAdminPage() {
   }, [allSelectors, localSignatureMap]);
 
   useEffect(() => {
-    if (!allSelectors.length) {
+    if (!availableSelectors.length) {
       setSelectedSelector("");
       setSelectedSignature("");
       return;
     }
-    if (!selectedSelector || !allSelectors.includes(selectedSelector)) {
-      setSelectedSelector(allSelectors[0]);
+    if (!selectedSelector || !availableSelectors.includes(selectedSelector)) {
+      setSelectedSelector(availableSelectors[0]);
     }
-  }, [allSelectors, selectedSelector]);
+  }, [availableSelectors, selectedSelector]);
 
   useEffect(() => {
     if (!selectedSelector) {
@@ -490,14 +1095,19 @@ export default function DiamondAdminPage() {
     const candidates =
       localCandidates.length > 0 ?
         localCandidates
-      : (signatureMap[selectedSelector] ?? []);
+      : availableSignaturesForSelectedSelector;
     if (!candidates.length) {
       return;
     }
     if (!selectedSignature || !candidates.includes(selectedSignature)) {
       setSelectedSignature(candidates[0]);
     }
-  }, [localSignatureMap, selectedSelector, selectedSignature, signatureMap]);
+  }, [
+    availableSignaturesForSelectedSelector,
+    localSignatureMap,
+    selectedSelector,
+    selectedSignature,
+  ]);
 
   useEffect(() => {
     if (!selectedSignature.trim()) {
@@ -670,10 +1280,30 @@ export default function DiamondAdminPage() {
       });
       setTxHash(hash);
     } catch (runError) {
-      const message =
+      const revertData = extractRevertData(runError);
+      let message =
         runError instanceof Error ?
           runError.message
         : "Unknown execution error";
+
+      if (revertData != null) {
+        try {
+          const decodedError = decodeErrorResult({
+            abi: knownErrorAbi,
+            data: revertData,
+          });
+          const decodedArgs =
+            decodedError.args == null ?
+              ""
+            : `\n${stringifyResult(decodedError.args)}`;
+          message =
+            `Decoded custom error: ${decodedError.errorName}${decodedArgs}\n\n` +
+            `Raw revert data: ${revertData}\n\n` +
+            message;
+        } catch {
+          message = `Raw revert data: ${revertData}\n\n${message}`;
+        }
+      }
       setExecutionError(message);
     } finally {
       setIsExecutingRead(false);
@@ -786,6 +1416,12 @@ export default function DiamondAdminPage() {
               {totalSelectors.toLocaleString("en-US")}
             </p>
           </div>
+          <div className="space-y-1 text-right text-xs text-neutral-muted">
+            <p>Inferred proxy ABI</p>
+            <p className="text-sm text-neutral-content">
+              {inferredProxyAbi?.label ?? "Unknown"}
+            </p>
+          </div>
         </div>
 
         <div className="space-y-4 rounded-2xl border border-border-neutral bg-neutral/5 p-4">
@@ -811,20 +1447,20 @@ export default function DiamondAdminPage() {
                 />
               )}
 
-              {facets.length > 0 && (
+              {facetsWithNames.length > 0 && (
                 <div className="space-y-3">
-                  {facets.map((facet, index) => (
+                  {facetsWithNames.map((facet, index) => (
                     <div
                       key={facet.facetAddress}
                       className="rounded-xl border border-border-neutral/40 bg-neutral/50 p-4"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                          <p className="text-xs text-neutral-muted">
-                            Facet #{index + 1}
+                          <p className="text-sm font-semibold text-neutral-content">
+                            {facet.inferredName ?? `Unidentified Facet #${index + 1}`}
                           </p>
-                          <p className="font-mono text-sm text-neutral-content">
-                            {shortenAddress(facet.facetAddress)}
+                          <p className="font-mono text-xs text-neutral-muted">
+                            ({facet.facetAddress})
                           </p>
                         </div>
                         <p className="text-xs text-neutral-muted">
@@ -850,10 +1486,22 @@ export default function DiamondAdminPage() {
                                 }
                               }}
                             >
-                              <span>{selector}</span>
-                              <span className="ml-2 text-[10px] text-neutral-muted">
-                                {(signatureMap[selector] ?? [])[0] ?? "unknown"}
-                              </span>
+                              {(signatureMap[selector] ?? [])[0] ?
+                                <>
+                                  <div className="text-sm font-mono text-primary-content">
+                                    {(signatureMap[selector] ?? [])[0]}
+                                  </div>
+                                  <div className="mt-1 font-mono text-xs text-neutral-content">
+                                    {selector}
+                                  </div>
+                                </>
+                              : <>
+                                  <div className="h-4 w-48 rounded bg-primary-content/15" />
+                                  <div className="mt-1 font-mono text-xs text-neutral-content">
+                                    {selector}
+                                  </div>
+                                </>
+                              }
                             </button>
                           ))}
                         </div>
@@ -863,6 +1511,52 @@ export default function DiamondAdminPage() {
                       }
                     </div>
                   ))}
+                </div>
+              )}
+
+              {diamondAddress && proxyFunctions.length > 0 && (
+                <div className="rounded-xl border border-border-neutral/40 bg-neutral/50 p-4 space-y-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-neutral-content">
+                      Proxy / main ABI surface
+                    </p>
+                    <p className="text-xs text-neutral-muted">
+                      Accessible fields and functions from the inferred main contract ABI, not only loupe facets.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-[10px]">
+                    {proxyFunctions.map((fn) => {
+                      const signature = toCanonicalSignature(fn);
+                      const selector = selectorFromSignature(signature);
+
+                      return (
+                        <button
+                          key={signature}
+                          type="button"
+                          className={`rounded border px-2 py-1 text-left ${
+                            selectedSignature === signature ?
+                              "border-primary-content/80 bg-primary-content/10 text-primary-content"
+                            : "border-border-neutral/50 bg-neutral/30 text-primary-content"
+                          }`}
+                          onClick={() => {
+                            setSelectedSelector(selector);
+                            setSelectedSignature(signature);
+                          }}
+                        >
+                          <div className="font-mono text-sm text-primary-content">
+                            {signature}
+                          </div>
+                          <div className="mt-1 font-mono text-xs text-neutral-content">
+                            {selector}
+                          </div>
+                          <div className="mt-1 flex items-center gap-2 text-[10px] text-neutral-muted">
+                            <span>proxy/main</span>
+                            <span>{fn.stateMutability}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
@@ -892,51 +1586,6 @@ export default function DiamondAdminPage() {
                     />
                   )}
 
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <label className="flex flex-col gap-1 text-xs text-neutral-muted">
-                      <span>Selector</span>
-                      <select
-                        className="rounded-lg border border-border-neutral bg-neutral px-3 py-2 text-sm text-neutral-content focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
-                        value={selectedSelector}
-                        onChange={(event) => {
-                          const selector = event.target.value;
-                          setSelectedSelector(selector);
-                          const signatures = signatureMap[selector] ?? [];
-                          if (signatures.length) {
-                            setSelectedSignature(signatures[0]);
-                          }
-                        }}
-                      >
-                        {allSelectors.map((selector) => (
-                          <option key={selector} value={selector}>
-                            {selector}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label className="flex flex-col gap-1 text-xs text-neutral-muted">
-                      <span>Resolved signature</span>
-                      <select
-                        className="rounded-lg border border-border-neutral bg-neutral px-3 py-2 text-sm text-neutral-content focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
-                        value={selectedSignature}
-                        onChange={(event) =>
-                          setSelectedSignature(event.target.value)
-                        }
-                      >
-                        {(signatureMap[selectedSelector] ?? []).length > 0 ?
-                          (signatureMap[selectedSelector] ?? []).map(
-                            (signature) => (
-                              <option key={signature} value={signature}>
-                                {signature}
-                              </option>
-                            ),
-                          )
-                        : <option value="">No signature found</option>}
-                      </select>
-                    </label>
-                  </div>
-
                   <label className="flex flex-col gap-1 text-xs text-neutral-muted">
                     <span>Manual signature override</span>
                     <input
@@ -954,10 +1603,62 @@ export default function DiamondAdminPage() {
                     <textarea
                       className="min-h-[88px] rounded-lg border border-border-neutral bg-neutral px-3 py-2 font-mono text-xs text-neutral-content placeholder:text-neutral-muted focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
                       value={argsInput}
-                      onChange={(event) => setArgsInput(event.target.value)}
+                      onChange={(event) => {
+                        const nextValue = event.target.value;
+                        setArgsInput(nextValue);
+                        try {
+                          const maybeArgs = JSON.parse(nextValue || "[]");
+                          if (Array.isArray(maybeArgs) && selectedAbiFunction) {
+                            setArgFieldValues(
+                              (selectedAbiFunction.inputs ?? []).map(
+                                (input, index) =>
+                                  stringifyFieldValue(
+                                    maybeArgs[index] ??
+                                      (input.type === "bool" ? false : ""),
+                                  ),
+                              ),
+                            );
+                          }
+                        } catch {
+                          // keep manual JSON free-form if invalid
+                        }
+                      }}
                       placeholder='Example: ["0xabc...", "1000000000000000000"]'
                     />
                   </label>
+
+                  {generatedArgFields.length > 0 && (
+                    <div className="space-y-3 rounded-xl border border-border-neutral/40 bg-neutral/30 p-4">
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-neutral-content">
+                          Generated argument fields
+                        </p>
+                        <p className="text-xs text-neutral-muted">
+                          Inputs are inferred from the selected function signature and keep the JSON args array in sync.
+                        </p>
+                      </div>
+                      <div className="grid gap-3">
+                        {generatedArgFields.map((field) => (
+                          <GeneratedArgFieldEditor
+                            key={field.key}
+                            field={field}
+                            onChange={(path, value) => {
+                              const nextValues = setNestedPathValue(
+                                argFieldValues,
+                                path,
+                                value,
+                              );
+                              setArgFieldValues(nextValues);
+                              syncArgTextareaFromFields(
+                                nextValues,
+                                selectedAbiFunction,
+                              );
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <label className="flex flex-col gap-1 text-xs text-neutral-muted">
                     <span>Value (wei, for write calls)</span>
@@ -970,20 +1671,6 @@ export default function DiamondAdminPage() {
                   </label>
 
                   <div className="flex flex-wrap gap-2">
-                    <Button
-                      btnStyle="outline"
-                      color={
-                        selectedFunctionKind === "read" ? "primary" : (
-                          "secondary"
-                        )
-                      }
-                      className="sm:w-auto"
-                      onClick={() => void executeFunction("read")}
-                      isLoading={isExecutingRead}
-                      disabled={!diamondAddress || !selectedSignature.trim()}
-                    >
-                      Call (eth_call)
-                    </Button>
                     <Button
                       btnStyle="outline"
                       color="primary"
@@ -999,6 +1686,20 @@ export default function DiamondAdminPage() {
                       }
                     >
                       Simulate transaction
+                    </Button>
+                    <Button
+                      btnStyle="outline"
+                      color={
+                        selectedFunctionKind === "read" ? "primary" : (
+                          "secondary"
+                        )
+                      }
+                      className="sm:w-auto"
+                      onClick={() => void executeFunction("read")}
+                      isLoading={isExecutingRead}
+                      disabled={!diamondAddress || !selectedSignature.trim()}
+                    >
+                      Read (eth_call)
                     </Button>
                     <Button
                       btnStyle="filled"
@@ -1050,6 +1751,7 @@ export default function DiamondAdminPage() {
                       infoBoxType="error"
                       title="Execution error"
                       content={executionError}
+                      contentStyle="whitespace-pre-wrap break-all"
                     />
                   )}
 

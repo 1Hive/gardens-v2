@@ -64,6 +64,10 @@ const replaceUrlWithoutSearch = (path: string) => {
   window.history.replaceState(null, "", path);
 };
 
+const shouldPreserveSearchParamsInUrl = (path: string) => {
+  return path === "/loupe";
+};
+
 // Define the context
 interface QueryParamsContextType {
   [key: string]: string;
@@ -109,7 +113,9 @@ export const QueryParamsProvider = ({ children }: { children: ReactNode }) => {
         "QueryParamsProvider: collected query params",
         newParams,
       );
-      replaceUrlWithoutSearch(path);
+      if (!shouldPreserveSearchParamsInUrl(path)) {
+        replaceUrlWithoutSearch(path);
+      }
       return;
     }
 
