@@ -143,6 +143,7 @@ export function CommunityStakingLeaderboard({
                 "Kick is disabled for this community"
               : kickTooltip
             }
+            tooltipClassName="tooltip-left"
             isLoading={
               isKickMemberLoading &&
               kickingMemberAddress?.toLowerCase() ===
