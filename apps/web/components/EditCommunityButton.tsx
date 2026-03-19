@@ -303,6 +303,7 @@ function CommunityEditModal({
     isReadonlyForCouncilMember ? "Connect with Council Safe" : tooltipMessage;
 
   const handlePreview = () => {
+    if (!isDirty) return;
     setPreviewData(buildCompleteValues());
     setShowPreview(true);
   };

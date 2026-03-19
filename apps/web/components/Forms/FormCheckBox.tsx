@@ -47,15 +47,21 @@ export function FormCheckBox({
   const checkboxClasses = [
     "checkbox",
     "shrink-0",
+    "h-5",
+    "w-5",
+    "rounded-md",
+    "border-2",
     hasError ? "checkbox-error" : "checkbox-info",
-    "dark:bg-primary-soft-dark",
+    "border-neutral-soft-content",
+    "bg-transparent",
+    "dark:bg-transparent",
     disabled || readOnly ?
-      "cursor-not-allowed !opacity-100 border border-neutral-soft-content bg-neutral"
+      "cursor-not-allowed !opacity-100 border-neutral-soft-content bg-neutral/70 dark:bg-neutral/40"
     : "",
     "disabled:!opacity-100",
     "disabled:border-neutral-soft-content",
-    "disabled:bg-neutral",
-    "disabled:checked:bg-neutral",
+    "disabled:bg-neutral/70",
+    "disabled:checked:bg-neutral/70",
     "disabled:checked:text-neutral-content",
   ]
     .filter(Boolean)
