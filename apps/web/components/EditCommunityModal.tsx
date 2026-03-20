@@ -18,7 +18,7 @@ import { useFlag } from "@/hooks/useFlag";
 import { registryCommunityABI } from "@/src/generated";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as Address;
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 type CommunityEditFormValues = {
   communityName: string;
@@ -35,8 +35,8 @@ type Props = {
   communityName: string;
   communityMembersCount: number;
   currentCommunityName: string;
-  currentCouncilSafe: Address;
-  pendingCouncilSafe?: Address;
+  currentCouncilSafe: string;
+  pendingCouncilSafe?: string;
   currentCovenant: string;
   tokenDecimals: number;
   tokenSymbol: string;
@@ -183,12 +183,10 @@ function CommunityEditModal({
   const hasPendingCouncilSafe =
     pendingCouncilSafe != null &&
     pendingCouncilSafe.toLowerCase() !== ZERO_ADDRESS.toLowerCase();
-  const displayedCouncilSafe = hasPendingCouncilSafe ?
-      pendingCouncilSafe
-    : fallbackCouncilSafe;
-  const councilSafeLabel = hasPendingCouncilSafe ?
-      "Council safe (pending)"
-    : "Council safe";
+  const displayedCouncilSafe =
+    hasPendingCouncilSafe ? pendingCouncilSafe : fallbackCouncilSafe;
+  const councilSafeLabel =
+    hasPendingCouncilSafe ? "Council safe (pending)" : "Council safe";
   const fallbackFeeReceiver =
     (
       feeReceiverData != null &&
@@ -307,7 +305,8 @@ function CommunityEditModal({
 
   useEffect(() => {
     if (!isSubmitting) return;
-    if (transactionStatus !== "success" && transactionStatus !== "error") return;
+    if (transactionStatus !== "success" && transactionStatus !== "error")
+      return;
     onClose();
   }, [isSubmitting, onClose, transactionStatus]);
 
@@ -360,8 +359,10 @@ function CommunityEditModal({
     setIsSubmitting(true);
     const completeValues = buildCompleteValues(values);
     const nextCouncilSafe =
-      completeValues.councilSafe.toLowerCase() ===
-        displayedCouncilSafe.toLowerCase() ?
+      (
+        completeValues.councilSafe.toLowerCase() ===
+        displayedCouncilSafe.toLowerCase()
+      ) ?
         ZERO_ADDRESS
       : (completeValues.councilSafe as Address);
     let covenantIpfsHash = covenantIpfsHashData ?? "";
@@ -395,11 +396,6 @@ function CommunityEditModal({
       covenantIpfsHash,
     };
 
-    console.log("[EditCommunity] setCommunityParams payload", {
-      communityAddress,
-      payload: editCommunityPayload,
-    });
-
     writeSetCommunityParams({
       args: [editCommunityPayload],
     });
@@ -416,8 +412,11 @@ function CommunityEditModal({
   }
 
   const previewCouncilSafeLabel =
-    previewData != null &&
-    previewData.councilSafe.toLowerCase() !== fallbackCouncilSafe.toLowerCase() ?
+    (
+      previewData != null &&
+      previewData.councilSafe.toLowerCase() !==
+        fallbackCouncilSafe.toLowerCase()
+    ) ?
       "Council safe (pending)"
     : councilSafeLabel;
 

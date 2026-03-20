@@ -130,8 +130,7 @@ export default function ClientPage({
 
   const covenant =
     registryCommunity?.covenant?.text ?? covenantResult?.covenant;
-  const effectivePendingCouncilSafe =
-    registryCommunity?.pendingNewCouncilSafe as Address | undefined;
+  const effectivePendingCouncilSafe = registryCommunity?.pendingNewCouncilSafe;
   const effectiveCouncilSafe = registryCommunity?.councilSafe as
     | Address
     | undefined;
@@ -592,21 +591,23 @@ export default function ClientPage({
                     </Statistic>
                   </div>
                   <div className="absolute top-12 md:top-7 right-5 flex items-center gap-2 z-50">
-                    {(isCouncilMember || isCouncilSafe) && (
-                      <EditCommunityModal
-                        communityAddress={registryCommunity.id as Address}
-                        communityName={communityName ?? "Community"}
-                        communityMembersCount={Number(membersCount ?? 0)}
-                        currentCommunityName={communityName ?? ""}
-                        currentCouncilSafe={effectiveCouncilSafe as Address}
-                        pendingCouncilSafe={effectivePendingCouncilSafe}
-                        currentCovenant={covenant ?? ""}
-                        tokenDecimals={tokenGarden.decimals}
-                        tokenSymbol={tokenGarden.symbol}
-                        isCouncilSafe={isCouncilSafe}
-                        isCouncilMember={isCouncilMember}
-                      />
-                    )}
+                    {(isCouncilMember || isCouncilSafe) &&
+                      effectiveCouncilSafe &&
+                      effectivePendingCouncilSafe && (
+                        <EditCommunityModal
+                          communityAddress={registryCommunity.id as Address}
+                          communityName={communityName ?? "Community"}
+                          communityMembersCount={Number(membersCount ?? 0)}
+                          currentCommunityName={communityName ?? ""}
+                          currentCouncilSafe={effectiveCouncilSafe}
+                          pendingCouncilSafe={effectivePendingCouncilSafe}
+                          currentCovenant={covenant ?? ""}
+                          tokenDecimals={tokenGarden.decimals}
+                          tokenSymbol={tokenGarden.symbol}
+                          isCouncilSafe={isCouncilSafe}
+                          isCouncilMember={isCouncilMember}
+                        />
+                      )}
                     {(isCouncilMember || isCouncilSafe) && (
                       <Button
                         btnStyle="outline"
@@ -883,22 +884,24 @@ export default function ClientPage({
 
                     {/* Action Buttons */}
                     <div className="flex flex-col gap-2 mt-4">
-                      {(isCouncilMember || isCouncilSafe) && (
-                        <EditCommunityModal
-                          communityAddress={registryCommunity.id as Address}
-                          communityName={communityName ?? "Community"}
-                          communityMembersCount={Number(membersCount ?? 0)}
-                          currentCommunityName={communityName ?? ""}
-                          currentCouncilSafe={effectiveCouncilSafe as Address}
-                          pendingCouncilSafe={effectivePendingCouncilSafe}
-                          currentCovenant={covenant ?? ""}
-                          tokenDecimals={tokenGarden.decimals}
-                          tokenSymbol={tokenGarden.symbol}
-                          isCouncilSafe={isCouncilSafe}
-                          isCouncilMember={isCouncilMember}
-                          className="w-full"
-                        />
-                      )}
+                      {(isCouncilMember || isCouncilSafe) &&
+                        effectivePendingCouncilSafe &&
+                        effectiveCouncilSafe && (
+                          <EditCommunityModal
+                            communityAddress={registryCommunity.id as Address}
+                            communityName={communityName ?? "Community"}
+                            communityMembersCount={Number(membersCount ?? 0)}
+                            currentCommunityName={communityName ?? ""}
+                            currentCouncilSafe={effectiveCouncilSafe}
+                            pendingCouncilSafe={effectivePendingCouncilSafe}
+                            currentCovenant={covenant ?? ""}
+                            tokenDecimals={tokenGarden.decimals}
+                            tokenSymbol={tokenGarden.symbol}
+                            isCouncilSafe={isCouncilSafe}
+                            isCouncilMember={isCouncilMember}
+                            className="w-full"
+                          />
+                        )}
                       {(isCouncilMember || isCouncilSafe) && (
                         <Button
                           btnStyle="outline"

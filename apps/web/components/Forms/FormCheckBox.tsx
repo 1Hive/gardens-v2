@@ -56,9 +56,8 @@ export function FormCheckBox({
     "bg-transparent",
     "dark:bg-transparent",
     disabled || readOnly ?
-      "cursor-not-allowed opacity-10 border-neutral-soft-content bg-neutral/70 dark:bg-neutral/40"
+      "cursor-not-allowed !opacity-10 border-neutral-soft-content bg-neutral/70 dark:bg-neutral/40"
     : "",
-    "disabled:!opacity-100",
     "disabled:border-neutral-soft-content",
     "disabled:bg-neutral/70",
     "disabled:checked:bg-neutral/70",
@@ -67,18 +66,16 @@ export function FormCheckBox({
     .filter(Boolean)
     .join(" ");
 
-  const labelWrapperClasses = [
-    "flex",
-    "items-center",
-    "gap-2",
-  ]
+  const labelWrapperClasses = ["flex", "items-center", "gap-2"]
     .filter(Boolean)
     .join(" ");
 
   const labelClasses = [
     "text-sm",
     "font-medium",
-    disabled || readOnly ? "cursor-not-allowed text-neutral-soft-content" : "cursor-pointer",
+    disabled || readOnly ?
+      "cursor-not-allowed text-neutral-soft-content"
+    : "cursor-pointer",
   ].join(" ");
 
   return (

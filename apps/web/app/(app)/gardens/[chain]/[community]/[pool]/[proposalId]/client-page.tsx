@@ -242,7 +242,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     enabled: shouldReadOnchainMetadataHash,
   });
   const resolvedMetadataHash =
-    proposalData?.metadataHash || onchainMetadataHash || undefined;
+    proposalData?.metadataHash ?? onchainMetadataHash ?? undefined;
   const { data: ipfsResult, fetching: isIpfsMetadataFetching } =
     useMetadataIpfsFetch({
     hash: resolvedMetadataHash,

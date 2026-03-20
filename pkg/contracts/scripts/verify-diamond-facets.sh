@@ -140,7 +140,7 @@ build_contract_map() {
     if [[ -z "${HASH_TO_CONTRACT[$hash]:-}" ]]; then
       HASH_TO_CONTRACT["$hash"]="$source:$name"
     fi
-  done < <(find "$OUT_DIR" -type f -name "*.json" -print0)
+  done < <(find "$OUT_DIR" -type f -path "*/out/*Facet.sol/*.json" -print0)
   local hash_count
   hash_count=$(printf '%s\n' "${!HASH_TO_CONTRACT[@]}" | wc -l | tr -d ' ')
   echo "Loaded ${hash_count} facet bytecode hashes"
@@ -149,7 +149,11 @@ build_contract_map() {
 get_facet_addresses() {
   local proxy="$1"
   local raw
-  raw=$(cast call --rpc-url "$RPC_URL" "$proxy" "facetAddresses()(address[])")
+  if ! raw=$(cast call --rpc-url "$RPC_URL" "$proxy" "facetAddresses()(address[])" 2>&1); then
+    echo "    - WARNING: failed to inspect $proxy via facetAddresses(); skipping live facet discovery" >&2
+    echo "      $raw" >&2
+    return 1
+  fi
   echo "    - Decoding facet addresses for $proxy" >&2
   if [[ "$raw" == "{"* ]]; then
     echo "$raw" | jq -r '.decoded | if type=="array" then (.[0] // .) | .[] else empty end'
@@ -203,6 +207,7 @@ verify_network() {
   local -A expected_facets=()
   local display_name="${network:-custom}"
   local unknown_facet_count=0
+  local skipped_proxy_count=0
 
   if [[ -n "$network" ]]; then
     while read -r facet_impl; do
@@ -221,6 +226,10 @@ verify_network() {
 
   for proxy in "${proxies[@]}"; do
     echo "  - Inspecting proxy: $proxy"
+    if ! facet_addresses=$(get_facet_addresses "$proxy"); then
+      skipped_proxy_count=$((skipped_proxy_count + 1))
+      continue
+    fi
     while read -r facet; do
       [[ -z "$facet" ]] && continue
       facet_lc=$(echo "$facet" | tr '[:upper:]' '[:lower:]')
@@ -249,7 +258,7 @@ verify_network() {
         --etherscan-api-key "$ETHERSCAN_API_KEY" \
         "$facet" \
         "$contract"
-    done < <(get_facet_addresses "$proxy" | sort -u)
+    done < <(printf '%s\n' "$facet_addresses" | sort -u)
   done
 
   if [[ ${#expected_facets[@]} -gt 0 ]]; then
@@ -281,6 +290,9 @@ verify_network() {
   local total
   total=$(printf '%s\n' "${!seen[@]}" | wc -l | tr -d ' ')
   echo "  - Done. Verified ${total} unique facet address(es)."
+  if [[ "$skipped_proxy_count" -gt 0 ]]; then
+    echo "  - WARNING: Skipped live facet discovery for ${skipped_proxy_count} proxy(s) that do not expose loupe selectors." >&2
+  fi
   if [[ "$unknown_facet_count" -gt 0 ]]; then
     echo "  - ERROR: Found ${unknown_facet_count} facet address(es) missing from config/networks.json FACETS." >&2
     return 1

@@ -5,7 +5,14 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { Address, createPublicClient, http, isAddress, parseUnits } from "viem";
+import {
+  Address,
+  createPublicClient,
+  http,
+  isAddress,
+  parseUnits,
+  zeroAddress,
+} from "viem";
 import { erc20ABI, useNetwork, useSwitchNetwork } from "wagmi";
 import { getRegistryFactoryDataDocument } from "#/subgraph/.graphclient";
 import { getRegistryFactoryDataQuery } from "#/subgraph/.graphclient";
@@ -40,7 +47,6 @@ import { ethAddressRegEx } from "@/utils/text";
 
 // Constants
 const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** 18;
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 type FormInputs = {
   title: string;
@@ -332,7 +338,7 @@ export const CommunityForm = () => {
         CV_PERCENTAGE_SCALE_DECIMALS,
       );
 
-      const communityFeeReceiver = previewData.feeReceiver || ZERO_ADDRESS;
+      const communityFeeReceiver = previewData.feeReceiver || zeroAddress;
       const councilSafeAddress = previewData.councilSafe;
       const isKickMemberEnabled = previewData.isKickMemberEnabled;
 
@@ -377,7 +383,7 @@ export const CommunityForm = () => {
 
     return Object.entries(previewData)
       .filter(([key]) => {
-        if (!formRowTypes[key]) return false;
+        if (!Boolean(formRowTypes[key])) return false;
         if (key === "feeReceiver") {
           return Number(previewData.feeAmount || 0) > 0;
         }
