@@ -132,8 +132,9 @@ export default function ClientPage({
     registryCommunity?.covenant?.text ?? covenantResult?.covenant;
   const effectivePendingCouncilSafe =
     registryCommunity?.pendingNewCouncilSafe as Address | undefined;
-  const effectiveCouncilSafe =
-    registryCommunity?.councilSafe as Address | undefined;
+  const effectiveCouncilSafe = registryCommunity?.councilSafe as
+    | Address
+    | undefined;
 
   const { isCouncilSafe, isCouncilMember, councilMembers } = useCouncil({
     strategyOrCommunity: registryCommunity,
@@ -244,16 +245,22 @@ export default function ClientPage({
   const createPoolHref = `/gardens/${chain?.id}/${communityAddr}/create-pool`;
 
   const normalizedPendingCouncilSafe =
-    effectivePendingCouncilSafe != null &&
-    effectivePendingCouncilSafe.toLowerCase() !== ZERO_ADDRESS ?
+    (
+      effectivePendingCouncilSafe != null &&
+      effectivePendingCouncilSafe.toLowerCase() !== ZERO_ADDRESS
+    ) ?
       effectivePendingCouncilSafe.toLowerCase()
     : null;
-  const hasPendingCouncilSafe = normalizedPendingCouncilSafe != null;
+  const normalizedCouncilSafe =
+    effectiveCouncilSafe != null ? effectiveCouncilSafe.toLowerCase() : null;
+  const hasPendingCouncilSafe =
+    normalizedPendingCouncilSafe != null &&
+    normalizedPendingCouncilSafe !== normalizedCouncilSafe;
   const isPendingCouncilSafeWallet =
     accountAddress != null &&
     normalizedPendingCouncilSafe != null &&
     accountAddress.toLowerCase() === normalizedPendingCouncilSafe;
-  const acceptHandoverTooltip =
+  const acceptCouncilTooltip =
     !isPendingCouncilSafeWallet && effectivePendingCouncilSafe != null ?
       `Connect with pending council safe ${shortenAddress(effectivePendingCouncilSafe)}`
     : tooltipMessage;
@@ -623,10 +630,10 @@ export default function ClientPage({
                           })
                         }
                         isLoading={isSetArchiveLoading}
-                        >
-                          {result.registryCommunity?.archived ?
-                            "Unarchive"
-                          : "Archive"}
+                      >
+                        {result.registryCommunity?.archived ?
+                          "Unarchive"
+                        : "Archive"}
                       </Button>
                     )}
                     {hasPendingCouncilSafe && (
@@ -638,11 +645,11 @@ export default function ClientPage({
                           missmatchUrl ||
                           !isPendingCouncilSafeWallet
                         }
-                        tooltip={acceptHandoverTooltip}
+                        tooltip={acceptCouncilTooltip}
                         onClick={() => writeAcceptCouncilSafe()}
                         isLoading={isAcceptCouncilSafeLoading}
                       >
-                        Accept Handover
+                        Accept Council
                       </Button>
                     )}
                     <RegisterMember
@@ -931,12 +938,12 @@ export default function ClientPage({
                             missmatchUrl ||
                             !isPendingCouncilSafeWallet
                           }
-                          tooltip={acceptHandoverTooltip}
+                          tooltip={acceptCouncilTooltip}
                           onClick={() => writeAcceptCouncilSafe()}
                           isLoading={isAcceptCouncilSafeLoading}
                           className="w-full"
                         >
-                          Accept Handover
+                          Accept Council
                         </Button>
                       )}
                       <RegisterMember

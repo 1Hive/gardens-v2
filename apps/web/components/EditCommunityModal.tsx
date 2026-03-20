@@ -359,6 +359,11 @@ function CommunityEditModal({
   const onSubmit = async (values: CommunityEditFormValues) => {
     setIsSubmitting(true);
     const completeValues = buildCompleteValues(values);
+    const nextCouncilSafe =
+      completeValues.councilSafe.toLowerCase() ===
+        displayedCouncilSafe.toLowerCase() ?
+        ZERO_ADDRESS
+      : (completeValues.councilSafe as Address);
     let covenantIpfsHash = covenantIpfsHashData ?? "";
     const nextCovenant = completeValues.covenant.trim();
     const currentCovenantTrimmed = currentCovenant.trim();
@@ -374,24 +379,29 @@ function CommunityEditModal({
       covenantIpfsHash = uploadedHash;
     }
 
+    const editCommunityPayload = {
+      communityName: completeValues.communityName.trim(),
+      communityFee: parseUnits(completeValues.communityFee || "0", 4),
+      feeReceiver:
+        completeValues.feeReceiver.trim().length > 0 ?
+          (completeValues.feeReceiver as Address)
+        : ZERO_ADDRESS,
+      councilSafe: nextCouncilSafe,
+      registerStakeAmount: parseUnits(
+        completeValues.registerStakeAmount || "0",
+        tokenDecimals,
+      ),
+      isKickEnabled: completeValues.isKickEnabled,
+      covenantIpfsHash,
+    };
+
+    console.log("[EditCommunity] setCommunityParams payload", {
+      communityAddress,
+      payload: editCommunityPayload,
+    });
+
     writeSetCommunityParams({
-      args: [
-        {
-          communityName: completeValues.communityName.trim(),
-          communityFee: parseUnits(completeValues.communityFee || "0", 4),
-          feeReceiver:
-            completeValues.feeReceiver.trim().length > 0 ?
-              (completeValues.feeReceiver as Address)
-            : ZERO_ADDRESS,
-          councilSafe: completeValues.councilSafe as Address,
-          registerStakeAmount: parseUnits(
-            completeValues.registerStakeAmount || "0",
-            tokenDecimals,
-          ),
-          isKickEnabled: completeValues.isKickEnabled,
-          covenantIpfsHash,
-        },
-      ],
+      args: [editCommunityPayload],
     });
   };
 
@@ -590,7 +600,7 @@ function CommunityEditModal({
                 <p className="mt-2 text-sm leading-relaxed text-neutral-content/80">
                   The new council safe will need to{" "}
                   <span className="font-semibold whitespace-nowrap text-tertiary-content">
-                    Accept Handover
+                    Accept Council
                   </span>{" "}
                   from the community page.
                 </p>
