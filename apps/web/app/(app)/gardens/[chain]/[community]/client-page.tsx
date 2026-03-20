@@ -6,12 +6,10 @@ import {
   CircleStackIcon,
   CurrencyDollarIcon,
   PlusIcon,
-  TrophyIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { CheckIcon } from "@heroicons/react/24/solid";
 
-import { FetchTokenResult } from "@wagmi/core";
 import { Dnum, multiply } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
@@ -31,8 +29,9 @@ import {
 } from "@/assets";
 import {
   Button,
-  DataTable,
+  CommunityStakingLeaderboard,
   DisplayNumber,
+  EditCommunityModal,
   EthAddress,
   IncreasePower,
   InfoWrapper,
@@ -60,31 +59,22 @@ import { useIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { getProtopiansOwners } from "@/services/alchemy";
 import { registryCommunityABI } from "@/src/generated";
-import { Column, PoolTypes } from "@/types";
+import { PoolTypes } from "@/types";
 import { logOnce } from "@/utils/log";
 import {
-  calculatePercentageBigInt,
-  formatCountWhenPlus1k,
   parseToken,
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
+import { shortenAddress } from "@/utils/text";
 
 type MembersStaked = {
+  id: string;
   memberAddress: string;
   stakedTokens: string;
 };
 
-type CommunityMetricsProps = {
-  membersStaked: MembersStaked[] | undefined;
-  tokenGarden: FetchTokenResult;
-  communityName: string;
-  communityStakedTokens: number | bigint;
-  openMembersModal: boolean;
-  setOpenMembersModal: (open: boolean) => void;
-};
-
-type MemberColumn = Column<MembersStaked>;
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 export default function ClientPage({
   params: { community: communityAddr },
@@ -105,7 +95,6 @@ export default function ClientPage({
   const isFetchingNFT = useRef<boolean>(false);
   const { publish } = usePubSubContext();
   const chain = useChainFromPath();
-  const [openMembersModal, setOpenMembersModal] = useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
 
   const covenantSectionRef = useRef<HTMLDivElement>(null);
@@ -141,6 +130,11 @@ export default function ClientPage({
 
   const covenant =
     registryCommunity?.covenant?.text ?? covenantResult?.covenant;
+  const effectivePendingCouncilSafe =
+    registryCommunity?.pendingNewCouncilSafe as Address | undefined;
+  const effectiveCouncilSafe = registryCommunity?.councilSafe as
+    | Address
+    | undefined;
 
   const { isCouncilSafe, isCouncilMember, councilMembers } = useCouncil({
     strategyOrCommunity: registryCommunity,
@@ -227,9 +221,49 @@ export default function ClientPage({
       },
     });
 
+  const {
+    write: writeAcceptCouncilSafe,
+    isLoading: isAcceptCouncilSafeLoading,
+  } = useContractWriteWithConfirmations({
+    address: registryCommunity?.id as Address,
+    abi: registryCommunityABI,
+    contractName: "Registry Community",
+    functionName: "acceptCouncilSafe",
+    onConfirmations: () => {
+      publish({
+        topic: "community",
+        type: "update",
+        id: communityAddr,
+        function: "acceptCouncilSafe",
+        containerId: communityAddr,
+      });
+    },
+  });
+
   const { tooltipMessage, isConnected, missmatchUrl, isButtonDisabled } =
     useDisableButtons();
   const createPoolHref = `/gardens/${chain?.id}/${communityAddr}/create-pool`;
+
+  const normalizedPendingCouncilSafe =
+    (
+      effectivePendingCouncilSafe != null &&
+      effectivePendingCouncilSafe.toLowerCase() !== ZERO_ADDRESS
+    ) ?
+      effectivePendingCouncilSafe.toLowerCase()
+    : null;
+  const normalizedCouncilSafe =
+    effectiveCouncilSafe != null ? effectiveCouncilSafe.toLowerCase() : null;
+  const hasPendingCouncilSafe =
+    normalizedPendingCouncilSafe != null &&
+    normalizedPendingCouncilSafe !== normalizedCouncilSafe;
+  const isPendingCouncilSafeWallet =
+    accountAddress != null &&
+    normalizedPendingCouncilSafe != null &&
+    accountAddress.toLowerCase() === normalizedPendingCouncilSafe;
+  const acceptCouncilTooltip =
+    !isPendingCouncilSafeWallet && effectivePendingCouncilSafe != null ?
+      `Connect with pending council safe ${shortenAddress(effectivePendingCouncilSafe)}`
+    : tooltipMessage;
 
   useEffect(() => {
     if (error) {
@@ -242,6 +276,17 @@ export default function ClientPage({
       (acc: bigint, member) => acc + BigInt(member?.stakedTokens),
       0n,
     ) ?? 0;
+
+  const leaderboardMembers = useMemo(
+    () =>
+      (registryCommunity?.members as MembersStaked[] | undefined)?.map(
+        (member) => ({
+          ...member,
+          id: member.memberAddress.toLowerCase(),
+        }),
+      ) ?? [],
+    [registryCommunity?.members],
+  );
 
   const strategyPoolType = (strategy: {
     config?: { proposalType?: unknown } | null;
@@ -507,10 +552,10 @@ export default function ClientPage({
                       className="px-2 py-1"
                     />
                   </div>
-                  {registryCommunity?.councilSafe && (
+                  {effectiveCouncilSafe && (
                     <EthAddress
                       icon={false}
-                      address={registryCommunity.councilSafe as Address}
+                      address={effectiveCouncilSafe}
                       label="Council safe"
                       textColor="var(--color-grey-900)"
                     />
@@ -548,14 +593,33 @@ export default function ClientPage({
                   </div>
                   <div className="absolute top-12 md:top-7 right-5 flex items-center gap-2 z-50">
                     {(isCouncilMember || isCouncilSafe) && (
+                      <EditCommunityModal
+                        communityAddress={registryCommunity.id as Address}
+                        communityName={communityName ?? "Community"}
+                        communityMembersCount={Number(membersCount ?? 0)}
+                        currentCommunityName={communityName ?? ""}
+                        currentCouncilSafe={effectiveCouncilSafe as Address}
+                        pendingCouncilSafe={effectivePendingCouncilSafe}
+                        currentCovenant={covenant ?? ""}
+                        tokenDecimals={tokenGarden.decimals}
+                        tokenSymbol={tokenGarden.symbol}
+                        isCouncilSafe={isCouncilSafe}
+                        isCouncilMember={isCouncilMember}
+                      />
+                    )}
+                    {(isCouncilMember || isCouncilSafe) && (
                       <Button
                         btnStyle="outline"
                         color="secondary"
-                        disabled={isButtonDisabled || isCouncilMember}
+                        disabled={
+                          isButtonDisabled ||
+                          (isCouncilMember && !isCouncilSafe)
+                        }
                         tooltip={
-                          tooltipMessage ? tooltipMessage
-                          : isCouncilMember ?
+                          isCouncilMember && !isCouncilSafe ?
                             "Connect with Council Safe"
+                          : tooltipMessage ?
+                            tooltipMessage
                           : "Archive this community will hide it from being listed in the home page but will remain accessible through a link."
 
                         }
@@ -570,6 +634,22 @@ export default function ClientPage({
                         {result.registryCommunity?.archived ?
                           "Unarchive"
                         : "Archive"}
+                      </Button>
+                    )}
+                    {hasPendingCouncilSafe && (
+                      <Button
+                        btnStyle="filled"
+                        color="tertiary"
+                        disabled={
+                          isButtonDisabled ||
+                          missmatchUrl ||
+                          !isPendingCouncilSafeWallet
+                        }
+                        tooltip={acceptCouncilTooltip}
+                        onClick={() => writeAcceptCouncilSafe()}
+                        isLoading={isAcceptCouncilSafeLoading}
+                      >
+                        Accept Council
                       </Button>
                     )}
                     <RegisterMember
@@ -611,14 +691,15 @@ export default function ClientPage({
                       </div>
                     </InfoWrapper>
                   </div>
-                  <Button
-                    onClick={() => setOpenMembersModal(!openMembersModal)}
-                    btnStyle="outline"
-                    color="tertiary"
-                    icon={<TrophyIcon className="h-4 w-4" />}
-                  >
-                    Community Staking Leaderboard
-                  </Button>
+                  <CommunityStakingLeaderboard
+                    membersStaked={leaderboardMembers}
+                    tokenGarden={tokenGarden}
+                    communityName={communityName ?? "Community"}
+                    communityStakedTokens={communityStakedTokens}
+                    communityAddress={registryCommunity.id as Address}
+                    isCouncilSafe={isCouncilSafe}
+                    isCouncilMember={isCouncilMember}
+                  />
                 </div>
               </div>
             </div>
@@ -803,14 +884,34 @@ export default function ClientPage({
                     {/* Action Buttons */}
                     <div className="flex flex-col gap-2 mt-4">
                       {(isCouncilMember || isCouncilSafe) && (
+                        <EditCommunityModal
+                          communityAddress={registryCommunity.id as Address}
+                          communityName={communityName ?? "Community"}
+                          communityMembersCount={Number(membersCount ?? 0)}
+                          currentCommunityName={communityName ?? ""}
+                          currentCouncilSafe={effectiveCouncilSafe as Address}
+                          pendingCouncilSafe={effectivePendingCouncilSafe}
+                          currentCovenant={covenant ?? ""}
+                          tokenDecimals={tokenGarden.decimals}
+                          tokenSymbol={tokenGarden.symbol}
+                          isCouncilSafe={isCouncilSafe}
+                          isCouncilMember={isCouncilMember}
+                          className="w-full"
+                        />
+                      )}
+                      {(isCouncilMember || isCouncilSafe) && (
                         <Button
                           btnStyle="outline"
                           color="secondary"
-                          disabled={isButtonDisabled || isCouncilMember}
+                          disabled={
+                            isButtonDisabled ||
+                            (isCouncilMember && !isCouncilSafe)
+                          }
                           tooltip={
-                            tooltipMessage ? tooltipMessage
-                            : isCouncilMember ?
+                            isCouncilMember && !isCouncilSafe ?
                               "Connect with Council Safe"
+                            : tooltipMessage ?
+                              tooltipMessage
                             : "Archive this community will hide it from being listed in the home page but will remain accessible through a link."
 
                           }
@@ -826,6 +927,23 @@ export default function ClientPage({
                           {result.registryCommunity?.archived ?
                             "Unarchive"
                           : "Archive"}
+                        </Button>
+                      )}
+                      {hasPendingCouncilSafe && (
+                        <Button
+                          btnStyle="filled"
+                          color="tertiary"
+                          disabled={
+                            isButtonDisabled ||
+                            missmatchUrl ||
+                            !isPendingCouncilSafeWallet
+                          }
+                          tooltip={acceptCouncilTooltip}
+                          onClick={() => writeAcceptCouncilSafe()}
+                          isLoading={isAcceptCouncilSafeLoading}
+                          className="w-full"
+                        >
+                          Accept Council
                         </Button>
                       )}
                       <RegisterMember
@@ -868,15 +986,16 @@ export default function ClientPage({
                           </div>
                         </InfoWrapper>
                       </div>
-                      <Button
-                        onClick={() => setOpenMembersModal(!openMembersModal)}
-                        btnStyle="outline"
-                        color="tertiary"
-                        icon={<TrophyIcon className="h-4 w-4" />}
+                      <CommunityStakingLeaderboard
+                        membersStaked={leaderboardMembers}
+                        tokenGarden={tokenGarden}
+                        communityName={communityName ?? "Community"}
+                        communityStakedTokens={communityStakedTokens}
+                        communityAddress={registryCommunity.id as Address}
+                        isCouncilSafe={isCouncilSafe}
+                        isCouncilMember={isCouncilMember}
                         className="w-full"
-                      >
-                        Community Staking Leaderboard
-                      </Button>
+                      />
                     </div>
                   </div>
                 </div>
@@ -964,86 +1083,9 @@ export default function ClientPage({
           )}
         </div>
       </div>
-
-      <CommunityDetailsTable
-        membersStaked={registryCommunity.members as MembersStaked[]}
-        tokenGarden={tokenGarden}
-        communityName={communityName ?? "Community"}
-        communityStakedTokens={communityStakedTokens}
-        openMembersModal={openMembersModal}
-        setOpenMembersModal={setOpenMembersModal}
-      />
     </>
   );
 }
-
-const CommunityDetailsTable = ({
-  membersStaked,
-  communityName,
-  tokenGarden,
-  communityStakedTokens,
-  openMembersModal,
-  setOpenMembersModal,
-}: CommunityMetricsProps) => {
-  const columns: MemberColumn[] = [
-    {
-      header: `Members (${formatCountWhenPlus1k(membersStaked?.length ?? 0)})`,
-      render: (memberData: MembersStaked) => (
-        <EthAddress
-          address={memberData.memberAddress as Address}
-          actions="copy"
-          shortenAddress={true}
-          icon="ens"
-          textColor="var(--color-grey-900)"
-        />
-      ),
-    },
-
-    {
-      header: "Staked tokens",
-      render: (memberData: MembersStaked) => (
-        <div className="flex items-baseline gap-2">
-          <p className="text-xs">
-            (
-            {calculatePercentageBigInt(
-              BigInt(memberData.stakedTokens),
-              BigInt(communityStakedTokens),
-            )}
-            %)
-          </p>
-          <DisplayNumber
-            number={[BigInt(memberData.stakedTokens), tokenGarden.decimals]}
-            compact={true}
-            tokenSymbol={tokenGarden.symbol}
-          />
-        </div>
-      ),
-      className: "flex justify-end",
-    },
-  ];
-
-  return (
-    <DataTable
-      openModal={openMembersModal}
-      setOpenModal={setOpenMembersModal}
-      title={communityName + " Staking Leaderboard"}
-      data={membersStaked as MembersStaked[]}
-      description="Overview of all community members and the total amount of tokens they have staked."
-      columns={columns}
-      className="max-h-screen w-full"
-      footer={
-        <div className="flex justify-between items-center gap-2 mr-8 sm:mr-12">
-          <p className="subtitle">Total Staked: </p>
-          <DisplayNumber
-            number={[BigInt(communityStakedTokens), tokenGarden.decimals]}
-            compact={true}
-            tokenSymbol={tokenGarden.symbol}
-          />
-        </div>
-      }
-    />
-  );
-};
 
 // Pool filtering components and types
 

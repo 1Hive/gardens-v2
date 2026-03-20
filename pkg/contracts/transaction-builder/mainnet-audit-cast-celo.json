@@ -1,0 +1,29 @@
+{
+  "chain": "celo",
+  "factory": {
+    "registryCommunityTemplate": {
+      "value": "0x6064943C86989868410A44aD363543254043565d",
+      "matchesExpected": true,
+      "error": null
+    },
+    "strategyTemplate": {
+      "value": "0x9D881D189Bef020B78aa2Cf7970DE409C3B87a34",
+      "matchesExpected": true,
+      "error": null
+    }
+  },
+  "communityMismatch": [],
+  "communityErrors": [],
+  "ownerMismatch": [],
+  "vprZero": [],
+  "resetNonCallable": [],
+  "strategyErrors": [],
+  "summary": {
+    "communityMismatch": 0,
+    "communityErrors": 0,
+    "ownerMismatch": 0,
+    "vprZero": 0,
+    "resetNonCallable": 0,
+    "strategyErrors": 0
+  }
+}

@@ -55,6 +55,19 @@ function getMaxConviction(staked: BigInt, _decay: BigInt): BigInt {
   return staked.times(D).div(D.minus(_decay));
 }
 
+function loadCommunityWithBackfill(id: string): RegistryCommunity | null {
+  const community = RegistryCommunity.load(id);
+  if (community == null) {
+    return null;
+  }
+
+  if (community.get("membersCount") == null) {
+    community.membersCount = BigInt.fromI32(0);
+  }
+
+  return community;
+}
+
 export function handleInitialized(event: RegistryInitialized): void {
   const communityAddr = event.address.toHexString();
   log.debug("RegistryCommunity: handleInitialized : {}", [communityAddr]);
@@ -187,7 +200,7 @@ export function handleMemberRegisteredWithCovenant(
   newMemberCommunity.save();
 
   // handle community members count
-  let communityEntity = RegistryCommunity.load(community);
+  let communityEntity = loadCommunityWithBackfill(community);
   if (communityEntity == null) {
     log.error("RegistryCommunity: Community not found: {}", [community]);
     return;
@@ -245,7 +258,7 @@ export function handleMemberRegistered(event: MemberRegistered): void {
   newMemberCommunity.save();
 
   // handle community members count
-  let communityEntity = RegistryCommunity.load(community);
+  let communityEntity = loadCommunityWithBackfill(community);
   if (communityEntity == null) {
     log.error("RegistryCommunity: Community not found: {}", [community]);
     return;
@@ -277,7 +290,7 @@ export function handleMemberUnregistered(event: MemberRegistered): void {
   memberCommunity.save();
 
   // handle community members count
-  let communityEntity = RegistryCommunity.load(event.address.toHexString());
+  let communityEntity = loadCommunityWithBackfill(event.address.toHexString());
   if (communityEntity == null) {
     log.error("RegistryCommunity: Community not found: {}", [
       event.address.toHexString()
@@ -316,7 +329,7 @@ export function handleMemberKicked(event: MemberKicked): void {
   memberCommunity.save();
 
   // handle community members count
-  let communityEntity = RegistryCommunity.load(event.address.toHexString());
+  let communityEntity = loadCommunityWithBackfill(event.address.toHexString());
   if (communityEntity == null) {
     log.error("RegistryCommunity: Community not found: {}", [
       event.address.toHexString()

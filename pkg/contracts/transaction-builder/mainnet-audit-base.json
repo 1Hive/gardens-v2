@@ -1,0 +1,90 @@
+{
+  "chain": "base",
+  "factory": {
+    "registryCommunityTemplate": {
+      "value": "0x8934dc76d5ef1d447f17c70cab991a6220c3d18e",
+      "matchesExpected": true,
+      "error": null
+    },
+    "strategyTemplate": {
+      "value": "0x89451a7dd5f4ff1f96699b1355c35cce4c8814ed",
+      "matchesExpected": true,
+      "error": null
+    }
+  },
+  "communityMismatch": [],
+  "communityErrors": [],
+  "ownerMismatch": [],
+  "vprZero": [
+    {
+      "address": "0x07739850ca2121690139c33b3c42dc43de239743"
+    },
+    {
+      "address": "0x240e7c37ba4027e2ac38ede57e4c13e0e11d08cf"
+    },
+    {
+      "address": "0x25863eed6cb38422f74d4aff476e8962fed9241b"
+    },
+    {
+      "address": "0x28a94d291ffcd62b75c2b523a2b6348ced13fa06"
+    },
+    {
+      "address": "0x336866f1ad9db88100f23924323119136a192df5"
+    },
+    {
+      "address": "0x36a3a40d1afff6392cd1f4591d4f2d46aff779d9"
+    },
+    {
+      "address": "0x3f281d944b8272a84765dd397ae87cb4076df085"
+    },
+    {
+      "address": "0x5e492f773dc17d7796efe64c3cd1614d46c69df8"
+    },
+    {
+      "address": "0x6b57c434de064306e7981662895868d700683dcc"
+    },
+    {
+      "address": "0x6cf124c57ddd95d17559e3caf07539bc63cc7728"
+    },
+    {
+      "address": "0x7b569e081796dd8fd72e386fb1671091c2604bd3"
+    },
+    {
+      "address": "0x8ad5953a53b7a69203e87de928481e6066011e82"
+    },
+    {
+      "address": "0x8fe008e79f1f66453865e611224d66ad4cb536aa"
+    },
+    {
+      "address": "0x9127bf81bdd0526ca992579e9bc8f232d880d650"
+    },
+    {
+      "address": "0xaaaa24e573d86c9e8b7bfccea38e3b4e864cf8fa"
+    },
+    {
+      "address": "0xabe49f543f5abcc1c90b353fa38aae70ec889692"
+    },
+    {
+      "address": "0xabf6f3e646056218bc857fa9ea313aa31a03454b"
+    },
+    {
+      "address": "0xc207f48c402e3b60e99d37cd9293953db835c9dc"
+    },
+    {
+      "address": "0xcc3845c008a0942ac1965abe1c6872e1ea9951c3"
+    },
+    {
+      "address": "0xf51f81d34fbfc56bb57dca0a3a4f1591065bf499"
+    }
+  ],
+  "resetNonCallable": [],
+  "strategyErrors": [],
+  "summary": {
+    "communityMismatch": 0,
+    "communityErrors": 0,
+    "ownerMismatch": 0,
+    "vprZero": 20,
+    "resetNonCallable": 0,
+    "strategyErrors": 0
+  }
+}

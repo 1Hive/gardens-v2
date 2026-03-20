@@ -64,7 +64,7 @@ function CancelButton({ proposalData }: Props) {
 
         <div className="modal-action !mt-4">
           <Button
-            btnStyle="outline"
+            btnStyle="ghost"
             color="secondary"
             onClick={() => setIsModalOpen(false)}
           >

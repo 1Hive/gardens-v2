@@ -1,0 +1,32 @@
+{
+  "combined": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/arbitrum-full-repair-payload.json",
+  "totalTransactions": 121,
+  "partSize": 40,
+  "parts": [
+    {
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/arbitrum-full-repair-payload-part1.json",
+      "txCount": 40
+    },
+    {
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/arbitrum-full-repair-payload-part2.json",
+      "txCount": 40
+    },
+    {
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/arbitrum-full-repair-payload-part3.json",
+      "txCount": 40
+    },
+    {
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/arbitrum-full-repair-payload-part4.json",
+      "txCount": 1
+    }
+  ],
+  "breakdown": {
+    "communityUpgradeTo": 47,
+    "communitySetStrategyTemplate": 47,
+    "strategyUpgradeTo": 27
+  },
+  "targets": {
+    "communityImplementation": "0xc895e3075ebb4b0899979da5d51e112f858605b3",
+    "strategyImplementation": "0xee99dbf0bfffc9c811d109a3e4a1eed857463127"
+  }
+}

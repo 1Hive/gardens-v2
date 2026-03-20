@@ -240,7 +240,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
         className={`relative ${readOnly || disabled ? "!bg-transparent dark:!bg-primary-soft-dark opacity-40" : "bg-neutral"} rounded-2xl`}
       >
         <div
-          className={`markdown-editor-shell p-2 min-h-60 rounded-2xl border ${
+          className={`markdown-editor-shell flex flex-col p-2 min-h-60 rounded-2xl border ${
             id && errors?.[id] ? "input-error" : "input-info"
           } ${className ?? ""} ${
             disabled ?
@@ -249,7 +249,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
           } ${
             isFullscreenActive ?
               "markdown-editor-shell--fullscreen"
-            : "resize-y overflow-auto"
+            : "h-96 resize-y overflow-auto"
           }`}
           id={id}
           tabIndex={-1}
@@ -260,7 +260,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
             ref={editorRef}
             markdown={value ?? ""}
             readOnly={readOnly || disabled}
-            className={`rounded-2xl mdxeditor-theme ${isFullscreenActive ? "!h-full" : ""} ${resolvedTheme === "darkTheme" ? "dark-theme dark-editor" : ""} ${
+            className={`rounded-2xl mdxeditor-theme flex-1 ${isFullscreenActive ? "!h-full" : "h-full min-h-[12rem]"} ${resolvedTheme === "darkTheme" ? "dark-theme dark-editor" : ""} ${
               readOnly || disabled ?
                 "pointer-events-none !bg-transparent dark:!bg-primary-soft-dark"
               : ""

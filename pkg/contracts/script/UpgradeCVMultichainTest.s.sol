@@ -450,6 +450,13 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
     function _getOrDeployCommunityDiamondInit() internal returns (address) {
         string memory key = ".INITS.REGISTRY_COMMUNITY_DIAMOND_INIT";
         address cached = _readAddressOrZero(key);
+        bool reuseConfiguredInits = vm.envOr("REUSE_CONFIGURED_INITS", false);
+        if (reuseConfiguredInits) {
+            if (!_hasExpectedRuntimeCode(cached, type(RegistryCommunityDiamondInit).runtimeCode)) {
+                revert("configured registry community init invalid");
+            }
+            return cached;
+        }
         if (_hasExpectedRuntimeCode(cached, type(RegistryCommunityDiamondInit).runtimeCode)) {
             return cached;
         }
@@ -462,6 +469,13 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
     function _getOrDeployStrategyDiamondInit() internal returns (address) {
         string memory key = ".INITS.CV_STRATEGY_DIAMOND_INIT";
         address cached = _readAddressOrZero(key);
+        bool reuseConfiguredInits = vm.envOr("REUSE_CONFIGURED_INITS", false);
+        if (reuseConfiguredInits) {
+            if (!_hasExpectedRuntimeCode(cached, type(CVStrategyDiamondInit).runtimeCode)) {
+                revert("configured strategy init invalid");
+            }
+            return cached;
+        }
         if (_hasExpectedRuntimeCode(cached, type(CVStrategyDiamondInit).runtimeCode)) {
             return cached;
         }

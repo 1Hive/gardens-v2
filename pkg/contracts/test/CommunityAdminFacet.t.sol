@@ -121,6 +121,21 @@ contract CommunityAdminFacetTest is Test {
         assertTrue(facet.isCouncilMember(other));
     }
 
+    function test_acceptCouncilSafe_keeps_role_when_pending_safe_matches_current_safe() public {
+        assertTrue(facet.isCouncilMember(council));
+
+        vm.prank(council);
+        facet.setCouncilSafe(payable(council));
+        assertEq(address(facet.pendingCouncilSafe()), council);
+
+        vm.prank(council);
+        facet.acceptCouncilSafe();
+
+        assertEq(address(facet.councilSafe()), council);
+        assertEq(address(facet.pendingCouncilSafe()), address(0));
+        assertTrue(facet.isCouncilMember(council));
+    }
+
     function test_setCommunityParams_updates_fields() public {
         CommunityParams memory params = CommunityParams({
             councilSafe: address(other),

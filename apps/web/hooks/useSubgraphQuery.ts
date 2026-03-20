@@ -60,11 +60,12 @@ export function useSubgraphQuery<
 } {
   const mounted = useIsMounted();
   const pathChainId = useChainIdFromPath();
-  chainId = (chainId ?? pathChainId)!;
+  const resolvedChainId = chainId ?? pathChainId;
   const { urqlClient } = initUrqlClient();
   const { connected, subscribe, unsubscribe } = usePubSubContext();
   const [fetching, setFetching] = useState(false);
-  const config = getConfigByChain(chainId);
+  const config =
+    resolvedChainId != null ? getConfigByChain(resolvedChainId) : undefined;
   const [response, setResponse] = useState<
     Omit<Awaited<ReturnType<typeof fetch>>, "operation">
   >({
@@ -83,8 +84,8 @@ export function useSubgraphQuery<
     latestResponse.current.response = response; // Update ref on every response change
   }, [response]);
 
-  if (!config) {
-    console.error(`No subgraph address found for chain ${chainId}`);
+  if (enabled && resolvedChainId != null && !config) {
+    console.error(`No subgraph address found for chain ${resolvedChainId}`);
   }
 
   const normalizedChangeScope = useMemo(() => {
@@ -96,9 +97,9 @@ export function useSubgraphQuery<
     const scopes = Array.isArray(changeScope) ? changeScope : [changeScope];
     return scopes.map((scope) => ({
       ...scope,
-      chainId: scope.chainId ?? chainId,
+      chainId: scope.chainId ?? resolvedChainId,
     }));
-  }, [changeScope, chainId]);
+  }, [changeScope, resolvedChainId]);
   useEffect(() => {
     if (!normalizedChangeScope || normalizedChangeScope.length === 0) {
       return;
@@ -112,7 +113,7 @@ export function useSubgraphQuery<
         response,
         fetching,
         setResponse,
-        chain: chainId,
+        chain: resolvedChainId,
         mounted,
       });
     });
@@ -133,6 +134,15 @@ export function useSubgraphQuery<
   }, [connected, normalizedChangeScope]);
 
   const fetch = async () => {
+    if (!config) {
+      return {
+        hasNext: false,
+        stale: false,
+        data: undefined,
+        error: undefined,
+      };
+    }
+
     const withLowercaseAddresses: AnyVariables = {};
     Object.entries({ ...variables }).forEach(([key, value]) => {
       withLowercaseAddresses[key] =
@@ -145,9 +155,9 @@ export function useSubgraphQuery<
       urqlClient.query<Data>(query, variables, {
         ...context,
         url:
-          useDev || !config?.publishedSubgraphUrl ?
-            config?.subgraphUrl
-          : config?.publishedSubgraphUrl,
+          useDev || !config.publishedSubgraphUrl ?
+            config.subgraphUrl
+          : config.publishedSubgraphUrl,
         requestPolicy: "network-only",
       });
 
@@ -277,6 +287,7 @@ export function useSubgraphQuery<
   useEffect(() => {
     if (
       !enabled ||
+      !config ||
       fetching ||
       (!!latestResponse.current.response.data &&
         isEqual(variables, latestResponse.current.variables)) || // Skip if variables are the same

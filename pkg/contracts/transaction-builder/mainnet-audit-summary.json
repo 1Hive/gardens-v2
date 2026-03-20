@@ -1,0 +1,68 @@
+[
+  {
+    "chain": "arbitrum",
+    "factoryRegistryOk": true,
+    "factoryStrategyOk": true,
+    "communityMismatch": 47,
+    "communityErrors": 0,
+    "ownerMismatch": 0,
+    "vprZero": 0,
+    "resetNonCallable": 0,
+    "strategyErrors": 0
+  },
+  {
+    "chain": "optimism",
+    "factoryRegistryOk": false,
+    "factoryStrategyOk": false,
+    "communityMismatch": 38,
+    "communityErrors": 0,
+    "ownerMismatch": 0,
+    "vprZero": 82,
+    "resetNonCallable": 82,
+    "strategyErrors": 0
+  },
+  {
+    "chain": "polygon",
+    "factoryRegistryOk": true,
+    "factoryStrategyOk": true,
+    "communityMismatch": 0,
+    "communityErrors": 0,
+    "ownerMismatch": 0,
+    "vprZero": 0,
+    "resetNonCallable": 0,
+    "strategyErrors": 0
+  },
+  {
+    "chain": "gnosis",
+    "factoryRegistryOk": true,
+    "factoryStrategyOk": true,
+    "communityMismatch": 0,
+    "communityErrors": 0,
+    "ownerMismatch": 0,
+    "vprZero": 0,
+    "resetNonCallable": 0,
+    "strategyErrors": 0
+  },
+  {
+    "chain": "base",
+    "factoryRegistryOk": true,
+    "factoryStrategyOk": true,
+    "communityMismatch": 0,
+    "communityErrors": 0,
+    "ownerMismatch": 0,
+    "vprZero": 20,
+    "resetNonCallable": 0,
+    "strategyErrors": 0
+  },
+  {
+    "chain": "celo",
+    "factoryRegistryOk": true,
+    "factoryStrategyOk": true,
+    "communityMismatch": 0,
+    "communityErrors": 0,
+    "ownerMismatch": 0,
+    "vprZero": 0,
+    "resetNonCallable": 0,
+    "strategyErrors": 0
+  }
+]

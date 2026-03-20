@@ -1,0 +1,83 @@
+{
+  "chain": "polygon",
+  "factory": {
+    "implementation": "0xe6398d8d597a64b5920290775c7e942f9acabd47",
+    "expectedImplementationFromPayload": "0xe6398d8d597a64b5920290775c7e942f9acabd47",
+    "implementationMatchesPayload": true,
+    "communityInit": {
+      "value": "0x21795a8dd8da0092af2583814e0c6b265e3f6855",
+      "expected": "0x21795a8dd8da0092af2583814e0c6b265e3f6855",
+      "matches": true,
+      "calldata": "0xe1c7392a"
+    },
+    "communityFacets": {
+      "value": [
+        "0xefeedd648f16c377e89e1b0ca74850f110df1fd8",
+        "0xec910dd8c0a2ec8644dcdb640c77c4140ea5f2f7",
+        "0x4f86291a897203f1130a3ac98c8db9081bec8f56",
+        "0xeab1455e63791ad609f3457f2baae012e0658590",
+        "0x496c6ddc825279bd723194086c699a010e5e18c9",
+        "0x35cd07fce7890898b0bdb3724b39f683c4e12690",
+        "0x2fae9271543cd70602862815e115da6d988a840f"
+      ],
+      "expected": [
+        "0xefeedd648f16c377e89e1b0ca74850f110df1fd8",
+        "0xec910dd8c0a2ec8644dcdb640c77c4140ea5f2f7",
+        "0x4f86291a897203f1130a3ac98c8db9081bec8f56",
+        "0xeab1455e63791ad609f3457f2baae012e0658590",
+        "0x496c6ddc825279bd723194086c699a010e5e18c9",
+        "0x35cd07fce7890898b0bdb3724b39f683c4e12690",
+        "0x2fae9271543cd70602862815e115da6d988a840f"
+      ],
+      "matches": true
+    },
+    "strategyInit": {
+      "value": "0x2315ee63c0972e93bb3248a77980a69de11bf325",
+      "expected": "0x2315ee63c0972e93bb3248a77980a69de11bf325",
+      "matches": true,
+      "calldata": "0xe1c7392a"
+    },
+    "strategyFacets": {
+      "value": [
+        "0xefeedd648f16c377e89e1b0ca74850f110df1fd8",
+        "0xd0822c1c051ee538f3134bda9acec55572968205",
+        "0xed6390697e6fec63e888c8a63d003a7d7d70674d",
+        "0x95d4a911fe8090246ef27dcdfcd468f392bf7edb",
+        "0xb87ef4e94dfe201a16d31fdcaf484e8d8e17dd71",
+        "0x88b7292c58cba3efbd9466e88eedc465425580c6",
+        "0xf24f20e3e570d693bb33636a973955b003afc545",
+        "0x679cc041f0ee166ebf8fe4afcc82ea1ea0f17659",
+        "0x8201588c00723390cb0d4d0a60da1e23eae26d56"
+      ],
+      "expected": [
+        "0xefeedd648f16c377e89e1b0ca74850f110df1fd8",
+        "0xd0822c1c051ee538f3134bda9acec55572968205",
+        "0xed6390697e6fec63e888c8a63d003a7d7d70674d",
+        "0x95d4a911fe8090246ef27dcdfcd468f392bf7edb",
+        "0xb87ef4e94dfe201a16d31fdcaf484e8d8e17dd71",
+        "0x88b7292c58cba3efbd9466e88eedc465425580c6",
+        "0xf24f20e3e570d693bb33636a973955b003afc545",
+        "0x679cc041f0ee166ebf8fe4afcc82ea1ea0f17659",
+        "0x8201588c00723390cb0d4d0a60da1e23eae26d56"
+      ],
+      "matches": true
+    }
+  },
+  "communityImplementations": {
+    "total": 8,
+    "mismatch": []
+  },
+  "strategyImplementations": {
+    "total": 21,
+    "mismatch": []
+  },
+  "summary": {
+    "factoryCommunityInitMatch": true,
+    "factoryStrategyInitMatch": true,
+    "factoryCommunityFacetsMatch": true,
+    "factoryStrategyFacetsMatch": true,
+    "factoryImplementationMatchesPayload": true,
+    "communityImplementationMismatches": 0,
+    "strategyImplementationMismatches": 0
+  }
+}

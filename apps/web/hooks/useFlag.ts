@@ -12,6 +12,7 @@ export const cheats = [
   "queryAllChains",
   "showExcludedCommunities",
   "showAsCouncilSafe",
+  "showEditCommunity",
   "showUseSuperTokenBalance",
   "loupe",
 ] as const;
@@ -37,6 +38,8 @@ const getFlagFromEnv = (flag: CheatName) => {
       return process.env.NEXT_PUBLIC_FLAG_SHOWEXCLUDEDCOMMUNITIES;
     case "showAsCouncilSafe":
       return process.env.NEXT_PUBLIC_FLAG_SHOWASCOUNCILSAFE;
+    case "showEditCommunity":
+      return process.env.NEXT_PUBLIC_FLAG_SHOWEDITCOMMUNITY;
     case "showUseSuperTokenBalance":
       return process.env.NEXT_PUBLIC_FLAG_SHOWUSESUPERTOKENBALANCE;
     case "loupe":

@@ -17,6 +17,18 @@ function loadOrCreateTarget(
     item.pausedUntil = null;
     item.pausedSelectors = [];
     item.createdAt = timestamp;
+    item.updatedAt = timestamp;
+    return item;
+  }
+
+  if (item.get("pausedSelectors") == null) {
+    item.pausedSelectors = [];
+  }
+  if (item.get("createdAt") == null) {
+    item.createdAt = timestamp;
+  }
+  if (item.get("updatedAt") == null) {
+    item.updatedAt = timestamp;
   }
   item.updatedAt = timestamp;
   return item;

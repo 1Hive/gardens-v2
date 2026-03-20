@@ -351,6 +351,46 @@ This ensures storage alignment is verified (and contracts are built) before any 
 - Check event signatures in mappings
 - Use Graph Explorer for query testing
 - Monitor indexing status in Graph Node logs
+- For hosted/indexer debugging, query `https://indexer.upgrade.thegraph.com/status` with:
+  ```graphql
+  {
+    indexingStatuses(subgraphs: ["Qm..."]) {
+      subgraph
+      synced
+      health
+      entityCount
+      fatalError {
+        handler
+        message
+        deterministic
+        block {
+          hash
+          number
+        }
+      }
+      node
+      nonFatalErrors {
+        message
+        block {
+          number
+        }
+      }
+      chains {
+        chainHeadBlock {
+          number
+        }
+        earliestBlock {
+          number
+        }
+        network
+        latestBlock {
+          number
+        }
+      }
+    }
+  }
+  ```
+  Replace the example CID with the deployment CID to inspect fatal/non-fatal indexing errors and block progress.
 
 ## Additional Resources
 
