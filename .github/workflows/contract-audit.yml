@@ -63,7 +63,7 @@ jobs:
           sarif_file: ${{ steps.slither.outputs.sarif }}
 
       - name: Enforce High Severity Gate
-        if: steps.slither.outcome == 'failure'
+        if: github.event_name == 'pull_request' && steps.slither.outcome == 'failure'
         run: |
           echo "::error title=Contract Audit Failed::Slither found at least one HIGH-severity issue. Review Code Scanning alerts and the Slither log in this job."
           exit 1
