@@ -1,3 +1,7 @@
+Updated **Security Policy** aligned with your Gardens bug bounty pool mechanics and requirements:
+
+---
+
 # Security Policy
 
 ## About Gardens v2 Security
@@ -8,8 +12,8 @@ Gardens v2 is a modular governance framework that enables communities to create 
 
 Gardens v2 is currently deployed on the following networks:
 
-| Network      | Status    | Support      |
-| ------------ | --------- | ------------ |
+| Network      | Status   | Support      |
+| ------------ | -------- | ------------ |
 | Gnosis Chain | ✅ Active | Full support |
 | Polygon      | ✅ Active | Full support |
 | Arbitrum     | ✅ Active | Full support |
@@ -19,111 +23,163 @@ Gardens v2 is currently deployed on the following networks:
 
 We provide security support for all currently deployed networks.
 
-## Reporting a Vulnerability
+---
 
-If you discover a security vulnerability in Gardens v2, we encourage responsible disclosure. Please follow these steps:
+## Bug Bounty Program (Gardens Pool)
 
-### 1. Do Not Create Public Issues
+Gardens v2 operates an on-chain bug bounty program through a dedicated funding pool:
 
-Please **do not** create public GitHub issues for security vulnerabilities. This helps protect users while we work on a fix.
+* **Bounty Pool**: [https://app.gardens.fund/gardens/10/0x59c47c30da2a0ca7359590f023da0284fef83e73/0x114964e7d57288eb8e117b98dd8972c514027025](https://app.gardens.fund/gardens/10/0x59c47c30da2a0ca7359590f023da0284fef83e73/0x114964e7d57288eb8e117b98dd8972c514027025)
 
-### 2. Contact Us Privately
+This pool rewards responsible disclosure of vulnerabilities affecting Gardens v2 smart contracts currently deployed and actively used on:
 
-Report security vulnerabilities through one of these secure channels:
+* [https://app.gardens.fund](https://app.gardens.fund)
 
-- **GitHub Security**: Use GitHub's [private vulnerability reporting feature](https://github.com/1Hive/gardens-v2/security/advisories/new) (recommended)
-- **Discord**: Join our [Discord Community](https://discord.gg/tJWPg69ZWG) and reach out to moderators or team members privately
-- **Email**: Contact our team through our community channels for direct email contact
+### Scope
 
-### 3. Include Detailed Information
+Eligible vulnerabilities include:
 
-When reporting a vulnerability, please include:
+* Smart contracts developed by Gardens Core Contributors
+* Contracts integrated into Gardens that may impact user funds or governance outcomes (evaluated case-by-case)
 
-- **Description**: Clear description of the vulnerability
-- **Impact**: Potential impact and severity assessment
-- **Steps to Reproduce**: Detailed steps to reproduce the issue
-- **Network**: Which network(s) are affected
-- **Contracts**: Specific contracts or components involved
-- **Proof of Concept**: Code or screenshots demonstrating the issue (if applicable)
+Out-of-scope:
 
-### 4. Response Timeline
-
-We aim to respond to security reports according to the following timeline:
-
-- **Initial Response**: Within 48 hours
-- **Confirmation**: Within 1 week of initial report
-- **Fix Development**: Timeline depends on severity and complexity
-- **Public Disclosure**: After fix is deployed and users have time to update
-
-## Security Best Practices for Users
-
-When using Gardens v2, we recommend following these security practices:
-
-### For Community Creators
-
-- Start with small amounts to test functionality
-- Carefully review all governance parameters before going live
-- Educate community members on governance mechanisms
-- Ensure council members are trusted community participants
-- Regularly monitor community activity and proposals
-
-### For Community Members
-
-- Only connect wallets you control and trust
-- Verify you're using the official Gardens v2 app at [app.gardens.fund](https://app.gardens.fund)
-- Start with small stakes while learning the platform
-- Understand the governance mechanisms before participating
-- Keep your wallet software updated
-
-### For Developers
-
-- Review our [documentation](https://docs.gardens.fund) before integrating
-- Test thoroughly on testnets before mainnet deployment
-- Follow smart contract security best practices
-- Stay updated with our releases and security announcements
-
-## Dependencies and Third-Party Security
-
-Gardens v2 relies on several audited and battle-tested protocols:
-
-- **[Allo Protocol v2](https://www.gitcoin.co/blog/allo-gitcoins-newest-protocol)**: Gitcoin's allocation protocol
-- **[The Graph](https://thegraph.com/)**: Decentralized indexing protocol
-- **[Safe](https://safe.global/)**: Multi-signature wallet infrastructure
-
-While these dependencies have their own security measures, users should be aware that Gardens v2's security depends on the security of these underlying protocols.
-
-## Bug Bounty Program
-
-We are currently evaluating the implementation of a bug bounty program. Updates will be announced through our community channels:
-
-- [Discord Community](https://discord.gg/tJWPg69ZWG)
-- [Twitter](https://twitter.com/gardens_fund)
-- [Documentation](https://docs.gardens.fund)
-
-## Security Updates
-
-Security updates and announcements will be communicated through:
-
-1. **Twitter**: Follow us at [@gardens_fund](https://twitter.com/gardens_fund) for real-time updates
-2. **Discord Community**: Real-time updates and discussions
-
-## Contributing to Security
-
-We welcome contributions that improve Gardens v2's security:
-
-- **Code Reviews**: Participate in pull request reviews
-- **Testing**: Help test new features and identify potential issues
-- **Documentation**: Improve security documentation and guides
-- **Community**: Help educate other users about security best practices
-
-See our [Contributing Guide](./CONTRIBUTING.md) for more information.
-
-## License and Legal
-
-This security policy is part of the Gardens v2 project, which is licensed under [GPL-3.0](https://github.com/1Hive/gardens-v2?tab=GPL-3.0-1-ov-file#readme).
-
-By using Gardens v2, you acknowledge and accept the risks associated with experimental blockchain technology and agree to use the platform at your own risk.
+* Front-end or UI-only bugs
+* Previously reported vulnerabilities
+* Issues in unused or deprecated contracts
 
 ---
 
-**Questions about security?** Join our [Discord Community](https://discord.gg/tJWPg69ZWG) or check our [Documentation](https://docs.gardens.fund).
+## Known Vulnerabilities
+
+Before reporting a new issue, review existing advisories:
+
+* **GitHub Security Advisories**: [https://github.com/1Hive/gardens-v2/security/advisories](https://github.com/1Hive/gardens-v2/security/advisories)
+
+Duplicate reports are not eligible for rewards.
+
+---
+
+## Reporting a Vulnerability
+
+### 1. Mandatory Private Disclosure
+
+All vulnerabilities **must first be reported via GitHub Security Advisories**:
+
+* [https://github.com/1Hive/gardens-v2/security/advisories/new](https://github.com/1Hive/gardens-v2/security/advisories/new)
+
+Do **not** create public issues.
+
+### 2. Disclosure Rules
+
+To remain eligible for rewards:
+
+* Do **not** disclose the vulnerability to any third party before reporting
+* Do **not** exploit the vulnerability
+* Do **not** publish or share proof publicly before coordinated disclosure
+
+Any violation will result in disqualification from the bounty.
+
+### 3. Include Detailed Information
+
+Reports should include:
+
+* Description of the vulnerability
+* Impact and potential exploit scenarios
+* Steps to reproduce
+* Affected contracts and networks
+* Proof of concept (if applicable)
+
+---
+
+## Bounty Process
+
+After submission:
+
+1. Core Contributors will review and validate the report
+2. Severity will be assessed using the **CVSS Risk Rating scale**
+3. The team will coordinate remediation with the reporter
+4. If eligible, the reporter will be invited to submit a **funding proposal** in the bounty pool
+
+---
+
+## Reward Structure
+
+Rewards are determined as a percentage of the total pool funds:
+
+| Severity | CVSS Score | Reward            |
+| -------- | ---------- | ----------------- |
+| Critical | 9.0 – 10.0 | 50% of pool funds |
+| High     | 7.0 – 8.9  | 10% of pool funds |
+| Medium   | 4.0 – 6.9  | 1% of pool funds  |
+
+Notes:
+
+* Final severity assessment is determined by Core Contributors
+* Evaluation may include contextual and systemic impact beyond raw CVSS score
+* Rewards scale dynamically with pool size
+
+---
+
+## Security Best Practices for Users
+
+### For Community Creators
+
+* Start with small amounts to test functionality
+* Carefully review governance parameters before deployment
+* Ensure trusted participants in privileged roles
+* Monitor activity and proposals regularly
+
+### For Community Members
+
+* Use trusted wallets only
+* Verify the official app: [https://app.gardens.fund](https://app.gardens.fund)
+* Start with small stakes
+* Keep wallet software updated
+
+### For Developers
+
+* Test on testnets before mainnet deployment
+* Follow smart contract security best practices
+* Stay updated with releases and advisories
+
+---
+
+## Dependencies and Third-Party Security
+
+Gardens v2 integrates external protocols:
+
+* **Allo Protocol v2**
+* **The Graph**
+* **Safe**
+
+Security assumptions extend to these dependencies.
+
+---
+
+## Security Updates
+
+Security updates are communicated via:
+
+* Twitter: [https://twitter.com/gardens_fund](https://twitter.com/gardens_fund)
+* Discord: [https://discord.gg/tJWPg69ZWG](https://discord.gg/tJWPg69ZWG)
+
+---
+
+## Contributing to Security
+
+* Participate in audits and code reviews
+* Report vulnerabilities responsibly
+* Improve documentation and tooling
+
+See: `./CONTRIBUTING.md`
+
+---
+
+## License and Legal
+
+Licensed under GPL-3.0.
+
+Use of Gardens v2 involves risks inherent to experimental blockchain systems. Users assume responsibility for their usage.
+
+---
