@@ -5,7 +5,7 @@
   "scripts": {
     "generate": "wagmi generate",
     "dev": "pnpm install && next dev",
-    "build": "next build",
+    "build": "pnpm generate && next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
