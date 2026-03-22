@@ -94,7 +94,8 @@ abstract contract CommunityBaseFacet is ProxyOwnableUpgrader, ReentrancyGuardUpg
     /// @notice The address of the collateral vault template
     // slither-disable-next-line uninitialized-state
     address public collateralVaultTemplate;
-    /// @notice The address of the strategy template
+    /// @notice Deprecated. Pool creation now resolves the strategy template from RegistryFactory.
+    ///         Kept for storage and ABI compatibility only.
     // slither-disable-next-line uninitialized-state
     address public strategyTemplate;
     /// @notice The address of the pending council safe owner

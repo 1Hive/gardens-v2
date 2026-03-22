@@ -69,6 +69,8 @@ contract CommunityAdminFacet is CommunityBaseFacet {
     }
 
     // Sig: 0x1b71f0e4
+    /// @dev Deprecated. Existing storage field is kept for compatibility but pool creation now uses
+    ///      RegistryFactory.strategyTemplate().
     function setStrategyTemplate(address template) external {
         require(msg.sender == owner(), "Ownable: caller is not the owner");
         strategyTemplate = template;

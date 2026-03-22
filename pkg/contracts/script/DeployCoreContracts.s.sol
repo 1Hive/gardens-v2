@@ -107,48 +107,6 @@ contract DeployCoreContracts is BaseMultiChain {
         networkJson;
     }
 
-    function _writeNetworkAddress(string memory key, address value) internal {
-        string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/pkg/contracts/config/networks.json");
-        string memory tmpPath = string.concat(root, "/pkg/contracts/config/.networks.tmp.json");
-        string memory command = string.concat(
-            "jq '(.networks[] | select(.name==\"",
-            CURRENT_NETWORK,
-            "\") | ",
-            key,
-            ") = \"",
-            _addressToString(value),
-            "\"' ",
-            path,
-            " > ",
-            tmpPath,
-            " && mv ",
-            tmpPath,
-            " ",
-            path
-        );
-
-        string[] memory inputs = new string[](3);
-        inputs[0] = "bash";
-        inputs[1] = "-c";
-        inputs[2] = command;
-        vm.ffi(inputs);
-    }
-
-    function _addressToString(address _addr) internal pure returns (string memory) {
-        bytes32 value = bytes32(uint256(uint160(_addr)));
-        bytes memory alphabet = "0123456789abcdef";
-
-        bytes memory str = new bytes(42);
-        str[0] = "0";
-        str[1] = "x";
-        for (uint256 i = 0; i < 20; i++) {
-            str[2 + i * 2] = alphabet[uint8(value[i + 12] >> 4)];
-            str[3 + i * 2] = alphabet[uint8(value[i + 12] & 0x0f)];
-        }
-        return string(str);
-    }
-
     function _deployCommunityFacets() internal returns (IDiamond.FacetCut[] memory cuts, address init) {
         CommunityAdminFacet adminFacet = new CommunityAdminFacet();
         CommunityMemberFacet memberFacet = new CommunityMemberFacet();

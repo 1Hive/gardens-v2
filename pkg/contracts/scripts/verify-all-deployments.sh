@@ -10,8 +10,9 @@ usage() {
 Usage: scripts/verify-all-deployments.sh [--scope <scope>] [--network <name>]...
 
 Scopes:
-  all         Run global + factory + communities + strategies + facets
+  all         Run global + state + factory + communities + strategies + facets
   global      Run pause + escrow verifiers
+  state       Verify live contract state against config/networks.json
   pause       Run only global pause controller verifier
   escrow      Run only streaming escrow verifier
   factory     Run factory verification (skips pre/postflight)
@@ -28,6 +29,7 @@ Examples:
   scripts/verify-all-deployments.sh --scope global
   scripts/verify-all-deployments.sh --scope facets --network arbitrum --network base
   scripts/verify-all-deployments.sh --scope pause,escrow --network optimism
+  scripts/verify-all-deployments.sh --scope state --network arbitrum
 USAGE
 }
 
@@ -65,12 +67,13 @@ for item in "${scope_items[@]}"; do
   case "$scope_name" in
     all)
       REQUESTED_SCOPES[global]=1
+      REQUESTED_SCOPES[state]=1
       REQUESTED_SCOPES[factory]=1
       REQUESTED_SCOPES[communities]=1
       REQUESTED_SCOPES[strategies]=1
       REQUESTED_SCOPES[facets]=1
       ;;
-    global|pause|escrow|factory|communities|strategies|facets|diamonds)
+    global|state|pause|escrow|factory|communities|strategies|facets|diamonds)
       if [[ "$scope_name" == "diamonds" ]]; then
         scope_name="facets"
       fi
@@ -96,6 +99,50 @@ run_global_scope() {
   "${cmd[@]}"
 }
 
+run_state_scope() {
+  local failed=0
+
+  echo "==> Running config/state verifier"
+
+  for network in "${NETWORKS[@]}"; do
+    local rpc_var
+    local rpc_url
+    local network_chain_id
+    local cmd
+
+    rpc_var="$(rpc_env_name "$network")" || {
+      echo "❌ $network state"
+      failed=1
+      continue
+    }
+    rpc_url="${!rpc_var:-}"
+    network_chain_id="$(chain_id "$network")"
+
+    if [[ -z "$rpc_url" || -z "$network_chain_id" ]]; then
+      echo "❌ $network state"
+      failed=1
+      continue
+    fi
+
+    echo "### $network"
+    cmd=(forge script script/VerifyNetworkConfigState.s.sol:VerifyNetworkConfigState
+      --rpc-url "$rpc_url"
+      --sig "run(string)" "$network"
+      --ffi
+      --chain-id "$network_chain_id"
+      -vv)
+
+    if "${cmd[@]}"; then
+      echo "✅ $network state"
+    else
+      echo "❌ $network state"
+      failed=1
+    fi
+  done
+
+  return "$failed"
+}
+
 run_diamond_scope() {
   local failed=0
 
@@ -115,8 +162,12 @@ run_diamond_scope() {
 
 rpc_env_name() {
   case "$1" in
+    ethsepolia) echo "RPC_URL_SEP_TESTNET" ;;
+    arbsepolia) echo "RPC_URL_ARB_TESTNET" ;;
+    opsepolia) echo "RPC_URL_OP_TESTNET" ;;
     arbitrum) echo "RPC_URL_ARB" ;;
     optimism) echo "RPC_URL_OPT" ;;
+    mainnet) echo "RPC_URL_MAINNET" ;;
     polygon) echo "RPC_URL_POLYGON" ;;
     gnosis) echo "RPC_URL_GNOSIS" ;;
     base) echo "RPC_URL_BASE" ;;
@@ -174,7 +225,7 @@ run_upgrade_scope() {
     fi
 
     echo "### $network"
-    cmd=(forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd
+    cmd=(forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain
       --rpc-url "$rpc_url"
       --sig "$sig" "$network"
       --private-key "$PRIVATE_KEY"
@@ -201,6 +252,12 @@ failed=0
 
 if [[ -n "${REQUESTED_SCOPES[global]:-}" ]]; then
   if ! run_global_scope both; then
+    failed=1
+  fi
+fi
+
+if [[ -n "${REQUESTED_SCOPES[state]:-}" ]]; then
+  if ! run_state_scope; then
     failed=1
   fi
 fi

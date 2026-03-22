@@ -105,7 +105,7 @@ tasks:
       - cmd: |
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --sig "run(string)" 'sepolia' \
           --ffi \
           --broadcast \
@@ -118,7 +118,7 @@ tasks:
       - cmd: |
           forge script script/DeployCoreContracts.s.sol:DeployCoreContracts \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string)" 'ethsepolia' \
           --ffi \
@@ -133,7 +133,7 @@ tasks:
       - cmd: |
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --sig "run(string)" 'sepolia' \
           --ffi \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
@@ -148,7 +148,7 @@ tasks:
       - cmd: |
           forge script script/AddStrategy.s.sol:AddStrategy \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --sig "run(address,address)" ${S} ${C} \
           --broadcast \
           --legacy \
@@ -160,7 +160,7 @@ tasks:
       - cmd: |
           forge script script/AddStrategy.s.sol:AddStrategy \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --sig "run(uint256,address)" ${P} ${C} \
           --broadcast \
           --legacy \
@@ -173,17 +173,17 @@ tasks:
       - task: refresh-facets-ethsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
           --sig "run(string)" 'ethsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155111 \
           --ffi \
           --broadcast \
           --verify \
           -vvv
-      - task: verify-diamond-facets-ethsep
+      - task: verify-all-ethsep
   upgrade-ethsep-factory-upgrade-impl:
     desc: Upgrade ethsep factory implementation only
     deps:
@@ -191,17 +191,16 @@ tasks:
       - task: refresh-facets-ethsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
           --sig "runFactoryUpgradeImpl(string)" 'ethsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155111 \
           --ffi \
           --skip-simulation \
           --broadcast \
           -v
-      - task: verify-diamond-facets-ethsep
   upgrade-and-verify-ethsep:
     desc: Upgrade and verify ethsep
     deps:
@@ -216,7 +215,7 @@ tasks:
           forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
           --sig "run(string)" 'ethsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --broadcast \
@@ -243,7 +242,7 @@ tasks:
           forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --broadcast \
@@ -270,7 +269,7 @@ tasks:
           forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string)" 'arbsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --broadcast \
@@ -297,7 +296,7 @@ tasks:
           forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_ARB} \
           --sig "run(string)" 'arbitrum' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --broadcast \
@@ -324,7 +323,7 @@ tasks:
           forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --broadcast \
@@ -351,7 +350,7 @@ tasks:
           forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --broadcast \
@@ -378,7 +377,7 @@ tasks:
           forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --broadcast \
@@ -405,7 +404,7 @@ tasks:
           forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --broadcast \
@@ -432,7 +431,7 @@ tasks:
           forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_CELO} \
           --sig "run(string)" 'celo' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --broadcast \
@@ -461,7 +460,7 @@ tasks:
           --sig "run(string)" 'ethsepolia' \
           --chain-id 11155111 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -474,7 +473,7 @@ tasks:
           forge script script/RefreshFacets.s.sol:RefreshFacets \
           --rpc-url ${RPC_URL_MAINNET} \
           --sig "run(string)" 'mainnet' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 1 \
@@ -496,6 +495,56 @@ tasks:
     cmds:
       - task: refresh-facets-mainnet
       - task: verify-diamond-facets-mainnet
+  verify-all-ethsep:
+    desc: Run full deployment verification on ethsepolia
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-all-deployments.sh --scope all --network ethsepolia
+  verify-all-opsep:
+    desc: Run full deployment verification on opsepolia
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-all-deployments.sh --scope all --network opsepolia
+  verify-all-arbsep:
+    desc: Run full deployment verification on arbsepolia
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-all-deployments.sh --scope all --network arbsepolia
+  verify-all-arbitrum:
+    desc: Run full deployment verification on arbitrum
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-all-deployments.sh --scope all --network arbitrum
+  verify-all-optimism:
+    desc: Run full deployment verification on optimism
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-all-deployments.sh --scope all --network optimism
+  verify-all-polygon:
+    desc: Run full deployment verification on polygon
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-all-deployments.sh --scope all --network polygon
+  verify-all-gnosis:
+    desc: Run full deployment verification on gnosis
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-all-deployments.sh --scope all --network gnosis
+  verify-all-base:
+    desc: Run full deployment verification on base
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-all-deployments.sh --scope all --network base
+  verify-all-celo:
+    desc: Run full deployment verification on celo
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-all-deployments.sh --scope all --network celo
+  verify-all-mainnet:
+    desc: Run full deployment verification on mainnet
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-all-deployments.sh --scope all --network mainnet
   deploy-streaming-escrow-factory-ethsep:
     desc: Deploy streaming escrow factory ethsep (set on registry factory)
     cmds:
@@ -506,9 +555,9 @@ tasks:
           fi
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,address)" 'ethsepolia' ${I:-0x0000000000000000000000000000000000000000} \
+          --sig "run(string,address,bool)" 'ethsepolia' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
           --ffi \
           --broadcast \
           ${RESUME_FLAG} \
@@ -521,15 +570,14 @@ tasks:
       - cmd: |
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,address)" 'ethsepolia' ${I:-0x0000000000000000000000000000000000000000} \
+          --sig "run(string,address,bool)" 'ethsepolia' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
           --ffi \
           --broadcast \
           --verify \
           --chain-id 11155111 \
           -vvv
-      - task: verify-diamond-facets-ethsep
   deploy-streaming-escrow-factory-arbsep:
     desc: Deploy streaming escrow factory arbsep (set on registry factory)
     cmds:
@@ -540,9 +588,9 @@ tasks:
           fi
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,address)" 'arbsepolia' ${I:-0x0000000000000000000000000000000000000000} \
+          --sig "run(string,address,bool)" 'arbsepolia' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
           --ffi \
           --broadcast \
           ${RESUME_FLAG} \
@@ -555,7 +603,7 @@ tasks:
       - cmd: |
           forge script script/DeployERC20.s.sol:DeployERC20 \
           --rpc-url ${RPC_URL_OP_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string,string)" 'Honey' 'HNY' \
           --ffi \
@@ -582,7 +630,7 @@ tasks:
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
@@ -598,17 +646,17 @@ tasks:
       - task: refresh-facets-opsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
           --broadcast \
           --verify \
           -vvv
-      - task: verify-diamond-facets-opsep
+      - task: verify-all-opsep
   upgrade-opsep-factory:
     desc: Upgrade opsep factory
     deps:
@@ -616,17 +664,16 @@ tasks:
       - task: refresh-facets-opsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "runFactory(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
           --skip-simulation \
           --broadcast \
           -v
-      - task: verify-diamond-facets-opsep
   upgrade-opsep-factory-upgrade-impl:
     desc: Upgrade opsep factory implementation only
     deps:
@@ -634,17 +681,16 @@ tasks:
       - task: refresh-facets-opsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "runFactoryUpgradeImpl(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
           --skip-simulation \
           --broadcast \
           -v
-      - task: verify-diamond-facets-opsep
   upgrade-opsep-factory-set-community-facets:
     desc: Set opsep factory community facets only
     deps:
@@ -652,17 +698,16 @@ tasks:
       - task: refresh-facets-opsep
     cmds:
       - cmd: |
-          SPLIT_FACTORY_FACETS=true forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          SPLIT_FACTORY_FACETS=true forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "runFactorySetCommunityFacets(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
           --skip-simulation \
           --broadcast \
           -v
-      - task: verify-diamond-facets-opsep
   upgrade-opsep-factory-set-strategy-facets:
     desc: Set opsep factory strategy facets only
     deps:
@@ -670,17 +715,16 @@ tasks:
       - task: refresh-facets-opsep
     cmds:
       - cmd: |
-          SPLIT_FACTORY_FACETS=true forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          SPLIT_FACTORY_FACETS=true forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "runFactorySetStrategyFacets(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
           --skip-simulation \
           --broadcast \
           -v
-      - task: verify-diamond-facets-opsep
   upgrade-opsep-factory-set-pause-controller:
     desc: Set opsep factory pause controller only
     deps:
@@ -688,17 +732,16 @@ tasks:
       - task: refresh-facets-opsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "runFactorySetPauseController(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
           --skip-simulation \
           --broadcast \
           -v
-      - task: verify-diamond-facets-opsep
   upgrade-opsep-factory-set-registry-template:
     desc: Set opsep factory registry template only
     deps:
@@ -706,17 +749,16 @@ tasks:
       - task: refresh-facets-opsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "runFactorySetRegistryTemplate(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
           --skip-simulation \
           --broadcast \
           -v
-      - task: verify-diamond-facets-opsep
   upgrade-opsep-factory-set-strategy-template:
     desc: Set opsep factory strategy template only
     deps:
@@ -724,17 +766,16 @@ tasks:
       - task: refresh-facets-opsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "runFactorySetStrategyTemplate(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
           --skip-simulation \
           --broadcast \
           -v
-      - task: verify-diamond-facets-opsep
   upgrade-opsep-communities:
     desc: Upgrade opsep communities
     deps:
@@ -742,16 +783,15 @@ tasks:
       - task: refresh-facets-opsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string,string)" 'opsepolia' 'communities' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
           --broadcast \
           -vvv
-      - task: verify-diamond-facets-opsep
   upgrade-opsep-strategies:
     desc: Upgrade opsep strategies
     deps:
@@ -759,16 +799,15 @@ tasks:
       - task: refresh-facets-opsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string,string)" 'opsepolia' 'strategies' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
           --broadcast \
           -vvv
-      - task: verify-diamond-facets-opsep
   upgrade-diamond-opsep:
     desc: Upgrade diamond opsep
     deps:
@@ -779,7 +818,7 @@ tasks:
           forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --broadcast \
@@ -787,7 +826,6 @@ tasks:
           --verify \
           --slow \
           -vvv
-      - task: verify-diamond-facets-opsep
   upgrade-community-diamond-opsep:
     desc: Upgrade community diamond opsep
     deps:
@@ -798,14 +836,13 @@ tasks:
           forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
           --broadcast \
           --verify \
           -vvv
-      - task: verify-diamond-facets-opsep
   verify-diamond-blockscout-opsep:
     desc: Verify diamond blockscout opsep
     cmds:
@@ -813,7 +850,7 @@ tasks:
           forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamondTest \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://optimism.blockscout.com/api/ \
           --chain-id 11155420 \
@@ -828,7 +865,7 @@ tasks:
           forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://optimism.blockscout.com/api/ \
           --chain-id 11155420 \
@@ -843,8 +880,7 @@ tasks:
       - upgrade-diamond-opsep
       - upgrade-community-diamond-opsep
       - task: refresh-facets-opsep
-    cmds:
-      - task: verify-diamond-facets-opsep
+    cmds: []
   upgrade-atomic-diamond-opsep:
     desc: Upgrade atomic diamond opsep
     deps:
@@ -855,7 +891,7 @@ tasks:
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --broadcast \
@@ -864,7 +900,6 @@ tasks:
           --slow \
           --via-ir \
           -vvv
-      - task: verify-diamond-facets-opsep
   upgrade-and-verify-diamond-opsep:
     desc: Upgrade and verify diamond opsep
     deps:
@@ -885,10 +920,10 @@ tasks:
     desc: Verify blockscout opsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://optimism.blockscout.com/api/ \
           --chain-id 11155420 \
@@ -900,10 +935,10 @@ tasks:
     desc: Verify etherscan opsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 11155420 \
           --ffi \
@@ -917,7 +952,7 @@ tasks:
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 11155420 \
@@ -942,7 +977,7 @@ tasks:
       - cmd: |
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
           --rpc-url ${RPC_URL_OP_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --sig "run(string)" 'opsepolia' \
           --chain-id 11155420 \
           --broadcast \
@@ -959,7 +994,7 @@ tasks:
           --sig "run(string)" 'opsepolia' \
           --chain-id 11155420 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -974,7 +1009,7 @@ tasks:
           --sig "run(string)" 'opsepolia' \
           --chain-id 11155420 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --broadcast \
           -vv \
           --verify
@@ -990,9 +1025,9 @@ tasks:
           fi
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_OP_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,address)" 'opsepolia' ${I:-0x0000000000000000000000000000000000000000} \
+          --sig "run(string,address,bool)" 'opsepolia' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
           --ffi \
           --broadcast \
           ${RESUME_FLAG} \
@@ -1005,7 +1040,7 @@ tasks:
       - cmd: |
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_OP_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string,address)" 'opsepolia' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
@@ -1013,22 +1048,20 @@ tasks:
           --verify \
           --chain-id 11155420 \
           -vvv
-      - task: verify-diamond-facets-opsep
   upgrade-streaming-escrows-arbsep:
     desc: Deploy or upgrade streaming escrows on arbsep (networks.json managed in script, optional I implementation)
     cmds:
       - cmd: |
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,address)" 'arbsepolia' ${I:-0x0000000000000000000000000000000000000000} \
+          --sig "run(string,address,bool)" 'arbsepolia' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
           --ffi \
           --broadcast \
           --verify \
           --chain-id 421614 \
           -vvv
-      - task: verify-diamond-facets-arbsep
   deploy-snapshot-strategy-facets-opsep:
     desc: Deploy and snapshot strategy facets opsep
     cmds:
@@ -1037,7 +1070,7 @@ tasks:
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string,string)" 'opsepolia' 'strategy' \
           --chain-id 11155420 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --broadcast \
           -vvv
@@ -1054,7 +1087,7 @@ tasks:
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string,string)" 'opsepolia' 'community' \
           --chain-id 11155420 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --broadcast \
           -vvv
@@ -1067,7 +1100,7 @@ tasks:
           --sig "run(string)" 'opsepolia' \
           --chain-id 11155420 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -1082,7 +1115,7 @@ tasks:
           --sig "run(string)" 'opsepolia' \
           --chain-id 11155420 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -1106,7 +1139,7 @@ tasks:
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string)" 'arbsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           --ffi \
@@ -1125,7 +1158,7 @@ tasks:
       - task: upgrade-arbsep-factory
       - task: upgrade-arbsep-communities
       - task: upgrade-arbsep-strategies
-      - task: verify-diamond-facets-arbsep
+      - task: verify-all-arbsep
   upgrade-arbsep-factory:
     desc: Upgrade arbsep factory
     deps:
@@ -1133,17 +1166,16 @@ tasks:
       - task: refresh-facets-arbsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "runFactory(string)" 'arbsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           --ffi \
           --skip-simulation \
           --broadcast \
           -v
-      - task: verify-diamond-facets-arbsep
   upgrade-arbsep-factory-upgrade-impl:
     desc: Upgrade arbsep factory implementation only
     deps:
@@ -1151,17 +1183,16 @@ tasks:
       - task: refresh-facets-arbsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "runFactoryUpgradeImpl(string)" 'arbsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           --ffi \
           --skip-simulation \
           --broadcast \
           -v
-      - task: verify-diamond-facets-arbsep
   upgrade-arbsep-factory-set-community-facets:
     desc: Set arbsep factory community facets only
     deps:
@@ -1169,17 +1200,16 @@ tasks:
       - task: refresh-facets-arbsep
     cmds:
       - cmd: |
-          SPLIT_FACTORY_FACETS=true forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          SPLIT_FACTORY_FACETS=true forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "runFactorySetCommunityFacets(string)" 'arbsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           --ffi \
           --skip-simulation \
           --broadcast \
           -v
-      - task: verify-diamond-facets-arbsep
   upgrade-arbsep-factory-set-strategy-facets:
     desc: Set arbsep factory strategy facets only
     deps:
@@ -1187,17 +1217,16 @@ tasks:
       - task: refresh-facets-arbsep
     cmds:
       - cmd: |
-          SPLIT_FACTORY_FACETS=true forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          SPLIT_FACTORY_FACETS=true forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "runFactorySetStrategyFacets(string)" 'arbsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           --ffi \
           --skip-simulation \
           --broadcast \
           -v
-      - task: verify-diamond-facets-arbsep
   upgrade-arbsep-factory-set-pause-controller:
     desc: Set arbsep factory pause controller only
     deps:
@@ -1205,17 +1234,16 @@ tasks:
       - task: refresh-facets-arbsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "runFactorySetPauseController(string)" 'arbsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           --ffi \
           --skip-simulation \
           --broadcast \
           -v
-      - task: verify-diamond-facets-arbsep
   upgrade-arbsep-factory-set-registry-template:
     desc: Set arbsep factory registry template only
     deps:
@@ -1223,17 +1251,16 @@ tasks:
       - task: refresh-facets-arbsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "runFactorySetRegistryTemplate(string)" 'arbsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           --ffi \
           --skip-simulation \
           --broadcast \
           -v
-      - task: verify-diamond-facets-arbsep
   upgrade-arbsep-factory-set-strategy-template:
     desc: Set arbsep factory strategy template only
     deps:
@@ -1241,17 +1268,16 @@ tasks:
       - task: refresh-facets-arbsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "runFactorySetStrategyTemplate(string)" 'arbsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           --ffi \
           --skip-simulation \
           --broadcast \
           -v
-      - task: verify-diamond-facets-arbsep
   upgrade-arbsep-communities:
     desc: Upgrade arbsep communities
     deps:
@@ -1259,16 +1285,15 @@ tasks:
       - task: refresh-facets-arbsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string,string)" 'arbsepolia' 'communities' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           --ffi \
           --broadcast \
           -vvv
-      - task: verify-diamond-facets-arbsep
   upgrade-arbsep-strategies:
     desc: Upgrade arbsep strategies
     deps:
@@ -1276,16 +1301,15 @@ tasks:
       - task: refresh-facets-arbsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string,string)" 'arbsepolia' 'strategies' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           --ffi \
           --broadcast \
           -vvv
-      - task: verify-diamond-facets-arbsep
   upgrade-atomic-diamond-arbsep:
     desc: Upgrade atomic diamond arbsep
     deps:
@@ -1296,7 +1320,7 @@ tasks:
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string)" 'arbsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 421614 \
           --broadcast \
@@ -1304,14 +1328,13 @@ tasks:
           --verify \
           --slow \
           --via-ir
-      - task: verify-diamond-facets-arbsep
   verify-blockscout-arbsep:
     desc: Verify blockscout arbsep
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainTest.s.sol:UpgradeCVMultichainTest \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://arbitrum.blockscout.com/api/ \
           --verify \
@@ -1323,7 +1346,7 @@ tasks:
       - cmd: |
           forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           -vv
@@ -1335,7 +1358,7 @@ tasks:
       - cmd: |
           forge script script/DeployCVArbSepoliaPool.s.sol:DeployCVArbSepoliaPool \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --broadcast -vv
@@ -1347,7 +1370,7 @@ tasks:
       - cmd: |
           forge script script/DeployCVArbSepoliaCommFee.s.sol:DeployCVArbSepoliaCommFee \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --broadcast -vv
@@ -1359,7 +1382,7 @@ tasks:
       - cmd: |
           forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --broadcast \
@@ -1372,7 +1395,7 @@ tasks:
       - cmd: |
           forge script script/CreateSafe.s.sol \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --sig "run()" \
           --broadcast \
           --verify \
@@ -1386,7 +1409,7 @@ tasks:
       - cmd: |
           forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           -vvvv
         ignore_error: true
       - task: sync-abis
@@ -1396,7 +1419,7 @@ tasks:
       - cmd: |
           forge script script/AddOwner.s.sol:AddOwner \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --sig "run(address,address)" ${owner} ${safe} \
           --broadcast \
           -vvvv
@@ -1407,7 +1430,7 @@ tasks:
       - cmd: |
           forge script script/AddStrategy.s.sol:AddStrategy \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --sig "run(address,address)" ${S} ${C} \
           --broadcast \
           -vvvv
@@ -1419,7 +1442,7 @@ tasks:
           forge script script/VerifyTest.s.sol:VerifyTest \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string)" 'arbsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --chain-id 421614 \
           --broadcast \
@@ -1435,7 +1458,7 @@ tasks:
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string)" 'arbsepolia' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 421614 \
@@ -1460,7 +1483,7 @@ tasks:
       - cmd: |
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --sig "run(string)" 'arbsepolia' \
           --chain-id 421614 \
           --broadcast \
@@ -1477,7 +1500,7 @@ tasks:
           --sig "run(string)" 'arbsepolia' \
           --chain-id 421614 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -1492,7 +1515,7 @@ tasks:
           --sig "run(string)" 'arbsepolia' \
           --chain-id 421614 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -1507,7 +1530,7 @@ tasks:
           --sig "run(string)" 'arbsepolia' \
           --chain-id 421614 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -1522,7 +1545,7 @@ tasks:
           --sig "run(string)" 'arbsepolia' \
           --chain-id 421614 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -1536,7 +1559,7 @@ tasks:
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string,string)" 'arbsepolia' 'strategy' \
           --chain-id 421614 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --broadcast \
           -vvv
@@ -1554,7 +1577,7 @@ tasks:
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string,string)" 'arbsepolia' 'community' \
           --chain-id 421614 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --broadcast \
           -vvv
@@ -1565,7 +1588,7 @@ tasks:
       - cmd: |
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
           --rpc-url ${RPC_URL_ARB} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --sig "run(string)" 'arbitrum' \
           --chain-id 42161 \
           --broadcast \
@@ -1580,7 +1603,7 @@ tasks:
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
           --rpc-url ${RPC_URL_ARB} \
           --sig "run(string)" 'arbitrum' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 42161 \
@@ -1597,7 +1620,7 @@ tasks:
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
           --rpc-url ${RPC_URL_ARB} \
           --sig "run(string)" 'arbitrum' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --chain-id 42161 \
           --broadcast \
@@ -1612,17 +1635,17 @@ tasks:
       - task: refresh-facets-arbitrum
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_ARB} \
           --sig "run(string)" 'arbitrum' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 42161 \
           --broadcast \
           --slow \
           -vvv
-      - task: verify-diamond-facets-arbitrum
+      - task: verify-all-arbitrum
   upgrade-atomic-diamond-arbitrum:
     desc: Upgrade atomic diamond arbitrum
     deps:
@@ -1633,22 +1656,21 @@ tasks:
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
           --rpc-url ${RPC_URL_ARB} \
           --sig "run(string)" 'arbitrum' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 42161 \
           --broadcast \
           --ffi \
           --slow \
           --via-ir
-      - task: verify-diamond-facets-arbitrum
   verify-blockscout-arbitrum:
     desc: Verify blockscout arbitrum
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_ARB} \
           --sig "run(string)" 'arbitrum' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://arbitrum.blockscout.com/api/ \
           --ffi \
@@ -1665,7 +1687,7 @@ tasks:
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
           --rpc-url ${RPC_URL_ARB} \
           --sig "run(string)" 'arbitrum' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://arbitrum.blockscout.com/api/ \
           --ffi \
@@ -1698,7 +1720,7 @@ tasks:
           --rpc-url ${RPC_URL_ARB} \
           --sig "run(string)" 'arbitrum' \
           --chain-id 42161 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --broadcast \
           --legacy \
@@ -1713,7 +1735,7 @@ tasks:
           --sig "run(string)" 'arbitrum' \
           --chain-id 42161 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -1728,7 +1750,7 @@ tasks:
           --sig "run(string)" 'arbitrum' \
           --chain-id 42161 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -1743,7 +1765,7 @@ tasks:
           --sig "run(string)" 'arbitrum' \
           --chain-id 42161 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --broadcast \
           -vv \
           --verify
@@ -1768,7 +1790,7 @@ tasks:
           --sig "run(string)" 'arbitrum' \
           --chain-id 42161 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -1784,9 +1806,9 @@ tasks:
           fi
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_ARB} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,address)" 'arbitrum' ${I:-0x0000000000000000000000000000000000000000} \
+          --sig "run(string,address,bool)" 'arbitrum' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
           --ffi \
           --broadcast \
           ${RESUME_FLAG} \
@@ -1810,14 +1832,13 @@ tasks:
       - cmd: |
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_ARB} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string,address)" 'arbitrum' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
           --broadcast \
           --chain-id 42161 \
           -vvv
-      - task: verify-diamond-facets-arbitrum
   deploy-or-upgrade-good-dollar-sybil-arbitrum:
     desc: Deploy or upgrade good dollar sybil arbitrum
     cmds:
@@ -1827,7 +1848,7 @@ tasks:
           --sig "run(string)" 'arbitrum' \
           --chain-id 42161 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -1842,7 +1863,7 @@ tasks:
           --sig "run(string)" 'optimism' \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 10 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --broadcast \
           --verify \
           -vvv
@@ -1856,7 +1877,7 @@ tasks:
           --sig "run(string)" 'optimism' \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 10 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --legacy \
           --broadcast \
@@ -1871,7 +1892,7 @@ tasks:
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 10 \
@@ -1889,17 +1910,17 @@ tasks:
       - task: refresh-facets-optimism
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 10 \
           --broadcast \
           --legacy \
           -vvv
-      - task: verify-diamond-facets-optimism
+      - task: verify-all-optimism
   upgrade-atomic-diamond-optimism:
     desc: Upgrade atomic diamond optimism
     deps:
@@ -1910,22 +1931,21 @@ tasks:
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 10 \
           --broadcast \
           --ffi \
           --slow \
           --via-ir
-      - task: verify-diamond-facets-optimism
   verify-blockscout-optimism:
     desc: Verify blockscout optimism
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://optimism.blockscout.com/api/ \
           --chain-id 10 \
@@ -1941,7 +1961,7 @@ tasks:
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://optimism.blockscout.com/api/ \
           --ffi \
@@ -1974,7 +1994,7 @@ tasks:
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
           --chain-id 10 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --broadcast \
           --legacy \
@@ -1989,7 +2009,7 @@ tasks:
           --sig "run(string)" 'optimism' \
           --chain-id 10 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2004,7 +2024,7 @@ tasks:
           --sig "run(string)" 'optimism' \
           --chain-id 10 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2019,7 +2039,7 @@ tasks:
           --sig "run(string)" 'optimism' \
           --chain-id 10 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --broadcast \
           -vv \
           --verify
@@ -2044,7 +2064,7 @@ tasks:
           --sig "run(string)" 'optimism' \
           --chain-id 10 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2060,9 +2080,9 @@ tasks:
           fi
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_OPT} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,address)" 'optimism' ${I:-0x0000000000000000000000000000000000000000} \
+          --sig "run(string,address,bool)" 'optimism' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
           --ffi \
           --broadcast \
           ${RESUME_FLAG} \
@@ -2086,14 +2106,13 @@ tasks:
       - cmd: |
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_OPT} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string,address)" 'optimism' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
           --broadcast \
           --chain-id 10 \
           -vvv
-      - task: verify-diamond-facets-optimism
   deploy-or-upgrade-good-dollar-sybil-optimism:
     desc: Deploy or upgrade good dollar sybil optimism
     cmds:
@@ -2103,7 +2122,7 @@ tasks:
           --sig "run(string)" 'optimism' \
           --chain-id 10 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2119,14 +2138,13 @@ tasks:
           forge script script/UpgradeCVDiamond.s.sol:UpgradeCVDiamond \
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 137 \
           --broadcast \
           --ffi \
           --slow \
           -vvv
-      - task: verify-diamond-facets-polygon
   upgrade-community-diamond-polygon:
     desc: Upgrade community diamond polygon
     deps:
@@ -2137,7 +2155,7 @@ tasks:
           forge script script/UpgradeRegistryCommunityDiamond.s.sol:UpgradeRegistryCommunityDiamond \
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 137 \
           --broadcast \
@@ -2145,7 +2163,6 @@ tasks:
           --ffi \
           --slow \
           -vvv
-      - task: verify-diamond-facets-polygon
   upgrade-atomic-diamond-polygon:
     desc: Upgrade atomic diamond polygon
     deps:
@@ -2156,7 +2173,7 @@ tasks:
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 137 \
           --broadcast \
@@ -2165,7 +2182,6 @@ tasks:
           --slow \
           --via-ir \
           -vvv
-      - task: verify-diamond-facets-polygon
   transfer-ownership-polygon:
     desc: Transfer ownership polygon
     cmds:
@@ -2175,7 +2191,7 @@ tasks:
           --sig "run(string)" 'polygon' \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 137 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --broadcast \
           --verify \
           -vvv
@@ -2189,7 +2205,7 @@ tasks:
           --sig "run(string)" 'polygon' \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 137 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --legacy \
           --broadcast \
@@ -2204,7 +2220,7 @@ tasks:
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --chain-id 137 \
           --broadcast \
@@ -2219,10 +2235,10 @@ tasks:
       - task: refresh-facets-polygon
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 137 \
@@ -2230,15 +2246,15 @@ tasks:
           --legacy \
           --slow \
           -vvv
-      - task: verify-diamond-facets-polygon
+      - task: verify-all-polygon
   verify-blockscout-polygon:
     desc: Verify blockscout polygon
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://polygon.blockscout.com/api/ \
           --ffi \
@@ -2255,7 +2271,7 @@ tasks:
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://polygon.blockscout.com/api/ \
           --ffi \
@@ -2288,7 +2304,7 @@ tasks:
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
           --chain-id 137 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --broadcast \
           --legacy \
@@ -2303,7 +2319,7 @@ tasks:
           --sig "run(string)" 'polygon' \
           --chain-id 137 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2318,7 +2334,7 @@ tasks:
           --sig "run(string)" 'polygon' \
           --chain-id 137 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2333,7 +2349,7 @@ tasks:
           --sig "run(string)" 'polygon' \
           --chain-id 137 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --broadcast \
           -vv \
           --verify
@@ -2358,7 +2374,7 @@ tasks:
           --sig "run(string)" 'polygon' \
           --chain-id 137 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2374,9 +2390,9 @@ tasks:
           fi
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_POLYGON} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,address)" 'polygon' ${I:-0x0000000000000000000000000000000000000000} \
+          --sig "run(string,address,bool)" 'polygon' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
           --ffi \
           --broadcast \
           ${RESUME_FLAG} \
@@ -2400,14 +2416,13 @@ tasks:
       - cmd: |
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_POLYGON} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string,address)" 'polygon' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
           --broadcast \
           --chain-id 137 \
           -vvv
-      - task: verify-diamond-facets-polygon
   deploy-or-upgrade-good-dollar-sybil-polygon:
     desc: Deploy or upgrade good dollar sybil polygon
     cmds:
@@ -2417,7 +2432,7 @@ tasks:
           --sig "run(string)" 'polygon' \
           --chain-id 137 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2432,7 +2447,7 @@ tasks:
           --sig "run(string)" 'gnosis' \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 100 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --broadcast \
           --verify \
           -vvv
@@ -2446,7 +2461,7 @@ tasks:
           --sig "run(string)" 'gnosis' \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 100 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --legacy \
           --broadcast \
@@ -2462,7 +2477,7 @@ tasks:
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 100 \
@@ -2480,10 +2495,10 @@ tasks:
       - task: refresh-facets-gnosis
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 100 \
@@ -2491,7 +2506,7 @@ tasks:
           --legacy \
           --gas-price 20000000000 \
           -vvv
-      - task: verify-diamond-facets-gnosis
+      - task: verify-all-gnosis
   upgrade-atomic-diamond-gnosis:
     desc: Upgrade atomic diamond gnosis
     deps:
@@ -2502,23 +2517,22 @@ tasks:
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 100 \
           --broadcast \
           --ffi \
           --slow \
           --via-ir
-      - task: verify-diamond-facets-gnosis
   verify-blockscout-gnosis:
     desc: Verify blockscout gnosis
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
           --chain-id 100 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://gnosis.blockscout.com/api/ \
           --ffi \
@@ -2534,7 +2548,7 @@ tasks:
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://gnosis.blockscout.com/api/ \
           --ffi \
@@ -2554,7 +2568,7 @@ tasks:
           --sig "run(string)" 'gnosis' \
           --chain-id 100 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2569,7 +2583,7 @@ tasks:
           --sig "run(string)" 'gnosis' \
           --chain-id 100 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2584,7 +2598,7 @@ tasks:
           --sig "run(string)" 'gnosis' \
           --chain-id 100 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --broadcast \
           -vv \
           --verify
@@ -2609,7 +2623,7 @@ tasks:
           --sig "run(string)" 'gnosis' \
           --chain-id 100 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2641,7 +2655,7 @@ tasks:
           forge script script/PassportScorerWriter.s.sol:PassportScorerWriter \
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --chain-id 100 \
           --broadcast \
@@ -2657,7 +2671,7 @@ tasks:
           --sig "run(string)" 'gnosis' \
           --chain-id 100 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2673,9 +2687,9 @@ tasks:
           fi
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_GNOSIS} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,address)" 'gnosis' ${I:-0x0000000000000000000000000000000000000000} \
+          --sig "run(string,address,bool)" 'gnosis' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
           --ffi \
           --broadcast \
           ${RESUME_FLAG} \
@@ -2699,21 +2713,20 @@ tasks:
       - cmd: |
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_GNOSIS} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string,address)" 'gnosis' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
           --broadcast \
           --chain-id 100 \
           -vvv
-      - task: verify-diamond-facets-gnosis
   transfer-ownership-base:
     desc: Transfer ownership base
     cmds:
       - cmd: |
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
           --rpc-url ${RPC_URL_BASE} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --sig "run(string)" 'base' \
           --chain-id 8453 \
           --broadcast \
@@ -2728,7 +2741,7 @@ tasks:
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 8453 \
@@ -2746,7 +2759,7 @@ tasks:
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
           --chain-id 8453 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --broadcast \
@@ -2762,10 +2775,10 @@ tasks:
       - task: refresh-facets-base
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 8453 \
@@ -2773,7 +2786,7 @@ tasks:
           --legacy \
           --slow \
           -vvv
-      - task: verify-diamond-facets-base
+      - task: verify-all-base
   upgrade-atomic-diamond-base:
     desc: Upgrade atomic diamond base
     deps:
@@ -2784,23 +2797,22 @@ tasks:
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 8453 \
           --broadcast \
           --ffi \
           --slow \
           --via-ir
-      - task: verify-diamond-facets-base
   verify-blockscout-base:
     desc: Verify blockscout base
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
           --chain-id 8453 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://base.blockscout.com/api/ \
           --ffi \
@@ -2816,7 +2828,7 @@ tasks:
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://base.blockscout.com/api/ \
           --ffi \
@@ -2849,7 +2861,7 @@ tasks:
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
           --chain-id 8453 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --broadcast \
           --legacy \
@@ -2864,7 +2876,7 @@ tasks:
           --sig "run(string)" 'base' \
           --chain-id 8453 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2879,7 +2891,7 @@ tasks:
           --sig "run(string)" 'base' \
           --chain-id 8453 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2894,7 +2906,7 @@ tasks:
           --sig "run(string)" 'base' \
           --chain-id 8453 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --broadcast \
           -vv \
           --verify
@@ -2919,7 +2931,7 @@ tasks:
           --sig "run(string)" 'base' \
           --chain-id 8453 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2934,12 +2946,186 @@ tasks:
           --sig "run(string)" 'base' \
           --chain-id 8453 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
         ignore_error: true
       - task: sync-abis
+  upgrade-proxy-owner-ethsep:
+    desc: Upgrade proxy owner ethsepolia
+    cmds:
+      - cmd: |
+          forge script script/UpgradeProxyOwner.s.sol:UpgradeProxyOwner \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --sig "run(string,address,bool)" 'ethsepolia' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
+          --chain-id 11155111 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --account PK_DEPLOYER \
+          --ffi \
+          --verify \
+          --broadcast \
+          -vv
+  upgrade-proxy-owner-arbsep:
+    desc: Upgrade proxy owner arbsepolia
+    cmds:
+      - cmd: |
+          forge script script/UpgradeProxyOwner.s.sol:UpgradeProxyOwner \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string,address,bool)" 'arbsepolia' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
+          --chain-id 421614 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --account PK_DEPLOYER \
+          --ffi \
+          --verify \
+          --broadcast \
+          -vv
+  upgrade-proxy-owner-opsep:
+    desc: Upgrade proxy owner opsepolia
+    cmds:
+      - cmd: |
+          forge script script/UpgradeProxyOwner.s.sol:UpgradeProxyOwner \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string,address,bool)" 'opsepolia' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
+          --chain-id 11155420 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --account PK_DEPLOYER \
+          --ffi \
+          --verify \
+          --broadcast \
+          -vv
+  upgrade-proxy-owner-arbitrum:
+    desc: Upgrade proxy owner arbitrum
+    cmds:
+      - cmd: |
+          forge script script/UpgradeProxyOwner.s.sol:UpgradeProxyOwner \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string,address,bool)" 'arbitrum' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
+          --chain-id 42161 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --account PK_DEPLOYER \
+          --ffi \
+          --verify \
+          --broadcast \
+          --legacy \
+          -vv
+  upgrade-proxy-owner-optimism:
+    desc: Upgrade proxy owner optimism
+    cmds:
+      - cmd: |
+          forge script script/UpgradeProxyOwner.s.sol:UpgradeProxyOwner \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string,address,bool)" 'optimism' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
+          --chain-id 10 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --account PK_DEPLOYER \
+          --ffi \
+          --verify \
+          --broadcast \
+          --legacy \
+          -vv
+  upgrade-proxy-owner-polygon:
+    desc: Upgrade proxy owner polygon
+    cmds:
+      - cmd: |
+          forge script script/UpgradeProxyOwner.s.sol:UpgradeProxyOwner \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string,address,bool)" 'polygon' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
+          --chain-id 137 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --account PK_DEPLOYER \
+          --ffi \
+          --verify \
+          --broadcast \
+          --legacy \
+          -vv
+  upgrade-proxy-owner-gnosis:
+    desc: Upgrade proxy owner gnosis
+    cmds:
+      - cmd: |
+          forge script script/UpgradeProxyOwner.s.sol:UpgradeProxyOwner \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string,address,bool)" 'gnosis' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
+          --chain-id 100 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --account PK_DEPLOYER \
+          --ffi \
+          --verify \
+          --broadcast \
+          --legacy \
+          -vv
+  upgrade-proxy-owner-base:
+    desc: Upgrade proxy owner base
+    cmds:
+      - cmd: |
+          forge script script/UpgradeProxyOwner.s.sol:UpgradeProxyOwner \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string,address,bool)" 'base' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
+          --chain-id 8453 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --account PK_DEPLOYER \
+          --ffi \
+          --verify \
+          --broadcast \
+          --legacy \
+          -vv
+  upgrade-proxy-owner-celo:
+    desc: Upgrade proxy owner celo
+    cmds:
+      - cmd: |
+          forge script script/UpgradeProxyOwner.s.sol:UpgradeProxyOwner \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string,address,bool)" 'celo' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
+          --chain-id 42220 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --account PK_DEPLOYER \
+          --ffi \
+          --verify \
+          --broadcast \
+          --legacy \
+          -vv
+  upgrade-proxy-owner-mainnets:
+    desc: Upgrade proxy owner on all mainnets
+    cmds:
+      - echo "Upgrading proxy owner on arbitrum"
+      - task: upgrade-proxy-owner-arbitrum
+      - echo "Upgrading proxy owner on optimism"
+      - task: upgrade-proxy-owner-optimism
+      - echo "Upgrading proxy owner on polygon"
+      - task: upgrade-proxy-owner-polygon
+      - echo "Upgrading proxy owner on gnosis"
+      - task: upgrade-proxy-owner-gnosis
+      - echo "Upgrading proxy owner on base"
+      - task: upgrade-proxy-owner-base
+      - echo "Upgrading proxy owner on celo"
+      - task: upgrade-proxy-owner-celo
+  deploy-proxy-owner-implementation-mainnets:
+    desc: Deploy ProxyOwner implementation only on all mainnets and snapshot IMPLEMENTATIONS.PROXY_OWNER
+    cmds:
+      - echo "Deploying ProxyOwner implementation on arbitrum"
+      - task: upgrade-proxy-owner-arbitrum
+        vars:
+          DEPLOY_IMPLEMENTATION_ONLY: "true"
+      - echo "Deploying ProxyOwner implementation on optimism"
+      - task: upgrade-proxy-owner-optimism
+        vars:
+          DEPLOY_IMPLEMENTATION_ONLY: "true"
+      - echo "Deploying ProxyOwner implementation on polygon"
+      - task: upgrade-proxy-owner-polygon
+        vars:
+          DEPLOY_IMPLEMENTATION_ONLY: "true"
+      - echo "Deploying ProxyOwner implementation on gnosis"
+      - task: upgrade-proxy-owner-gnosis
+        vars:
+          DEPLOY_IMPLEMENTATION_ONLY: "true"
+      - echo "Deploying ProxyOwner implementation on base"
+      - task: upgrade-proxy-owner-base
+        vars:
+          DEPLOY_IMPLEMENTATION_ONLY: "true"
+      - echo "Deploying ProxyOwner implementation on celo"
+      - task: upgrade-proxy-owner-celo
+        vars:
+          DEPLOY_IMPLEMENTATION_ONLY: "true"
   deploy-or-upgrade-good-dollar-sybil-base:
     desc: Deploy or upgrade good dollar sybil base
     cmds:
@@ -2949,7 +3135,7 @@ tasks:
           --sig "run(string)" 'base' \
           --chain-id 8453 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -2965,7 +3151,7 @@ tasks:
           fi
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_BASE} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string,address)" 'base' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
@@ -2991,21 +3177,20 @@ tasks:
       - cmd: |
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_BASE} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string,address)" 'base' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
           --broadcast \
           --chain-id 8453 \
           -vvv
-      - task: verify-diamond-facets-base
   transfer-ownership-celo:
     desc: Transfer ownership celo
     cmds:
       - cmd: |
           forge script script/TransferOwnershipAllContracts.s.sol:TransferOwnershipAllContracts \
           --rpc-url ${RPC_URL_CELO} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --sig "run(string)" 'celo' \
           --chain-id 42220 \
           --broadcast \
@@ -3020,7 +3205,7 @@ tasks:
           forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
           --rpc-url ${RPC_URL_CELO} \
           --sig "run(string)" 'celo' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 42220 \
@@ -3038,7 +3223,7 @@ tasks:
           --rpc-url ${RPC_URL_CELO} \
           --sig "run(string)" 'celo' \
           --chain-id 42220 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --broadcast \
@@ -3054,10 +3239,10 @@ tasks:
       - task: refresh-facets-celo
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_CELO} \
           --sig "run(string)" 'celo' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 42220 \
@@ -3065,7 +3250,7 @@ tasks:
           --legacy \
           --slow \
           -vvv
-      - task: verify-diamond-facets-celo
+      - task: verify-all-celo
   upgrade-atomic-diamond-celo:
     desc: Upgrade atomic diamond celo
     deps:
@@ -3076,23 +3261,22 @@ tasks:
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
           --rpc-url ${RPC_URL_CELO} \
           --sig "run(string)" 'celo' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 42220 \
           --broadcast \
           --ffi \
           --slow \
           --via-ir
-      - task: verify-diamond-facets-celo
   verify-blockscout-celo:
     desc: Verify blockscout celo
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_CELO} \
           --sig "run(string)" 'celo' \
           --chain-id 42220 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://celo.blockscout.com/api/ \
           --ffi \
@@ -3108,7 +3292,7 @@ tasks:
           forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
           --rpc-url ${RPC_URL_CELO} \
           --sig "run(string)" 'celo' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verifier blockscout \
           --verifier-url https://celo.blockscout.com/api/ \
           --ffi \
@@ -3142,7 +3326,7 @@ tasks:
           --rpc-url ${RPC_URL_MAINNET} \
           --sig "run(string)" 'mainnet' \
           --chain-id 1 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --broadcast \
@@ -3158,16 +3342,16 @@ tasks:
       - task: refresh-facets-mainnet
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_MAINNET} \
           --sig "run(string)" 'mainnet' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 1 \
           --broadcast \
           -vvv
-      - task: verify-diamond-facets-mainnet
+      - task: verify-all-mainnet
 
   upgrade-atomic-diamond-mainnet:
     desc: Upgrade atomic diamond mainnet
@@ -3179,23 +3363,22 @@ tasks:
           forge script script/UpgradeAllDiamonds.s.sol:UpgradeAllDiamonds \
           --rpc-url ${RPC_URL_MAINNET} \
           --sig "run(string)" 'mainnet' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --chain-id 1 \
           --broadcast \
           --ffi \
           --slow \
           --via-ir
-      - task: verify-diamond-facets-mainnet
 
   verify-etherscan-mainnet:
     desc: Verify contracts on Etherscan mainnet
     cmds:
       - cmd: |
-          forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+          forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
           --rpc-url ${RPC_URL_MAINNET} \
           --sig "run(string)" 'mainnet' \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --ffi \
           --chain-id 1 \
@@ -3232,10 +3415,10 @@ tasks:
           failed=0
 
           (
-            forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+            forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
             --rpc-url ${RPC_URL_ARB} \
             --sig "run(string)" 'arbitrum' \
-            --private-key ${PRIVATE_KEY} \
+            --account PK_DEPLOYER \
             --etherscan-api-key ${ETHERSCAN_API_KEY} \
             --ffi \
             --chain-id 42161 \
@@ -3245,10 +3428,10 @@ tasks:
           ) & pids+=($!); names+=("arbitrum")
 
           (
-            forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+            forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
             --rpc-url ${RPC_URL_OPT} \
             --sig "run(string)" 'optimism' \
-            --private-key ${PRIVATE_KEY} \
+            --account PK_DEPLOYER \
             --etherscan-api-key ${ETHERSCAN_API_KEY} \
             --ffi \
             --chain-id 10 \
@@ -3258,10 +3441,10 @@ tasks:
           ) & pids+=($!); names+=("optimism")
 
           (
-            forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+            forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
             --rpc-url ${RPC_URL_POLYGON} \
             --sig "run(string)" 'polygon' \
-            --private-key ${PRIVATE_KEY} \
+            --account PK_DEPLOYER \
             --etherscan-api-key ${ETHERSCAN_API_KEY} \
             --ffi \
             --chain-id 137 \
@@ -3272,10 +3455,10 @@ tasks:
           ) & pids+=($!); names+=("polygon")
 
           (
-            forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+            forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
             --rpc-url ${RPC_URL_GNOSIS} \
             --sig "run(string)" 'gnosis' \
-            --private-key ${PRIVATE_KEY} \
+            --account PK_DEPLOYER \
             --etherscan-api-key ${ETHERSCAN_API_KEY} \
             --ffi \
             --chain-id 100 \
@@ -3286,10 +3469,10 @@ tasks:
           ) & pids+=($!); names+=("gnosis")
 
           (
-            forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+            forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
             --rpc-url ${RPC_URL_BASE} \
             --sig "run(string)" 'base' \
-            --private-key ${PRIVATE_KEY} \
+            --account PK_DEPLOYER \
             --etherscan-api-key ${ETHERSCAN_API_KEY} \
             --ffi \
             --chain-id 8453 \
@@ -3300,10 +3483,10 @@ tasks:
           ) & pids+=($!); names+=("base")
 
           (
-            forge script script/UpgradeCVMultichainProd.s.sol:UpgradeCVMultichainProd \
+            forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
             --rpc-url ${RPC_URL_CELO} \
             --sig "run(string)" 'celo' \
-            --private-key ${PRIVATE_KEY} \
+            --account PK_DEPLOYER \
             --etherscan-api-key ${ETHERSCAN_API_KEY} \
             --ffi \
             --chain-id 42220 \
@@ -3322,10 +3505,10 @@ tasks:
             fi
           done
 
-          if task verify-global-deployments-all-mainnets; then
-            echo "✅ global verification: success"
+          if task verify-all-mainnets; then
+            echo "✅ all verification: success"
           else
-            echo "❌ global verification: failed"
+            echo "❌ all verification: failed"
             failed=1
           fi
 
@@ -3429,13 +3612,13 @@ tasks:
           exit 0
 
   verify-global-deployments-all-mainnets:
-    desc: Verify deployments on arbitrum, optimism, polygon, gnosis, base, celo; pass SCOPE=global|pause|escrow|factory|communities|strategies|facets|all
+    desc: Verify deployments on arbitrum, optimism, polygon, gnosis, base, celo; pass SCOPE=global|state|pause|escrow|factory|communities|strategies|facets|all
     cmds:
       - cmd: |
           bash ./scripts/verify-all-deployments.sh --scope "${SCOPE:-global}"
 
   verify-all-mainnets:
-    desc: Verify all deployments on arbitrum, optimism, polygon, gnosis, base, celo; pass SCOPE=global|pause|escrow|factory|communities|strategies|facets|all
+    desc: Verify all deployments on arbitrum, optimism, polygon, gnosis, base, celo; pass SCOPE=global|state|pause|escrow|factory|communities|strategies|facets|all
     cmds:
       - cmd: |
           bash ./scripts/verify-all-deployments.sh --scope "${SCOPE:-all}"
@@ -3497,7 +3680,7 @@ tasks:
             echo "[INFO] ${network}: pausing targets for ${DURATION_SECONDS}s"
             forge script script/PauseAllByController.s.sol:PauseAllByController \
               --rpc-url "${rpc}" \
-              --private-key "${PRIVATE_KEY}" \
+              --account PK_DEPLOYER \
               --sig "run(string,uint256)" "${network}" "${DURATION_SECONDS}" \
               --chain-id "${chain_id}" \
               --broadcast \
@@ -3576,7 +3759,7 @@ tasks:
             echo "[INFO] ${network}: unpausing targets"
             if forge script script/UnpauseAllByController.s.sol:UnpauseAllByController \
               --rpc-url "${rpc}" \
-              --private-key "${PRIVATE_KEY}" \
+              --account PK_DEPLOYER \
               --sig "run(string)" "${network}" \
               --chain-id "${chain_id}" \
               --broadcast \
@@ -3710,7 +3893,7 @@ tasks:
           --rpc-url ${RPC_URL_CELO} \
           --sig "run(string)" 'celo' \
           --chain-id 42220 \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --ffi \
           --broadcast \
           --legacy \
@@ -3725,7 +3908,7 @@ tasks:
           --sig "run(string)" 'celo' \
           --chain-id 42220 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -3740,7 +3923,7 @@ tasks:
           --sig "run(string)" 'celo' \
           --chain-id 42220 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -3755,7 +3938,7 @@ tasks:
           --sig "run(string)" 'celo' \
           --chain-id 42220 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --broadcast \
           -vv \
           --verify
@@ -3781,7 +3964,7 @@ tasks:
           --chain-id 42220 \
           --verifier blockscout \
           --verifier-url https://celo.blockscout.com/api/ \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           -vv
         ignore_error: true
@@ -3796,7 +3979,7 @@ tasks:
           --chain-id 42220 \
           --verifier blockscout \
           --verifier-url https://celo.blockscout.com/api/ \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           -vv \
         ignore_error: true
@@ -3811,7 +3994,7 @@ tasks:
           --chain-id 42220 \
           --verifier blockscout \
           --verifier-url https://celo.blockscout.com/api/ \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           -vv
         ignore_error: true
@@ -3825,7 +4008,7 @@ tasks:
           --sig "run(string)" 'celo' \
           --chain-id 42220 \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --verify \
           --broadcast \
           -vv
@@ -3841,7 +4024,7 @@ tasks:
           fi
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_CELO} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string,address)" 'celo' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
@@ -3867,11 +4050,196 @@ tasks:
       - cmd: |
           forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
           --rpc-url ${RPC_URL_CELO} \
-          --private-key ${PRIVATE_KEY} \
+          --account PK_DEPLOYER \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string,address)" 'celo' ${I:-0x0000000000000000000000000000000000000000} \
           --ffi \
           --broadcast \
           --chain-id 42220 \
           -vvv
-      - task: verify-diamond-facets-celo
+  transfer-gas:
+    desc: "Transfer native gas token from OLD_PRIVATE_KEY to PK_DEPLOYER. Usage: task transfer-gas NETWORK=<network> [AMOUNT=<native>] [PRESET_AMOUNT=<native>] [DRY_RUN=true]"
+    cmds:
+      - cmd: |
+          network="{{.NETWORK}}"
+          amount_override="{{.AMOUNT}}"
+          preset_amount="{{.PRESET_AMOUNT}}"
+          dry_run_flag="{{default "false" .DRY_RUN}}"
+
+          : "${network:?missing NETWORK}"
+          : "${OLD_PRIVATE_KEY:?missing OLD_PRIVATE_KEY}"
+          case "${network}" in
+            arbsepolia) rpc="${RPC_URL_ARB_TESTNET}"; symbol="ETH"; buffer="0.0002" ;;
+            sepolia) rpc="${RPC_URL_SEP_TESTNET}"; symbol="ETH"; buffer="0.00005" ;;
+            opsepolia) rpc="${RPC_URL_OP_TESTNET}"; symbol="ETH"; buffer="0.0002" ;;
+            arbitrum) rpc="${RPC_URL_ARB}"; symbol="ETH"; buffer="0.0002" ;;
+            optimism) rpc="${RPC_URL_OPT}"; symbol="ETH"; buffer="0.0002" ;;
+            mainnet) rpc="${RPC_URL_MAINNET}"; symbol="ETH"; buffer="0.00005" ;;
+            base) rpc="${RPC_URL_BASE}"; symbol="ETH"; buffer="0.0002" ;;
+            polygon) rpc="${RPC_URL_POLYGON}"; symbol="POL"; buffer="0.1" ;;
+            gnosis|xdai) rpc="${RPC_URL_GNOSIS}"; symbol="xDAI"; buffer="0.01" ;;
+            celo) rpc="${RPC_URL_CELO}"; symbol="CELO"; buffer="0.01" ;;
+            *)
+              echo "Unsupported NETWORK=${network}"
+              echo "Supported: arbsepolia sepolia opsepolia arbitrum optimism mainnet base polygon gnosis xdai celo"
+              exit 1
+              ;;
+          esac
+
+          : "${rpc:?missing RPC for ${network}}"
+
+          from="$(cast wallet address --private-key "${OLD_PRIVATE_KEY}")"
+          to="$(cast wallet address --account PK_DEPLOYER)"
+          balance="$(cast balance "${from}" --rpc-url "${rpc}")"
+          gas_price="$(cast gas-price --rpc-url "${rpc}")"
+          gas_limit="$(cast estimate "${to}" --value 1 --from "${from}" --rpc-url "${rpc}")"
+          buffer_wei="$(cast to-wei "${buffer}" ether)"
+
+          reserve="$(python3 -c 'import sys; gas=int(sys.argv[1]); gas_price=int(sys.argv[2]); buffer=int(sys.argv[3]); print((gas * gas_price * 12 // 10) + buffer)' "${gas_limit}" "${gas_price}" "${buffer_wei}")"
+
+          if [ -n "${amount_override}" ]; then
+            amount_wei="$(cast to-wei "${amount_override}" ether)"
+          elif [ -n "${preset_amount}" ]; then
+            amount_wei="$(cast to-wei "${preset_amount}" ether)"
+          else
+            amount_wei="$(python3 -c 'import sys; balance=int(sys.argv[1]); reserve=int(sys.argv[2]); print(balance - reserve)' "${balance}" "${reserve}")"
+          fi
+
+          python3 -c 'import sys; amount=int(sys.argv[1]); reserve=int(sys.argv[2]); balance=int(sys.argv[3]); symbol=sys.argv[4]; assert amount > 0, "Computed transfer amount is <= 0"; assert amount + reserve <= balance, f"Insufficient balance for transfer plus reserve: amount={amount} reserve={reserve} balance={balance} ({symbol})"' "${amount_wei}" "${reserve}" "${balance}" "${symbol}"
+
+          echo "Network: ${network}"
+          echo "RPC: ${rpc}"
+          echo "From: ${from}"
+          echo "To: ${to}"
+          echo "Balance (wei): ${balance}"
+          echo "Amount (wei): ${amount_wei}"
+          echo "Gas limit estimate: ${gas_limit}"
+          echo "Gas price (wei): ${gas_price}"
+          echo "Reserve (wei): ${reserve}"
+
+          if [ "${dry_run_flag}" = "true" ]; then
+            echo "Dry run only."
+            exit 0
+          fi
+
+          cast send "${to}" \
+            --private-key "${OLD_PRIVATE_KEY}" \
+            --rpc-url "${rpc}" \
+            --value "${amount_wei}"
+  transfer-gas-preset:
+    desc: "Transfer an inline preset amount for NETWORK from OLD_PRIVATE_KEY to PK_DEPLOYER. Usage: task transfer-gas-preset NETWORK=<network> PRESET_AMOUNT=<native> [DRY_RUN=true]"
+    cmds:
+      - task: transfer-gas
+        vars:
+          NETWORK: "{{.NETWORK}}"
+          PRESET_AMOUNT: "{{.PRESET_AMOUNT}}"
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+  transfer-gas-all:
+    desc: "Transfer gas on all supported networks. Per-network overrides are optional; omitted amounts use sweep mode. Vars: ARBSEPOLIA_AMOUNT SEPOLIA_AMOUNT OPSEPOLIA_AMOUNT ARBITRUM_AMOUNT OPTIMISM_AMOUNT MAINNET_AMOUNT BASE_AMOUNT POLYGON_AMOUNT GNOSIS_AMOUNT CELO_AMOUNT [DRY_RUN=true]"
+    cmds:
+      - task: transfer-gas
+        vars:
+          NETWORK: "arbsepolia"
+          AMOUNT: '{{default "" .ARBSEPOLIA_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "sepolia"
+          AMOUNT: '{{default "" .SEPOLIA_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "opsepolia"
+          AMOUNT: '{{default "" .OPSEPOLIA_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "arbitrum"
+          AMOUNT: '{{default "" .ARBITRUM_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "optimism"
+          AMOUNT: '{{default "" .OPTIMISM_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "mainnet"
+          AMOUNT: '{{default "" .MAINNET_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "base"
+          AMOUNT: '{{default "" .BASE_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "polygon"
+          AMOUNT: '{{default "" .POLYGON_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "gnosis"
+          AMOUNT: '{{default "" .GNOSIS_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "celo"
+          AMOUNT: '{{default "" .CELO_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+  transfer-gas-testnets:
+    desc: "Transfer gas on testnets only. Per-network overrides are optional; omitted amounts use sweep mode. Vars: ARBSEPOLIA_AMOUNT SEPOLIA_AMOUNT OPSEPOLIA_AMOUNT [DRY_RUN=true]"
+    cmds:
+      - task: transfer-gas
+        vars:
+          NETWORK: "arbsepolia"
+          AMOUNT: '{{default "" .ARBSEPOLIA_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "sepolia"
+          AMOUNT: '{{default "" .SEPOLIA_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "opsepolia"
+          AMOUNT: '{{default "" .OPSEPOLIA_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+  transfer-gas-mainnets:
+    desc: "Transfer gas on mainnets only. Per-network overrides are optional; omitted amounts use sweep mode. Vars: ARBITRUM_AMOUNT OPTIMISM_AMOUNT MAINNET_AMOUNT BASE_AMOUNT POLYGON_AMOUNT GNOSIS_AMOUNT CELO_AMOUNT [DRY_RUN=true]"
+    cmds:
+      - task: transfer-gas
+        vars:
+          NETWORK: "arbitrum"
+          AMOUNT: '{{default "" .ARBITRUM_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "optimism"
+          AMOUNT: '{{default "" .OPTIMISM_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "mainnet"
+          AMOUNT: '{{default "" .MAINNET_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "base"
+          AMOUNT: '{{default "" .BASE_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "polygon"
+          AMOUNT: '{{default "" .POLYGON_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "gnosis"
+          AMOUNT: '{{default "" .GNOSIS_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: transfer-gas
+        vars:
+          NETWORK: "celo"
+          AMOUNT: '{{default "" .CELO_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'

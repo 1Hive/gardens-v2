@@ -41,7 +41,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
     uint256 public MINIMUM_STAKE = 1 ether;
 
-    address public SENDER = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
+    address public SENDER;
     address public TOKEN; // check networks.json file
     address public COUNCIL_SAFE; // check networks.json file
     address public SAFE_PROXY_FACTORY; // check networks.json file
@@ -64,7 +64,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     GV2ERC20 token;
 
     function pool_admin() public virtual override returns (address) {
-        return address(SENDER);
+        return SENDER == address(0) ? _senderFromEnv() : SENDER;
     }
 
     function executeJq(string memory command) internal returns (bytes memory) {
@@ -108,7 +108,6 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     }
 
     function run(string memory network) public {
-        vm.startBroadcast(pool_admin());
         if (bytes(network).length != 0) {
             CURRENT_NETWORK = network;
         }
@@ -117,7 +116,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
         uint256 chainId = json.readUint(getKeyNetwork(".chainId"));
         string memory name = json.readString(getKeyNetwork(".name"));
-        SENDER = json.readAddress(getKeyNetwork(".ENVS.SENDER"));
+        SENDER = _senderFromEnv();
+        vm.startBroadcast();
         ERC1967Proxy proxy;
 
 
@@ -393,5 +393,57 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             // }
         }
         vm.stopBroadcast();
+    }
+
+    function _senderFromEnv() internal returns (address) {
+        string memory account = vm.envOr("DEPLOYER_KEYSTORE_ACCOUNT", string("PK_DEPLOYER"));
+        string[] memory inputs = new string[](3);
+        inputs[0] = "bash";
+        inputs[1] = "-c";
+        inputs[2] = string.concat("cast wallet address --account ", account);
+        bytes memory result = vm.ffi(inputs);
+        return _parseAddress(_trim(string(result)));
+    }
+
+    function _trim(string memory input) internal pure returns (string memory) {
+        bytes memory inputBytes = bytes(input);
+        uint256 start = 0;
+        uint256 end = inputBytes.length;
+        while (start < end && _isWhitespace(inputBytes[start])) start++;
+        while (end > start && _isWhitespace(inputBytes[end - 1])) end--;
+
+        bytes memory trimmed = new bytes(end - start);
+        for (uint256 i = 0; i < trimmed.length; i++) {
+            trimmed[i] = inputBytes[start + i];
+        }
+        return string(trimmed);
+    }
+
+    function _isWhitespace(bytes1 char) internal pure returns (bool) {
+        return char == 0x20 || char == 0x0a || char == 0x0d || char == 0x09;
+    }
+
+    function _parseAddress(string memory value) internal pure returns (address) {
+        bytes memory data = bytes(value);
+        if (data.length != 42 || data[0] != "0" || data[1] != "x") {
+            return address(0);
+        }
+        uint160 result = 0;
+        for (uint256 i = 2; i < 42; i++) {
+            uint8 nibble = _fromHexChar(data[i]);
+            if (nibble > 15) {
+                return address(0);
+            }
+            result = (result << 4) | uint160(nibble);
+        }
+        return address(result);
+    }
+
+    function _fromHexChar(bytes1 char) internal pure returns (uint8) {
+        uint8 value = uint8(char);
+        if (value >= 48 && value <= 57) return value - 48;
+        if (value >= 65 && value <= 70) return value - 55;
+        if (value >= 97 && value <= 102) return value - 87;
+        return 255;
     }
 }

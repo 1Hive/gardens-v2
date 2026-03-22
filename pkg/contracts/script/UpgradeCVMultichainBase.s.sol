@@ -31,7 +31,7 @@ import {CommunityDiamondConfiguratorBase} from "../test/helpers/CommunityDiamond
 
 // EIP-1967 slot for proxy implementation:
 
-contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorBase, CommunityDiamondConfiguratorBase {
+contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorBase, CommunityDiamondConfiguratorBase {
     using stdJson for string;
 
     bytes32 constant IMPLEMENTATION_SLOT = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
@@ -122,6 +122,27 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         run(network);
     }
 
+    function run(string memory network) public virtual override {
+        delete pendingNetworkWrites;
+
+        if (bytes(network).length != 0) {
+            CURRENT_NETWORK = network;
+        }
+
+        string memory json = getNetworkJson();
+
+        chainId = json.readUint(getKeyNetwork(".chainId"));
+        chainName = json.readString(getKeyNetwork(".name"));
+        SENDER = _senderFromEnv();
+
+        vm.startBroadcast(pool_admin());
+
+        runCurrentNetwork(json);
+        _flushPendingNetworkWrites();
+
+        vm.stopBroadcast();
+    }
+
     function runCurrentNetwork(string memory networkJson) public virtual override {
         bool doFactory = phaseSelection == Phase.All || phaseSelection == Phase.Factory;
         bool doCommunities = phaseSelection == Phase.All || phaseSelection == Phase.Communities;
@@ -209,9 +230,9 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
 
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
         RegistryFactory registryFactory = RegistryFactory(payable(address(registryFactoryProxy)));
-        bool forceFacets = vm.envOr("FORCE_FACETS", false);
-        bool splitFactoryFacetWrites = vm.envOr("SPLIT_FACTORY_FACETS", false);
-        bool checkFactoryImpl = vm.envOr("CHECK_FACTORY_IMPL", false);
+        bool forceFacets = _flagEnabled("FORCE_FACETS");
+        bool splitFactoryFacetWrites = _flagEnabled("SPLIT_FACTORY_FACETS");
+        bool checkFactoryImpl = _flagEnabled("CHECK_FACTORY_IMPL");
         if (
             checkFactoryImpl && splitFactoryFacetWrites
                 && (factoryAction == FactoryAction.SetCommunityFacets
@@ -244,7 +265,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
             } else {
                 address communityInit = _getOrDeployCommunityDiamondInit();
                 bytes memory communityInitCalldata = abi.encodeCall(RegistryCommunityDiamondInit.init, ());
-                if (vm.envOr("ESTIMATE_FACTORY_GAS", false)) {
+                if (_flagEnabled("ESTIMATE_FACTORY_GAS")) {
                     bytes memory setCommunityFacetsCalldata = abi.encodeCall(
                         RegistryFactory.setCommunityFacets, (communityCuts, communityInit, communityInitCalldata)
                     );
@@ -268,7 +289,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
             } else {
                 address strategyInit = _getOrDeployStrategyDiamondInit();
                 bytes memory strategyInitCalldata = abi.encodeCall(CVStrategyDiamondInit.init, ());
-                if (vm.envOr("ESTIMATE_FACTORY_GAS", false)) {
+                if (_flagEnabled("ESTIMATE_FACTORY_GAS")) {
                     bytes memory setStrategyFacetsCalldata =
                         abi.encodeCall(RegistryFactory.setStrategyFacets, (cvCuts, strategyInit, strategyInitCalldata));
                     _logEstimatedTxGas("setStrategyFacets", registryFactoryProxy, setStrategyFacetsCalldata);
@@ -450,7 +471,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
     function _getOrDeployCommunityDiamondInit() internal returns (address) {
         string memory key = ".INITS.REGISTRY_COMMUNITY_DIAMOND_INIT";
         address cached = _readAddressOrZero(key);
-        bool reuseConfiguredInits = vm.envOr("REUSE_CONFIGURED_INITS", false);
+        bool reuseConfiguredInits = _flagEnabled("REUSE_CONFIGURED_INITS");
         if (reuseConfiguredInits) {
             if (!_hasExpectedRuntimeCode(cached, type(RegistryCommunityDiamondInit).runtimeCode)) {
                 revert("configured registry community init invalid");
@@ -469,7 +490,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
     function _getOrDeployStrategyDiamondInit() internal returns (address) {
         string memory key = ".INITS.CV_STRATEGY_DIAMOND_INIT";
         address cached = _readAddressOrZero(key);
-        bool reuseConfiguredInits = vm.envOr("REUSE_CONFIGURED_INITS", false);
+        bool reuseConfiguredInits = _flagEnabled("REUSE_CONFIGURED_INITS");
         if (reuseConfiguredInits) {
             if (!_hasExpectedRuntimeCode(cached, type(CVStrategyDiamondInit).runtimeCode)) {
                 revert("configured strategy init invalid");
@@ -1129,7 +1150,7 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         internal
         returns (address cached, bool reused)
     {
-        if (vm.envOr("FORCE_FACETS", false)) {
+        if (_flagEnabled("FORCE_FACETS")) {
             return (address(0), false);
         }
 
@@ -1149,119 +1170,25 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
         return (cached, true);
     }
 
-    function _readAddressOrZero(string memory key) internal returns (address) {
-        string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/pkg/contracts/config/networks.json");
-        string memory command = string.concat(
-            "jq -r '(.networks[] | select(.name==\"", CURRENT_NETWORK, "\") | ", key, " // empty)' ", path
-        );
-
-        string[] memory inputs = new string[](3);
-        inputs[0] = "bash";
-        inputs[1] = "-c";
-        inputs[2] = command;
-        bytes memory result = _ffiCall("readAddressOrZero", inputs);
-        // vm.ffi hex-decodes stdout when it starts with "0x", so jq can return
-        // either raw 20 bytes or the ASCII form. Handle both.
-        if (result.length == 20) {
-            return address(bytes20(result));
-        }
-        string memory value = _trim(string(result));
-        if (bytes(value).length == 0) return address(0);
-        if (keccak256(bytes(value)) == keccak256(bytes("null"))) return address(0);
-        return _parseAddress(value);
-    }
-
-    function _readStringOrEmpty(string memory key) internal returns (string memory) {
-        string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/pkg/contracts/config/networks.json");
-        string memory command = string.concat(
-            "v=$(jq -r '(.networks[] | select(.name==\"",
-            CURRENT_NETWORK,
-            "\") | ",
-            key,
-            " // empty)' ",
-            path,
-            "); if [ -n \"$v\" ]; then echo \"str:$v\"; fi"
-        );
-
-        string[] memory inputs = new string[](3);
-        inputs[0] = "bash";
-        inputs[1] = "-c";
-        inputs[2] = command;
-        bytes memory result = _ffiCall("readStringOrEmpty", inputs);
-        string memory value = _trim(string(result));
-        if (bytes(value).length == 0) return "";
-
-        bytes memory valueBytes = bytes(value);
-        if (valueBytes.length < 4) return "";
-        if (valueBytes[0] != "s" || valueBytes[1] != "t" || valueBytes[2] != "r" || valueBytes[3] != ":") return "";
-
-        bytes memory trimmed = new bytes(valueBytes.length - 4);
-        for (uint256 i = 0; i < trimmed.length; i++) {
-            trimmed[i] = valueBytes[i + 4];
-        }
-        return string(trimmed);
-    }
-
-    function _writeNetworkAddress(string memory key, address value) internal {
-        string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/pkg/contracts/config/networks.json");
-        string memory tmpPath = string.concat(root, "/pkg/contracts/config/.networks.tmp.json");
-        string memory command = string.concat(
-            "jq '(.networks[] | select(.name==\"",
-            CURRENT_NETWORK,
-            "\") | ",
-            key,
-            ") = \"",
-            _addressToString(value),
-            "\"' ",
-            path,
-            " > ",
-            tmpPath,
-            " && mv ",
-            tmpPath,
-            " ",
-            path
-        );
-
-        string[] memory inputs = new string[](3);
-        inputs[0] = "bash";
-        inputs[1] = "-c";
-        inputs[2] = command;
-        _ffiCall("writeNetworkAddress", inputs);
-    }
-
-    function _writeNetworkString(string memory key, string memory value) internal {
-        string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/pkg/contracts/config/networks.json");
-        string memory tmpPath = string.concat(root, "/pkg/contracts/config/.networks.tmp.json");
-        string memory command = string.concat(
-            "jq '(.networks[] | select(.name==\"",
-            CURRENT_NETWORK,
-            "\") | ",
-            key,
-            ") = \"",
-            value,
-            "\"' ",
-            path,
-            " > ",
-            tmpPath,
-            " && mv ",
-            tmpPath,
-            " ",
-            path
-        );
-
-        string[] memory inputs = new string[](3);
-        inputs[0] = "bash";
-        inputs[1] = "-c";
-        inputs[2] = command;
-        _ffiCall("writeNetworkString", inputs);
-    }
-
     function _ffiCall(string memory label, string[] memory inputs) internal returns (bytes memory result) {
         result = vm.ffi(inputs);
+    }
+
+    function _flagEnabled(string memory key) internal view virtual returns (bool) {
+        string memory raw = vm.envOr(key, string(""));
+        bytes32 valueHash = keccak256(bytes(raw));
+        if (bytes(raw).length == 0) return false;
+        if (
+            valueHash == keccak256(bytes("1")) || valueHash == keccak256(bytes("true"))
+                || valueHash == keccak256(bytes("TRUE")) || valueHash == keccak256(bytes("yes"))
+                || valueHash == keccak256(bytes("YES"))
+        ) return true;
+        if (
+            valueHash == keccak256(bytes("0")) || valueHash == keccak256(bytes("false"))
+                || valueHash == keccak256(bytes("FALSE")) || valueHash == keccak256(bytes("no"))
+                || valueHash == keccak256(bytes("NO"))
+        ) return false;
+        revert("invalid boolean env flag");
     }
 
     function _runtimeCodeHash(string memory artifactId) internal returns (bytes32) {
@@ -1338,64 +1265,6 @@ contract UpgradeCVMultichainTest is BaseMultiChain, StrategyDiamondConfiguratorB
             return vm.envOr("RPC_URL_SEP_TESTNET", string(""));
         }
         return "";
-    }
-
-    function _trim(string memory input) internal pure returns (string memory) {
-        bytes memory inputBytes = bytes(input);
-        uint256 start = 0;
-        uint256 end = inputBytes.length;
-        while (start < end && _isWhitespace(inputBytes[start])) {
-            start++;
-        }
-        while (end > start && _isWhitespace(inputBytes[end - 1])) {
-            end--;
-        }
-        bytes memory trimmed = new bytes(end - start);
-        for (uint256 i = 0; i < trimmed.length; i++) {
-            trimmed[i] = inputBytes[start + i];
-        }
-        return string(trimmed);
-    }
-
-    function _isWhitespace(bytes1 char) internal pure returns (bool) {
-        return char == 0x20 || char == 0x0a || char == 0x0d || char == 0x09;
-    }
-
-    function _parseAddress(string memory value) internal pure returns (address) {
-        bytes memory data = bytes(value);
-        if (data.length != 42 || data[0] != "0" || data[1] != "x") {
-            return address(0);
-        }
-        uint160 result = 0;
-        for (uint256 i = 2; i < 42; i++) {
-            uint8 nibble = _fromHexChar(data[i]);
-            if (nibble > 15) {
-                return address(0);
-            }
-            result = (result << 4) | uint160(nibble);
-        }
-        return address(result);
-    }
-
-    function _fromHexChar(bytes1 char) internal pure returns (uint8) {
-        uint8 value = uint8(char);
-        if (value >= 48 && value <= 57) return value - 48;
-        if (value >= 65 && value <= 70) return value - 55;
-        if (value >= 97 && value <= 102) return value - 87;
-        return 255;
-    }
-
-    function _addressToString(address _addr) internal pure returns (string memory) {
-        bytes32 value = bytes32(uint256(uint160(_addr)));
-        bytes memory alphabet = "0123456789abcdef";
-        bytes memory str = new bytes(42);
-        str[0] = "0";
-        str[1] = "x";
-        for (uint256 i = 0; i < 20; i++) {
-            str[2 + i * 2] = alphabet[uint8(value[i + 12] >> 4)];
-            str[3 + i * 2] = alphabet[uint8(value[i + 12] & 0x0f)];
-        }
-        return string(str);
     }
 
     function _bytesToHex(bytes memory data) internal pure returns (string memory) {

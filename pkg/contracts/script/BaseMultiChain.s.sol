@@ -34,9 +34,14 @@ import {ISybilScorer} from "../src/ISybilScorer.sol";
 abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     using stdJson for string;
 
+    struct PendingNetworkWrite {
+        string key;
+        string value;
+    }
+
     uint256 public MINIMUM_STAKE = 1 ether;
 
-    address public SENDER = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
+    address public SENDER;
     address public TOKEN; // check networks.json file
     address public COUNCIL_SAFE; // check networks.json file
     address public SAFE_PROXY_FACTORY; // check networks.json file
@@ -58,9 +63,10 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
     ISybilScorer sybilScorer;
     uint256 chainId;
     string chainName;
+    PendingNetworkWrite[] internal pendingNetworkWrites;
 
     function pool_admin() public virtual override returns (address) {
-        return address(SENDER);
+        return SENDER == address(0) ? _senderFromEnv() : SENDER;
     }
 
     function executeJq(string memory command) internal returns (bytes memory) {
@@ -74,6 +80,11 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
         return result;
     }
 
+    function _networksJsonPath() internal view virtual returns (string memory) {
+        string memory root = vm.projectRoot();
+        return string.concat(root, "/pkg/contracts/config/networks.json");
+    }
+
     function getKeyNetwork(string memory key) internal view returns (string memory) {
         string memory networkSelected = CURRENT_NETWORK;
         string memory jqNetworkSelected = string.concat("$.networks[?(@.name=='", networkSelected, "')]");
@@ -81,9 +92,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
     }
 
     function getNetworkJson() internal view returns (string memory) {
-        string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/pkg/contracts/config/networks.json");
-        string memory json = vm.readFile(path);
+        string memory json = vm.readFile(_networksJsonPath());
         return json;
     }
 
@@ -96,7 +105,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
     function runCurrentNetwork(string memory networkJson) public virtual;
 
     function run(string memory network) public virtual {
-        vm.startBroadcast(pool_admin());
+        delete pendingNetworkWrites;
 
         if (bytes(network).length != 0) {
             CURRENT_NETWORK = network;
@@ -106,10 +115,13 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
 
         chainId = json.readUint(getKeyNetwork(".chainId"));
         chainName = json.readString(getKeyNetwork(".name"));
-        SENDER = json.readAddress(getKeyNetwork(".ENVS.SENDER"));
+        SENDER = _senderFromEnv();
+
+        vm.startBroadcast();
 
 
         runCurrentNetwork(json);
+        _flushPendingNetworkWrites();
 
         // allo_proxy = json.readAddress(getKeyNetwork(".ENVS.ALLO_PROXY"));
 
@@ -377,6 +389,201 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
         //registryCommunity.removeStrategy(_strategy2);
 
         vm.stopBroadcast();
+    }
+
+    function _senderFromEnv() internal returns (address) {
+        string memory account = vm.envOr("DEPLOYER_KEYSTORE_ACCOUNT", string("PK_DEPLOYER"));
+        string[] memory inputs = new string[](3);
+        inputs[0] = "bash";
+        inputs[1] = "-c";
+        inputs[2] = string.concat("cast wallet address --account ", account);
+        bytes memory result = vm.ffi(inputs);
+        return _parseAddress(_trim(string(result)));
+    }
+
+    function _readAddressOrZero(string memory key) internal returns (address) {
+        string memory pending = _readPendingNetworkValue(key);
+        if (bytes(pending).length != 0) {
+            return _parseAddress(pending);
+        }
+
+        string memory path = _networksJsonPath();
+        string memory command = string.concat(
+            "jq -r '(.networks[] | select(.name==\"", CURRENT_NETWORK, "\") | ", key, " // empty)' ", path
+        );
+
+        string[] memory inputs = new string[](3);
+        inputs[0] = "bash";
+        inputs[1] = "-c";
+        inputs[2] = command;
+        bytes memory result = vm.ffi(inputs);
+
+        if (result.length == 20) {
+            return address(bytes20(result));
+        }
+
+        string memory value = _trim(string(result));
+        if (bytes(value).length == 0 || keccak256(bytes(value)) == keccak256(bytes("null"))) {
+            return address(0);
+        }
+        return _parseAddress(value);
+    }
+
+    function _readStringOrEmpty(string memory key) internal returns (string memory) {
+        string memory pending = _readPendingNetworkValue(key);
+        if (bytes(pending).length != 0) {
+            return pending;
+        }
+
+        string memory path = _networksJsonPath();
+        string memory command = string.concat(
+            "v=$(jq -r '(.networks[] | select(.name==\"",
+            CURRENT_NETWORK,
+            "\") | ",
+            key,
+            " // empty)' ",
+            path,
+            "); if [ -n \"$v\" ]; then echo \"str:$v\"; fi"
+        );
+
+        string[] memory inputs = new string[](3);
+        inputs[0] = "bash";
+        inputs[1] = "-c";
+        inputs[2] = command;
+        bytes memory result = vm.ffi(inputs);
+        string memory value = _trim(string(result));
+        if (bytes(value).length == 0) return "";
+
+        bytes memory valueBytes = bytes(value);
+        if (valueBytes.length < 4) return "";
+        if (valueBytes[0] != "s" || valueBytes[1] != "t" || valueBytes[2] != "r" || valueBytes[3] != ":") return "";
+
+        bytes memory trimmed = new bytes(valueBytes.length - 4);
+        for (uint256 i = 0; i < trimmed.length; i++) {
+            trimmed[i] = valueBytes[i + 4];
+        }
+        return string(trimmed);
+    }
+
+    function _writeNetworkAddress(string memory key, address value) internal {
+        _stageNetworkWrite(key, _addressToString(value));
+    }
+
+    function _writeNetworkString(string memory key, string memory value) internal {
+        _stageNetworkWrite(key, value);
+    }
+
+    function _stageNetworkWrite(string memory key, string memory value) internal {
+        pendingNetworkWrites.push(PendingNetworkWrite({key: key, value: value}));
+    }
+
+    function _readPendingNetworkValue(string memory key) internal view returns (string memory) {
+        bytes32 targetHash = keccak256(bytes(key));
+        for (uint256 i = pendingNetworkWrites.length; i > 0; i--) {
+            PendingNetworkWrite storage entry = pendingNetworkWrites[i - 1];
+            if (keccak256(bytes(entry.key)) == targetHash) {
+                return entry.value;
+            }
+        }
+        return "";
+    }
+
+    function _flushPendingNetworkWrites() internal {
+        for (uint256 i = 0; i < pendingNetworkWrites.length; i++) {
+            _applyNetworkWrite(pendingNetworkWrites[i].key, pendingNetworkWrites[i].value);
+        }
+        delete pendingNetworkWrites;
+    }
+
+    function _applyNetworkWrite(string memory key, string memory value) internal {
+        string memory path = _networksJsonPath();
+        string memory sanitizedKey = _sanitizeJsonPathKey(key);
+        string memory tmpPath = string.concat(path, ".", sanitizedKey, ".tmp");
+        string memory command = string.concat(
+            "jq '(.networks[] | select(.name==\"",
+            CURRENT_NETWORK,
+            "\") | ",
+            key,
+            ") = \"",
+            value,
+            "\"' '",
+            path,
+            "' > '",
+            tmpPath,
+            "' && mv '",
+            tmpPath,
+            "' '",
+            path,
+            "'"
+        );
+
+        string[] memory inputs = new string[](3);
+        inputs[0] = "bash";
+        inputs[1] = "-c";
+        inputs[2] = command;
+        vm.ffi(inputs);
+    }
+
+    function _sanitizeJsonPathKey(string memory key) internal pure returns (string memory) {
+        bytes memory source = bytes(key);
+        bytes memory sanitized = new bytes(source.length);
+        for (uint256 i = 0; i < source.length; i++) {
+            bytes1 char = source[i];
+            if (
+                (char >= 0x30 && char <= 0x39) || (char >= 0x41 && char <= 0x5A) || (char >= 0x61 && char <= 0x7A)
+            ) {
+                sanitized[i] = char;
+            } else {
+                sanitized[i] = "_";
+            }
+        }
+        return string(sanitized);
+    }
+
+    function _trim(string memory input) internal pure returns (string memory) {
+        bytes memory inputBytes = bytes(input);
+        uint256 start = 0;
+        uint256 end = inputBytes.length;
+        while (start < end && _isWhitespace(inputBytes[start])) start++;
+        while (end > start && _isWhitespace(inputBytes[end - 1])) end--;
+
+        bytes memory trimmed = new bytes(end - start);
+        for (uint256 i = 0; i < trimmed.length; i++) {
+            trimmed[i] = inputBytes[start + i];
+        }
+        return string(trimmed);
+    }
+
+    function _isWhitespace(bytes1 char) internal pure returns (bool) {
+        return char == 0x20 || char == 0x0a || char == 0x0d || char == 0x09;
+    }
+
+    function _parseAddress(string memory value) internal pure returns (address) {
+        bytes memory data = bytes(value);
+        if (data.length != 42 || data[0] != "0" || data[1] != "x") {
+            return address(0);
+        }
+        uint160 result = 0;
+        for (uint256 i = 2; i < 42; i++) {
+            uint8 nibble = _fromHexChar(data[i]);
+            if (nibble > 15) {
+                return address(0);
+            }
+            result = (result << 4) | uint160(nibble);
+        }
+        return address(result);
+    }
+
+    function _fromHexChar(bytes1 char) internal pure returns (uint8) {
+        uint8 value = uint8(char);
+        if (value >= 48 && value <= 57) return value - 48;
+        if (value >= 65 && value <= 70) return value - 55;
+        if (value >= 97 && value <= 102) return value - 87;
+        return 255;
+    }
+
+    function _addressToString(address account) internal pure returns (string memory) {
+        return Strings.toHexString(uint160(account), 20);
     }
 
     function _isEqual(string memory a, string memory b) internal pure returns (bool) {
