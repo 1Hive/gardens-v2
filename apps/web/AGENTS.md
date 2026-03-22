@@ -1,401 +1,139 @@
-# Agent.md
+# AGENTS.md
 
-This file provides guidance to coding agents when working with code in this repository.
+Guidance for coding agents working in `apps/web` of the Gardens v2 monorepo.
 
-## Project Overview
+## Scope
 
-Gardens v2 is a modular governance framework that enables communities to create and manage multiple governance pools with customizable parameters and voting mechanisms. The project implements Conviction Voting on top of Allo Protocol v2, deployed across 6+ networks including Gnosis Chain, Polygon, Arbitrum, Optimism, Base, and Celo.
+- This file is for the Next.js frontend app in `apps/web`.
+- Do not assume monorepo-wide contract or subgraph procedures apply here unless the task explicitly crosses package boundaries.
+- The web app depends on code and generated artifacts from `pkg/contracts` via the `#/*` TypeScript alias.
 
-## Monorepo Architecture
+## App Summary
 
-This is a pnpm workspace monorepo with Turbo for build orchestration:
+- Stack: Next.js 14 App Router, React 18, TypeScript, wagmi v1, viem, RainbowKit, urql, Tailwind CSS, DaisyUI, Sentry.
+- Domain: multi-chain governance UI for Gardens communities and pools, including proposal flows, member actions, Safe interactions, and Superfluid/Passport-related admin flows.
+- Styling: app-wide SCSS in `styles/globals.scss`, theme tokens in `tailwind.config.js`, fonts wired in [app/layout.tsx](/home/corantin/Documents/GitHub/gardens-v2/apps/web/app/layout.tsx).
 
-- **`apps/web/`**: Next.js 14 frontend application with App Router
-- **`apps/docs/`**: Documentation site
-- **`pkg/contracts/`**: Solidity smart contracts (Foundry)
-- **`pkg/subgraph/`**: The Graph subgraph for indexing on-chain data
-- **`pkg/ui/`**: Shared UI components
-- **`pkg/tsconfig/`**: Shared TypeScript configurations
+## Important Directories
 
-## Core Smart Contract Architecture
+- [app](/home/corantin/Documents/GitHub/gardens-v2/apps/web/app): App Router pages, layouts, route handlers, Open Graph image routes.
+- [components](/home/corantin/Documents/GitHub/gardens-v2/apps/web/components): UI components and forms.
+- [providers](/home/corantin/Documents/GitHub/gardens-v2/apps/web/providers): Wagmi, RainbowKit, urql, theme, notifications.
+- [contexts](/home/corantin/Documents/GitHub/gardens-v2/apps/web/contexts): shared client state.
+- [hooks](/home/corantin/Documents/GitHub/gardens-v2/apps/web/hooks): chain-aware data and wallet interaction hooks.
+- [configs](/home/corantin/Documents/GitHub/gardens-v2/apps/web/configs): chain metadata, environment mode, subgraph version config.
+- [services](/home/corantin/Documents/GitHub/gardens-v2/apps/web/services): external API clients and campaign helpers.
+- [utils](/home/corantin/Documents/GitHub/gardens-v2/apps/web/utils): formatting, web3 helpers, proposal logic, logging.
+- [src/generated.ts](/home/corantin/Documents/GitHub/gardens-v2/apps/web/src/generated.ts): generated wagmi contract bindings. Regenerate, do not hand-edit.
+- [src/customAbis.ts](/home/corantin/Documents/GitHub/gardens-v2/apps/web/src/customAbis.ts): manual ABI additions when generated bindings are not enough.
 
-The contract system follows a factory pattern with upgradeable proxies:
+## Routing Notes
 
-### Contract Hierarchy
+- Main user-facing pages live under [app/(app)](/home/corantin/Documents/GitHub/gardens-v2/apps/web/app/%28app%29).
+- The Gardens experience is centered on [app/(app)/gardens](/home/corantin/Documents/GitHub/gardens-v2/apps/web/app/%28app%29/gardens).
+- Server endpoints live under [app/api](/home/corantin/Documents/GitHub/gardens-v2/apps/web/app/api).
+- `next.config.js` defines several rewrites for legacy/nested garden URLs. Changes to route params often require checking rewrites too.
 
-1. **RegistryFactory** (`pkg/contracts/src/RegistryFactory/`)
+## Commands
 
-   - Diamond-based factory that creates RegistryCommunity instances
-   - Manages protocol-level settings and fees
-   - Entry point for creating new governance communities
-
-2. **RegistryCommunity** (`pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol`)
-
-   - Represents a governance community
-   - Manages member registration, staking, and voting power
-   - Creates and manages multiple CVStrategy pools
-   - Integrates with Allo Registry for profile management
-   - Uses Safe (Gnosis Safe) for council governance
-
-3. **CVStrategy** (`pkg/contracts/src/CVStrategy/CVStrategy.sol`)
-   - Implements Conviction Voting algorithm
-   - Extends Allo Protocol v2's BaseStrategy
-   - Manages proposals, voting, and fund distribution
-   - Supports multiple point systems: Token-weighted, Fixed, Capped, Quadratic
-   - Handles dispute resolution via arbitrators
-   - Optional Superfluid integration for streaming payments
-
-### Key Patterns
-
-- **UUPS Upgradeable**: Contracts use OpenZeppelin's UUPS proxy pattern for upgradeable implementations
-- **ERC1967 Proxies**: Upgradeable entrypoints (e.g., RegistryCommunity deployments) run behind ERC1967-compliant proxies such as UUPS
-- **EIP-1167 Minimal Clones**: Lightweight contracts (CollateralVault instances and similar helpers) are deployed via minimal proxy clones
-- **Diamond Pattern**: RegistryCommunity and CVStrategy are EIP-2535 diamonds whose facets are coordinated by RegistryFactory
-
-### External Dependencies
-
-- **Allo Protocol v2**: Core allocation protocol
-- **Safe**: Multi-sig wallet for council governance
-- **Superfluid**: Token streaming for funding pools
-- **The Graph**: Off-chain indexing via subgraph
-
-## Build & Test Commands
-
-### Monorepo Commands (from root)
+Run from `apps/web` unless stated otherwise.
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Build all packages
-pnpm build
-
-# Run development servers (parallel)
 pnpm dev
-
-# Lint all packages
-pnpm lint
-
-# Format code
-pnpm format
-
-# Run tests across workspace
-pnpm test
-```
-
-### Smart Contract Commands (pkg/contracts)
-
-```bash
-# Build contracts with size reporting
 pnpm build
-# or directly:
-forge build --sizes
-
-# Run all tests with verbose output
-pnpm test
-# or:
-forge test -vvv
-
-# Run specific test file
-forge test --match-path pkg/contracts/test/CVStrategyTest.t.sol -vvv
-
-# Run specific test function
-forge test --match-test testProposalCreation -vvv
-
-# Inspect contract storage layout
-forge inspect pkg/contracts/src/CVStrategy/CVStrategy.sol storageLayout --md
-
-# Format Solidity files
-forge fmt
-
-# Deploy (uses Makefile in pkg/contracts/)
-make deploy
-```
-
-### Frontend Commands (apps/web)
-
-```bash
-cd apps/web
-
-# Generate contract ABIs and TypeScript bindings
-pnpm generate
-# This runs: wagmi generate
-
-# Development server
-pnpm dev
-
-# Build production
-pnpm build
-
-# Type checking
-pnpm typecheck
-
-# Lint
 pnpm lint
 pnpm lint:fix
+pnpm typecheck
+pnpm generate
 ```
 
-### Subgraph Commands (pkg/subgraph)
+Useful details:
 
-```bash
-cd pkg/subgraph
+- `pnpm dev` runs `pnpm install && next dev`; avoid rerunning it repeatedly if dependencies are already installed.
+- `pnpm build` runs `pnpm generate && next build`; build failures may come from generated wagmi code or server routes, not just page code.
+- `pnpm generate` refreshes [src/generated.ts](/home/corantin/Documents/GitHub/gardens-v2/apps/web/src/generated.ts) from [wagmi.config.ts](/home/corantin/Documents/GitHub/gardens-v2/apps/web/wagmi.config.ts).
 
-# Build for local development
-pnpm build
-# This runs: pnpm manifest:local && graph codegen && graph build
+## Architecture Notes
 
-# Build for specific networks
-pnpm build:arbsep    # Arbitrum Sepolia
-pnpm build:opsep     # Optimism Sepolia
-pnpm build:ethsep    # Ethereum Sepolia
+### Providers and Runtime Boundaries
 
-# Deploy to local Graph Node
-pnpm local
+- Global providers are assembled in [providers/Providers.tsx](/home/corantin/Documents/GitHub/gardens-v2/apps/web/providers/Providers.tsx).
+- Wagmi config is built dynamically from the current route's chain and can include a simulated wallet via query params.
+- urql setup lives in [providers/urql.tsx](/home/corantin/Documents/GitHub/gardens-v2/apps/web/providers/urql.tsx) and is chain-aware at query time.
+- Client/server boundaries matter. Keep browser-only code out of route handlers and server-only secrets out of client components.
 
-# Deploy to production networks
-pnpm deploy:arbitrum
-pnpm deploy:optimism
-pnpm deploy:matic
-pnpm deploy:gnosis
-pnpm deploy:base
-pnpm deploy:celo
+### Chain and Subgraph Configuration
 
-# Deploy all production networks
-pnpm deploy:prod
-```
+- Chain metadata is centralized in [configs/chains.tsx](/home/corantin/Documents/GitHub/gardens-v2/apps/web/configs/chains.tsx).
+- Production/testnet behavior is gated by [configs/isProd.ts](/home/corantin/Documents/GitHub/gardens-v2/apps/web/configs/isProd.ts) and can depend on localStorage as well as env.
+- Subgraph versions come from [configs/subgraph.json](/home/corantin/Documents/GitHub/gardens-v2/apps/web/configs/subgraph.json).
+- Many hooks derive chain context from the pathname. If you change URL structure, audit `useChainFromPath`, `useChainIdFromPath`, and dependent hooks.
 
-## Development Workflows
+### Contracts and ABIs
 
-### Frontend Development
+- This app imports contract ABIs from `pkg/contracts` through the `#/*` alias in [tsconfig.json](/home/corantin/Documents/GitHub/gardens-v2/apps/web/tsconfig.json).
+- `wagmi.config.ts` uses aggregated diamond ABIs for `CVStrategy` and `RegistryCommunity`.
+- If contract interfaces change, update the relevant ABI source in `pkg/contracts`, then run `pnpm generate` here.
+- Do not hand-edit [src/generated.ts](/home/corantin/Documents/GitHub/gardens-v2/apps/web/src/generated.ts).
 
-- Next.js 14 with App Router pattern (`apps/web/app/(app)/`)
-- State management via React Context (`apps/web/contexts/`)
-- wagmi for Ethereum interactions
-- RainbowKit for wallet connections
-- urql for GraphQL queries to subgraph
-- Tailwind CSS + DaisyUI for styling
-- Dark mode support via next-themes
+### API Routes and Background Jobs
 
-### Smart Contract Development
+- Several routes under [app/api](/home/corantin/Documents/GitHub/gardens-v2/apps/web/app/api) are operational jobs, not simple public endpoints.
+- Superfluid, Passport Oracle, rebalance keeper, IPFS, and Ably routes rely on secrets such as `CRON_SECRET`, `PINATA_*`, `NEXT_ABLY_API_KEY`, wallet private keys, and Notion/Farcaster credentials.
+- Treat route changes as production-sensitive. Preserve auth checks and avoid logging secrets.
 
-**Prerequisites**: Install Foundry:
+## Environment and Secrets
 
-```bash
-curl -L https://foundry.paradigm.xyz | bash
-foundryup
-```
+- Public env vars generally use `NEXT_PUBLIC_*`.
+- Server-only env vars are used in route handlers and services. Do not move them into client bundles.
+- Commonly referenced public vars include:
+  - `NEXT_PUBLIC_ALCHEMY_KEY`
+  - `NEXT_PUBLIC_WALLET_CONNECT_ID`
+  - `NEXT_PUBLIC_ENV_GARDENS`
+  - `NEXT_PUBLIC_SUBGRAPH_KEY`
+  - feature flags under `NEXT_PUBLIC_FLAG_*`
+- The app also reads some behavior flags from localStorage, including environment selection and multi-chain query toggles.
 
-**Testing Pattern**:
+## Coding Rules For This App
 
-- Main test files in `pkg/contracts/test/`
-- Helper utilities in `pkg/contracts/test/shared/`
-- Use `CVStrategyHelpers.sol` for common test setup
-- Tests use Foundry's standard library and console logging
+- Prefer existing utilities and hooks over reimplementing chain, address, proposal, or formatting logic.
+- Follow the existing import aliases:
+  - `@/*` for app-local files
+  - `#/*` for package-level imports from `pkg/*`
+- Respect client component markers. If a file uses hooks, browser APIs, or wallet state, it likely needs `"use client"`.
+- Keep route handlers compatible with their runtime assumptions. Sentry instrumentation splits node and edge setup under [src/instrumentation.ts](/home/corantin/Documents/GitHub/gardens-v2/apps/web/src/instrumentation.ts) and [src/instrumentation-client.ts](/home/corantin/Documents/GitHub/gardens-v2/apps/web/src/instrumentation-client.ts).
+- Preserve existing rewrites, wallet flows, and chain-specific behavior unless the task explicitly changes them.
 
-**Contract Size Optimization**:
+## Verification Expectations
 
-- CVStrategy contracts are near the 24KB limit
-- Many error messages are commented out with `@todo uncomment when contract size is fixed with diamond`
-- Consider Diamond pattern for future size reduction
+Choose the smallest meaningful verification for the change:
 
-### Subgraph Development
+- UI or component changes: `pnpm lint` and `pnpm typecheck`
+- Contract binding or ABI changes: `pnpm generate`, then `pnpm typecheck`
+- Routing, metadata, or build-sensitive changes: `pnpm build`
+- API route changes: `pnpm typecheck`, then `pnpm build` if the route touches server-only modules or runtime-specific code
 
-- Schema defined in `pkg/subgraph/schema.graphql`
-- AssemblyScript mappings in `pkg/subgraph/src/`
-- Multi-network config in `pkg/subgraph/config/`
-- Use mustache templating for network-specific manifests
+If you cannot run a full build because required env vars are missing, say so clearly and still run the narrower checks that are possible.
 
-## Key Technical Considerations
+## Known Pitfalls
 
-### Conviction Voting Implementation
+- `pnpm build` can fail because `pnpm generate` runs first.
+- `pnpm dev` installs dependencies before starting Next.js, which can be slow and noisy.
+- `configs/isProd.ts` reads `localStorage`; do not import it into places that require pure server evaluation without understanding the implications.
+- `providers/Providers.tsx` dynamically rebuilds wagmi config based on route context and simulated wallet query params; avoid unnecessary refactors there.
+- `next.config.js` has custom webpack fallbacks, Sentry wrapping, permissive remote image patterns, and route rewrites. Treat edits there as high-risk.
+- Many API routes are long-running integration code with external services. Small changes can have operational side effects.
 
-The CV algorithm (`pkg/contracts/src/CVStrategy/ConvictionsUtils.sol`) calculates voting power that grows over time as tokens remain staked on a proposal. Key parameters:
+## When To Look Outside `apps/web`
 
-- **decay**: Rate at which conviction decreases when support is removed
-- **weight**: Multiplier for conviction growth
-- **maxRatio**: Maximum % of pool funds a single proposal can request
-- **minThresholdPoints**: Minimum conviction required regardless of pool size
+- ABI or contract function mismatch: inspect `pkg/contracts`.
+- Broken `#/*` imports: inspect the corresponding package under `pkg/`.
+- Subgraph schema/query mismatch: inspect `pkg/subgraph`.
 
-### Point Systems
+## Preferred Workflow
 
-Four voting weight mechanisms in `PointSystem` enum:
-
-- **Unlimited**: 1 token = 1 vote (no cap)
-- **Fixed**: Equal voting power for all members
-- **Capped**: 1 token = 1 vote up to `maxAmount`
-- **Quadratic**: Voting weight = sqrt(tokens)
-
-### Dispute Resolution
-
-- Proposals can be disputed by community members
-- Requires challenger collateral
-- Arbitrator (typically a Safe multisig) rules on disputes
-- Three ruling options: Approve (1), Reject (2), Default (timeout)
-
-### Multi-Network Deployment
-
-- Contracts deployed to 6+ EVM chains
-- Deployment scripts in `pkg/contracts/script/`
-- Network-specific configs in broadcast directory
-- RPC URLs configured via environment variables
-
-### Storage Layout
-
-To inspect contract storage (important for upgrades):
-
-```bash
-forge inspect pkg/contracts/src/CVStrategy/CVStrategy.sol storageLayout --md
-```
-
-#### Diamond Pattern Storage Verification
-
-Both `CVStrategy` and `RegistryCommunity` use the diamond pattern (EIP-2535), where facets execute via delegatecall in the main contract's storage context. **Critical requirement**: All facets MUST have identical storage layout to the main contract.
-
-The verification script automatically discovers diamond contracts and their facets:
-
-```bash
-# From pkg/contracts directory
-
-# Verify all contracts (automatically discovers CVStrategy & RegistryCommunity)
-./scripts/verify-storage-layout.sh
-
-# Skip build if contracts already compiled (faster)
-./scripts/verify-storage-layout.sh --skip-build
-
-# Verify specific directory only
-./scripts/verify-storage-layout.sh --path src/CVStrategy
-
-# Show detailed differences if mismatches found
-./scripts/verify-storage-layout.sh --verbose
-
-# Use Makefile targets
-make verify-storage        # With build (recommended for deployments)
-make verify-storage-quick  # Skip build (faster if already compiled)
-```
-
-**Auto-Discovery Features:**
-
-- Finds main contracts by detecting `fallback()` functions
-- Discovers all `*Facet.sol` files in `facets/` subdirectories
-- Skips `src/diamonds` directory (generic diamond utilities)
-- Skips standard diamond facets (DiamondLoupeFacet)
-
-**Architecture**:
-
-- **CVStrategy**: Main contract with 5 facets (CVAdminFacet, CVAllocationFacet, CVDisputeFacet, CVPowerFacet, CVProposalFacet)
-
-  - All facets inherit from `CVStrategyBaseFacet` which defines the shared storage layout
-  - Eliminates ~220 lines of duplicated storage declarations
-
-- **RegistryCommunity**: Main contract with 5 facets (CommunityAdminFacet, CommunityMemberFacet, CommunityPoolFacet, CommunityPowerFacet, CommunityStrategyFacet)
-  - All facets inherit from `CommunityBaseFacet` which defines the shared storage layout
-  - Eliminates ~185 lines of duplicated storage declarations
-
-**When to verify**:
-
-- **Before deployments**: Use `make verify-storage` as prerequisite in deployment targets
-- After adding new storage variables to base contracts
-- Before deploying upgrades
-- When creating new facets
-- In CI/CD pipeline before merging facet changes
-
-**Integrating with deployments**:
-Add `verify-storage` as a prerequisite to deployment targets in Makefile:
-
-```makefile
-# For production deployments (always build + verify)
-deploy-my-contract: verify-storage
-	forge script script/DeployMyContract.s.sol ...
-
-# For local testing (quick verification)
-deploy-local: verify-storage-quick
-	forge script script/DeployLocal.s.sol ...
-```
-
-This ensures storage alignment is verified (and contracts are built) before any deployment proceeds.
-
-**Storage safety rules**:
-
-1. Never reorder existing storage variables
-2. Never change variable types
-3. Always append new variables at the end (before `__gap`)
-4. Decrease `__gap` size when adding variables to maintain total slot count
-5. All facets must inherit from the BaseFacet contract
-
-## Git Commit Guidelines
-
-- Never include co-authored AI assistant commits (as per global config)
-- Follow conventional commits for clear change history
-- Contract changes should include test updates
-- Frontend changes should be tested against local subgraph if possible
-
-## Common Debugging Tips
-
-### Contracts
-
-- Use `forge test -vvvv` for detailed trace output
-- Check storage slots for upgrade compatibility
-- Verify proxy initialization in deployment scripts
-- Monitor gas usage with `forge snapshot`
-
-### Frontend
-
-- Check `.env` for required API keys (Alchemy, Pinata, etc.)
-- Verify subgraph queries match deployed schema version
-- Use Next.js dev tools for API route debugging
-- Check RainbowKit config for wallet connection issues
-
-### Subgraph
-
-- Verify contract ABIs match deployed versions
-- Check event signatures in mappings
-- Use Graph Explorer for query testing
-- Monitor indexing status in Graph Node logs
-- For hosted/indexer debugging, query `https://indexer.upgrade.thegraph.com/status` with:
-  ```graphql
-  {
-    indexingStatuses(subgraphs: ["Qm..."]) {
-      subgraph
-      synced
-      health
-      entityCount
-      fatalError {
-        handler
-        message
-        deterministic
-        block {
-          hash
-          number
-        }
-      }
-      node
-      nonFatalErrors {
-        message
-        block {
-          number
-        }
-      }
-      chains {
-        chainHeadBlock {
-          number
-        }
-        earliestBlock {
-          number
-        }
-        network
-        latestBlock {
-          number
-        }
-      }
-    }
-  }
-  ```
-  Replace the example CID with the deployment CID to inspect fatal/non-fatal indexing errors and block progress.
-
-## Additional Resources
-
-- Main docs: https://docs.gardens.fund
-- Contributing guide: [CONTRIBUTING.md](./CONTRIBUTING.md)
-- Security policy: [SECURITY.md](./SECURITY.md)
-- Allo Protocol v2: https://github.com/allo-protocol/allo-v2
-- Foundry Book: https://book.getfoundry.sh/
+1. Read the relevant route, hook, provider, or component first.
+2. Check whether chain config, feature flags, or generated bindings are involved.
+3. Make the smallest coherent change.
+4. Run targeted verification.
+5. Mention any required env vars or unverified production-sensitive paths in the final handoff.
