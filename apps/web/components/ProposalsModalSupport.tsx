@@ -177,6 +177,15 @@ export const ProposalsModalSupport = forwardRef<
     const impossibleToPass =
       (thresholdPct != null && thresholdPct >= 100) || thresholdPct === 0;
 
+    const streamingStatusLabel =
+      isStreamingType ?
+        (ProposalStatus[proposalStatus] === "disputed" ?
+          "disputed"
+        : readyToBeExecuted || proposalWillPass ?
+          "about to stream"
+        : "active, not streaming")
+      : undefined;
+
     const ProposalCountDown = (
       <>
         <div className="text-neutral-soft-content text-xs sm:text-sm">
@@ -209,12 +218,13 @@ export const ProposalsModalSupport = forwardRef<
           : proposalWillPass ?
             PoolTypes[strategyConfig.proposalType] === "funding" ?
               "Estimated time to pass:"
-            : "Before stream start:"
+            : "Before streaming starts:"
           : !alreadyExecuted &&
             readyToBeExecuted &&
-            !isSignalingType &&
-            !isStreamingType ?
-            "Ready to be executed"
+            !isSignalingType ?
+            isStreamingType ?
+              "About to stream"
+            : "Ready to be executed"
           : ""}
         </div>
       </>
@@ -241,7 +251,11 @@ export const ProposalsModalSupport = forwardRef<
                 </Skeleton>
                 {isPoolEnabled && (
                   <div className="flex items-center gap-4 ">
-                    <Badge status={proposalStatus} icon={<HandRaisedIcon />} />
+                    <Badge
+                      status={proposalStatus}
+                      label={streamingStatusLabel}
+                      icon={<HandRaisedIcon />}
+                    />
                   </div>
                 )}
               </div>

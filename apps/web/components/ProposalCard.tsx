@@ -404,6 +404,17 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const impossibleToPass =
       hasThreshold && (thresholdValue >= 100 || thresholdValue === 0);
 
+    const streamingStatusLabel =
+      isStreamingType ?
+        (proposalStatus[proposalStatus] === "disputed" ?
+          "disputed"
+        : (currentFlowRateBn ?? 0n) > 0n ?
+          "streaming"
+        : readyToBeExecuted || proposalWillPass ?
+          "about to stream"
+        : "active, not streaming")
+      : undefined;
+
     const ProposalCountDown = (
       <>
         <div className="text-neutral-soft-content text-xs sm:text-sm">
@@ -436,12 +447,13 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
           : proposalWillPass ?
             PoolTypes[strategyConfig.proposalType] === "funding" ?
               "Estimated time to pass:"
-            : "Before stream start:"
+            : "Before streaming starts:"
           : !alreadyExecuted &&
             readyToBeExecuted &&
-            !isSignalingType &&
-            !isStreamingType ?
-            "Ready to be executed"
+            !isSignalingType ?
+            isStreamingType ?
+              "About to stream"
+            : "Ready to be executed"
           : ""}
         </div>
         {proposalWillPass && !readyToBeExecuted && timeToPass != null && (
@@ -483,6 +495,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                     <div className="flex items-center gap-4">
                       <Badge
                         status={proposalStatus}
+                        label={streamingStatusLabel}
                         icon={<HandRaisedIcon />}
                       />
                     </div>

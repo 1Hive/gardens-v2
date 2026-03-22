@@ -739,6 +739,20 @@ export default function ClientPage({ params }: ClientPageProps) {
 
   // };
   const status = ProposalStatus[proposalData.proposalStatus];
+  const streamingStatusLabel =
+    isStreamingType ?
+      (status === "disputed" ?
+        "disputed"
+      : currentFlowRateForDisplay > 0n ?
+        "streaming"
+      : (currentConvictionPct ?? 0) > (thresholdPct ?? 0) ?
+        "about to stream"
+      : status === "active" ?
+        "active, not streaming"
+      : status === "executed" ?
+        "about to stream"
+      : undefined)
+    : undefined;
 
   return (
     <>
@@ -1029,7 +1043,10 @@ export default function ClientPage({ params }: ClientPageProps) {
           <section className="section-layout gap-4 flex flex-col">
             <div className="flex items-center justify-between">
               <h5>Status</h5>
-              <Badge status={proposalData.proposalStatus} />
+              <Badge
+                status={proposalData.proposalStatus}
+                label={streamingStatusLabel}
+              />
             </div>
 
             {status === "executed" && (
@@ -1053,7 +1070,9 @@ export default function ClientPage({ params }: ClientPageProps) {
                     <CheckIcon className="w-4 m-0.5" />
                   </div>
                   <div className="timeline-end  flex flex-col pt-2">
-                    <p className="text-md font-semibold">Executed</p>
+                    <p className="text-md font-semibold">
+                      {isStreamingType ? "Started streaming" : "Executed"}
+                    </p>
                     <p className="text-sm text-neutral-soft-content">
                       {prettyTimestamp(proposalData?.executedAt)}
                     </p>
@@ -1115,7 +1134,13 @@ export default function ClientPage({ params }: ClientPageProps) {
                   <InfoBox
                     title="Information"
                     infoBoxType="info"
-                    content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
+                    content={`${
+                      isSignalingType ?
+                        "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel"
+                      : isStreamingType ?
+                        "This proposal is active. Once it reaches the threshold, it will start streaming automatically unless successfully disputed."
+                      : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."
+                    }`}
                   />
                 )}
               {status === "disputed" && (
@@ -1129,7 +1154,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   content={
                     isStreamingType ?
                       "Stream funds are accumulated while this proposal is disputed. When the dispute is ruled, accumulated funds are sent to the beneficiary if approved, or returned to the pool if rejected."
-                    : "This proposal is currently disputed. It cannot be executed until the dispute is ruled."
+                    : "This proposal is currently disputed. It cannot proceed until the dispute is ruled."
                   }
                 />
               )}
@@ -1569,7 +1594,10 @@ export default function ClientPage({ params }: ClientPageProps) {
               <section className="section-layout gap-4 flex flex-col">
                 <div className="flex items-center justify-between">
                   <h5>Status</h5>
-                  <Badge status={proposalData.proposalStatus} />
+                  <Badge
+                    status={proposalData.proposalStatus}
+                    label={streamingStatusLabel}
+                  />
                 </div>
                 <div>
                   {status !== "executed" &&
@@ -1578,7 +1606,13 @@ export default function ClientPage({ params }: ClientPageProps) {
                       <InfoBox
                         title="Information"
                         infoBoxType="info"
-                        content={`${isSignalingType ? "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel" : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."}`}
+                        content={`${
+                          isSignalingType ?
+                            "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel"
+                          : isStreamingType ?
+                            "This proposal is active. Once it reaches the threshold, it will start streaming automatically unless successfully disputed."
+                          : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."
+                        }`}
                       />
                     )}
                   {status === "disputed" && (
@@ -1592,7 +1626,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                       content={
                         isStreamingType ?
                           "Stream funds are accumulated while this proposal is disputed. When the dispute is ruled, accumulated funds are sent to the beneficiary if approved, or returned to the pool if rejected."
-                        : "This proposal is currently disputed. It cannot be executed until the dispute is ruled."
+                        : "This proposal is currently disputed. It cannot proceed until the dispute is ruled."
                       }
                     />
                   )}
@@ -1617,7 +1651,9 @@ export default function ClientPage({ params }: ClientPageProps) {
                           <CheckIcon className="w-4 m-0.5" />
                         </div>
                         <div className="timeline-end  flex flex-col pt-2">
-                          <p className="text-md font-semibold">Executed</p>
+                          <p className="text-md font-semibold">
+                            {isStreamingType ? "Started streaming" : "Executed"}
+                          </p>
                           <p className="text-sm text-neutral-soft-content">
                             {prettyTimestamp(proposalData?.executedAt)}
                           </p>
