@@ -56,7 +56,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ ${#NETWORKS[@]} -eq 0 ]]; then
-  NETWORKS=(arbitrum optimism polygon gnosis base celo)
+  NETWORKS=(ethereum arbitrum optimism polygon gnosis base celo)
 fi
 
 declare -A REQUESTED_SCOPES=()
@@ -148,8 +148,29 @@ run_diamond_scope() {
 
   echo "==> Running facet verifier"
   for network in "${NETWORKS[@]}"; do
+    local rpc_var
+    local rpc_url
+    local network_chain_id
+
+    rpc_var="$(rpc_env_name "$network")" || {
+      echo "❌ $network facets"
+      failed=1
+      continue
+    }
+    rpc_url="${!rpc_var:-}"
+    network_chain_id="$(chain_id "$network")"
+
+    if [[ -z "$rpc_url" || -z "$network_chain_id" ]]; then
+      echo "❌ $network facets"
+      failed=1
+      continue
+    fi
+
     echo "### $network"
-    if bash "$CONTRACTS_ROOT/scripts/verify-diamond-facets.sh" --network "$network"; then
+    if bash "$CONTRACTS_ROOT/scripts/verify-diamond-facets.sh" \
+      --network "$network" \
+      --rpc-url "$rpc_url" \
+      --chain-id "$network_chain_id"; then
       echo "✅ $network facets"
     else
       echo "❌ $network facets"
@@ -167,7 +188,7 @@ rpc_env_name() {
     opsepolia) echo "RPC_URL_OP_TESTNET" ;;
     arbitrum) echo "RPC_URL_ARB" ;;
     optimism) echo "RPC_URL_OPT" ;;
-    mainnet) echo "RPC_URL_MAINNET" ;;
+    ethereum) echo "RPC_URL_ETHEREUM" ;;
     polygon) echo "RPC_URL_POLYGON" ;;
     gnosis) echo "RPC_URL_GNOSIS" ;;
     base) echo "RPC_URL_BASE" ;;
@@ -204,6 +225,10 @@ run_upgrade_scope() {
 
   echo "==> Running ${scope} verifier (skipping pre/postflight)"
 
+  : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
+  local deployer_address
+  deployer_address="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+
   for network in "${NETWORKS[@]}"; do
     local rpc_var
     local rpc_url
@@ -218,17 +243,18 @@ run_upgrade_scope() {
     rpc_url="${!rpc_var:-}"
     network_chain_id="$(chain_id "$network")"
 
-    if [[ -z "$rpc_url" || -z "$network_chain_id" || -z "${PRIVATE_KEY:-}" ]]; then
+    if [[ -z "$rpc_url" || -z "$network_chain_id" ]]; then
       echo "❌ $network $scope"
       failed=1
       continue
     fi
 
     echo "### $network"
-    cmd=(forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain
+    cmd=(forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript
       --rpc-url "$rpc_url"
       --sig "$sig" "$network"
-      --private-key "$PRIVATE_KEY"
+      --account PK_DEPLOYER
+      --password "$PK_DEPLOYER_PW"
       --ffi
       --chain-id "$network_chain_id"
       -vv)
@@ -237,7 +263,7 @@ run_upgrade_scope() {
       cmd+=(--legacy)
     fi
 
-    if SKIP_PREFLIGHT=true "${cmd[@]}"; then
+    if ETH_PASSWORD= DEPLOYER_ADDRESS="$deployer_address" SKIP_PREFLIGHT=true SKIP_NETWORK_WRITES=true "${cmd[@]}"; then
       echo "✅ $network $scope"
     else
       echo "❌ $network $scope"

@@ -146,7 +146,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       enabled: shouldReadOnchainMetadataHash,
     });
     const resolvedMetadataHash =
-      proposalData.metadataHash || onchainMetadataHash || undefined;
+      proposalData.metadataHash ?? onchainMetadataHash ?? undefined;
     const { data: metadataResult, fetching: isMetadataIpfsFetching } =
       useMetadataIpfsFetch({
         hash: resolvedMetadataHash,
@@ -268,7 +268,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       currentFlowRateBn > 0n && lastSnapshotAtMs > 0n && nowMs > lastSnapshotAtMs ?
         nowMs - lastSnapshotAtMs
       : 0n;
-    const liveTotalStreamedBn =
+    const totalReceivedByEscrowBn =
       streamedUntilSnapshotBn + (currentFlowRateBn * elapsedMs) / 1000n;
 
     const { liveTotalStreamedBn: explorerTotalStreamedBn } = useSuperfluidStream(
@@ -314,27 +314,14 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       ) ?
         +formatUnits(currentFlowRateBn, poolToken.decimals) * SEC_TO_MONTH
       : null;
-    const proposalTotalStreamed =
-      isStreamingType && poolToken ?
-        +formatUnits(
-          explorerTotalStreamedBn ?? liveTotalStreamedBn,
-          poolToken.decimals,
-        )
-      : null;
-    const proposalTotalStreamedDisplay =
-      poolToken ?
-        `${(proposalTotalStreamed ?? 0).toFixed(5)} ${poolToken.symbol}`
-      : null;
-
     const { data: escrowSuperTokenBalance } = useBalance({
       address: proposalData.streamingEscrow as Address,
       token: strategyConfig.superfluidToken as Address,
       chainId,
       enabled:
-        isDisputedStreamingProposal &&
+        isStreamingType &&
         !!proposalData.streamingEscrow &&
-        !!strategyConfig.superfluidToken &&
-        escrowBalanceSnapshotBn == null,
+        !!strategyConfig.superfluidToken,
     });
 
     const { data: escrowDepositAmount } = useContractRead({
@@ -370,6 +357,28 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         escrowBalanceSnapshotBn +
         (currentFlowRateBn * escrowBalanceElapsedMs) / 1000n
       : null;
+    const currentEscrowSuperTokenBalanceBn =
+      isDisputedStreamingProposal ?
+        (liveEscrowSuperTokenBalanceBn ?? escrowSuperTokenBalance?.value ?? 0n)
+      : (escrowSuperTokenBalance?.value ?? 0n);
+    const totalStreamedToBeneficiaryBn =
+      isStreamingType ?
+        (() => {
+          const totalReceivedBn =
+            explorerTotalStreamedBn ?? totalReceivedByEscrowBn;
+          return totalReceivedBn > currentEscrowSuperTokenBalanceBn ?
+              totalReceivedBn - currentEscrowSuperTokenBalanceBn
+            : 0n;
+        })()
+      : null;
+    const proposalTotalStreamed =
+      isStreamingType && poolToken && totalStreamedToBeneficiaryBn != null ?
+        +formatUnits(totalStreamedToBeneficiaryBn, poolToken.decimals)
+      : null;
+    const proposalTotalStreamedDisplay =
+      poolToken ?
+        `${(proposalTotalStreamed ?? 0).toFixed(5)} ${poolToken.symbol}`
+      : null;
 
     const accumulatedAmountBn =
       isDisputedStreamingProposal &&
@@ -384,7 +393,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         `${(+formatUnits(accumulatedAmountBn, poolToken.decimals)).toFixed(5)} ${poolToken.symbol}`
       : null;
 
-    const alreadyExecuted = proposalStatus[proposalStatus] === "executed";
+    const alreadyExecuted = ProposalStatus[proposalStatus] === "executed";
 
     const hasThreshold = thresholdPct != null;
     const thresholdValue = thresholdPct ?? 0;
@@ -404,9 +413,10 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const impossibleToPass =
       hasThreshold && (thresholdValue >= 100 || thresholdValue === 0);
 
+    const resolvedProposalStatus = ProposalStatus[proposalStatus];
     const streamingStatusLabel =
       isStreamingType ?
-        (proposalStatus[proposalStatus] === "disputed" ?
+        (resolvedProposalStatus === "disputed" ?
           "disputed"
         : (currentFlowRateBn ?? 0n) > 0n ?
           "streaming"

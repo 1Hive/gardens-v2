@@ -147,6 +147,7 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
         bool doFactory = phaseSelection == Phase.All || phaseSelection == Phase.Factory;
         bool doCommunities = phaseSelection == Phase.All || phaseSelection == Phase.Communities;
         bool doStrategies = phaseSelection == Phase.All || phaseSelection == Phase.Strategies;
+        bool skipFacetDeployment = _skipFacetDeployment();
 
         address strategyImplementation = (doStrategies
                 || (doFactory && _isFactoryAction(FactoryAction.SetStrategyTemplate)))
@@ -172,19 +173,23 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
             && (_isFactoryAction(FactoryAction.SetCommunityFacets) || _isFactoryAction(FactoryAction.SetStrategyFacets));
         if (doCommunities) {
             FacetCuts memory facetCuts;
-            if (phaseSelection == Phase.Factory) {
+            if (skipFacetDeployment) {
                 facetCuts = _buildFacetCutsFromSnapshot();
             } else {
                 facetCuts = _buildFacetCuts();
             }
+            cvCuts = facetCuts.cvCuts;
             communityCuts = facetCuts.communityCuts;
         } else if (needFactoryFacetCuts) {
             if (factoryAction == FactoryAction.SetCommunityFacets) {
-                communityCuts = _buildCommunityFacetCutsFromSnapshot();
+                communityCuts =
+                    skipFacetDeployment ? _buildCommunityFacetCutsFromSnapshot() : _buildCommunityCutsWithFreshFacets(_deployDiamondLoupeFacet());
             } else if (factoryAction == FactoryAction.SetStrategyFacets) {
-                cvCuts = _buildCVFacetCutsFromSnapshot();
+                cvCuts =
+                    skipFacetDeployment ? _buildCVFacetCutsFromSnapshot() : _buildCVCutsWithFreshFacets(_deployDiamondLoupeFacet());
             } else {
-                FacetCuts memory facetCuts = _buildFacetCutsFromSnapshot();
+                FacetCuts memory facetCuts =
+                    skipFacetDeployment ? _buildFacetCutsFromSnapshot() : _buildFacetCuts();
                 cvCuts = facetCuts.cvCuts;
                 communityCuts = facetCuts.communityCuts;
             }
@@ -208,6 +213,10 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
         if (doStrategies) {
             _upgradeStrategies(networkJson, strategyImplementation, cvCuts);
         }
+    }
+
+    function _skipFacetDeployment() internal view returns (bool) {
+        return _flagEnabled("SKIP_FACETS_DEPLOYMENT") || _flagEnabled("SKIP_FACET_DEPLOYMENT");
     }
 
     function _isFactoryAction(FactoryAction action) internal view returns (bool) {
@@ -697,53 +706,53 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
     function _buildFacetCutsFromSnapshot() internal returns (FacetCuts memory cuts) {
 
         DiamondLoupeFacet loupeFacet = DiamondLoupeFacet(
-            _requireSnapshotFacet(
+            _requireExistingSnapshotFacet(
                 ".FACETS.DIAMOND_LOUPE", "DIAMOND_LOUPE", "src/diamonds/facets/DiamondLoupeFacet.sol:DiamondLoupeFacet"
             )
         );
 
         cuts.cvCuts = _buildCVFacetCuts(
             CVAdminFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_ADMIN", "CV_ADMIN", "src/CVStrategy/facets/CVAdminFacet.sol:CVAdminFacet"
                 )
             ),
             CVAllocationFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_ALLOCATION",
                     "CV_ALLOCATION",
                     "src/CVStrategy/facets/CVAllocationFacet.sol:CVAllocationFacet"
                 )
             ),
             CVDisputeFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_DISPUTE", "CV_DISPUTE", "src/CVStrategy/facets/CVDisputeFacet.sol:CVDisputeFacet"
                 )
             ),
             CVPauseFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_PAUSE", "CV_PAUSE", "src/CVStrategy/facets/CVPauseFacet.sol:CVPauseFacet"
                 )
             ),
             CVPowerFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_POWER", "CV_POWER", "src/CVStrategy/facets/CVPowerFacet.sol:CVPowerFacet"
                 )
             ),
             CVProposalFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_PROPOSAL", "CV_PROPOSAL", "src/CVStrategy/facets/CVProposalFacet.sol:CVProposalFacet"
                 )
             ),
             CVSyncPowerFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_SYNC_POWER",
                     "CV_SYNC_POWER",
                     "src/CVStrategy/facets/CVSyncPowerFacet.sol:CVSyncPowerFacet"
                 )
             ),
             CVStreamingFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_STREAMING",
                     "CV_STREAMING",
                     "src/CVStrategy/facets/CVStreamingFacet.sol:CVStreamingFacet"
@@ -754,42 +763,42 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
 
         cuts.communityCuts = _buildCommunityFacetCuts(
             CommunityAdminFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.COMMUNITY_ADMIN",
                     "COMMUNITY_ADMIN",
                     "src/RegistryCommunity/facets/CommunityAdminFacet.sol:CommunityAdminFacet"
                 )
             ),
             CommunityMemberFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.COMMUNITY_MEMBER",
                     "COMMUNITY_MEMBER",
                     "src/RegistryCommunity/facets/CommunityMemberFacet.sol:CommunityMemberFacet"
                 )
             ),
             CommunityPauseFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.COMMUNITY_PAUSE",
                     "COMMUNITY_PAUSE",
                     "src/RegistryCommunity/facets/CommunityPauseFacet.sol:CommunityPauseFacet"
                 )
             ),
             CommunityPoolFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.COMMUNITY_POOL",
                     "COMMUNITY_POOL",
                     "src/RegistryCommunity/facets/CommunityPoolFacet.sol:CommunityPoolFacet"
                 )
             ),
             CommunityPowerFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.COMMUNITY_POWER",
                     "COMMUNITY_POWER",
                     "src/RegistryCommunity/facets/CommunityPowerFacet.sol:CommunityPowerFacet"
                 )
             ),
             CommunityStrategyFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.COMMUNITY_STRATEGY",
                     "COMMUNITY_STRATEGY",
                     "src/RegistryCommunity/facets/CommunityStrategyFacet.sol:CommunityStrategyFacet"
@@ -801,52 +810,52 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
 
     function _buildCVFacetCutsFromSnapshot() internal returns (IDiamond.FacetCut[] memory cvCuts) {
         DiamondLoupeFacet loupeFacet = DiamondLoupeFacet(
-            _requireSnapshotFacet(
+            _requireExistingSnapshotFacet(
                 ".FACETS.DIAMOND_LOUPE", "DIAMOND_LOUPE", "src/diamonds/facets/DiamondLoupeFacet.sol:DiamondLoupeFacet"
             )
         );
         cvCuts = _buildCVFacetCuts(
             CVAdminFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_ADMIN", "CV_ADMIN", "src/CVStrategy/facets/CVAdminFacet.sol:CVAdminFacet"
                 )
             ),
             CVAllocationFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_ALLOCATION",
                     "CV_ALLOCATION",
                     "src/CVStrategy/facets/CVAllocationFacet.sol:CVAllocationFacet"
                 )
             ),
             CVDisputeFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_DISPUTE", "CV_DISPUTE", "src/CVStrategy/facets/CVDisputeFacet.sol:CVDisputeFacet"
                 )
             ),
             CVPauseFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_PAUSE", "CV_PAUSE", "src/CVStrategy/facets/CVPauseFacet.sol:CVPauseFacet"
                 )
             ),
             CVPowerFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_POWER", "CV_POWER", "src/CVStrategy/facets/CVPowerFacet.sol:CVPowerFacet"
                 )
             ),
             CVProposalFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_PROPOSAL", "CV_PROPOSAL", "src/CVStrategy/facets/CVProposalFacet.sol:CVProposalFacet"
                 )
             ),
             CVSyncPowerFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_SYNC_POWER",
                     "CV_SYNC_POWER",
                     "src/CVStrategy/facets/CVSyncPowerFacet.sol:CVSyncPowerFacet"
                 )
             ),
             CVStreamingFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.CV_STREAMING",
                     "CV_STREAMING",
                     "src/CVStrategy/facets/CVStreamingFacet.sol:CVStreamingFacet"
@@ -858,48 +867,48 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
 
     function _buildCommunityFacetCutsFromSnapshot() internal returns (IDiamond.FacetCut[] memory communityCuts) {
         DiamondLoupeFacet loupeFacet = DiamondLoupeFacet(
-            _requireSnapshotFacet(
+            _requireExistingSnapshotFacet(
                 ".FACETS.DIAMOND_LOUPE", "DIAMOND_LOUPE", "src/diamonds/facets/DiamondLoupeFacet.sol:DiamondLoupeFacet"
             )
         );
         communityCuts = _buildCommunityFacetCuts(
             CommunityAdminFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.COMMUNITY_ADMIN",
                     "COMMUNITY_ADMIN",
                     "src/RegistryCommunity/facets/CommunityAdminFacet.sol:CommunityAdminFacet"
                 )
             ),
             CommunityMemberFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.COMMUNITY_MEMBER",
                     "COMMUNITY_MEMBER",
                     "src/RegistryCommunity/facets/CommunityMemberFacet.sol:CommunityMemberFacet"
                 )
             ),
             CommunityPauseFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.COMMUNITY_PAUSE",
                     "COMMUNITY_PAUSE",
                     "src/RegistryCommunity/facets/CommunityPauseFacet.sol:CommunityPauseFacet"
                 )
             ),
             CommunityPoolFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.COMMUNITY_POOL",
                     "COMMUNITY_POOL",
                     "src/RegistryCommunity/facets/CommunityPoolFacet.sol:CommunityPoolFacet"
                 )
             ),
             CommunityPowerFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.COMMUNITY_POWER",
                     "COMMUNITY_POWER",
                     "src/RegistryCommunity/facets/CommunityPowerFacet.sol:CommunityPowerFacet"
                 )
             ),
             CommunityStrategyFacet(
-                _requireSnapshotFacet(
+                _requireExistingSnapshotFacet(
                     ".FACETS.COMMUNITY_STRATEGY",
                     "COMMUNITY_STRATEGY",
                     "src/RegistryCommunity/facets/CommunityStrategyFacet.sol:CommunityStrategyFacet"
@@ -926,6 +935,26 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
 
         if (addr.codehash != expectedCodeHash) {
             return _deployFacetForSnapshot(key, label);
+        }
+    }
+
+    function _requireExistingSnapshotFacet(string memory key, string memory label, string memory artifactId)
+        internal
+        returns (address addr)
+    {
+        bytes32 expectedCodeHash = _runtimeCodeHash(artifactId);
+        addr = _readAddressOrZero(key);
+
+        if (addr == address(0)) {
+            revert(string.concat("missing facet snapshot: ", label));
+        }
+
+        if (addr.code.length == 0) {
+            revert(string.concat("facet snapshot has no code: ", label));
+        }
+
+        if (addr.codehash != expectedCodeHash) {
+            revert(string.concat("facet snapshot code mismatch: ", label));
         }
     }
 
@@ -1174,7 +1203,7 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
         result = vm.ffi(inputs);
     }
 
-    function _flagEnabled(string memory key) internal view virtual returns (bool) {
+    function _flagEnabled(string memory key) internal view virtual override returns (bool) {
         string memory raw = vm.envOr(key, string(""));
         bytes32 valueHash = keccak256(bytes(raw));
         if (bytes(raw).length == 0) return false;
@@ -1309,21 +1338,14 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
             cvPauseFacet,
             cvPowerFacet,
             cvProposalFacet,
-            cvSyncPowerFacet
+            cvSyncPowerFacet,
+            cvStreamingFacet
         );
         cuts = new IDiamond.FacetCut[](9);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 7; i++) {
+        for (uint256 i = 0; i < 8; i++) {
             cuts[i + 1] = baseCuts[i];
         }
-        bytes4[] memory streamingSelectors = new bytes4[](2);
-        streamingSelectors[0] = CVStreamingFacet.rebalance.selector;
-        streamingSelectors[1] = CVStreamingFacet.stopEscrowStream.selector;
-        cuts[8] = IDiamond.FacetCut({
-            facetAddress: address(cvStreamingFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: streamingSelectors
-        });
     }
 
     function _buildCommunityFacetCuts(

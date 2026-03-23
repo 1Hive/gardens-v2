@@ -72,6 +72,7 @@ export type ChainData = {
 const SUBGRAPH_ARBSEP_VERSION = Subgraph.VERSION_ARBSEP;
 const SUBGRAPH_OPSEP_VERSION = Subgraph.VERSION_OPSEP;
 const SUBGRAPH_ETHSEP_VERSION = Subgraph.VERSION_ETHSEP;
+const SUBGRAPH_VERSION_ETHEREUM = Subgraph.VERSION_ETHEREUM;
 const SUBGRAPH_PRODNET_VERSION = Subgraph.VERSION_PROD;
 
 const getGatewayKey = () => {
@@ -158,7 +159,7 @@ export const chainConfigMap: {
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x49222C53695C77a0F8b78Eb42606B893E98DfE6a",
-    passportScorer: "0x2053E225672776deb23Af0A3EBa9CE2c87838a72",
+    passportScorer: "0x6ad70508f44aa0e86e7af80ccc4fc1f160c2df46",
     goodDollar: "0x9DdE3cE47cC11ee04Ea1e2C440116B3De6f11Ed8",
     isTestnet: true,
   },
@@ -212,8 +213,8 @@ export const chainConfigMap: {
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x3678d8f5d4f04cb033b8ab4d85df384d0df9cb08",
-    passportScorer: "0xd58ff588177f02cc535a0e235a4c002a17e27202",
-    goodDollar: "0xa50ec350146e42b1ad15705da04c7cb6929e1f2a",
+    passportScorer: "0x082cbb29a444f14053787f93f6c7689f14d91377",
+    goodDollar: "0x2946190b615163a34c245ff6661e6172584467bb",
     isTestnet: true,
   },
 
@@ -238,7 +239,7 @@ export const chainConfigMap: {
       "7hoLgMuj3LcWkUfH5iNWqVn69rmVbk4mrdgx1FX3sa3M",
     ),
     superfluidExplorerUrl: getSuperfluidExplorerUrl("arbitrum-one"),
-    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
+    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x1c62F449058BbeeD546823A1a581D28233f7A69c",
     passportScorer: "0x8cd4bA4ad10d85A550fe45d567a49E49e1D23CE1",
@@ -266,7 +267,7 @@ export const chainConfigMap: {
       "48YRvi7PHbX4RJChq4nF8DpmJGZxcvUgwfdf8QoHBXxT",
     ),
     superfluidExplorerUrl: getSuperfluidExplorerUrl("optimism-mainnet"),
-    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
+    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xaf6628d7347fc4D65F1D5C69663C875a00c56d9F",
     passportScorer: "0x084a5504dCFeac0ec3E10517247639e50c8DcFFd",
@@ -294,7 +295,7 @@ export const chainConfigMap: {
       "CvVf1MiypnZhwWZjbxMH9A8nR2qdcfTozC5DQ1cw4X9n",
     ),
     superfluidExplorerUrl: getSuperfluidExplorerUrl("matic"),
-    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
+    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x8D9EAed9D3D23EF30ADAA706c8352c5655AEd814",
     passportScorer: "0x190Fa730E6FfC64Ebd0031bE59b3007cC9eE2bB3",
@@ -322,7 +323,7 @@ export const chainConfigMap: {
       "CFe2JWsPy9eiT9B49m2E2gwxdCzWdm5kfYHRXi5VseXV",
     ),
     superfluidExplorerUrl: getSuperfluidExplorerUrl("xdai"),
-    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
+    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x92bc0af737f55FF7B677cd942Aafd52934Fc751d",
     passportScorer: "0x20965C5C8a021ac6fFeD5dE7A402f7CEaC3b0A82",
@@ -394,19 +395,16 @@ export const chainConfigMap: {
     blockTime: 12,
     confirmations: 3,
     rpcUrl: getRpcUrl(
-      process.env.RPC_URL_MAINNET,
+      process.env.RPC_URL_ETHEREUM,
       getAlchemyRpcUrl("eth-mainnet"),
     ),
-    subgraphUrl:
-      process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM ?
-        `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`
-      : "",
+    subgraphUrl: `https://api.studio.thegraph.com/query/102093/gardens-v-2-ethereum/${SUBGRAPH_VERSION_ETHEREUM}`,
     superfluidExplorerUrl: getSuperfluidExplorerUrl("eth-mainnet"),
-    globalTribunal: "0x0000000000000000000000000000000000000000",
+    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
-    arbitrator: "0x0000000000000000000000000000000000000000",
-    passportScorer: "0x0000000000000000000000000000000000000000",
-    goodDollar: "0x0000000000000000000000000000000000000000",
+    arbitrator: "0xbdf24e13e0228fd0f2f432252655d3738c7a015a",
+    passportScorer: "0x4a9f8c35b55aabc45112dadf5b5adf689605b397",
+    goodDollar: "0x8d6131910eb9a74fab60dfebdd414ee76e425c7f",
     isTestnet: false,
     safePrefix: "eth",
   },

@@ -23,6 +23,7 @@ MULTISEND_SELECTOR = keccak(text="multiSend(bytes)")[:4]
 
 
 SAFE_SERVICE_URLS = {
+    "mainnet": "https://safe-transaction-mainnet.safe.global",
     "arbitrum": "https://safe-transaction-arbitrum.safe.global",
     "optimism": "https://safe-transaction-optimism.safe.global",
     "polygon": "https://safe-transaction-polygon.safe.global",
@@ -32,6 +33,7 @@ SAFE_SERVICE_URLS = {
 }
 
 SAFE_APP_PREFIX = {
+    "mainnet": "eth",
     "arbitrum": "arb1",
     "optimism": "oeth",
     "polygon": "matic",
@@ -268,7 +270,7 @@ def main():
     )
     parser.add_argument(
         "--chains",
-        default="arbitrum,optimism,polygon,gnosis,base,celo",
+        default="mainnet,arbitrum,optimism,polygon,gnosis,base,celo",
         help="Comma-separated list of chains to submit",
     )
     parser.add_argument(

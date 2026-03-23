@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import { useMemo } from "react";
 import { Address, isAddress } from "viem";
-import { useNetwork, useToken } from "wagmi";
+import { useToken } from "wagmi";
+import { useResolvedChainId } from "./useResolvedChainId";
 
 interface UseERC20ValidationProps {
   address?: Address | string;
@@ -24,7 +25,7 @@ export function useERC20Validation({
   enabled = true,
   chainId,
 }: UseERC20ValidationProps) {
-  const { chain } = useNetwork();
+  const resolvedChainId = useResolvedChainId(chainId);
 
   // Prepare the address for validation
   const validAddress =
@@ -33,8 +34,8 @@ export function useERC20Validation({
   // Use wagmi's useToken hook
   const { data, isLoading, error, refetch } = useToken({
     address: validAddress,
-    enabled: !!validAddress && enabled && !!chain?.id,
-    chainId: chainId || chain?.id,
+    enabled: !!validAddress && enabled && !!resolvedChainId,
+    chainId: resolvedChainId,
   });
 
   const tokenData: TokenData = {

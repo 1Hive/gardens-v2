@@ -466,6 +466,7 @@ export default function ClientPage({
   const { data: superTokenInfo } = useBalance({
     address: wallet as Address,
     token: effectiveSuperToken as Address,
+    chainId,
     watch: true,
     enabled: !!effectiveSuperToken && !!wallet,
   });
@@ -501,6 +502,7 @@ export default function ClientPage({
   const poolToken = usePoolToken({
     poolAddress: strategy?.id,
     poolTokenAddr: poolTokenAddr,
+    chainId,
     enabled:
       !!strategy && PoolTypes[proposalType] !== "signaling" && !!poolTokenAddr,
     watch: true,
@@ -551,13 +553,25 @@ export default function ClientPage({
       address: strategy?.id as Address,
       abi: cvStrategyABI,
       functionName: "lastRebalanceAt",
+      chainId,
       enabled: isStreamingPool && !!strategy?.id,
       watch: true,
     });
+  const { data: isAuthorizedRebalanceCaller } = useContractRead({
+    address: strategy?.id as Address,
+    abi: cvStrategyABI,
+    functionName: "isAuthorizedRebalanceCaller",
+    args: wallet ? [wallet] : undefined,
+    chainId,
+    enabled: isStreamingPool && !!strategy?.id && !!wallet,
+    watch: true,
+  } as any);
   const lastRebalanceAt = Number(lastRebalanceAtValue ?? 0n);
   const hideSyncStreamButton =
     lastRebalanceAt > 0 &&
     nowTs - lastRebalanceAt < SYNC_STREAM_HIDE_WINDOW_SECONDS;
+  const showSyncStreamButton =
+    !hideSyncStreamButton && !!wallet && isAuthorizedRebalanceCaller === true;
 
   const {
     tooltipMessage: syncStreamTooltipMessage,
@@ -777,7 +791,7 @@ export default function ClientPage({
               This pool currently has no active outflow.
             </InfoBox>
           )}
-          {!hideSyncStreamButton && (
+          {showSyncStreamButton && (
             <Button
               btnStyle="outline"
               color="primary"
@@ -788,9 +802,9 @@ export default function ClientPage({
               onClick={() => writeRebalance?.()}
               icon={<ArrowPathIcon className="h-4 w-4" />}
             >
-              Sync Stream
-            </Button>
-          )}
+                  Manual stream sync
+                </Button>
+              )}
         </div>
       </section>
     );
@@ -940,7 +954,7 @@ export default function ClientPage({
         {/* ================= DESKTOP ================= */}
 
         {/*  Join community - Activate governace path and description from pool page */}
-        <div className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-6">
+        <div className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-4">
           <PoolHeader
             poolToken={poolToken}
             strategy={effectiveStrategy}
@@ -962,6 +976,19 @@ export default function ClientPage({
             communityName={communityName ?? ""}
           />
           {registerAndActivateFromPool}
+          {isEnabled && (
+            <section className="flex flex-col gap-4 sm:gap-8">
+              <Proposals
+                poolToken={poolToken}
+                strategy={{ ...effectiveStrategy, title: metadata?.title }}
+                alloInfo={alloInfo}
+                communityAddress={communityAddress}
+                createProposalUrl={createProposalUrl}
+                proposalType={proposalType}
+                minThGtTotalEffPoints={minThGtTotalEffPoints}
+              />
+            </section>
+          )}
         </div>
 
         {isEnabled && (
@@ -1002,20 +1029,6 @@ export default function ClientPage({
 
             <StreamingInfoCard />
           </div>
-        )}
-
-        {isEnabled && (
-          <section className="hidden col-span-12 xl:col-span-9 sm:flex flex-col gap-4 sm:gap-8">
-            <Proposals
-              poolToken={poolToken}
-              strategy={{ ...effectiveStrategy, title: metadata?.title }}
-              alloInfo={alloInfo}
-              communityAddress={communityAddress}
-              createProposalUrl={createProposalUrl}
-              proposalType={proposalType}
-              minThGtTotalEffPoints={minThGtTotalEffPoints}
-            />
-          </section>
         )}
 
         {/* ================= MOBILE ================= */}

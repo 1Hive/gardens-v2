@@ -5,6 +5,7 @@ import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
+import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
 import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 
@@ -72,14 +73,52 @@ contract VerifyNetworkConfigState is Script {
         _verifyConfiguredCode(expectedStreamingEscrowImpl, "streaming escrow implementation");
 
         _verifyFactoryCuts(factory, networkJson, networkKey);
-        _verifyProxyFleet(networkJson, networkKey, ".PROXIES.REGISTRY_COMMUNITIES", expectedCommunityImpl, "community");
-        _verifyProxyFleet(networkJson, networkKey, ".PROXIES.CV_STRATEGIES", expectedStrategyImpl, "strategy");
+        address[] memory communityProxies =
+            _verifyProxyFleet(networkJson, networkKey, ".PROXIES.REGISTRY_COMMUNITIES", expectedCommunityImpl, "community");
+        address[] memory strategyProxies =
+            _verifyProxyFleet(networkJson, networkKey, ".PROXIES.CV_STRATEGIES", expectedStrategyImpl, "strategy");
+        _verifyExpectedCutSelectors(factory, communityProxies, strategyProxies);
 
         address streamingEscrowFactory = _readOptionalAddress(networkJson, networkKey, ".ENVS.STREAMING_ESCROW_FACTORY");
         if (streamingEscrowFactory != address(0)) {
             address liveEscrowImplementation =
                 abi.decode(_staticCall(streamingEscrowFactory, abi.encodeWithSignature("escrowImplementation()")), (address));
             require(liveEscrowImplementation == expectedStreamingEscrowImpl, "streaming escrow implementation mismatch");
+        }
+    }
+
+    function _verifyExpectedCutSelectors(
+        RegistryFactory factory,
+        address[] memory communityProxies,
+        address[] memory strategyProxies
+    ) internal view {
+        if (communityProxies.length != 0) {
+            (IDiamondCut.FacetCut[] memory communityCuts,,) = factory.getCommunityFacets();
+            _verifyDiamondSelectorRouting(communityProxies[0], communityCuts, "community");
+        }
+
+        if (strategyProxies.length != 0) {
+            (IDiamondCut.FacetCut[] memory strategyCuts,,) = factory.getStrategyFacets();
+            _verifyDiamondSelectorRouting(strategyProxies[0], strategyCuts, "strategy");
+        }
+    }
+
+    function _verifyDiamondSelectorRouting(address proxy, IDiamondCut.FacetCut[] memory cuts, string memory label)
+        internal
+        view
+    {
+        require(proxy.code.length > 0, string.concat(label, " proxy has no code"));
+
+        for (uint256 i = 0; i < cuts.length; i++) {
+            address expectedFacet = cuts[i].facetAddress;
+            bytes4[] memory selectors = cuts[i].functionSelectors;
+
+            for (uint256 j = 0; j < selectors.length; j++) {
+                bytes4 selector = selectors[j];
+                address resolvedFacet =
+                    abi.decode(_staticCall(proxy, abi.encodeCall(IDiamondLoupe.facetAddress, (selector))), (address));
+                require(resolvedFacet == expectedFacet, string.concat(label, " selector facet mismatch"));
+            }
         }
     }
 
@@ -100,45 +139,78 @@ contract VerifyNetworkConfigState is Script {
             "strategy init calldata mismatch"
         );
 
-        string[7] memory communityFacetKeys = [
-            string("DIAMOND_LOUPE"),
-            "COMMUNITY_ADMIN",
-            "COMMUNITY_MEMBER",
-            "COMMUNITY_PAUSE",
-            "COMMUNITY_POOL",
-            "COMMUNITY_POWER",
-            "COMMUNITY_STRATEGY"
+        address[7] memory communityExpectedFacets = [
+            _readFacetAddress(networkJson, networkKey, ".FACETS.COMMUNITY_DIAMOND_LOUPE"),
+            _readRequiredAddress(networkJson, networkKey, ".FACETS.COMMUNITY_ADMIN"),
+            _readRequiredAddress(networkJson, networkKey, ".FACETS.COMMUNITY_MEMBER"),
+            _readRequiredAddress(networkJson, networkKey, ".FACETS.COMMUNITY_PAUSE"),
+            _readRequiredAddress(networkJson, networkKey, ".FACETS.COMMUNITY_POOL"),
+            _readRequiredAddress(networkJson, networkKey, ".FACETS.COMMUNITY_POWER"),
+            _readRequiredAddress(networkJson, networkKey, ".FACETS.COMMUNITY_STRATEGY")
         ];
-        string[9] memory strategyFacetKeys = [
-            string("DIAMOND_LOUPE"),
-            "CV_ADMIN",
-            "CV_ALLOCATION",
-            "CV_DISPUTE",
-            "CV_PAUSE",
-            "CV_POWER",
-            "CV_PROPOSAL",
-            "CV_SYNC_POWER",
-            "CV_STREAMING"
+        address[9] memory strategyExpectedFacets = [
+            _readFacetAddress(networkJson, networkKey, ".FACETS.STRATEGY_DIAMOND_LOUPE"),
+            _readRequiredAddress(networkJson, networkKey, ".FACETS.CV_ADMIN"),
+            _readRequiredAddress(networkJson, networkKey, ".FACETS.CV_ALLOCATION"),
+            _readRequiredAddress(networkJson, networkKey, ".FACETS.CV_DISPUTE"),
+            _readRequiredAddress(networkJson, networkKey, ".FACETS.CV_PAUSE"),
+            _readRequiredAddress(networkJson, networkKey, ".FACETS.CV_POWER"),
+            _readRequiredAddress(networkJson, networkKey, ".FACETS.CV_PROPOSAL"),
+            _readRequiredAddress(networkJson, networkKey, ".FACETS.CV_SYNC_POWER"),
+            _readRequiredAddress(networkJson, networkKey, ".FACETS.CV_STREAMING")
         ];
 
-        require(communityCuts.length == communityFacetKeys.length, "community cut count mismatch");
-        require(strategyCuts.length == strategyFacetKeys.length, "strategy cut count mismatch");
+        require(communityCuts.length == communityExpectedFacets.length, "community cut count mismatch");
+        require(strategyCuts.length == strategyExpectedFacets.length, "strategy cut count mismatch");
 
-        for (uint256 i = 0; i < communityFacetKeys.length; i++) {
-            address expectedFacet =
-                _readRequiredAddress(networkJson, networkKey, string.concat(".FACETS.", communityFacetKeys[i]));
+        for (uint256 i = 0; i < communityExpectedFacets.length; i++) {
+            address expectedFacet = communityExpectedFacets[i];
             require(communityCuts[i].facetAddress == expectedFacet, "community facet mismatch");
             require(communityCuts[i].functionSelectors.length > 0, "community facet selectors missing");
             _verifyConfiguredCode(expectedFacet, "community facet");
         }
 
-        for (uint256 i = 0; i < strategyFacetKeys.length; i++) {
-            address expectedFacet =
-                _readRequiredAddress(networkJson, networkKey, string.concat(".FACETS.", strategyFacetKeys[i]));
+        for (uint256 i = 0; i < strategyExpectedFacets.length; i++) {
+            address expectedFacet = strategyExpectedFacets[i];
             require(strategyCuts[i].facetAddress == expectedFacet, "strategy facet mismatch");
             require(strategyCuts[i].functionSelectors.length > 0, "strategy facet selectors missing");
             _verifyConfiguredCode(expectedFacet, "strategy facet");
         }
+    }
+
+    function _readFacetAddress(string memory networkJson, string memory networkKey, string memory specificSuffix)
+        internal
+        view
+        returns (address)
+    {
+        address specific = _readOptionalAddress(networkJson, networkKey, specificSuffix);
+        if (specific == address(0)) {
+            if (_hasSuffix(specificSuffix, "COMMUNITY_DIAMOND_LOUPE")) {
+                specific = _readOptionalAddress(networkJson, networkKey, ".FACETS.DIAMOND_LOUPE");
+            } else if (_hasSuffix(specificSuffix, "STRATEGY_DIAMOND_LOUPE")) {
+                specific = _readOptionalAddress(networkJson, networkKey, ".FACETS.DIAMOND_LOUPE");
+            }
+        }
+
+        require(specific != address(0), "required facet address missing");
+        return specific;
+    }
+
+    function _hasSuffix(string memory value, string memory suffix) internal pure returns (bool) {
+        bytes memory valueBytes = bytes(value);
+        bytes memory suffixBytes = bytes(suffix);
+
+        if (suffixBytes.length > valueBytes.length) {
+            return false;
+        }
+
+        uint256 offset = valueBytes.length - suffixBytes.length;
+        for (uint256 i = 0; i < suffixBytes.length; i++) {
+            if (valueBytes[offset + i] != suffixBytes[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     function _verifyProxyFleet(
@@ -147,8 +219,8 @@ contract VerifyNetworkConfigState is Script {
         string memory proxyArrayKey,
         address expectedImplementation,
         string memory label
-    ) internal view {
-        address[] memory proxies = networkJson.readAddressArray(string.concat(networkKey, proxyArrayKey));
+    ) internal view returns (address[] memory proxies) {
+        proxies = networkJson.readAddressArray(string.concat(networkKey, proxyArrayKey));
         for (uint256 i = 0; i < proxies.length; i++) {
             require(proxies[i].code.length > 0, string.concat(label, " proxy has no code"));
             require(_implementationOf(proxies[i]) == expectedImplementation, string.concat(label, " implementation mismatch"));

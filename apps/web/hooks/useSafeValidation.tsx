@@ -3,6 +3,7 @@ import { Address, isAddress } from "viem";
 import { useContractRead } from "wagmi";
 import { useFlag } from "./useFlag";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useResolvedChainId } from "@/hooks/useResolvedChainId";
 import { safeABI } from "@/src/customAbis";
 
 interface UseSafeValidationProps {
@@ -27,6 +28,7 @@ export function useSafeValidation({
   enabled = true,
 }: UseSafeValidationProps): UseSafeValidationReturn {
   const chain = useChainFromPath();
+  const resolvedChainId = useResolvedChainId(chain?.id);
 
   // Prepare the address for validation
   const validAddress = useMemo(() => {
@@ -47,7 +49,7 @@ export function useSafeValidation({
     abi: safeABI,
     functionName: "getOwners",
     enabled: !bypassSafeCheck && !!validAddress && enabled,
-    chainId: chain?.id,
+    chainId: resolvedChainId,
   });
 
   // Validation function that can be called manually
@@ -60,10 +62,9 @@ export function useSafeValidation({
       try {
         const result = await refetch();
         return !!result.data;
-      } catch (err) {
+      } catch {
         console.warn(
           `${addressToValidate} is not a valid Safe address in the ${chain?.name} network`,
-          err,
         );
         return false;
       }

@@ -12,9 +12,9 @@ dataSources:
         type: Int
         data: 1
     source:
-      address: "0x0000000000000000000000000000000000000000"
+      address: "0x7d26c5b083b85b848645fcbd18fe01168989333b"
       abi: RegistryFactory
-      startBlock: 0
+      startBlock: 24717800
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -53,9 +53,9 @@ dataSources:
         type: Int
         data: 1
     source:
-      address: "0x0000000000000000000000000000000000000000"
+      address: "0x4a9f8c35b55aabc45112dadf5b5adf689605b397"
       abi: PassportScorer
-      startBlock: 0
+      startBlock: 24717800
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -90,9 +90,9 @@ dataSources:
         type: Int
         data: 1
     source:
-      address: "0x0000000000000000000000000000000000000000"
+      address: "0x8d6131910eb9a74fab60dfebdd414ee76e425c7f"
       abi: GoodDollarSybil
-      startBlock: 0
+      startBlock: 24717800
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -112,6 +112,37 @@ dataSources:
         - event: GoodDollarStrategyAdded(indexed address,address)
           handler: handleStrategyAdded
       file: ./src/mappings/good-dollar-sybil.ts
+
+  - kind: ethereum/contract
+    name: GlobalPauseController
+    network: mainnet
+    context:
+      chainId:
+        type: Int
+        data: 1
+    source:
+      address: "0x5800aafd1c613f1b2b7575ba36c5bf92f2b89b29"
+      abi: GlobalPauseController
+      startBlock: 24717800
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - GlobalPauseController
+      abis:
+        - name: GlobalPauseController
+          file: ../contracts/abis/GlobalPauseController.sol/GlobalPauseController.json
+      eventHandlers:
+        - event: ContractPaused(indexed address,uint64,indexed address)
+          handler: handleContractPaused
+        - event: ContractUnpaused(indexed address,indexed address)
+          handler: handleContractUnpaused
+        - event: SelectorPaused(indexed address,indexed bytes4,uint64,indexed address)
+          handler: handleSelectorPaused
+        - event: SelectorUnpaused(indexed address,indexed bytes4,indexed address)
+          handler: handleSelectorUnpaused
+      file: ./src/mappings/global-pause-controller.ts
 
 templates:
   - kind: ethereum/contract

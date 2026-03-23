@@ -8,6 +8,7 @@ import sfMeta from "@superfluid-finance/metadata";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
 import { Address, isAddress, parseUnits, zeroAddress } from "viem";
 import { polygon } from "viem/chains";
 import { useToken } from "wagmi";
@@ -248,6 +249,7 @@ export function PoolForm({
   const [optionType, setOptionType] = useState(1);
 
   const [loading, setLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [showWarningMessage, setShowWarningMessage] = useState(false);
 
   const router = useRouter();
@@ -552,9 +554,14 @@ export function PoolForm({
     functionName: "createPool",
     fallbackErrorMessage: "Error creating a pool, please report a bug.",
     onError: () => {
+      setIsRedirecting(false);
       setLoading(false);
     },
     onConfirmations: async (receipt) => {
+      setIsRedirecting(true);
+      toast.loading("Pool created. Redirecting...", {
+        toastId: "pool-create-redirect",
+      });
       const newPoolData = getEventFromReceipt(
         receipt,
         "RegistryCommunity",
@@ -711,6 +718,7 @@ export function PoolForm({
           formRows={formatFormRows()}
           onEdit={() => {
             setShowPreview(false);
+            setIsRedirecting(false);
           }}
           onSubmit={() => {
             if (!isConnected || missmatchUrl) return;
@@ -1262,6 +1270,7 @@ export function PoolForm({
             <Button
               onClick={() => {
                 setShowPreview(false);
+                setIsRedirecting(false);
               }}
               btnStyle="outline"
             >
@@ -1269,11 +1278,15 @@ export function PoolForm({
             </Button>
             <Button
               onClick={() => createPool()}
-              isLoading={loading}
+              isLoading={loading || isRedirecting}
               disabled={!isConnected || missmatchUrl}
-              tooltip={tooltipMessage}
+              tooltip={
+                isRedirecting ?
+                  "Redirecting to the new pool page"
+                : tooltipMessage
+              }
             >
-              Submit
+              {isRedirecting ? "Redirecting..." : "Submit"}
             </Button>
           </div>
         : <Button type="submit">Preview</Button>}

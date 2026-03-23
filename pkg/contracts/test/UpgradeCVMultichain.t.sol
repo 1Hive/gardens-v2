@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 import "forge-std/StdJson.sol";
 
-import {UpgradeCVMultichain} from "../script/UpgradeCVMultichain.s.sol";
+import {UpgradeCVMultichainScript as UpgradeCVMultichainRunner} from "../script/UpgradeCVMultichain.s.sol";
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {RegistryCommunity, RegistryCommunityInitializeParams} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
@@ -18,7 +18,9 @@ import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {CommunityDiamondConfigurator} from "./helpers/CommunityDiamondConfigurator.sol";
 import {StrategyDiamondConfigurator} from "./helpers/StrategyDiamondConfigurator.sol";
 import {CommunityPowerFacet} from "../src/RegistryCommunity/facets/CommunityPowerFacet.sol";
+import {CommunityMemberFacet} from "../src/RegistryCommunity/facets/CommunityMemberFacet.sol";
 import {CVAdminFacet} from "../src/CVStrategy/facets/CVAdminFacet.sol";
+import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol";
 import {CVStreamingFacet} from "../src/CVStrategy/facets/CVStreamingFacet.sol";
 import {MockPauseController} from "./helpers/PauseHelpers.sol";
 
@@ -48,7 +50,7 @@ contract MockAlloForUpgradeScript {
 
 contract DummyCodeContract {}
 
-contract UpgradeCVMultichainHarness is UpgradeCVMultichain {
+contract UpgradeCVMultichainHarness is UpgradeCVMultichainRunner {
     string internal networksPath;
     mapping(bytes32 => uint8) internal flagOverrides;
 
@@ -77,6 +79,20 @@ contract UpgradeCVMultichainHarness is UpgradeCVMultichain {
         flagOverrides[keccak256(bytes(key))] = value ? 2 : 1;
     }
 
+    function setFactoryStrategyFacetsForTest(
+        address factoryProxy,
+        IDiamondCut.FacetCut[] memory cuts,
+        address init,
+        bytes memory initCalldata
+    ) external {
+        RegistryFactory(payable(factoryProxy)).setStrategyFacets(cuts, init, initCalldata);
+    }
+
+    function computeDesiredStrategyCutsDigestForTest() external returns (bytes32) {
+        FacetCuts memory facetCuts = _buildFacetCuts();
+        return _facetCutsDigest(facetCuts.cvCuts);
+    }
+
     function _networksJsonPath() internal view override returns (string memory) {
         return networksPath;
     }
@@ -89,7 +105,7 @@ contract UpgradeCVMultichainHarness is UpgradeCVMultichain {
     }
 }
 
-contract UpgradeCVMultichainScriptTest is Test {
+contract UpgradeCVMultichainScript is Test {
     using stdJson for string;
 
     string internal constant NETWORK_NAME = "script-test";
@@ -99,8 +115,6 @@ contract UpgradeCVMultichainScriptTest is Test {
     CommunityDiamondConfigurator internal newCommunityConfigurator;
     StrategyDiamondConfigurator internal oldStrategyConfigurator;
     StrategyDiamondConfigurator internal newStrategyConfigurator;
-    CVStreamingFacet internal newStreamingFacet;
-
     RegistryFactory internal factory;
     RegistryCommunity internal community;
     CVStrategy internal strategy;
@@ -125,8 +139,6 @@ contract UpgradeCVMultichainScriptTest is Test {
         newCommunityConfigurator = new CommunityDiamondConfigurator();
         oldStrategyConfigurator = new StrategyDiamondConfigurator();
         newStrategyConfigurator = new StrategyDiamondConfigurator();
-        newStreamingFacet = new CVStreamingFacet();
-
         registryMock = new MockRegistryForUpgradeScript();
         alloMock = new MockAlloForUpgradeScript(address(registryMock));
         pauseController = new MockPauseController();
@@ -260,6 +272,15 @@ contract UpgradeCVMultichainScriptTest is Test {
             IDiamondLoupe(address(strategy)).facetAddress(CVAdminFacet.setVotingPowerRegistry.selector),
             updated.readAddress("$.networks[0].FACETS.CV_ADMIN")
         );
+        assertEq(
+            IDiamondLoupe(address(strategy)).facetAddress(CVStreamingFacet.isAuthorizedRebalanceCaller.selector),
+            updated.readAddress("$.networks[0].FACETS.CV_STREAMING")
+        );
+        assertEq(
+            IDiamondLoupe(address(strategy)).facetAddress(CVStreamingFacet.setAuthorizedRebalanceCaller.selector),
+            updated.readAddress("$.networks[0].FACETS.CV_STREAMING")
+        );
+        _assertFactoryStrategyCutsIncludeSelector(CVStreamingFacet.isAuthorizedRebalanceCaller.selector);
     }
 
     function test_runCurrentNetwork_respects_skip_flags() public {
@@ -277,15 +298,17 @@ contract UpgradeCVMultichainScriptTest is Test {
 
         string memory updated = vm.readFile(fixturePath);
         address factoryImpl = updated.readAddress("$.networks[0].IMPLEMENTATIONS.REGISTRY_FACTORY");
-        address newCommunityImpl = updated.readAddress("$.networks[0].IMPLEMENTATIONS.REGISTRY_COMMUNITY");
-        address newStrategyImpl = updated.readAddress("$.networks[0].IMPLEMENTATIONS.CV_STRATEGY");
+        address syncedCommunityImpl = updated.readAddress("$.networks[0].IMPLEMENTATIONS.REGISTRY_COMMUNITY");
+        address syncedStrategyImpl = updated.readAddress("$.networks[0].IMPLEMENTATIONS.CV_STRATEGY");
 
         assertEq(_implementation(address(factory)), factoryImpl);
         assertEq(_implementation(address(community)), address(oldCommunityImpl));
         assertEq(_implementation(address(strategy)), address(oldStrategyImpl));
+        assertEq(syncedCommunityImpl, address(oldCommunityImpl));
+        assertEq(syncedStrategyImpl, address(oldStrategyImpl));
         assertEq(community.strategyTemplate(), address(oldStrategyImpl));
-        assertEq(factory.registryCommunityTemplate(), newCommunityImpl);
-        assertEq(factory.strategyTemplate(), newStrategyImpl);
+        assertTrue(factory.registryCommunityTemplate() != address(oldCommunityImpl));
+        assertTrue(factory.strategyTemplate() != address(oldStrategyImpl));
     }
 
     function test_runCurrentNetwork_reuses_configured_implementations_and_inits() public {
@@ -365,6 +388,57 @@ contract UpgradeCVMultichainScriptTest is Test {
         assertEq(liveStrategyInit, updated.readAddress("$.networks[0].INITS.CV_STRATEGY_DIAMOND_INIT"));
     }
 
+    function test_runCurrentNetwork_factory_strategy_facets_use_live_state_not_config_digest() public {
+        _useFixture("factory-live-state");
+        _setDefaultScriptEnv();
+
+        IDiamondCut.FacetCut[] memory staleCuts = oldStrategyConfigurator.getFacetCuts();
+        bytes4[] memory staleStreamingSelectors = new bytes4[](2);
+        staleStreamingSelectors[0] = CVStreamingFacet.rebalance.selector;
+        staleStreamingSelectors[1] = CVStreamingFacet.stopEscrowStream.selector;
+        staleCuts[8].functionSelectors = staleStreamingSelectors;
+
+        script.setFactoryStrategyFacetsForTest(
+            address(factory),
+            staleCuts,
+            address(oldStrategyConfigurator.diamondInit()),
+            abi.encodeCall(CVStrategyDiamondInit.init, ())
+        );
+
+        _writeFixtureJson(address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0));
+        string memory desiredDigestHex = vm.toString(script.computeDesiredStrategyCutsDigestForTest());
+        _writeFixtureJson(
+            address(oldFactoryImpl),
+            address(oldCommunityImpl),
+            address(oldStrategyImpl),
+            address(0),
+            address(0),
+            "",
+            desiredDigestHex
+        );
+
+        script.setPhaseForTest(1);
+        script.setFactoryActionForTest(3);
+        script.executeCurrentNetworkForTest();
+
+        _assertFactoryStrategyCutsIncludeSelector(CVStreamingFacet.setAuthorizedRebalanceCaller.selector);
+        _assertFactoryStrategyCutsIncludeSelector(CVStreamingFacet.isAuthorizedRebalanceCaller.selector);
+        _assertFactoryStrategyCutsIncludeSelector(CVStreamingFacet.wrapIfNeeded.selector);
+    }
+
+    function test_configurators_include_full_public_facet_surface() public view {
+        IDiamondCut.FacetCut[] memory strategyCuts = newStrategyConfigurator.getFacetCuts();
+        IDiamondCut.FacetCut[] memory communityCuts = newCommunityConfigurator.getFacetCuts();
+
+        assertTrue(_cutsContainSelector(strategyCuts, CVAllocationFacet.getPoolAmount.selector));
+        assertTrue(_cutsContainSelector(strategyCuts, CVStreamingFacet.wrapIfNeeded.selector));
+        assertTrue(_cutsContainSelector(strategyCuts, CVStreamingFacet.setAuthorizedRebalanceCaller.selector));
+        assertTrue(_cutsContainSelector(strategyCuts, CVStreamingFacet.isAuthorizedRebalanceCaller.selector));
+
+        assertTrue(_cutsContainSelector(communityCuts, CommunityMemberFacet.registerMember.selector));
+        assertTrue(_cutsContainSelector(communityCuts, CommunityPowerFacet.isRegisteredMember.selector));
+    }
+
     function test_runCurrentNetwork_strategy_phase_only_upgrades_strategy_proxy() public {
         _useFixture("strategies-only");
         _setDefaultScriptEnv();
@@ -384,6 +458,35 @@ contract UpgradeCVMultichainScriptTest is Test {
             IDiamondLoupe(address(strategy)).facetAddress(CVAdminFacet.setVotingPowerRegistry.selector),
             updated.readAddress("$.networks[0].FACETS.CV_ADMIN")
         );
+        assertEq(
+            IDiamondLoupe(address(strategy)).facetAddress(CVStreamingFacet.isAuthorizedRebalanceCaller.selector),
+            updated.readAddress("$.networks[0].FACETS.CV_STREAMING")
+        );
+    }
+
+    function test_runCurrentNetwork_communities_phase_only_upgrades_community_proxy_and_syncs_live_impl() public {
+        _useFixture("communities-only");
+        _setDefaultScriptEnv();
+        _writeFixtureJson(address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0));
+
+        script.setPhaseForTest(2);
+        script.setFactoryActionForTest(0);
+        script.executeCurrentNetworkForTest();
+
+        string memory updated = vm.readFile(fixturePath);
+        address syncedCommunityImpl = updated.readAddress("$.networks[0].IMPLEMENTATIONS.REGISTRY_COMMUNITY");
+        address syncedStrategyImpl = updated.readAddress("$.networks[0].IMPLEMENTATIONS.CV_STRATEGY");
+
+        assertEq(_implementation(address(factory)), address(oldFactoryImpl));
+        assertEq(_implementation(address(community)), syncedCommunityImpl);
+        assertTrue(syncedCommunityImpl != address(oldCommunityImpl));
+        assertEq(_implementation(address(strategy)), address(oldStrategyImpl));
+        assertEq(syncedStrategyImpl, address(oldStrategyImpl));
+        assertEq(community.strategyTemplate(), address(oldStrategyImpl));
+        assertEq(
+            IDiamondLoupe(address(community)).facetAddress(CommunityPowerFacet.ercAddress.selector),
+            updated.readAddress("$.networks[0].FACETS.COMMUNITY_POWER")
+        );
     }
 
     function _writeFixtureJson(
@@ -392,6 +495,18 @@ contract UpgradeCVMultichainScriptTest is Test {
         address strategyImpl,
         address communityInit,
         address strategyInit
+    ) internal {
+        _writeFixtureJson(factoryImpl, communityImpl, strategyImpl, communityInit, strategyInit, "", "");
+    }
+
+    function _writeFixtureJson(
+        address factoryImpl,
+        address communityImpl,
+        address strategyImpl,
+        address communityInit,
+        address strategyInit,
+        string memory communityCutsDigest,
+        string memory strategyCutsDigest
     ) internal {
         string memory json = string.concat(
             '{"networks":[{',
@@ -404,6 +519,8 @@ contract UpgradeCVMultichainScriptTest is Test {
             _implementationsJson(factoryImpl, communityImpl, strategyImpl),
             ",",
             _initsJson(communityInit, strategyInit),
+            ",",
+            _factoryStateJson(communityCutsDigest, strategyCutsDigest),
             ',"FACETS":',
             _facetsJson(),
             "}]}");
@@ -491,6 +608,20 @@ contract UpgradeCVMultichainScriptTest is Test {
         return string.concat("{", _communityFacetsJson(), ",", _strategyFacetsJson(), "}");
     }
 
+    function _factoryStateJson(string memory communityCutsDigest, string memory strategyCutsDigest)
+        internal
+        pure
+        returns (string memory)
+    {
+        return string.concat(
+            '"FACTORY_STATE":{"COMMUNITY_CUTS_DIGEST":"',
+            communityCutsDigest,
+            '","STRATEGY_CUTS_DIGEST":"',
+            strategyCutsDigest,
+            '"}'
+        );
+    }
+
     function _communityFacetsJson() internal view returns (string memory) {
         return string.concat(
             '"DIAMOND_LOUPE":"',
@@ -528,9 +659,35 @@ contract UpgradeCVMultichainScriptTest is Test {
             '","CV_SYNC_POWER":"',
             vm.toString(address(newStrategyConfigurator.syncPowerFacet())),
             '","CV_STREAMING":"',
-            vm.toString(address(newStreamingFacet)),
+            vm.toString(address(newStrategyConfigurator.streamingFacet())),
             '"'
         );
+    }
+
+    function _assertFactoryStrategyCutsIncludeSelector(bytes4 selector) internal view {
+        (IDiamondCut.FacetCut[] memory strategyCuts,,) = factory.getStrategyFacets();
+        bool found;
+        for (uint256 i = 0; i < strategyCuts.length; i++) {
+            for (uint256 j = 0; j < strategyCuts[i].functionSelectors.length; j++) {
+                if (strategyCuts[i].functionSelectors[j] == selector) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found) break;
+        }
+        assertTrue(found);
+    }
+
+    function _cutsContainSelector(IDiamondCut.FacetCut[] memory cuts, bytes4 selector) internal pure returns (bool) {
+        for (uint256 i = 0; i < cuts.length; i++) {
+            for (uint256 j = 0; j < cuts[i].functionSelectors.length; j++) {
+                if (cuts[i].functionSelectors[j] == selector) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     function _implementation(address proxy) internal view returns (address impl) {

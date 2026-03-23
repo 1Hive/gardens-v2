@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import {
   AdjustmentsHorizontalIcon,
   XMarkIcon,
@@ -22,6 +22,7 @@ import {
 import {
   Badge,
   Button,
+  Countdown,
   DisplayNumber,
   EthAddress,
   InfoBox,
@@ -33,6 +34,7 @@ import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { DisputeModal } from "@/components/DisputeModal";
 import EditProposalButton from "@/components/EditProposalButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { LoupeButton } from "@/components/LoupeButton";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
 import { chainConfigMap } from "@/configs/chains";
@@ -44,6 +46,7 @@ import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { useFlag } from "@/hooks/useFlag";
 import { MetadataV1, useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
@@ -71,6 +74,81 @@ type ProposalSupporter = {
 };
 type SupporterColumn = Column<ProposalSupporter>;
 const SYNC_STREAM_HIDE_WINDOW_SECONDS = 15 * 60;
+
+const LiveStreamedTotal = memo(function LiveStreamedTotal({
+  poolToken,
+  proposalFlowRateBn,
+  streamedUntilSnapshotBn,
+  lastSnapshotAtBn,
+  explorerTotalStreamedBn,
+  isDisputedStreamingProposal,
+  escrowBalanceSnapshotBn,
+  escrowBalanceSnapshotAtMs,
+  escrowSuperTokenBalanceValue,
+}: {
+  poolToken?: { decimals: number; symbol: string } | null;
+  proposalFlowRateBn: bigint;
+  streamedUntilSnapshotBn: bigint;
+  lastSnapshotAtBn: bigint;
+  explorerTotalStreamedBn?: bigint | null;
+  isDisputedStreamingProposal: boolean;
+  escrowBalanceSnapshotBn: bigint | null;
+  escrowBalanceSnapshotAtMs: bigint;
+  escrowSuperTokenBalanceValue?: bigint;
+}) {
+  const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
+  const lastSnapshotAtMs = lastSnapshotAtBn * 1000n;
+  const shouldTickFallback = explorerTotalStreamedBn == null;
+  const shouldTickLiveValues =
+    shouldTickFallback ||
+    (isDisputedStreamingProposal &&
+      proposalFlowRateBn > 0n &&
+      escrowBalanceSnapshotBn != null);
+
+  useEffect(() => {
+    if (!shouldTickLiveValues) return;
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      setNowMs(BigInt(Date.now()));
+    }, 100);
+    return () => clearInterval(interval);
+  }, [shouldTickLiveValues]);
+
+  const elapsedMs =
+    proposalFlowRateBn > 0n && lastSnapshotAtMs > 0n && nowMs > lastSnapshotAtMs ?
+      nowMs - lastSnapshotAtMs
+    : 0n;
+  const totalReceivedByEscrowBn =
+    streamedUntilSnapshotBn + (proposalFlowRateBn * elapsedMs) / 1000n;
+  const escrowBalanceElapsedMs =
+    escrowBalanceSnapshotBn != null &&
+    proposalFlowRateBn > 0n &&
+    nowMs > escrowBalanceSnapshotAtMs ?
+      nowMs - escrowBalanceSnapshotAtMs
+    : 0n;
+  const liveEscrowSuperTokenBalanceBn =
+    escrowBalanceSnapshotBn != null ?
+      escrowBalanceSnapshotBn +
+      (proposalFlowRateBn * escrowBalanceElapsedMs) / 1000n
+    : null;
+  const currentEscrowSuperTokenBalanceBn =
+    isDisputedStreamingProposal ?
+      (liveEscrowSuperTokenBalanceBn ??
+        escrowSuperTokenBalanceValue ??
+        0n)
+    : (escrowSuperTokenBalanceValue ?? 0n);
+  const totalReceivedBn = explorerTotalStreamedBn ?? totalReceivedByEscrowBn;
+  const totalStreamedToBeneficiaryBn =
+    totalReceivedBn > currentEscrowSuperTokenBalanceBn ?
+      totalReceivedBn - currentEscrowSuperTokenBalanceBn
+    : 0n;
+  const proposalTotalStreamedDisplay =
+    poolToken ?
+      `${(+formatUnits(totalStreamedToBeneficiaryBn, poolToken.decimals)).toFixed(5)} ${poolToken.symbol}`
+    : "--";
+
+  return <>{proposalTotalStreamedDisplay}</>;
+});
 
 export type ProposalPageParams = {
   proposalId: string;
@@ -103,6 +181,12 @@ export default function ClientPage({ params }: ClientPageProps) {
   const [openSupportersModal, setOpenSupportersModal] = useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
   const [nowTs, setNowTs] = useState(() => Math.floor(Date.now() / 1000));
+  const [escrowBalanceSnapshotBn, setEscrowBalanceSnapshotBn] = useState<
+    bigint | null
+  >(null);
+  const [escrowBalanceSnapshotAtMs, setEscrowBalanceSnapshotAtMs] = useState<
+    bigint
+  >(0n);
 
   const router = useRouter();
 
@@ -217,7 +301,6 @@ export default function ClientPage({ params }: ClientPageProps) {
     proposalData?.proposalNumber != null ?
       BigInt(proposalData.proposalNumber)
     : undefined;
-  const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
   const chainId = useChainIdFromPath();
   const shouldReadOnchainMetadataHash =
     !!proposalData?.strategy?.id &&
@@ -334,6 +417,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     ) ?
       `${superfluidExplorerBaseUrl}/accounts/${resolvedStreamingEscrow.toLowerCase()}?tab=streams`
     : undefined;
+  const showEscrow = useFlag("showEscrow", { defaultValue: !isProd });
   const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
   const shouldShowSupportersTab =
     proposalStatus !== "executed" && proposalStatus !== "cancelled";
@@ -341,6 +425,7 @@ export default function ClientPage({ params }: ClientPageProps) {
   const poolToken = usePoolToken({
     poolAddress: proposalData?.strategy?.id,
     poolTokenAddr,
+    chainId,
     enabled:
       !!poolTokenAddr && !!proposalData?.strategy?.id && !isSignalingType,
   });
@@ -393,17 +478,6 @@ export default function ClientPage({ params }: ClientPageProps) {
     ) ?
       toBigInt(proposalStream.lastSnapshotAt)
     : 0n;
-  const lastSnapshotAtMs = lastSnapshotAtBn * 1000n;
-  const elapsedMs =
-    (
-      proposalFlowRateBn > 0n &&
-      lastSnapshotAtMs > 0n &&
-      nowMs > lastSnapshotAtMs
-    ) ?
-      nowMs - lastSnapshotAtMs
-    : 0n;
-  const proposalTotalStreamedBn =
-    streamedUntilSnapshotBn + (proposalFlowRateBn * elapsedMs) / 1000n;
   const superfluidStreamResult = useSuperfluidStream({
     receiver: resolvedStreamingEscrow as Address,
     superToken: proposalData?.strategy?.config?.superfluidToken as Address,
@@ -415,7 +489,8 @@ export default function ClientPage({ params }: ClientPageProps) {
       liveTotalStreamedBn?: bigint | null;
     }
   )?.liveTotalStreamedBn;
-  const shouldTickFallback = isStreamingType && explorerTotalStreamedBn == null;
+  const isDisputedStreamingProposal =
+    isStreamingType && proposalStatus === "disputed";
 
   const proposalFlowPerMonth =
     (
@@ -426,33 +501,11 @@ export default function ClientPage({ params }: ClientPageProps) {
     ) ?
       +formatUnits(proposalFlowRateBn, poolToken.decimals) * SEC_TO_MONTH
     : null;
-  const proposalTotalStreamed =
-    isStreamingType && poolToken ?
-      +formatUnits(
-        explorerTotalStreamedBn ?? proposalTotalStreamedBn,
-        poolToken.decimals,
-      )
-    : null;
-  const proposalTotalStreamedDisplay =
-    poolToken ? (proposalTotalStreamed ?? 0).toFixed(4) : null;
-  const streamInfo = (
-    proposalData?.strategy as
-      | {
-          stream?: {
-            maxFlowRate?: bigint | number | string | null;
-          };
-        }
-      | undefined
-  )?.stream;
   const superTokenAddress = proposalData?.strategy?.config?.superfluidToken as
     | Address
     | undefined;
   const isBeneficiaryConnected = beneficiary === address?.toLowerCase();
   const streamTokenDecimals = poolToken?.decimals ?? 18;
-  const maxFlowRateForDisplay = streamInfo?.maxFlowRate as
-    | bigint
-    | null
-    | undefined;
   const currentFlowRateForDisplay = proposalFlowRateBn;
   const { data: beneficiarySuperTokenBalance, refetch: refetchSuperToken } =
     useBalance({
@@ -461,6 +514,15 @@ export default function ClientPage({ params }: ClientPageProps) {
       chainId,
       enabled: isStreamingType && !!beneficiary && !!superTokenAddress,
     });
+  const { data: escrowSuperTokenBalance } = useBalance({
+    address: resolvedStreamingEscrow as Address,
+    token: superTokenAddress,
+    chainId,
+    enabled:
+      isStreamingType &&
+      !!resolvedStreamingEscrow &&
+      !!superTokenAddress,
+  });
   const {
     currentConvictionPct,
     thresholdPct,
@@ -472,6 +534,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     proposalData: proposalData as getProposalDataQuery["cvproposal"],
     strategyConfig: proposalData?.strategy?.config,
     tokenData: proposalData?.strategy?.registryCommunity?.garden?.decimals,
+    chainId,
     enabled: proposalData?.proposalNumber != null && proposalData != null,
   });
 
@@ -489,13 +552,10 @@ export default function ClientPage({ params }: ClientPageProps) {
   }, [fetching, isAwaitingProposal]);
 
   useEffect(() => {
-    if (!shouldTickFallback) return;
-    const interval = setInterval(() => {
-      if (typeof document !== "undefined" && document.hidden) return;
-      setNowMs(BigInt(Date.now()));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [shouldTickFallback]);
+    if (escrowSuperTokenBalance?.value == null) return;
+    setEscrowBalanceSnapshotBn(escrowSuperTokenBalance.value);
+    setEscrowBalanceSnapshotAtMs(BigInt(Date.now()));
+  }, [escrowSuperTokenBalance?.value]);
 
   useEffect(() => {
     if (convictionRefreshing && currentConvictionPct != null) {
@@ -628,13 +688,25 @@ export default function ClientPage({ params }: ClientPageProps) {
       address: proposalData?.strategy?.id as Address,
       abi: cvStrategyABI,
       functionName: "lastRebalanceAt",
+      chainId,
       enabled: isStreamingType && !!proposalData?.strategy?.id,
       watch: true,
     } as any);
+  const { data: isAuthorizedRebalanceCaller } = useContractRead({
+    address: proposalData?.strategy?.id as Address,
+    abi: cvStrategyABI,
+    functionName: "isAuthorizedRebalanceCaller",
+    args: address ? [address] : undefined,
+    chainId,
+    enabled: isStreamingType && !!proposalData?.strategy?.id && !!address,
+    watch: true,
+  } as any);
   const lastRebalanceAt = Number(lastRebalanceAtValue ?? 0n);
   const hideSyncStreamButton =
     lastRebalanceAt > 0 &&
     nowTs - lastRebalanceAt < SYNC_STREAM_HIDE_WINDOW_SECONDS;
+  const showSyncStreamButton =
+    !hideSyncStreamButton && !!address && isAuthorizedRebalanceCaller === true;
 
   const { write: writeRebalance, isLoading: isRebalanceLoading } =
     useContractWriteWithConfirmations({
@@ -682,7 +754,11 @@ export default function ClientPage({ params }: ClientPageProps) {
       roundToSignificant(beneficiarySuperTokenBalance.formatted, 4)
     : "--";
   const showUnwrapSuperTokenButton =
-    isStreamingType && (isProposerConnected || isBeneficiaryConnected);
+    isStreamingType && isBeneficiaryConnected;
+  const showClaimFundsInfo =
+    isStreamingType &&
+    !isBeneficiaryConnected &&
+    (beneficiarySuperTokenBalance?.value ?? 0n) > 0n;
   const disableUnwrapBtnConditions: ConditionObject[] = [
     {
       condition: !isBeneficiaryConnected,
@@ -749,20 +825,27 @@ export default function ClientPage({ params }: ClientPageProps) {
         "about to stream"
       : status === "active" ?
         "active, not streaming"
-      : status === "executed" ?
-        "about to stream"
       : undefined)
     : undefined;
+  const hasThreshold = thresholdPct != null;
+  const alreadyStreaming = (currentFlowRateForDisplay ?? 0n) > 0n;
+  const proposalWillPass =
+    isStreamingType &&
+    hasThreshold &&
+    Number((thresholdPct - (totalSupportPct ?? 0)).toFixed(2)) < 0 &&
+    (currentConvictionPct ?? 0) < thresholdPct &&
+    !alreadyStreaming;
 
   return (
     <>
       {/* ================= DESKTOP ================= */}
 
-      {/* main section: proposal details + conviction progress + vote proposals & execute buttons */}
-      <section className="hidden sm:block sm:col-span-12 xl:col-span-9">
-        <div
-          className={`section-layout flex flex-col gap-8  ${status === "disputed" ? "!border-warning-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
-        >
+      <div className="hidden sm:block sm:col-span-12 xl:col-span-9">
+        <div className="flex flex-col gap-6">
+          {/* main section: proposal details + conviction progress + vote proposals & execute buttons */}
+          <section
+            className={`section-layout flex flex-col gap-8  ${status === "disputed" ? "!border-warning-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
+          >
           <div className="flex flex-col items-start gap-10 sm:flex-row">
             <div className="flex w-full flex-col gap-6">
               {/* Title - author - beneficairy - request - created - type */}
@@ -905,22 +988,27 @@ export default function ClientPage({ params }: ClientPageProps) {
               </div>
             </div>
           )}
+          </section>
+
+          {/* Proposal Description */}
+          <section className="section-layout flex flex-col gap-6">
+            <h3>Proposal Description</h3>
+            <div>
+              <Skeleton rows={5} isLoading={isMetadataLoading}>
+                <MarkdownWrapper source={metadata?.description} />
+              </Skeleton>
+            </div>
+          </section>
         </div>
-      </section>
+      </div>
 
       {/* Right side: Status + view supporters + cancel button */}
-      <div className="hidden sm:block sm:col-span-12 xl:col-span-3 xl:h-10 xl:overflow-visible">
+      <div className="hidden sm:block sm:col-span-12 xl:col-span-3">
         <div className="backdrop-blur-sm rounded-lg flex flex-col gap-6 sticky top-32">
           {isStreamingType && (
             <section className="section-layout gap-4 flex flex-col">
               <h5>Stream Info</h5>
               <div className="rounded-lg border border-neutral-soft-content/20 p-3 flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="subtitle2">Budget</p>
-                  <p className="text-right">
-                    {formatFlowPerMonth(maxFlowRateForDisplay)}/m
-                  </p>
-                </div>
                 <div className="flex items-center justify-between gap-3">
                   <p className="subtitle2">Streaming</p>
                   <p className="text-right">
@@ -930,38 +1018,46 @@ export default function ClientPage({ params }: ClientPageProps) {
                 <div className="flex items-center justify-between gap-3">
                   <p className="subtitle2">Total</p>
                   <div className="flex items-center gap-2">
-                    {proposalTotalStreamedDisplay != null ?
-                      <p className="text-right">
-                        {proposalTotalStreamedDisplay}
-                      </p>
-                    : <p className="text-right">--</p>}
-                    {poolToken?.address && poolToken?.symbol && (
-                      <EthAddress
-                        address={poolToken.address}
-                        label={poolToken.symbol}
-                        shortenAddress={false}
-                        icon={false}
-                        actions="none"
-                        showPopup={false}
+                    <p className="text-right">
+                      <LiveStreamedTotal
+                        poolToken={poolToken}
+                        proposalFlowRateBn={proposalFlowRateBn}
+                        streamedUntilSnapshotBn={streamedUntilSnapshotBn}
+                        lastSnapshotAtBn={lastSnapshotAtBn}
+                        explorerTotalStreamedBn={explorerTotalStreamedBn}
+                        isDisputedStreamingProposal={
+                          isDisputedStreamingProposal
+                        }
+                        escrowBalanceSnapshotBn={escrowBalanceSnapshotBn}
+                        escrowBalanceSnapshotAtMs={escrowBalanceSnapshotAtMs}
+                        escrowSuperTokenBalanceValue={
+                          escrowSuperTokenBalance?.value
+                        }
                       />
-                    )}
+                    </p>
                   </div>
                 </div>
-                {!isProd && (
+                {showEscrow && (
                   <div className="flex items-center justify-between gap-3">
                     <p className="subtitle2">Escrow</p>
                     {resolvedStreamingEscrow ?
-                      <EthAddress
-                        address={resolvedStreamingEscrow as Address}
-                        shortenAddress={true}
-                        icon={false}
-                        actions="explorer"
-                      />
+                      <div className="flex items-center gap-2">
+                        <EthAddress
+                          address={resolvedStreamingEscrow as Address}
+                          shortenAddress={true}
+                          icon={false}
+                          actions="explorer"
+                        />
+                        <LoupeButton
+                          diamond={resolvedStreamingEscrow}
+                          chainId={chainId}
+                        />
+                      </div>
                     : <p className="text-right">--</p>}
                   </div>
                 )}
                 <div className="flex items-center justify-between gap-3">
-                  <p className="subtitle2">Available to unwrap</p>
+                  <p className="subtitle2">Claimable</p>
                   <div className="flex items-center gap-2">
                     {beneficiarySuperTokenBalance != null ?
                       <DisplayNumber
@@ -1008,7 +1104,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   This pool currently has no active outflow.
                 </InfoBox>
               )}
-              {!hideSyncStreamButton && (
+              {showSyncStreamButton && (
                 <Button
                   btnStyle="outline"
                   color="primary"
@@ -1018,7 +1114,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   isLoading={isRebalanceLoading}
                   onClick={() => writeRebalance?.()}
                 >
-                  Sync Stream
+                  Manual stream sync
                 </Button>
               )}
               {showUnwrapSuperTokenButton && (
@@ -1035,8 +1131,17 @@ export default function ClientPage({ params }: ClientPageProps) {
                     })
                   }
                 >
-                  Unwrap Super Token
+                  Claim funds
                 </Button>
+              )}
+              {showClaimFundsInfo && (
+                <InfoBox
+                  infoBoxType="info"
+                  className="w-full"
+                  title="Claim funds"
+                >
+                  Only the proposal beneficiary can claim streamed funds.
+                </InfoBox>
               )}
             </section>
           )}
@@ -1048,6 +1153,17 @@ export default function ClientPage({ params }: ClientPageProps) {
                 label={streamingStatusLabel}
               />
             </div>
+            {proposalWillPass && timeToPass != null && (
+              <div className="flex items-center gap-2 text-sm text-neutral-soft-content">
+                <p>Before streaming starts:</p>
+                <Countdown
+                  endTimestamp={Number(timeToPass)}
+                  display="inline"
+                  showTimeout={false}
+                  onTimeout={triggerConvictionRefetch}
+                />
+              </div>
+            )}
 
             {status === "executed" && (
               <ul className="timeline timeline-vertical relative">
@@ -1110,7 +1226,23 @@ export default function ClientPage({ params }: ClientPageProps) {
                         <div className="flex items-baseline gap-1">
                           <h6 className="text-neutral-soft-content">Total:</h6>
                           <p className="text-neutral-soft-content text-sm">
-                            {proposalTotalStreamedDisplay}
+                            <LiveStreamedTotal
+                              poolToken={poolToken}
+                              proposalFlowRateBn={proposalFlowRateBn}
+                              streamedUntilSnapshotBn={streamedUntilSnapshotBn}
+                              lastSnapshotAtBn={lastSnapshotAtBn}
+                              explorerTotalStreamedBn={explorerTotalStreamedBn}
+                              isDisputedStreamingProposal={
+                                isDisputedStreamingProposal
+                              }
+                              escrowBalanceSnapshotBn={escrowBalanceSnapshotBn}
+                              escrowBalanceSnapshotAtMs={
+                                escrowBalanceSnapshotAtMs
+                              }
+                              escrowSuperTokenBalanceValue={
+                                escrowSuperTokenBalance?.value
+                              }
+                            />
                           </p>
                         </div>
                       </div>
@@ -1203,7 +1335,7 @@ export default function ClientPage({ params }: ClientPageProps) {
 
           {filteredAndSortedProposalSupporters.length > 0 &&
             totalSupportPct != null && (
-              <section className="xl:max-h-10">
+              <section>
                 <ProposalSupportersTable
                   supporters={filteredAndSortedProposalSupporters}
                   beneficiary={beneficiary}
@@ -1217,16 +1349,6 @@ export default function ClientPage({ params }: ClientPageProps) {
             )}
         </div>
       </div>
-
-      {/* Proposal Description */}
-      <section className="hidden section-layout col-span-12 xl:col-span-9 mt-6 sm:flex flex-col gap-6">
-        <h3>Proposal Description</h3>
-        <div>
-          <Skeleton rows={5} isLoading={isMetadataLoading}>
-            <MarkdownWrapper source={metadata?.description} />
-          </Skeleton>
-        </div>
-      </section>
 
       {/* ================= MOBILE ================= */}
       <div className="block md:hidden col-span-12">
@@ -1467,12 +1589,6 @@ export default function ClientPage({ params }: ClientPageProps) {
                   <h5>Stream Info</h5>
                   <div className="rounded-lg border border-neutral-soft-content/20 p-3 flex flex-col gap-2">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="subtitle2">Budget</p>
-                      <p className="text-right">
-                        {formatFlowPerMonth(maxFlowRateForDisplay)}/m
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
                       <p className="subtitle2">Streaming</p>
                       <p className="text-right">
                         {formatFlowPerMonth(currentFlowRateForDisplay)}/m
@@ -1481,36 +1597,47 @@ export default function ClientPage({ params }: ClientPageProps) {
                     <div className="flex items-center justify-between gap-3">
                       <p className="subtitle2">Total</p>
                       <div className="flex items-center gap-2">
-                        {proposalTotalStreamedDisplay != null ?
-                          <p className="text-right">
-                            {proposalTotalStreamedDisplay}
-                          </p>
-                        : <p className="text-right">--</p>}
-                        {poolToken?.address && poolToken?.symbol && (
-                          <EthAddress
-                            address={poolToken.address}
-                            label={poolToken.symbol}
-                            shortenAddress={false}
-                            icon={false}
-                            actions="explorer"
+                        <p className="text-right">
+                          <LiveStreamedTotal
+                            poolToken={poolToken}
+                            proposalFlowRateBn={proposalFlowRateBn}
+                            streamedUntilSnapshotBn={streamedUntilSnapshotBn}
+                            lastSnapshotAtBn={lastSnapshotAtBn}
+                            explorerTotalStreamedBn={explorerTotalStreamedBn}
+                            isDisputedStreamingProposal={
+                              isDisputedStreamingProposal
+                            }
+                            escrowBalanceSnapshotBn={escrowBalanceSnapshotBn}
+                            escrowBalanceSnapshotAtMs={
+                              escrowBalanceSnapshotAtMs
+                            }
+                            escrowSuperTokenBalanceValue={
+                              escrowSuperTokenBalance?.value
+                            }
                           />
-                        )}
+                        </p>
                       </div>
                     </div>
-                    {!isProd && (
+                    {showEscrow && (
                       <div className="flex items-center justify-between gap-3">
                         <p className="subtitle2">StreamingEscrow</p>
                         {resolvedStreamingEscrow ?
-                          <EthAddress
-                            address={resolvedStreamingEscrow as Address}
-                            actions="copy"
-                            shortenAddress={true}
-                          />
+                          <div className="flex items-center gap-2">
+                            <EthAddress
+                              address={resolvedStreamingEscrow as Address}
+                              actions="copy"
+                              shortenAddress={true}
+                            />
+                            <LoupeButton
+                              diamond={resolvedStreamingEscrow}
+                              chainId={chainId}
+                            />
+                          </div>
                         : <p className="text-right">--</p>}
                       </div>
                     )}
                     <div className="flex items-center justify-between gap-3">
-                      <p className="subtitle2">Available to unwrap</p>
+                      <p className="subtitle2">Claimable</p>
                       <div className="flex items-center gap-2">
                         {beneficiarySuperTokenBalance != null ?
                           <DisplayNumber
@@ -1557,7 +1684,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                       This pool currently has no active outflow.
                     </InfoBox>
                   )}
-                  {!hideSyncStreamButton && (
+                  {showSyncStreamButton && (
                     <Button
                       btnStyle="outline"
                       color="primary"
@@ -1569,7 +1696,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                       isLoading={isRebalanceLoading}
                       onClick={() => writeRebalance?.()}
                     >
-                      Sync Stream
+                      Manual stream sync
                     </Button>
                   )}
                   {showUnwrapSuperTokenButton && (
@@ -1586,8 +1713,17 @@ export default function ClientPage({ params }: ClientPageProps) {
                         })
                       }
                     >
-                      Unwrap Super Token
+                      Claim funds
                     </Button>
+                  )}
+                  {showClaimFundsInfo && (
+                    <InfoBox
+                      infoBoxType="info"
+                      className="w-full"
+                      title="Claim funds"
+                    >
+                      Only the proposal beneficiary can claim streamed funds.
+                    </InfoBox>
                   )}
                 </section>
               )}
@@ -1599,6 +1735,17 @@ export default function ClientPage({ params }: ClientPageProps) {
                     label={streamingStatusLabel}
                   />
                 </div>
+                {proposalWillPass && timeToPass != null && (
+                  <div className="flex items-center gap-2 text-sm text-neutral-soft-content">
+                    <p>Before streaming starts:</p>
+                    <Countdown
+                      endTimestamp={Number(timeToPass)}
+                      display="inline"
+                      showTimeout={false}
+                      onTimeout={triggerConvictionRefetch}
+                    />
+                  </div>
+                )}
                 <div>
                   {status !== "executed" &&
                     status !== "cancelled" &&
@@ -1695,7 +1842,29 @@ export default function ClientPage({ params }: ClientPageProps) {
                                   Total:
                                 </h6>
                                 <p className="text-neutral-soft-content text-sm">
-                                  {proposalTotalStreamedDisplay}
+                                  <LiveStreamedTotal
+                                    poolToken={poolToken}
+                                    proposalFlowRateBn={proposalFlowRateBn}
+                                    streamedUntilSnapshotBn={
+                                      streamedUntilSnapshotBn
+                                    }
+                                    lastSnapshotAtBn={lastSnapshotAtBn}
+                                    explorerTotalStreamedBn={
+                                      explorerTotalStreamedBn
+                                    }
+                                    isDisputedStreamingProposal={
+                                      isDisputedStreamingProposal
+                                    }
+                                    escrowBalanceSnapshotBn={
+                                      escrowBalanceSnapshotBn
+                                    }
+                                    escrowBalanceSnapshotAtMs={
+                                      escrowBalanceSnapshotAtMs
+                                    }
+                                    escrowSuperTokenBalanceValue={
+                                      escrowSuperTokenBalance?.value
+                                    }
+                                  />
                                 </p>
                               </div>
                             </div>

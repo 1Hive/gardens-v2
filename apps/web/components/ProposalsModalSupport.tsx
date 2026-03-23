@@ -161,7 +161,8 @@ export const ProposalsModalSupport = forwardRef<
     const isStreamingType =
       PoolTypes[strategyConfig.proposalType] === "streaming";
 
-    const alreadyExecuted = ProposalStatus[proposalStatus] === "executed";
+    const resolvedProposalStatus = ProposalStatus[proposalStatus];
+    const alreadyExecuted = resolvedProposalStatus === "executed";
 
     const supportNeededToPass = (
       (thresholdPct ?? 0) - (totalSupportPct ?? 0)
@@ -179,7 +180,7 @@ export const ProposalsModalSupport = forwardRef<
 
     const streamingStatusLabel =
       isStreamingType ?
-        (ProposalStatus[proposalStatus] === "disputed" ?
+        (resolvedProposalStatus === "disputed" ?
           "disputed"
         : readyToBeExecuted || proposalWillPass ?
           "about to stream"

@@ -5,6 +5,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
 import {
   Address,
   createPublicClient,
@@ -78,6 +79,7 @@ export const CommunityForm = () => {
     handleSubmit,
     formState: { errors },
     getValues,
+    setError,
     setValue,
     trigger,
     watch,
@@ -101,6 +103,7 @@ export const CommunityForm = () => {
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const router = useRouter();
   const publicClient = useMemo(() => {
     if (!selectedChainId) {
@@ -243,9 +246,14 @@ export const CommunityForm = () => {
     contractName: "Registry Factory",
     fallbackErrorMessage: "Error creating community, please report a bug.",
     onError: () => {
+      setIsRedirecting(false);
       setLoading(false);
     },
     onConfirmations: async (receipt) => {
+      setIsRedirecting(true);
+      toast.loading("Community created. Redirecting...", {
+        toastId: "community-create-redirect",
+      });
       const newCommunityAddr = getEventFromReceipt(
         receipt,
         "RegistryFactory",
@@ -263,7 +271,6 @@ export const CommunityForm = () => {
           `/gardens/${selectedChainId}/${newCommunityAddr.toLowerCase()}?${QUERY_PARAMS.communityPage.newCommunity}=true`,
         );
       }
-      setLoading(false);
     },
     chainId: selectedChainId,
   });
@@ -287,6 +294,7 @@ export const CommunityForm = () => {
 
   const handleBackToEdit = useCallback(() => {
     setShowPreview(false);
+    setIsRedirecting(false);
     setLoading(false);
   }, []);
 
@@ -311,6 +319,7 @@ export const CommunityForm = () => {
           await new Promise((resolve) => setTimeout(resolve, 1000));
         } catch (error) {
           console.error("Failed to switch networks:", error);
+          setIsRedirecting(false);
           setLoading(false);
           return;
         }
@@ -327,7 +336,7 @@ export const CommunityForm = () => {
       }
 
       // Prepare transaction data
-      const govTokenAddr = getValues("tokenAddress") as Address;
+      const govTokenAddr = getValues("tokenAddress");
       const communityName = previewData.title;
       const stakeAmount = parseUnits(
         previewData.stakeAmount.toString(),
@@ -338,9 +347,51 @@ export const CommunityForm = () => {
         CV_PERCENTAGE_SCALE_DECIMALS,
       );
 
-      const communityFeeReceiver = previewData.feeReceiver || zeroAddress;
-      const councilSafeAddress = previewData.councilSafe;
+      const hasCommunityFee = communityFeeAmount > 0n;
+      const feeReceiverAddress = getValues("feeReceiver").trim();
+      const communityFeeReceiver =
+        hasCommunityFee && isAddress(feeReceiverAddress) ?
+          feeReceiverAddress
+        : zeroAddress;
+      const councilSafeAddress = getValues("councilSafe").trim();
       const isKickMemberEnabled = previewData.isKickMemberEnabled;
+
+      if (!isAddress(govTokenAddr)) {
+        setError("tokenAddress", {
+          type: "manual",
+          message: "Invalid community token address",
+        });
+        setShowPreview(false);
+        setIsRedirecting(false);
+        setLoading(false);
+        return;
+      }
+
+      if (!isAddress(councilSafeAddress)) {
+        setError("councilSafe", {
+          type: "manual",
+          message: "Invalid council Safe address",
+        });
+        setShowPreview(false);
+        setIsRedirecting(false);
+        setLoading(false);
+        return;
+      }
+
+      if (hasCommunityFee && !isAddress(feeReceiverAddress)) {
+        setError("feeReceiver", {
+          type: "manual",
+          message: "Invalid community fee receiver address",
+        });
+        setShowPreview(false);
+        setIsRedirecting(false);
+        setLoading(false);
+        return;
+      }
+
+      if (!registryFactoryAddr || !isAddress(registryFactoryAddr)) {
+        throw new Error("Invalid registry factory address");
+      }
 
       write?.({
         args: [
@@ -351,7 +402,7 @@ export const CommunityForm = () => {
             _registerStakeAmount: stakeAmount,
             _communityFee: communityFeeAmount,
             _councilSafe: councilSafeAddress as Address,
-            _gardenToken: govTokenAddr as Address,
+            _gardenToken: govTokenAddr,
             _isKickEnabled: isKickMemberEnabled,
             _nonce: 0n,
             _registryFactory: registryFactoryAddr,
@@ -362,6 +413,7 @@ export const CommunityForm = () => {
       });
     } catch (error) {
       console.error("Error creating community:", error);
+      setIsRedirecting(false);
       setLoading(false);
     }
   }, [
@@ -370,6 +422,7 @@ export const CommunityForm = () => {
     connectedChainId,
     switchNetwork,
     getValues,
+    setError,
     tokenData?.decimals,
     registryFactoryAddr,
     write,
@@ -637,11 +690,11 @@ export const CommunityForm = () => {
             </Button>
             <Button
               onClick={createCommunity}
-              isLoading={loading}
+              isLoading={loading || isRedirecting}
               disabled={!isConnected}
-              tooltip={tooltipMessage}
+              tooltip={isRedirecting ? "Redirecting to the new community page" : tooltipMessage}
             >
-              Submit
+              {isRedirecting ? "Redirecting..." : "Submit"}
             </Button>
           </div>
         : <Button type="submit">Preview</Button>}

@@ -30,7 +30,7 @@ if [[ "$ONLY" != "pause" && "$ONLY" != "escrow" && "$ONLY" != "both" ]]; then
 fi
 
 if [[ ${#NETWORKS[@]} -eq 0 ]]; then
-  NETWORKS=(arbitrum optimism polygon gnosis base celo)
+  NETWORKS=(ethereum arbitrum optimism polygon gnosis base celo)
 fi
 
 if [[ -z "${ETHERSCAN_API_KEY:-}" ]]; then
@@ -43,6 +43,7 @@ rpc_env_name() {
     ethsepolia) echo "RPC_URL_SEP_TESTNET" ;;
     arbsepolia) echo "RPC_URL_ARB_TESTNET" ;;
     opsepolia) echo "RPC_URL_OP_TESTNET" ;;
+    ethereum|mainnet) echo "RPC_URL_ETHEREUM" ;;
     arbitrum) echo "RPC_URL_ARB" ;;
     optimism) echo "RPC_URL_OPT" ;;
     polygon) echo "RPC_URL_POLYGON" ;;
@@ -58,6 +59,7 @@ verifier_url() {
     ethsepolia) echo "https://eth-sepolia.blockscout.com/api/" ;;
     arbsepolia) echo "https://arbitrum-sepolia.blockscout.com/api/" ;;
     opsepolia) echo "https://optimism-sepolia.blockscout.com/api/" ;;
+    ethereum|mainnet) echo "https://api.etherscan.io/api" ;;
     arbitrum) echo "https://arbitrum.blockscout.com/api/" ;;
     optimism) echo "https://optimism.blockscout.com/api/" ;;
     polygon) echo "https://polygon.blockscout.com/api/" ;;

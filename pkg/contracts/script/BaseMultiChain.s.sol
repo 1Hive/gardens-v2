@@ -104,6 +104,10 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
 
     function runCurrentNetwork(string memory networkJson) public virtual;
 
+    function _flagEnabled(string memory) internal view virtual returns (bool) {
+        return false;
+    }
+
     function run(string memory network) public virtual {
         delete pendingNetworkWrites;
 
@@ -391,14 +395,8 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
         vm.stopBroadcast();
     }
 
-    function _senderFromEnv() internal returns (address) {
-        string memory account = vm.envOr("DEPLOYER_KEYSTORE_ACCOUNT", string("PK_DEPLOYER"));
-        string[] memory inputs = new string[](3);
-        inputs[0] = "bash";
-        inputs[1] = "-c";
-        inputs[2] = string.concat("cast wallet address --account ", account);
-        bytes memory result = vm.ffi(inputs);
-        return _parseAddress(_trim(string(result)));
+    function _senderFromEnv() internal view returns (address) {
+        return vm.envAddress("DEPLOYER_ADDRESS");
     }
 
     function _readAddressOrZero(string memory key) internal returns (address) {
@@ -474,6 +472,13 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
     }
 
     function _stageNetworkWrite(string memory key, string memory value) internal {
+        bytes32 targetHash = keccak256(bytes(key));
+        for (uint256 i = 0; i < pendingNetworkWrites.length; i++) {
+            if (keccak256(bytes(pendingNetworkWrites[i].key)) == targetHash) {
+                pendingNetworkWrites[i].value = value;
+                return;
+            }
+        }
         pendingNetworkWrites.push(PendingNetworkWrite({key: key, value: value}));
     }
 
@@ -489,6 +494,10 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
     }
 
     function _flushPendingNetworkWrites() internal {
+        if (_flagEnabled("SKIP_NETWORK_WRITES")) {
+            delete pendingNetworkWrites;
+            return;
+        }
         for (uint256 i = 0; i < pendingNetworkWrites.length; i++) {
             _applyNetworkWrite(pendingNetworkWrites[i].key, pendingNetworkWrites[i].value);
         }

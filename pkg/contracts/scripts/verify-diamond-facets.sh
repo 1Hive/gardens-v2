@@ -90,7 +90,7 @@ load_rpc_from_env() {
     11155420) rpc_var="RPC_URL_OP_TESTNET";;
     42161) rpc_var="RPC_URL_ARB";;
     10) rpc_var="RPC_URL_OPT";;
-    1) rpc_var="RPC_URL_MAINNET";;
+    1) rpc_var="RPC_URL_ETHEREUM";;
     137) rpc_var="RPC_URL_POLYGON";;
     100) rpc_var="RPC_URL_GNOSIS";;
     8453) rpc_var="RPC_URL_BASE";;
@@ -207,7 +207,9 @@ verify_network() {
   local -A expected_facets=()
   local display_name="${network:-custom}"
   local unknown_facet_count=0
+  local unknown_codehash_count=0
   local skipped_proxy_count=0
+  local -a unknown_codehash_messages=()
 
   if [[ -n "$network" ]]; then
     while read -r facet_impl; do
@@ -248,7 +250,8 @@ verify_network() {
       codehash=$(cast codehash --rpc-url "$rpc_url" "$facet")
       contract=${HASH_TO_CONTRACT[$codehash]:-}
       if [[ -z "$contract" ]]; then
-        echo "    - Unknown facet codehash for $facet (skipping)"
+        unknown_codehash_count=$((unknown_codehash_count + 1))
+        unknown_codehash_messages+=("live facet $facet")
         continue
       fi
 
@@ -273,7 +276,8 @@ verify_network() {
       codehash=$(cast codehash --rpc-url "$rpc_url" "$facet")
       contract=${HASH_TO_CONTRACT[$codehash]:-}
       if [[ -z "$contract" ]]; then
-        echo "    - Unknown facet codehash for declared facet $facet (skipping)"
+        unknown_codehash_count=$((unknown_codehash_count + 1))
+        unknown_codehash_messages+=("declared facet $facet")
         continue
       fi
 
@@ -296,6 +300,20 @@ verify_network() {
   if [[ "$unknown_facet_count" -gt 0 ]]; then
     echo "  - ERROR: Found ${unknown_facet_count} facet address(es) missing from config/networks.json FACETS." >&2
     return 1
+  fi
+  if [[ "$unknown_codehash_count" -gt 0 ]]; then
+    echo "  - INFO: Skipped source mapping for ${unknown_codehash_count} facet address(es) with unknown codehashes."
+    local preview_count=${#unknown_codehash_messages[@]}
+    if [[ "$preview_count" -gt 5 ]]; then
+      preview_count=5
+    fi
+    local i
+    for ((i=0; i<preview_count; i++)); do
+      echo "    - ${unknown_codehash_messages[$i]}"
+    done
+    if [[ ${#unknown_codehash_messages[@]} -gt "$preview_count" ]]; then
+      echo "    - ... and $(( ${#unknown_codehash_messages[@]} - preview_count )) more"
+    fi
   fi
 }
 
@@ -355,9 +373,13 @@ else
   fi
 
   if [[ ${#PROXIES[@]} -eq 0 ]]; then
-    echo "No proxies provided. Use --network or --proxy." >&2
-    usage
-    exit 1
+    if [[ -n "$NETWORK" ]]; then
+      echo "No proxies configured for $NETWORK. Verifying declared FACETS only."
+    else
+      echo "No proxies provided. Use --network or --proxy." >&2
+      usage
+      exit 1
+    fi
   fi
 
   verify_network "$NETWORK" "$CHAIN_ID" "$RPC_URL" "${PROXIES[@]}"

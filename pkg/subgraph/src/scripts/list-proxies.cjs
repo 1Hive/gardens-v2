@@ -15,7 +15,7 @@ const optimismSepoliaSubgraph =
 
 const ethSepoliaSubgraph =
   "https://api.studio.thegraph.com/query/70985/gardens-v-2-sepolia/" +
-    subgraphConfig.VERSION_ETHSEP;
+  subgraphConfig.VERSION_ETHSEP;
 
 const arbitrumSubgraph =
   "https://api.studio.thegraph.com/query/102093/gardens-v2---arbitrum/" +
@@ -36,9 +36,9 @@ const baseSubgraph =
 const celoSubgraph =
   "https://api.studio.thegraph.com/query/102093/gardens-v2---celo/" +
   subgraphConfig.VERSION_PROD;
-const mainnetSubgraph =
-  "https://api.studio.thegraph.com/query/102093/gardens-v2---mainnet/" +
-  subgraphConfig.VERSION_PROD;
+const ethereumSubgraph =
+  "https://api.studio.thegraph.com/query/102093/gardens-v-2-ethereum/" +
+  subgraphConfig.VERSION_ETHEREUM;
 
 // @ts-ignore
 const chainArg = process.argv[process.argv.length - 1];
@@ -59,7 +59,7 @@ const jsons = {
   [viemChains.base.id]: baseSubgraph,
   [viemChains.celo.id]: celoSubgraph,
   // @ts-ignore
-  [viemChains.mainnet.id]: mainnetSubgraph,
+  [viemChains.mainnet.id]: ethereumSubgraph,
 };
 
 async function extractProxies(chainId) {
@@ -135,7 +135,10 @@ async function extractProxies(chainId) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  if (!result.data || (Array.isArray(result.errors) && result.errors.length > 0)) {
+  if (
+    !result.data ||
+    (Array.isArray(result.errors) && result.errors.length > 0)
+  ) {
     throw new Error(`Error in response: ${rawBody}`);
   }
 

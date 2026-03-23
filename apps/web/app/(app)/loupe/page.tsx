@@ -35,9 +35,11 @@ import cvPowerFacetArtifact from "#/contracts/abis/CVPowerFacet.sol/CVPowerFacet
 import cvProposalFacetArtifact from "#/contracts/abis/CVProposalFacet.sol/CVProposalFacet.json";
 import cvStreamingFacetArtifact from "#/contracts/abis/CVStreamingFacet.sol/CVStreamingFacet.json";
 import cvSyncPowerFacetArtifact from "#/contracts/abis/CVSyncPowerFacet.sol/CVSyncPowerFacet.json";
-import diamondCutFacetArtifact from "#/contracts/abis/DiamondCutFacet.sol/DiamondCutFacet.json";
 import diamondLoupeFacetArtifact from "#/contracts/abis/DiamondLoupeFacet.sol/DiamondLoupeFacet.json";
-import ownershipFacetArtifact from "#/contracts/abis/OwnershipFacet.sol/OwnershipFacet.json";
+import globalPauseControllerArtifact from "#/contracts/abis/GlobalPauseController.sol/GlobalPauseController.json";
+import proxyOwnableUpgraderArtifact from "#/contracts/abis/ProxyOwnableUpgrader.sol/ProxyOwnableUpgrader.json";
+import proxyOwnerArtifact from "#/contracts/abis/ProxyOwner.sol/ProxyOwner.json";
+import streamingEscrowFactoryArtifact from "#/contracts/abis/StreamingEscrowFactory.sol/StreamingEscrowFactory.json";
 import { Button } from "@/components/Button";
 import { InfoBox } from "@/components/InfoBox";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -83,10 +85,14 @@ const KNOWN_ABI_CATALOG = [
   { label: "GoodDollar", abi: goodDollarABI },
   { label: "IArbitrator", abi: iArbitratorABI },
   { label: "PassportScorer", abi: passportScorerABI },
+  { label: "ProxyOwnableUpgrader", abi: proxyOwnableUpgraderArtifact.abi },
+  { label: "ProxyOwner", abi: proxyOwnerArtifact.abi },
   { label: "RegistryFactory", abi: registryFactoryABI },
   { label: "RegistryCommunity", abi: registryCommunityABI },
   { label: "SafeArbitrator", abi: safeArbitratorABI },
+  { label: "StreamingEscrowFactory", abi: streamingEscrowFactoryArtifact.abi },
   { label: "CVStrategy", abi: cvStrategyABI },
+  { label: "GlobalPauseController", abi: globalPauseControllerArtifact.abi },
 ] as const;
 const KNOWN_FACET_ABI_CATALOG = [
   { label: "CommunityAdminFacet", abi: communityAdminFacetArtifact.abi },
@@ -103,9 +109,7 @@ const KNOWN_FACET_ABI_CATALOG = [
   { label: "CVPauseFacet", abi: cvPauseFacetArtifact.abi },
   { label: "CVStreamingFacet", abi: cvStreamingFacetArtifact.abi },
   { label: "CVSyncPowerFacet", abi: cvSyncPowerFacetArtifact.abi },
-  { label: "DiamondCutFacet", abi: diamondCutFacetArtifact.abi },
   { label: "DiamondLoupeFacet", abi: diamondLoupeFacetArtifact.abi },
-  { label: "OwnershipFacet", abi: ownershipFacetArtifact.abi },
 ] as const;
 
 const FACETS_ABI = [
@@ -626,6 +630,7 @@ export default function DiamondAdminPage() {
   const [probedProxyAbiLabel, setProbedProxyAbiLabel] = useState<string | null>(
     null,
   );
+  const [selectedProxyAbiLabel, setSelectedProxyAbiLabel] = useState("");
   const didApplyQueryParamsRef = useRef(false);
   const functionRunnerRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
@@ -815,12 +820,37 @@ export default function DiamondAdminPage() {
     };
   }, [allSelectors.length, probedProxyAbiLabel, selectorInferredProxyAbi]);
 
+  const effectiveProxyAbi = useMemo(() => {
+    const selectedCandidate =
+      selectedProxyAbiLabel ?
+        KNOWN_ABI_CATALOG.find(({ label }) => label === selectedProxyAbiLabel)
+      : undefined;
+
+    if (selectedCandidate) {
+      const functions = selectedCandidate.abi
+        .filter(isAbiFunctionItem)
+        .map((item) => item as AbiFunction);
+
+      return {
+        label: selectedCandidate.label,
+        functions: Array.from(
+          new Map(
+            functions.map((fn) => [toCanonicalSignature(fn), fn] as const),
+          ).values(),
+        ),
+        overlapCount: 0,
+      };
+    }
+
+    return inferredProxyAbi;
+  }, [inferredProxyAbi, selectedProxyAbiLabel]);
+
   const proxyFunctions = useMemo(() => {
-    if (inferredProxyAbi == null) return [];
+    if (effectiveProxyAbi == null) return [];
 
     return Array.from(
       new Map(
-        inferredProxyAbi.functions.map(
+        effectiveProxyAbi.functions.map(
           (fn) => [toCanonicalSignature(fn), fn] as const,
         ),
       ).values(),
@@ -835,7 +865,7 @@ export default function DiamondAdminPage() {
         }
         return a.name.localeCompare(b.name);
       });
-  }, [allSelectors, inferredProxyAbi]);
+  }, [allSelectors, effectiveProxyAbi]);
 
   const availableSelectors = useMemo(
     () =>
@@ -1276,6 +1306,7 @@ export default function DiamondAdminPage() {
       return;
     }
     setSignatureMap({});
+    setSelectedProxyAbiLabel("");
     setSelectedSelector("");
     setSelectedSignature("");
     setExecutionError(null);
@@ -1539,19 +1570,6 @@ export default function DiamondAdminPage() {
           </div>
         </div>
 
-        {isError && (
-          <InfoBox infoBoxType="error" title="Unable to read facets">
-            {error?.message ?
-              <>
-                {error.message.split("\n").map((line) => <p key={line}>{line}</p>)}
-                <p>
-                  Continuing in proxy mode. Loupe-only sections are hidden when
-                  the contract is not a diamond.
-                </p>
-              </>
-            : "The contract does not expose loupe data. Continuing in proxy mode."}
-          </InfoBox>
-        )}
       </section>
 
       <section className="space-y-4">
@@ -1593,9 +1611,23 @@ export default function DiamondAdminPage() {
           </div>
           <div className="space-y-1 text-right text-xs text-neutral-muted">
             <p>Inferred proxy ABI</p>
-            <p className="text-sm text-neutral-content">
-              {inferredProxyAbi?.label ?? "Unknown"}
-            </p>
+            <select
+              className="rounded-lg border border-border-neutral bg-neutral px-2 py-1 text-sm text-neutral-content focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
+              value={selectedProxyAbiLabel || inferredProxyAbi?.label || ""}
+              onChange={(event) =>
+                setSelectedProxyAbiLabel(event.target.value)
+              }
+            >
+              {!inferredProxyAbi?.label && (
+                <option value="">Unknown</option>
+              )}
+              {KNOWN_ABI_CATALOG.map(({ label }) => (
+                <option key={label} value={label}>
+                  {label}
+                  {label === inferredProxyAbi?.label ? " (inferred)" : ""}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

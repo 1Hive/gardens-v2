@@ -172,10 +172,9 @@ export default function ClientPage() {
                         ),
                     ),
                   };
-                } catch (error) {
-                  console.error(
-                    `Error reading council safe for community ${x.communityName}:`,
-                    error,
+                } catch {
+                  console.warn(
+                    `Council Safe owners could not be read for community ${x.communityName}.`,
                   );
                   return x;
                 }

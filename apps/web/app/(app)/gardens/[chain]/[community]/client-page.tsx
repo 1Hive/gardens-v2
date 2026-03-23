@@ -592,15 +592,16 @@ export default function ClientPage({
                   </div>
                   <div className="absolute top-12 md:top-7 right-5 flex items-center gap-2 z-50">
                     {(isCouncilMember || isCouncilSafe) &&
-                      effectiveCouncilSafe &&
-                      effectivePendingCouncilSafe && (
+                      effectiveCouncilSafe && (
                         <EditCommunityModal
                           communityAddress={registryCommunity.id as Address}
                           communityName={communityName ?? "Community"}
                           communityMembersCount={Number(membersCount ?? 0)}
                           currentCommunityName={communityName ?? ""}
                           currentCouncilSafe={effectiveCouncilSafe}
-                          pendingCouncilSafe={effectivePendingCouncilSafe}
+                          pendingCouncilSafe={
+                            effectivePendingCouncilSafe ?? undefined
+                          }
                           currentCovenant={covenant ?? ""}
                           tokenDecimals={tokenGarden.decimals}
                           tokenSymbol={tokenGarden.symbol}
@@ -885,7 +886,6 @@ export default function ClientPage({
                     {/* Action Buttons */}
                     <div className="flex flex-col gap-2 mt-4">
                       {(isCouncilMember || isCouncilSafe) &&
-                        effectivePendingCouncilSafe &&
                         effectiveCouncilSafe && (
                           <EditCommunityModal
                             communityAddress={registryCommunity.id as Address}
@@ -893,7 +893,9 @@ export default function ClientPage({
                             communityMembersCount={Number(membersCount ?? 0)}
                             currentCommunityName={communityName ?? ""}
                             currentCouncilSafe={effectiveCouncilSafe}
-                            pendingCouncilSafe={effectivePendingCouncilSafe}
+                            pendingCouncilSafe={
+                              effectivePendingCouncilSafe ?? undefined
+                            }
                             currentCovenant={covenant ?? ""}
                             tokenDecimals={tokenGarden.decimals}
                             tokenSymbol={tokenGarden.symbol}

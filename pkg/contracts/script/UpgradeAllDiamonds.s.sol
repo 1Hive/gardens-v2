@@ -10,6 +10,7 @@ import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
 import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {CVSyncPowerFacet} from "../src/CVStrategy/facets/CVSyncPowerFacet.sol";
+import {CVStreamingFacet} from "../src/CVStrategy/facets/CVStreamingFacet.sol";
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
@@ -49,6 +50,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
     CVPowerFacet public cvPowerFacet;
     CVProposalFacet public cvProposalFacet;
     CVSyncPowerFacet public cvSyncPowerFacet;
+    CVStreamingFacet public cvStreamingFacet;
 
     // RegistryCommunity facets
     CommunityAdminFacet public communityAdminFacet;
@@ -143,6 +145,8 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
         cvProposalFacet = new CVProposalFacet();
 
         cvSyncPowerFacet = new CVSyncPowerFacet();
+
+        cvStreamingFacet = new CVStreamingFacet();
 
         // Deploy RegistryCommunity facets
         communityAdminFacet = new CommunityAdminFacet();
@@ -504,11 +508,12 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
                 cvPauseFacet,
                 cvPowerFacet,
                 cvProposalFacet,
-                cvSyncPowerFacet
+                cvSyncPowerFacet,
+                cvStreamingFacet
             );
-        cuts = new IDiamond.FacetCut[](8);
+        cuts = new IDiamond.FacetCut[](9);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 7; i++) {
+        for (uint256 i = 0; i < 8; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }
