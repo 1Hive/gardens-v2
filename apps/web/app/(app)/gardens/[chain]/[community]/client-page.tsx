@@ -34,6 +34,7 @@ import {
   EditCommunityModal,
   EthAddress,
   IncreasePower,
+  InfoBox,
   InfoWrapper,
   PoolCard,
   RegisterMember,
@@ -89,10 +90,13 @@ export default function ClientPage({
   }, []);
 
   const searchParams = useCollectQueryParams();
+  const isNewCommunity =
+    searchParams[QUERY_PARAMS.communityPage.newCommunity] !== undefined;
   const { address: accountAddress } = useAccount();
   const showArchived = useFlag("showArchived");
   const showStreamingPools = useFlag("showStreamingPools");
   const isFetchingNFT = useRef<boolean>(false);
+  const pendingNewCommunityRefetch = useRef<string | null>(null);
   const { publish } = usePubSubContext();
   const chain = useChainFromPath();
   const [selectedTab, setSelectedTab] = useState(0);
@@ -103,6 +107,7 @@ export default function ClientPage({
     data: result,
     error,
     refetch,
+    fetching,
   } = useSubgraphQuery<getCommunityQuery>({
     query: getCommunityDocument,
     variables: {
@@ -115,6 +120,8 @@ export default function ClientPage({
   });
 
   const registryCommunity = result?.registryCommunity;
+  const isAwaitingNewCommunityIndexing =
+    isNewCommunity && !registryCommunity;
   const tokenAddress = registryCommunity?.garden?.id;
 
   const { data: tokenGarden } = useToken({
@@ -269,6 +276,34 @@ export default function ClientPage({
       console.error("Error while fetching community data: ", error);
     }
   }, [error]);
+
+  useEffect(() => {
+    if (!isNewCommunity) {
+      pendingNewCommunityRefetch.current = null;
+      return;
+    }
+
+    if (registryCommunity) {
+      pendingNewCommunityRefetch.current = null;
+      return;
+    }
+
+    if (fetching) {
+      return;
+    }
+
+    const communityKey = communityAddr.toLowerCase();
+    if (pendingNewCommunityRefetch.current === communityKey) {
+      return;
+    }
+
+    pendingNewCommunityRefetch.current = communityKey;
+    void refetch().finally(() => {
+      if (pendingNewCommunityRefetch.current === communityKey) {
+        pendingNewCommunityRefetch.current = null;
+      }
+    });
+  }, [communityAddr, fetching, isNewCommunity, refetch, registryCommunity]);
 
   const communityStakedTokens =
     members?.reduce(
@@ -428,8 +463,6 @@ export default function ClientPage({
 
   useEffect(() => {
     const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
-    const isNewCommunity =
-      searchParams[QUERY_PARAMS.communityPage.newCommunity];
     const fetchedPools = poolsInReview.some((c) => c.poolId === newPoolId);
     if (isNewCommunity) {
       console.debug("Community: New community, refetching...");
@@ -460,6 +493,18 @@ export default function ClientPage({
       });
     }
   }, [covenantSectionRef.current, searchParams]);
+
+  if (isAwaitingNewCommunityIndexing) {
+    return (
+      <div className="col-span-12 mt-48 flex justify-center">
+        <InfoBox infoBoxType="info" title="Community is still indexing">
+          We created this community successfully, but the subgraph has not
+          returned it yet. This page will refresh automatically as soon as the
+          community is indexed.
+        </InfoBox>
+      </div>
+    );
+  }
 
   if (!tokenGarden || !registryCommunity) {
     return (

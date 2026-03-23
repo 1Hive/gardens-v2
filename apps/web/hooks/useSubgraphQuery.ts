@@ -78,6 +78,9 @@ export function useSubgraphQuery<
   const latestResponse = useRef({ variables, response });
   const subscritionId = useRef<SubscriptionId>();
   const fetchingRef = useRef(false);
+  const fetchPromiseRef = useRef<Promise<Awaited<ReturnType<typeof fetch>>> | null>(
+    null,
+  );
   const skipPublished = useFlag("skipPublished");
 
   useEffect(() => {
@@ -186,8 +189,18 @@ export function useSubgraphQuery<
       return latestResponse.current.response as Awaited<ReturnType<typeof fetch>>;
     }
     if (fetchingRef.current) {
-      console.debug("⚡ Already fetching, skipping refetch");
-      return latestResponse.current.response as Awaited<ReturnType<typeof fetch>>;
+      console.debug(
+        "⚡ Already fetching, waiting for current fetch before retrying",
+      );
+      try {
+        await fetchPromiseRef.current;
+      } catch (error) {
+        console.debug("⚡ Current fetch failed before external refetch", error);
+      }
+      if (fetchingRef.current) {
+        return latestResponse.current
+          .response as Awaited<ReturnType<typeof fetch>>;
+      }
     }
     setFetching(true);
     fetchingRef.current = true;
@@ -227,7 +240,13 @@ export function useSubgraphQuery<
       });
     }
 
-    const result = await fetch();
+    const resultPromise = fetch();
+    fetchPromiseRef.current = resultPromise;
+    const result = await resultPromise.finally(() => {
+      if (fetchPromiseRef.current === resultPromise) {
+        fetchPromiseRef.current = null;
+      }
+    });
 
     if (retryCount >= CHANGE_EVENT_MAX_RETRIES || !mounted.current) {
       if (retryCount >= CHANGE_EVENT_MAX_RETRIES) {
@@ -309,7 +328,13 @@ export function useSubgraphQuery<
       ) {
         resp = await refetch();
       } else {
-        resp = await fetch();
+        const resultPromise = fetch();
+        fetchPromiseRef.current = resultPromise;
+        resp = await resultPromise.finally(() => {
+          if (fetchPromiseRef.current === resultPromise) {
+            fetchPromiseRef.current = null;
+          }
+        });
       }
       setResponse(resp);
       setFetching(false);
