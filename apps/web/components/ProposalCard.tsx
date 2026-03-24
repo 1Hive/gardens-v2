@@ -319,7 +319,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       token: strategyConfig.superfluidToken as Address,
       chainId,
       enabled:
-        isStreamingType &&
+        isDisputedStreamingProposal &&
         !!proposalData.streamingEscrow &&
         !!strategyConfig.superfluidToken,
     });
