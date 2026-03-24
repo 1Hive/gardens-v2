@@ -47,7 +47,10 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
-import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import {
+  dismissPendingSubgraphRefreshToast,
+  useSubgraphQuery,
+} from "@/hooks/useSubgraphQuery";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
@@ -142,7 +145,7 @@ export default function ClientPage({
 
     pendingNewPoolRefetch.current = newPoolId;
 
-    void refetch().finally(() => {
+    void refetch({ showToast: false }).finally(() => {
       if (pendingNewPoolRefetch.current === newPoolId) {
         setHasResolvedInitialNewPoolLookup(true);
       }
@@ -158,6 +161,12 @@ export default function ClientPage({
       setPoolIdForScope(resolvedPoolId);
     }
   }, [resolvedPoolId, poolIdForScope]);
+
+  useEffect(() => {
+    if (newPoolId && strategy) {
+      dismissPendingSubgraphRefreshToast();
+    }
+  }, [newPoolId, strategy]);
   const communityAddress = strategy?.registryCommunity.id as Address;
 
   const { address: wallet } = useAccount();
@@ -488,12 +497,15 @@ export default function ClientPage({
     const fetchedProposals = strategy?.proposals.map((p) =>
       p.proposalNumber.toString(),
     );
+    if (newProposalId && fetchedProposals.includes(newProposalId)) {
+      dismissPendingSubgraphRefreshToast();
+    }
     if (newProposalId && !fetchedProposals.includes(newProposalId)) {
       console.debug("Pool: New proposal not yet fetched, refetching...", {
         newProposalId,
         fetchedProposals,
       });
-      refetch();
+      refetch({ showToast: false });
     }
   }, [searchParams, strategy?.proposals]);
 

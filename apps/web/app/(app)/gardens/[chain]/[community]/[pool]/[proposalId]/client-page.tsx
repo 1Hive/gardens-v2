@@ -49,7 +49,10 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
 import { MetadataV1, useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
-import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import {
+  dismissPendingSubgraphRefreshToast,
+  useSubgraphQuery,
+} from "@/hooks/useSubgraphQuery";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { superTokenABI } from "@/src/customAbis";
 import { alloABI, cvStrategyABI } from "@/src/generated";
@@ -548,8 +551,14 @@ export default function ClientPage({ params }: ClientPageProps) {
 
   useEffect(() => {
     if (fetching || !isAwaitingProposal) return;
-    refetchProposal();
+    refetchProposal({ showToast: false });
   }, [fetching, isAwaitingProposal]);
+
+  useEffect(() => {
+    if (pendingProposalParam && !isAwaitingProposal) {
+      dismissPendingSubgraphRefreshToast();
+    }
+  }, [isAwaitingProposal, pendingProposalParam]);
 
   useEffect(() => {
     if (escrowSuperTokenBalance?.value == null) return;

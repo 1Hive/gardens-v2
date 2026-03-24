@@ -27,6 +27,9 @@ export type ComputedStatus =
   | "waiting"
   | undefined;
 
+const isRpcTransactionHash = (hash?: string): hash is `0x${string}` =>
+  /^0x[a-fA-F0-9]{64}$/.test(hash ?? "");
+
 // Divvi configuration constants
 const DIVVI_CONSUMER =
   process.env.NEXT_PUBLIC_DIVVI_CONSUMER ??
@@ -221,32 +224,71 @@ export function useContractWriteWithConfirmations<
     props.onError?.(...params);
   };
 
+  const rawTransactionHash = txResult.data?.hash;
+  const transactionHash = isRpcTransactionHash(rawTransactionHash) ?
+      rawTransactionHash
+    : undefined;
+  const safeTransactionHash =
+    rawTransactionHash != null && transactionHash == null ?
+      rawTransactionHash
+    : undefined;
+
   // Hook does not run unless hash is defined.
   const txWaitResult = useWaitForTransaction({
-    hash: txResult.data?.hash,
+    hash: transactionHash,
     chainId: +resolvedChaindId,
     confirmations: propsWithChainId.confirmations,
+    enabled: transactionHash != null,
   });
 
   const computedStatus = useMemo(() => {
     if (txResult.status === "idle") {
       return undefined;
-    } else if (txWaitResult.status === "loading") {
-      return "loading";
-    } else if (txResult.status === "success" || txResult.status === "error") {
+    }
+
+    if (txResult.status === "error") {
       if (txResult.error) {
-        logError(txResult.error, txResult.variables, "wait for tx");
+        logError(txResult.error, txResult.variables, "write tx");
       }
-      return txResult.status;
-    } else if (txWaitResult.status === "idle") {
+      return "error";
+    }
+
+    if (transactionHash == null) {
       return "waiting";
     }
+
+    if (txWaitResult.status === "loading") {
+      return "loading";
+    }
+
+    if (txWaitResult.status === "success") {
+      return "success";
+    }
+
+    if (txWaitResult.status === "error") {
+      return "error";
+    }
+
+    if (txWaitResult.status === "idle") {
+      return "waiting";
+    }
+
     return txWaitResult.status;
-  }, [txResult.status, txWaitResult.status]);
+  }, [
+    transactionHash,
+    txResult.error,
+    txResult.status,
+    txResult.variables,
+    txWaitResult.status,
+  ]);
 
   useTransactionNotification({
     toastId,
     transactionData: txResult.data,
+    transactionHash,
+    safeTransactionHash,
+    safeAddress: connectedAddress,
+    targetAddress: props.address,
     transactionStatus: computedStatus,
     transactionError: txResult.error,
     enabled: props.showNotification ?? true, // default to true
@@ -254,11 +296,12 @@ export function useContractWriteWithConfirmations<
     contractName: props.contractName,
     chainId: resolvedChaindId,
     confirmations: propsWithChainId.confirmations,
+    watchTransaction: true,
   });
 
   useEffect(() => {
     if (txWaitResult.isSuccess && txWaitResult.data) {
-      const hash = txResult.data?.hash;
+      const hash = transactionHash;
       // Referral tracking only for Celo
       if (hash && shouldDivviTrack) {
         try {
@@ -274,7 +317,7 @@ export function useContractWriteWithConfirmations<
       }
       propsWithChainId.onConfirmations?.(txWaitResult.data);
     }
-  }, [txResult.isSuccess, txWaitResult.data]);
+  }, [transactionHash, txResult.isSuccess, txWaitResult.data]);
 
   return {
     ...txResult,

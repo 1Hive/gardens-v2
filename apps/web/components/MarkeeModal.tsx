@@ -4,7 +4,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { ChevronDownIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { formatEther, parseEther, UserRejectedRequestError } from "viem";
-import { useAccount, useBalance, useChainId, useSwitchNetwork } from "wagmi";
+import { useAccount, useBalance, useChainId } from "wagmi";
+import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { MarkeeAbi } from "@/src/customAbis";
 import {
@@ -86,7 +87,7 @@ export default function MarkeeModal({
     switchNetwork,
     switchNetworkAsync,
     isLoading: isSwitching,
-  } = useSwitchNetwork();
+  } = useAppSwitchNetwork();
   const { openConnectModal, connectModalOpen } = useConnectModal();
   const [hiddenForConnect, setHiddenForConnect] = useState(false);
 
@@ -213,11 +214,7 @@ export default function MarkeeModal({
     }
     if (!isOnBase) {
       try {
-        if (switchNetworkAsync) {
-          await switchNetworkAsync(MarkeeNetwork.id);
-        } else {
-          switchNetwork?.(MarkeeNetwork.id);
-        }
+        await switchNetworkAsync(MarkeeNetwork.id);
         setInputError("Switched to Base. Please submit again.");
       } catch (switchError) {
         console.error("[MarkeeModal] Failed to switch to Base", switchError);

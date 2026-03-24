@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
 import { useAccount, useContractRead, useToken } from "wagmi";
 import {
@@ -143,7 +142,6 @@ export const ProposalForm = ({
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [requestedAmount, setRequestedAmount] = useState<string>();
   const [loading, setLoading] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
@@ -209,14 +207,9 @@ export const ProposalForm = ({
     fallbackErrorMessage: "Error creating Proposal, please report a bug.",
     value: arbitrableConfig?.submitterCollateralAmount,
     onError: () => {
-      setIsRedirecting(false);
       setLoading(false);
     },
     onConfirmations: (receipt) => {
-      setIsRedirecting(true);
-      toast.loading("Proposal created. Redirecting...", {
-        toastId: "proposal-create-redirect",
-      });
       const proposalId = getEventFromReceipt(
         receipt,
         "CVStrategy",
@@ -362,7 +355,6 @@ export const ProposalForm = ({
           formRows={formatFormRows()}
           onEdit={() => {
             setShowPreview(false);
-            setIsRedirecting(false);
           }}
           onSubmit={() => {
             if (isButtonDisabled) return;
@@ -492,7 +484,6 @@ export const ProposalForm = ({
               type="button"
               onClick={() => {
                 setShowPreview(false);
-                setIsRedirecting(false);
                 setLoading(false);
               }}
               btnStyle="outline"
@@ -502,15 +493,11 @@ export const ProposalForm = ({
             <Button
               type="button"
               onClick={() => createProposal()}
-              isLoading={loading || isRedirecting}
+              isLoading={loading}
               disabled={isButtonDisabled}
-              tooltip={
-                isRedirecting ?
-                  "Redirecting to the new proposal page"
-                : tooltipMessage
-              }
+              tooltip={tooltipMessage}
             >
-              {isRedirecting ? "Redirecting..." : "Submit"}
+              Submit
             </Button>
           </div>
         : <Button type="submit">Preview</Button>}

@@ -8,7 +8,6 @@ import {
   useAccount,
   useContractRead,
   usePublicClient,
-  useSwitchNetwork,
   useWalletClient,
 } from "wagmi";
 import {
@@ -28,6 +27,7 @@ import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useGoodDollarSdk } from "@/hooks/useGoodDollar";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
@@ -65,7 +65,7 @@ export function CheckSybil({
   const publicClient = usePublicClient({ chainId: celo.id });
   const chainFromPath = useChainFromPath();
   const { publish } = usePubSubContext();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { switchNetworkAsync } = useAppSwitchNetwork();
   const searchParams = useCollectQueryParams();
   const [isGoodDollarVerifying, setIsGoodDollarVerifying] = useState(false);
   const { isWalletVerified, refetch: refetchGoodDollar } = useGoodDollarSdk({
@@ -369,7 +369,7 @@ export function CheckSybil({
   };
 
   const handleGoodDollarVerification = async () => {
-    if (!walletClient || !switchNetworkAsync) {
+    if (!walletClient) {
       toast.error("Wallet not connected");
       console.error("WalletClient not found");
       return;

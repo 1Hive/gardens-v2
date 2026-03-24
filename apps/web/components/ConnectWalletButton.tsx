@@ -1,6 +1,12 @@
 "use client";
 
-import React, { Fragment, useMemo, useState } from "react";
+import React, {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
@@ -23,7 +29,6 @@ import {
   useDisconnect,
   useEnsAvatar,
   useEnsName,
-  useSwitchNetwork,
 } from "wagmi";
 import { getCommunityNameDocument } from "#/subgraph/.graphclient";
 import TooltipIfOverflow from "./TooltipIfOverflow";
@@ -32,10 +37,46 @@ import { BeeKeeperNFT, FirstHolderNFT, ProtopianNFT } from "@/assets";
 import { walletIcon } from "@/assets";
 import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chains";
+import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useHasContractCode } from "@/hooks/useHasContractCode";
 import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { formatAddress } from "@/utils/formatAddress";
+
+const WALLETCONNECT_STORAGE_KEY_PREFIXES = [
+  "wc@",
+  "walletconnect",
+  "WALLETCONNECT_DEEPLINK_CHOICE",
+];
+
+type WalletConnectProviderLike = {
+  disconnect?: () => Promise<void> | void;
+  modal?: {
+    closeModal?: () => void;
+  };
+};
+
+const clearWalletConnectStorage = (storage: Storage) => {
+  const keysToRemove: string[] = [];
+
+  for (let i = 0; i < storage.length; i += 1) {
+    const key = storage.key(i);
+    if (!key) {
+      continue;
+    }
+
+    if (
+      WALLETCONNECT_STORAGE_KEY_PREFIXES.some((prefix) =>
+        key.startsWith(prefix),
+      )
+    ) {
+      keysToRemove.push(key);
+    }
+  }
+
+  keysToRemove.forEach((key) => storage.removeItem(key));
+};
 
 export function ConnectWallet() {
   const path = usePathname();
@@ -61,8 +102,8 @@ export function ConnectWallet() {
 
   const tokenUrlAddress = communityData?.registryCommunity?.garden?.id;
 
-  const { switchNetwork } = useSwitchNetwork();
-  const { disconnect } = useDisconnect();
+  const { switchNetwork } = useAppSwitchNetwork();
+  const { disconnectAsync } = useDisconnect();
   const { connectors } = useConnect();
   const { isOwner: isFirstHolder } = useOwnerOfNFT({
     nft: "FirstHolder",
@@ -104,14 +145,68 @@ export function ConnectWallet() {
 
   const [selectedNFTIndex, setSelectedNFTIndex] = useState(0);
 
+  useEffect(() => {
+    if (!account.isConnected || account.connector?.id !== "walletConnect") {
+      return;
+    }
+
+    type WalletConnectProviderWithModal = {
+      modal?: {
+        closeModal?: () => void;
+      };
+    };
+
+    void account.connector
+      .getProvider()
+      .then((provider) => {
+        (provider as WalletConnectProviderWithModal).modal?.closeModal?.();
+      })
+      .catch(() => {
+        // Ignore provider access failures. This only cleans up a stale QR modal.
+      });
+  }, [account.connector, account.isConnected]);
+
+  const handleDisconnect = useCallback(async () => {
+    const connector = account.connector;
+    const isWalletConnectConnector = connector?.id === "walletConnect";
+
+    try {
+      if (isWalletConnectConnector) {
+        const provider =
+          (await connector.getProvider()) as WalletConnectProviderLike | null;
+
+        provider?.modal?.closeModal?.();
+        await provider?.disconnect?.();
+      }
+    } catch {
+      // Ignore provider-level disconnect failures and still clear local state.
+    } finally {
+      if (typeof window !== "undefined") {
+        clearWalletConnectStorage(window.localStorage);
+        clearWalletConnectStorage(window.sessionStorage);
+      }
+    }
+
+    await disconnectAsync();
+  }, [account.connector, disconnectAsync]);
+
   const wallet = connectors[0].name;
   const isMockConnection = account.connector?.id === "mock";
+  const { hasContractCode: hasGardenTokenContract } = useHasContractCode({
+    address: tokenUrlAddress,
+    chainId: urlChainId,
+    enabled: !!tokenUrlAddress && urlChainId != null,
+  });
 
   const { data: token } = useBalance({
     address: account?.address,
     token: tokenUrlAddress as `0x${string}` | undefined,
     chainId: urlChainId,
-    enabled: !!account.address && urlChainId != null && !!tokenUrlAddress,
+    enabled:
+      !!account.address &&
+      urlChainId != null &&
+      !!tokenUrlAddress &&
+      hasGardenTokenContract,
   });
 
   const { data: ensName } = useEnsName({
@@ -299,9 +394,11 @@ export function ConnectWallet() {
                               {isWrongNetwork && (
                                 <Button
                                   className="w-full"
-                                  onClick={() =>
-                                    switchNetwork && switchNetwork(urlChainId)
-                                  }
+                                  onClick={() => {
+                                    if (urlChainId != null) {
+                                      switchNetwork(urlChainId);
+                                    }
+                                  }}
                                   icon={
                                     <ArrowsRightLeftIcon
                                       className="h-5 w-5"
@@ -316,7 +413,9 @@ export function ConnectWallet() {
                               )}
 
                               <Button
-                                onClick={() => disconnect()}
+                                onClick={() => {
+                                  void handleDisconnect();
+                                }}
                                 btnStyle="filled"
                                 color="danger"
                                 className="w-full"

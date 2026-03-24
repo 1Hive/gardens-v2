@@ -9,6 +9,7 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { CheckIcon } from "@heroicons/react/24/solid";
+import { FetchTokenResult } from "@wagmi/core";
 
 import { Dnum, multiply } from "dnum";
 import Image from "next/image";
@@ -28,6 +29,7 @@ import {
   ProtopianLogo,
 } from "@/assets";
 import {
+  Badge,
   Button,
   CommunityStakingLeaderboard,
   DisplayNumber,
@@ -56,8 +58,12 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { useCouncil } from "@/hooks/useCouncil";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
+import { useHasContractCode } from "@/hooks/useHasContractCode";
 import { useIpfsFetch } from "@/hooks/useIpfsFetch";
-import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import {
+  dismissPendingSubgraphRefreshToast,
+  useSubgraphQuery,
+} from "@/hooks/useSubgraphQuery";
 import { getProtopiansOwners } from "@/services/alchemy";
 import { registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
@@ -123,12 +129,47 @@ export default function ClientPage({
   const isAwaitingNewCommunityIndexing =
     isNewCommunity && !registryCommunity;
   const tokenAddress = registryCommunity?.garden?.id;
+  const { hasContractCode: hasGardenTokenCode } = useHasContractCode({
+    address: tokenAddress,
+    chainId: chain?.id,
+    enabled: !!tokenAddress && chain?.id != null,
+  });
 
   const { data: tokenGarden } = useToken({
     address: tokenAddress as Address,
     chainId: chain?.id,
-    enabled: !!tokenAddress,
+    enabled: !!tokenAddress && hasGardenTokenCode,
   });
+  const resolvedTokenGarden = (tokenGarden ??
+    registryCommunity?.garden) as FetchTokenResult | undefined;
+
+  useEffect(() => {
+    if (!registryCommunity || resolvedTokenGarden) {
+      return;
+    }
+
+    logOnce("debug", "[CommunityPage] token loading condition", {
+      communityAddr,
+      tokenAddress,
+      chainId: chain?.id,
+      hasGardenTokenCode,
+      hasRegistryCommunity: registryCommunity != null,
+      hasSubgraphGarden: registryCommunity.garden != null,
+      hasUseTokenData: !!tokenGarden,
+      fetching,
+      isAwaitingNewCommunityIndexing,
+    });
+  }, [
+    chain?.id,
+    communityAddr,
+    fetching,
+    hasGardenTokenCode,
+    isAwaitingNewCommunityIndexing,
+    registryCommunity,
+    resolvedTokenGarden,
+    tokenAddress,
+    tokenGarden,
+  ]);
 
   const { data: covenantResult } = useIpfsFetch<{ covenant: string }>({
     hash: registryCommunity?.covenantIpfsHash,
@@ -278,6 +319,12 @@ export default function ClientPage({
   }, [error]);
 
   useEffect(() => {
+    if (isNewCommunity && registryCommunity) {
+      dismissPendingSubgraphRefreshToast();
+    }
+  }, [isNewCommunity, registryCommunity]);
+
+  useEffect(() => {
     if (!isNewCommunity) {
       pendingNewCommunityRefetch.current = null;
       return;
@@ -298,7 +345,7 @@ export default function ClientPage({
     }
 
     pendingNewCommunityRefetch.current = communityKey;
-    void refetch().finally(() => {
+    void refetch({ showToast: false }).finally(() => {
       if (pendingNewCommunityRefetch.current === communityKey) {
         pendingNewCommunityRefetch.current = null;
       }
@@ -464,9 +511,12 @@ export default function ClientPage({
   useEffect(() => {
     const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
     const fetchedPools = poolsInReview.some((c) => c.poolId === newPoolId);
+    if (newPoolId && fetchedPools) {
+      dismissPendingSubgraphRefreshToast();
+    }
     if (isNewCommunity) {
       console.debug("Community: New community, refetching...");
-      refetch();
+      refetch({ showToast: false });
     } else if (
       newPoolId &&
       result &&
@@ -476,7 +526,7 @@ export default function ClientPage({
         newPoolId,
         fetchedPools,
       });
-      refetch();
+      refetch({ showToast: false });
     }
   }, [searchParams, poolsInReview]);
 
@@ -506,7 +556,7 @@ export default function ClientPage({
     );
   }
 
-  if (!tokenGarden || !registryCommunity) {
+  if (!resolvedTokenGarden || !registryCommunity) {
     return (
       <div className="mt-96 col-span-12">
         <LoadingSpinner />
@@ -518,7 +568,7 @@ export default function ClientPage({
     try {
       const membership = [
         BigInt(registerStakeAmount),
-        Number(tokenGarden!.decimals),
+        Number(resolvedTokenGarden.decimals),
       ] as Dnum;
       const feePercentage = [
         BigInt(communityFee),
@@ -534,7 +584,7 @@ export default function ClientPage({
 
   const registrationAmount = [
     BigInt(registerStakeAmount),
-    tokenGarden.decimals,
+    resolvedTokenGarden.decimals,
   ] as Dnum;
 
   const registerStakeAmountValue = registerStakeAmount ?? 0;
@@ -555,13 +605,19 @@ export default function ClientPage({
     registerStakeAmountBn + // Min stake
     communityFeeAmount + // Community fee as % of min stake
     protocolFeeAmount; // Protocol fee as extra
+  const headerCardBorderClass =
+    registryCommunity.archived ?
+      "!border-warning-content"
+    : "border-gray-200";
 
   return (
     <>
       {/* Desktop Layout */}
       <div className="hidden md:block col-span-12 xl:col-span-9">
         <div className="backdrop-blur-sm flex flex-col gap-10">
-          <header className="border border-gray-200 shadow-sm section-layout">
+          <header
+            className={`border shadow-sm section-layout ${headerCardBorderClass}`}
+          >
             <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
               {/* Image */}
               <div className="flex-shrink-0">
@@ -581,7 +637,12 @@ export default function ClientPage({
               <div className="flex-1 flex-col lg:items-start lg:justify-between sm:gap-4 ">
                 {/* Community name + Address */}
                 <div className=" flex-flex-col">
-                  <h2>{communityName}</h2>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h2>{communityName}</h2>
+                    {registryCommunity.archived && (
+                      <Badge color="warning" label="Archived" />
+                    )}
+                  </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <EthAddress
                       icon={false}
@@ -628,10 +689,10 @@ export default function ClientPage({
                       <DisplayNumber
                         number={[
                           BigInt(communityStakedTokens),
-                          tokenGarden.decimals,
+                          resolvedTokenGarden.decimals,
                         ]}
                         compact={true}
-                        tokenSymbol={tokenGarden.symbol}
+                        tokenSymbol={resolvedTokenGarden.symbol}
                       />
                     </Statistic>
                   </div>
@@ -648,8 +709,8 @@ export default function ClientPage({
                             effectivePendingCouncilSafe ?? undefined
                           }
                           currentCovenant={covenant ?? ""}
-                          tokenDecimals={tokenGarden.decimals}
-                          tokenSymbol={tokenGarden.symbol}
+                          tokenDecimals={resolvedTokenGarden.decimals}
+                          tokenSymbol={resolvedTokenGarden.symbol}
                           isCouncilSafe={isCouncilSafe}
                           isCouncilMember={isCouncilMember}
                         />
@@ -670,6 +731,7 @@ export default function ClientPage({
                           : "Archive this community will hide it from being listed in the home page but will remain accessible through a link."
 
                         }
+                        tooltipSide="tooltip-bottom"
                         forceShowTooltip={result.registryCommunity?.archived}
                         onClick={() =>
                           writeSetArchive({
@@ -702,7 +764,7 @@ export default function ClientPage({
                     <RegisterMember
                       memberData={accountAddress ? isMemberResult : undefined}
                       registrationCost={totalRegistrationCost}
-                      token={tokenGarden}
+                      token={resolvedTokenGarden}
                       registryCommunity={registryCommunity}
                     />
                   </div>
@@ -713,11 +775,11 @@ export default function ClientPage({
                   <div className="flex gap-1 items-center ">
                     <p className="subtitle2">Registration stake:</p>
                     <InfoWrapper
-                      tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
+                      tooltip={`Registration amount: ${parseToken(registrationAmount)} ${resolvedTokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${resolvedTokenGarden.symbol}`}
                     >
                       <div className="flex">
                         <EthAddress
-                          address={tokenGarden.address as Address}
+                          address={resolvedTokenGarden.address as Address}
                           shortenAddress={true}
                           actions="none"
                           icon={false}
@@ -725,13 +787,13 @@ export default function ClientPage({
                             <DisplayNumber
                               number={[
                                 totalRegistrationCost,
-                                tokenGarden?.decimals,
+                                resolvedTokenGarden?.decimals,
                               ]}
                               valueClassName="text-xl font-bold"
                               disableTooltip={true}
                               compact={true}
                               copiable={true}
-                              tokenSymbol={tokenGarden.symbol}
+                              tokenSymbol={resolvedTokenGarden.symbol}
                             />
                           }
                         />
@@ -740,7 +802,7 @@ export default function ClientPage({
                   </div>
                   <CommunityStakingLeaderboard
                     membersStaked={leaderboardMembers}
-                    tokenGarden={tokenGarden}
+                    tokenGarden={resolvedTokenGarden}
                     communityName={communityName ?? "Community"}
                     communityStakedTokens={communityStakedTokens}
                     communityAddress={registryCommunity.id as Address}
@@ -810,7 +872,7 @@ export default function ClientPage({
               />
             </div>
           </section>
-          {!isProd && <TokenGardenFaucet token={tokenGarden} />}
+          {!isProd && <TokenGardenFaucet token={resolvedTokenGarden} />}
         </div>
       </div>
 
@@ -820,7 +882,7 @@ export default function ClientPage({
           <IncreasePower
             memberData={accountAddress ? isMemberResult : undefined}
             registryCommunity={registryCommunity}
-            tokenGarden={tokenGarden}
+            tokenGarden={resolvedTokenGarden}
             registrationAmount={registrationAmount}
           />
         </div>
@@ -852,7 +914,9 @@ export default function ClientPage({
           {/* Overview Tab */}
           {selectedTab === 0 && (
             <div className="backdrop-blur-sm flex flex-col gap-6">
-              <header className="border border-gray-200 shadow-sm section-layout">
+              <header
+                className={`border shadow-sm section-layout ${headerCardBorderClass}`}
+              >
                 <div className="flex flex-col items-start space-y-4">
                   {/* Image */}
                   <div className="flex-shrink-0">
@@ -872,7 +936,12 @@ export default function ClientPage({
                   <div className="flex-1 w-full flex-col gap-4">
                     {/* Community name + Address */}
                     <div className="mb-3">
-                      <h2>{communityName}</h2>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h2>{communityName}</h2>
+                        {registryCommunity.archived && (
+                          <Badge color="warning" label="Archived" />
+                        )}
+                      </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <EthAddress
                           icon={false}
@@ -918,10 +987,10 @@ export default function ClientPage({
                         <DisplayNumber
                           number={[
                             BigInt(communityStakedTokens),
-                            tokenGarden.decimals,
+                            resolvedTokenGarden.decimals,
                           ]}
                           compact={true}
-                          tokenSymbol={tokenGarden.symbol}
+                          tokenSymbol={resolvedTokenGarden.symbol}
                         />
                       </Statistic>
                     </div>
@@ -942,8 +1011,8 @@ export default function ClientPage({
                               effectivePendingCouncilSafe ?? undefined
                             }
                             currentCovenant={covenant ?? ""}
-                            tokenDecimals={tokenGarden.decimals}
-                            tokenSymbol={tokenGarden.symbol}
+                            tokenDecimals={resolvedTokenGarden.decimals}
+                            tokenSymbol={resolvedTokenGarden.symbol}
                             isCouncilSafe={isCouncilSafe}
                             isCouncilMember={isCouncilMember}
                             className="w-full"
@@ -965,6 +1034,7 @@ export default function ClientPage({
                             : "Archive this community will hide it from being listed in the home page but will remain accessible through a link."
 
                           }
+                          tooltipSide="tooltip-bottom"
                           forceShowTooltip={result.registryCommunity?.archived}
                           onClick={() =>
                             writeSetArchive({
@@ -999,7 +1069,7 @@ export default function ClientPage({
                       <RegisterMember
                         memberData={accountAddress ? isMemberResult : undefined}
                         registrationCost={totalRegistrationCost}
-                        token={tokenGarden}
+                        token={resolvedTokenGarden}
                         registryCommunity={registryCommunity}
                       />
                     </div>
@@ -1011,11 +1081,11 @@ export default function ClientPage({
                       <div className="flex gap-1 items-center flex-wrap">
                         <p className="subtitle2">Registration stake:</p>
                         <InfoWrapper
-                          tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
+                          tooltip={`Registration amount: ${parseToken(registrationAmount)} ${resolvedTokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${resolvedTokenGarden.symbol}`}
                         >
                           <div className="flex">
                             <EthAddress
-                              address={tokenGarden.address as Address}
+                              address={resolvedTokenGarden.address as Address}
                               shortenAddress={true}
                               actions="none"
                               icon={false}
@@ -1023,13 +1093,13 @@ export default function ClientPage({
                                 <DisplayNumber
                                   number={[
                                     totalRegistrationCost,
-                                    tokenGarden?.decimals,
+                                    resolvedTokenGarden?.decimals,
                                   ]}
                                   valueClassName="text-md sm:text-lg font-bold"
                                   disableTooltip={true}
                                   compact={true}
                                   copiable={true}
-                                  tokenSymbol={tokenGarden.symbol}
+                                  tokenSymbol={resolvedTokenGarden.symbol}
                                 />
                               }
                             />
@@ -1038,7 +1108,7 @@ export default function ClientPage({
                       </div>
                       <CommunityStakingLeaderboard
                         membersStaked={leaderboardMembers}
-                        tokenGarden={tokenGarden}
+                        tokenGarden={resolvedTokenGarden}
                         communityName={communityName ?? "Community"}
                         communityStakedTokens={communityStakedTokens}
                         communityAddress={registryCommunity.id as Address}
@@ -1056,12 +1126,12 @@ export default function ClientPage({
                 <IncreasePower
                   memberData={accountAddress ? isMemberResult : undefined}
                   registryCommunity={registryCommunity}
-                  tokenGarden={tokenGarden}
+                  tokenGarden={resolvedTokenGarden}
                   registrationAmount={registrationAmount}
                 />
               </div>
 
-              {!isProd && <TokenGardenFaucet token={tokenGarden} />}
+              {!isProd && <TokenGardenFaucet token={resolvedTokenGarden} />}
             </div>
           )}
 

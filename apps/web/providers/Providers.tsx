@@ -16,13 +16,12 @@ import {
   walletConnectWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { AddrethConfig } from "addreth";
+import { usePathname } from "next/navigation";
 import { Bounce, ToastContainer } from "react-toastify";
 import { Address, createWalletClient, custom, isAddress } from "viem";
 import { base } from "viem/chains";
-import { usePathname } from "next/navigation";
 import {
   Chain,
-  Config,
   configureChains,
   ConnectorAlreadyConnectedError,
   createConfig,
@@ -36,8 +35,7 @@ import { publicProvider } from "wagmi/providers/public";
 import ThemeProvider from "./ThemeProvider";
 import { TransactionNotificationProvider } from "./TransactionNotificationProvider";
 import { UrqlProvider } from "./UrqlProvider";
-import { chainConfigMap, CHAINS } from "@/configs/chains";
-import { isProd } from "@/configs/isProd";
+import { CHAINS } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import {
   QueryParamsProvider,
@@ -54,34 +52,22 @@ const dedupeChains = (chainList: Chain[]) =>
       arr.findIndex((item) => item.id === candidate.id) === index,
   );
 
+const getConfiguredChains = (
+  routeChain: Chain | undefined,
+) => {
+  return dedupeChains([
+    ...(routeChain ? [routeChain] : []),
+    ...CHAINS,
+    base,
+    mainnet,
+  ]);
+};
+
 const createCustomConfig = (
   chain: Chain | undefined,
   simulatedWallet?: Address,
-  includeAllChains: boolean = false,
 ) => {
-  let usedChains: Chain[] = [];
-  if (chain) {
-    usedChains = dedupeChains([chain, base, mainnet]);
-  } else {
-    const isClient = typeof window !== "undefined";
-    const queryAllChains =
-      isClient ?
-        window.localStorage?.getItem("queryAllChains") === "true"
-      : false;
-
-    const usedChainIds = Object.entries(chainConfigMap)
-      .filter(([_, chainConfig]) =>
-        includeAllChains || queryAllChains ? true
-        : isProd ? !chainConfig.isTestnet
-        : !!chainConfig.isTestnet,
-      )
-      .map(([chainId]) => Number(chainId));
-    usedChains = dedupeChains([
-      ...CHAINS.filter((elem) => usedChainIds.includes(elem.id)),
-      base,
-      mainnet,
-    ]);
-  }
+  const usedChains = getConfiguredChains(chain);
 
   const { publicClient, chains } = configureChains(usedChains, [
     alchemyProvider({
@@ -197,7 +183,7 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
 
   useEffect(() => {
     const { config, simulatedConnector: newSimulatedConnector } =
-      createCustomConfig(chain, simulatedWallet, includeAllChains);
+      createCustomConfig(chain, simulatedWallet);
     setWagmiConfig(config);
     setSimulatedConnector(newSimulatedConnector ?? null);
     setMounted(true);

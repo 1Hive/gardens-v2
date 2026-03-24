@@ -8,6 +8,7 @@ import {
   TokenGarden,
 } from "#/subgraph/.graphclient";
 import { useChainFromPath } from "./useChainFromPath";
+import { useHasContractCode } from "./useHasContractCode";
 import { useResolvedChainId } from "./useResolvedChainId";
 import { cvStrategyABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
@@ -48,6 +49,24 @@ export const useConvictionRead = ({
     abi: cvStrategyABI,
     enabled: !!proposalData,
   };
+  const { hasContractCode: hasStrategyContractCode } = useHasContractCode({
+    address: proposalData?.strategy.id,
+    chainId: resolvedChainId,
+    enabled: enabled && !!proposalData?.strategy.id && resolvedChainId != null,
+  });
+  const shouldReadConviction =
+    enabled && !!proposalData && hasStrategyContractCode;
+
+  if (enabled && proposalData?.strategy.id && resolvedChainId != null) {
+    logOnce("debug", "[useConvictionRead] read inputs", {
+      strategyAddress: proposalData.strategy.id,
+      proposalNumber: proposalData.proposalNumber,
+      explicitChainId: chainId,
+      resolvedChainId,
+      pathChainId: chain?.id,
+      hasStrategyContractCode,
+    });
+  }
 
   const {
     data: updatedConviction,
@@ -58,7 +77,7 @@ export const useConvictionRead = ({
     chainId: resolvedChainId,
     functionName: "calculateProposalConviction",
     args: [BigInt(proposalData?.proposalNumber ?? 0)],
-    enabled,
+    enabled: shouldReadConviction,
     watch: true,
   });
 
@@ -66,7 +85,8 @@ export const useConvictionRead = ({
     logOnce("error", "Error reading conviction", errorConviction);
   }
   const poolType = PoolTypes[strategyConfig?.proposalType];
-  const shouldReadThreshold = enabled && poolType !== "signaling";
+  const shouldReadThreshold =
+    shouldReadConviction && poolType !== "signaling";
 
   const {
     data: thresholdFromContract,

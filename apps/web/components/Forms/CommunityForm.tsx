@@ -5,7 +5,6 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
 import {
   Address,
   createPublicClient,
@@ -14,7 +13,7 @@ import {
   parseUnits,
   zeroAddress,
 } from "viem";
-import { erc20ABI, useNetwork, useSwitchNetwork } from "wagmi";
+import { erc20ABI, useNetwork } from "wagmi";
 import { getRegistryFactoryDataDocument } from "#/subgraph/.graphclient";
 import { getRegistryFactoryDataQuery } from "#/subgraph/.graphclient";
 import FormAddressInput from "./FormAddressInput";
@@ -33,6 +32,7 @@ import {
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
@@ -103,7 +103,6 @@ export const CommunityForm = () => {
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
   const router = useRouter();
   const publicClient = useMemo(() => {
     if (!selectedChainId) {
@@ -123,7 +122,7 @@ export const CommunityForm = () => {
     });
   }, [selectedChainId]);
   const { isConnected, tooltipMessage } = useDisableButtons();
-  const { switchNetwork, data: switchNetworkData } = useSwitchNetwork();
+  const { switchNetwork, data: switchNetworkData } = useAppSwitchNetwork();
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
   const [tokenIsFetching, setTokenIsFetching] = useState<boolean>(false);
 
@@ -246,14 +245,9 @@ export const CommunityForm = () => {
     contractName: "Registry Factory",
     fallbackErrorMessage: "Error creating community, please report a bug.",
     onError: () => {
-      setIsRedirecting(false);
       setLoading(false);
     },
     onConfirmations: async (receipt) => {
-      setIsRedirecting(true);
-      toast.loading("Community created. Redirecting...", {
-        toastId: "community-create-redirect",
-      });
       const newCommunityAddr = getEventFromReceipt(
         receipt,
         "RegistryFactory",
@@ -294,7 +288,6 @@ export const CommunityForm = () => {
 
   const handleBackToEdit = useCallback(() => {
     setShowPreview(false);
-    setIsRedirecting(false);
     setLoading(false);
   }, []);
 
@@ -308,18 +301,13 @@ export const CommunityForm = () => {
       setLoading(true);
 
       // Switch network if necessary
-      if (
-        selectedChainId &&
-        switchNetwork &&
-        selectedChainId !== connectedChainId
-      ) {
+      if (selectedChainId && selectedChainId !== connectedChainId) {
         try {
           await switchNetwork(selectedChainId);
           // Wait for network switch to complete
           await new Promise((resolve) => setTimeout(resolve, 1000));
         } catch (error) {
           console.error("Failed to switch networks:", error);
-          setIsRedirecting(false);
           setLoading(false);
           return;
         }
@@ -362,7 +350,6 @@ export const CommunityForm = () => {
           message: "Invalid community token address",
         });
         setShowPreview(false);
-        setIsRedirecting(false);
         setLoading(false);
         return;
       }
@@ -373,7 +360,6 @@ export const CommunityForm = () => {
           message: "Invalid council Safe address",
         });
         setShowPreview(false);
-        setIsRedirecting(false);
         setLoading(false);
         return;
       }
@@ -384,7 +370,6 @@ export const CommunityForm = () => {
           message: "Invalid community fee receiver address",
         });
         setShowPreview(false);
-        setIsRedirecting(false);
         setLoading(false);
         return;
       }
@@ -413,7 +398,6 @@ export const CommunityForm = () => {
       });
     } catch (error) {
       console.error("Error creating community:", error);
-      setIsRedirecting(false);
       setLoading(false);
     }
   }, [
@@ -690,11 +674,11 @@ export const CommunityForm = () => {
             </Button>
             <Button
               onClick={createCommunity}
-              isLoading={loading || isRedirecting}
+              isLoading={loading}
               disabled={!isConnected}
-              tooltip={isRedirecting ? "Redirecting to the new community page" : tooltipMessage}
+              tooltip={tooltipMessage}
             >
-              {isRedirecting ? "Redirecting..." : "Submit"}
+              Submit
             </Button>
           </div>
         : <Button type="submit">Preview</Button>}
