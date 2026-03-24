@@ -1608,7 +1608,7 @@ export default function DiamondAdminPage() {
             <p>Inferred proxy ABI</p>
             <select
               className="rounded-lg border border-border-neutral bg-neutral px-2 py-1 text-sm text-neutral-content focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
-              value={selectedProxyAbiLabel || inferredProxyAbi?.label || ""}
+              value={selectedProxyAbiLabel !== "" ? selectedProxyAbiLabel : (inferredProxyAbi?.label ?? "")}
               onChange={(event) =>
                 setSelectedProxyAbiLabel(event.target.value)
               }
