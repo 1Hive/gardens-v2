@@ -1478,8 +1478,7 @@ const findContractCreationBlock = async ({
     searchEnd != null && searchEnd > 0n && searchEnd < latestBlock ?
       searchEnd
     : latestBlock;
-  const lowerBound =
-    searchStart != null && searchStart > 0n ? searchStart : 0n;
+  const lowerBound = searchStart != null && searchStart > 0n ? searchStart : 0n;
 
   let hasCode = false;
   try {

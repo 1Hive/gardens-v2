@@ -121,6 +121,10 @@ export const FormAddressInput = ({
   }, [ensAddress, onChange, registerKey, registerOptions]);
 
   const validateSafeAddress = async (address: string) => {
+    if (bypassSafeCheck) {
+      return true;
+    }
+    
     if (!validationClient) {
       return "Unable to validate Safe address without an RPC client.";
     }
