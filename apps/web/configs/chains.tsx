@@ -398,7 +398,14 @@ export const chainConfigMap: {
       process.env.RPC_URL_ETHEREUM,
       getAlchemyRpcUrl("eth-mainnet"),
     ),
-    subgraphUrl: `https://api.studio.thegraph.com/query/102093/gardens-v-2-ethereum/${SUBGRAPH_VERSION_ETHEREUM}`,
+    ...getSubgraphUrls(
+      "39E6r8bqUTeyrSb4JWMkqcVBKqeKAwJVp6mPhoDCtgbB",
+      "gardens-v-2-ethereum",
+      SUBGRAPH_VERSION_ETHEREUM,
+    ),
+    ...getSuperfluidSubgraphUrls(
+      "3ALqHuNpxGPi1ecKSzxBQrTiKznoVk9cQYemY2RR5pgd",
+    ),
     superfluidExplorerUrl: getSuperfluidExplorerUrl("eth-mainnet"),
     globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
