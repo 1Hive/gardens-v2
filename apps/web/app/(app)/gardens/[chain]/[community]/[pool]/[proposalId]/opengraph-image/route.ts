@@ -13,7 +13,7 @@ type RouteContext = {
   params: ProposalPageParams;
 };
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 
 export async function GET(request: Request, { params }: RouteContext) {
   const url = new URL(request.url);
