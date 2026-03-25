@@ -42,7 +42,11 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useHasContractCode } from "@/hooks/useHasContractCode";
 import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { WALLETCONNECT_RESET_EVENT } from "@/providers/Providers";
+import {
+  AUTOCONNECT_RESET_EVENT,
+  SKIP_AUTOCONNECT_STORAGE_KEY,
+  WALLETCONNECT_RESET_EVENT,
+} from "@/providers/Providers";
 import { formatAddress } from "@/utils/formatAddress";
 
 const WALLETCONNECT_STORAGE_KEY_PREFIXES = [
@@ -59,6 +63,7 @@ const DISCONNECT_RESET_STORAGE_KEY_SUBSTRINGS = ["recentWalletIds"];
 
 type WalletConnectProviderLike = {
   disconnect?: () => Promise<void> | void;
+  session?: unknown;
   modal?: {
     closeModal?: () => void;
   };
@@ -86,6 +91,47 @@ const clearDisconnectPersistence = (storage: Storage) => {
   }
 
   keysToRemove.forEach((key) => storage.removeItem(key));
+};
+
+const WALLETCONNECT_INDEXED_DB_NAME_FRAGMENTS = [
+  "walletconnect",
+  "wallet_connect",
+  "wc@",
+];
+
+const clearWalletConnectIndexedDb = async () => {
+  if (typeof window === "undefined" || !("indexedDB" in window)) {
+    return;
+  }
+
+  const indexedDbWithDatabases = window.indexedDB as IDBFactory & {
+    databases?: () => Promise<Array<{ name?: string }>>;
+  };
+
+  if (indexedDbWithDatabases.databases == null) {
+    return;
+  }
+
+  const databases = await indexedDbWithDatabases.databases();
+  await Promise.all(
+    databases.map(async ({ name }) => {
+      if (
+        !name ||
+        !WALLETCONNECT_INDEXED_DB_NAME_FRAGMENTS.some((fragment) =>
+          name.toLowerCase().includes(fragment),
+        )
+      ) {
+        return;
+      }
+
+      await new Promise<void>((resolve) => {
+        const request = window.indexedDB.deleteDatabase(name);
+        request.onsuccess = () => resolve();
+        request.onerror = () => resolve();
+        request.onblocked = () => resolve();
+      });
+    }),
+  );
 };
 
 export function ConnectWallet() {
@@ -176,29 +222,52 @@ export function ConnectWallet() {
       });
   }, [account.connector, account.isConnected]);
 
+  useEffect(() => {
+    if (!account.isConnected || typeof window === "undefined") {
+      return;
+    }
+
+    if (window.localStorage.getItem(SKIP_AUTOCONNECT_STORAGE_KEY) !== "true") {
+      return;
+    }
+
+    window.localStorage.removeItem(SKIP_AUTOCONNECT_STORAGE_KEY);
+  }, [account.isConnected]);
+
   const handleDisconnect = useCallback(async () => {
     const connector = account.connector;
     const isWalletConnectConnector = connector?.id === "walletConnect";
+    let provider: WalletConnectProviderLike | null = null;
 
     try {
       if (isWalletConnectConnector) {
-        const provider =
+        provider =
           (await connector.getProvider()) as WalletConnectProviderLike | null;
 
         provider?.modal?.closeModal?.();
-        await provider?.disconnect?.();
       }
     } catch {
       // Ignore provider-level disconnect failures and still clear local state.
     } finally {
+      await disconnectAsync();
+
+      if (isWalletConnectConnector && provider?.session) {
+        try {
+          await provider.disconnect?.();
+        } catch {
+          // Ignore late WalletConnect provider disconnect failures after wagmi disconnect.
+        }
+      }
+
       if (typeof window !== "undefined") {
+        window.localStorage.setItem(SKIP_AUTOCONNECT_STORAGE_KEY, "true");
         clearDisconnectPersistence(window.localStorage);
         clearDisconnectPersistence(window.sessionStorage);
+        await clearWalletConnectIndexedDb();
+        window.dispatchEvent(new Event(AUTOCONNECT_RESET_EVENT));
         window.dispatchEvent(new Event(WALLETCONNECT_RESET_EVENT));
       }
     }
-
-    await disconnectAsync();
   }, [account.connector, disconnectAsync]);
 
   const wallet = connectors[0].name;
@@ -234,6 +303,13 @@ export function ConnectWallet() {
     cacheTime: 30_000,
   });
 
+  const handleOpenConnectModal = useCallback(
+    (openConnectModal?: (() => void) | undefined) => {
+      openConnectModal?.();
+    },
+    [],
+  );
+
   return (
     <ConnectButton.Custom>
       {({ account: acc, chain, openConnectModal, mounted }) => {
@@ -248,7 +324,7 @@ export function ConnectWallet() {
               //button to connect wallet
               if (!connected) {
                 return (
-                  <Button onClick={openConnectModal}>
+                  <Button onClick={() => handleOpenConnectModal(openConnectModal)}>
                     <Image
                       src={walletIcon}
                       alt="wallet"
