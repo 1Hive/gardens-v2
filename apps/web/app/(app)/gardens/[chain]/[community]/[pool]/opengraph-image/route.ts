@@ -8,7 +8,7 @@ type RouteContext = {
   };
 };
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 export async function GET(_: Request, { params }: RouteContext) {
   return Image({ params });
