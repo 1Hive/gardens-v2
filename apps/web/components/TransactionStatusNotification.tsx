@@ -51,8 +51,11 @@ export function TransactionStatusNotification({
   const icon = statusToIcon[status];
   const textColor = statusToTextColor[status];
   const hasContractName =
-    contractName !== undefined && contractName !== null && contractName !== false;
-  const hasMessage = message !== undefined && message !== null && message !== false;
+    contractName !== undefined &&
+    contractName !== null &&
+    contractName !== false;
+  const hasMessage =
+    message !== undefined && message !== null && message !== false;
   const textClass =
     showClickToExplorer ? textColor : "dark:text-neutral-inverted-content";
   const contractNameClass =

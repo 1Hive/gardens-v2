@@ -16,7 +16,6 @@ import {
   useContractRead,
   useNetwork,
   usePublicClient,
-  useSwitchNetwork,
   useWalletClient,
 } from "wagmi";
 import { Button } from "@/components/Button";
@@ -24,6 +23,7 @@ import { InfoBox } from "@/components/InfoBox";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { CHAINS } from "@/configs/chains";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { logOnce } from "@/utils/log";
 import { shortenAddress } from "@/utils/text";
@@ -202,7 +202,7 @@ export default function DiamondAdminPage() {
   const { data: walletClient } = useWalletClient({ chainId: selectedChainId });
   const { chain } = useNetwork();
   const { switchNetworkAsync, isLoading: isSwitchingNetwork } =
-    useSwitchNetwork();
+    useAppSwitchNetwork();
   const { isConnected } = useAccount();
 
   const {
@@ -536,11 +536,6 @@ export default function DiamondAdminPage() {
       }
 
       if (chain?.id !== selectedChainId) {
-        if (!switchNetworkAsync) {
-          throw new Error(
-            `Wrong network: wallet is on ${chain?.id ?? "unknown"}. Switch to ${selectedChainId} in your wallet first.`,
-          );
-        }
         await switchNetworkAsync(selectedChainId);
       }
 
@@ -956,4 +951,3 @@ export default function DiamondAdminPage() {
     </div>
   );
 }
-

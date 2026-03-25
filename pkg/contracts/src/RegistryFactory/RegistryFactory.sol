@@ -360,12 +360,16 @@ contract RegistryFactory is ProxyOwnableUpgrader {
             return 0;
         }
 
-        // Make sure council address is not EOA
+        // Only Safe-compatible council contracts expose getOwners().
+        // Other contract wallets should not break fee calculation.
         if (address(councilSafe).code.length != 0) {
-            address[] memory communityOwners = councilSafe.getOwners();
-            for (uint256 i = 0; i < communityOwners.length; i++) {
-                if (protopiansAddresses[communityOwners[i]]) {
-                    return 0;
+            (bool ok, bytes memory data) = address(councilSafe).staticcall(abi.encodeWithSelector(ISafe.getOwners.selector));
+            if (ok && data.length > 0) {
+                address[] memory communityOwners = abi.decode(data, (address[]));
+                for (uint256 i = 0; i < communityOwners.length; i++) {
+                    if (protopiansAddresses[communityOwners[i]]) {
+                        return 0;
+                    }
                 }
             }
         }

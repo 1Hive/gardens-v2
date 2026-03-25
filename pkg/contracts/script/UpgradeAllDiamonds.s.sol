@@ -10,6 +10,7 @@ import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
 import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {CVSyncPowerFacet} from "../src/CVStrategy/facets/CVSyncPowerFacet.sol";
+import {CVStreamingFacet} from "../src/CVStrategy/facets/CVStreamingFacet.sol";
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
@@ -49,6 +50,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
     CVPowerFacet public cvPowerFacet;
     CVProposalFacet public cvProposalFacet;
     CVSyncPowerFacet public cvSyncPowerFacet;
+    CVStreamingFacet public cvStreamingFacet;
 
     // RegistryCommunity facets
     CommunityAdminFacet public communityAdminFacet;
@@ -144,6 +146,8 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
 
         cvSyncPowerFacet = new CVSyncPowerFacet();
 
+        cvStreamingFacet = new CVStreamingFacet();
+
         // Deploy RegistryCommunity facets
         communityAdminFacet = new CommunityAdminFacet();
 
@@ -198,113 +202,12 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
         }
     }
 
-    function _readAddressOrZero(string memory key) internal returns (address) {
-        string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/pkg/contracts/config/networks.json");
-        string memory command = string.concat(
-            "jq -r '(.networks[] | select(.name==\"", CURRENT_NETWORK, "\") | ", key, " // empty)' ", path
-        );
-
-        string[] memory inputs = new string[](3);
-        inputs[0] = "bash";
-        inputs[1] = "-c";
-        inputs[2] = command;
-        bytes memory result = vm.ffi(inputs);
-        string memory value = _trim(string(result));
-        if (bytes(value).length == 0) {
-            return address(0);
-        }
-        if (keccak256(bytes(value)) == keccak256(bytes("null"))) {
-            return address(0);
-        }
-        return _parseAddress(value);
-    }
-
-    function _trim(string memory input) internal pure returns (string memory) {
-        bytes memory inputBytes = bytes(input);
-        uint256 start = 0;
-        uint256 end = inputBytes.length;
-        while (start < end && _isWhitespace(inputBytes[start])) {
-            start++;
-        }
-        while (end > start && _isWhitespace(inputBytes[end - 1])) {
-            end--;
-        }
-        bytes memory trimmed = new bytes(end - start);
-        for (uint256 i = 0; i < trimmed.length; i++) {
-            trimmed[i] = inputBytes[start + i];
-        }
-        return string(trimmed);
-    }
-
-    function _isWhitespace(bytes1 char) internal pure returns (bool) {
-        return char == 0x20 || char == 0x0a || char == 0x0d || char == 0x09;
-    }
-
-    function _parseAddress(string memory value) internal pure returns (address) {
-        bytes memory data = bytes(value);
-        if (data.length != 42 || data[0] != "0" || data[1] != "x") {
-            return address(0);
-        }
-        uint160 result = 0;
-        for (uint256 i = 2; i < 42; i++) {
-            uint8 nibble = _fromHexChar(data[i]);
-            if (nibble > 15) {
-                return address(0);
-            }
-            result = (result << 4) | uint160(nibble);
-        }
-        return address(result);
-    }
-
-    function _fromHexChar(bytes1 char) internal pure returns (uint8) {
-        uint8 value = uint8(char);
-        if (value >= 48 && value <= 57) {
-            return value - 48;
-        }
-        if (value >= 65 && value <= 70) {
-            return value - 55;
-        }
-        if (value >= 97 && value <= 102) {
-            return value - 87;
-        }
-        return 255;
-    }
-
     function _runtimeCodeHash(string memory artifactId) internal returns (bytes32) {
         bytes memory deployedCode = vm.getDeployedCode(artifactId);
         if (deployedCode.length == 0) {
             revert("Missing deployed bytecode for artifact");
         }
         return keccak256(deployedCode);
-    }
-
-    function _writeNetworkAddress(string memory key, address value) internal {
-        string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/pkg/contracts/config/networks.json");
-        string memory tmpPath = string.concat(root, "/pkg/contracts/config/.networks.tmp.json");
-        string memory command = string.concat(
-            "jq '(.networks[] | select(.name==\"",
-            CURRENT_NETWORK,
-            "\") | ",
-            key,
-            ") = \"",
-            _addressToString(value),
-            "\"' ",
-            path,
-            " > ",
-            tmpPath,
-            " && mv ",
-            tmpPath,
-            " ",
-            path
-        );
-
-        string[] memory inputs = new string[](3);
-        inputs[0] = "bash";
-        inputs[1] = "-c";
-        inputs[2] = command;
-        vm.ffi(inputs);
     }
 
     function _executeRun(string memory networkJson, bool directBroadcast, RunContext memory context) internal {
@@ -605,11 +508,12 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
                 cvPauseFacet,
                 cvPowerFacet,
                 cvProposalFacet,
-                cvSyncPowerFacet
+                cvSyncPowerFacet,
+                cvStreamingFacet
             );
-        cuts = new IDiamond.FacetCut[](8);
+        cuts = new IDiamond.FacetCut[](9);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 7; i++) {
+        for (uint256 i = 0; i < 8; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }
@@ -712,19 +616,6 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
         );
     }
 
-    function _addressToString(address _addr) internal pure returns (string memory) {
-        bytes32 value = bytes32(uint256(uint160(_addr)));
-        bytes memory alphabet = "0123456789abcdef";
-
-        bytes memory str = new bytes(42);
-        str[0] = "0";
-        str[1] = "x";
-        for (uint256 i = 0; i < 20; i++) {
-            str[2 + i * 2] = alphabet[uint8(value[i + 12] >> 4)];
-            str[3 + i * 2] = alphabet[uint8(value[i + 12] & 0x0f)];
-        }
-        return string(str);
-    }
 
     function _bytesToHexString(bytes memory _bytes) internal pure returns (string memory) {
         bytes memory alphabet = "0123456789abcdef";

@@ -23,6 +23,10 @@ contract MockSafe {
     }
 }
 
+contract MockNonSafeContractWallet {
+    fallback() external payable {}
+}
+
 contract MockRegistryCommunity {
     address public councilSafe;
 
@@ -235,6 +239,17 @@ contract RegistryFactoryTest is Test {
 
     function test_getProtocolFee_returnsFeeWhenCouncilSafeIsEOA() public {
         params._councilSafe = payable(address(0xABCD));
+        address registryAddr = factory.createRegistry(params);
+
+        vm.prank(owner);
+        factory.setProtocolFee(registryAddr, 55);
+
+        uint256 fee = factory.getProtocolFee(registryAddr);
+        assertEq(fee, 55);
+    }
+
+    function test_getProtocolFee_returnsFeeWhenCouncilSafeContractIsNotSafe() public {
+        params._councilSafe = payable(address(new MockNonSafeContractWallet()));
         address registryAddr = factory.createRegistry(params);
 
         vm.prank(owner);

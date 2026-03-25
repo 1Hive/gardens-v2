@@ -29,6 +29,7 @@ NETWORK=""
 ALL_PROD=false
 PROXIES=()
 OUT_DIR=""
+VERIFIER_URL=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -58,6 +59,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --proxy)
       PROXIES+=("$2")
+      shift 2
+      ;;
+    --verifier-url)
+      VERIFIER_URL="$2"
       shift 2
       ;;
     -h|--help)
@@ -90,7 +95,7 @@ load_rpc_from_env() {
     11155420) rpc_var="RPC_URL_OP_TESTNET";;
     42161) rpc_var="RPC_URL_ARB";;
     10) rpc_var="RPC_URL_OPT";;
-    1) rpc_var="RPC_URL_MAINNET";;
+    1) rpc_var="RPC_URL_ETHEREUM";;
     137) rpc_var="RPC_URL_POLYGON";;
     100) rpc_var="RPC_URL_GNOSIS";;
     8453) rpc_var="RPC_URL_BASE";;
@@ -116,6 +121,39 @@ if [[ -z "$ETHERSCAN_API_KEY" ]]; then
 fi
 
 declare -A HASH_TO_CONTRACT
+
+verify_with_retry() {
+  local description="$1"
+  shift
+
+  local attempt=1
+  local max_attempts=4
+  local delay=8
+  local output
+
+  while true; do
+    if output="$("$@" 2>&1)"; then
+      printf '%s\n' "$output"
+      sleep 2
+      return 0
+    fi
+
+    printf '%s\n' "$output" >&2
+    if [[ "$attempt" -ge "$max_attempts" ]]; then
+      return 1
+    fi
+
+    if grep -Eqi 'rate limit|max calls per sec|expected value|SourcifyResponse|429|timeout' <<< "$output"; then
+      echo "    - Retrying $description after ${delay}s (attempt $((attempt + 1))/${max_attempts})..." >&2
+      sleep "$delay"
+      attempt=$((attempt + 1))
+      delay=$((delay * 2))
+      continue
+    fi
+
+    return 1
+  done
+}
 
 build_contract_map() {
   echo "Scanning facet artifacts in $OUT_DIR ..."
@@ -207,7 +245,16 @@ verify_network() {
   local -A expected_facets=()
   local display_name="${network:-custom}"
   local unknown_facet_count=0
+  local unknown_codehash_count=0
   local skipped_proxy_count=0
+  local -a unknown_codehash_messages=()
+  local -a verifier_args=(--verifier etherscan)
+
+  if [[ -n "$VERIFIER_URL" ]]; then
+    verifier_args+=(--verifier-url "$VERIFIER_URL")
+  elif [[ "$chain_id" == "11155420" ]]; then
+    verifier_args+=(--verifier-url "https://api.etherscan.io/v2/api?chainid=11155420")
+  fi
 
   if [[ -n "$network" ]]; then
     while read -r facet_impl; do
@@ -248,13 +295,15 @@ verify_network() {
       codehash=$(cast codehash --rpc-url "$rpc_url" "$facet")
       contract=${HASH_TO_CONTRACT[$codehash]:-}
       if [[ -z "$contract" ]]; then
-        echo "    - Unknown facet codehash for $facet (skipping)"
+        unknown_codehash_count=$((unknown_codehash_count + 1))
+        unknown_codehash_messages+=("live facet $facet")
         continue
       fi
 
       echo "    - Verifying $facet as $contract"
-      forge verify-contract \
+      verify_with_retry "$facet on $display_name" forge verify-contract \
         --chain-id "$chain_id" \
+        "${verifier_args[@]}" \
         --etherscan-api-key "$ETHERSCAN_API_KEY" \
         "$facet" \
         "$contract"
@@ -273,13 +322,15 @@ verify_network() {
       codehash=$(cast codehash --rpc-url "$rpc_url" "$facet")
       contract=${HASH_TO_CONTRACT[$codehash]:-}
       if [[ -z "$contract" ]]; then
-        echo "    - Unknown facet codehash for declared facet $facet (skipping)"
+        unknown_codehash_count=$((unknown_codehash_count + 1))
+        unknown_codehash_messages+=("declared facet $facet")
         continue
       fi
 
       echo "    - Verifying declared facet $facet as $contract"
-      forge verify-contract \
+      verify_with_retry "declared facet $facet on $display_name" forge verify-contract \
         --chain-id "$chain_id" \
+        "${verifier_args[@]}" \
         --etherscan-api-key "$ETHERSCAN_API_KEY" \
         "$facet" \
         "$contract"
@@ -296,6 +347,20 @@ verify_network() {
   if [[ "$unknown_facet_count" -gt 0 ]]; then
     echo "  - ERROR: Found ${unknown_facet_count} facet address(es) missing from config/networks.json FACETS." >&2
     return 1
+  fi
+  if [[ "$unknown_codehash_count" -gt 0 ]]; then
+    echo "  - INFO: Skipped source mapping for ${unknown_codehash_count} facet address(es) with unknown codehashes."
+    local preview_count=${#unknown_codehash_messages[@]}
+    if [[ "$preview_count" -gt 5 ]]; then
+      preview_count=5
+    fi
+    local i
+    for ((i=0; i<preview_count; i++)); do
+      echo "    - ${unknown_codehash_messages[$i]}"
+    done
+    if [[ ${#unknown_codehash_messages[@]} -gt "$preview_count" ]]; then
+      echo "    - ... and $(( ${#unknown_codehash_messages[@]} - preview_count )) more"
+    fi
   fi
 }
 
@@ -355,9 +420,13 @@ else
   fi
 
   if [[ ${#PROXIES[@]} -eq 0 ]]; then
-    echo "No proxies provided. Use --network or --proxy." >&2
-    usage
-    exit 1
+    if [[ -n "$NETWORK" ]]; then
+      echo "No proxies configured for $NETWORK. Verifying declared FACETS only."
+    else
+      echo "No proxies provided. Use --network or --proxy." >&2
+      usage
+      exit 1
+    fi
   fi
 
   verify_network "$NETWORK" "$CHAIN_ID" "$RPC_URL" "${PROXIES[@]}"

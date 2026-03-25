@@ -22,6 +22,7 @@ export { Show, When, Else } from "./Show";
 export { Statistic } from "./Statistic";
 export { Layout } from "./Layout";
 export { DisplayNumber } from "./DisplayNumber";
+export { Countdown } from "./Countdown";
 export { EditCommunityModal as EditCommunityModal } from "./EditCommunityModal";
 export { ProposalCard } from "./ProposalCard";
 export { Card } from "./Card";

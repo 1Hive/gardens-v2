@@ -866,7 +866,7 @@ const getMainnetClient = () => {
   mainnetClient = createPublicClient({
     chain: chainCfg,
     transport: http(
-      process.env.RPC_URL_MAINNET ?? chainCfg.rpcUrls.default.http[0],
+      process.env.RPC_URL_ETHEREUM ?? chainCfg.rpcUrls.default.http[0],
     ),
   });
   return mainnetClient;
@@ -1478,8 +1478,7 @@ const findContractCreationBlock = async ({
     searchEnd != null && searchEnd > 0n && searchEnd < latestBlock ?
       searchEnd
     : latestBlock;
-  const lowerBound =
-    searchStart != null && searchStart > 0n ? searchStart : 0n;
+  const lowerBound = searchStart != null && searchStart > 0n ? searchStart : 0n;
 
   let hasCode = false;
   try {

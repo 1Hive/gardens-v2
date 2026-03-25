@@ -34,6 +34,8 @@ export const LoupeButton = ({
     <Link
       href={href}
       prefetch={false}
+      target="_blank"
+      rel="noreferrer noopener"
       className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-base leading-none text-secondary-content hover:bg-secondary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary ${className}`}
       aria-label="Open in Loupe"
       title="Open in Loupe"

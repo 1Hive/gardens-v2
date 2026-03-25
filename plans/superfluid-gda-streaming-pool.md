@@ -40,6 +40,7 @@ We will implement the Streaming Pool using **Superfluid General Distribution Agr
 
    - `rebalance()` is **permissionless**
    - A keeper/cron is used only for liveness
+   - Current operational assumption: a cron-triggered rebalance runs every **5 minutes**
    - The contract enforces:
      - `minUpdateDelay` (time gate)
      - minimum change thresholds (bps / absolute)
@@ -128,3 +129,77 @@ We will implement the Streaming Pool using **Superfluid General Distribution Agr
 - Tune `minUpdateDelay`, thresholds, and batch size
 - Standardize DisputeEscrow implementation
 - Add monitoring for rebalance liveness
+
+## Meeting Follow-Ups From 2026-03-04 Core Sync
+
+These are transcript-derived suggestions specifically relevant to the streaming pool feature and current web implementation.
+
+### UX and Visual Design
+
+- Replace the current streaming animation / illustration with a clearer metaphor for value flowing over time.
+- Keep the visual treatment aligned with the rest of the Gardens UI rather than using a placeholder-style graphic.
+- Review Flow State UI patterns as inspiration for cleaner stream information cards.
+
+### Pool and Proposal UI
+
+- Right-align the `Join` button / primary membership CTA.
+- Show the user's current balance inside the streaming modal, not only as an insufficient-balance warning.
+- Fix the step text / rendering for steps `1`, `2`, and `3` in the modal flow.
+- Reduce information overload on the proposal details page, especially the right-side information cluster.
+- Preserve useful recipient-facing information such as `available to unwrap`, but remove debug/internal escrow details from production views.
+- Restrict `unwrap / claim funds` actions to the proposal owner; non-owners should see status or explanatory text instead of the action.
+
+### Terminology and States
+
+- Prefer `threshold` as the user-facing term for the conviction requirement.
+- Make it explicit in the UI that if threshold is not met, the stream does not begin.
+- Split proposal/pool stream states more clearly than `active`, for example:
+  - `streaming`
+  - `active but not streaming`
+
+### Rebalance / Sync UX
+
+- Keep the `sync stream` / `rebalance` action out of the primary UX by default unless there is a clear user need.
+- If a manual sync action remains available, position it as an exception/liveness control rather than a normal user task.
+- Because rebalance is expected to run from cron every 5 minutes, proposals that have crossed threshold but are waiting for the next rebalance should be presented as `about to stream`, not as manually pending execution.
+
+### Routing and Integrations
+
+- Evaluate changing pool URLs from pool ID-based bootstrapping to contract-address-based bootstrapping.
+- Main rationale:
+  - faster page bootstrapping
+  - fewer lookup queries
+  - easier external integration, especially for Flow State-style forwarding
+- Validate with external integrators before locking this in.
+
+### Production Readiness
+
+- Address the known security issues before production rollout.
+- Secure the required Superfluid deployment key / super app credentials before launch.
+
+## Latest UX Decisions
+
+These decisions supersede older wording where there is a conflict.
+
+### Streaming Status Language
+
+- For streaming proposals, avoid user-facing references to `executed` except in developer/internal contexts.
+- Keep `executed` as the internal enum / contract-facing state if needed, but do not surface it as the primary UX label.
+- Preferred user-facing status labels:
+  - `streaming` when the proposal has active flow
+  - `about to stream` when the proposal has crossed threshold and is waiting for the next scheduled rebalance
+  - `active, not streaming` when the proposal is active but below threshold
+  - `disputed`, `cancelled`, and `rejected` remain unchanged
+
+### Streaming Copy Rules
+
+- Replace `Ready to be executed` with `About to stream` for streaming proposals.
+- Replace `Executed` timeline/milestone language with `Started streaming` for streaming proposals.
+- Replace funding-style `pass/execute` messaging with streaming-specific wording where appropriate:
+  - `This proposal is active. Once it reaches the threshold, it will start streaming automatically unless successfully disputed.`
+- Prefer `Before streaming starts` over `Before stream start`.
+
+### Current Web App Direction
+
+- The web app already uses contract-address-based pool routing, so URL work should be treated as validation / cleanup rather than a net-new routing model.
+- Streaming status copy in the web app should continue to diverge from funding-pool terminology even if both share the same underlying proposal status enum.

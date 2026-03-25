@@ -2,24 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { AbiFunction, AbiParameter } from "abitype";
-import { useSearchParams } from "next/navigation";
-import communityAdminFacetArtifact from "#/contracts/abis/CommunityAdminFacet.sol/CommunityAdminFacet.json";
-import communityMemberFacetArtifact from "#/contracts/abis/CommunityMemberFacet.sol/CommunityMemberFacet.json";
-import communityPoolFacetArtifact from "#/contracts/abis/CommunityPoolFacet.sol/CommunityPoolFacet.json";
-import communityPowerFacetArtifact from "#/contracts/abis/CommunityPowerFacet.sol/CommunityPowerFacet.json";
-import communityStrategyFacetArtifact from "#/contracts/abis/CommunityStrategyFacet.sol/CommunityStrategyFacet.json";
-import communityPauseFacetArtifact from "#/contracts/abis/CommunityPauseFacet.sol/CommunityPauseFacet.json";
-import cvAdminFacetArtifact from "#/contracts/abis/CVAdminFacet.sol/CVAdminFacet.json";
-import cvAllocationFacetArtifact from "#/contracts/abis/CVAllocationFacet.sol/CVAllocationFacet.json";
-import cvDisputeFacetArtifact from "#/contracts/abis/CVDisputeFacet.sol/CVDisputeFacet.json";
-import cvPowerFacetArtifact from "#/contracts/abis/CVPowerFacet.sol/CVPowerFacet.json";
-import cvProposalFacetArtifact from "#/contracts/abis/CVProposalFacet.sol/CVProposalFacet.json";
-import cvPauseFacetArtifact from "#/contracts/abis/CVPauseFacet.sol/CVPauseFacet.json";
-import cvStreamingFacetArtifact from "#/contracts/abis/CVStreamingFacet.sol/CVStreamingFacet.json";
-import cvSyncPowerFacetArtifact from "#/contracts/abis/CVSyncPowerFacet.sol/CVSyncPowerFacet.json";
-import diamondCutFacetArtifact from "#/contracts/abis/DiamondCutFacet.sol/DiamondCutFacet.json";
-import diamondLoupeFacetArtifact from "#/contracts/abis/DiamondLoupeFacet.sol/DiamondLoupeFacet.json";
-import ownershipFacetArtifact from "#/contracts/abis/OwnershipFacet.sol/OwnershipFacet.json";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Address,
   decodeErrorResult,
@@ -35,14 +18,43 @@ import {
   useContractRead,
   useNetwork,
   usePublicClient,
-  useSwitchNetwork,
   useWalletClient,
 } from "wagmi";
+import communityAdminFacetArtifact from "#/contracts/abis/CommunityAdminFacet.sol/CommunityAdminFacet.json";
+import communityMemberFacetArtifact from "#/contracts/abis/CommunityMemberFacet.sol/CommunityMemberFacet.json";
+import communityPauseFacetArtifact from "#/contracts/abis/CommunityPauseFacet.sol/CommunityPauseFacet.json";
+import communityPoolFacetArtifact from "#/contracts/abis/CommunityPoolFacet.sol/CommunityPoolFacet.json";
+import communityPowerFacetArtifact from "#/contracts/abis/CommunityPowerFacet.sol/CommunityPowerFacet.json";
+import communityStrategyFacetArtifact from "#/contracts/abis/CommunityStrategyFacet.sol/CommunityStrategyFacet.json";
+import cvAdminFacetArtifact from "#/contracts/abis/CVAdminFacet.sol/CVAdminFacet.json";
+import cvAllocationFacetArtifact from "#/contracts/abis/CVAllocationFacet.sol/CVAllocationFacet.json";
+import cvDisputeFacetArtifact from "#/contracts/abis/CVDisputeFacet.sol/CVDisputeFacet.json";
+import cvPauseFacetArtifact from "#/contracts/abis/CVPauseFacet.sol/CVPauseFacet.json";
+import cvPowerFacetArtifact from "#/contracts/abis/CVPowerFacet.sol/CVPowerFacet.json";
+import cvProposalFacetArtifact from "#/contracts/abis/CVProposalFacet.sol/CVProposalFacet.json";
+import cvStreamingFacetArtifact from "#/contracts/abis/CVStreamingFacet.sol/CVStreamingFacet.json";
+import cvSyncPowerFacetArtifact from "#/contracts/abis/CVSyncPowerFacet.sol/CVSyncPowerFacet.json";
+import diamondLoupeFacetArtifact from "#/contracts/abis/DiamondLoupeFacet.sol/DiamondLoupeFacet.json";
+import globalPauseControllerArtifact from "#/contracts/abis/GlobalPauseController.sol/GlobalPauseController.json";
+import proxyOwnableUpgraderArtifact from "#/contracts/abis/ProxyOwnableUpgrader.sol/ProxyOwnableUpgrader.json";
+import proxyOwnerArtifact from "#/contracts/abis/ProxyOwner.sol/ProxyOwner.json";
+import streamingEscrowFactoryArtifact from "#/contracts/abis/StreamingEscrowFactory.sol/StreamingEscrowFactory.json";
 import { Button } from "@/components/Button";
 import { InfoBox } from "@/components/InfoBox";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { CHAINS } from "@/configs/chains";
-import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
+import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
+import {
+  alloABI,
+  cvStrategyABI,
+  erc20ABI,
+  goodDollarABI,
+  iArbitratorABI,
+  passportScorerABI,
+  registryCommunityABI,
+  registryFactoryABI,
+  safeArbitratorABI,
+} from "@/src/generated";
 import { shortenAddress } from "@/utils/text";
 
 type DiamondFacet = {
@@ -68,8 +80,19 @@ type KnownFacetDefinition = {
 };
 const EMPTY_FACETS: DiamondFacet[] = [];
 const KNOWN_ABI_CATALOG = [
+  { label: "Allo", abi: alloABI },
+  { label: "ERC20", abi: erc20ABI },
+  { label: "GoodDollar", abi: goodDollarABI },
+  { label: "IArbitrator", abi: iArbitratorABI },
+  { label: "PassportScorer", abi: passportScorerABI },
+  { label: "ProxyOwnableUpgrader", abi: proxyOwnableUpgraderArtifact.abi },
+  { label: "ProxyOwner", abi: proxyOwnerArtifact.abi },
+  { label: "RegistryFactory", abi: registryFactoryABI },
   { label: "RegistryCommunity", abi: registryCommunityABI },
+  { label: "SafeArbitrator", abi: safeArbitratorABI },
+  { label: "StreamingEscrowFactory", abi: streamingEscrowFactoryArtifact.abi },
   { label: "CVStrategy", abi: cvStrategyABI },
+  { label: "GlobalPauseController", abi: globalPauseControllerArtifact.abi },
 ] as const;
 const KNOWN_FACET_ABI_CATALOG = [
   { label: "CommunityAdminFacet", abi: communityAdminFacetArtifact.abi },
@@ -86,9 +109,7 @@ const KNOWN_FACET_ABI_CATALOG = [
   { label: "CVPauseFacet", abi: cvPauseFacetArtifact.abi },
   { label: "CVStreamingFacet", abi: cvStreamingFacetArtifact.abi },
   { label: "CVSyncPowerFacet", abi: cvSyncPowerFacetArtifact.abi },
-  { label: "DiamondCutFacet", abi: diamondCutFacetArtifact.abi },
   { label: "DiamondLoupeFacet", abi: diamondLoupeFacetArtifact.abi },
-  { label: "OwnershipFacet", abi: ownershipFacetArtifact.abi },
 ] as const;
 
 const FACETS_ABI = [
@@ -248,6 +269,20 @@ const getParameterHelper = (parameter: AbiParameter) => {
   return parameter.type;
 };
 
+const getAbiProbeFunctions = (abi: readonly unknown[]) =>
+  abi
+    .filter(isAbiFunctionItem)
+    .map((item) => item as AbiFunction)
+    .filter((fn) => {
+      const mutability = fn.stateMutability;
+      return (
+        (mutability === "view" || mutability === "pure") &&
+        (fn.inputs?.length ?? 0) === 0 &&
+        (fn.outputs?.length ?? 0) > 0
+      );
+    })
+    .slice(0, 5);
+
 const parseNumberish = (value: unknown) => {
   if (typeof value === "bigint") return value;
   if (typeof value === "number" && Number.isInteger(value)) {
@@ -405,7 +440,7 @@ const buildGeneratedArgFields = (
       });
 
       return {
-        key: `${input.name || "arg"}-${path.join("-")}`,
+        key: `${input.name ?? "arg"}-${path.join("-")}`,
         label:
           input.name?.trim() ?
             `${input.name} (${input.type})`
@@ -425,7 +460,7 @@ const buildGeneratedArgFields = (
     }
 
     return {
-      key: `${input.name || "arg"}-${path.join("-")}`,
+      key: `${input.name ?? "arg"}-${path.join("-")}`,
       label:
         input.name?.trim() ?
           `${input.name} (${input.type})`
@@ -592,7 +627,14 @@ export default function DiamondAdminPage() {
   const [isExecutingRead, setIsExecutingRead] = useState(false);
   const [isSimulatingWrite, setIsSimulatingWrite] = useState(false);
   const [isExecutingWrite, setIsExecutingWrite] = useState(false);
+  const [probedProxyAbiLabel, setProbedProxyAbiLabel] = useState<string | null>(
+    null,
+  );
+  const [selectedProxyAbiLabel, setSelectedProxyAbiLabel] = useState("");
   const didApplyQueryParamsRef = useRef(false);
+  const functionRunnerRef = useRef<HTMLDivElement | null>(null);
+  const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const isAddressValid = Boolean(addressInput) && isAddress(addressInput);
@@ -600,7 +642,7 @@ export default function DiamondAdminPage() {
   const { data: walletClient } = useWalletClient({ chainId: selectedChainId });
   const { chain } = useNetwork();
   const { switchNetworkAsync, isLoading: isSwitchingNetwork } =
-    useSwitchNetwork();
+    useAppSwitchNetwork();
   const { isConnected } = useAccount();
 
   const {
@@ -621,6 +663,8 @@ export default function DiamondAdminPage() {
     () => (rawFacets as DiamondFacet[] | undefined) ?? EMPTY_FACETS,
     [rawFacets],
   );
+  const loupeReadFailed = Boolean(diamondAddress) && isError;
+  const supportsDiamondLoupe = facets.length > 0;
   const totalSelectors = useMemo(
     () =>
       facets.reduce(
@@ -646,13 +690,13 @@ export default function DiamondAdminPage() {
   const selectedChain = CHAINS.find((entry) => entry.id === selectedChainId);
   const knownAbiFunctions = useMemo<AbiFunction[]>(
     () =>
-      [...registryCommunityABI, ...cvStrategyABI]
+      KNOWN_ABI_CATALOG.flatMap(({ abi }) => abi as readonly unknown[])
         .filter(isAbiFunctionItem)
         .map((item) => item as AbiFunction),
     [],
   );
 
-  const inferredProxyAbi = useMemo(() => {
+  const selectorInferredProxyAbi = useMemo(() => {
     const facetSelectorSet = new Set(allSelectors.map((selector) => selector.toLowerCase()));
 
     const candidates = KNOWN_ABI_CATALOG.map(({ label, abi }) => {
@@ -681,12 +725,132 @@ export default function DiamondAdminPage() {
     return candidates.sort((a, b) => b.overlapCount - a.overlapCount)[0] ?? null;
   }, [allSelectors]);
 
+  useEffect(() => {
+    if (!diamondAddress || publicClient == null) {
+      setProbedProxyAbiLabel(null);
+      return;
+    }
+
+    if (allSelectors.length > 0) {
+      setProbedProxyAbiLabel(null);
+      return;
+    }
+
+    let isActive = true;
+
+    const probeAbiSurface = async () => {
+      const candidateScores = await Promise.all(
+        KNOWN_ABI_CATALOG.map(async ({ label, abi }) => {
+          const probeFunctions = getAbiProbeFunctions(abi);
+          let successCount = 0;
+
+          for (const fn of probeFunctions) {
+            try {
+              const data = encodeFunctionData({
+                abi: [fn],
+                functionName: fn.name,
+              });
+              const response = await publicClient.call({
+                to: diamondAddress,
+                data,
+              });
+              if (response.data != null && response.data !== "0x") {
+                successCount += 1;
+              }
+            } catch {
+              // Ignore failed probe calls and continue scoring other signatures.
+            }
+          }
+
+          return {
+            label,
+            successCount,
+          };
+        }),
+      );
+
+      const bestCandidate = candidateScores.sort((a, b) => {
+        if (a.successCount === b.successCount) {
+          return a.label.localeCompare(b.label);
+        }
+        return b.successCount - a.successCount;
+      })[0];
+
+      if (isActive) {
+        setProbedProxyAbiLabel(
+          bestCandidate != null && bestCandidate.successCount > 0 ?
+            bestCandidate.label
+          : null,
+        );
+      }
+    };
+
+    void probeAbiSurface();
+
+    return () => {
+      isActive = false;
+    };
+  }, [allSelectors.length, diamondAddress, publicClient]);
+
+  const inferredProxyAbi = useMemo(() => {
+    if (allSelectors.length > 0) {
+      return selectorInferredProxyAbi;
+    }
+
+    if (probedProxyAbiLabel == null) return null;
+
+    const candidate = KNOWN_ABI_CATALOG.find(
+      ({ label }) => label === probedProxyAbiLabel,
+    );
+
+    if (!candidate) return null;
+
+    const functions = candidate.abi
+      .filter(isAbiFunctionItem)
+      .map((item) => item as AbiFunction);
+
+    return {
+      label: candidate.label,
+      functions: Array.from(
+        new Map(
+          functions.map((fn) => [toCanonicalSignature(fn), fn] as const),
+        ).values(),
+      ),
+      overlapCount: 0,
+    };
+  }, [allSelectors.length, probedProxyAbiLabel, selectorInferredProxyAbi]);
+
+  const effectiveProxyAbi = useMemo(() => {
+    const selectedCandidate =
+      selectedProxyAbiLabel ?
+        KNOWN_ABI_CATALOG.find(({ label }) => label === selectedProxyAbiLabel)
+      : undefined;
+
+    if (selectedCandidate) {
+      const functions = selectedCandidate.abi
+        .filter(isAbiFunctionItem)
+        .map((item) => item as AbiFunction);
+
+      return {
+        label: selectedCandidate.label,
+        functions: Array.from(
+          new Map(
+            functions.map((fn) => [toCanonicalSignature(fn), fn] as const),
+          ).values(),
+        ),
+        overlapCount: 0,
+      };
+    }
+
+    return inferredProxyAbi;
+  }, [inferredProxyAbi, selectedProxyAbiLabel]);
+
   const proxyFunctions = useMemo(() => {
-    if (!inferredProxyAbi) return [];
+    if (effectiveProxyAbi == null) return [];
 
     return Array.from(
       new Map(
-        inferredProxyAbi.functions.map(
+        effectiveProxyAbi.functions.map(
           (fn) => [toCanonicalSignature(fn), fn] as const,
         ),
       ).values(),
@@ -701,7 +865,7 @@ export default function DiamondAdminPage() {
         }
         return a.name.localeCompare(b.name);
       });
-  }, [allSelectors, inferredProxyAbi]);
+  }, [allSelectors, effectiveProxyAbi]);
 
   const availableSelectors = useMemo(
     () =>
@@ -1127,17 +1291,42 @@ export default function DiamondAdminPage() {
   const handleInspectClick = () => {
     if (!isAddressValid) return;
     const normalized = addressInput as Address;
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.set("chainId", String(selectedChainId));
+    nextParams.set("address", normalized);
+    nextParams.delete("diamond");
+    nextParams.delete("chain");
+    nextParams.delete("selector");
+    nextParams.delete("signature");
+    nextParams.delete("args");
+    nextParams.delete("value");
+    router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
     if (diamondAddress === normalized) {
       refetch?.();
       return;
     }
     setSignatureMap({});
+    setSelectedProxyAbiLabel("");
     setSelectedSelector("");
     setSelectedSignature("");
     setExecutionError(null);
     setReadOutput(null);
     setTxHash(null);
+    setSimulationOutput(null);
     setDiamondAddress(normalized);
+  };
+
+  const handleFunctionSelect = (selector: string, signature?: string) => {
+    setSelectedSelector(selector);
+    if (signature !== undefined) {
+      setSelectedSignature(signature);
+    }
+    requestAnimationFrame(() => {
+      functionRunnerRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
   };
 
   const executeFunction = async (mode: "read" | "simulate" | "write") => {
@@ -1258,11 +1447,6 @@ export default function DiamondAdminPage() {
       }
 
       if (chain?.id !== selectedChainId) {
-        if (!switchNetworkAsync) {
-          throw new Error(
-            `Wrong network: wallet is on ${chain?.id ?? "unknown"}. Switch to ${selectedChainId} in your wallet first.`,
-          );
-        }
         await switchNetworkAsync(selectedChainId);
       }
 
@@ -1313,6 +1497,8 @@ export default function DiamondAdminPage() {
   };
 
   const txExplorerBase = selectedChain?.blockExplorers?.default?.url;
+  const getExplorerAddressHref = (address?: Address) =>
+    txExplorerBase && address ? `${txExplorerBase}/address/${address}` : null;
 
   return (
     <div className="space-y-8 px-4 py-8">
@@ -1374,18 +1560,11 @@ export default function DiamondAdminPage() {
               disabled={!isAddressValid}
               className="w-full"
             >
-              Inspect facets
+              Inspect
             </Button>
           </div>
         </div>
 
-        {isError && (
-          <InfoBox infoBoxType="error" title="Unable to read facets">
-            {error?.message ?
-              error?.message.split("\n").map((line) => <p key={line}>{line}</p>)
-            : "The diamond does not expose loupe data."}
-          </InfoBox>
-        )}
       </section>
 
       <section className="space-y-4">
@@ -1394,7 +1573,16 @@ export default function DiamondAdminPage() {
             <p className="text-sm text-neutral-muted">Currently probing</p>
             <p className="text-base font-mono text-primary-content">
               {diamondAddress ?
-                shortenAddress(diamondAddress)
+                getExplorerAddressHref(diamondAddress) ?
+                  <a
+                    href={getExplorerAddressHref(diamondAddress) ?? undefined}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline decoration-border-neutral/60 underline-offset-2 transition hover:text-primary-content/80"
+                  >
+                    {shortenAddress(diamondAddress)}
+                  </a>
+                : shortenAddress(diamondAddress)
               : "No diamond yet"}
             </p>
           </div>
@@ -1407,20 +1595,34 @@ export default function DiamondAdminPage() {
           <div className="space-y-1 text-right text-xs text-neutral-muted">
             <p>Facets</p>
             <p className="text-sm text-neutral-content">
-              {facets.length.toLocaleString("en-US")}
+              {supportsDiamondLoupe ? facets.length.toLocaleString("en-US") : "n/a"}
             </p>
           </div>
           <div className="space-y-1 text-right text-xs text-neutral-muted">
             <p>Function selectors</p>
             <p className="text-sm text-neutral-content">
-              {totalSelectors.toLocaleString("en-US")}
+              {supportsDiamondLoupe ? totalSelectors.toLocaleString("en-US") : "n/a"}
             </p>
           </div>
           <div className="space-y-1 text-right text-xs text-neutral-muted">
             <p>Inferred proxy ABI</p>
-            <p className="text-sm text-neutral-content">
-              {inferredProxyAbi?.label ?? "Unknown"}
-            </p>
+            <select
+              className="rounded-lg border border-border-neutral bg-neutral px-2 py-1 text-sm text-neutral-content focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
+              value={selectedProxyAbiLabel !== "" ? selectedProxyAbiLabel : (inferredProxyAbi?.label ?? "")}
+              onChange={(event) =>
+                setSelectedProxyAbiLabel(event.target.value)
+              }
+            >
+              {!inferredProxyAbi?.label && (
+                <option value="">Unknown</option>
+              )}
+              {KNOWN_ABI_CATALOG.map(({ label }) => (
+                <option key={label} value={label}>
+                  {label}
+                  {label === inferredProxyAbi?.label ? " (inferred)" : ""}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -1439,7 +1641,10 @@ export default function DiamondAdminPage() {
                 </InfoBox>
               )}
 
-              {diamondAddress && !facets.length && !isFetching && (
+              {diamondAddress &&
+                !supportsDiamondLoupe &&
+                !isFetching &&
+                !loupeReadFailed && (
                 <InfoBox
                   infoBoxType="warning"
                   title="No facets returned"
@@ -1460,7 +1665,18 @@ export default function DiamondAdminPage() {
                             {facet.inferredName ?? `Unidentified Facet #${index + 1}`}
                           </p>
                           <p className="font-mono text-xs text-neutral-muted">
-                            ({facet.facetAddress})
+                            (
+                            {getExplorerAddressHref(facet.facetAddress) ?
+                              <a
+                                href={getExplorerAddressHref(facet.facetAddress) ?? undefined}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="underline decoration-border-neutral/60 underline-offset-2 transition hover:text-neutral-content"
+                              >
+                                {facet.facetAddress}
+                              </a>
+                            : facet.facetAddress}
+                            )
                           </p>
                         </div>
                         <p className="text-xs text-neutral-muted">
@@ -1478,13 +1694,12 @@ export default function DiamondAdminPage() {
                                   "border-primary-content/80 bg-primary-content/10 text-primary-content"
                                 : "border-border-neutral/50 bg-neutral/30 text-primary-content"
                               }`}
-                              onClick={() => {
-                                setSelectedSelector(selector);
-                                const signatures = signatureMap[selector] ?? [];
-                                if (signatures.length > 0) {
-                                  setSelectedSignature(signatures[0]);
-                                }
-                              }}
+                              onClick={() =>
+                                handleFunctionSelect(
+                                  selector,
+                                  (signatureMap[selector] ?? [])[0],
+                                )
+                              }
                             >
                               {(signatureMap[selector] ?? [])[0] ?
                                 <>
@@ -1538,10 +1753,9 @@ export default function DiamondAdminPage() {
                               "border-primary-content/80 bg-primary-content/10 text-primary-content"
                             : "border-border-neutral/50 bg-neutral/30 text-primary-content"
                           }`}
-                          onClick={() => {
-                            setSelectedSelector(selector);
-                            setSelectedSignature(signature);
-                          }}
+                          onClick={() =>
+                            handleFunctionSelect(selector, signature)
+                          }
                         >
                           <div className="font-mono text-sm text-primary-content">
                             {signature}
@@ -1560,15 +1774,20 @@ export default function DiamondAdminPage() {
                 </div>
               )}
 
-              {diamondAddress && allSelectors.length > 0 && (
-                <div className="rounded-xl border border-border-neutral/40 bg-neutral/50 p-4 space-y-4">
+              {diamondAddress &&
+                (availableSelectors.length > 0 || selectedSignature.trim()) && (
+                <div
+                  ref={functionRunnerRef}
+                  className="rounded-xl border border-border-neutral/40 bg-neutral/50 p-4 space-y-4"
+                >
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-neutral-content">
                       Facet function runner
                     </p>
                     <p className="text-xs text-neutral-muted">
                       Resolve selectors and execute any function using manual
-                      args.
+                      args. In proxy mode, only inferred proxy/main ABI
+                      functions are available.
                     </p>
                   </div>
 

@@ -48,6 +48,44 @@ CONTRACTS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO_ROOT="$(cd "$CONTRACTS_ROOT/../.." && pwd)"
 CONFIG_PATH="$CONTRACTS_ROOT/config/networks.json"
 
+verify_with_retry() {
+  local description="$1"
+  shift
+
+  local attempt=1
+  local max_attempts=4
+  local delay=8
+  local output
+
+  while true; do
+    if output="$("$@" 2>&1)"; then
+      printf '%s\n' "$output"
+      sleep 2
+      return 0
+    fi
+
+    printf '%s\n' "$output" >&2
+    if [[ "$attempt" -ge "$max_attempts" ]]; then
+      return 1
+    fi
+
+    if grep -Eqi 'rate limit|max calls per sec|expected value|SourcifyResponse|429|timeout' <<< "$output"; then
+      echo "Retrying $description after ${delay}s (attempt $((attempt + 1))/${max_attempts})..." >&2
+      sleep "$delay"
+      attempt=$((attempt + 1))
+      delay=$((delay * 2))
+      continue
+    fi
+
+    return 1
+  done
+}
+
+verifier_args=()
+if [[ -n "$VERIFIER_URL" ]]; then
+  verifier_args+=(--verifier-url "$VERIFIER_URL")
+fi
+
 if [[ ! -f "$CONFIG_PATH" ]]; then
   echo "Config file not found: $CONFIG_PATH" >&2
   exit 1
@@ -71,27 +109,31 @@ if [[ -z "$host" || -z "$escrow_implementation" ]]; then
 fi
 
 echo "Verifying StreamingEscrow implementation on $NETWORK: $escrow_implementation"
-forge verify-contract \
+verify_with_retry "StreamingEscrow implementation on $NETWORK" forge verify-contract \
   --root "$REPO_ROOT" \
   --rpc-url "$RPC_URL" \
   --chain "$CHAIN_ID" \
+  --verifier etherscan \
   --compiler-version "$COMPILER_VERSION" \
   --num-of-optimizations "$OPTIMIZER_RUNS" \
   --evm-version "$EVM_VERSION" \
   --etherscan-api-key "$ETHERSCAN_KEY" \
+  "${verifier_args[@]}" \
   --watch \
   "$escrow_implementation" \
   pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow
 
 echo "Verifying StreamingEscrowFactory implementation on $NETWORK: $factory_implementation"
-forge verify-contract \
+verify_with_retry "StreamingEscrowFactory implementation on $NETWORK" forge verify-contract \
   --root "$REPO_ROOT" \
   --rpc-url "$RPC_URL" \
   --chain "$CHAIN_ID" \
+  --verifier etherscan \
   --compiler-version "$COMPILER_VERSION" \
   --num-of-optimizations "$OPTIMIZER_RUNS" \
   --evm-version "$EVM_VERSION" \
   --etherscan-api-key "$ETHERSCAN_KEY" \
+  "${verifier_args[@]}" \
   --watch \
   "$factory_implementation" \
   pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory
@@ -100,14 +142,16 @@ init_data="$(cast calldata "initialize(address,address,address)" "$proxy_owner" 
 constructor_args="$(cast abi-encode "constructor(address,bytes)" "$factory_implementation" "$init_data")"
 
 echo "Verifying StreamingEscrowFactory proxy on $NETWORK: $factory_proxy"
-forge verify-contract \
+verify_with_retry "StreamingEscrowFactory proxy on $NETWORK" forge verify-contract \
   --root "$REPO_ROOT" \
   --rpc-url "$RPC_URL" \
   --chain "$CHAIN_ID" \
+  --verifier etherscan \
   --compiler-version "$COMPILER_VERSION" \
   --num-of-optimizations "$OPTIMIZER_RUNS" \
   --evm-version "$EVM_VERSION" \
   --etherscan-api-key "$ETHERSCAN_KEY" \
+  "${verifier_args[@]}" \
   --constructor-args "$constructor_args" \
   --watch \
   "$factory_proxy" \

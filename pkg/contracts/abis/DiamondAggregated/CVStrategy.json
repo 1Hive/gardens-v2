@@ -3929,6 +3929,27 @@
     },
     {
       "type": "error",
+      "name": "ApproveFailed",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "spender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
       "name": "BlockNumberRegression",
       "inputs": [
         {
@@ -4052,6 +4073,17 @@
     },
     {
       "type": "error",
+      "name": "ProposalActive",
+      "inputs": [
+        {
+          "name": "proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
       "name": "ProposalDoesNotExist",
       "inputs": [
         {
@@ -4065,6 +4097,17 @@
       "type": "error",
       "name": "RebalanceCallFailed",
       "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "StreamingRateOverflow",
+      "inputs": [
+        {
+          "name": "streamingRatePerSecond",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
     },
     {
       "type": "error",
@@ -4103,6 +4146,22 @@
         },
         {
           "name": "caller",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "SuperfluidUnderlyingTokenMismatch",
+      "inputs": [
+        {
+          "name": "expectedUnderlying",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "actualUnderlying",
           "type": "address",
           "internalType": "address"
         }
@@ -4265,6 +4324,22 @@
           "name": "currentStatus",
           "type": "uint8",
           "internalType": "enum ProposalStatus"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "UpdateMemberUnitsFailed",
+      "inputs": [
+        {
+          "name": "member",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "units",
+          "type": "uint128",
+          "internalType": "uint128"
         }
       ]
     },
@@ -4487,22 +4562,6 @@
       ]
     },
     {
-      "type": "error",
-      "name": "UpdateMemberUnitsFailed",
-      "inputs": [
-        {
-          "name": "member",
-          "type": "address",
-          "internalType": "address"
-        },
-        {
-          "name": "units",
-          "type": "uint128",
-          "internalType": "uint128"
-        }
-      ]
-    },
-    {
       "type": "function",
       "name": "isAuthorizedRebalanceCaller",
       "inputs": [
@@ -4599,44 +4658,12 @@
     },
     {
       "type": "error",
-      "name": "ApproveFailed",
-      "inputs": [
-        {
-          "name": "token",
-          "type": "address",
-          "internalType": "address"
-        },
-        {
-          "name": "spender",
-          "type": "address",
-          "internalType": "address"
-        },
-        {
-          "name": "amount",
-          "type": "uint256",
-          "internalType": "uint256"
-        }
-      ]
-    },
-    {
-      "type": "error",
       "name": "StreamingEscrowNotFound",
       "inputs": [
         {
           "name": "escrow",
           "type": "address",
           "internalType": "address"
-        }
-      ]
-    },
-    {
-      "type": "error",
-      "name": "StreamingRateOverflow",
-      "inputs": [
-        {
-          "name": "streamingRatePerSecond",
-          "type": "uint256",
-          "internalType": "uint256"
         }
       ]
     },

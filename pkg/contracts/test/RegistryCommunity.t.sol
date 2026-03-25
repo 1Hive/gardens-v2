@@ -191,6 +191,7 @@ contract MockAllo is FAllo {
 
 contract MockRegistryFactoryWithPause {
     address public controller;
+    address public strategyTemplate;
     IDiamondCut.FacetCut[] internal communityFacetCuts;
     IDiamondCut.FacetCut[] internal strategyFacetCuts;
     address internal communityInit;
@@ -200,6 +201,11 @@ contract MockRegistryFactoryWithPause {
 
     constructor(address controller_) {
         controller = controller_;
+        strategyTemplate = address(new PoolFacet());
+    }
+
+    function setStrategyTemplate(address template) external {
+        strategyTemplate = template;
     }
 
     function globalPauseController() external view returns (address) {

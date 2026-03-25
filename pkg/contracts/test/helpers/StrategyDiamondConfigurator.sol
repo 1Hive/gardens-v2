@@ -8,6 +8,7 @@ import {CVPauseFacet} from "../../src/CVStrategy/facets/CVPauseFacet.sol";
 import {CVPowerFacet} from "../../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../../src/CVStrategy/facets/CVProposalFacet.sol";
 import {CVSyncPowerFacet} from "../../src/CVStrategy/facets/CVSyncPowerFacet.sol";
+import {CVStreamingFacet} from "../../src/CVStrategy/facets/CVStreamingFacet.sol";
 import {DiamondLoupeFacet} from "../../src/diamonds/facets/DiamondLoupeFacet.sol";
 import {CVStrategyDiamondInit} from "../../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {IDiamondCut} from "../../src/diamonds/interfaces/IDiamondCut.sol";
@@ -23,9 +24,10 @@ abstract contract StrategyDiamondConfiguratorBase {
         CVPauseFacet _pauseFacet,
         CVPowerFacet _powerFacet,
         CVProposalFacet _proposalFacet,
-        CVSyncPowerFacet _syncPowerFacet
+        CVSyncPowerFacet _syncPowerFacet,
+        CVStreamingFacet _streamingFacet
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
-        cuts = new IDiamond.FacetCut[](7);
+        cuts = new IDiamond.FacetCut[](8);
 
         bytes4[] memory adminSelectors = new bytes4[](5);
         adminSelectors[0] =
@@ -39,9 +41,10 @@ abstract contract StrategyDiamondConfiguratorBase {
             facetAddress: address(_adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
         });
 
-        bytes4[] memory allocationSelectors = new bytes4[](2);
+        bytes4[] memory allocationSelectors = new bytes4[](3);
         allocationSelectors[0] = CVAllocationFacet.allocate.selector;
         allocationSelectors[1] = CVAllocationFacet.distribute.selector;
+        allocationSelectors[2] = CVAllocationFacet.getPoolAmount.selector;
         cuts[1] = IDiamond.FacetCut({
             facetAddress: address(_allocationFacet),
             action: IDiamond.FacetCutAction.Auto,
@@ -104,6 +107,18 @@ abstract contract StrategyDiamondConfiguratorBase {
         cuts[6] = IDiamond.FacetCut({
             facetAddress: address(_syncPowerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: syncSelectors
         });
+
+        bytes4[] memory streamingSelectors = new bytes4[](5);
+        streamingSelectors[0] = CVStreamingFacet.rebalance.selector;
+        streamingSelectors[1] = CVStreamingFacet.stopEscrowStream.selector;
+        streamingSelectors[2] = CVStreamingFacet.setAuthorizedRebalanceCaller.selector;
+        streamingSelectors[3] = CVStreamingFacet.isAuthorizedRebalanceCaller.selector;
+        streamingSelectors[4] = CVStreamingFacet.wrapIfNeeded.selector;
+        cuts[7] = IDiamond.FacetCut({
+            facetAddress: address(_streamingFacet),
+            action: IDiamond.FacetCutAction.Auto,
+            functionSelectors: streamingSelectors
+        });
     }
 
     function _buildLoupeFacetCut(DiamondLoupeFacet _loupeFacet)
@@ -137,6 +152,7 @@ contract StrategyDiamondConfigurator is StrategyDiamondConfiguratorBase {
     CVPowerFacet public powerFacet;
     CVProposalFacet public proposalFacet;
     CVSyncPowerFacet public syncPowerFacet;
+    CVStreamingFacet public streamingFacet;
     DiamondLoupeFacet public loupeFacet;
     CVStrategyDiamondInit public diamondInit;
 
@@ -149,6 +165,7 @@ contract StrategyDiamondConfigurator is StrategyDiamondConfiguratorBase {
         powerFacet = new CVPowerFacet();
         proposalFacet = new CVProposalFacet();
         syncPowerFacet = new CVSyncPowerFacet();
+        streamingFacet = new CVStreamingFacet();
         loupeFacet = new DiamondLoupeFacet();
         diamondInit = new CVStrategyDiamondInit();
     }
@@ -159,12 +176,21 @@ contract StrategyDiamondConfigurator is StrategyDiamondConfiguratorBase {
      */
     function getFacetCuts() public view returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts =
-            _buildFacetCuts(adminFacet, allocationFacet, disputeFacet, pauseFacet, powerFacet, proposalFacet, syncPowerFacet);
+            _buildFacetCuts(
+                adminFacet,
+                allocationFacet,
+                disputeFacet,
+                pauseFacet,
+                powerFacet,
+                proposalFacet,
+                syncPowerFacet,
+                streamingFacet
+            );
 
         // Add loupe facet as first cut.
-        cuts = new IDiamond.FacetCut[](8);
+        cuts = new IDiamond.FacetCut[](9);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 7; i++) {
+        for (uint256 i = 0; i < 8; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }
@@ -180,15 +206,23 @@ contract StrategyDiamondConfigurator is StrategyDiamondConfiguratorBase {
         CVPowerFacet _powerFacet,
         CVProposalFacet _proposalFacet,
         CVSyncPowerFacet _syncPowerFacet,
+        CVStreamingFacet _streamingFacet,
         DiamondLoupeFacet _loupeFacet
     ) public pure returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(
-            _adminFacet, _allocationFacet, _disputeFacet, _pauseFacet, _powerFacet, _proposalFacet, _syncPowerFacet
+            _adminFacet,
+            _allocationFacet,
+            _disputeFacet,
+            _pauseFacet,
+            _powerFacet,
+            _proposalFacet,
+            _syncPowerFacet,
+            _streamingFacet
         );
 
-        cuts = new IDiamond.FacetCut[](8);
+        cuts = new IDiamond.FacetCut[](9);
         cuts[0] = _buildLoupeFacetCut(_loupeFacet);
-        for (uint256 i = 0; i < 7; i++) {
+        for (uint256 i = 0; i < 8; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }

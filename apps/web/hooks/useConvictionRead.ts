@@ -8,6 +8,8 @@ import {
   TokenGarden,
 } from "#/subgraph/.graphclient";
 import { useChainFromPath } from "./useChainFromPath";
+import { useHasContractCode } from "./useHasContractCode";
+import { useResolvedChainId } from "./useResolvedChainId";
 import { cvStrategyABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { getRemainingBlocksToPass } from "@/utils/convictionFormulas";
@@ -30,20 +32,41 @@ export const useConvictionRead = ({
   proposalData,
   strategyConfig,
   tokenData: token,
+  chainId,
   enabled = true,
 }: {
   proposalData: ProposalDataLight | undefined;
   strategyConfig: Pick<CVStrategyConfig, "decay" | "proposalType"> | undefined;
   tokenData: Maybe<Pick<TokenGarden, "decimals">> | undefined;
+  chainId?: number;
   enabled?: boolean;
 }) => {
   const chain = useChainFromPath();
+  const resolvedChainId = useResolvedChainId(chainId);
 
   const cvStrategyContract = {
     address: proposalData?.strategy.id as Address,
     abi: cvStrategyABI,
     enabled: !!proposalData,
   };
+  const { hasContractCode: hasStrategyContractCode } = useHasContractCode({
+    address: proposalData?.strategy.id,
+    chainId: resolvedChainId,
+    enabled: enabled && !!proposalData?.strategy.id && resolvedChainId != null,
+  });
+  const shouldReadConviction =
+    enabled && !!proposalData && hasStrategyContractCode;
+
+  if (enabled && proposalData?.strategy.id && resolvedChainId != null) {
+    logOnce("debug", "[useConvictionRead] read inputs", {
+      strategyAddress: proposalData.strategy.id,
+      proposalNumber: proposalData.proposalNumber,
+      explicitChainId: chainId,
+      resolvedChainId,
+      pathChainId: chain?.id,
+      hasStrategyContractCode,
+    });
+  }
 
   const {
     data: updatedConviction,
@@ -51,9 +74,10 @@ export const useConvictionRead = ({
     refetch: triggerConvictionRefetch,
   } = useContractRead({
     ...cvStrategyContract,
+    chainId: resolvedChainId,
     functionName: "calculateProposalConviction",
     args: [BigInt(proposalData?.proposalNumber ?? 0)],
-    enabled,
+    enabled: shouldReadConviction,
     watch: true,
   });
 
@@ -61,7 +85,8 @@ export const useConvictionRead = ({
     logOnce("error", "Error reading conviction", errorConviction);
   }
   const poolType = PoolTypes[strategyConfig?.proposalType];
-  const shouldReadThreshold = enabled && poolType !== "signaling";
+  const shouldReadThreshold =
+    shouldReadConviction && poolType !== "signaling";
 
   const {
     data: thresholdFromContract,
@@ -69,6 +94,7 @@ export const useConvictionRead = ({
     refetch: triggerThresholdRefetch,
   } = useContractRead({
     ...cvStrategyContract,
+    chainId: resolvedChainId,
     functionName: "calculateThreshold",
     args: [proposalData?.requestedAmount ?? 0],
     enabled: shouldReadThreshold,

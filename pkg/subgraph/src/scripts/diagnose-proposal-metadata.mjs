@@ -144,7 +144,7 @@ const RPC_ENV_BY_NETWORK = {
   gnosis: ["RPC_URL_GNOSIS"],
   base: ["RPC_URL_BASE"],
   celo: ["RPC_URL_CELO"],
-  mainnet: ["RPC_URL_MAINNET"],
+  mainnet: ["RPC_URL_ETHEREUM"],
 };
 
 const SUBGRAPH_CONFIG_FILE_BY_NETWORK = {

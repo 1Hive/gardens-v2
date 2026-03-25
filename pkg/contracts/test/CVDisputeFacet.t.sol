@@ -10,6 +10,7 @@ import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol"
 import {ICollateralVault} from "../src/interfaces/ICollateralVault.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
+import {ISuperfluidPool} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 
 import {MockRegistryCommunity, MockArbitrator, MockCollateralVault} from "./helpers/CVStrategyHelpers.sol";
 
@@ -27,6 +28,22 @@ contract MockStreamingEscrow {
 
     function drainToBeneficiary() external {
         resolved = true;
+    }
+}
+
+contract MockDisputeGDA {
+    address public lastMember;
+    uint128 public lastUnits;
+    bool public updateShouldSucceed = true;
+
+    function setUpdateShouldSucceed(bool shouldSucceed) external {
+        updateShouldSucceed = shouldSucceed;
+    }
+
+    function updateMemberUnits(address member, uint128 units) external returns (bool) {
+        lastMember = member;
+        lastUnits = units;
+        return updateShouldSucceed;
     }
 }
 
@@ -90,6 +107,10 @@ contract CVDisputeFacetHarness is CVDisputeFacet {
     function setDisputeCount(uint64 count) external {
         disputeCount = count;
     }
+
+    function setSuperfluidGDA(address gda) external {
+        superfluidGDA = ISuperfluidPool(gda);
+    }
 }
 
 contract CVDisputeFacetTest is Test {
@@ -97,6 +118,7 @@ contract CVDisputeFacetTest is Test {
     MockRegistryCommunity internal registry;
     MockArbitrator internal arbitrator;
     MockCollateralVault internal vault;
+    MockDisputeGDA internal gda;
     address internal member = makeAddr("member");
 
     function setUp() public {
@@ -104,6 +126,7 @@ contract CVDisputeFacetTest is Test {
         registry = new MockRegistryCommunity();
         arbitrator = new MockArbitrator();
         vault = new MockCollateralVault();
+        gda = new MockDisputeGDA();
 
         registry.setMember(member, true);
         registry.setCouncilSafe(makeAddr("council"));
@@ -112,6 +135,7 @@ contract CVDisputeFacetTest is Test {
         facet.setRegistryCommunity(address(registry));
         facet.setVotingPowerRegistry(address(registry));
         facet.setCollateralVault(address(vault));
+        facet.setSuperfluidGDA(address(gda));
     }
 
     function _config(uint256 challengerCollateral, uint256 defaultRuling, uint256 timeout)
@@ -233,6 +257,8 @@ contract CVDisputeFacetTest is Test {
 
         facet.rule(5, 0);
         assertTrue(escrow.resolved());
+        assertEq(gda.lastMember(), address(escrow));
+        assertEq(gda.lastUnits(), 0);
         assertEq(facet.getProposalEscrow(1), address(escrow));
     }
 
@@ -252,13 +278,20 @@ contract CVDisputeFacetTest is Test {
         ArbitrableConfig memory config = _config(1 ether, 1, 1000);
         config.submitterCollateralAmount = 10;
         facet.setArbitrableConfig(1, config);
+        facet.setProposalType(ProposalType.Streaming);
         facet.setProposal(1, ProposalStatus.Disputed, 1, 0);
         facet.setDisputeInfo(1, 7, block.timestamp, member);
         facet.setDisputeId(7, 1);
         facet.setDisputeCount(1);
+        MockStreamingEscrow escrow = new MockStreamingEscrow();
+        facet.setProposalEscrow(1, address(escrow));
 
         vm.prank(address(arbitrator));
         facet.rule(7, 2);
+
+        assertTrue(escrow.resolved());
+        assertEq(gda.lastMember(), address(escrow));
+        assertEq(gda.lastUnits(), 0);
     }
 
     function test_rule_non_streaming_skips_stream_resolution() public {

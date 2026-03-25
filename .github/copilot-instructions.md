@@ -294,3 +294,37 @@ Check:
 * `pkg/subgraph/schema.graphql`
 * `pkg/subgraph/src/**`
 * `apps/web` 
+
+---
+
+## 11. Reviewer Checklist (Quick Commands)
+
+Use these targeted commands to validate changes quickly. Run them from the repo root unless a path is specified.
+
+Contracts
+
+```bash
+pnpm --filter foundry build
+forge build --sizes --root ../.. pkg/contracts/src
+cd pkg/contracts && ./scripts/verify-storage-layout.sh
+pnpm --filter foundry test
+# Targeted examples
+forge test --match-path pkg/contracts/test/<File>.t.sol -vvv
+forge test --match-test testSpecificBehavior -vvv
+```
+
+Subgraph (when events/ABIs change)
+
+```bash
+pnpm --filter subgraph build
+```
+
+Frontend (when ABIs/types or routing/server code change)
+
+```bash
+pnpm --filter web generate
+pnpm --filter web typecheck
+pnpm --filter web build
+```
+
+If any storage, facet, or upgrade-related change is present, treat `./scripts/verify-storage-layout.sh` as mandatory before approving.

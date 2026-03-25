@@ -6,6 +6,7 @@ import { logOnce } from "@/utils/log";
 export const cheats = [
   "showArchived",
   "showStreamingPools",
+  "showEscrow",
   "bypassSafeCheck",
   "allowNoProtection",
   "skipPublished",
@@ -26,6 +27,8 @@ const getFlagFromEnv = (flag: CheatName) => {
       return process.env.NEXT_PUBLIC_FLAG_SHOWARCHIVED;
     case "showStreamingPools":
       return process.env.NEXT_PUBLIC_FLAG_SHOWSTREAMINGPOOLS;
+    case "showEscrow":
+      return process.env.NEXT_PUBLIC_FLAG_SHOWESCROW;
     case "bypassSafeCheck":
       return process.env.NEXT_PUBLIC_FLAG_BYPASSSAFECHECK;
     case "allowNoProtection":
@@ -49,7 +52,12 @@ const getFlagFromEnv = (flag: CheatName) => {
   }
 };
 
-export const useFlag = (flag: CheatName) => {
+export const useFlag = (
+  flag: CheatName,
+  options?: {
+    defaultValue?: boolean;
+  },
+) => {
   const queryParams = useCollectQueryParams();
 
   const [flagFromStorage] = useWatchLocalStorage({
@@ -86,5 +94,5 @@ export const useFlag = (flag: CheatName) => {
     return flagFromEnv === "true";
   }
 
-  return false;
+  return options?.defaultValue ?? false;
 };

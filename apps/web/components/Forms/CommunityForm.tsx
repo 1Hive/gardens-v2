@@ -13,7 +13,7 @@ import {
   parseUnits,
   zeroAddress,
 } from "viem";
-import { erc20ABI, useNetwork, useSwitchNetwork } from "wagmi";
+import { erc20ABI, useNetwork } from "wagmi";
 import { getRegistryFactoryDataDocument } from "#/subgraph/.graphclient";
 import { getRegistryFactoryDataQuery } from "#/subgraph/.graphclient";
 import FormAddressInput from "./FormAddressInput";
@@ -32,6 +32,7 @@ import {
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
@@ -78,6 +79,7 @@ export const CommunityForm = () => {
     handleSubmit,
     formState: { errors },
     getValues,
+    setError,
     setValue,
     trigger,
     watch,
@@ -120,7 +122,7 @@ export const CommunityForm = () => {
     });
   }, [selectedChainId]);
   const { isConnected, tooltipMessage } = useDisableButtons();
-  const { switchNetwork, data: switchNetworkData } = useSwitchNetwork();
+  const { switchNetwork, data: switchNetworkData } = useAppSwitchNetwork();
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
   const [tokenIsFetching, setTokenIsFetching] = useState<boolean>(false);
 
@@ -263,7 +265,6 @@ export const CommunityForm = () => {
           `/gardens/${selectedChainId}/${newCommunityAddr.toLowerCase()}?${QUERY_PARAMS.communityPage.newCommunity}=true`,
         );
       }
-      setLoading(false);
     },
     chainId: selectedChainId,
   });
@@ -300,11 +301,7 @@ export const CommunityForm = () => {
       setLoading(true);
 
       // Switch network if necessary
-      if (
-        selectedChainId &&
-        switchNetwork &&
-        selectedChainId !== connectedChainId
-      ) {
+      if (selectedChainId && selectedChainId !== connectedChainId) {
         try {
           await switchNetwork(selectedChainId);
           // Wait for network switch to complete
@@ -327,7 +324,7 @@ export const CommunityForm = () => {
       }
 
       // Prepare transaction data
-      const govTokenAddr = getValues("tokenAddress") as Address;
+      const govTokenAddr = getValues("tokenAddress");
       const communityName = previewData.title;
       const stakeAmount = parseUnits(
         previewData.stakeAmount.toString(),
@@ -338,9 +335,48 @@ export const CommunityForm = () => {
         CV_PERCENTAGE_SCALE_DECIMALS,
       );
 
-      const communityFeeReceiver = previewData.feeReceiver || zeroAddress;
-      const councilSafeAddress = previewData.councilSafe;
+      const hasCommunityFee = communityFeeAmount > 0n;
+      const feeReceiverAddress = getValues("feeReceiver").trim();
+      const communityFeeReceiver =
+        hasCommunityFee && isAddress(feeReceiverAddress) ?
+          feeReceiverAddress
+        : zeroAddress;
+      const councilSafeAddress = getValues("councilSafe").trim();
       const isKickMemberEnabled = previewData.isKickMemberEnabled;
+
+      if (!isAddress(govTokenAddr)) {
+        setError("tokenAddress", {
+          type: "manual",
+          message: "Invalid community token address",
+        });
+        setShowPreview(false);
+        setLoading(false);
+        return;
+      }
+
+      if (!isAddress(councilSafeAddress)) {
+        setError("councilSafe", {
+          type: "manual",
+          message: "Invalid council Safe address",
+        });
+        setShowPreview(false);
+        setLoading(false);
+        return;
+      }
+
+      if (hasCommunityFee && !isAddress(feeReceiverAddress)) {
+        setError("feeReceiver", {
+          type: "manual",
+          message: "Invalid community fee receiver address",
+        });
+        setShowPreview(false);
+        setLoading(false);
+        return;
+      }
+
+      if (!registryFactoryAddr || !isAddress(registryFactoryAddr)) {
+        throw new Error("Invalid registry factory address");
+      }
 
       write?.({
         args: [
@@ -351,7 +387,7 @@ export const CommunityForm = () => {
             _registerStakeAmount: stakeAmount,
             _communityFee: communityFeeAmount,
             _councilSafe: councilSafeAddress as Address,
-            _gardenToken: govTokenAddr as Address,
+            _gardenToken: govTokenAddr,
             _isKickEnabled: isKickMemberEnabled,
             _nonce: 0n,
             _registryFactory: registryFactoryAddr,
@@ -370,6 +406,7 @@ export const CommunityForm = () => {
     connectedChainId,
     switchNetwork,
     getValues,
+    setError,
     tokenData?.decimals,
     registryFactoryAddr,
     write,

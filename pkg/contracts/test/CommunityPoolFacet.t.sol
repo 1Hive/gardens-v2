@@ -41,9 +41,14 @@ contract MockAlloPool {
 
 contract MockRegistryFactoryPause {
     address public pauseController;
+    address public strategyTemplate;
     IDiamondCut.FacetCut[] internal strategyFacetCuts;
     address internal strategyInit;
     bytes internal strategyInitCalldata;
+
+    function setStrategyTemplate(address template) external {
+        strategyTemplate = template;
+    }
 
     function setPauseController(address controller) external {
         pauseController = controller;
@@ -193,6 +198,7 @@ contract CommunityPoolFacetTest is Test {
         facet.setAllo(address(allo));
         facet.setRegistryFactory(address(registryFactory));
         facet.setStrategyTemplate(address(strategyTemplate));
+        registryFactory.setStrategyTemplate(address(strategyTemplate));
         facet.setCollateralVaultTemplate(address(0xBEEF));
         facet.setProfileId(bytes32(uint256(1)));
     }
@@ -211,6 +217,23 @@ contract CommunityPoolFacetTest is Test {
         assertEq(poolId, 1);
         assertEq(strategy, allo.lastStrategy());
         assertEq(allo.lastToken(), facet.NATIVE());
+    }
+
+    function test_createPool_uses_factory_strategy_template_instead_of_community_field() public {
+        MockStrategyTemplate factoryTemplate = new MockStrategyTemplate();
+        facet.setStrategyTemplate(address(0xDEAD));
+        registryFactory.setStrategyTemplate(address(factoryTemplate));
+
+        CVStrategyInitializeParamsV0_3 memory params = _baseParams();
+        Metadata memory metadata = Metadata({protocol: 1, pointer: "meta"});
+
+        (, address strategy) = facet.createPool(address(0), params, metadata);
+
+        MockStrategyTemplate proxy = MockStrategyTemplate(strategy);
+        assertEq(proxy.lastCollateralVault(), address(0xBEEF));
+        assertEq(proxy.lastOwner(), facet.proxyOwner());
+        assertEq(address(facet.strategyTemplate()), address(0xDEAD));
+        assertEq(address(registryFactory.strategyTemplate()), address(factoryTemplate));
     }
 
     function test_createPool_grants_allowlist_and_admin_role() public {

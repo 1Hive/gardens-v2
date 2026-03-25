@@ -163,7 +163,8 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     address public registryFactory;
     /// @notice The address of the collateral vault template
     address public collateralVaultTemplate;
-    /// @notice The address of the strategy template
+    /// @notice Deprecated. Pool creation now resolves the strategy template from RegistryFactory.
+    ///         Kept for storage and ABI compatibility only.
     address public strategyTemplate;
     /// @notice The address of the pending council safe owner
     address payable public pendingCouncilSafe;

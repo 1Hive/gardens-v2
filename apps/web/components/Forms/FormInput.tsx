@@ -119,6 +119,7 @@ export function FormInput({
             step={step}
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
+            value={value}
             onChange={registered?.onChange ?? onChange}
             {...otherProps}
           />

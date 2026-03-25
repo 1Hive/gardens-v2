@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Client, gql } from "urql";
 import { Address, parseAbi, zeroAddress } from "viem";
 import { usePublicClient } from "wagmi";
+import { useResolvedChainId } from "./useResolvedChainId";
 import { useSuperfluidSugraphClient } from "./useSuperfluidSubgraphClient";
 import { ChainId } from "@/types";
 
@@ -47,7 +48,8 @@ export function useSuperfluidToken({
 }) {
   const [superToken, setSuperToken] = useState<SuperToken | null>(null);
   const [isFetching, setIsFetching] = useState(false);
-  const publicClient = usePublicClient();
+  const resolvedChainId = useResolvedChainId(chainId);
+  const publicClient = usePublicClient({ chainId: resolvedChainId });
   const client = useSuperfluidSugraphClient({ chainId });
 
   const fetch: (client: Client, token: string) => Promise<void> = async (

@@ -114,12 +114,17 @@ export const FormAddressInput = ({
     if (ensAddress) {
       setInputValue(ensAddress);
       (onChange ?? registerOptions?.onChange)?.({
-        target: { value: ensAddress },
+        target: { name: registerKey, value: ensAddress },
+        currentTarget: { name: registerKey, value: ensAddress },
       } as React.ChangeEvent<HTMLInputElement>);
     }
-  }, [ensAddress]);
+  }, [ensAddress, onChange, registerKey, registerOptions]);
 
   const validateSafeAddress = async (address: string) => {
+    if (bypassSafeCheck) {
+      return true;
+    }
+    
     if (!validationClient) {
       return "Unable to validate Safe address without an RPC client.";
     }
@@ -150,8 +155,10 @@ export const FormAddressInput = ({
       } else {
         return `Not a valid Safe address in ${validationChain?.name} network`;
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
+      console.warn(
+        `Safe validation failed for ${address} on ${validationChain?.name ?? "unknown network"}`,
+      );
       return `Not a valid Safe address in ${validationChain?.name} network`;
     } finally {
       setIsValidatingSafe(false);
@@ -198,26 +205,28 @@ export const FormAddressInput = ({
   const extendedRegisterOptions = {
     ...registerOptions,
     validate: async (validateValue: string) => {
+      const resolvedValue =
+        (isENS(validateValue) ? ensAddress : validateValue) ?? "";
+
       // ENS validation
       if (isENS(validateValue)) {
         if (ensError) return "Invalid ENS name";
         if (!ensAddress) return "Unable to resolve ENS name";
-        return true;
       }
 
       // Address format validation
-      if (!isAddress(validateValue)) {
+      if (!isAddress(resolvedValue ?? "")) {
         return "Invalid Ethereum address format";
       }
 
       // SAFE validation if required
       if (validateSafe) {
-        const isValid = await validateSafeAddress(validateValue);
+        const isValid = await validateSafeAddress(resolvedValue);
         return isValid;
       }
 
       if (validateERC20) {
-        const erc20Validation = await validateErc20Address(validateValue);
+        const erc20Validation = await validateErc20Address(resolvedValue);
         return erc20Validation;
       }
 
@@ -227,6 +236,16 @@ export const FormAddressInput = ({
 
   const isValidInputAddress = isAddress(inputValue ?? "");
   const hasEnsAvatar = Boolean(avatarUrl);
+  const resolvedEnsVisualErrorCleared =
+    errors?.[registerKey]?.message === "Unable to resolve ENS name" &&
+    (Boolean(ensAddress) || isValidInputAddress);
+  const displayErrors =
+    resolvedEnsVisualErrorCleared ?
+      {
+        ...errors,
+        [registerKey]: undefined,
+      }
+    : errors;
 
   return (
     <div className="w-full max-w-[29rem]">
@@ -240,7 +259,7 @@ export const FormAddressInput = ({
         register={register}
         required={required}
         placeholder={placeholder}
-        errors={errors}
+        errors={displayErrors}
         disabled={disabled}
         readOnly={readOnly}
         className={`${className} pr-12`}

@@ -339,8 +339,12 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
 
     function _checkOwner() internal view override {
         address directOwner = proxyOwner();
+        if (msg.sender == directOwner) {
+            return;
+        }
+
         address resolvedOwner = owner();
-        if (msg.sender != directOwner && msg.sender != resolvedOwner) revert("Ownable: caller is not the owner");
+        if (msg.sender != resolvedOwner) revert("Ownable: caller is not the owner");
     }
 
     function _canExecuteAction(address _user) internal view returns (bool) {

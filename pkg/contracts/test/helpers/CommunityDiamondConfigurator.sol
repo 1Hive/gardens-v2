@@ -39,13 +39,14 @@ abstract contract CommunityDiamondConfiguratorBase {
             facetAddress: address(_adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
         });
 
-        bytes4[] memory memberSelectors = new bytes4[](6);
+        bytes4[] memory memberSelectors = new bytes4[](7);
         memberSelectors[0] = CommunityMemberFacet.stakeAndRegisterMember.selector;
         memberSelectors[1] = CommunityMemberFacet.unregisterMember.selector;
         memberSelectors[2] = CommunityMemberFacet.kickMember.selector;
         memberSelectors[3] = CommunityMemberFacet.isMember.selector;
         memberSelectors[4] = CommunityMemberFacet.getBasisStakedAmount.selector;
         memberSelectors[5] = CommunityMemberFacet.getStakeAmountWithFees.selector;
+        memberSelectors[6] = CommunityMemberFacet.registerMember.selector;
         cuts[1] = IDiamond.FacetCut({
             facetAddress: address(_memberFacet),
             action: IDiamond.FacetCutAction.Auto,
@@ -86,7 +87,7 @@ abstract contract CommunityDiamondConfiguratorBase {
             facetAddress: address(_poolFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: poolSelectors
         });
 
-        bytes4[] memory powerSelectors = new bytes4[](7);
+        bytes4[] memory powerSelectors = new bytes4[](8);
         powerSelectors[0] = CommunityPowerFacet.activateMemberInStrategy.selector;
         powerSelectors[1] = CommunityPowerFacet.deactivateMemberInStrategy.selector;
         powerSelectors[2] = CommunityPowerFacet.increasePower.selector;
@@ -94,6 +95,7 @@ abstract contract CommunityDiamondConfiguratorBase {
         powerSelectors[4] = CommunityPowerFacet.getMemberPowerInStrategy.selector;
         powerSelectors[5] = CommunityPowerFacet.getMemberStakedAmount.selector;
         powerSelectors[6] = CommunityPowerFacet.ercAddress.selector;
+        powerSelectors[7] = CommunityPowerFacet.isRegisteredMember.selector;
         cuts[4] = IDiamond.FacetCut({
             facetAddress: address(_powerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: powerSelectors
         });

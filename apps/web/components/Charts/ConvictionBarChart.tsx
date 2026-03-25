@@ -132,8 +132,10 @@ const ConvictionBarChartBase = ({
         thresholdPct < currentConvictionPct,
       details: [
         {
-          // TODO: add real date
-          message: "This proposal is Executable",
+          message:
+            proposalType === "streaming" ?
+              "This proposal is about to stream."
+            : "This proposal is executable.",
           growing: false,
         },
       ],
@@ -145,7 +147,10 @@ const ConvictionBarChartBase = ({
         currentConvictionPct < proposalSupportPct,
       details: [
         {
-          message: "This proposal is ready to be executed!",
+          message:
+            proposalType === "streaming" ?
+              "This proposal is about to stream."
+            : "This proposal is ready to be executed!",
           growing: true,
         },
       ],
@@ -157,7 +162,10 @@ const ConvictionBarChartBase = ({
         proposalSupportPct < currentConvictionPct,
       details: [
         {
-          message: "This proposal is ready to be executed!",
+          message:
+            proposalType === "streaming" ?
+              "This proposal is about to stream."
+            : "This proposal is ready to be executed!",
           growing: false,
         },
       ],
@@ -183,7 +191,10 @@ const ConvictionBarChartBase = ({
         proposalSupportPct > thresholdPct,
       details: [
         {
-          message: "This proposal is ready to be executed!",
+          message:
+            proposalType === "streaming" ?
+              "This proposal is about to stream."
+            : "This proposal is ready to be executed!",
           growing: null,
         },
       ],
@@ -429,7 +440,7 @@ const ConvictionBarChartBase = ({
                 <p>
                   {proposalType === "funding" ?
                     "Estimated time to pass"
-                  : "Before stream start"}
+                  : "Before streaming starts"}
                   :
                 </p>
                 <Countdown

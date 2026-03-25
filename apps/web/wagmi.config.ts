@@ -1,14 +1,15 @@
 import { defineConfig } from "@wagmi/cli";
 import { actions } from "@wagmi/cli/plugins";
 import { Abi } from "viem";
-import { abi as alloABI } from "#/contracts/abis/Allo.sol/Allo.json";
 // Use aggregated diamond ABIs that include all facet functions
 import { abi as CVStrategyABI } from "#/contracts/abis/DiamondAggregated/CVStrategy.json";
 import { abi as registryComityABI } from "#/contracts/abis/DiamondAggregated/RegistryCommunity.json";
 import { abi as GoodDollarABI } from "#/contracts/abis/GoodDollarSybil.sol/GoodDollarSybil.json";
+import { abi as alloABI } from "#/contracts/abis/IAllo.sol/IAllo.json";
 import { abi as ArbitratorAbi } from "#/contracts/abis/IArbitrator.sol/IArbitrator.json";
 import { abi as mockERC20ABI } from "#/contracts/abis/MockERC20.sol/MockERC20.json";
 import { abi as PassportScorerABI } from "#/contracts/abis/PassportScorer.sol/PassportScorer.json";
+import { abi as ProxyOwnerABI } from "#/contracts/abis/ProxyOwner.sol/ProxyOwner.json";
 // Use aggregated diamond ABIs that include all facet functions
 import { abi as registryFactoryABI } from "#/contracts/abis/RegistryFactory.sol/RegistryFactory.json";
 import { abi as SafeArbitrator } from "#/contracts/abis/SafeArbitrator.sol/SafeArbitrator.json";
@@ -39,6 +40,10 @@ export default defineConfig({
     {
       name: "PassportScorer",
       abi: PassportScorerABI as Abi,
+    },
+    {
+      name: "ProxyOwner",
+      abi: ProxyOwnerABI as Abi,
     },
     {
       name: "IArbitrator",

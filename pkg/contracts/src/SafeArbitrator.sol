@@ -44,10 +44,12 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
     error OnlySafe(address sender, address safe);
     error NotEnoughArbitrationFees();
     error InvalidRuling();
+    error InvalidDisputeId(uint256 disputeId);
     error DisputeAlreadySolved();
     error NotSupported();
 
     modifier onlySafe(uint256 _disputeID) {
+        _requireValidDisputeId(_disputeID);
         address tribunalSafe = disputes[_disputeID - 1].tribunalSafe;
         if (msg.sender == tribunalSafe) {
             _;
@@ -176,10 +178,17 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
     }
 
     function currentRuling(uint256 _disputeID) public view returns (uint256 ruling, bool tied, bool overridden) {
-        DisputeStruct storage dispute = disputes[_disputeID];
+        _requireValidDisputeId(_disputeID);
+        DisputeStruct storage dispute = disputes[_disputeID - 1];
         ruling = dispute.ruling;
         tied = false;
         overridden = false;
+    }
+
+    function _requireValidDisputeId(uint256 _disputeID) internal view {
+        if (_disputeID == 0 || _disputeID > disputes.length) {
+            revert InvalidDisputeId(_disputeID);
+        }
     }
 
 }

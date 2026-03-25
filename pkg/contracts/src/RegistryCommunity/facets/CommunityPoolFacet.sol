@@ -59,9 +59,10 @@ contract CommunityPoolFacet is CommunityBaseFacet {
         public
         returns (uint256 poolId, address strategy)
     {
+        address factoryStrategyTemplate = IRegistryFactory(registryFactory).strategyTemplate();
         address strategyProxy = address(
             new ERC1967Proxy(
-                address(strategyTemplate),
+                factoryStrategyTemplate,
                 abi.encodeWithSelector(CVStrategy.init.selector, address(allo), collateralVaultTemplate, address(this))
             )
         );

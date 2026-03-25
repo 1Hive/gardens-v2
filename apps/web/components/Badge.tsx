@@ -20,7 +20,7 @@ type BadgeProps = {
 
 // Styles for different pool badge types
 const POOL_TYPE_STYLES = [
-  "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
+  "border border-primary-content/35 bg-primary-content/10 text-primary-content dark:border-primary-dark-border/60 dark:bg-primary-dark-base/25 dark:text-primary-dark-text-hover",
   "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
   "bg-secondary-soft text-secondary-content dark:bg-secondary-dark-base/70 dark:text-secondary-dark-text",
 ];
