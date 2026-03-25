@@ -76,6 +76,16 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         address streamingFacet;
     }
 
+    struct CommunityFacetSnapshot {
+        address loupeFacet;
+        address adminFacet;
+        address memberFacet;
+        address pauseFacet;
+        address poolFacet;
+        address powerFacet;
+        address strategyFacet;
+    }
+
     function runCurrentNetwork(string memory networkJson) public override {
         bool reuseConfiguredImplementations = _flagEnabled("REUSE_CONFIGURED_IMPLEMENTATIONS");
 
@@ -663,64 +673,42 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         }
     }
 
-    function _syncCommunityFacetSnapshotsFromLive(address[] memory proxies, uint256 startIndex, uint256 endIndex) internal {
+    function _syncCommunityFacetSnapshotsFromLive(address[] memory proxies, uint256 startIndex, uint256 endIndex)
+        internal
+    {
         if (endIndex <= startIndex) return;
 
         address referenceProxy = proxies[startIndex];
-        address[] memory referenceFacets = IDiamondLoupe(referenceProxy).facetAddresses();
-        require(referenceFacets.length == EXPECTED_COMMUNITY_FACET_COUNT, "community facet count mismatch");
+        {
+            address[] memory referenceFacets = IDiamondLoupe(referenceProxy).facetAddresses();
+            require(referenceFacets.length == EXPECTED_COMMUNITY_FACET_COUNT, "community facet count mismatch");
+        }
 
-        address loupeFacet = IDiamondLoupe(referenceProxy).facetAddress(IDiamondLoupe.facets.selector);
-        address adminFacet = IDiamondLoupe(referenceProxy).facetAddress(CommunityAdminFacet.setStrategyTemplate.selector);
-        address memberFacet = IDiamondLoupe(referenceProxy).facetAddress(CommunityMemberFacet.stakeAndRegisterMember.selector);
-        address pauseFacet = IDiamondLoupe(referenceProxy).facetAddress(bytes4(keccak256("setPauseController(address)")));
-        address poolFacet = IDiamondLoupe(referenceProxy).facetAddress(
-            bytes4(
-                keccak256(
-                    "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address,uint256,address[],address,uint256),(uint256,string))"
-                )
-            )
-        );
-        address powerFacet = IDiamondLoupe(referenceProxy).facetAddress(CommunityPowerFacet.activateMemberInStrategy.selector);
-        address strategyFacet = IDiamondLoupe(referenceProxy).facetAddress(CommunityStrategyFacet.addStrategyByPoolId.selector);
-
+        CommunityFacetSnapshot memory snapshot = _readCommunityFacetSnapshot(referenceProxy);
         require(
-            loupeFacet != address(0) && adminFacet != address(0) && memberFacet != address(0) && pauseFacet != address(0)
-                && poolFacet != address(0) && powerFacet != address(0) && strategyFacet != address(0),
+            snapshot.loupeFacet != address(0) && snapshot.adminFacet != address(0) && snapshot.memberFacet != address(0)
+                && snapshot.pauseFacet != address(0) && snapshot.poolFacet != address(0)
+                && snapshot.powerFacet != address(0) && snapshot.strategyFacet != address(0),
             "community facet selector missing"
         );
 
         for (uint256 i = startIndex + 1; i < endIndex; i++) {
             address proxy = proxies[i];
-            address[] memory facetAddresses = IDiamondLoupe(proxy).facetAddresses();
-            require(facetAddresses.length == EXPECTED_COMMUNITY_FACET_COUNT, "community facet count mismatch");
-            require(
-                IDiamondLoupe(proxy).facetAddress(IDiamondLoupe.facets.selector) == loupeFacet
-                    && IDiamondLoupe(proxy).facetAddress(CommunityAdminFacet.setStrategyTemplate.selector) == adminFacet
-                    && IDiamondLoupe(proxy).facetAddress(CommunityMemberFacet.stakeAndRegisterMember.selector) == memberFacet
-                    && IDiamondLoupe(proxy).facetAddress(bytes4(keccak256("setPauseController(address)"))) == pauseFacet
-                    && IDiamondLoupe(proxy).facetAddress(
-                        bytes4(
-                            keccak256(
-                                "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address,uint256,address[],address,uint256),(uint256,string))"
-                            )
-                        )
-                    ) == poolFacet
-                    && IDiamondLoupe(proxy).facetAddress(CommunityPowerFacet.activateMemberInStrategy.selector) == powerFacet
-                    && IDiamondLoupe(proxy).facetAddress(CommunityStrategyFacet.addStrategyByPoolId.selector)
-                        == strategyFacet,
-                "community facets diverged across proxies"
-            );
+            {
+                address[] memory facetAddresses = IDiamondLoupe(proxy).facetAddresses();
+                require(facetAddresses.length == EXPECTED_COMMUNITY_FACET_COUNT, "community facet count mismatch");
+            }
+            require(_communityFacetSnapshotMatches(proxy, snapshot), "community facets diverged across proxies");
         }
 
-        _writeNetworkAddress(".FACETS.DIAMOND_LOUPE", loupeFacet);
-        _writeNetworkAddress(".FACETS.COMMUNITY_DIAMOND_LOUPE", loupeFacet);
-        _writeNetworkAddress(".FACETS.COMMUNITY_ADMIN", adminFacet);
-        _writeNetworkAddress(".FACETS.COMMUNITY_MEMBER", memberFacet);
-        _writeNetworkAddress(".FACETS.COMMUNITY_PAUSE", pauseFacet);
-        _writeNetworkAddress(".FACETS.COMMUNITY_POOL", poolFacet);
-        _writeNetworkAddress(".FACETS.COMMUNITY_POWER", powerFacet);
-        _writeNetworkAddress(".FACETS.COMMUNITY_STRATEGY", strategyFacet);
+        _writeNetworkAddress(".FACETS.DIAMOND_LOUPE", snapshot.loupeFacet);
+        _writeNetworkAddress(".FACETS.COMMUNITY_DIAMOND_LOUPE", snapshot.loupeFacet);
+        _writeNetworkAddress(".FACETS.COMMUNITY_ADMIN", snapshot.adminFacet);
+        _writeNetworkAddress(".FACETS.COMMUNITY_MEMBER", snapshot.memberFacet);
+        _writeNetworkAddress(".FACETS.COMMUNITY_PAUSE", snapshot.pauseFacet);
+        _writeNetworkAddress(".FACETS.COMMUNITY_POOL", snapshot.poolFacet);
+        _writeNetworkAddress(".FACETS.COMMUNITY_POWER", snapshot.powerFacet);
+        _writeNetworkAddress(".FACETS.COMMUNITY_STRATEGY", snapshot.strategyFacet);
     }
 
     function _syncRegistryFactoryImplementationFromLive(address proxy) internal {
@@ -857,5 +845,39 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
             && IDiamondLoupe(proxy).facetAddress(CVStrategy.registerRecipient.selector) == snapshot.proposalFacet
             && IDiamondLoupe(proxy).facetAddress(syncSelector) == snapshot.syncPowerFacet
             && IDiamondLoupe(proxy).facetAddress(CVStrategy.rebalance.selector) == snapshot.streamingFacet;
+    }
+
+    function _readCommunityFacetSnapshot(address proxy)
+        internal
+        view
+        returns (CommunityFacetSnapshot memory snapshot)
+    {
+        snapshot.loupeFacet = IDiamondLoupe(proxy).facetAddress(IDiamondLoupe.facets.selector);
+        snapshot.adminFacet = IDiamondLoupe(proxy).facetAddress(CommunityAdminFacet.setStrategyTemplate.selector);
+        snapshot.memberFacet =
+            IDiamondLoupe(proxy).facetAddress(CommunityMemberFacet.stakeAndRegisterMember.selector);
+        snapshot.pauseFacet = IDiamondLoupe(proxy).facetAddress(bytes4(keccak256("setPauseController(address)")));
+        snapshot.poolFacet = IDiamondLoupe(proxy).facetAddress(COMMUNITY_CREATE_POOL_SELECTOR_V0_3);
+        snapshot.powerFacet =
+            IDiamondLoupe(proxy).facetAddress(CommunityPowerFacet.activateMemberInStrategy.selector);
+        snapshot.strategyFacet =
+            IDiamondLoupe(proxy).facetAddress(CommunityStrategyFacet.addStrategyByPoolId.selector);
+    }
+
+    function _communityFacetSnapshotMatches(address proxy, CommunityFacetSnapshot memory snapshot)
+        internal
+        view
+        returns (bool)
+    {
+        return IDiamondLoupe(proxy).facetAddress(IDiamondLoupe.facets.selector) == snapshot.loupeFacet
+            && IDiamondLoupe(proxy).facetAddress(CommunityAdminFacet.setStrategyTemplate.selector) == snapshot.adminFacet
+            && IDiamondLoupe(proxy).facetAddress(CommunityMemberFacet.stakeAndRegisterMember.selector)
+                == snapshot.memberFacet
+            && IDiamondLoupe(proxy).facetAddress(bytes4(keccak256("setPauseController(address)"))) == snapshot.pauseFacet
+            && IDiamondLoupe(proxy).facetAddress(COMMUNITY_CREATE_POOL_SELECTOR_V0_3) == snapshot.poolFacet
+            && IDiamondLoupe(proxy).facetAddress(CommunityPowerFacet.activateMemberInStrategy.selector)
+                == snapshot.powerFacet
+            && IDiamondLoupe(proxy).facetAddress(CommunityStrategyFacet.addStrategyByPoolId.selector)
+                == snapshot.strategyFacet;
     }
 }
