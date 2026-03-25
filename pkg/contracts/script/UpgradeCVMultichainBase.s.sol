@@ -922,7 +922,7 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
         internal
         returns (address addr)
     {
-        bytes32 expectedCodeHash = _runtimeCodeHash(artifactId);
+        bytes32 expectedCodeHash = _deployedCodeHash(artifactId);
         addr = _readAddressOrZero(key);
 
         if (addr == address(0)) {
@@ -933,7 +933,7 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
             return _deployFacetForSnapshot(key, label);
         }
 
-        if (addr.codehash != expectedCodeHash) {
+        if (_addressCodeHash(addr, artifactId) != expectedCodeHash) {
             return _deployFacetForSnapshot(key, label);
         }
     }
@@ -942,7 +942,7 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
         internal
         returns (address addr)
     {
-        bytes32 expectedCodeHash = _runtimeCodeHash(artifactId);
+        bytes32 expectedCodeHash = _deployedCodeHash(artifactId);
         addr = _readAddressOrZero(key);
 
         if (addr == address(0)) {
@@ -953,7 +953,7 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
             revert(string.concat("facet snapshot has no code: ", label));
         }
 
-        if (addr.codehash != expectedCodeHash) {
+        if (_addressCodeHash(addr, artifactId) != expectedCodeHash) {
             revert(string.concat("facet snapshot code mismatch: ", label));
         }
     }
@@ -1192,11 +1192,63 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
             return (address(0), false);
         }
 
-        if (cached.codehash != expectedCodeHash) {
+        string memory artifactId = _artifactIdForSnapshotKey(key);
+        if (bytes(artifactId).length != 0 && _addressCodeHash(cached, artifactId) != expectedCodeHash) {
             return (address(0), false);
         }
 
         return (cached, true);
+    }
+
+    function _artifactIdForSnapshotKey(string memory key) internal pure returns (string memory artifactId) {
+        bytes32 keyHash = keccak256(bytes(key));
+
+        if (keyHash == keccak256(bytes(".FACETS.DIAMOND_LOUPE"))) {
+            return "src/diamonds/facets/DiamondLoupeFacet.sol:DiamondLoupeFacet";
+        }
+        if (keyHash == keccak256(bytes(".FACETS.CV_ADMIN"))) {
+            return "src/CVStrategy/facets/CVAdminFacet.sol:CVAdminFacet";
+        }
+        if (keyHash == keccak256(bytes(".FACETS.CV_ALLOCATION"))) {
+            return "src/CVStrategy/facets/CVAllocationFacet.sol:CVAllocationFacet";
+        }
+        if (keyHash == keccak256(bytes(".FACETS.CV_DISPUTE"))) {
+            return "src/CVStrategy/facets/CVDisputeFacet.sol:CVDisputeFacet";
+        }
+        if (keyHash == keccak256(bytes(".FACETS.CV_PAUSE"))) {
+            return "src/CVStrategy/facets/CVPauseFacet.sol:CVPauseFacet";
+        }
+        if (keyHash == keccak256(bytes(".FACETS.CV_POWER"))) {
+            return "src/CVStrategy/facets/CVPowerFacet.sol:CVPowerFacet";
+        }
+        if (keyHash == keccak256(bytes(".FACETS.CV_PROPOSAL"))) {
+            return "src/CVStrategy/facets/CVProposalFacet.sol:CVProposalFacet";
+        }
+        if (keyHash == keccak256(bytes(".FACETS.CV_SYNC_POWER"))) {
+            return "src/CVStrategy/facets/CVSyncPowerFacet.sol:CVSyncPowerFacet";
+        }
+        if (keyHash == keccak256(bytes(".FACETS.CV_STREAMING"))) {
+            return "src/CVStrategy/facets/CVStreamingFacet.sol:CVStreamingFacet";
+        }
+        if (keyHash == keccak256(bytes(".FACETS.COMMUNITY_ADMIN"))) {
+            return "src/RegistryCommunity/facets/CommunityAdminFacet.sol:CommunityAdminFacet";
+        }
+        if (keyHash == keccak256(bytes(".FACETS.COMMUNITY_MEMBER"))) {
+            return "src/RegistryCommunity/facets/CommunityMemberFacet.sol:CommunityMemberFacet";
+        }
+        if (keyHash == keccak256(bytes(".FACETS.COMMUNITY_PAUSE"))) {
+            return "src/RegistryCommunity/facets/CommunityPauseFacet.sol:CommunityPauseFacet";
+        }
+        if (keyHash == keccak256(bytes(".FACETS.COMMUNITY_POOL"))) {
+            return "src/RegistryCommunity/facets/CommunityPoolFacet.sol:CommunityPoolFacet";
+        }
+        if (keyHash == keccak256(bytes(".FACETS.COMMUNITY_POWER"))) {
+            return "src/RegistryCommunity/facets/CommunityPowerFacet.sol:CommunityPowerFacet";
+        }
+        if (keyHash == keccak256(bytes(".FACETS.COMMUNITY_STRATEGY"))) {
+            return "src/RegistryCommunity/facets/CommunityStrategyFacet.sol:CommunityStrategyFacet";
+        }
+        return "";
     }
 
     function _ffiCall(string memory label, string[] memory inputs) internal returns (bytes memory result) {

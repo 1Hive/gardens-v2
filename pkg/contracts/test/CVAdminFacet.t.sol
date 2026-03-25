@@ -4,10 +4,19 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 
 import {CVAdminFacet} from "../src/CVStrategy/facets/CVAdminFacet.sol";
-import {Proposal, ArbitrableConfig, CVParams, ProposalStatus, PointSystemConfig} from "../src/CVStrategy/ICVStrategy.sol";
+import {
+    Proposal,
+    ArbitrableConfig,
+    CVParams,
+    ProposalStatus,
+    ProposalType,
+    PointSystemConfig
+} from "../src/CVStrategy/ICVStrategy.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
+import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
+import {ISuperfluidPool} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
 import {LibDiamond} from "../src/diamonds/libraries/LibDiamond.sol";
@@ -89,6 +98,10 @@ contract MockSybilScorerAdmin is ISybilScorer {
 contract MockSuperfluidHost {
     address public agreement;
 
+    constructor(address agreement_) {
+        agreement = agreement_;
+    }
+
     function setAgreement(address agreement_) external {
         agreement = agreement_;
     }
@@ -97,20 +110,103 @@ contract MockSuperfluidHost {
         return agreement;
     }
 
-    function callAgreement(address, bytes calldata, bytes calldata) external pure returns (bytes memory) {
+    function callAgreement(address agreementClass, bytes calldata data, bytes calldata) external returns (bytes memory) {
+        if (agreementClass == agreement) {
+            bytes4 selector;
+            assembly {
+                selector := calldataload(data.offset)
+            }
+            if (selector == bytes4(keccak256("distributeFlow(address,address,address,int96,bytes)"))) {
+                (, , address pool, int96 requestedFlowRate,) = abi.decode(data[4:], (address, address, address, int96, bytes));
+                MockGDAAgreement(agreement).setFlowRate(pool, requestedFlowRate);
+            }
+        }
         return "";
+    }
+}
+
+contract MockGDAAgreement {
+    address public lastPool;
+    int96 public flowRate;
+
+    function getFlowRate(ISuperToken, address, ISuperfluidPool pool) external view returns (int96) {
+        pool;
+        return flowRate;
+    }
+
+    function setFlowRate(address pool, int96 newFlowRate) external {
+        lastPool = pool;
+        flowRate = newFlowRate;
     }
 }
 
 contract MockSuperToken {
     address public host;
+    address public underlyingToken;
+    mapping(address => uint256) public balances;
+    uint256 public lastDowngradeAmount;
+    uint256 public lastUpgradeAmount;
 
-    constructor(address host_) {
+    constructor(address host_, address underlyingToken_) {
         host = host_;
+        underlyingToken = underlyingToken_;
     }
 
     function getHost() external view returns (address) {
         return host;
+    }
+
+    function getUnderlyingToken() external view returns (address) {
+        return underlyingToken;
+    }
+
+    function balanceOf(address account) external view returns (uint256) {
+        return balances[account];
+    }
+
+    function setBalance(address account, uint256 amount) external {
+        balances[account] = amount;
+    }
+
+    function downgrade(uint256 amount) external {
+        balances[msg.sender] -= amount;
+        lastDowngradeAmount = amount;
+        MockERC20(underlyingToken).mint(msg.sender, amount);
+    }
+
+    function upgrade(uint256 amount) external {
+        lastUpgradeAmount = amount;
+        MockERC20(underlyingToken).burnFrom(msg.sender, amount);
+        balances[msg.sender] += amount;
+    }
+
+    function connectPool(address) external pure returns (bool) {
+        return true;
+    }
+
+    function disconnectPool(address) external pure returns (bool) {
+        return true;
+    }
+}
+
+contract MockERC20 {
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    function mint(address account, uint256 amount) external {
+        balanceOf[account] += amount;
+    }
+
+    function approve(address spender, uint256 amount) external returns (bool) {
+        allowance[msg.sender][spender] = amount;
+        return true;
+    }
+
+    function burnFrom(address from, uint256 amount) external {
+        uint256 allowed = allowance[from][msg.sender];
+        require(allowed >= amount, "INSUFFICIENT_ALLOWANCE");
+        allowance[from][msg.sender] = allowed - amount;
+        balanceOf[from] -= amount;
     }
 }
 
@@ -213,6 +309,27 @@ contract CVAdminFacetHarness is CVAdminFacet {
     function setPointConfig(uint256 maxAmount) external {
         pointConfig = PointSystemConfig(maxAmount);
     }
+
+    function setProposalType(ProposalType proposalType_) external {
+        proposalType = proposalType_;
+    }
+
+    function setSuperfluidToken(address token) external {
+        superfluidToken = ISuperToken(token);
+    }
+
+    function setSuperfluidGDA(address gda) external {
+        superfluidGDA = ISuperfluidPool(gda);
+    }
+
+    function setProposalStatus(uint256 proposalId, ProposalStatus status) external {
+        Proposal storage p = proposals[proposalId];
+        p.proposalId = proposalId;
+        p.proposalStatus = status;
+        if (proposalCounter < proposalId) {
+            proposalCounter = proposalId;
+        }
+    }
 }
 
 contract CVAdminFacetTest is Test {
@@ -223,6 +340,7 @@ contract CVAdminFacetTest is Test {
     MockArbitrator internal arbitrator;
     MockVotingRegistryAdmin internal customRegistry;
     MockFactoryAllowlist internal factoryAllowlist;
+    MockERC20 internal underlyingToken;
 
     address internal councilSafe = makeAddr("councilSafe");
     address internal member = makeAddr("member");
@@ -235,6 +353,7 @@ contract CVAdminFacetTest is Test {
         arbitrator = new MockArbitrator();
         customRegistry = new MockVotingRegistryAdmin();
         factoryAllowlist = new MockFactoryAllowlist();
+        underlyingToken = new MockERC20();
 
         facet.setRegistryCommunity(address(registry));
         facet.forceVotingPowerRegistry(address(registry));
@@ -304,9 +423,9 @@ contract CVAdminFacetTest is Test {
 
     function test_connect_and_disconnect_superfluid_gda() public {
         factoryAllowlist.setAllowed(address(arbitrator), true);
-        MockSuperfluidHost host = new MockSuperfluidHost();
-        MockSuperToken token = new MockSuperToken(address(host));
-        host.setAgreement(address(0xD00D));
+        MockGDAAgreement gdaAgreement = new MockGDAAgreement();
+        MockSuperfluidHost host = new MockSuperfluidHost(address(gdaAgreement));
+        MockSuperToken token = new MockSuperToken(address(host), address(underlyingToken));
 
         ArbitrableConfig memory arb = ArbitrableConfig({
             arbitrator: IArbitrator(address(arbitrator)),
@@ -326,6 +445,120 @@ contract CVAdminFacetTest is Test {
 
         vm.prank(councilSafe);
         facet.disconnectSuperfluidGDA(address(0xB0B));
+    }
+
+    function test_setPoolParams_streaming_reverts_when_unclosed_proposal_exists() public {
+        factoryAllowlist.setAllowed(address(arbitrator), true);
+        MockGDAAgreement gdaAgreement = new MockGDAAgreement();
+        MockSuperfluidHost host = new MockSuperfluidHost(address(gdaAgreement));
+        MockSuperToken oldToken = new MockSuperToken(address(host), address(underlyingToken));
+        MockSuperToken newToken = new MockSuperToken(address(host), address(underlyingToken));
+
+        facet.setProposalType(ProposalType.Streaming);
+        facet.setSuperfluidToken(address(oldToken));
+        facet.setProposalStatus(1, ProposalStatus.Active);
+
+        ArbitrableConfig memory arb = ArbitrableConfig({
+            arbitrator: IArbitrator(address(arbitrator)),
+            tribunalSafe: address(0xBEEF),
+            submitterCollateralAmount: 1,
+            challengerCollateralAmount: 1,
+            defaultRuling: 1,
+            defaultRulingTimeout: 10
+        });
+        CVParams memory params = CVParams({maxRatio: 0, weight: 0, decay: 0, minThresholdPoints: 0});
+
+        vm.prank(councilSafe);
+        vm.expectRevert(abi.encodeWithSelector(CVAdminFacet.ProposalActive.selector, 1));
+        facet.setPoolParams(arb, params, 0, new address[](0), new address[](0), address(newToken), 0);
+    }
+
+    function test_setPoolParams_streaming_migrates_balance_when_switching_super_token() public {
+        factoryAllowlist.setAllowed(address(arbitrator), true);
+        MockGDAAgreement gdaAgreement = new MockGDAAgreement();
+        MockSuperfluidHost host = new MockSuperfluidHost(address(gdaAgreement));
+        MockSuperToken oldToken = new MockSuperToken(address(host), address(underlyingToken));
+        MockSuperToken newToken = new MockSuperToken(address(host), address(underlyingToken));
+
+        allo.setPoolToken(1, address(underlyingToken));
+        facet.setProposalType(ProposalType.Streaming);
+        facet.setSuperfluidToken(address(oldToken));
+        facet.setProposalStatus(1, ProposalStatus.Rejected);
+        oldToken.setBalance(address(facet), 25 ether);
+
+        ArbitrableConfig memory arb = ArbitrableConfig({
+            arbitrator: IArbitrator(address(arbitrator)),
+            tribunalSafe: address(0xBEEF),
+            submitterCollateralAmount: 1,
+            challengerCollateralAmount: 1,
+            defaultRuling: 1,
+            defaultRulingTimeout: 10
+        });
+        CVParams memory params = CVParams({maxRatio: 0, weight: 0, decay: 0, minThresholdPoints: 0});
+
+        vm.prank(councilSafe);
+        facet.setPoolParams(arb, params, 0, new address[](0), new address[](0), address(newToken), 0);
+
+        assertEq(oldToken.balanceOf(address(facet)), 0);
+        assertEq(oldToken.lastDowngradeAmount(), 25 ether);
+        assertEq(newToken.balanceOf(address(facet)), 25 ether);
+        assertEq(newToken.lastUpgradeAmount(), 25 ether);
+        assertEq(underlyingToken.balanceOf(address(facet)), 0);
+        assertEq(address(facet.superfluidToken()), address(newToken));
+    }
+
+    function test_setPoolParams_streaming_rate_change_updates_flow_only() public {
+        factoryAllowlist.setAllowed(address(arbitrator), true);
+        MockGDAAgreement gdaAgreement = new MockGDAAgreement();
+        MockSuperfluidHost host = new MockSuperfluidHost(address(gdaAgreement));
+        MockSuperToken token = new MockSuperToken(address(host), address(underlyingToken));
+        address gda = address(0xB0B);
+
+        facet.setProposalType(ProposalType.Streaming);
+        facet.setSuperfluidToken(address(token));
+        facet.setSuperfluidGDA(gda);
+
+        ArbitrableConfig memory arb = ArbitrableConfig({
+            arbitrator: IArbitrator(address(arbitrator)),
+            tribunalSafe: address(0xBEEF),
+            submitterCollateralAmount: 1,
+            challengerCollateralAmount: 1,
+            defaultRuling: 1,
+            defaultRulingTimeout: 10
+        });
+        CVParams memory params = CVParams({maxRatio: 0, weight: 0, decay: 0, minThresholdPoints: 0});
+
+        vm.prank(councilSafe);
+        facet.setPoolParams(arb, params, 0, new address[](0), new address[](0), address(token), 123);
+
+        assertEq(gdaAgreement.lastPool(), gda);
+        assertEq(int256(gdaAgreement.flowRate()), int256(123));
+    }
+
+    function test_setPoolParams_streaming_rate_change_without_gda_is_noop() public {
+        factoryAllowlist.setAllowed(address(arbitrator), true);
+        MockGDAAgreement gdaAgreement = new MockGDAAgreement();
+        MockSuperfluidHost host = new MockSuperfluidHost(address(gdaAgreement));
+        MockSuperToken token = new MockSuperToken(address(host), address(underlyingToken));
+
+        facet.setProposalType(ProposalType.Streaming);
+        facet.setSuperfluidToken(address(token));
+
+        ArbitrableConfig memory arb = ArbitrableConfig({
+            arbitrator: IArbitrator(address(arbitrator)),
+            tribunalSafe: address(0xBEEF),
+            submitterCollateralAmount: 1,
+            challengerCollateralAmount: 1,
+            defaultRuling: 1,
+            defaultRulingTimeout: 10
+        });
+        CVParams memory params = CVParams({maxRatio: 0, weight: 0, decay: 0, minThresholdPoints: 0});
+
+        vm.prank(councilSafe);
+        facet.setPoolParams(arb, params, 0, new address[](0), new address[](0), address(token), 123);
+
+        assertEq(gdaAgreement.lastPool(), address(0));
+        assertEq(int256(gdaAgreement.flowRate()), int256(0));
     }
 
     function test_setVotingPowerRegistry_revertsIfNotAllowed() public {

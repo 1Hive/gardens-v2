@@ -172,6 +172,8 @@ contract ForkLifecycleHealthcheck is Test {
     bytes4 internal constant COMMUNITY_CREATE_POOL_CUSTOM_SELECTOR_V0_3 = 0x82b18ef4;
     bytes4 internal constant STRATEGY_SET_POOL_PARAMS_SELECTOR = 0xd5b7cc54;
     bytes4 internal constant STRATEGY_SET_POOL_PARAMS_WITH_RATE_SELECTOR = 0x2bbe0cae;
+    bytes32 internal constant ERC1967_IMPLEMENTATION_SLOT =
+        0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
     // RPC resolution order per chain:
     // 1. Existing package-standard env vars from `pkg/contracts/.env` / Taskfile.yml, for example `RPC_URL_OPT`
@@ -849,6 +851,7 @@ contract ForkLifecycleHealthcheck is Test {
         });
 
         ctx.community = RegistryCommunity(payable(ctx.factory.createRegistry(params)));
+        _assertCommunityDeploymentMatchesConfig(chain, json, address(ctx.community));
     }
 
     function _createPool(string memory chain) internal returns (ForkContext memory ctx) {
@@ -898,6 +901,7 @@ contract ForkLifecycleHealthcheck is Test {
         vm.stopPrank();
 
         ctx.strategy = CVStrategy(payable(strategyAddress));
+        _assertStrategyDeploymentMatchesConfig(ctx.community.communityName(), address(ctx.strategy));
         GV2ERC20(poolToken).mint(address(ctx.strategy), POOL_FUNDS);
         if (poolToken != address(ctx.token)) {
             ctx.token = GV2ERC20(poolToken);
@@ -1112,6 +1116,87 @@ contract ForkLifecycleHealthcheck is Test {
                 assertTrue(false, string.concat(chain, ": missing ", label, " selector"));
             }
         }
+    }
+
+    function _assertCommunityDeploymentMatchesConfig(string memory chain, string memory json, address community) internal {
+        address expectedImplementation = json.readAddress(_networkKey(chain, ".IMPLEMENTATIONS.REGISTRY_COMMUNITY"));
+        assertEq(
+            _implementationAddress(community),
+            expectedImplementation,
+            string.concat(chain, ": community implementation mismatch")
+        );
+
+        address[] memory expectedFacetAddresses = new address[](7);
+        expectedFacetAddresses[0] = json.readAddress(_networkKey(chain, ".FACETS.COMMUNITY_DIAMOND_LOUPE"));
+        expectedFacetAddresses[1] = json.readAddress(_networkKey(chain, ".FACETS.COMMUNITY_ADMIN"));
+        expectedFacetAddresses[2] = json.readAddress(_networkKey(chain, ".FACETS.COMMUNITY_MEMBER"));
+        expectedFacetAddresses[3] = json.readAddress(_networkKey(chain, ".FACETS.COMMUNITY_PAUSE"));
+        expectedFacetAddresses[4] = json.readAddress(_networkKey(chain, ".FACETS.COMMUNITY_POOL"));
+        expectedFacetAddresses[5] = json.readAddress(_networkKey(chain, ".FACETS.COMMUNITY_POWER"));
+        expectedFacetAddresses[6] = json.readAddress(_networkKey(chain, ".FACETS.COMMUNITY_STRATEGY"));
+
+        _assertFacetAddressSet(address(community), expectedFacetAddresses, string.concat(chain, ": community facets mismatch"));
+    }
+
+    function _assertStrategyDeploymentMatchesConfig(string memory communityName, address strategy) internal {
+        string memory chain = _chainFromCommunityName(communityName);
+        string memory json = vm.readFile(_networksJsonPath());
+        address expectedImplementation = json.readAddress(_networkKey(chain, ".IMPLEMENTATIONS.CV_STRATEGY"));
+        assertEq(
+            _implementationAddress(strategy),
+            expectedImplementation,
+            string.concat(chain, ": strategy implementation mismatch")
+        );
+
+        address[] memory expectedFacetAddresses = new address[](9);
+        expectedFacetAddresses[0] = json.readAddress(_networkKey(chain, ".FACETS.DIAMOND_LOUPE"));
+        expectedFacetAddresses[1] = json.readAddress(_networkKey(chain, ".FACETS.CV_ADMIN"));
+        expectedFacetAddresses[2] = json.readAddress(_networkKey(chain, ".FACETS.CV_ALLOCATION"));
+        expectedFacetAddresses[3] = json.readAddress(_networkKey(chain, ".FACETS.CV_DISPUTE"));
+        expectedFacetAddresses[4] = json.readAddress(_networkKey(chain, ".FACETS.CV_PAUSE"));
+        expectedFacetAddresses[5] = json.readAddress(_networkKey(chain, ".FACETS.CV_POWER"));
+        expectedFacetAddresses[6] = json.readAddress(_networkKey(chain, ".FACETS.CV_PROPOSAL"));
+        expectedFacetAddresses[7] = json.readAddress(_networkKey(chain, ".FACETS.CV_SYNC_POWER"));
+        expectedFacetAddresses[8] = json.readAddress(_networkKey(chain, ".FACETS.CV_STREAMING"));
+
+        _assertFacetAddressSet(strategy, expectedFacetAddresses, string.concat(chain, ": strategy facets mismatch"));
+    }
+
+    function _assertFacetAddressSet(address diamond, address[] memory expected, string memory errorMessage) internal {
+        address[] memory actual = IDiamondLoupe(diamond).facetAddresses();
+        assertEq(actual.length, expected.length, errorMessage);
+
+        for (uint256 i = 0; i < expected.length; i++) {
+            bool found = false;
+            for (uint256 j = 0; j < actual.length; j++) {
+                if (actual[j] == expected[i]) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                emit log_named_address("missing expected facet", expected[i]);
+                assertTrue(false, errorMessage);
+            }
+        }
+    }
+
+    function _implementationAddress(address proxy) internal view returns (address) {
+        return address(uint160(uint256(vm.load(proxy, ERC1967_IMPLEMENTATION_SLOT))));
+    }
+
+    function _chainFromCommunityName(string memory communityName) internal pure returns (string memory) {
+        bytes memory nameBytes = bytes(communityName);
+        bytes memory prefix = bytes("fork-community-");
+        if (nameBytes.length <= prefix.length) {
+            revert("invalid community name");
+        }
+
+        bytes memory chainBytes = new bytes(nameBytes.length - prefix.length);
+        for (uint256 i = 0; i < chainBytes.length; i++) {
+            chainBytes[i] = nameBytes[i + prefix.length];
+        }
+        return string(chainBytes);
     }
 
     function _hasSelector(address diamond, bytes4 selector) internal view returns (bool) {

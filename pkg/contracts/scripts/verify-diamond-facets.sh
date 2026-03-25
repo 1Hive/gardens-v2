@@ -29,6 +29,7 @@ NETWORK=""
 ALL_PROD=false
 PROXIES=()
 OUT_DIR=""
+VERIFIER_URL=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -58,6 +59,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --proxy)
       PROXIES+=("$2")
+      shift 2
+      ;;
+    --verifier-url)
+      VERIFIER_URL="$2"
       shift 2
       ;;
     -h|--help)
@@ -116,6 +121,39 @@ if [[ -z "$ETHERSCAN_API_KEY" ]]; then
 fi
 
 declare -A HASH_TO_CONTRACT
+
+verify_with_retry() {
+  local description="$1"
+  shift
+
+  local attempt=1
+  local max_attempts=4
+  local delay=8
+  local output
+
+  while true; do
+    if output="$("$@" 2>&1)"; then
+      printf '%s\n' "$output"
+      sleep 2
+      return 0
+    fi
+
+    printf '%s\n' "$output" >&2
+    if [[ "$attempt" -ge "$max_attempts" ]]; then
+      return 1
+    fi
+
+    if grep -Eqi 'rate limit|max calls per sec|expected value|SourcifyResponse|429|timeout' <<< "$output"; then
+      echo "    - Retrying $description after ${delay}s (attempt $((attempt + 1))/${max_attempts})..." >&2
+      sleep "$delay"
+      attempt=$((attempt + 1))
+      delay=$((delay * 2))
+      continue
+    fi
+
+    return 1
+  done
+}
 
 build_contract_map() {
   echo "Scanning facet artifacts in $OUT_DIR ..."
@@ -210,6 +248,13 @@ verify_network() {
   local unknown_codehash_count=0
   local skipped_proxy_count=0
   local -a unknown_codehash_messages=()
+  local -a verifier_args=(--verifier etherscan)
+
+  if [[ -n "$VERIFIER_URL" ]]; then
+    verifier_args+=(--verifier-url "$VERIFIER_URL")
+  elif [[ "$chain_id" == "11155420" ]]; then
+    verifier_args+=(--verifier-url "https://api.etherscan.io/v2/api?chainid=11155420")
+  fi
 
   if [[ -n "$network" ]]; then
     while read -r facet_impl; do
@@ -256,8 +301,9 @@ verify_network() {
       fi
 
       echo "    - Verifying $facet as $contract"
-      forge verify-contract \
+      verify_with_retry "$facet on $display_name" forge verify-contract \
         --chain-id "$chain_id" \
+        "${verifier_args[@]}" \
         --etherscan-api-key "$ETHERSCAN_API_KEY" \
         "$facet" \
         "$contract"
@@ -282,8 +328,9 @@ verify_network() {
       fi
 
       echo "    - Verifying declared facet $facet as $contract"
-      forge verify-contract \
+      verify_with_retry "declared facet $facet on $display_name" forge verify-contract \
         --chain-id "$chain_id" \
+        "${verifier_args[@]}" \
         --etherscan-api-key "$ETHERSCAN_API_KEY" \
         "$facet" \
         "$contract"

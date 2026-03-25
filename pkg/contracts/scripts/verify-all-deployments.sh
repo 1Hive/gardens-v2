@@ -129,8 +129,7 @@ run_state_scope() {
       --rpc-url "$rpc_url"
       --sig "run(string)" "$network"
       --ffi
-      --chain-id "$network_chain_id"
-      -vv)
+      --chain-id "$network_chain_id")
 
     if "${cmd[@]}"; then
       echo "✅ $network state"
@@ -197,6 +196,23 @@ rpc_env_name() {
   esac
 }
 
+proxy_owner_address() {
+  jq -r --arg n "$1" '.networks[] | select(.name == $n) | .ENVS.PROXY_OWNER // empty' "$CONTRACTS_ROOT/config/networks.json"
+}
+
+proxy_owner_upgrade_access() {
+  local network="$1"
+  local rpc_url="$2"
+  local proxy_owner
+
+  proxy_owner="$(proxy_owner_address "$network")"
+  if [[ -z "$proxy_owner" || "$proxy_owner" == "null" ]]; then
+    return 1
+  fi
+
+  cast call --rpc-url "$rpc_url" "$proxy_owner" "upgradeAccess()(address)" 2>/dev/null || return 1
+}
+
 chain_id() {
   jq -r --arg n "$1" '.networks[] | select(.name == $n) | .chainId // empty' "$CONTRACTS_ROOT/config/networks.json"
 }
@@ -225,6 +241,7 @@ run_upgrade_scope() {
 
   echo "==> Running ${scope} verifier (skipping pre/postflight)"
 
+  : "${ETHERSCAN_API_KEY:?missing ETHERSCAN_API_KEY}"
   : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
   local deployer_address
   deployer_address="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -249,21 +266,35 @@ run_upgrade_scope() {
       continue
     fi
 
+    local current_upgrade_access=""
+    if current_upgrade_access="$(proxy_owner_upgrade_access "$network" "$rpc_url")"; then
+      if [[ "$current_upgrade_access" == "0x0000000000000000000000000000000000000000" ]]; then
+        echo "### $network"
+        echo "ℹ️  $network $scope skipped: ProxyOwner upgradeAccess already renounced"
+        continue
+      fi
+    fi
+
     echo "### $network"
     cmd=(forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript
       --rpc-url "$rpc_url"
       --sig "$sig" "$network"
       --account PK_DEPLOYER
       --password "$PK_DEPLOYER_PW"
+      --verifier etherscan
+      --etherscan-api-key "$ETHERSCAN_API_KEY"
       --ffi
-      --chain-id "$network_chain_id"
-      -vv)
+      --chain-id "$network_chain_id")
+
+    if [[ "$network" == "opsepolia" ]]; then
+      cmd+=(--verifier-url "https://api.etherscan.io/v2/api?chainid=11155420")
+    fi
 
     if needs_legacy "$network"; then
       cmd+=(--legacy)
     fi
 
-    if ETH_PASSWORD= DEPLOYER_ADDRESS="$deployer_address" SKIP_PREFLIGHT=true SKIP_NETWORK_WRITES=true "${cmd[@]}"; then
+    if ETH_PASSWORD= DEPLOYER_ADDRESS="$deployer_address" REUSE_CONFIGURED_IMPLEMENTATIONS=true SKIP_PREFLIGHT=true SKIP_NETWORK_WRITES=true "${cmd[@]}"; then
       echo "✅ $network $scope"
     else
       echo "❌ $network $scope"

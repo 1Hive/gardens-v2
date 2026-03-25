@@ -42,6 +42,7 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useHasContractCode } from "@/hooks/useHasContractCode";
 import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { WALLETCONNECT_RESET_EVENT } from "@/providers/Providers";
 import { formatAddress } from "@/utils/formatAddress";
 
 const WALLETCONNECT_STORAGE_KEY_PREFIXES = [
@@ -49,6 +50,12 @@ const WALLETCONNECT_STORAGE_KEY_PREFIXES = [
   "walletconnect",
   "WALLETCONNECT_DEEPLINK_CHOICE",
 ];
+const DISCONNECT_RESET_STORAGE_KEY_PREFIXES = [
+  ...WALLETCONNECT_STORAGE_KEY_PREFIXES,
+  "wagmi",
+  "rk-",
+];
+const DISCONNECT_RESET_STORAGE_KEY_SUBSTRINGS = ["recentWalletIds"];
 
 type WalletConnectProviderLike = {
   disconnect?: () => Promise<void> | void;
@@ -57,7 +64,7 @@ type WalletConnectProviderLike = {
   };
 };
 
-const clearWalletConnectStorage = (storage: Storage) => {
+const clearDisconnectPersistence = (storage: Storage) => {
   const keysToRemove: string[] = [];
 
   for (let i = 0; i < storage.length; i += 1) {
@@ -67,8 +74,11 @@ const clearWalletConnectStorage = (storage: Storage) => {
     }
 
     if (
-      WALLETCONNECT_STORAGE_KEY_PREFIXES.some((prefix) =>
+      DISCONNECT_RESET_STORAGE_KEY_PREFIXES.some((prefix) =>
         key.startsWith(prefix),
+      ) ||
+      DISCONNECT_RESET_STORAGE_KEY_SUBSTRINGS.some((fragment) =>
+        key.includes(fragment),
       )
     ) {
       keysToRemove.push(key);
@@ -182,8 +192,9 @@ export function ConnectWallet() {
       // Ignore provider-level disconnect failures and still clear local state.
     } finally {
       if (typeof window !== "undefined") {
-        clearWalletConnectStorage(window.localStorage);
-        clearWalletConnectStorage(window.sessionStorage);
+        clearDisconnectPersistence(window.localStorage);
+        clearDisconnectPersistence(window.sessionStorage);
+        window.dispatchEvent(new Event(WALLETCONNECT_RESET_EVENT));
       }
     }
 

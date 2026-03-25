@@ -52,6 +52,8 @@ const dedupeChains = (chainList: Chain[]) =>
       arr.findIndex((item) => item.id === candidate.id) === index,
   );
 
+export const WALLETCONNECT_RESET_EVENT = "gardens:walletconnect-reset";
+
 const getConfiguredChains = (
   routeChain: Chain | undefined,
 ) => {
@@ -180,6 +182,22 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
     useState<MockConnector | null>(null);
   const [activeSimulatedWallet, setActiveSimulatedWallet] =
     useState<Address | null>(null);
+  const [walletConnectResetVersion, setWalletConnectResetVersion] = useState(0);
+
+  useEffect(() => {
+    const handleWalletConnectReset = () => {
+      setWalletConnectResetVersion((value) => value + 1);
+    };
+
+    window.addEventListener(WALLETCONNECT_RESET_EVENT, handleWalletConnectReset);
+
+    return () => {
+      window.removeEventListener(
+        WALLETCONNECT_RESET_EVENT,
+        handleWalletConnectReset,
+      );
+    };
+  }, []);
 
   useEffect(() => {
     const { config, simulatedConnector: newSimulatedConnector } =
@@ -187,7 +205,7 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
     setWagmiConfig(config);
     setSimulatedConnector(newSimulatedConnector ?? null);
     setMounted(true);
-  }, [chain, simulatedWallet, includeAllChains]);
+  }, [chain, simulatedWallet, includeAllChains, walletConnectResetVersion]);
 
   useEffect(() => {
     if (!wagmiConfig) {
