@@ -13,7 +13,7 @@
     "test:force": "forge test -vvv --force",
     "test:fork-healthcheck": "forge test --match-contract ForkLifecycleHealthcheck -vvv",
     "format": "forge fmt",
-    "coverage": "forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --exclude-tests --report lcov -r lcov.info && sed -i 's|^SF:pkg/contracts/|SF:|g' lcov.info",
+    "coverage": "forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --skip 'pkg/contracts/script/**' --exclude-tests --report lcov -r lcov.info && sed -i 's|^SF:pkg/contracts/|SF:|g' lcov.info",
     "sync:abis": "bash scripts/sync-abis.sh"
   }
 }
