@@ -2,12 +2,14 @@
 pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
+import {CVStreamingBase} from "../CVStreamingStorage.sol";
 import {IArbitrator} from "../../interfaces/IArbitrator.sol";
 import {IVotingPowerRegistry} from "../../interfaces/IVotingPowerRegistry.sol";
 import {IRegistryFactory} from "../../IRegistryFactory.sol";
-import {Proposal, ArbitrableConfig, CVParams, ProposalType} from "../ICVStrategy.sol";
+import {Proposal, ArbitrableConfig, CVParams, ProposalType, ProposalStatus} from "../ICVStrategy.sol";
 import {LibDiamond} from "../../diamonds/libraries/LibDiamond.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title CVAdminFacet
@@ -15,7 +17,7 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
  * @dev This facet is called via delegatecall from CVStrategy
  *      CRITICAL: Inherits storage layout from CVStrategyBaseFacet
  */
-contract CVAdminFacet is CVStrategyBaseFacet {
+contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
     using SuperTokenV1Library for ISuperToken;
 
     /*|--------------------------------------------|*/
@@ -26,6 +28,10 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     error VotingPowerRegistryNotAllowed(address target);
     error ArbitratorNotAllowed(address target);
     error RebalanceCallFailed();
+    error ProposalActive(uint256 proposalId);
+    error SuperfluidUnderlyingTokenMismatch(address expectedUnderlying, address actualUnderlying);
+    error ApproveFailed(address token, address spender, uint256 amount);
+    error StreamingRateOverflow(uint256 streamingRatePerSecond);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -106,6 +112,13 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         onlyCouncilSafe();
 
         uint256 previousStreamingRatePerSecond = streamingRatePerSecond;
+        ISuperToken previousSuperfluidToken = superfluidToken;
+
+        if (proposalType == ProposalType.Streaming && address(previousSuperfluidToken) != _superfluidToken) {
+            _ensureNoUnclosedStreamingProposals();
+            _migrateStreamingTokenBalance(previousSuperfluidToken, ISuperToken(_superfluidToken));
+        }
+
         superfluidToken = ISuperToken(_superfluidToken);
         streamingRatePerSecond = _streamingRatePerSecond;
         emit SuperfluidTokenUpdated(_superfluidToken);
@@ -118,10 +131,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         }
 
         if (proposalType == ProposalType.Streaming && previousStreamingRatePerSecond != _streamingRatePerSecond) {
-            (bool success,) = address(this).call(abi.encodeWithSignature("rebalance()"));
-            if (!success) {
-                revert RebalanceCallFailed();
-            }
+            _updateStreamingFlowRateOnly();
         }
     }
 
@@ -234,6 +244,72 @@ contract CVAdminFacet is CVStrategyBaseFacet {
                     && _cvParams.minThresholdPoints == 0)) {
             cvParams = _cvParams;
             emit CVParamsUpdated(_cvParams);
+        }
+    }
+
+    function _ensureNoUnclosedStreamingProposals() internal view {
+        for (uint256 i = 1; i <= proposalCounter; i++) {
+            Proposal storage proposal = proposals[i];
+            if (proposal.proposalId == 0) {
+                continue;
+            }
+            if (
+                proposal.proposalStatus != ProposalStatus.Cancelled
+                    && proposal.proposalStatus != ProposalStatus.Rejected
+                    && proposal.proposalStatus != ProposalStatus.Executed
+            ) {
+                revert ProposalActive(i);
+            }
+        }
+    }
+
+    function _migrateStreamingTokenBalance(ISuperToken previousToken, ISuperToken nextToken) internal {
+        if (
+            address(previousToken) == address(0) || address(nextToken) == address(0)
+                || address(previousToken) == address(nextToken)
+        ) {
+            return;
+        }
+
+        uint256 previousBalance = previousToken.balanceOf(address(this));
+        if (previousBalance == 0) {
+            return;
+        }
+
+        previousToken.downgrade(previousBalance);
+
+        address poolToken = allo.getPool(poolId).token;
+        address nextUnderlyingToken = nextToken.getUnderlyingToken();
+        if (nextUnderlyingToken != poolToken) {
+            revert SuperfluidUnderlyingTokenMismatch(poolToken, nextUnderlyingToken);
+        }
+
+        uint256 unwrappedBalance = IERC20(poolToken).balanceOf(address(this));
+        if (unwrappedBalance == 0) {
+            return;
+        }
+
+        if (!IERC20(poolToken).approve(address(nextToken), unwrappedBalance)) {
+            revert ApproveFailed(poolToken, address(nextToken), unwrappedBalance);
+        }
+
+        nextToken.upgrade(unwrappedBalance);
+    }
+
+    function _updateStreamingFlowRateOnly() internal {
+        if (address(superfluidToken) == address(0) || address(superfluidGDA) == address(0)) {
+            return;
+        }
+
+        uint256 requestedFlowRate = streamingRatePerSecond;
+        if (requestedFlowRate > uint256(uint96(type(int96).max))) {
+            revert StreamingRateOverflow(requestedFlowRate);
+        }
+
+        int96 currentFlowRate = superfluidToken.getGDAFlowRate(address(this), superfluidGDA);
+        int96 actualFlowRate = superfluidToken.distributeFlow(superfluidGDA, int96(uint96(requestedFlowRate)));
+        if (currentFlowRate != actualFlowRate) {
+            emit StreamRateUpdated(address(superfluidGDA), actualFlowRate > 0 ? uint256(uint96(actualFlowRate)) : 0);
         }
     }
 

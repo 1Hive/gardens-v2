@@ -58,8 +58,8 @@ verifier_url() {
   case "$1" in
     ethsepolia) echo "https://eth-sepolia.blockscout.com/api/" ;;
     arbsepolia) echo "https://arbitrum-sepolia.blockscout.com/api/" ;;
-    opsepolia) echo "https://optimism-sepolia.blockscout.com/api/" ;;
-    ethereum|mainnet) echo "https://api.etherscan.io/api" ;;
+    opsepolia) echo "https://api.etherscan.io/v2/api?chainid=11155420" ;;
+    ethereum|mainnet) echo "https://api.etherscan.io/v2/api?chainid=1" ;;
     arbitrum) echo "https://arbitrum.blockscout.com/api/" ;;
     optimism) echo "https://optimism.blockscout.com/api/" ;;
     polygon) echo "https://polygon.blockscout.com/api/" ;;

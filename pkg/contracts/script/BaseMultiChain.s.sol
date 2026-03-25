@@ -31,6 +31,22 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {PassportScorer} from "../src/PassportScorer.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 
+interface VmContext {
+    enum ForgeContext {
+        TestGroup,
+        Test,
+        Coverage,
+        Snapshot,
+        ScriptGroup,
+        ScriptDryRun,
+        ScriptBroadcast,
+        ScriptResume,
+        Unknown
+    }
+
+    function isContext(ForgeContext context) external view returns (bool result);
+}
+
 abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     using stdJson for string;
 
@@ -498,10 +514,30 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
             delete pendingNetworkWrites;
             return;
         }
+        if (!_shouldPersistNetworkWrites()) {
+            delete pendingNetworkWrites;
+            return;
+        }
         for (uint256 i = 0; i < pendingNetworkWrites.length; i++) {
             _applyNetworkWrite(pendingNetworkWrites[i].key, pendingNetworkWrites[i].value);
         }
         delete pendingNetworkWrites;
+    }
+
+    function _shouldPersistNetworkWrites() internal view virtual returns (bool) {
+        if (_flagEnabled("FORCE_NETWORK_WRITES")) {
+            return true;
+        }
+
+        try VmContext(address(vm)).isContext(VmContext.ForgeContext.ScriptBroadcast) returns (bool isBroadcast) {
+            if (isBroadcast) return true;
+        } catch {}
+
+        try VmContext(address(vm)).isContext(VmContext.ForgeContext.ScriptResume) returns (bool isResume) {
+            if (isResume) return true;
+        } catch {}
+
+        return false;
     }
 
     function _applyNetworkWrite(string memory key, string memory value) internal {
@@ -561,6 +597,100 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
             trimmed[i] = inputBytes[start + i];
         }
         return string(trimmed);
+    }
+
+    function _artifactJsonPath(string memory artifactId) internal view returns (string memory) {
+        bytes memory artifactBytes = bytes(artifactId);
+        uint256 colonIndex = artifactBytes.length;
+        uint256 slashIndex = 0;
+
+        for (uint256 i = 0; i < artifactBytes.length; i++) {
+            if (artifactBytes[i] == ":") {
+                colonIndex = i;
+                break;
+            }
+            if (artifactBytes[i] == "/") {
+                slashIndex = i + 1;
+            }
+        }
+
+        require(colonIndex < artifactBytes.length, "artifact id missing contract name");
+
+        bytes memory fileName = new bytes(colonIndex - slashIndex);
+        for (uint256 i = 0; i < fileName.length; i++) {
+            fileName[i] = artifactBytes[slashIndex + i];
+        }
+
+        bytes memory contractName = new bytes(artifactBytes.length - colonIndex - 1);
+        for (uint256 i = 0; i < contractName.length; i++) {
+            contractName[i] = artifactBytes[colonIndex + 1 + i];
+        }
+
+        return string.concat(vm.projectRoot(), "/pkg/contracts/out/", string(fileName), "/", string(contractName), ".json");
+    }
+
+    function _immutableReferences(string memory artifactId) internal returns (string memory) {
+        string memory command = string.concat(
+            "jq -r 'if .deployedBytecode.immutableReferences == null then \"\" else [.deployedBytecode.immutableReferences | to_entries[]?.value[]? | \"\\(.start):\\(.length)\"] | join(\";\") end' '",
+            _artifactJsonPath(artifactId),
+            "'"
+        );
+
+        string[] memory inputs = new string[](3);
+        inputs[0] = "bash";
+        inputs[1] = "-c";
+        inputs[2] = command;
+
+        return _trim(string(vm.ffi(inputs)));
+    }
+
+    function _normalizedCodeHash(bytes memory code, string memory artifactId) internal returns (bytes32) {
+        string memory refs = _immutableReferences(artifactId);
+        if (bytes(refs).length == 0) {
+            return keccak256(code);
+        }
+
+        bytes memory refsBytes = bytes(refs);
+        uint256 cursor = 0;
+        while (cursor < refsBytes.length) {
+            uint256 start = 0;
+            while (cursor < refsBytes.length && refsBytes[cursor] != ":") {
+                start = (start * 10) + (uint8(refsBytes[cursor]) - 48);
+                cursor++;
+            }
+            require(cursor < refsBytes.length && refsBytes[cursor] == ":", "invalid immutable refs");
+            cursor++;
+
+            uint256 len = 0;
+            while (cursor < refsBytes.length && refsBytes[cursor] != ";") {
+                len = (len * 10) + (uint8(refsBytes[cursor]) - 48);
+                cursor++;
+            }
+
+            uint256 end = start + len;
+            require(end <= code.length, "immutable ref out of bounds");
+            for (uint256 i = start; i < end; i++) {
+                code[i] = 0x00;
+            }
+
+            if (cursor < refsBytes.length && refsBytes[cursor] == ";") {
+                cursor++;
+            }
+        }
+
+        return keccak256(code);
+    }
+
+    function _deployedCodeHash(string memory artifactId) internal returns (bytes32) {
+        bytes memory deployedCode = vm.getDeployedCode(artifactId);
+        if (deployedCode.length == 0) {
+            revert("missing deployed bytecode for artifact");
+        }
+        return _normalizedCodeHash(deployedCode, artifactId);
+    }
+
+    function _addressCodeHash(address target, string memory artifactId) internal returns (bytes32) {
+        return _normalizedCodeHash(target.code, artifactId);
     }
 
     function _isWhitespace(bytes1 char) internal pure returns (bool) {

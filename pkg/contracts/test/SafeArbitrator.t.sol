@@ -458,11 +458,22 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         vm.prank(address(_councilSafe()));
         safeArbitrator.executeRuling(disputeID, 2, address(cvStrategy));
 
-        (uint256 ruling, bool tied, bool overridden) = safeArbitrator.currentRuling(disputeID - 1);
+        (uint256 ruling, bool tied, bool overridden) = safeArbitrator.currentRuling(disputeID);
 
         assertEq(ruling, 2);
         assertFalse(tied);
         assertFalse(overridden);
+    }
+
+    function testCurrentRuling_revertsOnZeroDisputeId() public {
+        vm.expectRevert(abi.encodeWithSelector(SafeArbitrator.InvalidDisputeId.selector, 0));
+        safeArbitrator.currentRuling(0);
+    }
+
+    function testExecuteRuling_revertsOnInvalidDisputeId() public {
+        vm.expectRevert(abi.encodeWithSelector(SafeArbitrator.InvalidDisputeId.selector, 1));
+        vm.prank(address(_councilSafe()));
+        safeArbitrator.executeRuling(1, 1, address(cvStrategy));
     }
 
     function test_executeRuling_refundHappensAfterRuleCallback() public {

@@ -15,9 +15,10 @@ contract DeploySafeArbitrator is BaseMultiChain {
         address safeArbitrator = networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR"));
         // address sender = networkJson.readAddress(getKeyNetwork(".ENVS.SENDER"));
         address newImplementation = address(new SafeArbitrator());
+        address arbitratorProxy = safeArbitrator;
 
         if (safeArbitrator == address(0)) {
-            address newSafeArbitrator = address(
+            arbitratorProxy = address(
                 new ERC1967Proxy(
                     newImplementation,
                     abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.001 ether, address(proxyOwner))
@@ -26,6 +27,9 @@ contract DeploySafeArbitrator is BaseMultiChain {
         } else {
             SafeArbitrator(safeArbitrator).upgradeTo(newImplementation);
         }
+
+        _writeNetworkAddress(".ENVS.ARBITRATOR", arbitratorProxy);
+        _writeNetworkAddress(".IMPLEMENTATIONS.SAFE_ARBITRATOR", newImplementation);
 
         // CV STRATEGIES
         //  address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));

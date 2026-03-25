@@ -821,6 +821,28 @@ tasks:
           ${RESUME_FLAG} \
           -vv
         ignore_error: true
+  deploy-or-upgrade-if-exists-safe-arbitrator-ethsep:
+    desc: Deploy or upgrade if exists safe arbitrator ethsep
+    cmds:
+      - cmd: |
+          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
+          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          RESUME_FLAG=""
+          if [ "${RESUME:-false}" = "true" ]; then
+            RESUME_FLAG="--resume"
+          fi
+          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --sig "run(string)" 'ethsepolia' \
+          --chain-id 11155111 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --account PK_DEPLOYER \
+          --password "${PK_DEPLOYER_PW}" \
+          --verify \
+          --broadcast \
+          ${RESUME_FLAG} \
+          -vv
+        ignore_error: true
 
   refresh-facets-mainnet:
     desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (mainnet)
@@ -869,6 +891,11 @@ tasks:
     cmds:
       - cmd: |
           bash ./scripts/verify-all-deployments.sh --scope all --network opsepolia
+  verify-strategies-opsep:
+    desc: Run strategy-only deployment verification on opsepolia
+    cmds:
+      - cmd: |
+          bash ./scripts/verify-all-deployments.sh --scope strategies --network opsepolia
   verify-all-arbsep:
     desc: Run full deployment verification on arbsepolia
     cmds:
@@ -5313,20 +5340,88 @@ tasks:
   renounce-proxy-owner-upgrade-access-mainnets:
     desc: Renounce ProxyOwner upgrade access on all mainnets
     cmds:
-      - echo "Renouncing ProxyOwner upgrade access on mainnet"
+      - cmd: |
+          set -euo pipefail
+
+          for network in ethereum arbitrum optimism polygon gnosis base celo; do
+            case "$network" in
+              ethereum)
+                rpc="${RPC_URL_ETHEREUM}"
+                task_name="renounce-proxy-owner-upgrade-access-mainnet"
+                ;;
+              arbitrum)
+                rpc="${RPC_URL_ARB}"
+                task_name="renounce-proxy-owner-upgrade-access-arbitrum"
+                ;;
+              optimism)
+                rpc="${RPC_URL_OPT}"
+                task_name="renounce-proxy-owner-upgrade-access-optimism"
+                ;;
+              polygon)
+                rpc="${RPC_URL_POLYGON}"
+                task_name="renounce-proxy-owner-upgrade-access-polygon"
+                ;;
+              gnosis)
+                rpc="${RPC_URL_GNOSIS}"
+                task_name="renounce-proxy-owner-upgrade-access-gnosis"
+                ;;
+              base)
+                rpc="${RPC_URL_BASE}"
+                task_name="renounce-proxy-owner-upgrade-access-base"
+                ;;
+              celo)
+                rpc="${RPC_URL_CELO}"
+                task_name="renounce-proxy-owner-upgrade-access-celo"
+                ;;
+            esac
+
+            proxy_owner="$(jq -r --arg n "$network" '.networks[] | select(.name == $n) | .ENVS.PROXY_OWNER // empty' config/networks.json)"
+            if [ -z "$proxy_owner" ]; then
+              echo "[SKIP] ${network}: missing PROXY_OWNER in config"
+              continue
+            fi
+
+            current_upgrade_access="$(cast call --rpc-url "$rpc" "$proxy_owner" "upgradeAccess()(address)" 2>/dev/null || true)"
+            if [ "$current_upgrade_access" = "0x0000000000000000000000000000000000000000" ]; then
+              echo "[SKIP] ${network}: ProxyOwner upgradeAccess already renounced"
+              continue
+            fi
+
+            echo "Renouncing ProxyOwner upgrade access on ${network}"
+            task "$task_name"
+          done
+  renounce-mainnet:
+    desc: Alias for renounce-proxy-owner-upgrade-access-mainnet
+    cmds:
       - task: renounce-proxy-owner-upgrade-access-mainnet
-      - echo "Renouncing ProxyOwner upgrade access on arbitrum"
+  renounce-arbitrum:
+    desc: Alias for renounce-proxy-owner-upgrade-access-arbitrum
+    cmds:
       - task: renounce-proxy-owner-upgrade-access-arbitrum
-      - echo "Renouncing ProxyOwner upgrade access on optimism"
+  renounce-optimism:
+    desc: Alias for renounce-proxy-owner-upgrade-access-optimism
+    cmds:
       - task: renounce-proxy-owner-upgrade-access-optimism
-      - echo "Renouncing ProxyOwner upgrade access on polygon"
+  renounce-polygon:
+    desc: Alias for renounce-proxy-owner-upgrade-access-polygon
+    cmds:
       - task: renounce-proxy-owner-upgrade-access-polygon
-      - echo "Renouncing ProxyOwner upgrade access on gnosis"
+  renounce-gnosis:
+    desc: Alias for renounce-proxy-owner-upgrade-access-gnosis
+    cmds:
       - task: renounce-proxy-owner-upgrade-access-gnosis
-      - echo "Renouncing ProxyOwner upgrade access on base"
+  renounce-base:
+    desc: Alias for renounce-proxy-owner-upgrade-access-base
+    cmds:
       - task: renounce-proxy-owner-upgrade-access-base
-      - echo "Renouncing ProxyOwner upgrade access on celo"
+  renounce-celo:
+    desc: Alias for renounce-proxy-owner-upgrade-access-celo
+    cmds:
       - task: renounce-proxy-owner-upgrade-access-celo
+  renounce-all-mainnets:
+    desc: Alias for renounce-proxy-owner-upgrade-access-mainnets
+    cmds:
+      - task: renounce-proxy-owner-upgrade-access-mainnets
   deploy-or-upgrade-good-dollar-sybil-base:
     desc: Deploy or upgrade good dollar sybil base
     cmds:
@@ -5945,7 +6040,30 @@ tasks:
           --rpc-url ${RPC_URL_ETHEREUM} \
           --chain-id 1 \
           --etherscan-key ${ETHERSCAN_API_KEY} \
-          --verifier-url https://api.etherscan.io/api
+          --verifier-url https://api.etherscan.io/v2/api?chainid=1
+  deploy-or-upgrade-if-exists-safe-arbitrator-ethereum:
+    desc: Deploy or upgrade if exists safe arbitrator ethereum
+    cmds:
+      - cmd: |
+          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
+          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          RESUME_FLAG=""
+          if [ "${RESUME:-false}" = "true" ]; then
+            RESUME_FLAG="--resume"
+          fi
+          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/DeploySafeArbitrator.s.sol:DeploySafeArbitrator \
+          --rpc-url ${RPC_URL_ETHEREUM} \
+          --sig "run(string)" 'ethereum' \
+          --chain-id 1 \
+          --etherscan-api-key ${ETHERSCAN_API_KEY} \
+          --account PK_DEPLOYER \
+          --password "${PK_DEPLOYER_PW}" \
+          --verify \
+          --broadcast \
+          ${RESUME_FLAG} \
+          -vv
+        ignore_error: true
+      - task: sync-abis
   deploy-streaming-escrow-factory-ethereum:
     desc: Deploy streaming escrow factory ethereum (set on registry factory)
     cmds:
@@ -5977,7 +6095,29 @@ tasks:
           --rpc-url ${RPC_URL_ETHEREUM} \
           --chain-id 1 \
           --etherscan-key ${ETHERSCAN_API_KEY} \
-          --verifier-url https://api.etherscan.io/api
+          --verifier-url https://api.etherscan.io/v2/api?chainid=1
+  upgrade-safe-arbitrator-mainnets:
+    desc: Deploy or upgrade SafeArbitrator on ethereum, arbitrum, optimism, polygon, gnosis, base, celo
+    cmds:
+      - cmd: |
+          set +e
+          failed=0
+
+          for network in ethereum arbitrum optimism polygon gnosis base celo; do
+            if task "deploy-or-upgrade-if-exists-safe-arbitrator-${network}"; then
+              echo "✅ ${network}: success"
+            else
+              echo "❌ ${network}: failed"
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "One or more networks failed."
+            exit 1
+          fi
+
+          echo "All networks succeeded."
 
   upgrade-all-mainnets:
     desc: Upgrade mainnet, arbitrum, optimism, polygon, gnosis, base, celo in parallel, then verify global deployments
@@ -6429,6 +6569,162 @@ tasks:
             echo "All networks succeeded."
           fi
           exit 0
+
+  refresh-facets-all-mainnets:
+    desc: Refresh facet snapshots on ethereum, arbitrum, optimism, polygon, gnosis, base, celo
+    cmds:
+      - cmd: |
+          set +e
+          failed=0
+
+          for network in mainnet arbitrum optimism polygon gnosis base celo; do
+            if task "refresh-facets-${network}"; then
+              echo "✅ ${network}: success"
+            else
+              echo "❌ ${network}: failed"
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "One or more networks failed."
+            exit 1
+          fi
+
+          echo "All networks succeeded."
+
+  sync-community-facets-from-factory-ethsep:
+    desc: Sync .FACETS.COMMUNITY_* from live factory state on ethsepolia
+    cmds:
+      - cmd: |
+          FORCE_NETWORK_WRITES=true forge script script/SyncCommunityFacetsFromFactory.s.sol:SyncCommunityFacetsFromFactory \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --sig "run(string)" 'ethsepolia' \
+          --ffi \
+          --chain-id 11155111 \
+          -vv
+
+  sync-community-facets-from-factory-arbsep:
+    desc: Sync .FACETS.COMMUNITY_* from live factory state on arbsepolia
+    cmds:
+      - cmd: |
+          FORCE_NETWORK_WRITES=true forge script script/SyncCommunityFacetsFromFactory.s.sol:SyncCommunityFacetsFromFactory \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string)" 'arbsepolia' \
+          --ffi \
+          --chain-id 421614 \
+          -vv
+
+  sync-community-facets-from-factory-opsep:
+    desc: Sync .FACETS.COMMUNITY_* from live factory state on opsepolia
+    cmds:
+      - cmd: |
+          FORCE_NETWORK_WRITES=true forge script script/SyncCommunityFacetsFromFactory.s.sol:SyncCommunityFacetsFromFactory \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --ffi \
+          --chain-id 11155420 \
+          -vv
+
+  sync-community-facets-from-factory-mainnet:
+    desc: Sync .FACETS.COMMUNITY_* from live factory state on ethereum
+    cmds:
+      - cmd: |
+          FORCE_NETWORK_WRITES=true forge script script/SyncCommunityFacetsFromFactory.s.sol:SyncCommunityFacetsFromFactory \
+          --rpc-url ${RPC_URL_ETHEREUM} \
+          --sig "run(string)" 'ethereum' \
+          --ffi \
+          --chain-id 1 \
+          -vv
+
+  sync-community-facets-from-factory-arbitrum:
+    desc: Sync .FACETS.COMMUNITY_* from live factory state on arbitrum
+    cmds:
+      - cmd: |
+          FORCE_NETWORK_WRITES=true forge script script/SyncCommunityFacetsFromFactory.s.sol:SyncCommunityFacetsFromFactory \
+          --rpc-url ${RPC_URL_ARB} \
+          --sig "run(string)" 'arbitrum' \
+          --ffi \
+          --chain-id 42161 \
+          -vv
+
+  sync-community-facets-from-factory-optimism:
+    desc: Sync .FACETS.COMMUNITY_* from live factory state on optimism
+    cmds:
+      - cmd: |
+          FORCE_NETWORK_WRITES=true forge script script/SyncCommunityFacetsFromFactory.s.sol:SyncCommunityFacetsFromFactory \
+          --rpc-url ${RPC_URL_OPT} \
+          --sig "run(string)" 'optimism' \
+          --ffi \
+          --chain-id 10 \
+          -vv
+
+  sync-community-facets-from-factory-polygon:
+    desc: Sync .FACETS.COMMUNITY_* from live factory state on polygon
+    cmds:
+      - cmd: |
+          FORCE_NETWORK_WRITES=true forge script script/SyncCommunityFacetsFromFactory.s.sol:SyncCommunityFacetsFromFactory \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --sig "run(string)" 'polygon' \
+          --ffi \
+          --chain-id 137 \
+          -vv
+
+  sync-community-facets-from-factory-gnosis:
+    desc: Sync .FACETS.COMMUNITY_* from live factory state on gnosis
+    cmds:
+      - cmd: |
+          FORCE_NETWORK_WRITES=true forge script script/SyncCommunityFacetsFromFactory.s.sol:SyncCommunityFacetsFromFactory \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --sig "run(string)" 'gnosis' \
+          --ffi \
+          --chain-id 100 \
+          -vv
+
+  sync-community-facets-from-factory-base:
+    desc: Sync .FACETS.COMMUNITY_* from live factory state on base
+    cmds:
+      - cmd: |
+          FORCE_NETWORK_WRITES=true forge script script/SyncCommunityFacetsFromFactory.s.sol:SyncCommunityFacetsFromFactory \
+          --rpc-url ${RPC_URL_BASE} \
+          --sig "run(string)" 'base' \
+          --ffi \
+          --chain-id 8453 \
+          -vv
+
+  sync-community-facets-from-factory-celo:
+    desc: Sync .FACETS.COMMUNITY_* from live factory state on celo
+    cmds:
+      - cmd: |
+          FORCE_NETWORK_WRITES=true forge script script/SyncCommunityFacetsFromFactory.s.sol:SyncCommunityFacetsFromFactory \
+          --rpc-url ${RPC_URL_CELO} \
+          --sig "run(string)" 'celo' \
+          --ffi \
+          --chain-id 42220 \
+          -vv
+
+  sync-community-facets-from-factory-all-networks:
+    desc: Sync .FACETS.COMMUNITY_* from live factory state on ethsepolia, arbsepolia, opsepolia, ethereum, arbitrum, optimism, polygon, gnosis, base, celo
+    cmds:
+      - cmd: |
+          set +e
+          failed=0
+
+          for network in ethsep arbsep opsep mainnet arbitrum optimism polygon gnosis base celo; do
+            if task "sync-community-facets-from-factory-${network}"; then
+              echo "✅ ${network}: success"
+            else
+              echo "❌ ${network}: failed"
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "One or more networks failed."
+            exit 1
+          fi
+
+          echo "All networks succeeded."
 
   verify-global-deployments-all-mainnets:
     desc: Verify deployments on mainnet, arbitrum, optimism, polygon, gnosis, base, celo; pass SCOPE=global|state|pause|escrow|factory|communities|strategies|facets|all

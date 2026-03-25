@@ -37,22 +37,6 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ISuperfluid} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 
-interface VmContext {
-    enum ForgeContext {
-        TestGroup,
-        Test,
-        Coverage,
-        Snapshot,
-        ScriptGroup,
-        ScriptDryRun,
-        ScriptBroadcast,
-        ScriptResume,
-        Unknown
-    }
-
-    function isContext(ForgeContext context) external view returns (bool result);
-}
-
 contract DeployCoreContracts is BaseMultiChain {
     using stdJson for string;
 

@@ -536,6 +536,8 @@ contract UpgradeCVMultichainScript is Test {
 
     function _setDefaultScriptEnv() internal {
         script.setFlagForTest("SKIP_PREFLIGHT", true);
+        script.setFlagForTest("SKIP_NETWORK_WRITES", false);
+        script.setFlagForTest("FORCE_NETWORK_WRITES", true);
         script.setFlagForTest("REUSE_CONFIGURED_IMPLEMENTATIONS", false);
         script.setFlagForTest("REUSE_CONFIGURED_INITS", false);
         script.setFlagForTest("FORCE_FACETS", false);

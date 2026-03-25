@@ -25,6 +25,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
     error DisputeCooldownActive(uint256 proposalId, uint256 secondsRemaining); // 0xc84ca6af
     error OnlyArbitrator(address sender, address arbitrator); // 0x84844502
     error DefaultRulingNotConfigured(uint256 proposalId); // 0x1b330288
+    error UpdateMemberUnitsFailed(address member, uint128 units);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -198,6 +199,9 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
             StreamingEscrow(escrow).setDisputed(false);
             StreamingEscrow(escrow).drainToBeneficiary();
         } else {
+            if (!superfluidGDA.updateMemberUnits(escrow, 0)) {
+                revert UpdateMemberUnitsFailed(escrow, 0);
+            }
             StreamingEscrow(escrow).drainToStrategy();
         }
     }

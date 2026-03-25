@@ -103,9 +103,9 @@ contract RefreshFacetSnapshots is BaseMultiChain {
 
     function _refreshFacet(string memory key, string memory artifactId, FacetKind kind) internal {
         address cached = _readAddressOrZero(key);
-        bytes32 expectedCodeHash = _runtimeCodeHash(artifactId);
+        bytes32 expectedCodeHash = _deployedCodeHash(artifactId);
         bool needsRedeploy =
-            cached == address(0) || cached.code.length == 0 || cached.codehash != expectedCodeHash;
+            cached == address(0) || cached.code.length == 0 || _addressCodeHash(cached, artifactId) != expectedCodeHash;
 
         if (!needsRedeploy) return;
 
@@ -130,14 +130,6 @@ contract RefreshFacetSnapshots is BaseMultiChain {
         if (kind == FacetKind.CommunityPower) return address(new CommunityPowerFacet());
         if (kind == FacetKind.CommunityStrategy) return address(new CommunityStrategyFacet());
         revert("unknown facet kind");
-    }
-
-    function _runtimeCodeHash(string memory artifactId) internal returns (bytes32) {
-        bytes memory deployedCode = vm.getDeployedCode(artifactId);
-        if (deployedCode.length == 0) {
-            revert("missing deployed bytecode for artifact");
-        }
-        return keccak256(deployedCode);
     }
 
 }

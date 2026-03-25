@@ -22,28 +22,44 @@ export function useAppSwitchNetwork() {
     );
   }, []);
 
+  const trySwitchNetworkAsync = useCallback(
+    async (chainId?: number) => {
+      if (chainId == null || !switchNetworkResult.switchNetworkAsync) {
+        showManualSwitchToast(chainId);
+        return undefined;
+      }
+
+      try {
+        return await switchNetworkResult.switchNetworkAsync(chainId);
+      } catch {
+        showManualSwitchToast(chainId);
+        return undefined;
+      }
+    },
+    [showManualSwitchToast, switchNetworkResult],
+  );
+
   const switchNetwork = useCallback(
     (chainId?: number) => {
       if (isWalletConnect) {
-        showManualSwitchToast(chainId);
+        void trySwitchNetworkAsync(chainId);
         return;
       }
 
       return switchNetworkResult.switchNetwork?.(chainId);
     },
-    [isWalletConnect, showManualSwitchToast, switchNetworkResult],
+    [isWalletConnect, switchNetworkResult, trySwitchNetworkAsync],
   );
 
   const switchNetworkAsync = useCallback(
     async (chainId?: number) => {
       if (isWalletConnect) {
-        showManualSwitchToast(chainId);
-        return undefined;
+        return trySwitchNetworkAsync(chainId);
       }
 
       return switchNetworkResult.switchNetworkAsync?.(chainId);
     },
-    [isWalletConnect, showManualSwitchToast, switchNetworkResult],
+    [isWalletConnect, switchNetworkResult, trySwitchNetworkAsync],
   );
 
   return {

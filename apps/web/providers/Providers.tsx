@@ -16,7 +16,6 @@ import {
   walletConnectWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { AddrethConfig } from "addreth";
-import { usePathname } from "next/navigation";
 import { Bounce, ToastContainer } from "react-toastify";
 import { Address, createWalletClient, custom, isAddress } from "viem";
 import { base } from "viem/chains";
@@ -52,22 +51,18 @@ const dedupeChains = (chainList: Chain[]) =>
       arr.findIndex((item) => item.id === candidate.id) === index,
   );
 
-const getConfiguredChains = (
-  routeChain: Chain | undefined,
-) => {
-  return dedupeChains([
-    ...(routeChain ? [routeChain] : []),
-    ...CHAINS,
-    base,
-    mainnet,
-  ]);
-};
+export const WALLETCONNECT_RESET_EVENT = "gardens:walletconnect-reset";
+export const AUTOCONNECT_RESET_EVENT = "gardens:autoconnect-reset";
+export const SKIP_AUTOCONNECT_STORAGE_KEY = "gardens:skip-autoconnect";
+
+const getConfiguredChains = () => dedupeChains([...CHAINS, base, mainnet]);
 
 const createCustomConfig = (
-  chain: Chain | undefined,
+  skipAutoConnect: boolean,
+  preferredSimulatedChain: Chain | undefined,
   simulatedWallet?: Address,
 ) => {
-  const usedChains = getConfiguredChains(chain);
+  const usedChains = getConfiguredChains();
 
   const { publicClient, chains } = configureChains(usedChains, [
     alchemyProvider({
@@ -93,7 +88,7 @@ const createCustomConfig = (
 
   let simulatedConnector: MockConnector | undefined;
   if (simulatedWallet) {
-    const simulatedChain = chain ?? chains[0] ?? mainnet;
+    const simulatedChain = preferredSimulatedChain ?? chains[0] ?? mainnet;
     const mockWalletClient = createWalletClient({
       account: simulatedWallet,
       chain: simulatedChain,
@@ -127,7 +122,7 @@ const createCustomConfig = (
 
   return {
     config: createConfig({
-      autoConnect: true,
+      autoConnect: !skipAutoConnect,
       connectors: resolveConnectors,
       publicClient,
     }),
@@ -154,10 +149,7 @@ const Providers = ({ children }: Props) => {
 const ProvidersWithQueryParams = ({ children }: Props) => {
   const [mounted, setMounted] = useState(false);
   const chain = useChainFromPath() as Chain | undefined;
-  const pathname = usePathname();
   const queryParams = useCollectQueryParams();
-  const includeAllChains =
-    pathname === "/loupe" || pathname === "/admin";
 
   const simulatedWallet = useMemo(() => {
     const walletFromQuery = queryParams?.[QUERY_PARAMS.simulatedWallet];
@@ -174,20 +166,67 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
     }
     return walletFromQuery as Address;
   }, [queryParams]);
+  const preferredSimulatedChain = simulatedWallet ? chain : undefined;
 
   const [wagmiConfig, setWagmiConfig] = useState<CustomWagmiConfig | null>(null);
   const [simulatedConnector, setSimulatedConnector] =
     useState<MockConnector | null>(null);
   const [activeSimulatedWallet, setActiveSimulatedWallet] =
     useState<Address | null>(null);
+  const [walletConnectResetVersion, setWalletConnectResetVersion] = useState(0);
+  const [skipAutoConnect, setSkipAutoConnect] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    setSkipAutoConnect(
+      window.localStorage.getItem(SKIP_AUTOCONNECT_STORAGE_KEY) === "true",
+    );
+  }, []);
+
+  useEffect(() => {
+    const handleWalletConnectReset = () => {
+      setWalletConnectResetVersion((value) => value + 1);
+    };
+    const handleAutoConnectReset = () => {
+      setSkipAutoConnect(
+        window.localStorage.getItem(SKIP_AUTOCONNECT_STORAGE_KEY) === "true",
+      );
+    };
+
+    window.addEventListener(WALLETCONNECT_RESET_EVENT, handleWalletConnectReset);
+    window.addEventListener(AUTOCONNECT_RESET_EVENT, handleAutoConnectReset);
+
+    return () => {
+      window.removeEventListener(
+        WALLETCONNECT_RESET_EVENT,
+        handleWalletConnectReset,
+      );
+      window.removeEventListener(
+        AUTOCONNECT_RESET_EVENT,
+        handleAutoConnectReset,
+      );
+    };
+  }, []);
 
   useEffect(() => {
     const { config, simulatedConnector: newSimulatedConnector } =
-      createCustomConfig(chain, simulatedWallet);
+      createCustomConfig(
+        skipAutoConnect,
+        preferredSimulatedChain,
+        simulatedWallet,
+      );
     setWagmiConfig(config);
     setSimulatedConnector(newSimulatedConnector ?? null);
     setMounted(true);
-  }, [chain, simulatedWallet, includeAllChains]);
+  }, [
+    simulatedWallet,
+    preferredSimulatedChain,
+    skipAutoConnect,
+    walletConnectResetVersion,
+  ]);
 
   useEffect(() => {
     if (!wagmiConfig) {
@@ -234,9 +273,12 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
   if (!mounted || !wagmiConfig) {
     return null;
   }
+
+  const providerResetKey = `wagmi-${walletConnectResetVersion}`;
+
   return (
     <UrqlProvider>
-      <WagmiConfig config={wagmiConfig}>
+      <WagmiConfig key={providerResetKey} config={wagmiConfig}>
         <AddrethConfig>
           <ThemeProvider>
             <ThemeAware chains={wagmiConfig.chains ?? []}>
