@@ -1,7 +1,6 @@
 "use client";
 
 import React, { Suspense, useEffect, useMemo, useState } from "react";
-import "@rainbow-me/rainbowkit/styles.css";
 import {
   connectorsForWallets,
   darkTheme as rainbowDarkTheme,
