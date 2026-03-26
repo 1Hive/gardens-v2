@@ -26,6 +26,25 @@ type RefetchOptions = {
   showToast?: boolean;
 };
 
+/**
+ * Module-level cache that persists query data across component remounts.
+ * This prevents the loading spinner from re-appearing when the component
+ * tree is remounted (e.g. during a WalletConnect reset flow after wallet change).
+ */
+const queryDataCache = new Map<string, unknown>();
+const MAX_QUERY_CACHE_SIZE = 50;
+
+function getOperationName(query: DocumentInput<any, any>): string {
+  if (typeof query === "string") {
+    const match = query.match(/^\s*(?:query|mutation|subscription)\s+(\w+)/);
+    return match?.[1] ?? "unknown";
+  }
+  const def = (query as any)?.definitions?.find(
+    (d: any) => d.kind === "OperationDefinition",
+  );
+  return (def?.name?.value as string | undefined) ?? "unknown";
+}
+
 export function dismissPendingSubgraphRefreshToast() {
   try {
     if (toast.isActive(PENDING_SUBGRAPH_REFRESH_TOAST_ID)) {
@@ -82,13 +101,30 @@ export function useSubgraphQuery<
   const [fetching, setFetching] = useState(false);
   const config =
     resolvedChainId != null ? getConfigByChain(resolvedChainId) : undefined;
+
+  // Build a stable cache key for this query so data can be reused after remounts
+  const operationName = getOperationName(query);
+  const cacheKey = JSON.stringify({
+    chainId: resolvedChainId,
+    operationName,
+    variables,
+  });
+
   const [response, setResponse] = useState<
     Omit<Awaited<ReturnType<typeof fetch>>, "operation">
-  >({
-    hasNext: true,
-    stale: true,
-    data: undefined,
-    error: undefined,
+  >(() => {
+    // Seed initial state from the module-level cache (survives component remounts
+    // such as the WalletConnect reset flow) so the page isn't replaced by a spinner.
+    const cachedData = enabled
+      ? (queryDataCache.get(cacheKey) as Data | undefined)
+      : undefined;
+    return {
+      // Cached data is always stale; the hook will re-fetch it in the background.
+      hasNext: cachedData == null,
+      stale: true,
+      data: cachedData,
+      error: undefined,
+    };
   });
 
   const latestResponse = useRef({ variables, response });
@@ -99,9 +135,31 @@ export function useSubgraphQuery<
   );
   const skipPublished = useFlag("skipPublished");
 
+  // Keep a ref pointing to the current cache key so the effect below can always
+  // write to the right key without needing `variables` in its dependency array
+  // (the `variables` object is recreated on every render).
+  const cacheKeyRef = useRef(cacheKey);
+  cacheKeyRef.current = cacheKey;
+
   useEffect(() => {
     latestResponse.current.response = response; // Update ref on every response change
   }, [response]);
+
+  // Persist the latest successful response in the module-level cache so it can
+  // be used as initial state if the component remounts (e.g. after a wallet
+  // change that triggers a WalletConnect reset and a full provider tree remount).
+  useEffect(() => {
+    if (response.data != null) {
+      // Evict the oldest entry when the cache reaches its size limit
+      if (queryDataCache.size >= MAX_QUERY_CACHE_SIZE) {
+        const oldestKey = queryDataCache.keys().next().value;
+        if (oldestKey !== undefined) {
+          queryDataCache.delete(oldestKey);
+        }
+      }
+      queryDataCache.set(cacheKeyRef.current, response.data);
+    }
+  }, [response.data]);
 
   if (enabled && resolvedChainId != null && !config) {
     console.error(`No subgraph address found for chain ${resolvedChainId}`);
