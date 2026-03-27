@@ -1,4 +1,5 @@
 import "@/styles/globals.scss";
+import "@rainbow-me/rainbowkit/styles.css";
 import React from "react";
 import { Chakra_Petch, Inter } from "next/font/google";
 import Providers from "@/providers/Providers";
