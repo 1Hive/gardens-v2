@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "./BaseMultiChain.s.sol";
+import "forge-std/console2.sol";
 import {CVAdminFacet} from "../src/CVStrategy/facets/CVAdminFacet.sol";
 import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol";
 import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
@@ -111,6 +112,7 @@ contract RefreshFacetSnapshots is BaseMultiChain {
 
         address deployed = _deployFacet(kind);
         _writeNetworkAddress(key, deployed);
+        console2.log("New facet deployed:", _facetName(kind), deployed);
     }
 
     function _deployFacet(FacetKind kind) internal returns (address) {
@@ -129,6 +131,25 @@ contract RefreshFacetSnapshots is BaseMultiChain {
         if (kind == FacetKind.CommunityPool) return address(new CommunityPoolFacet());
         if (kind == FacetKind.CommunityPower) return address(new CommunityPowerFacet());
         if (kind == FacetKind.CommunityStrategy) return address(new CommunityStrategyFacet());
+        revert("unknown facet kind");
+    }
+
+    function _facetName(FacetKind kind) internal pure returns (string memory) {
+        if (kind == FacetKind.DiamondLoupe) return "DiamondLoupeFacet";
+        if (kind == FacetKind.CVAdmin) return "CVAdminFacet";
+        if (kind == FacetKind.CVAllocation) return "CVAllocationFacet";
+        if (kind == FacetKind.CVDispute) return "CVDisputeFacet";
+        if (kind == FacetKind.CVPause) return "CVPauseFacet";
+        if (kind == FacetKind.CVPower) return "CVPowerFacet";
+        if (kind == FacetKind.CVProposal) return "CVProposalFacet";
+        if (kind == FacetKind.CVSyncPower) return "CVSyncPowerFacet";
+        if (kind == FacetKind.CVStreaming) return "CVStreamingFacet";
+        if (kind == FacetKind.CommunityAdmin) return "CommunityAdminFacet";
+        if (kind == FacetKind.CommunityMember) return "CommunityMemberFacet";
+        if (kind == FacetKind.CommunityPause) return "CommunityPauseFacet";
+        if (kind == FacetKind.CommunityPool) return "CommunityPoolFacet";
+        if (kind == FacetKind.CommunityPower) return "CommunityPowerFacet";
+        if (kind == FacetKind.CommunityStrategy) return "CommunityStrategyFacet";
         revert("unknown facet kind");
     }
 

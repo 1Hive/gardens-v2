@@ -262,7 +262,7 @@ def main():
     parser = argparse.ArgumentParser(description="Submit Safe Transaction Builder payloads.")
     parser.add_argument("--safe", required=True, help="Safe address")
     parser.add_argument("--keystore", required=True, help="Keystore file path")
-    parser.add_argument("--password-env", default="SAFE_KEYSTORE_PASSWORD", help="Env var for keystore password")
+    parser.add_argument("--password-env", default="PK_METAMASK_PW", help="Env var for keystore password")
     parser.add_argument(
         "--payload-dir",
         default=str(Path(__file__).resolve().parents[1] / "transaction-builder"),
