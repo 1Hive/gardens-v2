@@ -617,6 +617,8 @@ export default function DiamondAdminPage() {
   >(null);
   const [selectedSelector, setSelectedSelector] = useState("");
   const [selectedSignature, setSelectedSignature] = useState("");
+  const [isManualSignatureOverride, setIsManualSignatureOverride] =
+    useState(false);
   const [argsInput, setArgsInput] = useState("[]");
   const [argFieldValues, setArgFieldValues] = useState<unknown[]>([]);
   const [valueInput, setValueInput] = useState("0");
@@ -1245,14 +1247,20 @@ export default function DiamondAdminPage() {
       setSelectedSignature("");
       return;
     }
+    if (isManualSignatureOverride) {
+      return;
+    }
     if (!selectedSelector || !availableSelectors.includes(selectedSelector)) {
       setSelectedSelector(availableSelectors[0]);
     }
-  }, [availableSelectors, selectedSelector]);
+  }, [availableSelectors, isManualSignatureOverride, selectedSelector]);
 
   useEffect(() => {
+    if (isManualSignatureOverride) {
+      return;
+    }
     if (!selectedSelector) {
-      setSelectedSignature("");
+      // Don't clear signature when selector is empty - user may be typing manual override
       return;
     }
     const localCandidates = localSignatureMap[selectedSelector] ?? [];
@@ -1282,12 +1290,16 @@ export default function DiamondAdminPage() {
     }
   }, [
     availableSignaturesForSelectedSelector,
+    isManualSignatureOverride,
     localSignatureMap,
     selectedSelector,
     selectedSignature,
   ]);
 
   useEffect(() => {
+    if (isManualSignatureOverride) {
+      return;
+    }
     if (!selectedSignature.trim()) {
       return;
     }
@@ -1300,7 +1312,7 @@ export default function DiamondAdminPage() {
     } catch {
       // Ignore invalid signatures while typing.
     }
-  }, [selectedSelector, selectedSignature]);
+  }, [isManualSignatureOverride, selectedSelector, selectedSignature]);
 
   const handleInspectClick = () => {
     if (!isAddressValid) return;
@@ -1320,6 +1332,7 @@ export default function DiamondAdminPage() {
       return;
     }
     setSignatureMap({});
+    setIsManualSignatureOverride(false);
     setSelectedProxyAbiLabel("");
     setSelectedSelector("");
     setSelectedSignature("");
@@ -1331,6 +1344,7 @@ export default function DiamondAdminPage() {
   };
 
   const handleFunctionSelect = (selector: string, signature?: string) => {
+    setIsManualSignatureOverride(false);
     setSelectedSelector(selector);
     if (signature !== undefined) {
       setSelectedSignature(signature);
@@ -1824,9 +1838,11 @@ export default function DiamondAdminPage() {
                     <input
                       className="rounded-lg border border-border-neutral bg-neutral px-3 py-2 text-sm text-neutral-content placeholder:text-neutral-muted focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
                       value={selectedSignature}
-                      onChange={(event) =>
-                        setSelectedSignature(event.target.value)
-                      }
+                      onChange={(event) => {
+                        setIsManualSignatureOverride(true);
+                        setSelectedSelector("");
+                        setSelectedSignature(event.target.value);
+                      }}
                       placeholder="e.g. getCommunityFee()"
                     />
                   </label>

@@ -6,7 +6,6 @@ import { Address, isAddress } from "viem";
 import { useEnsName, useEnsAvatar } from "wagmi";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { isSafeAvatarUrl } from "@/app/api/utils";
-import { useCanResolveEns } from "@/hooks/useCanResolveEns";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useTheme } from "@/providers/ThemeProvider";
 import { shortenAddress as shortenAddressFn } from "@/utils/text";
@@ -39,18 +38,17 @@ export const EthAddress = ({
   const divParentRef = React.useRef<HTMLDivElement>(null);
   const chain = useChainFromPath();
   const { resolvedTheme } = useTheme();
-  const canResolveEns = useCanResolveEns();
 
   const { data: ensName } = useEnsName({
     address: address as Address,
-    enabled: canResolveEns && isAddress(address ?? ""),
+    enabled: isAddress(address ?? ""),
     chainId: 1,
     cacheTime: 30_000,
   });
 
   const { data: avatarUrl } = useEnsAvatar({
     name: ensName,
-    enabled: canResolveEns && Boolean(ensName),
+    enabled: Boolean(ensName),
     chainId: 1,
     cacheTime: 30_000,
   });

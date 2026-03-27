@@ -132,8 +132,6 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         int96 actualFlowRate = superfluidToken.distributeFlow(superfluidGDA, _toInt96StreamingRate(requestedFlowRate));
         if (currentFlowRate != actualFlowRate) {
             didMeaningfulWork = true;
-        }
-        if (currentFlowRate != actualFlowRate) {
             emit StreamRateUpdated(address(superfluidGDA), actualFlowRate > 0 ? uint256(uint96(actualFlowRate)) : 0);
         }
 
@@ -340,15 +338,11 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
 
     function _isAuthorizedRebalanceCaller(address caller) internal view returns (bool) {
         if (address(registryCommunity) == address(0)) {
-            // Keep facet-level unit tests and pre-init calls from failing on missing context.
-            return true;
+            // Defensive default: never allow open rebalance access before full initialization.
+            return false;
         }
         address ownerAddress = effectiveOwner();
         address councilSafeAddress = _tryCouncilSafe();
-        if (ownerAddress == address(0) && councilSafeAddress == address(0)) {
-            // Facet-level harnesses may not initialize ownership/council context.
-            return true;
-        }
         if (
             caller == address(this) || (ownerAddress != address(0) && caller == ownerAddress)
                 || (councilSafeAddress != address(0) && caller == councilSafeAddress)

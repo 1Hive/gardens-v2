@@ -5,8 +5,7 @@ import { useResolvedChainId } from "./useResolvedChainId";
 
 export function usePreferredReadClient(chainId?: number) {
   const resolvedChainId = useResolvedChainId(chainId);
-  const { connector, isConnected, isConnecting, isReconnecting, status } =
-    useAccount();
+  const { connector, isConnected, isConnecting, isReconnecting } = useAccount();
   const walletChainId = useChainId();
   const publicClient = usePublicClient({ chainId: resolvedChainId });
   const shouldWaitForWallet = isConnecting || isReconnecting;
@@ -15,9 +14,9 @@ export function usePreferredReadClient(chainId?: number) {
     resolvedChainId != null &&
     walletChainId === resolvedChainId &&
     !!connector;
-  const [preferredClient, setPreferredClient] = useState<PublicClient | undefined>(
-    shouldUseWalletClient ? undefined : publicClient,
-  );
+  const [preferredClient, setPreferredClient] = useState<
+    PublicClient | undefined
+  >(shouldUseWalletClient ? undefined : publicClient);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,6 +51,9 @@ export function usePreferredReadClient(chainId?: number) {
         setPreferredClient(nextClient);
       } catch (error) {
         if (!cancelled) {
+          if (process.env.NODE_ENV === "development") {
+            console.warn("usePreferredReadClient: provider load failed", error);
+          }
           setPreferredClient(undefined);
         }
       }
@@ -63,7 +65,6 @@ export function usePreferredReadClient(chainId?: number) {
       cancelled = true;
     };
   }, [
-    chainId,
     connector,
     publicClient,
     resolvedChainId,

@@ -595,7 +595,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     const interval = setInterval(() => {
       if (typeof document !== "undefined" && document.hidden) return;
       setClaimableNowMs(BigInt(Date.now()));
-    }, 100);
+    }, 500);
     return () => clearInterval(interval);
   }, [shouldTickAccumulated, shouldTickClaimable]);
 

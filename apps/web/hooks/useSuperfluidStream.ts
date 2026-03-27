@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { gql } from "urql";
-import { useAccount } from "wagmi";
 import { Address } from "viem";
+import { useAccount } from "wagmi";
 import { usePreferredReadClient } from "./usePreferredReadClient";
 import { useResolvedChainId } from "./useResolvedChainId";
 import { useSuperfluidSugraphClient as useSuperfluidSugraphClient } from "./useSuperfluidSubgraphClient";
@@ -203,20 +203,20 @@ export function useSuperfluidStream({
     if (result.data.poolMembers.length > 0) {
       let memberFlows: Array<{ result?: unknown; error?: unknown }> = [];
       try {
-        memberFlows = await Promise.all(
-          result.data.poolMembers.map(async (member: any) => {
-            try {
-              const flowRate = await readClient.readContract({
-                address: member.pool.id as Address,
-                abi: superfluidPoolAbi,
-                functionName: "getMemberFlowRate",
-                args: [receiver as Address],
-              });
-              return { result: flowRate };
-            } catch (error) {
-              return { error };
-            }
-          }),
+        const multicallResults = await readClient.multicall({
+          contracts: result.data.poolMembers.map((member: any) => ({
+            address: member.pool.id as Address,
+            abi: superfluidPoolAbi,
+            functionName: "getMemberFlowRate",
+            args: [receiver as Address],
+          })),
+          allowFailure: true,
+        });
+
+        memberFlows = multicallResults.map((flow) =>
+          flow.status === "success" ?
+            { result: flow.result }
+          : { error: flow.error },
         );
       } catch (error) {
         if (!hasLoggedMemberFlowReadErrorRef.current) {

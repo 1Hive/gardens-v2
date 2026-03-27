@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { zeroAddress } from "viem";
-import { Address, erc20ABI, useAccount, useChainId } from "wagmi";
+import { Address, erc20ABI } from "wagmi";
 import { usePoolAmount } from "./usePoolAmount";
 import { usePreferredReadClient } from "./usePreferredReadClient";
 import { useResolvedChainId } from "./useResolvedChainId";
@@ -19,8 +19,6 @@ export const usePoolToken = ({
   watch?: boolean;
 }) => {
   const resolvedChainId = useResolvedChainId(chainId);
-  const { isConnected } = useAccount();
-  const walletChainId = useChainId();
   const tokenClient = usePreferredReadClient(resolvedChainId);
   const [poolToken, setPoolToken] = useState<
     | {
@@ -30,10 +28,6 @@ export const usePoolToken = ({
       }
     | undefined
   >(undefined);
-  const shouldUseWalletClient =
-    isConnected &&
-    resolvedChainId != null &&
-    walletChainId === resolvedChainId;
 
   const poolAmount = usePoolAmount({
     poolAddress,
@@ -43,7 +37,12 @@ export const usePoolToken = ({
   });
 
   useEffect(() => {
-    if (!enabled || !poolTokenAddr || poolTokenAddr === zeroAddress || !tokenClient) {
+    if (
+      !enabled ||
+      !poolTokenAddr ||
+      poolTokenAddr === zeroAddress ||
+      !tokenClient
+    ) {
       setPoolToken(undefined);
       return;
     }
@@ -96,7 +95,7 @@ export const usePoolToken = ({
     };
   }, [enabled, poolTokenAddr, resolvedChainId, tokenClient]);
 
-  if (!poolAmount != null && !poolToken && enabled) {
+  if (poolAmount == null && !poolToken && enabled) {
     console.debug("Waiting for", {
       poolAmount,
       poolToken,
@@ -104,20 +103,16 @@ export const usePoolToken = ({
     return undefined;
   }
 
-  const balanceInfo = poolToken &&
-    poolAmount != null && {
-      value: poolAmount,
-      formatted: (poolAmount / 10n ** BigInt(poolToken.decimals)).toString(),
-    };
+  if (poolToken == null || poolAmount == null) {
+    return undefined;
+  }
 
-  return balanceInfo ?
-      {
-        address: poolTokenAddr as Address,
-        symbol: poolToken.symbol,
-        decimals: poolToken.decimals,
-        balance: balanceInfo.value,
-        formatted: balanceInfo.formatted,
-        name: poolToken.name,
-      }
-    : undefined;
+  return {
+    address: poolTokenAddr as Address,
+    symbol: poolToken.symbol,
+    decimals: poolToken.decimals,
+    balance: poolAmount,
+    formatted: (poolAmount / 10n ** BigInt(poolToken.decimals)).toString(),
+    name: poolToken.name,
+  };
 };

@@ -32,7 +32,6 @@ import { Modal } from "./Modal";
 import { ProposalTimeline } from "./ProposalTimeline";
 import { WalletBalance } from "./WalletBalance";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useCanResolveEns } from "@/hooks/useCanResolveEns";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
@@ -532,17 +531,16 @@ const DisputeMessage = ({
   title?: string;
 }) => {
   const [copied, setCopied] = useState(false);
-  const canResolveEns = useCanResolveEns();
   const { data: ensName } = useEnsName({
     address: dispute?.challenger as Address,
     chainId: mainnet.id,
-    enabled: canResolveEns && !!dispute?.challenger,
+    enabled: !!dispute?.challenger,
   });
 
   const { data: avatarUrl } = useEnsAvatar({
     name: ensName,
     chainId: mainnet.id,
-    enabled: canResolveEns && !!ensName,
+    enabled: !!ensName,
   });
 
   const { data: disputeMetadata } = useIpfsFetch<DisputeMetadata>({
