@@ -569,20 +569,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           <p className="text-sm dark:text-neutral-soft-content">
                             {proposalTotalStreamedDisplay}
                           </p>
-                          {isDisputedStreamingProposal &&
-                            accumulatedAmountDisplay != null && (
-                              <>
-                                <span className="hidden sm:inline text-neutral-soft-content">
-                                  ·
-                                </span>
-                                <p className="text-sm dark:text-neutral-soft-content">
-                                  Accumulated:
-                                </p>
-                                <p className="text-sm dark:text-neutral-soft-content">
-                                  {accumulatedAmountDisplay}
-                                </p>
-                              </>
-                            )}
                         </div>
                       )}
                     </div>
