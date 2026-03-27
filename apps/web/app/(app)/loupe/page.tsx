@@ -1263,7 +1263,21 @@ export default function DiamondAdminPage() {
     if (!candidates.length) {
       return;
     }
-    if (!selectedSignature || !candidates.includes(selectedSignature)) {
+    if (!selectedSignature) {
+      setSelectedSignature(candidates[0]);
+      return;
+    }
+    // If the signature is in candidates, no change needed
+    if (candidates.includes(selectedSignature)) {
+      return;
+    }
+    // If the signature is manually entered and valid, preserve it
+    try {
+      parseFunctionFromSignature(selectedSignature);
+      // It's a valid function signature, keep it
+      return;
+    } catch {
+      // Invalid signature, reset to first candidate
       setSelectedSignature(candidates[0]);
     }
   }, [
