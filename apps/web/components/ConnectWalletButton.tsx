@@ -38,6 +38,7 @@ import { walletIcon } from "@/assets";
 import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chains";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
+import { useCanResolveEns } from "@/hooks/useCanResolveEns";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useHasContractCode } from "@/hooks/useHasContractCode";
 import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
@@ -272,6 +273,7 @@ export function ConnectWallet() {
 
   const wallet = connectors[0].name;
   const isMockConnection = account.connector?.id === "mock";
+  const canResolveEns = useCanResolveEns();
   const { hasContractCode: hasGardenTokenContract } = useHasContractCode({
     address: tokenUrlAddress,
     chainId: urlChainId,
@@ -291,14 +293,14 @@ export function ConnectWallet() {
 
   const { data: ensName } = useEnsName({
     address: account?.address as Address,
-    enabled: isAddress(account?.address ?? ""),
+    enabled: canResolveEns && isAddress(account?.address ?? ""),
     chainId: 1,
     cacheTime: 30_000,
   });
 
   const { data: avatarUrl } = useEnsAvatar({
     name: ensName,
-    enabled: Boolean(ensName),
+    enabled: canResolveEns && Boolean(ensName),
     chainId: 1,
     cacheTime: 30_000,
   });

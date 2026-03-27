@@ -7,6 +7,7 @@ import { useEnsAddress, useEnsAvatar, useEnsName, useNetwork } from "wagmi";
 import { FormInput } from "./FormInput";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { getChain, getConfigByChain } from "@/configs/chains";
+import { useCanResolveEns } from "@/hooks/useCanResolveEns";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useFlag } from "@/hooks/useFlag";
@@ -83,6 +84,7 @@ export const FormAddressInput = ({
   const [isValidatingSafe, setIsValidatingSafe] = useState<boolean>(false);
   const [isValidatingERC20, setIsValidatingERC20] = useState<boolean>(false);
   const bypassSafeCheck = useFlag("bypassSafeCheck");
+  const canResolveEns = useCanResolveEns();
 
   useEffect(() => {
     setInputValue(value ?? "");
@@ -91,21 +93,21 @@ export const FormAddressInput = ({
   // ENS Resolution
   const { data: ensAddress, isError: ensError } = useEnsAddress({
     name: debouncedValue,
-    enabled: isENS(debouncedValue),
+    enabled: canResolveEns && isENS(debouncedValue),
     chainId: 1,
     cacheTime: 30_000,
   });
 
   const { data: ensName } = useEnsName({
     address: debouncedValue as Address,
-    enabled: isAddress(debouncedValue ?? ""),
+    enabled: canResolveEns && isAddress(debouncedValue ?? ""),
     chainId: 1,
     cacheTime: 30_000,
   });
 
   const { data: avatarUrl } = useEnsAvatar({
     name: ensName,
-    enabled: Boolean(ensName),
+    enabled: canResolveEns && Boolean(ensName),
     chainId: 1,
     cacheTime: 30_000,
   });

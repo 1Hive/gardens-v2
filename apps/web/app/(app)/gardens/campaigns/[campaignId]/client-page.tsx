@@ -19,6 +19,7 @@ import { useAccount, useEnsAvatar, useEnsName } from "wagmi";
 import { Badge } from "@/components/Badge";
 import { Button } from "@/components/Button";
 import { SuperfluidLeaderboardModal } from "@/components/SuperfluidLeaderboard";
+import { useCanResolveEns } from "@/hooks/useCanResolveEns";
 import {
   fetchSuperfluidLeaderboard,
   LeaderboardResponse,
@@ -275,17 +276,19 @@ export default function GardensGrowthInitiativePage({
   const howToParticipate = PARTICIPATION_BY_CAMPAIGN[campaignId] ?? [];
 
   const { address: connectedAccount } = useAccount();
+  const canResolveEns = useCanResolveEns();
 
   const { data: localEnsName } = useEnsName({
     address: connectedAccount as Address,
-    enabled: Boolean(connectedAccount) && !walletPoints?.ensName,
+    enabled:
+      canResolveEns && Boolean(connectedAccount) && !walletPoints?.ensName,
     chainId: 1,
     cacheTime: 30_000,
   });
 
   const { data: localEnsAvatar } = useEnsAvatar({
     name: localEnsName,
-    enabled: Boolean(localEnsName) && !walletPoints?.ensAvatar,
+    enabled: canResolveEns && Boolean(localEnsName) && !walletPoints?.ensAvatar,
     chainId: 1,
     cacheTime: 30_000,
   });

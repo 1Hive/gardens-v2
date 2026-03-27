@@ -17,14 +17,17 @@ export function useIsMemberActivated(
     useState<Error | null>(null);
 
   useEffect(() => {
-    if (!address) {
+    if (!address || !client) {
       return;
     }
 
     fetchData();
-  }, [address]);
+  }, [address, client]);
 
   const fetchData = async () => {
+    if (!client) {
+      return;
+    }
     const strategyAddress = strategy.id as Address;
 
     try {

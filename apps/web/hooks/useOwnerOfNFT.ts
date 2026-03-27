@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { Address, Chain, createPublicClient, http } from "viem";
+import { Address, Chain } from "viem";
 import { erc721ABI, useAccount } from "wagmi";
 import { NFTs } from "@/globals";
 import { getNFTsForWallet } from "@/services/alchemy";
+import { getEnvPublicClient } from "@/utils/publicClient";
 
 interface UseOwnerOfNFTParams {
   chains: Chain[];
@@ -61,10 +62,7 @@ export function useOwnerOfNFT({
                 break;
               }
             } else {
-              const publicClient = createPublicClient({
-                chain: chain,
-                transport: http(),
-              });
+              const publicClient = getEnvPublicClient(chain.id);
 
               const contractAddress = nftSelector;
 
