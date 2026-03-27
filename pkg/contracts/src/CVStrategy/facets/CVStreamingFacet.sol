@@ -6,6 +6,7 @@ import {IArbitrator} from "../../interfaces/IArbitrator.sol";
 import {Proposal, ProposalStatus, ArbitrableConfig} from "../ICVStrategy.sol";
 import {CVStreamingStorage, CVStreamingBase} from "../CVStreamingStorage.sol";
 import {ConvictionsUtils} from "../ConvictionsUtils.sol";
+import {IRegistryFactory} from "../../IRegistryFactory.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -131,8 +132,6 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         int96 actualFlowRate = superfluidToken.distributeFlow(superfluidGDA, _toInt96StreamingRate(requestedFlowRate));
         if (currentFlowRate != actualFlowRate) {
             didMeaningfulWork = true;
-        }
-        if (currentFlowRate != actualFlowRate) {
             emit StreamRateUpdated(address(superfluidGDA), actualFlowRate > 0 ? uint256(uint96(actualFlowRate)) : 0);
         }
 
@@ -175,7 +174,8 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         emit StreamMemberUnitUpdated(escrow, 0);
 
         // Best-effort to apply zero units immediately on escrow side.
-        try IStreamingEscrowSync(escrow).syncOutflow() {} catch (bytes memory reason) {
+        try IStreamingEscrowSync(escrow).syncOutflow() {}
+        catch (bytes memory reason) {
             emit EscrowSyncFailed(escrow, reason);
         }
         emit EscrowStreamStopped(escrow, msg.sender);
@@ -338,22 +338,43 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
 
     function _isAuthorizedRebalanceCaller(address caller) internal view returns (bool) {
         if (address(registryCommunity) == address(0)) {
-            // Keep facet-level unit tests and pre-init calls from failing on missing context.
-            return true;
+            // Defensive default: never allow open rebalance access before full initialization.
+            return false;
         }
         address ownerAddress = effectiveOwner();
         address councilSafeAddress = _tryCouncilSafe();
-        if (ownerAddress == address(0) && councilSafeAddress == address(0)) {
-            // Facet-level harnesses may not initialize ownership/council context.
-            return true;
-        }
         if (
             caller == address(this) || (ownerAddress != address(0) && caller == ownerAddress)
                 || (councilSafeAddress != address(0) && caller == councilSafeAddress)
         ) {
             return true;
         }
+        if (_isFactoryRebalanceCaller(caller)) {
+            return true;
+        }
         return CVStreamingStorage.layout().authorizedRebalanceCallers[caller];
+    }
+
+    function _isFactoryRebalanceCaller(address caller) internal view returns (bool) {
+        (bool factoryLookupOk, bytes memory factoryData) =
+            address(registryCommunity).staticcall(abi.encodeWithSignature("registryFactory()"));
+        if (!factoryLookupOk || factoryData.length < 32) {
+            return false;
+        }
+
+        address registryFactoryAddress = abi.decode(factoryData, (address));
+        if (registryFactoryAddress == address(0)) {
+            return false;
+        }
+
+        (bool allowlistLookupOk, bytes memory allowlistData) = registryFactoryAddress.staticcall(
+            abi.encodeWithSelector(IRegistryFactory.isRebalanceCallerAllowed.selector, caller)
+        );
+        if (!allowlistLookupOk || allowlistData.length < 32) {
+            return false;
+        }
+
+        return abi.decode(allowlistData, (bool));
     }
 
     function _tryCouncilSafe() internal view returns (address councilSafeAddress) {

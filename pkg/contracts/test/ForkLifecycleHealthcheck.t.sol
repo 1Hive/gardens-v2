@@ -232,7 +232,8 @@ contract ForkLifecycleHealthcheck is Test {
         for (uint256 i = 0; i < chains.length; i++) {
             (ForkContext memory ctx, uint256 proposalId) = _createProposalContext(chains[i]);
 
-            (address submitter, address beneficiary,,,, ProposalStatus status,,,,,,) = ctx.strategy.getProposal(proposalId);
+            (address submitter, address beneficiary,,,, ProposalStatus status,,,,,,) =
+                ctx.strategy.getProposal(proposalId);
 
             assertEq(submitter, ctx.member, chains[i]);
             assertEq(beneficiary, ctx.beneficiary, chains[i]);
@@ -372,12 +373,8 @@ contract ForkLifecycleHealthcheck is Test {
                 defaultRuling: 2,
                 defaultRulingTimeout: 2 days
             });
-            CVParams memory cvParams = CVParams({
-                maxRatio: 4_000_000,
-                weight: 200_000,
-                decay: 9_940_581,
-                minThresholdPoints: 0
-            });
+            CVParams memory cvParams =
+                CVParams({maxRatio: 4_000_000, weight: 200_000, decay: 9_940_581, minThresholdPoints: 0});
 
             vm.prank(ctx.council);
             ctx.strategy.setPoolParams(arb, cvParams, 0, toAdd, toRemove, address(0));
@@ -386,8 +383,12 @@ contract ForkLifecycleHealthcheck is Test {
             assertTrue(ctx.community.hasRole(allowlistRole, newAllowlisted), chains[i]);
             assertFalse(ctx.community.hasRole(allowlistRole, ctx.challenger), chains[i]);
 
-            (IArbitrator arbitrator,, uint256 submitterCollateral, uint256 challengerCollateral, uint256 defaultRuling,) =
-                ctx.strategy.getArbitrableConfig();
+            (
+                IArbitrator arbitrator,,
+                uint256 submitterCollateral,
+                uint256 challengerCollateral,
+                uint256 defaultRuling,
+            ) = ctx.strategy.getArbitrableConfig();
             assertEq(address(arbitrator), address(ctx.arbitrator), chains[i]);
             assertEq(submitterCollateral, 0.02 ether, chains[i]);
             assertEq(challengerCollateral, 0.03 ether, chains[i]);
@@ -424,7 +425,8 @@ contract ForkLifecycleHealthcheck is Test {
             vm.prank(ctx.council);
             ctx.allo.distribute(ctx.poolId, new address[](0), abi.encode(proposalId));
 
-            (, address beneficiary,, uint256 requestedAmount,, ProposalStatus status,,,,,,) = ctx.strategy.getProposal(proposalId);
+            (, address beneficiary,, uint256 requestedAmount,, ProposalStatus status,,,,,,) =
+                ctx.strategy.getProposal(proposalId);
             assertEq(beneficiary, ctx.beneficiary, chains[i]);
             assertEq(requestedAmount, REQUEST_AMOUNT, chains[i]);
             assertEq(uint256(status), uint256(ProposalStatus.Executed), chains[i]);
@@ -544,7 +546,8 @@ contract ForkLifecycleHealthcheck is Test {
         string[] memory chains = _supportedChains();
         for (uint256 i = 0; i < chains.length; i++) {
             ForkContext memory ctx = _createCommunity(chains[i], true);
-            (uint256 poolId, address strategyAddress) = _createPoolOnly(ctx, address(ctx.token), PointSystem.Fixed, address(0));
+            (uint256 poolId, address strategyAddress) =
+                _createPoolOnly(ctx, address(ctx.token), PointSystem.Fixed, address(0));
 
             vm.prank(ctx.council);
             ctx.community.addStrategyByPoolId(poolId);
@@ -579,7 +582,8 @@ contract ForkLifecycleHealthcheck is Test {
             vm.prank(ctx.member);
             ctx.strategy.editProposal(proposalId, metadata, ctx.challenger, 2 ether);
 
-            (, address beneficiary,, uint256 requestedAmount,, ProposalStatus status,,,,,,) = ctx.strategy.getProposal(proposalId);
+            (, address beneficiary,, uint256 requestedAmount,, ProposalStatus status,,,,,,) =
+                ctx.strategy.getProposal(proposalId);
             assertEq(beneficiary, ctx.challenger, chains[i]);
             assertEq(requestedAmount, 2 ether, chains[i]);
             assertEq(uint256(status), uint256(ProposalStatus.Active), chains[i]);
@@ -814,7 +818,6 @@ contract ForkLifecycleHealthcheck is Test {
             vm.prank(address(ctx.strategy.registryCommunity()));
             strategyHarness.deactivatePoints(ctx.member);
             assertEq(ctx.strategy.totalPointsActivated(), 0, chain);
-
         }
     }
 
@@ -893,7 +896,8 @@ contract ForkLifecycleHealthcheck is Test {
             votingPowerRegistry: votingPowerRegistry
         });
 
-        Metadata memory metadata = Metadata({protocol: 1, pointer: string.concat("pool-meta-", ctx.community.communityName())});
+        Metadata memory metadata =
+            Metadata({protocol: 1, pointer: string.concat("pool-meta-", ctx.community.communityName())});
 
         vm.startPrank(ctx.council);
         (ctx.poolId, strategyAddress) = _createPoolCompat(ctx.community, poolToken, params, metadata);
@@ -941,7 +945,8 @@ contract ForkLifecycleHealthcheck is Test {
             votingPowerRegistry: votingPowerRegistry
         });
 
-        Metadata memory metadata = Metadata({protocol: 1, pointer: string.concat("pool-meta-", ctx.community.communityName())});
+        Metadata memory metadata =
+            Metadata({protocol: 1, pointer: string.concat("pool-meta-", ctx.community.communityName())});
 
         vm.prank(ctx.council);
         (poolId, strategyAddress) = _createPoolCompat(ctx.community, poolToken, params, metadata);
@@ -972,12 +977,7 @@ contract ForkLifecycleHealthcheck is Test {
                 initialAllowlist: params.initialAllowlist,
                 superfluidToken: params.superfluidToken
             });
-            callData = abi.encodeWithSelector(
-                selector,
-                poolToken,
-                legacyParams,
-                metadata
-            );
+            callData = abi.encodeWithSelector(selector, poolToken, legacyParams, metadata);
         } else {
             revert("unsupported community createPool selector");
         }
@@ -1032,12 +1032,13 @@ contract ForkLifecycleHealthcheck is Test {
         vm.deal(submitter, submitterCollateralAmount + 1 ether);
 
         vm.prank(submitter);
-        proposalId = uint160(
-            ctx.allo.registerRecipient{value: submitterCollateralAmount}(ctx.poolId, abi.encode(proposal))
-        );
+        proposalId =
+            uint160(ctx.allo.registerRecipient{value: submitterCollateralAmount}(ctx.poolId, abi.encode(proposal)));
     }
 
-    function _allocateSupport(ForkContext memory ctx, uint256 proposalId, address voter, uint256 supportAmount) internal {
+    function _allocateSupport(ForkContext memory ctx, uint256 proposalId, address voter, uint256 supportAmount)
+        internal
+    {
         ProposalSupport[] memory votes = new ProposalSupport[](1);
         votes[0] = ProposalSupport({proposalId: proposalId, deltaSupport: int256(supportAmount)});
 
@@ -1071,9 +1072,8 @@ contract ForkLifecycleHealthcheck is Test {
 
     function _executeRuling(ForkContext memory ctx, uint256 disputeId, uint256 ruling, string memory chain) internal {
         vm.prank(ctx.council);
-        (bool success, bytes memory revertData) = address(ctx.arbitrator).call(
-            abi.encodeCall(SafeArbitrator.executeRuling, (disputeId, ruling, address(ctx.strategy)))
-        );
+        (bool success, bytes memory revertData) = address(ctx.arbitrator)
+            .call(abi.encodeCall(SafeArbitrator.executeRuling, (disputeId, ruling, address(ctx.strategy))));
 
         if (!success) {
             emit log_named_uint("arbitrator.disputes.length", _arbitratorDisputesLength(ctx.arbitrator));
@@ -1107,9 +1107,12 @@ contract ForkLifecycleHealthcheck is Test {
         assertTrue(success, errorMessage);
     }
 
-    function _assertSelectorsPresent(address diamond, bytes4[] memory selectors, string memory chain, string memory label)
-        internal
-    {
+    function _assertSelectorsPresent(
+        address diamond,
+        bytes4[] memory selectors,
+        string memory chain,
+        string memory label
+    ) internal {
         for (uint256 i = 0; i < selectors.length; i++) {
             if (IDiamondLoupe(diamond).facetAddress(selectors[i]) == address(0)) {
                 emit log_named_bytes32(string.concat(label, " missing selector"), bytes32(selectors[i]));
@@ -1118,7 +1121,9 @@ contract ForkLifecycleHealthcheck is Test {
         }
     }
 
-    function _assertCommunityDeploymentMatchesConfig(string memory chain, string memory json, address community) internal {
+    function _assertCommunityDeploymentMatchesConfig(string memory chain, string memory json, address community)
+        internal
+    {
         address expectedImplementation = json.readAddress(_networkKey(chain, ".IMPLEMENTATIONS.REGISTRY_COMMUNITY"));
         assertEq(
             _implementationAddress(community),
@@ -1135,7 +1140,9 @@ contract ForkLifecycleHealthcheck is Test {
         expectedFacetAddresses[5] = json.readAddress(_networkKey(chain, ".FACETS.COMMUNITY_POWER"));
         expectedFacetAddresses[6] = json.readAddress(_networkKey(chain, ".FACETS.COMMUNITY_STRATEGY"));
 
-        _assertFacetAddressSet(address(community), expectedFacetAddresses, string.concat(chain, ": community facets mismatch"));
+        _assertFacetAddressSet(
+            address(community), expectedFacetAddresses, string.concat(chain, ": community facets mismatch")
+        );
     }
 
     function _assertStrategyDeploymentMatchesConfig(string memory communityName, address strategy) internal {
@@ -1305,9 +1312,11 @@ contract ForkLifecycleHealthcheck is Test {
         selectors[42] = ICVStrategyFacetHarness.pausedSelectorUntil.selector;
     }
 
-
     function _selectFork(string memory chain) internal returns (string memory json) {
-        string memory rpcUrl = _rpcUrl(chain);
+        string memory rpcUrl = vm.envOr("FORK_HEALTHCHECK_RPC_URL", string(""));
+        if (bytes(rpcUrl).length == 0) {
+            rpcUrl = _rpcUrl(chain);
+        }
         require(bytes(rpcUrl).length != 0, string.concat("Missing RPC env for ", chain));
 
         vm.createSelectFork(rpcUrl);

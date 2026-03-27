@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Address, isAddress } from "viem";
-import { usePublicClient } from "wagmi";
+import { usePreferredReadClient } from "./usePreferredReadClient";
 
 type Props = {
   address?: string;
@@ -13,7 +13,7 @@ export function useHasContractCode({
   chainId,
   enabled = true,
 }: Props) {
-  const publicClient = usePublicClient({ chainId });
+  const publicClient = usePreferredReadClient(chainId);
   const [hasContractCode, setHasContractCode] = useState<boolean>(false);
 
   useEffect(() => {

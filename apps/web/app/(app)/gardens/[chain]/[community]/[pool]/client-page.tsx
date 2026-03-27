@@ -814,9 +814,9 @@ export default function ClientPage({
               onClick={() => writeRebalance?.()}
               icon={<ArrowPathIcon className="h-4 w-4" />}
             >
-                  Manual stream sync
-                </Button>
-              )}
+              Sync Stream
+            </Button>
+          )}
         </div>
       </section>
     );

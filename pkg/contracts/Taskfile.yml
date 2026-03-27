@@ -11,6 +11,26 @@ tasks:
     desc: Print
     cmds:
       - echo ${RPC_URL}
+  generate-wallet:
+    desc: Generate a new wallet and print PK + address, plus OLD_PRIVATE_KEY when available
+    cmds:
+      - cmd: |
+          PK="0x$(openssl rand -hex 32)"
+          ADDRESS="$(cast wallet address --private-key "${PK}")"
+          echo "PK=${PK}"
+          echo "ADDRESS=${ADDRESS}"
+          if [ -n "${OLD_PRIVATE_KEY:-}" ]; then
+            OLD_ADDRESS="$(cast wallet address --private-key "${OLD_PRIVATE_KEY}")"
+            echo ""
+            echo "OLD_PRIVATE_KEY=${OLD_PRIVATE_KEY}"
+            echo "OLD_PRIVATE_KEY_ADDRESS=${OLD_ADDRESS}"
+          fi
+          echo ""
+          echo "# Replace PK_DEPLOYER keystore (interactive password prompt)"
+          echo "rm -f ~/.foundry/keystores/PK_DEPLOYER && cast wallet import PK_DEPLOYER --private-key ${PK}"
+          echo ""
+          echo "# Replace PK_DEPLOYER keystore (non-interactive, uses PK_DEPLOYER_PW)"
+          echo "rm -f ~/.foundry/keystores/PK_DEPLOYER && CAST_UNSAFE_PASSWORD=\"\$PK_DEPLOYER_PW\" cast wallet import PK_DEPLOYER --private-key ${PK} --unsafe-password \"\$PK_DEPLOYER_PW\""
   aggregate-abi:
     desc: Aggregate abi
     cmds:
@@ -142,6 +162,196 @@ tasks:
     cmds:
       - cmd: |
           FORK_HEALTHCHECK_CHAIN=opsepolia forge test --match-contract ForkLifecycleHealthcheck -vvv
+  rehearse-upgrade-chain:
+    desc: Run upgrade script on a local Anvil fork for CHAIN, then smoke test the upgraded fork
+    vars:
+      CHAIN: ethsepolia
+    deps:
+      - verify-storage
+    cmds:
+      - cmd: |
+          CHAIN="{{.CHAIN}}"
+          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
+
+          case "${CHAIN}" in
+            ethsepolia) RPC_ENV="RPC_URL_SEP_TESTNET"; CHAIN_ID=11155111 ;;
+            arbsepolia) RPC_ENV="RPC_URL_ARB_TESTNET"; CHAIN_ID=421614 ;;
+            opsepolia) RPC_ENV="RPC_URL_OP_TESTNET"; CHAIN_ID=11155420 ;;
+            ethereum) RPC_ENV="RPC_URL_ETHEREUM"; CHAIN_ID=1 ;;
+            arbitrum) RPC_ENV="RPC_URL_ARB"; CHAIN_ID=42161 ;;
+            optimism) RPC_ENV="RPC_URL_OPT"; CHAIN_ID=10 ;;
+            polygon) RPC_ENV="RPC_URL_POLYGON"; CHAIN_ID=137 ;;
+            gnosis) RPC_ENV="RPC_URL_GNOSIS"; CHAIN_ID=100 ;;
+            base) RPC_ENV="RPC_URL_BASE"; CHAIN_ID=8453 ;;
+            celo) RPC_ENV="RPC_URL_CELO"; CHAIN_ID=42220 ;;
+            *) echo "unsupported CHAIN: ${CHAIN}" >&2; exit 1 ;;
+          esac
+
+          eval "RPC_URL=\${${RPC_ENV}:-}"
+          if [ -z "${RPC_URL}" ]; then
+            echo "missing ${RPC_ENV}" >&2
+            exit 1
+          fi
+
+          PORT="${ANVIL_PORT:-8545}"
+          LOCAL_RPC_URL="http://127.0.0.1:${PORT}"
+          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          REFRESH_FACETS="${REFRESH_FACETS:-true}"
+          RESUME_FLAG=""
+          if [ "${RESUME:-false}" = "true" ]; then
+            RESUME_FLAG="--resume"
+          fi
+
+          SIG="run(string)"
+          case "${PHASE:-all}" in
+            ""|all) ;;
+            factory)
+              case "${FACTORY_ACTION:-all}" in
+                ""|all) SIG="runFactory(string)" ;;
+                upgrade-impl|upgrade_impl) SIG="runFactoryUpgradeImpl(string)" ;;
+                set-community-facets|set_community_facets) SIG="runFactorySetCommunityFacets(string)" ;;
+                set-strategy-facets|set_strategy_facets) SIG="runFactorySetStrategyFacets(string)" ;;
+                set-pause-controller|set_pause_controller) SIG="runFactorySetPauseController(string)" ;;
+                set-registry-template|set_registry_template) SIG="runFactorySetRegistryTemplate(string)" ;;
+                set-strategy-template|set_strategy_template) SIG="runFactorySetStrategyTemplate(string)" ;;
+                *) echo "unsupported FACTORY_ACTION: ${FACTORY_ACTION}" >&2; exit 1 ;;
+              esac
+              ;;
+            communities) SIG="runCommunities(string)" ;;
+            strategies) SIG="runStrategies(string)" ;;
+            *) echo "unsupported PHASE: ${PHASE}" >&2; exit 1 ;;
+          esac
+
+          anvil \
+            --fork-url "${RPC_URL}" \
+            --chain-id "${CHAIN_ID}" \
+            --port "${PORT}" \
+            > "/tmp/gardens-rehearse-${CHAIN}-anvil.log" 2>&1 &
+          ANVIL_PID=$!
+
+          for attempt in $(seq 1 30); do
+            if cast block-number --rpc-url "${LOCAL_RPC_URL}" >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+            if [ "${attempt}" -eq 30 ]; then
+              echo "anvil fork did not start" >&2
+              kill "${ANVIL_PID}" >/dev/null 2>&1 || true
+              exit 1
+            fi
+          done
+
+          cast rpc --rpc-url "${LOCAL_RPC_URL}" anvil_setBalance "${DEPLOYER_ADDRESS}" 0x3635C9ADC5DEA00000 >/dev/null || {
+            kill "${ANVIL_PID}" >/dev/null 2>&1 || true
+            exit 1
+          }
+
+          if [ "${REFRESH_FACETS}" = "true" ]; then
+            ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+              --rpc-url "${LOCAL_RPC_URL}" \
+              --sig "run(string)" "${CHAIN}" \
+              --account PK_DEPLOYER \
+              --password "${PK_DEPLOYER_PW}" \
+              --chain-id "${CHAIN_ID}" \
+              --ffi \
+              --broadcast \
+              ${RESUME_FLAG} \
+              -vv || {
+              kill "${ANVIL_PID}" >/dev/null 2>&1 || true
+              exit 1
+            }
+          fi
+
+          REUSE_CONFIGURED_IMPLEMENTATIONS=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
+            --rpc-url "${LOCAL_RPC_URL}" \
+            --sig "${SIG}" "${CHAIN}" \
+            --account PK_DEPLOYER \
+            --password "${PK_DEPLOYER_PW}" \
+            --chain-id "${CHAIN_ID}" \
+            --ffi \
+            --broadcast \
+            ${RESUME_FLAG} \
+            -vvv || {
+            kill "${ANVIL_PID}" >/dev/null 2>&1 || true
+            exit 1
+          }
+
+          FORK_HEALTHCHECK_CHAIN="${CHAIN}" FORK_HEALTHCHECK_RPC_URL="${LOCAL_RPC_URL}" forge test --match-contract ForkLifecycleHealthcheck -vvv || {
+            kill "${ANVIL_PID}" >/dev/null 2>&1 || true
+            exit 1
+          }
+
+          kill "${ANVIL_PID}" >/dev/null 2>&1 || true
+  rehearse-upgrade-ethsep:
+    desc: Rehearse upgrade on ethsepolia
+    cmds:
+      - task: rehearse-upgrade-chain
+        vars:
+          CHAIN: ethsepolia
+  rehearse-upgrade-arbsep:
+    desc: Rehearse upgrade on arbitrum sepolia
+    cmds:
+      - task: rehearse-upgrade-chain
+        vars:
+          CHAIN: arbsepolia
+  rehearse-upgrade-opsep:
+    desc: Rehearse upgrade on optimism sepolia
+    cmds:
+      - task: rehearse-upgrade-chain
+        vars:
+          CHAIN: opsepolia
+  rehearse-upgrade-ethereum:
+    desc: Rehearse upgrade on ethereum
+    cmds:
+      - task: rehearse-upgrade-chain
+        vars:
+          CHAIN: ethereum
+  rehearse-upgrade-arbitrum:
+    desc: Rehearse upgrade on arbitrum
+    cmds:
+      - task: rehearse-upgrade-chain
+        vars:
+          CHAIN: arbitrum
+  rehearse-upgrade-optimism:
+    desc: Rehearse upgrade on optimism
+    cmds:
+      - task: rehearse-upgrade-chain
+        vars:
+          CHAIN: optimism
+  rehearse-upgrade-polygon:
+    desc: Rehearse upgrade on polygon
+    cmds:
+      - task: rehearse-upgrade-chain
+        vars:
+          CHAIN: polygon
+  rehearse-upgrade-gnosis:
+    desc: Rehearse upgrade on gnosis
+    cmds:
+      - task: rehearse-upgrade-chain
+        vars:
+          CHAIN: gnosis
+  rehearse-upgrade-base:
+    desc: Rehearse upgrade on base
+    cmds:
+      - task: rehearse-upgrade-chain
+        vars:
+          CHAIN: base
+  rehearse-upgrade-celo:
+    desc: Rehearse upgrade on celo
+    cmds:
+      - task: rehearse-upgrade-chain
+        vars:
+          CHAIN: celo
+  rehearse-upgrade-all-mainnets:
+    desc: Rehearse upgrade on all mainnets (no testnets)
+    cmds:
+      - task: rehearse-upgrade-ethereum
+      - task: rehearse-upgrade-arbitrum
+      - task: rehearse-upgrade-optimism
+      - task: rehearse-upgrade-polygon
+      - task: rehearse-upgrade-gnosis
+      - task: rehearse-upgrade-base
+      - task: rehearse-upgrade-celo
   cast1:
     desc: Cast1
     cmds:
@@ -248,6 +458,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: refresh-facets-ethsep
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -1416,6 +1627,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: refresh-facets-opsep
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -2160,6 +2372,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: refresh-facets-arbsep
       - cmd: |
           case "${PHASE:-all}" in
             ""|all)
@@ -2906,6 +3119,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: refresh-facets-arbitrum
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -3310,6 +3524,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: refresh-facets-optimism
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -3785,6 +4000,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: refresh-facets-polygon
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -4202,6 +4418,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: refresh-facets-gnosis
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -4611,6 +4828,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: refresh-facets-base
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -5576,6 +5794,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: refresh-facets-celo
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -5890,6 +6109,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: refresh-facets-mainnet
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -6993,6 +7213,126 @@ tasks:
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
           --keystore ~/.foundry/keystores/pkMetamask \
           --chains celo
+  submit-safe-payloads-grant-upgrade-access-all-chains:
+    desc: Submit ProxyOwner grantUpgradeAccess Safe payloads on arbitrum, optimism, polygon, gnosis, base, celo (set DRY_RUN=true to only log planned actions)
+    cmds:
+      - cmd: |
+          set -e
+          dry_run_flag="{{default "false" .DRY_RUN}}"
+          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
+          deployer_address="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          deployer_address_lc="$(echo "${deployer_address}" | tr '[:upper:]' '[:lower:]')"
+          deployer_address_no0x="${deployer_address_lc#0x}"
+          grant_selector="0x00c53432"
+          grant_data="${grant_selector}000000000000000000000000${deployer_address_no0x}"
+          ERC1967_IMPLEMENTATION_SLOT="0x360894A13BA1A3210667C828492DB98DCA3E2076CC3735A920A3CA505D382BBC"
+
+          for chain in arbitrum optimism polygon gnosis base celo; do
+            case "${chain}" in
+              arbitrum) RPC_ENV="RPC_URL_ARB" ;;
+              optimism) RPC_ENV="RPC_URL_OPT" ;;
+              polygon) RPC_ENV="RPC_URL_POLYGON" ;;
+              gnosis) RPC_ENV="RPC_URL_GNOSIS" ;;
+              base) RPC_ENV="RPC_URL_BASE" ;;
+              celo) RPC_ENV="RPC_URL_CELO" ;;
+              *) echo "unsupported chain: ${chain}" >&2; exit 1 ;;
+            esac
+
+            eval "RPC_URL=\${${RPC_ENV}:-}"
+            if [ -z "${RPC_URL}" ]; then
+              echo "missing ${RPC_ENV}" >&2
+              exit 1
+            fi
+
+            payload="transaction-builder/${chain}-proxy-owner-upgrade-and-grant-payload.json"
+            if [ ! -f "${payload}" ]; then
+              echo "missing payload: ${payload}" >&2
+              exit 1
+            fi
+
+            # Normalize grant target per run so payload stale addresses are never used.
+            chain_payload="$(mktemp)"
+            jq --arg newWallet "${deployer_address}" --arg grantData "${grant_data}" '
+              .transactions = [.transactions[] |
+                if ((.contractMethod.name // "") == "grantUpgradeAccess")
+                then ((.contractInputsValues.newUpgradeWallet = $newWallet) | (.data = $grantData))
+                else .
+                end
+              ]
+            ' "${payload}" > "${chain_payload}"
+
+            proxy_owner="$(jq -r '.transactions[0].to' "${chain_payload}")"
+            target_upgrade_wallet="$(jq -r '.transactions[] | select((.contractMethod.name // "") == "grantUpgradeAccess") | .contractInputsValues.newUpgradeWallet' "${chain_payload}" | head -n 1)"
+            if [ -z "${target_upgrade_wallet}" ] || [ "${target_upgrade_wallet}" = "null" ]; then
+              echo "${chain}: missing grantUpgradeAccess target in payload" >&2
+              rm -f "${chain_payload}"
+              exit 1
+            fi
+
+            current_owner="$(cast call "${proxy_owner}" "owner()(address)" --rpc-url "${RPC_URL}" | tr -d '\n')"
+            current_owner_lc="$(echo "${current_owner}" | tr '[:upper:]' '[:lower:]')"
+            target_upgrade_wallet_lc="$(echo "${target_upgrade_wallet}" | tr '[:upper:]' '[:lower:]')"
+            if [ "${current_owner_lc}" = "${target_upgrade_wallet_lc}" ]; then
+              echo "${chain}: skip submission, owner already ${target_upgrade_wallet}"
+              continue
+            fi
+
+            impl_slot_value="$(cast storage "${proxy_owner}" "${ERC1967_IMPLEMENTATION_SLOT}" --rpc-url "${RPC_URL}")"
+            implementation="0x${impl_slot_value: -40}"
+            implementation_lc="$(echo "${implementation}" | tr '[:upper:]' '[:lower:]')"
+            payload_upgrade_implementation="$(jq -r '.transactions[] | select((.contractMethod.name // "") == "upgradeTo") | .contractInputsValues.newImplementation' "${payload}" | head -n 1)"
+            payload_upgrade_implementation_lc="$(echo "${payload_upgrade_implementation}" | tr '[:upper:]' '[:lower:]')"
+
+            submit_payload="${chain_payload}"
+            origin_prefix="proxy-owner-upgrade-and-grant"
+            action_summary="upgradeTo(${payload_upgrade_implementation}) + grantUpgradeAccess(${target_upgrade_wallet})"
+            if [ -n "${payload_upgrade_implementation}" ] && [ "${payload_upgrade_implementation}" != "null" ] && [ "${implementation_lc}" = "${payload_upgrade_implementation_lc}" ]; then
+              tmp_payload="$(mktemp)"
+              jq '.transactions = [.transactions[] | select((.contractMethod.name // "") != "upgradeTo")]' "${submit_payload}" > "${tmp_payload}"
+              if [ "$(jq '.transactions | length' "${tmp_payload}")" -eq 0 ]; then
+                echo "${chain}: no grant transaction left in filtered payload" >&2
+                rm -f "${chain_payload}"
+                rm -f "${tmp_payload}"
+                exit 1
+              fi
+              submit_payload="${tmp_payload}"
+              origin_prefix="proxy-owner-grant-only"
+              action_summary="grantUpgradeAccess(${target_upgrade_wallet})"
+              echo "${chain}: current implementation already equals payload upgrade target (${payload_upgrade_implementation}), action is grantUpgradeAccess only"
+            else
+              echo "${chain}: implementation differs from payload upgrade target (live ${implementation}, payload ${payload_upgrade_implementation}), action is upgradeTo + grantUpgradeAccess"
+            fi
+
+            echo "${chain}: planned action -> ${action_summary}"
+            if [ "${dry_run_flag}" = "true" ]; then
+              echo "${chain}: DRY_RUN=true, would submit payload ${submit_payload} with origin ${origin_prefix}"
+              rm -f "${chain_payload}"
+              if [ -n "${tmp_payload:-}" ]; then
+                rm -f "${tmp_payload}"
+                unset tmp_payload
+              fi
+              continue
+            fi
+
+            python scripts/submit_safe_payloads.py \
+              --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
+              --keystore ~/.foundry/keystores/pkMetamask \
+              --service-chain "${chain}" \
+              --payload-file "${submit_payload}" \
+              --origin-prefix "${origin_prefix}"
+
+            if [ -n "${tmp_payload:-}" ]; then
+              rm -f "${tmp_payload}"
+              unset tmp_payload
+            fi
+            rm -f "${chain_payload}"
+          done
+  submit-safe-payloads-grant-upgrade-access-all-chains-dry:
+    desc: Dry-run ProxyOwner grantUpgradeAccess Safe payload submissions on arbitrum, optimism, polygon, gnosis, base, celo
+    cmds:
+      - task: submit-safe-payloads-grant-upgrade-access-all-chains
+        vars:
+          DRY_RUN: "true"
   clear-safe-queue:
     desc: Clear queued Safe transactions via Safe Transaction Service
     cmds:
@@ -7359,6 +7699,46 @@ tasks:
           NETWORK: "{{.NETWORK}}"
           PRESET_AMOUNT: "{{.PRESET_AMOUNT}}"
           DRY_RUN: '{{default "false" .DRY_RUN}}'
+  log-old-private-key-balances:
+    desc: "Log OLD_PRIVATE_KEY native balances on all supported transfer networks"
+    cmds:
+      - cmd: |
+          : "${OLD_PRIVATE_KEY:?missing OLD_PRIVATE_KEY}"
+          from="$(cast wallet address --private-key "${OLD_PRIVATE_KEY}")"
+          echo "Address from OLD_PRIVATE_KEY: ${from}"
+          for network in arbsepolia sepolia opsepolia arbitrum optimism mainnet base polygon gnosis celo; do
+            case "${network}" in
+              arbsepolia) rpc="${RPC_URL_ARB_TESTNET}"; symbol="ETH" ;;
+              sepolia) rpc="${RPC_URL_SEP_TESTNET}"; symbol="ETH" ;;
+              opsepolia) rpc="${RPC_URL_OP_TESTNET}"; symbol="ETH" ;;
+              arbitrum) rpc="${RPC_URL_ARB}"; symbol="ETH" ;;
+              optimism) rpc="${RPC_URL_OPT}"; symbol="ETH" ;;
+              mainnet) rpc="${RPC_URL_ETHEREUM}"; symbol="ETH" ;;
+              base) rpc="${RPC_URL_BASE}"; symbol="ETH" ;;
+              polygon) rpc="${RPC_URL_POLYGON}"; symbol="POL" ;;
+              gnosis) rpc="${RPC_URL_GNOSIS}"; symbol="xDAI" ;;
+              celo) rpc="${RPC_URL_CELO}"; symbol="CELO" ;;
+            esac
+
+            if [ -z "${rpc}" ]; then
+              echo "${network}: missing RPC env"
+              continue
+            fi
+
+            balance_wei="$(cast balance "${from}" --rpc-url "${rpc}")"
+            balance_native="$(cast from-wei "${balance_wei}" ether)"
+            echo "${network}: ${balance_native} ${symbol} (${balance_wei} wei)"
+          done
+  transfer-gas-with-balance-log:
+    desc: "Run transfer-gas then log OLD_PRIVATE_KEY balances on all chains"
+    cmds:
+      - task: transfer-gas
+        vars:
+          NETWORK: "{{.NETWORK}}"
+          AMOUNT: '{{default "" .AMOUNT}}'
+          PRESET_AMOUNT: '{{default "" .PRESET_AMOUNT}}'
+          DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: log-old-private-key-balances
   transfer-gas-all:
     desc: "Transfer gas on all supported networks. Per-network overrides are optional; omitted amounts use sweep mode. Vars: ARBSEPOLIA_AMOUNT SEPOLIA_AMOUNT OPSEPOLIA_AMOUNT ARBITRUM_AMOUNT OPTIMISM_AMOUNT MAINNET_AMOUNT BASE_AMOUNT POLYGON_AMOUNT GNOSIS_AMOUNT CELO_AMOUNT [DRY_RUN=true]"
     cmds:
@@ -7412,6 +7792,7 @@ tasks:
           NETWORK: "celo"
           AMOUNT: '{{default "" .CELO_AMOUNT}}'
           DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: log-old-private-key-balances
   transfer-gas-testnets:
     desc: "Transfer gas on testnets only. Per-network overrides are optional; omitted amounts use sweep mode. Vars: ARBSEPOLIA_AMOUNT SEPOLIA_AMOUNT OPSEPOLIA_AMOUNT [DRY_RUN=true]"
     cmds:
@@ -7430,6 +7811,7 @@ tasks:
           NETWORK: "opsepolia"
           AMOUNT: '{{default "" .OPSEPOLIA_AMOUNT}}'
           DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: log-old-private-key-balances
   transfer-gas-mainnets:
     desc: "Transfer gas on mainnets only. Per-network overrides are optional; omitted amounts use sweep mode. Vars: ARBITRUM_AMOUNT OPTIMISM_AMOUNT MAINNET_AMOUNT BASE_AMOUNT POLYGON_AMOUNT GNOSIS_AMOUNT CELO_AMOUNT [DRY_RUN=true]"
     cmds:
@@ -7468,3 +7850,4 @@ tasks:
           NETWORK: "celo"
           AMOUNT: '{{default "" .CELO_AMOUNT}}'
           DRY_RUN: '{{default "false" .DRY_RUN}}'
+      - task: log-old-private-key-balances

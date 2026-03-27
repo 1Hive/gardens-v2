@@ -190,6 +190,13 @@ export default function ClientPage({ params }: ClientPageProps) {
   const [escrowBalanceSnapshotAtMs, setEscrowBalanceSnapshotAtMs] = useState<
     bigint
   >(0n);
+  const [beneficiaryBalanceSnapshotBn, setBeneficiaryBalanceSnapshotBn] =
+    useState<bigint | null>(null);
+  const [beneficiaryBalanceSnapshotAtMs, setBeneficiaryBalanceSnapshotAtMs] =
+    useState<bigint>(0n);
+  const [claimableNowMs, setClaimableNowMs] = useState<bigint>(() =>
+    BigInt(Date.now()),
+  );
 
   const router = useRouter();
 
@@ -567,6 +574,32 @@ export default function ClientPage({ params }: ClientPageProps) {
   }, [escrowSuperTokenBalance?.value]);
 
   useEffect(() => {
+    if (beneficiarySuperTokenBalance?.value == null) return;
+    setBeneficiaryBalanceSnapshotBn(beneficiarySuperTokenBalance.value);
+    setBeneficiaryBalanceSnapshotAtMs(BigInt(Date.now()));
+  }, [beneficiarySuperTokenBalance?.value]);
+
+  const shouldTickClaimable =
+    isStreamingType &&
+    !isDisputedStreamingProposal &&
+    (currentFlowRateForDisplay ?? 0n) > 0n &&
+    beneficiaryBalanceSnapshotBn != null;
+  const shouldTickAccumulated =
+    isStreamingType &&
+    isDisputedStreamingProposal &&
+    proposalFlowRateBn > 0n &&
+    escrowBalanceSnapshotBn != null;
+
+  useEffect(() => {
+    if (!shouldTickClaimable && !shouldTickAccumulated) return;
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      setClaimableNowMs(BigInt(Date.now()));
+    }, 500);
+    return () => clearInterval(interval);
+  }, [shouldTickAccumulated, shouldTickClaimable]);
+
+  useEffect(() => {
     if (convictionRefreshing && currentConvictionPct != null) {
       setConvictionRefreshing(false);
     }
@@ -710,6 +743,23 @@ export default function ClientPage({ params }: ClientPageProps) {
     enabled: isStreamingType && !!proposalData?.strategy?.id && !!address,
     watch: true,
   } as any);
+
+  const { data: escrowDepositAmount } = useContractRead({
+    address: resolvedStreamingEscrow as Address,
+    chainId,
+    abi: [
+      {
+        type: "function",
+        stateMutability: "view",
+        name: "depositAmount",
+        inputs: [],
+        outputs: [{ name: "", type: "uint256" }],
+      },
+    ] as const,
+    functionName: "depositAmount",
+    enabled: isDisputedStreamingProposal && !!resolvedStreamingEscrow,
+  } as any);
+
   const lastRebalanceAt = Number(lastRebalanceAtValue ?? 0n);
   const hideSyncStreamButton =
     lastRebalanceAt > 0 &&
@@ -743,10 +793,19 @@ export default function ClientPage({ params }: ClientPageProps) {
       contractName: "SuperToken",
       fallbackErrorMessage:
         "Failed to unwrap super token for this proposal. Please try again.",
-      onSuccess: async () => {
+      onConfirmations: async () => {
         await refetchSuperToken();
       },
     });
+
+  const handleClaimClick = async () => {
+    // Refetch latest balance before claiming
+    const latestBalance = await refetchSuperToken();
+    const balanceToUnwrap = latestBalance.data?.value ?? beneficiarySuperTokenBalance?.value ?? 0n;
+    writeUnwrapSuperToken?.({
+      args: [balanceToUnwrap],
+    });
+  };
 
   const formatFlowPerMonth = (flowRate?: bigint | null) => {
     if (flowRate == null) return "--";
@@ -758,10 +817,52 @@ export default function ClientPage({ params }: ClientPageProps) {
     });
     return poolToken?.symbol ? `${value} ${poolToken.symbol}` : value;
   };
-  const availableToUnwrapDisplay =
-    beneficiarySuperTokenBalance != null ?
-      roundToSignificant(beneficiarySuperTokenBalance.formatted, 4)
+  const claimableElapsedMs =
+    shouldTickClaimable &&
+    beneficiaryBalanceSnapshotAtMs > 0n &&
+    claimableNowMs > beneficiaryBalanceSnapshotAtMs ?
+      claimableNowMs - beneficiaryBalanceSnapshotAtMs
+    : 0n;
+  const liveBeneficiarySuperTokenBalanceBn =
+    beneficiaryBalanceSnapshotBn != null ?
+      beneficiaryBalanceSnapshotBn +
+      ((currentFlowRateForDisplay ?? 0n) * claimableElapsedMs) / 1000n
+    : null;
+  const claimableDisplay =
+    liveBeneficiarySuperTokenBalanceBn != null ?
+      Number(
+        formatUnits(liveBeneficiarySuperTokenBalanceBn, streamTokenDecimals),
+      ).toFixed(6)
     : "--";
+
+  const nowMs = claimableNowMs;
+  const escrowBalanceElapsedMs =
+    escrowBalanceSnapshotBn != null &&
+    proposalFlowRateBn > 0n &&
+    nowMs > escrowBalanceSnapshotAtMs ?
+      nowMs - escrowBalanceSnapshotAtMs
+    : 0n;
+  const liveEscrowSuperTokenBalanceBn =
+    escrowBalanceSnapshotBn != null ?
+      escrowBalanceSnapshotBn +
+      (proposalFlowRateBn * escrowBalanceElapsedMs) / 1000n
+    : null;
+
+  const accumulatedAmountBn =
+    isDisputedStreamingProposal &&
+    liveEscrowSuperTokenBalanceBn != null &&
+    escrowDepositAmount != null ?
+      (liveEscrowSuperTokenBalanceBn as bigint) > (escrowDepositAmount as unknown as bigint) ?
+        (liveEscrowSuperTokenBalanceBn as bigint) - (escrowDepositAmount as unknown as bigint)
+      : 0n
+    : null;
+
+  const accumulatedAmountDisplay =
+    poolToken && accumulatedAmountBn != null ?
+      Number(
+        formatUnits(accumulatedAmountBn, poolToken.decimals),
+      ).toFixed(6)
+    : null;
   const showUnwrapSuperTokenButton =
     isStreamingType && isBeneficiaryConnected;
   const showClaimFundsInfo =
@@ -1070,7 +1171,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   <div className="flex items-center gap-2">
                     {beneficiarySuperTokenBalance != null ?
                       <DisplayNumber
-                        number={availableToUnwrapDisplay}
+                        number={claimableDisplay}
                         valueClassName="text-right font-semibold"
                       />
                     : <p className="text-right font-semibold">--</p>}
@@ -1086,6 +1187,24 @@ export default function ClientPage({ params }: ClientPageProps) {
                       )}
                   </div>
                 </div>
+                {isDisputedStreamingProposal && accumulatedAmountDisplay != null && (
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="subtitle2">Accumulated</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-right font-semibold">{accumulatedAmountDisplay}</p>
+                      {superTokenAddress &&
+                        poolToken?.symbol && (
+                          <EthAddress
+                            address={superTokenAddress}
+                            label={poolToken.symbol}
+                            actions="none"
+                            shortenAddress={false}
+                            icon={false}
+                          />
+                        )}
+                    </div>
+                  </div>
+                )}
               </div>
               {superfluidExplorerUrl != null &&
                 superfluidExplorerUrl !== "" && (
@@ -1123,7 +1242,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   isLoading={isRebalanceLoading}
                   onClick={() => writeRebalance?.()}
                 >
-                  Manual stream sync
+                  Sync Stream
                 </Button>
               )}
               {showUnwrapSuperTokenButton && (
@@ -1134,11 +1253,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   disabled={!isUnwrapConnected || isUnwrapWrongNetwork}
                   tooltip={unwrapSuperTokenTooltipMessage}
                   isLoading={isUnwrapSuperTokenLoading}
-                  onClick={() =>
-                    writeUnwrapSuperToken?.({
-                      args: [beneficiarySuperTokenBalance?.value ?? 0n],
-                    })
-                  }
+                  onClick={handleClaimClick}
                 >
                   Claim funds
                 </Button>
@@ -1650,7 +1765,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                       <div className="flex items-center gap-2">
                         {beneficiarySuperTokenBalance != null ?
                           <DisplayNumber
-                            number={availableToUnwrapDisplay}
+                            number={claimableDisplay}
                             valueClassName="text-right font-semibold"
                           />
                         : <p className="text-right font-semibold">--</p>}
@@ -1666,6 +1781,24 @@ export default function ClientPage({ params }: ClientPageProps) {
                           )}
                       </div>
                     </div>
+                    {isDisputedStreamingProposal && accumulatedAmountDisplay != null && (
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="subtitle2">Accumulated</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-right font-semibold">{accumulatedAmountDisplay}</p>
+                          {superTokenAddress &&
+                            poolToken?.symbol && (
+                              <EthAddress
+                                address={superTokenAddress}
+                                label={poolToken.symbol}
+                                actions="none"
+                                shortenAddress={false}
+                                icon={false}
+                              />
+                            )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   {superfluidExplorerUrl != null &&
                     superfluidExplorerUrl !== "" && (
@@ -1705,7 +1838,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                       isLoading={isRebalanceLoading}
                       onClick={() => writeRebalance?.()}
                     >
-                      Manual stream sync
+                      Sync Stream
                     </Button>
                   )}
                   {showUnwrapSuperTokenButton && (
@@ -1716,11 +1849,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                       disabled={!isUnwrapConnected || isUnwrapWrongNetwork}
                       tooltip={unwrapSuperTokenTooltipMessage}
                       isLoading={isUnwrapSuperTokenLoading}
-                      onClick={() =>
-                        writeUnwrapSuperToken?.({
-                          args: [beneficiarySuperTokenBalance?.value ?? 0n],
-                        })
-                      }
+                      onClick={handleClaimClick}
                     >
                       Claim funds
                     </Button>

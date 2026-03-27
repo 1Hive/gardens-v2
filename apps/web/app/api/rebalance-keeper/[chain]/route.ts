@@ -29,7 +29,13 @@ type StrategyCandidate = {
 type ChainRunResult = {
   chainId: number | string;
   discoveredStrategies: number;
-  sent: Array<{ strategy: Address; txHash: `0x${string}` }>;
+  sent: Array<{
+    strategy: Address;
+    txHash: `0x${string}`;
+    gasUsed: string;
+    effectiveGasPrice?: string;
+    gasCostWei?: string;
+  }>;
   skipped: Array<{ strategy: Address; reason: string }>;
   error?: string;
 };
@@ -39,6 +45,9 @@ const REBALANCE_KEEPER_ABI = parseAbi([
   "function proposalType() view returns (uint8)",
   "function lastRebalanceAt() view returns (uint256)",
   "function rebalanceCooldown() view returns (uint256)",
+  "function isAuthorizedRebalanceCaller(address) view returns (bool)",
+  "error UnauthorizedRebalanceCaller(address caller)",
+  "error RebalanceCooldownActive(uint256 secondsRemaining)",
 ]);
 
 const STRATEGY_PAGE_SIZE = 500;
@@ -202,7 +211,13 @@ async function runKeeperForChain({
 
     const block = await publicClient.getBlock({ blockTag: "latest" });
     const now = Number(block.timestamp);
-    const sent: Array<{ strategy: Address; txHash: `0x${string}` }> = [];
+    const sent: Array<{
+      strategy: Address;
+      txHash: `0x${string}`;
+      gasUsed: string;
+      effectiveGasPrice?: string;
+      gasCostWei?: string;
+    }> = [];
     const skipped: Array<{ strategy: Address; reason: string }> = [];
 
     for (const strategy of strategies) {
@@ -216,6 +231,20 @@ async function runKeeperForChain({
         );
         if (proposalType !== STREAMING_PROPOSAL_TYPE) {
           skipped.push({ strategy, reason: "not_streaming_pool" });
+          continue;
+        }
+
+        const isAuthorizedCaller = await publicClient.readContract({
+          address: strategy,
+          abi: REBALANCE_KEEPER_ABI,
+          functionName: "isAuthorizedRebalanceCaller",
+          args: [account.address],
+        });
+        if (!isAuthorizedCaller) {
+          skipped.push({
+            strategy,
+            reason: `unauthorized_rebalance_caller:${account.address}`,
+          });
           continue;
         }
 
@@ -252,8 +281,30 @@ async function runKeeperForChain({
         }
 
         const hash = await walletClient.writeContract(simulation.request);
-        await publicClient.waitForTransactionReceipt({ hash });
-        sent.push({ strategy, txHash: hash });
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        const gasUsed = receipt.gasUsed.toString();
+        const effectiveGasPrice = receipt.effectiveGasPrice?.toString();
+        const gasCostWei =
+          receipt.effectiveGasPrice != null ?
+            (receipt.gasUsed * receipt.effectiveGasPrice).toString()
+          : undefined;
+
+        console.info("rebalance-keeper: rebalance transaction confirmed", {
+          chainId: chainConfig.id,
+          strategy,
+          txHash: hash,
+          gasUsed,
+          effectiveGasPrice,
+          gasCostWei,
+        });
+
+        sent.push({
+          strategy,
+          txHash: hash,
+          gasUsed,
+          effectiveGasPrice,
+          gasCostWei,
+        });
       } catch (error) {
         const reason = error instanceof Error ? error.message : "unknown_error";
         const normalizedReason =
@@ -338,11 +389,28 @@ export async function GET(req: Request, { params }: Params) {
       discoveredStrategies:
         acc.discoveredStrategies + curr.discoveredStrategies,
       sentTxs: acc.sentTxs + curr.sent.length,
+      gasUsed: acc.gasUsed + curr.sent.reduce((sum, tx) => sum + BigInt(tx.gasUsed), 0n),
       skipped: acc.skipped + curr.skipped.length,
       failedChains: acc.failedChains + (curr.error ? 1 : 0),
     }),
-    { discoveredStrategies: 0, sentTxs: 0, skipped: 0, failedChains: 0 },
+    {
+      discoveredStrategies: 0,
+      sentTxs: 0,
+      gasUsed: 0n,
+      skipped: 0,
+      failedChains: 0,
+    },
   );
+
+  console.info("rebalance-keeper: completed run", {
+    mode: isAllChains ? "all_chains" : "single_chain",
+    dryRun,
+    discoveredStrategies: totals.discoveredStrategies,
+    sentTxs: totals.sentTxs,
+    gasUsed: totals.gasUsed.toString(),
+    skipped: totals.skipped,
+    failedChains: totals.failedChains,
+  });
 
   return NextResponse.json(
     {
@@ -352,7 +420,10 @@ export async function GET(req: Request, { params }: Params) {
         : "No rebalance tx sent after preflight checks.",
       mode: isAllChains ? "all_chains" : "single_chain",
       dryRun,
-      totals,
+      totals: {
+        ...totals,
+        gasUsed: totals.gasUsed.toString(),
+      },
       results,
     },
     { status: totals.failedChains > 0 ? 207 : 200 },

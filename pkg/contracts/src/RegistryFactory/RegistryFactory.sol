@@ -36,8 +36,9 @@ contract RegistryFactory is ProxyOwnableUpgrader {
 
     address public streamingEscrowFactory;
     address public globalPauseController;
+    mapping(address => bool) public rebalanceCallerAllowlist;
 
-    uint256[42] private __gap;
+    uint256[41] private __gap;
 
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
@@ -51,6 +52,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     event KeepersChanged(address[] _new, address[] _removed);
     event StreamingEscrowFactorySet(address _newFactory);
     event GlobalPauseControllerSet(address _newController);
+    event RebalanceCallerAllowlistSet(address indexed caller, bool allowed);
     event ContractRegistered(address indexed target);
     event ContractUnregistered(address indexed target);
 
@@ -91,6 +93,16 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         _revertZeroAddress(controller);
         globalPauseController = controller;
         emit GlobalPauseControllerSet(controller);
+    }
+
+    function setRebalanceCaller(address caller, bool allowed) external virtual onlyOwner {
+        _revertZeroAddress(caller);
+        rebalanceCallerAllowlist[caller] = allowed;
+        emit RebalanceCallerAllowlistSet(caller, allowed);
+    }
+
+    function isRebalanceCallerAllowed(address caller) external view virtual returns (bool) {
+        return rebalanceCallerAllowlist[caller];
     }
 
     function registerContract(address target) external virtual onlyOwner {
@@ -363,7 +375,8 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         // Only Safe-compatible council contracts expose getOwners().
         // Other contract wallets should not break fee calculation.
         if (address(councilSafe).code.length != 0) {
-            (bool ok, bytes memory data) = address(councilSafe).staticcall(abi.encodeWithSelector(ISafe.getOwners.selector));
+            (bool ok, bytes memory data) =
+                address(councilSafe).staticcall(abi.encodeWithSelector(ISafe.getOwners.selector));
             if (ok && data.length > 0) {
                 address[] memory communityOwners = abi.decode(data, (address[]));
                 for (uint256 i = 0; i < communityOwners.length; i++) {

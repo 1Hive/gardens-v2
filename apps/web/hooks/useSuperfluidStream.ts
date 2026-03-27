@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { gql } from "urql";
-import { readContracts, useAccount } from "wagmi";
+import { Address } from "viem";
+import { useAccount } from "wagmi";
+import { usePreferredReadClient } from "./usePreferredReadClient";
+import { useResolvedChainId } from "./useResolvedChainId";
 import { useSuperfluidSugraphClient as useSuperfluidSugraphClient } from "./useSuperfluidSubgraphClient";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { superfluidPoolAbi } from "@/src/customAbis";
@@ -77,6 +80,8 @@ export function useSuperfluidStream({
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const client = useSuperfluidSugraphClient({ chainId });
+  const resolvedChainId = useResolvedChainId(chainId);
+  const readClient = usePreferredReadClient(resolvedChainId);
   const { address: connectedWalletAddress } = useAccount();
 
   const [currentFlowRateBn, setCurrentFlowRateBn] = useState<bigint | null>(
@@ -152,7 +157,7 @@ export function useSuperfluidStream({
   };
 
   const fetch = async (): Promise<string | null> => {
-    if (!receiver || !superToken || !client) return null;
+    if (!receiver || !superToken || !client || !readClient) return null;
     const result = await client
       .query(STREAM_TO_TARGET_QUERY, {
         receiver: receiver.toLowerCase(),
@@ -198,15 +203,21 @@ export function useSuperfluidStream({
     if (result.data.poolMembers.length > 0) {
       let memberFlows: Array<{ result?: unknown; error?: unknown }> = [];
       try {
-        memberFlows = (await readContracts({
-          allowFailure: true,
+        const multicallResults = await readClient.multicall({
           contracts: result.data.poolMembers.map((member: any) => ({
-            address: member.pool.id,
+            address: member.pool.id as Address,
             abi: superfluidPoolAbi,
             functionName: "getMemberFlowRate",
-            args: [receiver],
+            args: [receiver as Address],
           })),
-        })) as Array<{ result?: unknown; error?: unknown }>;
+          allowFailure: true,
+        });
+
+        memberFlows = multicallResults.map((flow) =>
+          flow.status === "success" ?
+            { result: flow.result }
+          : { error: flow.error },
+        );
       } catch (error) {
         if (!hasLoggedMemberFlowReadErrorRef.current) {
           console.warn(

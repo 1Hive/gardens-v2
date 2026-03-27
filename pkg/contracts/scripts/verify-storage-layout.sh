@@ -333,9 +333,13 @@ verify_registry_factory_storage() {
         ok=false
         [ "$VERBOSE" = true ] && echo -e "${RED}  Missing globalPauseController storage field${NC}"
     fi
-    if ! grep -q "| __gap                     | uint256\\[42\\]                              | 118" "$layout_tmp"; then
+    if ! grep -q "| rebalanceCallerAllowlist  | mapping(address => bool)" "$layout_tmp"; then
         ok=false
-        [ "$VERBOSE" = true ] && echo -e "${RED}  Expected __gap (uint256[42]) at slot 118${NC}"
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Missing rebalanceCallerAllowlist storage field${NC}"
+    fi
+    if ! grep -q "| __gap                     | uint256\\[41\\]                              | 119" "$layout_tmp"; then
+        ok=false
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Expected __gap (uint256[41]) at slot 119${NC}"
     fi
 
     rm -f "$layout_tmp"
