@@ -6,6 +6,7 @@ import {IArbitrator} from "../../interfaces/IArbitrator.sol";
 import {Proposal, ProposalStatus, ArbitrableConfig} from "../ICVStrategy.sol";
 import {CVStreamingStorage, CVStreamingBase} from "../CVStreamingStorage.sol";
 import {ConvictionsUtils} from "../ConvictionsUtils.sol";
+import {IRegistryFactory} from "../../IRegistryFactory.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -175,7 +176,8 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         emit StreamMemberUnitUpdated(escrow, 0);
 
         // Best-effort to apply zero units immediately on escrow side.
-        try IStreamingEscrowSync(escrow).syncOutflow() {} catch (bytes memory reason) {
+        try IStreamingEscrowSync(escrow).syncOutflow() {}
+        catch (bytes memory reason) {
             emit EscrowSyncFailed(escrow, reason);
         }
         emit EscrowStreamStopped(escrow, msg.sender);
@@ -353,7 +355,32 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         ) {
             return true;
         }
+        if (_isFactoryRebalanceCaller(caller)) {
+            return true;
+        }
         return CVStreamingStorage.layout().authorizedRebalanceCallers[caller];
+    }
+
+    function _isFactoryRebalanceCaller(address caller) internal view returns (bool) {
+        (bool factoryLookupOk, bytes memory factoryData) =
+            address(registryCommunity).staticcall(abi.encodeWithSignature("registryFactory()"));
+        if (!factoryLookupOk || factoryData.length < 32) {
+            return false;
+        }
+
+        address registryFactoryAddress = abi.decode(factoryData, (address));
+        if (registryFactoryAddress == address(0)) {
+            return false;
+        }
+
+        (bool allowlistLookupOk, bytes memory allowlistData) = registryFactoryAddress.staticcall(
+            abi.encodeWithSelector(IRegistryFactory.isRebalanceCallerAllowed.selector, caller)
+        );
+        if (!allowlistLookupOk || allowlistData.length < 32) {
+            return false;
+        }
+
+        return abi.decode(allowlistData, (bool));
     }
 
     function _tryCouncilSafe() internal view returns (address councilSafeAddress) {

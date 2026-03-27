@@ -50,14 +50,17 @@ contract MockHost {
         return address(0);
     }
 
-    function callAgreement(address agreementClass, bytes calldata data, bytes calldata) external returns (bytes memory) {
+    function callAgreement(address agreementClass, bytes calldata data, bytes calldata)
+        external
+        returns (bytes memory)
+    {
         if (agreementClass == gda) {
             bytes4 selector;
             assembly {
                 selector := calldataload(data.offset)
             }
             if (selector == bytes4(keccak256("distributeFlow(address,address,address,int96,bytes)"))) {
-                (, , , int96 requestedFlowRate,) = abi.decode(data[4:], (address, address, address, int96, bytes));
+                (,,, int96 requestedFlowRate,) = abi.decode(data[4:], (address, address, address, int96, bytes));
                 MockGDAAgreement(gda).setFlowRate(requestedFlowRate);
             }
         }
@@ -212,6 +215,7 @@ contract MockRegistryCommunityStreaming {
 
     bool public strategyEnabled = true;
     address public councilSafeAddress;
+    address public registryFactoryAddress;
 
     function setStrategyEnabled(bool enabled) external {
         strategyEnabled = enabled;
@@ -219,6 +223,10 @@ contract MockRegistryCommunityStreaming {
 
     function setCouncilSafe(address safe_) external {
         councilSafeAddress = safe_;
+    }
+
+    function setRegistryFactory(address factory_) external {
+        registryFactoryAddress = factory_;
     }
 
     function onlyStrategyEnabled(address) external view {
@@ -233,6 +241,22 @@ contract MockRegistryCommunityStreaming {
 
     function councilSafe() external view returns (address) {
         return councilSafeAddress;
+    }
+
+    function registryFactory() external view returns (address) {
+        return registryFactoryAddress;
+    }
+}
+
+contract MockRegistryFactoryStreaming {
+    mapping(address => bool) public rebalanceCallerAllowlist;
+
+    function setRebalanceCaller(address caller, bool allowed) external {
+        rebalanceCallerAllowlist[caller] = allowed;
+    }
+
+    function isRebalanceCallerAllowed(address caller) external view returns (bool) {
+        return rebalanceCallerAllowlist[caller];
     }
 }
 
@@ -426,6 +450,7 @@ contract CVStreamingFacetTest is Test {
     MockSuperfluidPool internal gdaPool;
     MockAllo internal allo;
     MockRegistryCommunityStreaming internal registry;
+    MockRegistryFactoryStreaming internal registryFactory;
 
     address internal escrow1;
     address internal escrow2;
@@ -446,6 +471,7 @@ contract CVStreamingFacetTest is Test {
         gdaPool = new MockSuperfluidPool();
         allo = new MockAllo();
         registry = new MockRegistryCommunityStreaming();
+        registryFactory = new MockRegistryFactoryStreaming();
         escrow1 = address(new MockStreamingEscrowSync());
         escrow2 = address(new MockStreamingEscrowSync());
         escrow3 = address(new MockStreamingEscrowSync());
@@ -462,6 +488,7 @@ contract CVStreamingFacetTest is Test {
         facet.setDiamondOwner(address(this));
         facet.setProxyOwner(address(this));
         registry.setCouncilSafe(address(0xC011C1));
+        registry.setRegistryFactory(address(registryFactory));
 
         allo.setPool(1, address(token));
         token.mint(address(facet), 1_000 ether);
@@ -496,10 +523,18 @@ contract CVStreamingFacetTest is Test {
 
     function test_rebalance_reverts_for_unauthorized_caller() public {
         vm.prank(address(0xBAD));
-        vm.expectRevert(
-            abi.encodeWithSelector(CVStreamingFacet.UnauthorizedRebalanceCaller.selector, address(0xBAD))
-        );
+        vm.expectRevert(abi.encodeWithSelector(CVStreamingFacet.UnauthorizedRebalanceCaller.selector, address(0xBAD)));
         facet.rebalance();
+    }
+
+    function test_rebalance_allows_factory_allowlisted_caller() public {
+        address cronWallet = address(0xCA11);
+        registryFactory.setRebalanceCaller(cronWallet, true);
+
+        vm.prank(cronWallet);
+        facet.rebalance();
+
+        assertEq(facet.getLastRebalance(), 0);
     }
 
     function test_rebalance_starts_stream_when_enabled() public {
@@ -964,9 +999,7 @@ contract CVStreamingFacetTest is Test {
         assertGt(gdaPool.memberUnits(escrow1), 0);
 
         vm.prank(address(0xBAD));
-        vm.expectRevert(
-            abi.encodeWithSelector(CVStrategyBaseFacet.OnlyOwner.selector, address(0xBAD), address(this))
-        );
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyBaseFacet.OnlyOwner.selector, address(0xBAD), address(this)));
         facet.stopEscrowStream(escrow1);
 
         facet.stopEscrowStream(escrow1);
