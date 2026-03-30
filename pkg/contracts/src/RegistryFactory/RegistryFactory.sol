@@ -36,7 +36,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
 
     address public streamingEscrowFactory;
     address public globalPauseController;
-    mapping(address => bool) public rebalanceCallerAllowlist;
+    mapping(address => bool) public streamRebalanceCallerAllowlist;
 
     uint256[41] private __gap;
 
@@ -52,7 +52,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     event KeepersChanged(address[] _new, address[] _removed);
     event StreamingEscrowFactorySet(address _newFactory);
     event GlobalPauseControllerSet(address _newController);
-    event RebalanceCallerAllowlistSet(address indexed caller, bool allowed);
+    event StreamRebalanceCallerAllowlistSet(address indexed caller, bool allowed);
     event ContractRegistered(address indexed target);
     event ContractUnregistered(address indexed target);
 
@@ -95,14 +95,14 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         emit GlobalPauseControllerSet(controller);
     }
 
-    function setRebalanceCaller(address caller, bool allowed) external virtual onlyOwner {
+    function setStreamRebalanceCaller(address caller, bool allowed) external virtual onlyOwner {
         _revertZeroAddress(caller);
-        rebalanceCallerAllowlist[caller] = allowed;
-        emit RebalanceCallerAllowlistSet(caller, allowed);
+        streamRebalanceCallerAllowlist[caller] = allowed;
+        emit StreamRebalanceCallerAllowlistSet(caller, allowed);
     }
 
-    function isRebalanceCallerAllowed(address caller) external view virtual returns (bool) {
-        return rebalanceCallerAllowlist[caller];
+    function isStreamRebalanceCallerAllowed(address caller) external view virtual returns (bool) {
+        return streamRebalanceCallerAllowlist[caller];
     }
 
     function registerContract(address target) external virtual onlyOwner {

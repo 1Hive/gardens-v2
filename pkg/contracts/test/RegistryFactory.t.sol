@@ -363,6 +363,27 @@ contract RegistryFactoryTest is Test {
         factory.setGlobalPauseController(address(0xBEEF));
     }
 
+    function test_setStreamRebalanceCaller_onlyOwner() public {
+        address caller = address(0xCA11);
+
+        vm.prank(owner);
+        factory.setStreamRebalanceCaller(caller, true);
+        assertTrue(factory.isStreamRebalanceCallerAllowed(caller));
+
+        vm.prank(owner);
+        factory.setStreamRebalanceCaller(caller, false);
+        assertFalse(factory.isStreamRebalanceCallerAllowed(caller));
+
+        vm.expectRevert();
+        factory.setStreamRebalanceCaller(caller, true);
+    }
+
+    function test_setStreamRebalanceCaller_zeroAddressReverts() public {
+        vm.prank(owner);
+        vm.expectRevert(RegistryFactory.AddressCannotBeZero.selector);
+        factory.setStreamRebalanceCaller(address(0), true);
+    }
+
     function test_clear_and_upsert_facet_cuts_and_init_getters() public {
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         bytes4[] memory selectors = new bytes4[](1);

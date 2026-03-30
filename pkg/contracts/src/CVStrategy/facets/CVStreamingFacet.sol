@@ -7,6 +7,7 @@ import {Proposal, ProposalStatus, ArbitrableConfig} from "../ICVStrategy.sol";
 import {CVStreamingStorage, CVStreamingBase} from "../CVStreamingStorage.sol";
 import {ConvictionsUtils} from "../ConvictionsUtils.sol";
 import {IRegistryFactory} from "../../IRegistryFactory.sol";
+import {ISafe} from "../../interfaces/ISafe.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -349,6 +350,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         ) {
             return true;
         }
+        if (councilSafeAddress != address(0) && _isCouncilSafeOwner(councilSafeAddress, caller)) {
+            return true;
+        }
         if (_isFactoryRebalanceCaller(caller)) {
             return true;
         }
@@ -356,31 +360,29 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
     }
 
     function _isFactoryRebalanceCaller(address caller) internal view returns (bool) {
-        (bool factoryLookupOk, bytes memory factoryData) =
-            address(registryCommunity).staticcall(abi.encodeWithSignature("registryFactory()"));
-        if (!factoryLookupOk || factoryData.length < 32) {
-            return false;
-        }
-
-        address registryFactoryAddress = abi.decode(factoryData, (address));
+        address registryFactoryAddress = registryCommunity.registryFactory();
         if (registryFactoryAddress == address(0)) {
             return false;
         }
+        return IRegistryFactory(registryFactoryAddress).isStreamRebalanceCallerAllowed(caller);
+    }
 
-        (bool allowlistLookupOk, bytes memory allowlistData) = registryFactoryAddress.staticcall(
-            abi.encodeWithSelector(IRegistryFactory.isRebalanceCallerAllowed.selector, caller)
-        );
-        if (!allowlistLookupOk || allowlistData.length < 32) {
+    function _isCouncilSafeOwner(address councilSafeAddress, address caller) internal view returns (bool) {
+        if (councilSafeAddress.code.length == 0) {
             return false;
         }
-
-        return abi.decode(allowlistData, (bool));
+        try ISafe(councilSafeAddress).getOwners() returns (address[] memory owners) {
+            for (uint256 i = 0; i < owners.length; i++) {
+                if (owners[i] == caller) return true;
+            }
+        } catch {}
+        return false;
     }
 
     function _tryCouncilSafe() internal view returns (address councilSafeAddress) {
         (bool ok, bytes memory data) = address(registryCommunity).staticcall(abi.encodeWithSignature("councilSafe()"));
         if (!ok || data.length < 32) {
-            return address(0);
+            return councilSafeAddress;
         }
         councilSafeAddress = abi.decode(data, (address));
     }

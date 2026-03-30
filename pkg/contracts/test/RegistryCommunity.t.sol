@@ -33,6 +33,7 @@ import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCom
 import {LibDiamond} from "../src/diamonds/libraries/LibDiamond.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {MockPauseController} from "./helpers/PauseHelpers.sol";
+import {GlobalPauseController} from "../src/pausing/GlobalPauseController.sol";
 
 contract DummyCommunityFacet {
     function dummy() external {}
@@ -1076,7 +1077,15 @@ contract RegistryCommunityTest is Test {
         DummyCommunityFacet dummyFacet = new DummyCommunityFacet();
         AddStrategyFacet addStrategyFacet = new AddStrategyFacet();
         CommunityPauseFacet pauseFacet = new CommunityPauseFacet();
-        MockPauseController controller = new MockPauseController();
+        GlobalPauseController controllerImpl = new GlobalPauseController();
+        GlobalPauseController controller = GlobalPauseController(
+            address(
+                new ERC1967Proxy(
+                    address(controllerImpl), abi.encodeWithSelector(GlobalPauseController.initialize.selector, owner)
+                )
+            )
+        );
+        MockPauseController selectorController = new MockPauseController();
         MockAllo allo = new MockAllo();
         MockRegistry registry = new MockRegistry();
         allo.setRegistry(address(registry));
@@ -1093,7 +1102,8 @@ contract RegistryCommunityTest is Test {
         vm.prank(owner);
         CommunityPauseFacet(address(community)).setPauseController(address(controller));
 
-        controller.setGlobalPaused(true);
+        vm.prank(owner);
+        controller.pauseGlobal();
 
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.CommunityPaused.selector, address(controller)));
         community.addStrategy(address(0x1));
@@ -1104,14 +1114,28 @@ contract RegistryCommunityTest is Test {
         vm.prank(owner);
         CommunityPauseFacet(address(community)).pause(1);
 
-        controller.setGlobalPaused(false);
-        controller.setSelectorPaused(RegistryCommunity.addStrategy.selector, true);
+        vm.prank(owner);
+        CommunityPauseFacet(address(community)).unpause();
+
+        CommunityPauseFacet(address(community)).pauseController();
+        CommunityPauseFacet(address(community)).isPaused();
+        CommunityPauseFacet(address(community)).isPaused(RegistryCommunity.addStrategy.selector);
+        CommunityPauseFacet(address(community)).pausedUntil();
+        CommunityPauseFacet(address(community)).pausedSelectorUntil(RegistryCommunity.addStrategy.selector);
+
+        vm.prank(owner);
+        controller.unpauseGlobal();
+
+        vm.prank(owner);
+        CommunityPauseFacet(address(community)).setPauseController(address(selectorController));
+
+        selectorController.setSelectorPaused(RegistryCommunity.addStrategy.selector, true);
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 RegistryCommunity.CommunitySelectorPaused.selector,
                 RegistryCommunity.addStrategy.selector,
-                address(controller)
+                address(selectorController)
             )
         );
         community.addStrategy(address(0x2));

@@ -255,7 +255,7 @@ contract MockRegistryFactoryStreaming {
         rebalanceCallerAllowlist[caller] = allowed;
     }
 
-    function isRebalanceCallerAllowed(address caller) external view returns (bool) {
+    function isStreamRebalanceCallerAllowed(address caller) external view returns (bool) {
         return rebalanceCallerAllowlist[caller];
     }
 }
@@ -290,6 +290,18 @@ contract MockStreamingEscrowSync {
 
     function setRevertDepositLookup(bool value) external {
         revertDepositLookup = value;
+    }
+}
+
+contract MockSafe {
+    address[] private _owners;
+
+    function addOwner(address owner_) external {
+        _owners.push(owner_);
+    }
+
+    function getOwners() external view returns (address[] memory) {
+        return _owners;
     }
 }
 
@@ -1020,4 +1032,88 @@ contract CVStreamingFacetTest is Test {
     }
 
     // Note: Removed unrealistic uint128 max test - causes overflow in conviction calculation
+
+    /*//////////////////////////////////////////////////////////////
+                    AUTHORIZATION BRANCH TESTS
+    //////////////////////////////////////////////////////////////*/
+
+    function test_auth_none_returns_false() public view {
+        assertFalse(facet.isAuthorizedRebalanceCaller(address(0xDEAD)));
+    }
+
+    function test_auth_contract_owner() public view {
+        // address(this) is set as proxy owner in setUp
+        assertTrue(facet.isAuthorizedRebalanceCaller(address(this)));
+    }
+
+    function test_auth_internal_address_this() public view {
+        // The strategy contract itself is always authorized
+        assertTrue(facet.isAuthorizedRebalanceCaller(address(facet)));
+    }
+
+    function test_auth_council_safe_address() public view {
+        assertTrue(facet.isAuthorizedRebalanceCaller(registry.councilSafeAddress()));
+    }
+
+    function test_auth_council_safe_owner() public {
+        MockSafe safe = new MockSafe();
+        address safeOwner = address(0xF00D);
+        safe.addOwner(safeOwner);
+        registry.setCouncilSafe(address(safe));
+
+        assertTrue(facet.isAuthorizedRebalanceCaller(safeOwner));
+    }
+
+    function test_auth_council_safe_non_owner_returns_false() public {
+        MockSafe safe = new MockSafe();
+        safe.addOwner(address(0xF00D));
+        registry.setCouncilSafe(address(safe));
+
+        assertFalse(facet.isAuthorizedRebalanceCaller(address(0xBAD)));
+    }
+
+    function test_auth_factory_allowlist() public {
+        address keeper = address(0xCA11);
+        registryFactory.setRebalanceCaller(keeper, true);
+
+        assertTrue(facet.isAuthorizedRebalanceCaller(keeper));
+    }
+
+    function test_auth_factory_allowlist_removed() public {
+        address keeper = address(0xCA11);
+        registryFactory.setRebalanceCaller(keeper, true);
+        assertTrue(facet.isAuthorizedRebalanceCaller(keeper));
+
+        registryFactory.setRebalanceCaller(keeper, false);
+        assertFalse(facet.isAuthorizedRebalanceCaller(keeper));
+    }
+
+    function test_auth_strategy_allowlist() public {
+        address keeper = address(0xBEEF);
+        vm.prank(registry.councilSafeAddress());
+        facet.setAuthorizedRebalanceCaller(keeper, true);
+
+        assertTrue(facet.isAuthorizedRebalanceCaller(keeper));
+    }
+
+    function test_auth_strategy_allowlist_revoked() public {
+        address keeper = address(0xBEEF);
+        vm.prank(registry.councilSafeAddress());
+        facet.setAuthorizedRebalanceCaller(keeper, true);
+        assertTrue(facet.isAuthorizedRebalanceCaller(keeper));
+
+        vm.prank(registry.councilSafeAddress());
+        facet.setAuthorizedRebalanceCaller(keeper, false);
+        assertFalse(facet.isAuthorizedRebalanceCaller(keeper));
+    }
+
+    function test_auth_zero_registry_returns_false() public {
+        facet.setupRegistryCommunity(address(0));
+        assertFalse(facet.isAuthorizedRebalanceCaller(address(this)));
+    }
+
+    function test_auth_council_safe_non_contract_owner_path_returns_false() public view {
+        // councilSafe is 0xC011C1 (no code) — _isCouncilSafeOwner must return false gracefully
+        assertFalse(facet.isAuthorizedRebalanceCaller(address(0xABCD)));
+    }
 }
