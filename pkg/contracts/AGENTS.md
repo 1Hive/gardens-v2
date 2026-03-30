@@ -50,6 +50,7 @@ task -l
 
 - Never reorder storage variables or change existing storage types in upgradeable contracts.
 - New storage belongs at the end of the layout, following the package's established upgrade pattern.
+- For on-chain reads, first resolve the target network entry in `config/networks.json`, then select the contract address from the matching section (`ENVS`, `PROXIES`, or `IMPLEMENTATIONS`) before running `cast call`.
 - If you change public/external contract interfaces, check whether ABIs must be synced to `apps/web` or `pkg/subgraph`.
 - Prefer targeted Foundry tests for touched contracts before broader test runs.
 - Do not edit generated deployment artifacts under the repo root `broadcast/` unless explicitly asked.

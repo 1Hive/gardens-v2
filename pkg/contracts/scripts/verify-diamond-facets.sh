@@ -30,6 +30,10 @@ ALL_PROD=false
 PROXIES=()
 OUT_DIR=""
 VERIFIER_URL=""
+VERIFY_RPC_MAX_ATTEMPTS=${VERIFY_RPC_MAX_ATTEMPTS:-4}
+VERIFY_RPC_INITIAL_DELAY=${VERIFY_RPC_INITIAL_DELAY:-8}
+VERIFY_RPC_SUCCESS_DELAY=${VERIFY_RPC_SUCCESS_DELAY:-2}
+STRICT_FACET_MATCH=${STRICT_FACET_MATCH:-true}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -122,19 +126,23 @@ fi
 
 declare -A HASH_TO_CONTRACT
 
+is_retryable_rpc_error() {
+  grep -Eqi 'rate limit|max calls per sec|expected value|SourcifyResponse|429|timeout|failed to get storage|HTTP error 429|Max retries exceeded' <<< "$1"
+}
+
 verify_with_retry() {
   local description="$1"
   shift
 
   local attempt=1
-  local max_attempts=4
-  local delay=8
+  local max_attempts="$VERIFY_RPC_MAX_ATTEMPTS"
+  local delay="$VERIFY_RPC_INITIAL_DELAY"
   local output
 
   while true; do
     if output="$("$@" 2>&1)"; then
       printf '%s\n' "$output"
-      sleep 2
+      sleep "$VERIFY_RPC_SUCCESS_DELAY"
       return 0
     fi
 
@@ -143,7 +151,7 @@ verify_with_retry() {
       return 1
     fi
 
-    if grep -Eqi 'rate limit|max calls per sec|expected value|SourcifyResponse|429|timeout' <<< "$output"; then
+    if is_retryable_rpc_error "$output"; then
       echo "    - Retrying $description after ${delay}s (attempt $((attempt + 1))/${max_attempts})..." >&2
       sleep "$delay"
       attempt=$((attempt + 1))
@@ -187,7 +195,7 @@ build_contract_map() {
 get_facet_addresses() {
   local proxy="$1"
   local raw
-  if ! raw=$(cast call --rpc-url "$RPC_URL" "$proxy" "facetAddresses()(address[])" 2>&1); then
+  if ! raw=$(verify_with_retry "facetAddresses for $proxy" cast call --rpc-url "$RPC_URL" "$proxy" "facetAddresses()(address[])" 2>&1); then
     echo "    - WARNING: failed to inspect $proxy via facetAddresses(); skipping live facet discovery" >&2
     echo "      $raw" >&2
     return 1
@@ -292,7 +300,7 @@ verify_network() {
       fi
 
       echo "    - Fetching codehash for $facet"
-      codehash=$(cast codehash --rpc-url "$rpc_url" "$facet")
+      codehash=$(verify_with_retry "codehash for $facet on $display_name" cast codehash --rpc-url "$rpc_url" "$facet")
       contract=${HASH_TO_CONTRACT[$codehash]:-}
       if [[ -z "$contract" ]]; then
         unknown_codehash_count=$((unknown_codehash_count + 1))
@@ -319,7 +327,7 @@ verify_network() {
       fi
 
       echo "    - Fetching codehash for declared facet $facet"
-      codehash=$(cast codehash --rpc-url "$rpc_url" "$facet")
+      codehash=$(verify_with_retry "declared facet codehash for $facet on $display_name" cast codehash --rpc-url "$rpc_url" "$facet")
       contract=${HASH_TO_CONTRACT[$codehash]:-}
       if [[ -z "$contract" ]]; then
         unknown_codehash_count=$((unknown_codehash_count + 1))
@@ -345,8 +353,11 @@ verify_network() {
     echo "  - WARNING: Skipped live facet discovery for ${skipped_proxy_count} proxy(s) that do not expose loupe selectors." >&2
   fi
   if [[ "$unknown_facet_count" -gt 0 ]]; then
-    echo "  - ERROR: Found ${unknown_facet_count} facet address(es) missing from config/networks.json FACETS." >&2
-    return 1
+    if [[ "$STRICT_FACET_MATCH" == "true" ]]; then
+      echo "  - ERROR: Found ${unknown_facet_count} facet address(es) missing from config/networks.json FACETS." >&2
+      return 1
+    fi
+    echo "  - WARNING: Found ${unknown_facet_count} live facet address(es) missing from config/networks.json FACETS; continuing because STRICT_FACET_MATCH=false." >&2
   fi
   if [[ "$unknown_codehash_count" -gt 0 ]]; then
     echo "  - INFO: Skipped source mapping for ${unknown_codehash_count} facet address(es) with unknown codehashes."

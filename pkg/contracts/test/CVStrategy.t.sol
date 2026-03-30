@@ -24,6 +24,7 @@ import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol"
 import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {MockPauseController} from "./helpers/PauseHelpers.sol";
+import {GlobalPauseController} from "../src/pausing/GlobalPauseController.sol";
 import {ISuperfluidToken} from
     "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 import {ISuperfluidPool} from
@@ -841,7 +842,15 @@ contract CVStrategyTest is Test {
         address ownerAddr = makeAddr("strategyOwner");
         CVStrategyStubFacet facet = new CVStrategyStubFacet();
         CVPauseFacet pauseFacet = new CVPauseFacet();
-        MockPauseController controller = new MockPauseController();
+        GlobalPauseController controllerImpl = new GlobalPauseController();
+        GlobalPauseController controller = GlobalPauseController(
+            address(
+                new ERC1967Proxy(
+                    address(controllerImpl), abi.encodeWithSelector(GlobalPauseController.initialize.selector, ownerAddr)
+                )
+            )
+        );
+        MockPauseController selectorController = new MockPauseController();
 
         CVStrategyHarness local = CVStrategyHarness(
             payable(address(
@@ -867,7 +876,8 @@ contract CVStrategyTest is Test {
         vm.prank(ownerAddr);
         CVPauseFacet(address(local)).setPauseController(address(controller));
 
-        controller.setGlobalPaused(true);
+        vm.prank(ownerAddr);
+        controller.pauseGlobal();
 
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.StrategyPaused.selector, address(controller)));
         local.activatePoints();
@@ -878,12 +888,28 @@ contract CVStrategyTest is Test {
         vm.prank(ownerAddr);
         CVPauseFacet(address(local)).pause(1);
 
-        controller.setGlobalPaused(false);
-        controller.setSelectorPaused(CVStrategy.activatePoints.selector, true);
+        vm.prank(ownerAddr);
+        CVPauseFacet(address(local)).unpause();
+
+        CVPauseFacet(address(local)).pauseController();
+        CVPauseFacet(address(local)).isPaused();
+        CVPauseFacet(address(local)).isPaused(CVStrategy.activatePoints.selector);
+        CVPauseFacet(address(local)).pausedUntil();
+        CVPauseFacet(address(local)).pausedSelectorUntil(CVStrategy.activatePoints.selector);
+
+        vm.prank(ownerAddr);
+        controller.unpauseGlobal();
+
+        vm.prank(ownerAddr);
+        CVPauseFacet(address(local)).setPauseController(address(selectorController));
+
+        selectorController.setSelectorPaused(CVStrategy.activatePoints.selector, true);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                CVStrategy.StrategySelectorPaused.selector, CVStrategy.activatePoints.selector, address(controller)
+                CVStrategy.StrategySelectorPaused.selector,
+                CVStrategy.activatePoints.selector,
+                address(selectorController)
             )
         );
         local.activatePoints();

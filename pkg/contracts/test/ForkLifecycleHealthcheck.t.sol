@@ -34,6 +34,7 @@ import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {MockPauseController} from "./helpers/PauseHelpers.sol";
 import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
+import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
 
 contract MockVotingPowerRegistryFork is IVotingPowerRegistry {
     mapping(address => uint256) internal powerByMember;
@@ -821,6 +822,32 @@ contract ForkLifecycleHealthcheck is Test {
         }
     }
 
+    function testFork_registryFactory_healthcheck_allChains() public {
+        string[] memory chains = _supportedChains();
+
+        for (uint256 i = 0; i < chains.length; i++) {
+            string memory chain = chains[i];
+            string memory json = _selectFork(chain);
+            RegistryFactory factory = RegistryFactory(payable(json.readAddress(_networkKey(chain, ".PROXIES.REGISTRY_FACTORY"))));
+
+            assertTrue(factory.owner() != address(0), chain);
+            assertTrue(factory.gardensFeeReceiver() != address(0), chain);
+            assertTrue(factory.registryCommunityTemplate() != address(0), chain);
+            assertTrue(factory.strategyTemplate() != address(0), chain);
+
+            (IDiamondCut.FacetCut[] memory communityCuts,,) = factory.getCommunityFacets();
+            (IDiamondCut.FacetCut[] memory strategyCuts,,) = factory.getStrategyFacets();
+            assertGt(communityCuts.length, 0, chain);
+            assertGt(strategyCuts.length, 0, chain);
+
+            (bool success, bytes memory data) = address(factory).staticcall(
+                abi.encodeWithSelector(RegistryFactory.isStreamRebalanceCallerAllowed.selector, address(0))
+            );
+            assertTrue(success, string.concat(chain, ": factory missing stream rebalance selector"));
+            assertFalse(abi.decode(data, (bool)), chain);
+        }
+    }
+
     function _createCommunity(string memory chain, bool kickEnabled) internal returns (ForkContext memory ctx) {
         string memory json = _selectFork(chain);
 
@@ -1383,7 +1410,7 @@ contract ForkLifecycleHealthcheck is Test {
     function _rpcUrl(string memory chain) internal view returns (string memory) {
         string memory primary = _rpcEnv(chain);
         string memory premium = _premiumRpcEnv(chain);
-        return vm.envOr(primary, vm.envOr(premium, string("")));
+        return vm.envOr(premium, vm.envOr(primary, string("")));
     }
 
     function _premiumRpcEnv(string memory chain) internal pure returns (string memory) {

@@ -20,6 +20,7 @@ import {
   Initialized,
   KeepersChanged,
   ProtopiansChanged,
+  StreamRebalanceCallerAllowlistSet,
   StreamingEscrowFactorySet
 } from "../../generated/RegistryFactory/RegistryFactory";
 // import {RegistryCommunity}from "../../generated/RegistryCommunity/RegistryCommunity";
@@ -38,7 +39,25 @@ export function handleRegistryInitialized(event: Initialized): void {
   }
   const chainId = dataSource.context().getI32(CTX_CHAIN_ID);
   factory.chainId = BigInt.fromI32(chainId);
+  factory.rebalanceCallerAllowlist = [];
   factory.save();
+}
+
+function getOrCreateFactory(eventAddress: Address): RegistryFactory {
+  const addrId = eventAddress.toHexString();
+  let factory = RegistryFactory.load(addrId);
+
+  if (factory == null) {
+    factory = new RegistryFactory(addrId);
+    const chainId = dataSource.context().getI32(CTX_CHAIN_ID);
+    factory.chainId = BigInt.fromI32(chainId);
+    factory.rebalanceCallerAllowlist = [];
+  } else if (factory.rebalanceCallerAllowlist == null) {
+    // Backward compatibility for entities indexed before this field existed.
+    factory.rebalanceCallerAllowlist = [];
+  }
+
+  return factory as RegistryFactory;
 }
 
 export function handleCommunityCreated(event: CommunityCreated): void {
@@ -164,4 +183,38 @@ export function handleStreamingEscrowFactorySet(
   streamInfo.proposalStreamIds = [];
   streamInfo.updatedAt = event.block.timestamp;
   streamInfo.save();
+}
+
+export function handleStreamRebalanceCallerAllowlistSet(
+  event: StreamRebalanceCallerAllowlistSet
+): void {
+  const factory = getOrCreateFactory(event.address);
+
+  let allowlist = factory.rebalanceCallerAllowlist;
+  const caller = event.params.caller.toHexString();
+
+  let index = -1;
+  for (let i = 0; i < allowlist.length; i++) {
+    if (allowlist[i] == caller) {
+      index = i;
+      break;
+    }
+  }
+
+  if (event.params.allowed) {
+    if (index == -1) {
+      allowlist.push(caller);
+    }
+  } else if (index >= 0) {
+    const nextAllowlist = new Array<string>();
+    for (let i = 0; i < allowlist.length; i++) {
+      if (allowlist[i] != caller) {
+        nextAllowlist.push(allowlist[i]);
+      }
+    }
+    allowlist = nextAllowlist;
+  }
+
+  factory.rebalanceCallerAllowlist = allowlist;
+  factory.save();
 }

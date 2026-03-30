@@ -56,16 +56,16 @@ rpc_env_name() {
 
 verifier_url() {
   case "$1" in
-    ethsepolia) echo "https://eth-sepolia.blockscout.com/api/" ;;
-    arbsepolia) echo "https://arbitrum-sepolia.blockscout.com/api/" ;;
+    ethsepolia) echo "https://api.etherscan.io/v2/api?chainid=11155111" ;;
+    arbsepolia) echo "https://api.etherscan.io/v2/api?chainid=421611" ;;
     opsepolia) echo "https://api.etherscan.io/v2/api?chainid=11155420" ;;
     ethereum|mainnet) echo "https://api.etherscan.io/v2/api?chainid=1" ;;
-    arbitrum) echo "https://arbitrum.blockscout.com/api/" ;;
-    optimism) echo "https://optimism.blockscout.com/api/" ;;
-    polygon) echo "https://polygon.blockscout.com/api/" ;;
-    gnosis) echo "https://gnosis.blockscout.com/api/" ;;
-    base) echo "https://base.blockscout.com/api/" ;;
-    celo) echo "https://celo.blockscout.com/api/" ;;
+    arbitrum) echo "https://api.etherscan.io/v2/api?chainid=42161" ;;
+    optimism) echo "https://api.etherscan.io/v2/api?chainid=10" ;;
+    polygon) echo "https://api.etherscan.io/v2/api?chainid=137" ;;
+    gnosis) echo "https://api.etherscan.io/v2/api?chainid=100" ;;
+    base) echo "https://api.etherscan.io/v2/api?chainid=8453" ;;
+    celo) echo "https://api.etherscan.io/v2/api?chainid=42220" ;;
     *) return 1 ;;
   esac
 }

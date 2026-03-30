@@ -33,6 +33,8 @@
           handler: handleProtopiansChanged  
         - event: KeepersChanged(address[],address[])
           handler: handleKeepersChanged
+        - event: StreamRebalanceCallerAllowlistSet(indexed address,bool)
+          handler: handleStreamRebalanceCallerAllowlistSet
         - event: StreamingEscrowFactorySet(address)
           handler: handleStreamingEscrowFactorySet
         - event: Initialized(uint8)

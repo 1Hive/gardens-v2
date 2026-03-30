@@ -119,6 +119,7 @@ type CVProposal @entity(immutable: false) {
 type RegistryFactory @entity(immutable: false) {
   id: ID!
   chainId: BigInt!
+  rebalanceCallerAllowlist: [String!]!
   registryCommunities: [RegistryCommunity!]
     @derivedFrom(field: "registryFactory")
 }

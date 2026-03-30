@@ -1,1 +1,34 @@
-{"wallet":"0xBe7Bd60a6619cB436e1A3B8D6d5D6F4B37eABD4e","implementation":"0x6da32bb79a32797a33cf00cfacd0870162140d0a","networks":[{"name":"arbitrum","file":"/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/arbitrum-proxy-owner-upgrade-and-grant-payload.json"},{"name":"optimism","file":"/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/optimism-proxy-owner-upgrade-and-grant-payload.json"},{"name":"polygon","file":"/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/polygon-proxy-owner-upgrade-and-grant-payload.json"},{"name":"gnosis","file":"/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/gnosis-proxy-owner-upgrade-and-grant-payload.json"},{"name":"base","file":"/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/base-proxy-owner-upgrade-and-grant-payload.json"},{"name":"celo","file":"/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/celo-proxy-owner-upgrade-and-grant-payload.json"}]}
+{
+  "wallet": "0xBe7Bd60a6619cB436e1A3B8D6d5D6F4B37eABD4e",
+  "implementation": "0x6da32bb79a32797a33cf00cfacd0870162140d0a",
+  "networks": [
+    {
+      "name": "mainnet",
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/mainnet-proxy-owner-upgrade-and-grant-payload.json"
+    },
+    {
+      "name": "arbitrum",
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/arbitrum-proxy-owner-upgrade-and-grant-payload.json"
+    },
+    {
+      "name": "optimism",
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/optimism-proxy-owner-upgrade-and-grant-payload.json"
+    },
+    {
+      "name": "polygon",
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/polygon-proxy-owner-upgrade-and-grant-payload.json"
+    },
+    {
+      "name": "gnosis",
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/gnosis-proxy-owner-upgrade-and-grant-payload.json"
+    },
+    {
+      "name": "base",
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/base-proxy-owner-upgrade-and-grant-payload.json"
+    },
+    {
+      "name": "celo",
+      "file": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/celo-proxy-owner-upgrade-and-grant-payload.json"
+    }
+  ]
+}

@@ -97,6 +97,10 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
     }
 
     function _networksJsonPath() internal view virtual returns (string memory) {
+        string memory overridePath = vm.envOr("NETWORKS_JSON_PATH", string(""));
+        if (bytes(overridePath).length != 0) {
+            return overridePath;
+        }
         string memory root = vm.projectRoot();
         return string.concat(root, "/pkg/contracts/config/networks.json");
     }
@@ -543,7 +547,8 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
     function _applyNetworkWrite(string memory key, string memory value) internal {
         string memory path = _networksJsonPath();
         string memory sanitizedKey = _sanitizeJsonPathKey(key);
-        string memory tmpPath = string.concat(path, ".", sanitizedKey, ".tmp");
+        // Include network in tmp filename to avoid collisions across parallel chain tasks.
+        string memory tmpPath = string.concat(path, ".", CURRENT_NETWORK, ".", sanitizedKey, ".tmp");
         string memory command = string.concat(
             "jq '(.networks[] | select(.name==\"",
             CURRENT_NETWORK,

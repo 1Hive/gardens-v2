@@ -78,6 +78,20 @@ type KnownFacetDefinition = {
   label: string;
   selectors: string[];
 };
+type LoupeContractOption = {
+  key:
+    | "registryFactory"
+    | "safeArbitrator"
+    | "passportScorer"
+    | "goodDollarSybil"
+    | "proxyOwner"
+    | "streamingEscrowFactory"
+    | "pauseController";
+  label: string;
+  abiLabel: string;
+  address: string | null;
+  source: "subgraph" | "networks.json" | "chains.tsx" | null;
+};
 const EMPTY_FACETS: DiamondFacet[] = [];
 const KNOWN_ABI_CATALOG = [
   { label: "Allo", abi: alloABI },
@@ -610,6 +624,18 @@ export default function DiamondAdminPage() {
   const [selectedChainId, setSelectedChainId] = useState<number>(
     42161,
   );
+  const [contractOptions, setContractOptions] = useState<LoupeContractOption[]>(
+    [],
+  );
+  const [selectedContractKey, setSelectedContractKey] = useState("");
+  const [isAddressAutocompleteOpen, setIsAddressAutocompleteOpen] =
+    useState(false);
+  const [highlightedAutocompleteIndex, setHighlightedAutocompleteIndex] =
+    useState(0);
+  const [isLoadingContractOptions, setIsLoadingContractOptions] = useState(false);
+  const [contractOptionsError, setContractOptionsError] = useState<string | null>(
+    null,
+  );
   const [signatureMap, setSignatureMap] = useState<SignatureMap>({});
   const [isResolvingSignatures, setIsResolvingSignatures] = useState(false);
   const [signatureResolveError, setSignatureResolveError] = useState<
@@ -651,7 +677,6 @@ export default function DiamondAdminPage() {
     data: rawFacets,
     isFetching,
     isError,
-    error,
     refetch,
   } = useContractRead({
     address: diamondAddress,
@@ -690,6 +715,67 @@ export default function DiamondAdminPage() {
   );
 
   const selectedChain = CHAINS.find((entry) => entry.id === selectedChainId);
+  const normalizedAddressInput = useMemo(
+    () => addressInput.trim().toLowerCase(),
+    [addressInput],
+  );
+  const selectedContractOption = useMemo(
+    () => contractOptions.find((contract) => contract.key === selectedContractKey),
+    [contractOptions, selectedContractKey],
+  );
+  const matchedContractOption = useMemo(() => {
+    if (selectedContractOption != null) {
+      return selectedContractOption;
+    }
+
+    return (
+      contractOptions.find(
+        (contract) =>
+          contract.address?.toLowerCase() === normalizedAddressInput,
+      ) ?? null
+    );
+  }, [contractOptions, normalizedAddressInput, selectedContractOption]);
+  const autocompleteContractOptions = useMemo(() => {
+    const availableContracts = contractOptions.filter(
+      (contract) => contract.address != null,
+    );
+    const query = normalizedAddressInput;
+
+    const filteredContracts =
+      query.length === 0 ?
+        availableContracts
+      : availableContracts.filter((contract) => {
+          const address = contract.address?.toLowerCase() ?? "";
+          return (
+            contract.label.toLowerCase().includes(query) ||
+            contract.abiLabel.toLowerCase().includes(query) ||
+            address.includes(query)
+          );
+        });
+
+    return filteredContracts
+      .sort((left, right) => {
+        const leftAddress = left.address?.toLowerCase() ?? "";
+        const rightAddress = right.address?.toLowerCase() ?? "";
+        const leftStarts =
+          left.label.toLowerCase().startsWith(query) ||
+          leftAddress.startsWith(query);
+        const rightStarts =
+          right.label.toLowerCase().startsWith(query) ||
+          rightAddress.startsWith(query);
+
+        if (leftStarts !== rightStarts) {
+          return leftStarts ? -1 : 1;
+        }
+
+        return left.label.localeCompare(right.label);
+      })
+      .slice(0, 7);
+  }, [contractOptions, normalizedAddressInput]);
+
+  useEffect(() => {
+    setHighlightedAutocompleteIndex(0);
+  }, [autocompleteContractOptions, isAddressAutocompleteOpen]);
   const knownAbiFunctions = useMemo<AbiFunction[]>(
     () =>
       KNOWN_ABI_CATALOG.flatMap(({ abi }) => abi as readonly unknown[])
@@ -1127,6 +1213,117 @@ export default function DiamondAdminPage() {
   );
 
   useEffect(() => {
+    let isActive = true;
+
+    const loadContractOptions = async () => {
+      setIsLoadingContractOptions(true);
+      setContractOptionsError(null);
+      try {
+        const response = await fetch(
+          `/api/loupe/contracts?chainId=${selectedChainId}`,
+          { cache: "no-store" },
+        );
+        if (!response.ok) {
+          throw new Error(`Contract resolver request failed (${response.status})`);
+        }
+
+        const payload = (await response.json()) as {
+          contracts?: LoupeContractOption[];
+        };
+
+        if (isActive) {
+          setContractOptions(payload.contracts ?? []);
+        }
+      } catch (resolverError) {
+        if (isActive) {
+          setContractOptions([]);
+          setContractOptionsError(
+            resolverError instanceof Error ?
+              resolverError.message
+            : "Unknown contract resolver error",
+          );
+        }
+      } finally {
+        if (isActive) {
+          setIsLoadingContractOptions(false);
+        }
+      }
+    };
+
+    void loadContractOptions();
+
+    return () => {
+      isActive = false;
+    };
+  }, [selectedChainId]);
+
+  useEffect(() => {
+    if (!selectedContractKey) return;
+
+    const selectedContract = contractOptions.find(
+      (contract) => contract.key === selectedContractKey,
+    );
+
+    if (selectedContract == null) {
+      setSelectedContractKey("");
+      return;
+    }
+
+    if (selectedContract.address == null || !isAddress(selectedContract.address)) {
+      setAddressInput("");
+      setDiamondAddress(undefined);
+      setSelectedProxyAbiLabel("");
+      setSignatureMap({});
+      setSelectedSelector("");
+      setSelectedSignature("");
+      setExecutionError(null);
+      setReadOutput(null);
+      setSimulationOutput(null);
+      setTxHash(null);
+      return;
+    }
+
+    const normalizedAddress = selectedContract.address as Address;
+    setAddressInput(normalizedAddress);
+    setSelectedProxyAbiLabel(selectedContract.abiLabel);
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.set("chainId", String(selectedChainId));
+    nextParams.set("address", normalizedAddress);
+    nextParams.delete("diamond");
+    nextParams.delete("chain");
+    nextParams.delete("selector");
+    nextParams.delete("signature");
+    nextParams.delete("args");
+    nextParams.delete("value");
+    router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
+
+    if (diamondAddress?.toLowerCase() === normalizedAddress.toLowerCase()) {
+      refetch?.();
+      return;
+    }
+
+    setSignatureMap({});
+    setIsManualSignatureOverride(false);
+    setSelectedSelector("");
+    setSelectedSignature("");
+    setExecutionError(null);
+    setReadOutput(null);
+    setTxHash(null);
+    setSimulationOutput(null);
+    setDiamondAddress(normalizedAddress);
+  }, [
+    contractOptions,
+    diamondAddress,
+    pathname,
+    refetch,
+    router,
+    searchParams,
+    selectedChainId,
+    selectedContractKey,
+  ]);
+
+  useEffect(() => {
     if (didApplyQueryParamsRef.current) return;
 
     const chainIdParam = queryParams.chainId ?? queryParams.chain;
@@ -1333,7 +1530,7 @@ export default function DiamondAdminPage() {
     }
     setSignatureMap({});
     setIsManualSignatureOverride(false);
-    setSelectedProxyAbiLabel("");
+    setSelectedProxyAbiLabel(matchedContractOption?.abiLabel ?? "");
     setSelectedSelector("");
     setSelectedSignature("");
     setExecutionError(null);
@@ -1341,6 +1538,58 @@ export default function DiamondAdminPage() {
     setTxHash(null);
     setSimulationOutput(null);
     setDiamondAddress(normalized);
+  };
+
+  const applyAutocompleteContract = (contract: LoupeContractOption) => {
+    setSelectedContractKey(contract.key);
+    setAddressInput(contract.address ?? "");
+    setIsAddressAutocompleteOpen(false);
+    setHighlightedAutocompleteIndex(0);
+  };
+
+  const handleAddressAutocompleteKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (autocompleteContractOptions.length === 0) {
+      return;
+    }
+
+    if (event.key === "Tab" && isAddressAutocompleteOpen) {
+      event.preventDefault();
+      applyAutocompleteContract(autocompleteContractOptions[0]);
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setIsAddressAutocompleteOpen(true);
+      setHighlightedAutocompleteIndex((current) =>
+        current >= autocompleteContractOptions.length - 1 ? 0 : current + 1,
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setIsAddressAutocompleteOpen(true);
+      setHighlightedAutocompleteIndex((current) =>
+        current <= 0 ? autocompleteContractOptions.length - 1 : current - 1,
+      );
+      return;
+    }
+
+    if (event.key === "Enter" && isAddressAutocompleteOpen) {
+      event.preventDefault();
+      const contract =
+        autocompleteContractOptions[highlightedAutocompleteIndex] ??
+        autocompleteContractOptions[0];
+      applyAutocompleteContract(contract);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setIsAddressAutocompleteOpen(false);
+    }
   };
 
   const handleFunctionSelect = (selector: string, signature?: string) => {
@@ -1544,7 +1793,7 @@ export default function DiamondAdminPage() {
       </section>
 
       <section className="space-y-4">
-        <div className="grid gap-4 rounded-2xl border border-border-neutral bg-neutral/10 p-4 md:grid-cols-[1.5fr_1fr_160px]">
+        <div className="grid gap-4 rounded-2xl border border-border-neutral bg-neutral/10 p-4 md:grid-cols-[1fr_1.8fr_160px]">
           <label className="flex flex-col gap-2 text-sm text-neutral-muted">
             <span>Chain</span>
             <select
@@ -1566,13 +1815,79 @@ export default function DiamondAdminPage() {
           </label>
 
           <label className="flex flex-col gap-2 text-sm text-neutral-muted">
-            <span>Diamond address</span>
-            <input
-              className="rounded-lg border border-border-neutral bg-neutral px-3 py-2 text-sm text-neutral-content placeholder:text-neutral-muted focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
-              placeholder="0x..."
-              value={addressInput}
-              onChange={(event) => setAddressInput(event.target.value)}
-            />
+            <span>Contract address</span>
+            <div className="relative">
+              <input
+                className="w-full rounded-lg border border-border-neutral bg-neutral px-3 py-2 text-sm text-neutral-content placeholder:text-neutral-muted focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
+                placeholder="Type an address or contract name"
+                value={addressInput}
+                onKeyDown={handleAddressAutocompleteKeyDown}
+                onFocus={() => {
+                  setIsAddressAutocompleteOpen(true);
+                }}
+                onBlur={() => {
+                  window.setTimeout(() => {
+                    setIsAddressAutocompleteOpen(false);
+                  }, 120);
+                }}
+                onChange={(event) => {
+                  setSelectedContractKey("");
+                  setAddressInput(event.target.value);
+                  setIsAddressAutocompleteOpen(true);
+                }}
+              />
+              {isAddressAutocompleteOpen && autocompleteContractOptions.length > 0 && (
+                <div className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-y-auto rounded-xl border border-border-neutral bg-neutral shadow-2xl">
+                  {autocompleteContractOptions.map((contract) => (
+                    <button
+                      key={contract.key}
+                      type="button"
+                      className={`flex w-full flex-col gap-1 border-b border-border-neutral px-3 py-3 text-left last:border-b-0 hover:bg-neutral/70 ${
+                        autocompleteContractOptions[highlightedAutocompleteIndex]?.key === contract.key ?
+                          "bg-neutral/70"
+                        : ""
+                      }`}
+                      onMouseEnter={() => {
+                        const nextIndex = autocompleteContractOptions.findIndex(
+                          (entry) => entry.key === contract.key,
+                        );
+                        if (nextIndex >= 0) {
+                          setHighlightedAutocompleteIndex(nextIndex);
+                        }
+                      }}
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        applyAutocompleteContract(contract);
+                      }}
+                    >
+                      <span className="text-sm font-medium text-neutral-content">
+                        {contract.label}
+                      </span>
+                      <span className="font-mono text-xs text-neutral-muted">
+                        {contract.address}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {isLoadingContractOptions && (
+              <span className="text-xs text-neutral-muted">
+                Resolving chain contracts...
+              </span>
+            )}
+            {!isLoadingContractOptions && contractOptionsError && (
+              <span className="text-xs text-danger-content">
+                {contractOptionsError}
+              </span>
+            )}
+            {!isLoadingContractOptions &&
+              !contractOptionsError &&
+              matchedContractOption?.address && (
+                <span className="text-xs text-neutral-muted">
+                  {matchedContractOption.label} resolved from {matchedContractOption.source ?? "unknown source"}
+                </span>
+              )}
             {addressInput && !isAddressValid && (
               <span className="text-xs text-danger-content">
                 Provide a valid Ethereum address.
