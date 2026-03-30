@@ -325,19 +325,20 @@ verify_registry_factory_storage() {
 
     local ok=true
 
-    if ! grep -q "| streamingEscrowFactory    | address" "$layout_tmp"; then
+    if ! grep -Eq "\|[[:space:]]*streamingEscrowFactory[[:space:]]*\|[[:space:]]*address[[:space:]]*\|" "$layout_tmp"; then
         ok=false
         [ "$VERBOSE" = true ] && echo -e "${RED}  Missing streamingEscrowFactory storage field${NC}"
     fi
-    if ! grep -q "| globalPauseController     | address" "$layout_tmp"; then
+    if ! grep -Eq "\|[[:space:]]*globalPauseController[[:space:]]*\|[[:space:]]*address[[:space:]]*\|" "$layout_tmp"; then
         ok=false
         [ "$VERBOSE" = true ] && echo -e "${RED}  Missing globalPauseController storage field${NC}"
     fi
-    if ! grep -q "| rebalanceCallerAllowlist  | mapping(address => bool)" "$layout_tmp"; then
+    if ! grep -Eq "\|[[:space:]]*streamRebalanceCallerAllowlist[[:space:]]*\|[[:space:]]*mapping\(address => bool\)[[:space:]]*\|" "$layout_tmp" \
+        && ! grep -Eq "\|[[:space:]]*rebalanceCallerAllowlist[[:space:]]*\|[[:space:]]*mapping\(address => bool\)[[:space:]]*\|" "$layout_tmp"; then
         ok=false
-        [ "$VERBOSE" = true ] && echo -e "${RED}  Missing rebalanceCallerAllowlist storage field${NC}"
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Missing streamRebalanceCallerAllowlist storage field${NC}"
     fi
-    if ! grep -q "| __gap                     | uint256\\[41\\]                              | 119" "$layout_tmp"; then
+    if ! grep -Eq "\|[[:space:]]*__gap[[:space:]]*\|[[:space:]]*uint256\[41\][[:space:]]*\|[[:space:]]*119([[:space:]]*\||$)" "$layout_tmp"; then
         ok=false
         [ "$VERBOSE" = true ] && echo -e "${RED}  Expected __gap (uint256[41]) at slot 119${NC}"
     fi

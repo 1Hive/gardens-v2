@@ -31,6 +31,52 @@ tasks:
           echo ""
           echo "# Replace PK_DEPLOYER keystore (non-interactive, uses PK_DEPLOYER_PW)"
           echo "rm -f ~/.foundry/keystores/PK_DEPLOYER && CAST_UNSAFE_PASSWORD=\"\$PK_DEPLOYER_PW\" cast wallet import PK_DEPLOYER --private-key ${PK} --unsafe-password \"\$PK_DEPLOYER_PW\""
+  change-wallet:
+    desc: Generate a new wallet and set ENVS.SENDER to it for all networks in config/networks.json
+    cmds:
+      - cmd: |
+          PK="0x$(openssl rand -hex 32)"
+          ADDRESS="$(cast wallet address --private-key "${PK}")"
+
+          if [ ! -f config/networks.json ]; then
+            echo "❌ Missing config/networks.json"
+            exit 1
+          fi
+
+          ADDRESS="${ADDRESS}" node -e '
+            const fs = require("fs");
+            const path = "config/networks.json";
+            const address = process.env.ADDRESS;
+
+            const content = fs.readFileSync(path, "utf8");
+            const json = JSON.parse(content);
+
+            if (!Array.isArray(json.networks)) {
+              throw new Error("Invalid networks.json: missing networks array");
+            }
+
+            let updated = 0;
+            for (const network of json.networks) {
+              if (!network.ENVS || typeof network.ENVS !== "object") {
+                network.ENVS = {};
+              }
+              network.ENVS.SENDER = address;
+              updated++;
+            }
+
+            fs.writeFileSync(path, JSON.stringify(json, null, 2) + "\n");
+            console.log(`✅ Updated ENVS.SENDER for ${updated} networks in ${path}`);
+          '
+
+          echo ""
+          echo "PK=${PK}"
+          echo "ADDRESS=${ADDRESS}"
+          echo ""
+          echo "# Replace PK_DEPLOYER keystore (interactive password prompt)"
+          echo "rm -f ~/.foundry/keystores/PK_DEPLOYER && cast wallet import PK_DEPLOYER --private-key ${PK}"
+          echo ""
+          echo "# Replace PK_DEPLOYER keystore (non-interactive, uses PK_DEPLOYER_PW)"
+          echo "rm -f ~/.foundry/keystores/PK_DEPLOYER && CAST_UNSAFE_PASSWORD=\"\$PK_DEPLOYER_PW\" cast wallet import PK_DEPLOYER --private-key ${PK} --unsafe-password \"\$PK_DEPLOYER_PW\""
   aggregate-abi:
     desc: Aggregate abi
     cmds:
@@ -110,7 +156,7 @@ tasks:
       - cmd: |
           for chain in ethereum arbitrum optimism polygon gnosis base celo; do
             echo "==> smoke ${chain}"
-            FORK_HEALTHCHECK_CHAIN="${chain}" forge test --match-contract ForkLifecycleHealthcheck -vvv || exit 1
+            bash ./scripts/run-smoke-chain.sh "${chain}" || exit 1
           done
   smoke-test-ethereum:
     desc: Run fork smoke test on ethereum
@@ -170,7 +216,7 @@ tasks:
       - verify-storage
     cmds:
       - cmd: |
-          CHAIN="{{.CHAIN}}"
+          CHAIN="${CHAIN:-{{.CHAIN}}}"
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
 
           case "${CHAIN}" in
@@ -196,6 +242,11 @@ tasks:
           PORT="${ANVIL_PORT:-8545}"
           LOCAL_RPC_URL="http://127.0.0.1:${PORT}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          ROOT_DIR="$(git rev-parse --show-toplevel)"
+          mkdir -p "${ROOT_DIR}/pkg/contracts/.tmp"
+          TMP_NETWORKS_JSON="$(mktemp "${ROOT_DIR}/pkg/contracts/.tmp/gardens-networks-${CHAIN}-XXXXXX.json")"
+          cp "${ROOT_DIR}/pkg/contracts/config/networks.json" "${TMP_NETWORKS_JSON}"
+          trap 'rm -f "${TMP_NETWORKS_JSON}"' EXIT
           REFRESH_FACETS="${REFRESH_FACETS:-true}"
           RESUME_FLAG=""
           if [ "${RESUME:-false}" = "true" ]; then
@@ -247,7 +298,7 @@ tasks:
           }
 
           if [ "${REFRESH_FACETS}" = "true" ]; then
-            ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+            NETWORKS_JSON_PATH="${TMP_NETWORKS_JSON}" ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
               --rpc-url "${LOCAL_RPC_URL}" \
               --sig "run(string)" "${CHAIN}" \
               --account PK_DEPLOYER \
@@ -262,7 +313,7 @@ tasks:
             }
           fi
 
-          REUSE_CONFIGURED_IMPLEMENTATIONS=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
+          NETWORKS_JSON_PATH="${TMP_NETWORKS_JSON}" REUSE_CONFIGURED_IMPLEMENTATIONS=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
             --rpc-url "${LOCAL_RPC_URL}" \
             --sig "${SIG}" "${CHAIN}" \
             --account PK_DEPLOYER \
@@ -285,63 +336,43 @@ tasks:
   rehearse-upgrade-ethsep:
     desc: Rehearse upgrade on ethsepolia
     cmds:
-      - task: rehearse-upgrade-chain
-        vars:
-          CHAIN: ethsepolia
+      - cmd: CHAIN=ethsepolia task rehearse-upgrade-chain
   rehearse-upgrade-arbsep:
     desc: Rehearse upgrade on arbitrum sepolia
     cmds:
-      - task: rehearse-upgrade-chain
-        vars:
-          CHAIN: arbsepolia
+      - cmd: CHAIN=arbsepolia task rehearse-upgrade-chain
   rehearse-upgrade-opsep:
     desc: Rehearse upgrade on optimism sepolia
     cmds:
-      - task: rehearse-upgrade-chain
-        vars:
-          CHAIN: opsepolia
+      - cmd: CHAIN=opsepolia task rehearse-upgrade-chain
   rehearse-upgrade-ethereum:
     desc: Rehearse upgrade on ethereum
     cmds:
-      - task: rehearse-upgrade-chain
-        vars:
-          CHAIN: ethereum
+      - cmd: CHAIN=ethereum task rehearse-upgrade-chain
   rehearse-upgrade-arbitrum:
     desc: Rehearse upgrade on arbitrum
     cmds:
-      - task: rehearse-upgrade-chain
-        vars:
-          CHAIN: arbitrum
+      - cmd: CHAIN=arbitrum task rehearse-upgrade-chain
   rehearse-upgrade-optimism:
     desc: Rehearse upgrade on optimism
     cmds:
-      - task: rehearse-upgrade-chain
-        vars:
-          CHAIN: optimism
+      - cmd: CHAIN=optimism task rehearse-upgrade-chain
   rehearse-upgrade-polygon:
     desc: Rehearse upgrade on polygon
     cmds:
-      - task: rehearse-upgrade-chain
-        vars:
-          CHAIN: polygon
+      - cmd: CHAIN=polygon task rehearse-upgrade-chain
   rehearse-upgrade-gnosis:
     desc: Rehearse upgrade on gnosis
     cmds:
-      - task: rehearse-upgrade-chain
-        vars:
-          CHAIN: gnosis
+      - cmd: CHAIN=gnosis task rehearse-upgrade-chain
   rehearse-upgrade-base:
     desc: Rehearse upgrade on base
     cmds:
-      - task: rehearse-upgrade-chain
-        vars:
-          CHAIN: base
+      - cmd: CHAIN=base task rehearse-upgrade-chain
   rehearse-upgrade-celo:
     desc: Rehearse upgrade on celo
     cmds:
-      - task: rehearse-upgrade-chain
-        vars:
-          CHAIN: celo
+      - cmd: CHAIN=celo task rehearse-upgrade-chain
   rehearse-upgrade-all-mainnets:
     desc: Rehearse upgrade on all mainnets (no testnets)
     cmds:
@@ -1010,8 +1041,8 @@ tasks:
     cmds:
       - task: refresh-facets-celo
       - task: verify-diamond-facets-celo
-  deploy-global-pause-controller-ethsep:
-    desc: Deploy global pause controller ethsep
+  deploy-or-upgrade-global-pause-controller-ethsep:
+    desc: Deploy or upgrade global pause controller ethsep
     cmds:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -1027,7 +1058,6 @@ tasks:
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account PK_DEPLOYER \
           --password "${PK_DEPLOYER_PW}" \
-          --verify \
           --broadcast \
           ${RESUME_FLAG} \
           -vv
@@ -1065,7 +1095,7 @@ tasks:
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacets.s.sol:RefreshFacets \
+          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_ETHEREUM} \
           --sig "run(string)" 'ethereum' \
           --account PK_DEPLOYER \
@@ -1076,8 +1106,11 @@ tasks:
           --broadcast \
           ${RESUME_FLAG} \
           -vvv
-        ignore_error: true
       - task: sync-abis
+  refresh-facets-ethereum:
+    desc: Alias for refresh-facets-mainnet
+    cmds:
+      - task: refresh-facets-mainnet
   verify-diamond-facets-mainnet:
     desc: Verify live diamond facets on mainnet
     cmds:
@@ -1506,6 +1539,15 @@ tasks:
           --verify
         ignore_error: true
       - task: sync-abis
+  deploy-token-ethereum:
+    desc: Alias for deploy-token-mainnet
+    cmds:
+      - task: deploy-token-mainnet
+        vars:
+          {
+            NAME: '{{default "Honey" .NAME}}',
+            SYMBOL: '{{default "HNY" .SYMBOL}}',
+          }
   deploy-token-testnets:
     desc: Deploy token on all testnets
     cmds:
@@ -1528,9 +1570,9 @@ tasks:
             SYMBOL: '{{default "HNY" .SYMBOL}}',
           }
   deploy-token-mainnets:
-    desc: Deploy token on all mainnets
+    desc: Deploy token on ethereum, arbitrum, optimism, polygon, gnosis, base, celo
     cmds:
-      - task: deploy-token-mainnet
+      - task: deploy-token-ethereum
         vars:
           {
             NAME: '{{default "Honey" .NAME}}',
@@ -2171,8 +2213,7 @@ tasks:
           --password "${PK_DEPLOYER_PW}" \
           --broadcast \
           ${RESUME_FLAG} \
-          -vv \
-          --verify
+          -vv
         ignore_error: true
       - task: sync-abis
   deploy-streaming-escrow-factory-opsep:
@@ -2922,14 +2963,13 @@ tasks:
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account PK_DEPLOYER \
           --password "${PK_DEPLOYER_PW}" \
-          --verify \
           --broadcast \
           ${RESUME_FLAG} \
           -vv
         ignore_error: true
       - task: sync-abis
-  deploy-global-pause-controller-arbsep:
-    desc: Deploy global pause controller arbsep
+  deploy-or-upgrade-global-pause-controller-arbsep:
+    desc: Deploy or upgrade global pause controller arbsep
     cmds:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -2945,7 +2985,6 @@ tasks:
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account PK_DEPLOYER \
           --password "${PK_DEPLOYER_PW}" \
-          --verify \
           --broadcast \
           ${RESUME_FLAG} \
           -vv
@@ -3284,30 +3323,6 @@ tasks:
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account PK_DEPLOYER \
           --password "${PK_DEPLOYER_PW}" \
-          --verify \
-          --broadcast \
-          ${RESUME_FLAG} \
-          -vv
-        ignore_error: true
-      - task: sync-abis
-  deploy-global-pause-controller-arbitrum:
-    desc: Deploy global pause controller arbitrum
-    cmds:
-      - cmd: |
-          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
-          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
-          RESUME_FLAG=""
-          if [ "${RESUME:-false}" = "true" ]; then
-            RESUME_FLAG="--resume"
-          fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
-          --rpc-url ${RPC_URL_ARB} \
-          --sig "run(string)" 'arbitrum' \
-          --chain-id 42161 \
-          --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --account PK_DEPLOYER \
-          --password "${PK_DEPLOYER_PW}" \
-          --verify \
           --broadcast \
           ${RESUME_FLAG} \
           -vv
@@ -3332,8 +3347,7 @@ tasks:
           --password "${PK_DEPLOYER_PW}" \
           --broadcast \
           ${RESUME_FLAG} \
-          -vv \
-          --verify
+          -vv
         ignore_error: true
       - task: sync-abis
   verify-global-pause-controller-arbitrum:
@@ -3392,29 +3406,6 @@ tasks:
           --legacy \
           --chain-id 42161 \
           -vvv
-  verify-streaming-escrow-factory-arbitrum:
-    desc: Verify streaming escrow factory arbitrum
-    cmds:
-      - cmd: |
-          bash ./scripts/verify-streaming-escrow-factory.sh \
-          --network arbitrum \
-          --rpc-url ${RPC_URL_ARB} \
-          --chain-id 42161 \
-          --etherscan-key ${ETHERSCAN_API_KEY} \
-          --verifier-url https://arbitrum.blockscout.com/api/
-  upgrade-streaming-escrows-arbitrum:
-    desc: Deploy or upgrade streaming escrows on arbitrum (networks.json managed in script, optional I implementation)
-    cmds:
-      - cmd: |
-          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
-          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
-          RESUME_FLAG=""
-          if [ "${RESUME:-false}" = "true" ]; then
-            RESUME_FLAG="--resume"
-          fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
-          --rpc-url ${RPC_URL_ARB} \
-          --account PK_DEPLOYER \
           --password "${PK_DEPLOYER_PW}" \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string,address)" 'arbitrum' ${I:-0x0000000000000000000000000000000000000000} \
@@ -3688,30 +3679,6 @@ tasks:
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account PK_DEPLOYER \
           --password "${PK_DEPLOYER_PW}" \
-          --verify \
-          --broadcast \
-          ${RESUME_FLAG} \
-          -vv
-        ignore_error: true
-      - task: sync-abis
-  deploy-global-pause-controller-optimism:
-    desc: Deploy global pause controller optimism
-    cmds:
-      - cmd: |
-          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
-          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
-          RESUME_FLAG=""
-          if [ "${RESUME:-false}" = "true" ]; then
-            RESUME_FLAG="--resume"
-          fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
-          --rpc-url ${RPC_URL_OPT} \
-          --sig "run(string)" 'optimism' \
-          --chain-id 10 \
-          --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --account PK_DEPLOYER \
-          --password "${PK_DEPLOYER_PW}" \
-          --verify \
           --broadcast \
           ${RESUME_FLAG} \
           -vv
@@ -3736,8 +3703,7 @@ tasks:
           --password "${PK_DEPLOYER_PW}" \
           --broadcast \
           ${RESUME_FLAG} \
-          -vv \
-          --verify
+          -vv
         ignore_error: true
       - task: sync-abis
   verify-global-pause-controller-optimism:
@@ -3796,29 +3762,6 @@ tasks:
           --legacy \
           --chain-id 10 \
           -vvv
-  verify-streaming-escrow-factory-optimism:
-    desc: Verify streaming escrow factory optimism
-    cmds:
-      - cmd: |
-          bash ./scripts/verify-streaming-escrow-factory.sh \
-          --network optimism \
-          --rpc-url ${RPC_URL_OPT} \
-          --chain-id 10 \
-          --etherscan-key ${ETHERSCAN_API_KEY} \
-          --verifier-url https://optimism.blockscout.com/api/
-  upgrade-streaming-escrows-optimism:
-    desc: Deploy or upgrade streaming escrows on optimism (networks.json managed in script, optional I implementation)
-    cmds:
-      - cmd: |
-          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
-          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
-          RESUME_FLAG=""
-          if [ "${RESUME:-false}" = "true" ]; then
-            RESUME_FLAG="--resume"
-          fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
-          --rpc-url ${RPC_URL_OPT} \
-          --account PK_DEPLOYER \
           --password "${PK_DEPLOYER_PW}" \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string,address)" 'optimism' ${I:-0x0000000000000000000000000000000000000000} \
@@ -4177,30 +4120,6 @@ tasks:
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account PK_DEPLOYER \
           --password "${PK_DEPLOYER_PW}" \
-          --verify \
-          --broadcast \
-          ${RESUME_FLAG} \
-          -vv
-        ignore_error: true
-      - task: sync-abis
-  deploy-global-pause-controller-polygon:
-    desc: Deploy global pause controller polygon
-    cmds:
-      - cmd: |
-          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
-          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
-          RESUME_FLAG=""
-          if [ "${RESUME:-false}" = "true" ]; then
-            RESUME_FLAG="--resume"
-          fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
-          --rpc-url ${RPC_URL_POLYGON} \
-          --sig "run(string)" 'polygon' \
-          --chain-id 137 \
-          --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --account PK_DEPLOYER \
-          --password "${PK_DEPLOYER_PW}" \
-          --verify \
           --broadcast \
           ${RESUME_FLAG} \
           -vv
@@ -4225,8 +4144,7 @@ tasks:
           --password "${PK_DEPLOYER_PW}" \
           --broadcast \
           ${RESUME_FLAG} \
-          -vv \
-          --verify
+          -vv
         ignore_error: true
       - task: sync-abis
   verify-global-pause-controller-polygon:
@@ -4285,29 +4203,6 @@ tasks:
           --legacy \
           --chain-id 137 \
           -vvv
-  verify-streaming-escrow-factory-polygon:
-    desc: Verify streaming escrow factory polygon
-    cmds:
-      - cmd: |
-          bash ./scripts/verify-streaming-escrow-factory.sh \
-          --network polygon \
-          --rpc-url ${RPC_URL_POLYGON} \
-          --chain-id 137 \
-          --etherscan-key ${ETHERSCAN_API_KEY} \
-          --verifier-url https://polygon.blockscout.com/api/
-  upgrade-streaming-escrows-polygon:
-    desc: Deploy or upgrade streaming escrows on polygon (networks.json managed in script, optional I implementation)
-    cmds:
-      - cmd: |
-          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
-          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
-          RESUME_FLAG=""
-          if [ "${RESUME:-false}" = "true" ]; then
-            RESUME_FLAG="--resume"
-          fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
-          --rpc-url ${RPC_URL_POLYGON} \
-          --account PK_DEPLOYER \
           --password "${PK_DEPLOYER_PW}" \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string,address)" 'polygon' ${I:-0x0000000000000000000000000000000000000000} \
@@ -4549,30 +4444,6 @@ tasks:
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account PK_DEPLOYER \
           --password "${PK_DEPLOYER_PW}" \
-          --verify \
-          --broadcast \
-          ${RESUME_FLAG} \
-          -vv
-        ignore_error: true
-      - task: sync-abis
-  deploy-global-pause-controller-gnosis:
-    desc: Deploy global pause controller gnosis
-    cmds:
-      - cmd: |
-          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
-          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
-          RESUME_FLAG=""
-          if [ "${RESUME:-false}" = "true" ]; then
-            RESUME_FLAG="--resume"
-          fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
-          --rpc-url ${RPC_URL_GNOSIS} \
-          --sig "run(string)" 'gnosis' \
-          --chain-id 100 \
-          --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --account PK_DEPLOYER \
-          --password "${PK_DEPLOYER_PW}" \
-          --verify \
           --broadcast \
           ${RESUME_FLAG} \
           -vv
@@ -4597,8 +4468,7 @@ tasks:
           --password "${PK_DEPLOYER_PW}" \
           --broadcast \
           ${RESUME_FLAG} \
-          -vv \
-          --verify
+          -vv
         ignore_error: true
       - task: sync-abis
   verify-global-pause-controller-gnosis:
@@ -4674,29 +4544,6 @@ tasks:
           --legacy \
           -vvv
         ignore_error: true
-  deploy-or-upgrade-good-dollar-sybil-gnosis:
-    desc: Deploy or upgrade good dollar sybil gnosis
-    cmds:
-      - cmd: |
-          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
-          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
-          RESUME_FLAG=""
-          if [ "${RESUME:-false}" = "true" ]; then
-            RESUME_FLAG="--resume"
-          fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/DeployGoodDollarSybil.s.sol:DeployGoodDollarSybil \
-          --rpc-url ${RPC_URL_GNOSIS} \
-          --sig "run(string)" 'gnosis' \
-          --chain-id 100 \
-          --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --account PK_DEPLOYER \
-          --password "${PK_DEPLOYER_PW}" \
-          --verify \
-          --broadcast \
-          ${RESUME_FLAG} \
-          -vv
-        ignore_error: true
-      - task: sync-abis
   deploy-streaming-escrow-factory-gnosis:
     desc: Deploy streaming escrow factory gnosis (set on registry factory)
     cmds:
@@ -5029,30 +4876,6 @@ tasks:
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account PK_DEPLOYER \
           --password "${PK_DEPLOYER_PW}" \
-          --verify \
-          --broadcast \
-          ${RESUME_FLAG} \
-          -vv
-        ignore_error: true
-      - task: sync-abis
-  deploy-global-pause-controller-base:
-    desc: Deploy global pause controller base
-    cmds:
-      - cmd: |
-          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
-          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
-          RESUME_FLAG=""
-          if [ "${RESUME:-false}" = "true" ]; then
-            RESUME_FLAG="--resume"
-          fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
-          --rpc-url ${RPC_URL_BASE} \
-          --sig "run(string)" 'base' \
-          --chain-id 8453 \
-          --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --account PK_DEPLOYER \
-          --password "${PK_DEPLOYER_PW}" \
-          --verify \
           --broadcast \
           ${RESUME_FLAG} \
           -vv
@@ -5077,8 +4900,7 @@ tasks:
           --password "${PK_DEPLOYER_PW}" \
           --broadcast \
           ${RESUME_FLAG} \
-          -vv \
-          --verify
+          -vv
         ignore_error: true
       - task: sync-abis
   verify-global-pause-controller-base:
@@ -5236,6 +5058,50 @@ tasks:
               --account PK_TESTNET_OWNER \
               --password "${PK_TESTNET_OWNER_PW}"
           done
+  verify-upgrade-access:
+    desc: Verify upgradeAccess slot on all networks ProxyOwner contracts matches PK_DEPLOYER address
+    cmds:
+      - cmd: |
+          set -euo pipefail
+          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
+
+          deployer_address="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          failed=0
+
+          jq -r '.networks[] | select((.ENVS.PROXY_OWNER? != null) and (.ENVS.PROXY_OWNER != "")) | [.name, .ENVS.PROXY_OWNER] | @tsv' config/networks.json |
+          while IFS=$'\t' read -r network proxy_owner; do
+            case "${network}" in
+              ethsepolia) rpc="${RPC_URL_SEP_TESTNET}" ;;
+              arbsepolia) rpc="${RPC_URL_ARB_TESTNET}";;
+              opsepolia) rpc="${RPC_URL_OP_TESTNET}" ;;
+              arbitrum) rpc="${RPC_URL_ARB}" ;;
+              optimism) rpc="${RPC_URL_OPT}"; ;;
+              polygon) rpc="${RPC_URL_POLYGON}"; ;;
+              gnosis) rpc="${RPC_URL_GNOSIS}"; ;;
+              base) rpc="${RPC_URL_BASE}"; ;;
+              celo) rpc="${RPC_URL_CELO}"; ;;
+              ethereum) rpc="${RPC_URL_ETHEREUM}" ;;
+              *)
+                echo "[SKIP] ${network}: unsupported network"
+                continue
+                ;;
+            esac
+
+            : "${rpc:?missing RPC for ${network}}"
+
+            actual="$(cast call "${proxy_owner}" "upgradeAccess()(address)" --rpc-url "${rpc}")"
+            if [ "$(echo "${actual}" | tr '[:upper:]' '[:lower:]')" = "$(echo "${deployer_address}" | tr '[:upper:]' '[:lower:]')" ]; then
+              echo "✅ ${network}: upgradeAccess = ${actual}"
+            else
+              echo "❌ ${network}: upgradeAccess = ${actual} (expected ${deployer_address})"
+              failed=1
+            fi
+          done
+
+          if [ "${failed}" = "1" ]; then
+            echo "Some networks ProxyOwner contracts do not have PK_DEPLOYER as upgradeAccess"
+            exit 1
+          fi
   upgrade-proxy-owner-arbitrum:
     desc: Upgrade proxy owner arbitrum
     cmds:
@@ -5260,29 +5126,6 @@ tasks:
           --legacy \
           -vv
   upgrade-proxy-owner-optimism:
-    desc: Upgrade proxy owner optimism
-    cmds:
-      - cmd: |
-          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
-          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
-          RESUME_FLAG=""
-          if [ "${RESUME:-false}" = "true" ]; then
-            RESUME_FLAG="--resume"
-          fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeProxyOwner.s.sol:UpgradeProxyOwner \
-          --rpc-url ${RPC_URL_OPT} \
-          --sig "run(string,address,bool)" 'optimism' ${I:-0x0000000000000000000000000000000000000000} {{default "false" .DEPLOY_IMPLEMENTATION_ONLY}} \
-          --chain-id 10 \
-          --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --account PK_DEPLOYER \
-          --password "${PK_DEPLOYER_PW}" \
-          --ffi \
-          --verify \
-          --broadcast \
-          ${RESUME_FLAG} \
-          --legacy \
-          -vv
-  upgrade-proxy-owner-polygon:
     desc: Upgrade proxy owner polygon
     cmds:
       - cmd: |
@@ -5377,51 +5220,47 @@ tasks:
   upgrade-proxy-owner-mainnets:
     desc: Upgrade proxy owner on all mainnets
     cmds:
-      - echo "Upgrading proxy owner on mainnet"
-      - task: upgrade-proxy-owner-mainnet
-      - echo "Upgrading proxy owner on arbitrum"
-      - task: upgrade-proxy-owner-arbitrum
-      - echo "Upgrading proxy owner on optimism"
-      - task: upgrade-proxy-owner-optimism
-      - echo "Upgrading proxy owner on polygon"
-      - task: upgrade-proxy-owner-polygon
-      - echo "Upgrading proxy owner on gnosis"
-      - task: upgrade-proxy-owner-gnosis
-      - echo "Upgrading proxy owner on base"
-      - task: upgrade-proxy-owner-base
-      - echo "Upgrading proxy owner on celo"
-      - task: upgrade-proxy-owner-celo
+      - cmd: |
+          set +e
+          failed=0
+
+          for network in ethereum arbitrum optimism polygon gnosis base celo; do
+            if task "upgrade-proxy-owner-${network}"; then
+              echo "✅ ${network}: success"
+            else
+              echo "❌ ${network}: failed"
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "One or more networks failed."
+            exit 1
+          else
+            echo "All networks succeeded."
+          fi
   deploy-proxy-owner-implementation-mainnets:
     desc: Deploy ProxyOwner implementation only on all mainnets and snapshot IMPLEMENTATIONS.PROXY_OWNER
     cmds:
-      - echo "Deploying ProxyOwner implementation on mainnet"
-      - task: upgrade-proxy-owner-mainnet
-        vars:
-          DEPLOY_IMPLEMENTATION_ONLY: "true"
-      - echo "Deploying ProxyOwner implementation on arbitrum"
-      - task: upgrade-proxy-owner-arbitrum
-        vars:
-          DEPLOY_IMPLEMENTATION_ONLY: "true"
-      - echo "Deploying ProxyOwner implementation on optimism"
-      - task: upgrade-proxy-owner-optimism
-        vars:
-          DEPLOY_IMPLEMENTATION_ONLY: "true"
-      - echo "Deploying ProxyOwner implementation on polygon"
-      - task: upgrade-proxy-owner-polygon
-        vars:
-          DEPLOY_IMPLEMENTATION_ONLY: "true"
-      - echo "Deploying ProxyOwner implementation on gnosis"
-      - task: upgrade-proxy-owner-gnosis
-        vars:
-          DEPLOY_IMPLEMENTATION_ONLY: "true"
-      - echo "Deploying ProxyOwner implementation on base"
-      - task: upgrade-proxy-owner-base
-        vars:
-          DEPLOY_IMPLEMENTATION_ONLY: "true"
-      - echo "Deploying ProxyOwner implementation on celo"
-      - task: upgrade-proxy-owner-celo
-        vars:
-          DEPLOY_IMPLEMENTATION_ONLY: "true"
+      - cmd: |
+          set +e
+          failed=0
+
+          for network in ethereum arbitrum optimism polygon gnosis base celo; do
+            if DEPLOY_IMPLEMENTATION_ONLY=true task "upgrade-proxy-owner-${network}"; then
+              echo "✅ ${network}: success"
+            else
+              echo "❌ ${network}: failed"
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "One or more networks failed."
+            exit 1
+          else
+            echo "All networks succeeded."
+          fi
   upgrade-proxy-owner-mainnet:
     desc: Upgrade proxy owner on mainnet
     cmds:
@@ -5444,6 +5283,12 @@ tasks:
           --broadcast \
           ${RESUME_FLAG} \
           -vv
+  upgrade-proxy-owner-ethereum:
+    desc: Alias for upgrade-proxy-owner-mainnet
+    cmds:
+      - task: upgrade-proxy-owner-mainnet
+        vars:
+          DEPLOY_IMPLEMENTATION_ONLY: '{{default "false" .DEPLOY_IMPLEMENTATION_ONLY}}'
   renounce-proxy-owner-upgrade-access-mainnet:
     desc: Renounce ProxyOwner upgrade access on mainnet
     cmds:
@@ -6247,10 +6092,10 @@ tasks:
           --password "${PK_DEPLOYER_PW}" \
           --broadcast \
           ${RESUME_FLAG} \
-          -vv \
-          --verify
+          -vv
         ignore_error: true
       - task: sync-abis
+
   verify-global-pause-controller-ethereum:
     desc: Verify global pause controller ethereum
     cmds:
@@ -6340,11 +6185,14 @@ tasks:
           echo "All networks succeeded."
 
   upgrade-all-mainnets:
-    desc: Upgrade mainnet, arbitrum, optimism, polygon, gnosis, base, celo in parallel, then verify global deployments
+    desc: Upgrade ethereum, arbitrum, optimism, polygon, gnosis, base, celo in parallel, then verify global deployments
     deps:
       - verify-storage
     cmds:
+      - task: refresh-facets-all-mainnets
       - cmd: |
+          bash ./scripts/upgrade-all-mainnets.sh
+          exit $?
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
           set +e
@@ -6363,32 +6211,32 @@ tasks:
             ""|all) ;;
             factory)
               case "${FACTORY_ACTION:-all}" in
-                ""|all) SIG="runFactory(string)" ;;
-                upgrade-impl|upgrade_impl) SIG="runFactoryUpgradeImpl(string)" ;;
-                set-community-facets|set_community_facets) SIG="runFactorySetCommunityFacets(string)" ;;
-                set-strategy-facets|set_strategy_facets) SIG="runFactorySetStrategyFacets(string)" ;;
-                set-pause-controller|set_pause_controller) SIG="runFactorySetPauseController(string)" ;;
-                set-registry-template|set_registry_template) SIG="runFactorySetRegistryTemplate(string)" ;;
-                set-strategy-template|set_strategy_template) SIG="runFactorySetStrategyTemplate(string)" ;;
-                *) echo "unsupported FACTORY_ACTION: ${FACTORY_ACTION}" >&2; exit 1 ;;
-              esac
-              ;;
-            communities) SIG="runCommunities(string)" ;;
-            strategies) SIG="runStrategies(string)" ;;
-            *) echo "unsupported PHASE: ${PHASE}" >&2; exit 1 ;;
-          esac
-            ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
-            --rpc-url ${RPC_URL_ETHEREUM} \
-            --sig "${SIG}" 'ethereum' \
-            --account PK_DEPLOYER \
-          --password "${PK_DEPLOYER_PW}" \
-            --etherscan-api-key ${ETHERSCAN_API_KEY} \
-            --ffi \
-            --chain-id 1 \
-            --broadcast \
-            ${RESUME_FLAG} \
-            --slow \
-            -vvv
+                  ""|all) SIG="runFactory(string)" ;;
+                  upgrade-impl|upgrade_impl) SIG="runFactoryUpgradeImpl(string)" ;;
+                  set-community-facets|set_community_facets) SIG="runFactorySetCommunityFacets(string)" ;;
+                  set-strategy-facets|set_strategy_facets) SIG="runFactorySetStrategyFacets(string)" ;;
+                  set-pause-controller|set_pause_controller) SIG="runFactorySetPauseController(string)" ;;
+                  set-registry-template|set_registry_template) SIG="runFactorySetRegistryTemplate(string)" ;;
+                  set-strategy-template|set_strategy_template) SIG="runFactorySetStrategyTemplate(string)" ;;
+                  *) echo "unsupported FACTORY_ACTION: ${FACTORY_ACTION}" >&2; exit 1 ;;
+                esac
+                ;;
+              communities) SIG="runCommunities(string)" ;;
+              strategies) SIG="runStrategies(string)" ;;
+              *) echo "unsupported PHASE: ${PHASE}" >&2; exit 1 ;;
+            esac
+              ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
+              --rpc-url ${RPC_URL_ETHEREUM} \
+              --sig "${SIG}" 'ethereum' \
+              --account PK_DEPLOYER \
+              --password "${PK_DEPLOYER_PW}" \
+              --etherscan-api-key ${ETHERSCAN_API_KEY} \
+              --ffi \
+              --chain-id 1 \
+              --broadcast \
+              ${RESUME_FLAG} \
+              --slow \
+              -vvv
           ) & pids+=($!); names+=("mainnet")
 
           (
@@ -6641,24 +6489,25 @@ tasks:
 
           if [ "$failed" -ne 0 ]; then
             echo "One or more networks failed."
+              exit 1
           else
             echo "All networks succeeded."
+              exit 0
           fi
-          exit 0
 
   upgrade-factory-all-networks:
-    desc: Upgrade registry factory only on mainnet, arbitrum, optimism, polygon, gnosis, base, celo
+    desc: Upgrade registry factory only on ethereum, arbitrum, optimism, polygon, gnosis, base, celo
     deps:
       - verify-storage
     cmds:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
-          networks="mainnet arbitrum optimism polygon gnosis base celo"
+          networks="ethereum arbitrum optimism polygon gnosis base celo"
 
           for network in $networks; do
             case "$network" in
-              mainnet) rpc="${RPC_URL_ETHEREUM}"; chain_id="1" ;;
+              ethereum) rpc="${RPC_URL_ETHEREUM}"; chain_id="1" ;;
               arbitrum) rpc="${RPC_URL_ARB}"; chain_id="42161" ;;
               optimism) rpc="${RPC_URL_OPT}"; chain_id="10" ;;
               polygon) rpc="${RPC_URL_POLYGON}"; chain_id="137" ;;
@@ -6699,13 +6548,13 @@ tasks:
           done
 
   deploy-or-upgrade-global-pause-controller-all-mainnets:
-    desc: Deploy or upgrade global pause controller on mainnet, arbitrum, optimism, polygon, gnosis, base, celo
+    desc: Deploy or upgrade global pause controller on ethereum, arbitrum, optimism, polygon, gnosis, base, celo
     cmds:
       - cmd: |
           set +e
           failed=0
 
-          for network in mainnet arbitrum optimism polygon gnosis base celo; do
+          for network in ethereum arbitrum optimism polygon gnosis base celo; do
             if task "deploy-or-upgrade-global-pause-controller-${network}"; then
               echo "✅ ${network}: success"
             else
@@ -6722,13 +6571,13 @@ tasks:
           exit 0
 
   deploy-streaming-escrow-factory-all-mainnets:
-    desc: Deploy streaming escrow factory on mainnet, arbitrum, optimism, polygon, gnosis, base, celo
+    desc: Deploy streaming escrow factory on ethereum, arbitrum, optimism, polygon, gnosis, base, celo
     cmds:
       - cmd: |
           set +e
           failed=0
 
-          for network in mainnet arbitrum optimism polygon gnosis base celo; do
+          for network in ethereum arbitrum optimism polygon gnosis base celo; do
             if task "deploy-streaming-escrow-factory-${network}"; then
               echo "✅ ${network}: success"
             else
@@ -6745,13 +6594,13 @@ tasks:
           exit 0
 
   verify-global-pause-controller-all-mainnets:
-    desc: Verify global pause controller on mainnet, arbitrum, optimism, polygon, gnosis, base, celo
+    desc: Verify global pause controller on ethereum, arbitrum, optimism, polygon, gnosis, base, celo
     cmds:
       - cmd: |
           set +e
           failed=0
 
-          for network in mainnet arbitrum optimism polygon gnosis base celo; do
+          for network in ethereum arbitrum optimism polygon gnosis base celo; do
             if task "verify-global-pause-controller-${network}"; then
               echo "✅ ${network}: success"
             else
@@ -6768,13 +6617,13 @@ tasks:
           exit 0
 
   verify-streaming-escrow-factory-all-mainnets:
-    desc: Verify streaming escrow factory on mainnet, arbitrum, optimism, polygon, gnosis, base, celo
+    desc: Verify streaming escrow factory on ethereum, arbitrum, optimism, polygon, gnosis, base, celo
     cmds:
       - cmd: |
           set +e
           failed=0
 
-          for network in mainnet arbitrum optimism polygon gnosis base celo; do
+          for network in ethereum arbitrum optimism polygon gnosis base celo; do
             if task "verify-streaming-escrow-factory-${network}"; then
               echo "✅ ${network}: success"
             else
@@ -6797,12 +6646,48 @@ tasks:
           set +e
           failed=0
 
-          for network in mainnet arbitrum optimism polygon gnosis base celo; do
+          for network in ethereum arbitrum optimism polygon gnosis base celo; do
             if task "refresh-facets-${network}"; then
               echo "✅ ${network}: success"
             else
-              echo "❌ ${network}: failed"
-              failed=1
+              echo "⚠️ ${network}: initial attempt failed, retrying once"
+              sleep 3
+              if task "refresh-facets-${network}"; then
+                echo "✅ ${network}: success on retry"
+              else
+                case "${network}" in
+                  ethereum) chain_id=1 ;;
+                  arbitrum) chain_id=42161 ;;
+                  optimism) chain_id=10 ;;
+                  polygon) chain_id=137 ;;
+                  gnosis) chain_id=100 ;;
+                  base) chain_id=8453 ;;
+                  celo) chain_id=42220 ;;
+                  *) chain_id="" ;;
+                esac
+
+                run_latest=""
+                if [ -n "${chain_id}" ]; then
+                  if [ -f "broadcast/RefreshFacetSnapshots.s.sol/${chain_id}/run-latest.json" ]; then
+                    run_latest="broadcast/RefreshFacetSnapshots.s.sol/${chain_id}/run-latest.json"
+                  elif [ -f "../../broadcast/RefreshFacetSnapshots.s.sol/${chain_id}/run-latest.json" ]; then
+                    run_latest="../../broadcast/RefreshFacetSnapshots.s.sol/${chain_id}/run-latest.json"
+                  fi
+                fi
+
+                if [ -n "${run_latest}" ]; then
+                  echo "⚠️ ${network}: retry failed, attempting RESUME=true using ${run_latest}"
+                  if RESUME=true task "refresh-facets-${network}"; then
+                    echo "✅ ${network}: success on resume"
+                  else
+                    echo "❌ ${network}: failed"
+                    failed=1
+                  fi
+                else
+                  echo "❌ ${network}: failed (no run-latest.json found for resume)"
+                  failed=1
+                fi
+              fi
             fi
           done
 
@@ -6947,13 +6832,13 @@ tasks:
           echo "All networks succeeded."
 
   verify-global-deployments-all-mainnets:
-    desc: Verify deployments on mainnet, arbitrum, optimism, polygon, gnosis, base, celo; pass SCOPE=global|state|pause|escrow|factory|communities|strategies|facets|all
+    desc: Verify deployments on ethereum, arbitrum, optimism, polygon, gnosis, base, celo; pass SCOPE=global|state|pause|escrow|factory|communities|strategies|facets|all
     cmds:
       - cmd: |
           bash ./scripts/verify-all-deployments.sh --scope "${SCOPE:-global}"
 
   verify-all-mainnets:
-    desc: Verify all deployments on mainnet, arbitrum, optimism, polygon, gnosis, base, celo; pass SCOPE=global|state|pause|escrow|factory|communities|strategies|facets|all
+    desc: Verify all deployments on ethereum, arbitrum, optimism, polygon, gnosis, base, celo; pass SCOPE=global|state|pause|escrow|factory|communities|strategies|facets|all
     cmds:
       - cmd: |
           bash ./scripts/verify-all-deployments.sh --scope "${SCOPE:-all}"
@@ -7214,7 +7099,7 @@ tasks:
           --keystore ~/.foundry/keystores/pkMetamask \
           --chains celo
   submit-safe-payloads-grant-upgrade-access-all-chains:
-    desc: Submit ProxyOwner grantUpgradeAccess Safe payloads on arbitrum, optimism, polygon, gnosis, base, celo (set DRY_RUN=true to only log planned actions)
+    desc: Submit ProxyOwner grantUpgradeAccess Safe payloads on ethereum, arbitrum, optimism, polygon, gnosis, base, celo (set DRY_RUN=true to only log planned actions)
     cmds:
       - cmd: |
           set -e
@@ -7227,8 +7112,13 @@ tasks:
           grant_data="${grant_selector}000000000000000000000000${deployer_address_no0x}"
           ERC1967_IMPLEMENTATION_SLOT="0x360894A13BA1A3210667C828492DB98DCA3E2076CC3735A920A3CA505D382BBC"
 
-          for chain in arbitrum optimism polygon gnosis base celo; do
+          for chain in ethereum arbitrum optimism polygon gnosis base celo; do
             case "${chain}" in
+              ethereum)
+                RPC_ENV="RPC_URL_ETHEREUM"
+                safe_chain="mainnet"
+                payload_chain="mainnet"
+                ;;
               arbitrum) RPC_ENV="RPC_URL_ARB" ;;
               optimism) RPC_ENV="RPC_URL_OPT" ;;
               polygon) RPC_ENV="RPC_URL_POLYGON" ;;
@@ -7238,13 +7128,20 @@ tasks:
               *) echo "unsupported chain: ${chain}" >&2; exit 1 ;;
             esac
 
+            if [ -z "${safe_chain:-}" ]; then
+              safe_chain="${chain}"
+            fi
+            if [ -z "${payload_chain:-}" ]; then
+              payload_chain="${chain}"
+            fi
+
             eval "RPC_URL=\${${RPC_ENV}:-}"
             if [ -z "${RPC_URL}" ]; then
               echo "missing ${RPC_ENV}" >&2
               exit 1
             fi
 
-            payload="transaction-builder/${chain}-proxy-owner-upgrade-and-grant-payload.json"
+            payload="transaction-builder/${payload_chain}-proxy-owner-upgrade-and-grant-payload.json"
             if [ ! -f "${payload}" ]; then
               echo "missing payload: ${payload}" >&2
               exit 1
@@ -7317,7 +7214,7 @@ tasks:
             python scripts/submit_safe_payloads.py \
               --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
               --keystore ~/.foundry/keystores/pkMetamask \
-              --service-chain "${chain}" \
+              --service-chain "${safe_chain}" \
               --payload-file "${submit_payload}" \
               --origin-prefix "${origin_prefix}"
 
@@ -7326,9 +7223,11 @@ tasks:
               unset tmp_payload
             fi
             rm -f "${chain_payload}"
+            unset safe_chain
+            unset payload_chain
           done
   submit-safe-payloads-grant-upgrade-access-all-chains-dry:
-    desc: Dry-run ProxyOwner grantUpgradeAccess Safe payload submissions on arbitrum, optimism, polygon, gnosis, base, celo
+    desc: Dry-run ProxyOwner grantUpgradeAccess Safe payload submissions on ethereum, arbitrum, optimism, polygon, gnosis, base, celo
     cmds:
       - task: submit-safe-payloads-grant-upgrade-access-all-chains
         vars:
@@ -7395,30 +7294,6 @@ tasks:
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --account PK_DEPLOYER \
           --password "${PK_DEPLOYER_PW}" \
-          --verify \
-          --broadcast \
-          ${RESUME_FLAG} \
-          -vv
-        ignore_error: true
-      - task: sync-abis
-  deploy-global-pause-controller-celo:
-    desc: Deploy global pause controller celo
-    cmds:
-      - cmd: |
-          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
-          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
-          RESUME_FLAG=""
-          if [ "${RESUME:-false}" = "true" ]; then
-            RESUME_FLAG="--resume"
-          fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/DeployGlobalPauseController.s.sol:DeployGlobalPauseController \
-          --rpc-url ${RPC_URL_CELO} \
-          --sig "run(string)" 'celo' \
-          --chain-id 42220 \
-          --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --account PK_DEPLOYER \
-          --password "${PK_DEPLOYER_PW}" \
-          --verify \
           --broadcast \
           ${RESUME_FLAG} \
           -vv
@@ -7443,8 +7318,7 @@ tasks:
           --password "${PK_DEPLOYER_PW}" \
           --broadcast \
           ${RESUME_FLAG} \
-          -vv \
-          --verify
+          -vv
         ignore_error: true
       - task: sync-abis
   verify-global-pause-controller-celo:
@@ -7570,29 +7444,6 @@ tasks:
           --legacy \
           --chain-id 42220 \
           -vvv
-  verify-streaming-escrow-factory-celo:
-    desc: Verify streaming escrow factory celo
-    cmds:
-      - cmd: |
-          bash ./scripts/verify-streaming-escrow-factory.sh \
-          --network celo \
-          --rpc-url ${RPC_URL_CELO} \
-          --chain-id 42220 \
-          --etherscan-key ${ETHERSCAN_API_KEY} \
-          --verifier-url https://celo.blockscout.com/api/
-  upgrade-streaming-escrows-celo:
-    desc: Deploy or upgrade streaming escrows on celo (networks.json managed in script, optional I implementation)
-    cmds:
-      - cmd: |
-          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
-          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
-          RESUME_FLAG=""
-          if [ "${RESUME:-false}" = "true" ]; then
-            RESUME_FLAG="--resume"
-          fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/DeployOrUpgradeStreamingEscrows.s.sol:DeployOrUpgradeStreamingEscrows \
-          --rpc-url ${RPC_URL_CELO} \
-          --account PK_DEPLOYER \
           --password "${PK_DEPLOYER_PW}" \
           --etherscan-api-key ${ETHERSCAN_API_KEY} \
           --sig "run(string,address)" 'celo' ${I:-0x0000000000000000000000000000000000000000} \
@@ -7620,14 +7471,14 @@ tasks:
             opsepolia) rpc="${RPC_URL_OP_TESTNET}"; symbol="ETH"; buffer="0.0002" ;;
             arbitrum) rpc="${RPC_URL_ARB}"; symbol="ETH"; buffer="0.0002" ;;
             optimism) rpc="${RPC_URL_OPT}"; symbol="ETH"; buffer="0.0002" ;;
-            mainnet) rpc="${RPC_URL_ETHEREUM}"; symbol="ETH"; buffer="0.00005" ;;
+            mainnet|ethereum) rpc="${RPC_URL_ETHEREUM}"; symbol="ETH"; buffer="0.00005" ;;
             base) rpc="${RPC_URL_BASE}"; symbol="ETH"; buffer="0.0002" ;;
             polygon) rpc="${RPC_URL_POLYGON}"; symbol="POL"; buffer="0.1" ;;
             gnosis|xdai) rpc="${RPC_URL_GNOSIS}"; symbol="xDAI"; buffer="0.01" ;;
             celo) rpc="${RPC_URL_CELO}"; symbol="CELO"; buffer="0.01" ;;
             *)
               echo "Unsupported NETWORK=${network}"
-              echo "Supported: arbsepolia sepolia opsepolia arbitrum optimism mainnet base polygon gnosis xdai celo"
+              echo "Supported: arbsepolia sepolia opsepolia arbitrum optimism ethereum mainnet base polygon gnosis xdai celo"
               exit 1
               ;;
           esac
@@ -7813,7 +7664,7 @@ tasks:
           DRY_RUN: '{{default "false" .DRY_RUN}}'
       - task: log-old-private-key-balances
   transfer-gas-mainnets:
-    desc: "Transfer gas on mainnets only. Per-network overrides are optional; omitted amounts use sweep mode. Vars: ARBITRUM_AMOUNT OPTIMISM_AMOUNT MAINNET_AMOUNT BASE_AMOUNT POLYGON_AMOUNT GNOSIS_AMOUNT CELO_AMOUNT [DRY_RUN=true]"
+    desc: "Transfer gas on mainnets only. Per-network overrides are optional; omitted amounts use sweep mode. Vars: ARBITRUM_AMOUNT OPTIMISM_AMOUNT ETHEREUM_AMOUNT (or MAINNET_AMOUNT) BASE_AMOUNT POLYGON_AMOUNT GNOSIS_AMOUNT CELO_AMOUNT [DRY_RUN=true]"
     cmds:
       - task: transfer-gas
         vars:
@@ -7827,8 +7678,8 @@ tasks:
           DRY_RUN: '{{default "false" .DRY_RUN}}'
       - task: transfer-gas
         vars:
-          NETWORK: "mainnet"
-          AMOUNT: '{{default "" .MAINNET_AMOUNT}}'
+          NETWORK: "ethereum"
+          AMOUNT: "{{default .MAINNET_AMOUNT .ETHEREUM_AMOUNT}}"
           DRY_RUN: '{{default "false" .DRY_RUN}}'
       - task: transfer-gas
         vars:
@@ -7851,3 +7702,88 @@ tasks:
           AMOUNT: '{{default "" .CELO_AMOUNT}}'
           DRY_RUN: '{{default "false" .DRY_RUN}}'
       - task: log-old-private-key-balances
+
+  check-owner-proxy-owner-all:
+    desc: Check owner() and proxyOwner() on all configured chains (defaults to ENVS.SENDER and ENVS.PROXY_OWNER per chain)
+    cmds:
+      - cmd: |
+          bash ./scripts/check-owner-proxy-owner.sh
+
+  check-owner-proxy-owner-mainnets:
+    desc: Check owner() and proxyOwner() on all configured mainnets
+    cmds:
+      - cmd: |
+          bash ./scripts/check-owner-proxy-owner.sh --mainnets
+
+  check-owner-proxy-owner-testnets:
+    desc: Check owner() and proxyOwner() on all configured testnets
+    cmds:
+      - cmd: |
+          bash ./scripts/check-owner-proxy-owner.sh --testnets
+
+  check-owner-proxy-owner-network:
+    desc: "Check owner() and proxyOwner() on a single chain. Usage: task check-owner-proxy-owner-network NETWORK=<name>"
+    cmds:
+      - cmd: |
+          : "${NETWORK:?missing NETWORK}"
+          bash ./scripts/check-owner-proxy-owner.sh --network "${NETWORK}"
+
+  check-owner-proxy-owner-ethsepolia:
+    desc: Check owner() and proxyOwner() on ethsepolia
+    cmds:
+      - cmd: |
+          bash ./scripts/check-owner-proxy-owner.sh --network ethsepolia
+
+  check-owner-proxy-owner-arbsepolia:
+    desc: Check owner() and proxyOwner() on arbsepolia
+    cmds:
+      - cmd: |
+          bash ./scripts/check-owner-proxy-owner.sh --network arbsepolia
+
+  check-owner-proxy-owner-opsepolia:
+    desc: Check owner() and proxyOwner() on opsepolia
+    cmds:
+      - cmd: |
+          bash ./scripts/check-owner-proxy-owner.sh --network opsepolia
+
+  check-owner-proxy-owner-arbitrum:
+    desc: Check owner() and proxyOwner() on arbitrum
+    cmds:
+      - cmd: |
+          bash ./scripts/check-owner-proxy-owner.sh --network arbitrum
+
+  check-owner-proxy-owner-optimism:
+    desc: Check owner() and proxyOwner() on optimism
+    cmds:
+      - cmd: |
+          bash ./scripts/check-owner-proxy-owner.sh --network optimism
+
+  check-owner-proxy-owner-polygon:
+    desc: Check owner() and proxyOwner() on polygon
+    cmds:
+      - cmd: |
+          bash ./scripts/check-owner-proxy-owner.sh --network polygon
+
+  check-owner-proxy-owner-gnosis:
+    desc: Check owner() and proxyOwner() on gnosis
+    cmds:
+      - cmd: |
+          bash ./scripts/check-owner-proxy-owner.sh --network gnosis
+
+  check-owner-proxy-owner-base:
+    desc: Check owner() and proxyOwner() on base
+    cmds:
+      - cmd: |
+          bash ./scripts/check-owner-proxy-owner.sh --network base
+
+  check-owner-proxy-owner-celo:
+    desc: Check owner() and proxyOwner() on celo
+    cmds:
+      - cmd: |
+          bash ./scripts/check-owner-proxy-owner.sh --network celo
+
+  check-owner-proxy-owner-ethereum:
+    desc: Check owner() and proxyOwner() on ethereum
+    cmds:
+      - cmd: |
+          bash ./scripts/check-owner-proxy-owner.sh --network ethereum

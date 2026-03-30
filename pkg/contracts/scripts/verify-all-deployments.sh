@@ -4,6 +4,51 @@ set -euo pipefail
 CONTRACTS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 NETWORKS=()
 SCOPE="all"
+VERIFY_RPC_MAX_ATTEMPTS=${VERIFY_RPC_MAX_ATTEMPTS:-4}
+VERIFY_RPC_INITIAL_DELAY=${VERIFY_RPC_INITIAL_DELAY:-8}
+VERIFY_RPC_SUCCESS_DELAY=${VERIFY_RPC_SUCCESS_DELAY:-2}
+
+is_retryable_rpc_error() {
+  grep -Eqi 'rate limit|max calls per sec|429|timeout|temporar|failed to get storage|HTTP error 429|Max retries exceeded' <<< "$1"
+}
+
+run_with_rpc_retry() {
+  local description="$1"
+  shift
+
+  local attempt=1
+  local delay="$VERIFY_RPC_INITIAL_DELAY"
+  local output
+
+  while true; do
+    if output="$($@ 2>&1)"; then
+      printf '%s\n' "$output"
+      sleep "$VERIFY_RPC_SUCCESS_DELAY"
+      return 0
+    fi
+
+    printf '%s\n' "$output" >&2
+    if [[ "$attempt" -ge "$VERIFY_RPC_MAX_ATTEMPTS" ]]; then
+      return 1
+    fi
+
+    if is_retryable_rpc_error "$output"; then
+      echo "Retrying $description after ${delay}s (attempt $((attempt + 1))/${VERIFY_RPC_MAX_ATTEMPTS})..." >&2
+      sleep "$delay"
+      attempt=$((attempt + 1))
+      delay=$((delay * 2))
+      continue
+    fi
+
+    return 1
+  done
+}
+
+cooldown_after_network() {
+  if [[ "$VERIFY_RPC_SUCCESS_DELAY" -gt 0 ]]; then
+    sleep "$VERIFY_RPC_SUCCESS_DELAY"
+  fi
+}
 
 usage() {
   cat <<'USAGE'
@@ -105,17 +150,15 @@ run_state_scope() {
   echo "==> Running config/state verifier"
 
   for network in "${NETWORKS[@]}"; do
-    local rpc_var
     local rpc_url
     local network_chain_id
     local cmd
 
-    rpc_var="$(rpc_env_name "$network")" || {
+    rpc_url="$(rpc_url_for_network "$network")" || {
       echo "❌ $network state"
       failed=1
       continue
     }
-    rpc_url="${!rpc_var:-}"
     network_chain_id="$(chain_id "$network")"
 
     if [[ -z "$rpc_url" || -z "$network_chain_id" ]]; then
@@ -131,9 +174,26 @@ run_state_scope() {
       --ffi
       --chain-id "$network_chain_id")
 
-    if "${cmd[@]}"; then
+    if run_with_rpc_retry "$network state" "${cmd[@]}"; then
       echo "✅ $network state"
+      cooldown_after_network
     else
+      local alternate_rpc_url=""
+      alternate_rpc_url="$(alternate_rpc_url_for_network "$network")" || true
+      if [[ -n "$alternate_rpc_url" ]]; then
+        cmd=(forge script script/VerifyNetworkConfigState.s.sol:VerifyNetworkConfigState
+          --rpc-url "$alternate_rpc_url"
+          --sig "run(string)" "$network"
+          --ffi
+          --chain-id "$network_chain_id")
+
+        if run_with_rpc_retry "$network state (alternate RPC)" "${cmd[@]}"; then
+          echo "✅ $network state"
+          cooldown_after_network
+          continue
+        fi
+      fi
+
       echo "❌ $network state"
       failed=1
     fi
@@ -147,16 +207,14 @@ run_diamond_scope() {
 
   echo "==> Running facet verifier"
   for network in "${NETWORKS[@]}"; do
-    local rpc_var
     local rpc_url
     local network_chain_id
 
-    rpc_var="$(rpc_env_name "$network")" || {
+    rpc_url="$(rpc_url_for_network "$network")" || {
       echo "❌ $network facets"
       failed=1
       continue
     }
-    rpc_url="${!rpc_var:-}"
     network_chain_id="$(chain_id "$network")"
 
     if [[ -z "$rpc_url" || -z "$network_chain_id" ]]; then
@@ -166,12 +224,26 @@ run_diamond_scope() {
     fi
 
     echo "### $network"
-    if bash "$CONTRACTS_ROOT/scripts/verify-diamond-facets.sh" \
+    if run_with_rpc_retry "$network facets" bash "$CONTRACTS_ROOT/scripts/verify-diamond-facets.sh" \
       --network "$network" \
       --rpc-url "$rpc_url" \
       --chain-id "$network_chain_id"; then
       echo "✅ $network facets"
+      cooldown_after_network
     else
+      local alternate_rpc_url=""
+      alternate_rpc_url="$(alternate_rpc_url_for_network "$network")" || true
+      if [[ -n "$alternate_rpc_url" ]]; then
+        if run_with_rpc_retry "$network facets (alternate RPC)" bash "$CONTRACTS_ROOT/scripts/verify-diamond-facets.sh" \
+          --network "$network" \
+          --rpc-url "$alternate_rpc_url" \
+          --chain-id "$network_chain_id"; then
+          echo "✅ $network facets"
+          cooldown_after_network
+          continue
+        fi
+      fi
+
       echo "❌ $network facets"
       failed=1
     fi
@@ -196,8 +268,81 @@ rpc_env_name() {
   esac
 }
 
+premium_rpc_env_name() {
+  case "$1" in
+    ethsepolia) echo "PREMIUM_RPC_URL_SEP_TESTNET" ;;
+    arbsepolia) echo "PREMIUM_RPC_URL_ARB_TESTNET" ;;
+    opsepolia) echo "PREMIUM_RPC_URL_OP_TESTNET" ;;
+    arbitrum) echo "PREMIUM_RPC_URL_ARB" ;;
+    optimism) echo "PREMIUM_RPC_URL_OPT" ;;
+    ethereum) echo "PREMIUM_RPC_URL_ETHEREUM" ;;
+    polygon) echo "PREMIUM_RPC_URL_POLYGON" ;;
+    gnosis) echo "PREMIUM_RPC_URL_GNOSIS" ;;
+    base) echo "PREMIUM_RPC_URL_BASE" ;;
+    celo) echo "PREMIUM_RPC_URL_CELO" ;;
+    *) return 1 ;;
+  esac
+}
+
+rpc_url_for_network() {
+  local network="$1"
+  local premium_var=""
+  local primary_var=""
+
+  premium_var="$(premium_rpc_env_name "$network")" || true
+  primary_var="$(rpc_env_name "$network")" || return 1
+
+  if [[ -n "$premium_var" && -n "${!premium_var:-}" ]]; then
+    echo "${!premium_var}"
+    return 0
+  fi
+
+  echo "${!primary_var:-}"
+}
+
+alternate_rpc_url_for_network() {
+  local network="$1"
+  local premium_var=""
+  local primary_var=""
+
+  premium_var="$(premium_rpc_env_name "$network")" || true
+  primary_var="$(rpc_env_name "$network")" || return 1
+
+  if [[ -n "$premium_var" && -n "${!premium_var:-}" && -n "${!primary_var:-}" && "${!premium_var}" != "${!primary_var}" ]]; then
+    echo "${!primary_var}"
+    return 0
+  fi
+
+  return 1
+}
+
 proxy_owner_address() {
   jq -r --arg n "$1" '.networks[] | select(.name == $n) | .ENVS.PROXY_OWNER // empty' "$CONTRACTS_ROOT/config/networks.json"
+}
+
+configured_sender_address() {
+  jq -r --arg n "$1" '.networks[] | select(.name == $n) | .ENVS.SENDER // empty' "$CONTRACTS_ROOT/config/networks.json"
+}
+
+resolve_deployer_address() {
+  local network="$1"
+
+  if [[ -n "${DEPLOYER_ADDRESS:-}" ]]; then
+    echo "$DEPLOYER_ADDRESS"
+    return 0
+  fi
+
+  if [[ -n "${DEPLOYER_PRIVATE_KEY:-}" ]]; then
+    cast wallet address --private-key "$DEPLOYER_PRIVATE_KEY"
+    return 0
+  fi
+
+  if [[ -n "${PK_DEPLOYER_PW:-}" ]]; then
+    cast wallet address --account PK_DEPLOYER --password "$PK_DEPLOYER_PW"
+    return 0
+  fi
+
+  configured_sender_address "$network"
 }
 
 proxy_owner_upgrade_access() {
@@ -242,26 +387,30 @@ run_upgrade_scope() {
   echo "==> Running ${scope} verifier (skipping pre/postflight)"
 
   : "${ETHERSCAN_API_KEY:?missing ETHERSCAN_API_KEY}"
-  : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
-  local deployer_address
-  deployer_address="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
 
   for network in "${NETWORKS[@]}"; do
-    local rpc_var
     local rpc_url
     local network_chain_id
     local cmd
+    local deployer_address
 
-    rpc_var="$(rpc_env_name "$network")" || {
+    rpc_url="$(rpc_url_for_network "$network")" || {
       echo "❌ $network $scope"
       failed=1
       continue
     }
-    rpc_url="${!rpc_var:-}"
     network_chain_id="$(chain_id "$network")"
 
     if [[ -z "$rpc_url" || -z "$network_chain_id" ]]; then
       echo "❌ $network $scope"
+      failed=1
+      continue
+    fi
+
+    deployer_address="$(resolve_deployer_address "$network")"
+    if [[ -z "$deployer_address" || "$deployer_address" == "null" ]]; then
+      echo "❌ $network $scope"
+      echo "   missing deployer address (set DEPLOYER_ADDRESS, DEPLOYER_PRIVATE_KEY, PK_DEPLOYER_PW, or ENVS.SENDER)"
       failed=1
       continue
     fi
@@ -279,12 +428,14 @@ run_upgrade_scope() {
     cmd=(forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript
       --rpc-url "$rpc_url"
       --sig "$sig" "$network"
-      --account PK_DEPLOYER
-      --password "$PK_DEPLOYER_PW"
       --verifier etherscan
       --etherscan-api-key "$ETHERSCAN_API_KEY"
       --ffi
       --chain-id "$network_chain_id")
+
+    if [[ -n "${PK_DEPLOYER_PW:-}" ]]; then
+      cmd+=(--account PK_DEPLOYER --password "$PK_DEPLOYER_PW")
+    fi
 
     if [[ "$network" == "opsepolia" ]]; then
       cmd+=(--verifier-url "https://api.etherscan.io/v2/api?chainid=11155420")
@@ -294,9 +445,40 @@ run_upgrade_scope() {
       cmd+=(--legacy)
     fi
 
-    if ETH_PASSWORD= DEPLOYER_ADDRESS="$deployer_address" REUSE_CONFIGURED_IMPLEMENTATIONS=true SKIP_PREFLIGHT=true SKIP_NETWORK_WRITES=true "${cmd[@]}"; then
+    if run_with_rpc_retry "$network $scope" env ETH_PASSWORD= DEPLOYER_ADDRESS="$deployer_address" REUSE_CONFIGURED_IMPLEMENTATIONS=true SKIP_PREFLIGHT=true SKIP_NETWORK_WRITES=true "${cmd[@]}"; then
       echo "✅ $network $scope"
+      cooldown_after_network
     else
+      local alternate_rpc_url=""
+      alternate_rpc_url="$(alternate_rpc_url_for_network "$network")" || true
+      if [[ -n "$alternate_rpc_url" ]]; then
+        cmd=(forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript
+          --rpc-url "$alternate_rpc_url"
+          --sig "$sig" "$network"
+          --verifier etherscan
+          --etherscan-api-key "$ETHERSCAN_API_KEY"
+          --ffi
+          --chain-id "$network_chain_id")
+
+        if [[ -n "${PK_DEPLOYER_PW:-}" ]]; then
+          cmd+=(--account PK_DEPLOYER --password "$PK_DEPLOYER_PW")
+        fi
+
+        if [[ "$network" == "opsepolia" ]]; then
+          cmd+=(--verifier-url "https://api.etherscan.io/v2/api?chainid=11155420")
+        fi
+
+        if needs_legacy "$network"; then
+          cmd+=(--legacy)
+        fi
+
+        if run_with_rpc_retry "$network $scope (alternate RPC)" env ETH_PASSWORD= DEPLOYER_ADDRESS="$deployer_address" REUSE_CONFIGURED_IMPLEMENTATIONS=true SKIP_PREFLIGHT=true SKIP_NETWORK_WRITES=true "${cmd[@]}"; then
+          echo "✅ $network $scope"
+          cooldown_after_network
+          continue
+        fi
+      fi
+
       echo "❌ $network $scope"
       failed=1
     fi

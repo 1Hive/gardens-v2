@@ -123,13 +123,31 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         if (_shouldDoCommunities()) {
             _executeCommunityUpgrades(context, networkJson);
             _syncFactoryCommunityState(context);
-            _syncCommunityImplementationFromLive(networkJson);
+            if (_isFullCommunitySelection(networkJson)) {
+                _syncCommunityImplementationFromLive(networkJson);
+            }
         }
         if (_shouldDoStrategies()) {
             _executeStrategyUpgrades(context, networkJson);
             _syncFactoryStrategyState(context);
-            _syncStrategyImplementationFromLive(networkJson);
+            if (_isFullStrategySelection(networkJson)) {
+                _syncStrategyImplementationFromLive(networkJson);
+            }
         }
+    }
+
+    function _isFullCommunitySelection(string memory networkJson) internal view returns (bool) {
+        address[] memory proxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
+        uint256 startIndex = _boundedStartIndex(vm.envOr("COMMUNITY_START_INDEX", uint256(0)), proxies.length);
+        uint256 endIndex = _boundedEndIndex(vm.envOr("COMMUNITY_END_INDEX", proxies.length), proxies.length);
+        return startIndex == 0 && endIndex == proxies.length;
+    }
+
+    function _isFullStrategySelection(string memory networkJson) internal view returns (bool) {
+        address[] memory proxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
+        uint256 startIndex = _boundedStartIndex(vm.envOr("STRATEGY_START_INDEX", uint256(0)), proxies.length);
+        uint256 endIndex = _boundedEndIndex(vm.envOr("STRATEGY_END_INDEX", proxies.length), proxies.length);
+        return startIndex == 0 && endIndex == proxies.length;
     }
 
     function _populateDesiredCuts(UpgradeContext memory context, string memory networkJson)
@@ -344,7 +362,12 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         if (doCommunities) {
             address[] memory registryCommunityProxies =
                 networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
-            for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
+            uint256 communityStartIndex =
+                _boundedStartIndex(vm.envOr("COMMUNITY_START_INDEX", uint256(0)), registryCommunityProxies.length);
+            uint256 communityEndIndex = _boundedEndIndex(
+                vm.envOr("COMMUNITY_END_INDEX", registryCommunityProxies.length), registryCommunityProxies.length
+            );
+            for (uint256 i = communityStartIndex; i < communityEndIndex; i++) {
                 if (registryCommunityProxies[i].code.length == 0) revert("registry community proxy has no code");
                 if (!_isDiamondLoupeCompatible(registryCommunityProxies[i])) revert("registry community loupe mismatch");
             }
@@ -352,7 +375,11 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
 
         if (doStrategies) {
             address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
-            for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
+            uint256 strategyStartIndex =
+                _boundedStartIndex(vm.envOr("STRATEGY_START_INDEX", uint256(0)), cvStrategyProxies.length);
+            uint256 strategyEndIndex =
+                _boundedEndIndex(vm.envOr("STRATEGY_END_INDEX", cvStrategyProxies.length), cvStrategyProxies.length);
+            for (uint256 i = strategyStartIndex; i < strategyEndIndex; i++) {
                 if (cvStrategyProxies[i].code.length == 0) revert("cv strategy proxy has no code");
                 if (!_isDiamondLoupeCompatible(cvStrategyProxies[i])) revert("cv strategy loupe mismatch");
             }
