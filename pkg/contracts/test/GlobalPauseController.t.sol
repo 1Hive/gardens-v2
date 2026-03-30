@@ -99,6 +99,84 @@ contract GlobalPauseControllerTest is Test {
         assertTrue(controller.isPaused(target, selector));
     }
 
+    function test_pauseGlobal_only_owner() public {
+        vm.prank(address(0xBAD));
+        vm.expectRevert();
+        controller.pauseGlobal();
+
+        controller.pauseGlobal();
+        assertTrue(controller.isPaused(target));
+        assertTrue(controller.isPaused(target, selector));
+    }
+
+    function test_pauseGlobal_pauses_all_targets_and_selectors() public {
+        address anotherTarget = address(0xCAFE);
+        bytes4 anotherSelector = bytes4(0x87654321);
+
+        assertFalse(controller.isPaused(target));
+        assertFalse(controller.isPaused(anotherTarget));
+        assertFalse(controller.isPaused(target, selector));
+        assertFalse(controller.isPaused(anotherTarget, anotherSelector));
+
+        controller.pauseGlobal();
+
+        assertTrue(controller.isPaused(target));
+        assertTrue(controller.isPaused(anotherTarget));
+        assertTrue(controller.isPaused(target, selector));
+        assertTrue(controller.isPaused(anotherTarget, anotherSelector));
+        assertEq(controller.pausedUntil(target), type(uint64).max);
+        assertEq(controller.pausedUntil(anotherTarget), type(uint64).max);
+    }
+
+    function test_unpauseGlobal_restores_target_pause_state() public {
+        controller.pause(target, 20);
+        controller.pauseGlobal();
+        assertTrue(controller.isPaused(target));
+
+        controller.unpauseGlobal();
+
+        assertTrue(controller.isPaused(target));
+
+        vm.warp(block.timestamp + 21);
+        assertFalse(controller.isPaused(target));
+    }
+
+    function test_pauseSelectorGlobal_only_owner() public {
+        vm.prank(address(0xBAD));
+        vm.expectRevert();
+        controller.pauseSelectorGlobal(selector);
+
+        controller.pauseSelectorGlobal(selector);
+        assertTrue(controller.isPaused(target, selector));
+    }
+
+    function test_pauseSelectorGlobal_pauses_selector_for_all_targets() public {
+        address anotherTarget = address(0xCAFE);
+        bytes4 anotherSelector = bytes4(0x87654321);
+
+        controller.pauseSelectorGlobal(selector);
+
+        assertTrue(controller.isPaused(target, selector));
+        assertTrue(controller.isPaused(anotherTarget, selector));
+        assertFalse(controller.isPaused(target, anotherSelector));
+        assertEq(controller.pausedSelectorUntil(target, selector), type(uint64).max);
+        assertEq(controller.pausedSelectorUntil(anotherTarget, selector), type(uint64).max);
+    }
+
+    function test_unpauseSelectorGlobal_restores_target_selector_pause_state() public {
+        controller.pauseSelector(target, selector, 20);
+        controller.pauseSelectorGlobal(selector);
+
+        assertTrue(controller.isPaused(target, selector));
+
+        controller.unpauseSelectorGlobal(selector);
+
+        assertTrue(controller.isPaused(target, selector));
+
+        vm.warp(block.timestamp + 21);
+        assertFalse(controller.isPaused(target, selector));
+    }
+
     function test_unpause_only_authorized() public {
         controller.pause(target, 10);
 
