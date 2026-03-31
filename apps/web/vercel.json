@@ -1,4 +1,5 @@
 {
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- .",
   "crons": [
     {
       "path": "/api/passport-oracles/daily-job/10",
