@@ -47,7 +47,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            cache
+            pkg/contracts/cache
             pkg/contracts/out
           key: forge-coverage-${{ hashFiles('pkg/contracts/src/**/*.sol', 'pkg/contracts/test/**/*.sol', 'foundry.toml', 'lib/**', 'remappings.txt', 'foundry.lock', '.gitmodules') }}
           restore-keys: |
