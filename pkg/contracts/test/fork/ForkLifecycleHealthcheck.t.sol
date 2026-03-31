@@ -8,13 +8,13 @@ import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {GV2ERC20} from "../script/GV2ERC20.sol";
-import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
+import {GV2ERC20} from "../../script/GV2ERC20.sol";
+import {RegistryFactory} from "../../src/RegistryFactory/RegistryFactory.sol";
 import {
     RegistryCommunity,
     RegistryCommunityInitializeParams,
     CommunityParams
-} from "../src/RegistryCommunity/RegistryCommunity.sol";
+} from "../../src/RegistryCommunity/RegistryCommunity.sol";
 import {
     CVStrategy,
     ProposalType,
@@ -27,14 +27,14 @@ import {
     CVParams,
     CVStrategyInitializeParamsV0_2,
     CVStrategyInitializeParamsV0_3
-} from "../src/CVStrategy/CVStrategy.sol";
-import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
-import {SafeArbitrator} from "../src/SafeArbitrator.sol";
-import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
-import {ISybilScorer} from "../src/ISybilScorer.sol";
-import {MockPauseController} from "./helpers/PauseHelpers.sol";
-import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
-import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
+} from "../../src/CVStrategy/CVStrategy.sol";
+import {IArbitrator} from "../../src/interfaces/IArbitrator.sol";
+import {SafeArbitrator} from "../../src/SafeArbitrator.sol";
+import {IVotingPowerRegistry} from "../../src/interfaces/IVotingPowerRegistry.sol";
+import {ISybilScorer} from "../../src/ISybilScorer.sol";
+import {MockPauseController} from "../helpers/PauseHelpers.sol";
+import {IDiamondLoupe} from "../../src/diamonds/interfaces/IDiamondLoupe.sol";
+import {IDiamondCut} from "../../src/diamonds/interfaces/IDiamondCut.sol";
 
 contract MockVotingPowerRegistryFork is IVotingPowerRegistry {
     mapping(address => uint256) internal powerByMember;

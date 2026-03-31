@@ -3,15 +3,15 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 
-import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
-import {CVAdminFacet} from "../src/CVStrategy/facets/CVAdminFacet.sol";
-import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol";
-import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
-import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
-import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
-import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
-import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
-import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
+import {CVStrategy} from "../../src/CVStrategy/CVStrategy.sol";
+import {CVAdminFacet} from "../../src/CVStrategy/facets/CVAdminFacet.sol";
+import {CVAllocationFacet} from "../../src/CVStrategy/facets/CVAllocationFacet.sol";
+import {CVDisputeFacet} from "../../src/CVStrategy/facets/CVDisputeFacet.sol";
+import {CVPowerFacet} from "../../src/CVStrategy/facets/CVPowerFacet.sol";
+import {CVProposalFacet} from "../../src/CVStrategy/facets/CVProposalFacet.sol";
+import {IDiamondLoupe} from "../../src/diamonds/interfaces/IDiamondLoupe.sol";
+import {RegistryFactory} from "../../src/RegistryFactory/RegistryFactory.sol";
+import {RegistryCommunity} from "../../src/RegistryCommunity/RegistryCommunity.sol";
 
 /**
  * @title DiamondUpgradeFork
