@@ -20,18 +20,24 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
         0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
     address internal requestedEscrowImplementation;
+    bool internal deployImplementationOnly;
 
-    function run(string memory network, address _newEscrowImplementation) public {
+    function run(string memory network, address _newEscrowImplementation, bool implementationOnly) public {
         requestedEscrowImplementation = _newEscrowImplementation;
+        deployImplementationOnly = implementationOnly;
         BaseMultiChain.run(network);
     }
 
+    function run(string memory network, address _newEscrowImplementation) public {
+        run(network, _newEscrowImplementation, false);
+    }
+
     function run(string memory network) public override {
-        run(network, address(0));
+        run(network, address(0), false);
     }
 
     function runCurrentNetwork(string memory networkJson) public override {
-        bool deployOnly = vm.envOr("DEPLOY_ONLY", false);
+        bool deployOnly = deployImplementationOnly || vm.envOr("DEPLOY_ONLY", false);
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
         require(proxyOwner != address(0), "PROXY_OWNER is zero");
 

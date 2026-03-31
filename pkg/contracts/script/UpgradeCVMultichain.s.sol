@@ -87,8 +87,6 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     }
 
     function runCurrentNetwork(string memory networkJson) public override {
-        bool reuseConfiguredImplementations = _flagEnabled("REUSE_CONFIGURED_IMPLEMENTATIONS");
-
         UpgradeContext memory context;
         context.pauseController = networkJson.readAddress(getKeyNetwork(".ENVS.PAUSE_CONTROLLER"));
         if (context.pauseController == address(0)) revert("PAUSE_CONTROLLER not set in networks.json");
@@ -106,13 +104,13 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         }
 
         context.registryFactoryImplementation = _shouldDeployFactoryImplementation()
-            ? _resolveRegistryFactoryImplementation(reuseConfiguredImplementations)
+            ? _resolveRegistryFactoryImplementation()
             : address(0);
         context.registryImplementation = _shouldDeployRegistryImplementation()
-            ? _resolveRegistryImplementation(reuseConfiguredImplementations)
+            ? _resolveRegistryImplementation()
             : address(0);
         context.strategyImplementation = _shouldDeployStrategyImplementation()
-            ? _resolveStrategyImplementation(reuseConfiguredImplementations)
+            ? _resolveStrategyImplementation()
             : address(0);
         context = _populateDesiredCuts(context, networkJson);
 
@@ -391,12 +389,26 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         return ok;
     }
 
-    function _resolveRegistryFactoryImplementation(bool reuseConfiguredImplementations) internal returns (address) {
-        if (reuseConfiguredImplementations) {
-            address configured = _readAddressOrZero(".IMPLEMENTATIONS.REGISTRY_FACTORY");
-            if (configured == address(0) || configured.code.length == 0) {
-                revert("configured registry factory implementation invalid");
-            }
+    function _shouldReuseConfiguredImplementation(address configured, bytes memory expectedRuntimeCode)
+        internal
+        view
+        returns (bool)
+    {
+        return configured != address(0) && configured.code.length != 0
+            && keccak256(configured.code) == keccak256(expectedRuntimeCode);
+    }
+
+    function _artifactRuntimeCode(string memory artifactPath) internal view returns (bytes memory) {
+        return vm.getDeployedCode(artifactPath);
+    }
+
+    function _resolveRegistryFactoryImplementation() internal returns (address) {
+        address configured = _readAddressOrZero(".IMPLEMENTATIONS.REGISTRY_FACTORY");
+        if (
+            _shouldReuseConfiguredImplementation(
+                configured, _artifactRuntimeCode("RegistryFactory.sol:RegistryFactory")
+            )
+        ) {
             return configured;
         }
 
@@ -405,12 +417,13 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         return deployed;
     }
 
-    function _resolveRegistryImplementation(bool reuseConfiguredImplementations) internal returns (address) {
-        if (reuseConfiguredImplementations) {
-            address configured = _readAddressOrZero(".IMPLEMENTATIONS.REGISTRY_COMMUNITY");
-            if (configured == address(0) || configured.code.length == 0) {
-                revert("configured registry community implementation invalid");
-            }
+    function _resolveRegistryImplementation() internal returns (address) {
+        address configured = _readAddressOrZero(".IMPLEMENTATIONS.REGISTRY_COMMUNITY");
+        if (
+            _shouldReuseConfiguredImplementation(
+                configured, _artifactRuntimeCode("RegistryCommunity.sol:RegistryCommunity")
+            )
+        ) {
             return configured;
         }
 
@@ -419,12 +432,13 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         return deployed;
     }
 
-    function _resolveStrategyImplementation(bool reuseConfiguredImplementations) internal returns (address) {
-        if (reuseConfiguredImplementations) {
-            address configured = _readAddressOrZero(".IMPLEMENTATIONS.CV_STRATEGY");
-            if (configured == address(0) || configured.code.length == 0) {
-                revert("configured strategy implementation invalid");
-            }
+    function _resolveStrategyImplementation() internal returns (address) {
+        address configured = _readAddressOrZero(".IMPLEMENTATIONS.CV_STRATEGY");
+        if (
+            _shouldReuseConfiguredImplementation(
+                configured, _artifactRuntimeCode("CVStrategy.sol:CVStrategy")
+            )
+        ) {
             return configured;
         }
 

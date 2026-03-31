@@ -159,8 +159,8 @@ export async function GET(request: Request) {
   }
 
   const registryFactory = pickAddress(
-    { source: "subgraph", value: subgraphContracts.registryFactory },
     { source: "networks.json", value: network.PROXIES?.REGISTRY_FACTORY },
+    { source: "subgraph", value: subgraphContracts.registryFactory },
   );
   const safeArbitrator = pickAddress({
     source: "networks.json",

@@ -313,7 +313,7 @@ tasks:
             }
           fi
 
-          NETWORKS_JSON_PATH="${TMP_NETWORKS_JSON}" REUSE_CONFIGURED_IMPLEMENTATIONS=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
+          NETWORKS_JSON_PATH="${TMP_NETWORKS_JSON}" ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
             --rpc-url "${LOCAL_RPC_URL}" \
             --sig "${SIG}" "${CHAIN}" \
             --account PK_DEPLOYER \
@@ -516,7 +516,7 @@ tasks:
             strategies) SIG="runStrategies(string)" ;;
             *) echo "unsupported PHASE: ${PHASE}" >&2; exit 1 ;;
           esac
-          REUSE_CONFIGURED_IMPLEMENTATIONS=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
+          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
           --sig "${SIG}" 'ethsepolia' \
           --account PK_DEPLOYER \
@@ -540,7 +540,7 @@ tasks:
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          REUSE_CONFIGURED_IMPLEMENTATIONS=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
+          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
           --sig "runFactoryUpgradeImpl(string)" 'ethsepolia' \
           --account PK_DEPLOYER \
@@ -612,7 +612,7 @@ tasks:
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          REUSE_CONFIGURED_IMPLEMENTATIONS=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
+          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
           --sig "runFactorySetPauseController(string)" 'ethsepolia' \
           --account PK_DEPLOYER \
@@ -636,7 +636,7 @@ tasks:
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          REUSE_CONFIGURED_IMPLEMENTATIONS=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
+          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
           --sig "runFactorySetRegistryTemplate(string)" 'ethsepolia' \
           --account PK_DEPLOYER \
@@ -660,7 +660,7 @@ tasks:
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          REUSE_CONFIGURED_IMPLEMENTATIONS=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
+          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
           --sig "runFactorySetStrategyTemplate(string)" 'ethsepolia' \
           --account PK_DEPLOYER \
@@ -684,7 +684,7 @@ tasks:
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          REUSE_CONFIGURED_IMPLEMENTATIONS=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
+          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
           --sig "run(string,string)" 'ethsepolia' 'communities' \
           --account PK_DEPLOYER \
@@ -709,7 +709,7 @@ tasks:
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          REUSE_CONFIGURED_IMPLEMENTATIONS=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
+          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
           --sig "run(string,string)" 'ethsepolia' 'strategies' \
           --account PK_DEPLOYER \
@@ -5102,6 +5102,100 @@ tasks:
             echo "Some networks ProxyOwner contracts do not have PK_DEPLOYER as upgradeAccess"
             exit 1
           fi
+  renounce-proxy-owner-upgrade-access-ethsep:
+    desc: Renounce ProxyOwner upgrade access on ethsepolia
+    cmds:
+      - cmd: |
+          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
+          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RenounceProxyOwnerUpgradeAccess.s.sol:RenounceProxyOwnerUpgradeAccess \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --sig "run(string)" 'ethsepolia' \
+          --chain-id 11155111 \
+          --account PK_DEPLOYER \
+          --password "${PK_DEPLOYER_PW}" \
+          --ffi \
+          --broadcast \
+          -vv
+  renounce-proxy-owner-upgrade-access-arbsep:
+    desc: Renounce ProxyOwner upgrade access on arbsepolia
+    cmds:
+      - cmd: |
+          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
+          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RenounceProxyOwnerUpgradeAccess.s.sol:RenounceProxyOwnerUpgradeAccess \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --sig "run(string)" 'arbsepolia' \
+          --chain-id 421614 \
+          --account PK_DEPLOYER \
+          --password "${PK_DEPLOYER_PW}" \
+          --ffi \
+          --broadcast \
+          -vv
+  renounce-proxy-owner-upgrade-access-opsep:
+    desc: Renounce ProxyOwner upgrade access on opsepolia
+    cmds:
+      - cmd: |
+          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
+          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RenounceProxyOwnerUpgradeAccess.s.sol:RenounceProxyOwnerUpgradeAccess \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --sig "run(string)" 'opsepolia' \
+          --chain-id 11155420 \
+          --account PK_DEPLOYER \
+          --password "${PK_DEPLOYER_PW}" \
+          --ffi \
+          --broadcast \
+          -vv
+  renounce-proxy-owner-upgrade-access-testnets:
+    desc: Renounce ProxyOwner upgrade access on all configured testnets
+    cmds:
+      - cmd: |
+          set -euo pipefail
+          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
+
+          deployer_address="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+
+          jq -r '.networks[] | select(.testnet == true and (.ENVS.PROXY_OWNER? != null) and (.ENVS.PROXY_OWNER != "")) | [.name, .ENVS.PROXY_OWNER] | @tsv' config/networks.json |
+          while IFS=$'\t' read -r network proxy_owner; do
+            case "${network}" in
+              ethsepolia)
+                rpc="${RPC_URL_SEP_TESTNET}"
+                task_name="renounce-proxy-owner-upgrade-access-ethsep"
+                ;;
+              arbsepolia)
+                rpc="${RPC_URL_ARB_TESTNET}"
+                task_name="renounce-proxy-owner-upgrade-access-arbsep"
+                ;;
+              opsepolia)
+                rpc="${RPC_URL_OP_TESTNET}"
+                task_name="renounce-proxy-owner-upgrade-access-opsep"
+                ;;
+              *)
+                echo "[SKIP] ${network}: unsupported testnet"
+                continue
+                ;;
+            esac
+
+            : "${rpc:?missing RPC for ${network}}"
+
+            current_upgrade_access="$(cast call --rpc-url "${rpc}" "${proxy_owner}" "upgradeAccess()(address)" 2>/dev/null || true)"
+            current_upgrade_access_lower="$(echo "${current_upgrade_access}" | tr '[:upper:]' '[:lower:]')"
+            deployer_address_lower="$(echo "${deployer_address}" | tr '[:upper:]' '[:lower:]')"
+
+            if [ "${current_upgrade_access_lower}" = "0x0000000000000000000000000000000000000000" ]; then
+              echo "[SKIP] ${network}: ProxyOwner upgradeAccess already renounced"
+              continue
+            fi
+
+            if [ "${current_upgrade_access_lower}" != "${deployer_address_lower}" ]; then
+              echo "[SKIP] ${network}: upgradeAccess is ${current_upgrade_access}, expected ${deployer_address}"
+              continue
+            fi
+
+            echo "Renouncing ProxyOwner upgrade access on ${network}"
+            task "${task_name}"
+          done
   upgrade-proxy-owner-arbitrum:
     desc: Upgrade proxy owner arbitrum
     cmds:
@@ -5457,6 +5551,18 @@ tasks:
     desc: Alias for renounce-proxy-owner-upgrade-access-mainnet
     cmds:
       - task: renounce-proxy-owner-upgrade-access-mainnet
+  renounce-ethsep:
+    desc: Alias for renounce-proxy-owner-upgrade-access-ethsep
+    cmds:
+      - task: renounce-proxy-owner-upgrade-access-ethsep
+  renounce-arbsep:
+    desc: Alias for renounce-proxy-owner-upgrade-access-arbsep
+    cmds:
+      - task: renounce-proxy-owner-upgrade-access-arbsep
+  renounce-opsep:
+    desc: Alias for renounce-proxy-owner-upgrade-access-opsep
+    cmds:
+      - task: renounce-proxy-owner-upgrade-access-opsep
   renounce-arbitrum:
     desc: Alias for renounce-proxy-owner-upgrade-access-arbitrum
     cmds:
@@ -5485,6 +5591,14 @@ tasks:
     desc: Alias for renounce-proxy-owner-upgrade-access-mainnets
     cmds:
       - task: renounce-proxy-owner-upgrade-access-mainnets
+  renounce-all-testnets:
+    desc: Alias for renounce-proxy-owner-upgrade-access-testnets
+    cmds:
+      - task: renounce-proxy-owner-upgrade-access-testnets
+  renounce-testnets:
+    desc: Alias for renounce-proxy-owner-upgrade-access-testnets
+    cmds:
+      - task: renounce-proxy-owner-upgrade-access-testnets
   deploy-or-upgrade-good-dollar-sybil-base:
     desc: Deploy or upgrade good dollar sybil base
     cmds:
