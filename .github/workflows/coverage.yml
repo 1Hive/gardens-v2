@@ -23,17 +23,35 @@ permissions:
 jobs:
   coverage:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      - name: Setup swap space
+        run: |
+          sudo fallocate -l 8G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          free -h
+
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: stable
+
+      - name: Cache forge build
+        uses: actions/cache@v4
+        with:
+          path: |
+            pkg/contracts/cache
+            pkg/contracts/out
+          key: forge-coverage-${{ hashFiles('pkg/contracts/src/**/*.sol', 'pkg/contracts/test/**/*.sol', 'foundry.toml', 'lib/**', 'remappings.txt', 'foundry.lock', '.gitmodules') }}
+          restore-keys: |
+            forge-coverage-
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -44,7 +62,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: pnpm
 
       - name: Run coverage
         run: pnpm --dir pkg/contracts run coverage

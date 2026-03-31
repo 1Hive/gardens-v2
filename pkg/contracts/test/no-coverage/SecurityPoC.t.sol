@@ -12,13 +12,13 @@ import {RegistrySetupFull} from "allo-v2-test/foundry/shared/RegistrySetup.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 
-import {SafeArbitrator} from "../src/SafeArbitrator.sol";
-import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
-import {IArbitrable} from "../src/interfaces/IArbitrable.sol";
-import {CollateralVault} from "../src/CollateralVault.sol";
-import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
+import {SafeArbitrator} from "../../src/SafeArbitrator.sol";
+import {IArbitrator} from "../../src/interfaces/IArbitrator.sol";
+import {IArbitrable} from "../../src/interfaces/IArbitrable.sol";
+import {CollateralVault} from "../../src/CollateralVault.sol";
+import {RegistryFactory} from "../../src/RegistryFactory/RegistryFactory.sol";
 import {RegistryCommunity, RegistryCommunityInitializeParams} from
-    "../src/RegistryCommunity/RegistryCommunity.sol";
+    "../../src/RegistryCommunity/RegistryCommunity.sol";
 import {
     CVStrategy,
     ProposalType,
@@ -26,15 +26,15 @@ import {
     PointSystemConfig,
     ArbitrableConfig,
     CreateProposal
-} from "../src/CVStrategy/CVStrategy.sol";
-import {CVParams, ProposalStatus, ProposalSupport} from "../src/CVStrategy/ICVStrategy.sol";
-import {GV2ERC20} from "../script/GV2ERC20.sol";
-import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
-import {SafeSetup} from "./shared/SafeSetup.sol";
-import {StrategyDiamondConfigurator} from "./helpers/StrategyDiamondConfigurator.sol";
-import {CommunityDiamondConfigurator} from "./helpers/CommunityDiamondConfigurator.sol";
-import {PowerManagementUtils} from "../src/CVStrategy/PowerManagementUtils.sol";
-import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
+} from "../../src/CVStrategy/CVStrategy.sol";
+import {CVParams, ProposalStatus, ProposalSupport} from "../../src/CVStrategy/ICVStrategy.sol";
+import {GV2ERC20} from "../../script/GV2ERC20.sol";
+import {CVStrategyHelpers} from "../CVStrategyHelpers.sol";
+import {SafeSetup} from "../shared/SafeSetup.sol";
+import {StrategyDiamondConfigurator} from "../helpers/StrategyDiamondConfigurator.sol";
+import {CommunityDiamondConfigurator} from "../helpers/CommunityDiamondConfigurator.sol";
+import {PowerManagementUtils} from "../../src/CVStrategy/PowerManagementUtils.sol";
+import {IVotingPowerRegistry} from "../../src/interfaces/IVotingPowerRegistry.sol";
 
 // =============================================================
 //  ATTACK CONTRACTS

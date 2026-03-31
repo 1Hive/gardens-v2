@@ -41,7 +41,7 @@ remappings = [
 # # the <path to lib> supports remappings
 # libraries = []
 # cache = true
-# cache_path = 'cache'
+cache_path = 'pkg/contracts/cache'
 # broadcast = 'broadcast'
 # # additional solc allow paths
 # allow_paths = []

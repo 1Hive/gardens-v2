@@ -2,9 +2,9 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import {CVStrategy, ArbitrableConfig, CVParams} from "../src/CVStrategy/CVStrategy.sol";
-import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
-import {StrategyDiamondConfigurator} from "./helpers/StrategyDiamondConfigurator.sol";
+import {CVStrategy, ArbitrableConfig, CVParams} from "../../src/CVStrategy/CVStrategy.sol";
+import {IArbitrator} from "../../src/interfaces/IArbitrator.sol";
+import {StrategyDiamondConfigurator} from "../helpers/StrategyDiamondConfigurator.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
