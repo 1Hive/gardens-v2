@@ -49,7 +49,7 @@ jobs:
           path: |
             pkg/contracts/cache
             pkg/contracts/out
-          key: forge-coverage-${{ hashFiles('pkg/contracts/src/**/*.sol', 'pkg/contracts/test/**/*.sol', 'foundry.toml', '.gitmodules') }}
+          key: forge-coverage-${{ hashFiles('pkg/contracts/src/**/*.sol', 'pkg/contracts/test/**/*.sol', 'foundry.toml', 'lib/**', 'remappings.txt', 'foundry.lock', '.gitmodules') }}
           restore-keys: |
             forge-coverage-
 
