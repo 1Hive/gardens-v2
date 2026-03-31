@@ -17,6 +17,8 @@ ast = true
 build_info = true
 extra_output = ["storageLayout"]
 
+no_match_path = "pkg/contracts/test/fork/**"
+
 optimizer = true
 optimizer-runs = 0
 # prompt_timeout = 120
