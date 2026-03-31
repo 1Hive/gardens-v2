@@ -17,7 +17,7 @@ ast = true
 build_info = true
 extra_output = ["storageLayout"]
 
-no_match_path = "pkg/contracts/test/fork/**"
+no_match_path = "pkg/contracts/test/{fork,no-coverage}/**"
 
 optimizer = true
 optimizer-runs = 0

@@ -12,9 +12,9 @@
     "test": "forge test -vvv",
     "test:force": "forge test -vvv --force",
     "test:fork-healthcheck": "forge test --match-path 'pkg/contracts/test/fork/ForkLifecycleHealthcheck.t.sol' -vvv",
-    "test:security": "forge test --match-path 'pkg/contracts/test/SecurityPoC.t.sol' -vvv",
+    "test:security": "forge test --match-path 'pkg/contracts/test/no-coverage/SecurityPoC.t.sol' -vvv",
     "format": "forge fmt",
-    "coverage": "forge coverage --ir-minimum --no-match-path '*(Fork|SecurityPoC|UpgradeCVMultichain)*' --match-path 'pkg/contracts/test/**' --skip 'pkg/contracts/script/**' --exclude-tests --report lcov -r lcov.info && sed -i 's|^SF:pkg/contracts/|SF:|g' lcov.info",
+    "coverage": "forge coverage --ir-minimum --match-path 'pkg/contracts/test/**' --skip 'pkg/contracts/script/**' --exclude-tests --report lcov -r lcov.info && sed -i 's|^SF:pkg/contracts/|SF:|g' lcov.info",
     "sync:abis": "bash scripts/sync-abis.sh"
   }
 }

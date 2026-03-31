@@ -8,12 +8,12 @@ on:
       - dev
     paths:
       - pkg/contracts/src/**/*.sol
-      - pkg/contracts/test/SecurityPoC.t.sol
+      - pkg/contracts/test/no-coverage/SecurityPoC.t.sol
       - .github/workflows/security-poc.yml
   pull_request:
     paths:
       - pkg/contracts/src/**/*.sol
-      - pkg/contracts/test/SecurityPoC.t.sol
+      - pkg/contracts/test/no-coverage/SecurityPoC.t.sol
       - .github/workflows/security-poc.yml
 
 permissions:
@@ -36,4 +36,4 @@ jobs:
           version: stable
 
       - name: Run SecurityPoC tests
-        run: forge test --match-path 'pkg/contracts/test/SecurityPoC.t.sol' -vvv
+        run: forge test --match-path 'pkg/contracts/test/no-coverage/SecurityPoC.t.sol' -vvv
