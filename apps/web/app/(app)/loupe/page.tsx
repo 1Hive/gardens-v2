@@ -92,6 +92,10 @@ type LoupeContractOption = {
   address: string | null;
   source: "subgraph" | "networks.json" | "chains.tsx" | null;
 };
+type SignatureAutocompleteOption = {
+  signature: string;
+  selector: string;
+};
 const EMPTY_FACETS: DiamondFacet[] = [];
 const KNOWN_ABI_CATALOG = [
   { label: "Allo", abi: alloABI },
@@ -265,7 +269,9 @@ const getParameterPlaceholder = (parameter: AbiParameter) => {
   if (parameter.type === "string") return "text";
   if (parameter.type.startsWith("bytes")) return "0x";
   if (parameter.type.includes("[") || parameter.type === "tuple") {
-    return parameter.type.includes("[") ? '["value1","value2"]' : '{"field":"value"}';
+    return parameter.type.includes("[") ?
+        '["value1","value2"]'
+      : '{"field":"value"}';
   }
   return parameter.type;
 };
@@ -465,11 +471,7 @@ const buildGeneratedArgFields = (
         value,
         path,
         parameter: input,
-        children: buildGeneratedArgFields(
-          input.components,
-          childValues,
-          path,
-        ),
+        children: buildGeneratedArgFields(input.components, childValues, path),
       };
     }
 
@@ -577,42 +579,46 @@ const GeneratedArgFieldEditor = ({
           onChange={(event) => onChange(field.path, event.target.value)}
         />
       }
-      {field.parameter.type.match(/^(u?int)([0-9]+)?$/) && field.kind === "text" && (
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            className="rounded border border-border-neutral/60 px-2 py-1 font-mono text-[10px] text-neutral-content hover:border-primary-content hover:text-primary-content"
-            onClick={() =>
-              onChange(field.path, `${String(field.value ?? "")}${"0".repeat(18)}`)
-            }
-          >
-            +18 decimals
-          </button>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min="1"
-              className="w-16 rounded border border-border-neutral bg-neutral px-2 py-1 font-mono text-[10px] text-neutral-content placeholder:text-neutral-muted focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
-              value={customZeroCount}
-              onChange={(event) => setCustomZeroCount(event.target.value)}
-            />
+      {field.parameter.type.match(/^(u?int)([0-9]+)?$/) &&
+        field.kind === "text" && (
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               className="rounded border border-border-neutral/60 px-2 py-1 font-mono text-[10px] text-neutral-content hover:border-primary-content hover:text-primary-content"
-              onClick={() => {
-                const zeroCount = Number(customZeroCount);
-                if (!Number.isInteger(zeroCount) || zeroCount <= 0) return;
+              onClick={() =>
                 onChange(
                   field.path,
-                  `${String(field.value ?? "")}${"0".repeat(zeroCount)}`,
-                );
-              }}
+                  `${String(field.value ?? "")}${"0".repeat(18)}`,
+                )
+              }
             >
-              +custom decimals
+              +18 decimals
             </button>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="1"
+                className="w-16 rounded border border-border-neutral bg-neutral px-2 py-1 font-mono text-[10px] text-neutral-content placeholder:text-neutral-muted focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
+                value={customZeroCount}
+                onChange={(event) => setCustomZeroCount(event.target.value)}
+              />
+              <button
+                type="button"
+                className="rounded border border-border-neutral/60 px-2 py-1 font-mono text-[10px] text-neutral-content hover:border-primary-content hover:text-primary-content"
+                onClick={() => {
+                  const zeroCount = Number(customZeroCount);
+                  if (!Number.isInteger(zeroCount) || zeroCount <= 0) return;
+                  onChange(
+                    field.path,
+                    `${String(field.value ?? "")}${"0".repeat(zeroCount)}`,
+                  );
+                }}
+              >
+                +custom decimals
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       <span className="text-[10px] text-neutral-muted">{field.helper}</span>
     </label>
   );
@@ -621,9 +627,7 @@ const GeneratedArgFieldEditor = ({
 export default function DiamondAdminPage() {
   const [addressInput, setAddressInput] = useState("");
   const [diamondAddress, setDiamondAddress] = useState<Address>();
-  const [selectedChainId, setSelectedChainId] = useState<number>(
-    42161,
-  );
+  const [selectedChainId, setSelectedChainId] = useState<number>(42161);
   const [contractOptions, setContractOptions] = useState<LoupeContractOption[]>(
     [],
   );
@@ -632,10 +636,17 @@ export default function DiamondAdminPage() {
     useState(false);
   const [highlightedAutocompleteIndex, setHighlightedAutocompleteIndex] =
     useState(0);
-  const [isLoadingContractOptions, setIsLoadingContractOptions] = useState(false);
-  const [contractOptionsError, setContractOptionsError] = useState<string | null>(
-    null,
-  );
+  const [isSignatureAutocompleteOpen, setIsSignatureAutocompleteOpen] =
+    useState(false);
+  const [
+    highlightedSignatureAutocompleteIndex,
+    setHighlightedSignatureAutocompleteIndex,
+  ] = useState(0);
+  const [isLoadingContractOptions, setIsLoadingContractOptions] =
+    useState(false);
+  const [contractOptionsError, setContractOptionsError] = useState<
+    string | null
+  >(null);
   const [signatureMap, setSignatureMap] = useState<SignatureMap>({});
   const [isResolvingSignatures, setIsResolvingSignatures] = useState(false);
   const [signatureResolveError, setSignatureResolveError] = useState<
@@ -720,7 +731,8 @@ export default function DiamondAdminPage() {
     [addressInput],
   );
   const selectedContractOption = useMemo(
-    () => contractOptions.find((contract) => contract.key === selectedContractKey),
+    () =>
+      contractOptions.find((contract) => contract.key === selectedContractKey),
     [contractOptions, selectedContractKey],
   );
   const matchedContractOption = useMemo(() => {
@@ -785,7 +797,9 @@ export default function DiamondAdminPage() {
   );
 
   const selectorInferredProxyAbi = useMemo(() => {
-    const facetSelectorSet = new Set(allSelectors.map((selector) => selector.toLowerCase()));
+    const facetSelectorSet = new Set(
+      allSelectors.map((selector) => selector.toLowerCase()),
+    );
 
     const candidates = KNOWN_ABI_CATALOG.map(({ label, abi }) => {
       const functions = abi
@@ -810,7 +824,9 @@ export default function DiamondAdminPage() {
       };
     });
 
-    return candidates.sort((a, b) => b.overlapCount - a.overlapCount)[0] ?? null;
+    return (
+      candidates.sort((a, b) => b.overlapCount - a.overlapCount)[0] ?? null
+    );
   }, [allSelectors]);
 
   useEffect(() => {
@@ -987,9 +1003,7 @@ export default function DiamondAdminPage() {
   const knownErrorAbi = useMemo(
     () =>
       [
-        ...KNOWN_ABI_CATALOG.flatMap(
-          ({ abi }) => abi as readonly unknown[],
-        ),
+        ...KNOWN_ABI_CATALOG.flatMap(({ abi }) => abi as readonly unknown[]),
         ...KNOWN_FACET_ABI_CATALOG.flatMap(
           ({ abi }) => abi as readonly unknown[],
         ),
@@ -1121,6 +1135,63 @@ export default function DiamondAdminPage() {
     [selectedSelector, signatureMap],
   );
 
+  const signatureAutocompleteOptions = useMemo<
+    SignatureAutocompleteOption[]
+  >(() => {
+    const query = selectedSignature.trim().toLowerCase();
+    const signatureOptions = new Map<string, SignatureAutocompleteOption>();
+
+    const addOption = (signature: string) => {
+      const trimmedSignature = signature.trim();
+      if (trimmedSignature === "") return;
+
+      const selector = selectorFromSignature(trimmedSignature);
+      signatureOptions.set(trimmedSignature, {
+        signature: trimmedSignature,
+        selector,
+      });
+    };
+
+    availableSignaturesForSelectedSelector.forEach(addOption);
+    proxyFunctions.forEach((fn) => addOption(toCanonicalSignature(fn)));
+
+    if (signatureOptions.size === 0) {
+      knownAbiFunctions.forEach((fn) => addOption(toCanonicalSignature(fn)));
+    }
+
+    const options = Array.from(signatureOptions.values());
+    const filteredOptions =
+      query === "" ? options : (
+        options.filter(
+          (option) =>
+            option.signature.toLowerCase().includes(query) ||
+            option.selector.includes(query),
+        )
+      );
+
+    return filteredOptions
+      .sort((left, right) => {
+        const leftStarts = left.signature.toLowerCase().startsWith(query);
+        const rightStarts = right.signature.toLowerCase().startsWith(query);
+
+        if (leftStarts !== rightStarts) {
+          return leftStarts ? -1 : 1;
+        }
+
+        return left.signature.localeCompare(right.signature);
+      })
+      .slice(0, 10);
+  }, [
+    availableSignaturesForSelectedSelector,
+    knownAbiFunctions,
+    proxyFunctions,
+    selectedSignature,
+  ]);
+
+  useEffect(() => {
+    setHighlightedSignatureAutocompleteIndex(0);
+  }, [isSignatureAutocompleteOpen, signatureAutocompleteOptions]);
+
   const selectedAbiFunction = useMemo(() => {
     if (selectedKnownFunction) return selectedKnownFunction;
     if (!selectedSignature.trim()) return null;
@@ -1133,11 +1204,13 @@ export default function DiamondAdminPage() {
 
   const generatedArgFields = useMemo<GeneratedArgField[]>(() => {
     if (!selectedAbiFunction) return [];
-    const inputValues = (selectedAbiFunction.inputs ?? []).map((input, index) => {
-      const current = argFieldValues[index];
-      if (current !== undefined) return current;
-      return input.type === "bool" ? false : "";
-    });
+    const inputValues = (selectedAbiFunction.inputs ?? []).map(
+      (input, index) => {
+        const current = argFieldValues[index];
+        if (current !== undefined) return current;
+        return input.type === "bool" ? false : "";
+      },
+    );
 
     return buildGeneratedArgFields(
       selectedAbiFunction.inputs ?? [],
@@ -1224,7 +1297,9 @@ export default function DiamondAdminPage() {
           { cache: "no-store" },
         );
         if (!response.ok) {
-          throw new Error(`Contract resolver request failed (${response.status})`);
+          throw new Error(
+            `Contract resolver request failed (${response.status})`,
+          );
         }
 
         const payload = (await response.json()) as {
@@ -1269,7 +1344,10 @@ export default function DiamondAdminPage() {
       return;
     }
 
-    if (selectedContract.address == null || !isAddress(selectedContract.address)) {
+    if (
+      selectedContract.address == null ||
+      !isAddress(selectedContract.address)
+    ) {
       setAddressInput("");
       setDiamondAddress(undefined);
       setSelectedProxyAbiLabel("");
@@ -1397,15 +1475,18 @@ export default function DiamondAdminPage() {
         };
         if (isActive) {
           const resolvedSelectors = payload.selectors ?? {};
-          const mergedMap = allSelectors.reduce<SignatureMap>((acc, selector) => {
-            const localSignatures = localSignatureMap[selector] ?? [];
-            const resolvedSignatures = resolvedSelectors[selector] ?? [];
-            acc[selector] =
-              localSignatures.length > 0 ?
-                localSignatures
-              : resolvedSignatures;
-            return acc;
-          }, {});
+          const mergedMap = allSelectors.reduce<SignatureMap>(
+            (acc, selector) => {
+              const localSignatures = localSignatureMap[selector] ?? [];
+              const resolvedSignatures = resolvedSelectors[selector] ?? [];
+              acc[selector] =
+                localSignatures.length > 0 ?
+                  localSignatures
+                : resolvedSignatures;
+              return acc;
+            },
+            {},
+          );
           setSignatureMap(mergedMap);
         }
       } catch (resolveError) {
@@ -1604,6 +1685,61 @@ export default function DiamondAdminPage() {
         block: "start",
       });
     });
+  };
+
+  const applySignatureAutocompleteOption = (
+    option: SignatureAutocompleteOption,
+  ) => {
+    setIsManualSignatureOverride(false);
+    setSelectedSelector(option.selector);
+    setSelectedSignature(option.signature);
+    setIsSignatureAutocompleteOpen(false);
+    setHighlightedSignatureAutocompleteIndex(0);
+  };
+
+  const handleSignatureAutocompleteKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (signatureAutocompleteOptions.length === 0) {
+      return;
+    }
+
+    if (event.key === "Tab" && isSignatureAutocompleteOpen) {
+      event.preventDefault();
+      applySignatureAutocompleteOption(signatureAutocompleteOptions[0]);
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setIsSignatureAutocompleteOpen(true);
+      setHighlightedSignatureAutocompleteIndex((current) =>
+        current >= signatureAutocompleteOptions.length - 1 ? 0 : current + 1,
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setIsSignatureAutocompleteOpen(true);
+      setHighlightedSignatureAutocompleteIndex((current) =>
+        current <= 0 ? signatureAutocompleteOptions.length - 1 : current - 1,
+      );
+      return;
+    }
+
+    if (event.key === "Enter" && isSignatureAutocompleteOpen) {
+      event.preventDefault();
+      const option =
+        signatureAutocompleteOptions[highlightedSignatureAutocompleteIndex] ??
+        signatureAutocompleteOptions[0];
+      applySignatureAutocompleteOption(option);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setIsSignatureAutocompleteOpen(false);
+    }
   };
 
   const executeFunction = async (mode: "read" | "simulate" | "write") => {
@@ -1836,40 +1972,46 @@ export default function DiamondAdminPage() {
                   setIsAddressAutocompleteOpen(true);
                 }}
               />
-              {isAddressAutocompleteOpen && autocompleteContractOptions.length > 0 && (
-                <div className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-y-auto rounded-xl border border-border-neutral bg-neutral shadow-2xl">
-                  {autocompleteContractOptions.map((contract) => (
-                    <button
-                      key={contract.key}
-                      type="button"
-                      className={`flex w-full flex-col gap-1 border-b border-border-neutral px-3 py-3 text-left last:border-b-0 hover:bg-neutral/70 ${
-                        autocompleteContractOptions[highlightedAutocompleteIndex]?.key === contract.key ?
-                          "bg-neutral/70"
-                        : ""
-                      }`}
-                      onMouseEnter={() => {
-                        const nextIndex = autocompleteContractOptions.findIndex(
-                          (entry) => entry.key === contract.key,
-                        );
-                        if (nextIndex >= 0) {
-                          setHighlightedAutocompleteIndex(nextIndex);
-                        }
-                      }}
-                      onMouseDown={(event) => {
-                        event.preventDefault();
-                        applyAutocompleteContract(contract);
-                      }}
-                    >
-                      <span className="text-sm font-medium text-neutral-content">
-                        {contract.label}
-                      </span>
-                      <span className="font-mono text-xs text-neutral-muted">
-                        {contract.address}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
+              {isAddressAutocompleteOpen &&
+                autocompleteContractOptions.length > 0 && (
+                  <div className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-y-auto rounded-xl border border-border-neutral bg-neutral shadow-2xl">
+                    {autocompleteContractOptions.map((contract) => (
+                      <button
+                        key={contract.key}
+                        type="button"
+                        className={`flex w-full flex-col gap-1 border-b border-border-neutral px-3 py-3 text-left last:border-b-0 hover:bg-neutral/70 ${
+                          (
+                            autocompleteContractOptions[
+                              highlightedAutocompleteIndex
+                            ]?.key === contract.key
+                          ) ?
+                            "bg-neutral/70"
+                          : ""
+                        }`}
+                        onMouseEnter={() => {
+                          const nextIndex =
+                            autocompleteContractOptions.findIndex(
+                              (entry) => entry.key === contract.key,
+                            );
+                          if (nextIndex >= 0) {
+                            setHighlightedAutocompleteIndex(nextIndex);
+                          }
+                        }}
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          applyAutocompleteContract(contract);
+                        }}
+                      >
+                        <span className="text-sm font-medium text-neutral-content">
+                          {contract.label}
+                        </span>
+                        <span className="font-mono text-xs text-neutral-muted">
+                          {contract.address}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
             </div>
             {isLoadingContractOptions && (
               <span className="text-xs text-neutral-muted">
@@ -1885,7 +2027,8 @@ export default function DiamondAdminPage() {
               !contractOptionsError &&
               matchedContractOption?.address && (
                 <span className="text-xs text-neutral-muted">
-                  {matchedContractOption.label} resolved from {matchedContractOption.source ?? "unknown source"}
+                  {matchedContractOption.label} resolved from{" "}
+                  {matchedContractOption.source ?? "unknown source"}
                 </span>
               )}
             {addressInput && !isAddressValid && (
@@ -1907,7 +2050,6 @@ export default function DiamondAdminPage() {
             </Button>
           </div>
         </div>
-
       </section>
 
       <section className="space-y-4">
@@ -1938,27 +2080,31 @@ export default function DiamondAdminPage() {
           <div className="space-y-1 text-right text-xs text-neutral-muted">
             <p>Facets</p>
             <p className="text-sm text-neutral-content">
-              {supportsDiamondLoupe ? facets.length.toLocaleString("en-US") : "n/a"}
+              {supportsDiamondLoupe ?
+                facets.length.toLocaleString("en-US")
+              : "n/a"}
             </p>
           </div>
           <div className="space-y-1 text-right text-xs text-neutral-muted">
             <p>Function selectors</p>
             <p className="text-sm text-neutral-content">
-              {supportsDiamondLoupe ? totalSelectors.toLocaleString("en-US") : "n/a"}
+              {supportsDiamondLoupe ?
+                totalSelectors.toLocaleString("en-US")
+              : "n/a"}
             </p>
           </div>
           <div className="space-y-1 text-right text-xs text-neutral-muted">
             <p>Inferred proxy ABI</p>
             <select
               className="rounded-lg border border-border-neutral bg-neutral px-2 py-1 text-sm text-neutral-content focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
-              value={selectedProxyAbiLabel !== "" ? selectedProxyAbiLabel : (inferredProxyAbi?.label ?? "")}
-              onChange={(event) =>
-                setSelectedProxyAbiLabel(event.target.value)
+              value={
+                selectedProxyAbiLabel !== "" ?
+                  selectedProxyAbiLabel
+                : inferredProxyAbi?.label ?? ""
               }
+              onChange={(event) => setSelectedProxyAbiLabel(event.target.value)}
             >
-              {!inferredProxyAbi?.label && (
-                <option value="">Unknown</option>
-              )}
+              {!inferredProxyAbi?.label && <option value="">Unknown</option>}
               {KNOWN_ABI_CATALOG.map(({ label }) => (
                 <option key={label} value={label}>
                   {label}
@@ -1988,12 +2134,12 @@ export default function DiamondAdminPage() {
                 !supportsDiamondLoupe &&
                 !isFetching &&
                 !loupeReadFailed && (
-                <InfoBox
-                  infoBoxType="warning"
-                  title="No facets returned"
-                  content="The diamond returned an empty facet array."
-                />
-              )}
+                  <InfoBox
+                    infoBoxType="warning"
+                    title="No facets returned"
+                    content="The diamond returned an empty facet array."
+                  />
+                )}
 
               {facetsWithNames.length > 0 && (
                 <div className="space-y-3">
@@ -2005,13 +2151,17 @@ export default function DiamondAdminPage() {
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <p className="text-sm font-semibold text-neutral-content">
-                            {facet.inferredName ?? `Unidentified Facet #${index + 1}`}
+                            {facet.inferredName ??
+                              `Unidentified Facet #${index + 1}`}
                           </p>
                           <p className="font-mono text-xs text-neutral-muted">
                             (
                             {getExplorerAddressHref(facet.facetAddress) ?
                               <a
-                                href={getExplorerAddressHref(facet.facetAddress) ?? undefined}
+                                href={
+                                  getExplorerAddressHref(facet.facetAddress) ??
+                                  undefined
+                                }
                                 target="_blank"
                                 rel="noreferrer"
                                 className="underline decoration-border-neutral/60 underline-offset-2 transition hover:text-neutral-content"
@@ -2079,7 +2229,8 @@ export default function DiamondAdminPage() {
                       Proxy / main ABI surface
                     </p>
                     <p className="text-xs text-neutral-muted">
-                      Accessible fields and functions from the inferred main contract ABI, not only loupe facets.
+                      Accessible fields and functions from the inferred main
+                      contract ABI, not only loupe facets.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2 text-[10px]">
@@ -2119,246 +2270,309 @@ export default function DiamondAdminPage() {
 
               {diamondAddress &&
                 (availableSelectors.length > 0 || selectedSignature.trim()) && (
-                <div
-                  ref={functionRunnerRef}
-                  className="rounded-xl border border-border-neutral/40 bg-neutral/50 p-4 space-y-4"
-                >
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-neutral-content">
-                      Facet function runner
-                    </p>
-                    <p className="text-xs text-neutral-muted">
-                      Resolve selectors and execute any function using manual
-                      args. In proxy mode, only inferred proxy/main ABI
-                      functions are available.
-                    </p>
-                  </div>
-
-                  {isResolvingSignatures && (
-                    <p className="text-xs text-neutral-muted">
-                      Resolving selectors...
-                    </p>
-                  )}
-
-                  {signatureResolveError && (
-                    <InfoBox
-                      infoBoxType="warning"
-                      title="Signature resolver warning"
-                      content={signatureResolveError}
-                    />
-                  )}
-
-                  <label className="flex flex-col gap-1 text-xs text-neutral-muted">
-                    <span>Manual signature override</span>
-                    <input
-                      className="rounded-lg border border-border-neutral bg-neutral px-3 py-2 text-sm text-neutral-content placeholder:text-neutral-muted focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
-                      value={selectedSignature}
-                      onChange={(event) => {
-                        setIsManualSignatureOverride(true);
-                        setSelectedSelector("");
-                        setSelectedSignature(event.target.value);
-                      }}
-                      placeholder="e.g. getCommunityFee()"
-                    />
-                  </label>
-
-                  <label className="flex flex-col gap-1 text-xs text-neutral-muted">
-                    <span>Arguments (JSON array)</span>
-                    <textarea
-                      className="min-h-[88px] rounded-lg border border-border-neutral bg-neutral px-3 py-2 font-mono text-xs text-neutral-content placeholder:text-neutral-muted focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
-                      value={argsInput}
-                      onChange={(event) => {
-                        const nextValue = event.target.value;
-                        setArgsInput(nextValue);
-                        try {
-                          const maybeArgs = JSON.parse(nextValue || "[]");
-                          if (Array.isArray(maybeArgs) && selectedAbiFunction) {
-                            setArgFieldValues(
-                              (selectedAbiFunction.inputs ?? []).map(
-                                (input, index) =>
-                                  stringifyFieldValue(
-                                    maybeArgs[index] ??
-                                      (input.type === "bool" ? false : ""),
-                                  ),
-                              ),
-                            );
-                          }
-                        } catch {
-                          // keep manual JSON free-form if invalid
-                        }
-                      }}
-                      placeholder='Example: ["0xabc...", "1000000000000000000"]'
-                    />
-                  </label>
-
-                  {generatedArgFields.length > 0 && (
-                    <div className="space-y-3 rounded-xl border border-border-neutral/40 bg-neutral/30 p-4">
-                      <div className="space-y-1">
-                        <p className="text-xs font-semibold text-neutral-content">
-                          Generated argument fields
-                        </p>
-                        <p className="text-xs text-neutral-muted">
-                          Inputs are inferred from the selected function signature and keep the JSON args array in sync.
-                        </p>
-                      </div>
-                      <div className="grid gap-3">
-                        {generatedArgFields.map((field) => (
-                          <GeneratedArgFieldEditor
-                            key={field.key}
-                            field={field}
-                            onChange={(path, value) => {
-                              const nextValues = setNestedPathValue(
-                                argFieldValues,
-                                path,
-                                value,
-                              );
-                              setArgFieldValues(nextValues);
-                              syncArgTextareaFromFields(
-                                nextValues,
-                                selectedAbiFunction,
-                              );
-                            }}
-                          />
-                        ))}
-                      </div>
+                  <div
+                    ref={functionRunnerRef}
+                    className="rounded-xl border border-border-neutral/40 bg-neutral/50 p-4 space-y-4"
+                  >
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-neutral-content">
+                        Facet function runner
+                      </p>
+                      <p className="text-xs text-neutral-muted">
+                        Resolve selectors and execute any function using manual
+                        args. In proxy mode, only inferred proxy/main ABI
+                        functions are available.
+                      </p>
                     </div>
-                  )}
 
-                  <label className="flex flex-col gap-1 text-xs text-neutral-muted">
-                    <span>Value (wei, for write calls)</span>
-                    <input
-                      className="rounded-lg border border-border-neutral bg-neutral px-3 py-2 font-mono text-xs text-neutral-content placeholder:text-neutral-muted focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
-                      value={valueInput}
-                      onChange={(event) => setValueInput(event.target.value)}
-                      placeholder="0"
-                    />
-                  </label>
+                    {isResolvingSignatures && (
+                      <p className="text-xs text-neutral-muted">
+                        Resolving selectors...
+                      </p>
+                    )}
 
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      btnStyle="outline"
-                      color="primary"
-                      className="sm:w-auto"
-                      onClick={() => void executeFunction("simulate")}
-                      isLoading={isSimulatingWrite}
-                      disabled={
-                        !diamondAddress ||
-                        !selectedSignature.trim() ||
-                        selectedFunctionKind === "read" ||
-                        !isConnected ||
-                        !walletClient?.account
-                      }
-                    >
-                      Simulate transaction
-                    </Button>
-                    <Button
-                      btnStyle="outline"
-                      color={
-                        selectedFunctionKind === "read" ? "primary" : (
-                          "secondary"
-                        )
-                      }
-                      className="sm:w-auto"
-                      onClick={() => void executeFunction("read")}
-                      isLoading={isExecutingRead}
-                      disabled={!diamondAddress || !selectedSignature.trim()}
-                    >
-                      Read (eth_call)
-                    </Button>
-                    <Button
-                      btnStyle="filled"
-                      color="primary"
-                      className="sm:w-auto"
-                      onClick={() => void executeFunction("write")}
-                      isLoading={isExecutingWrite || isSwitchingNetwork}
-                      disabled={
-                        !diamondAddress ||
-                        !selectedSignature.trim() ||
-                        selectedFunctionKind === "read" ||
-                        !isConnected ||
-                        !walletClient?.account
-                      }
-                    >
-                      Send transaction
-                    </Button>
-                  </div>
-                  <p className="text-xs text-neutral-muted">
-                    Detected mode:{" "}
-                    <span className="font-mono text-neutral-content">
-                      {selectedFunctionKind}
-                    </span>
-                  </p>
-                  {resolvedSelectedSignature && (
+                    {signatureResolveError && (
+                      <InfoBox
+                        infoBoxType="warning"
+                        title="Signature resolver warning"
+                        content={signatureResolveError}
+                      />
+                    )}
+
+                    <label className="flex flex-col gap-1 text-xs text-neutral-muted">
+                      <span>Manual signature override</span>
+                      <div className="relative">
+                        <input
+                          className="w-full rounded-lg border border-border-neutral bg-neutral px-3 py-2 text-sm text-neutral-content placeholder:text-neutral-muted focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
+                          value={selectedSignature}
+                          onKeyDown={handleSignatureAutocompleteKeyDown}
+                          onFocus={() => {
+                            setIsSignatureAutocompleteOpen(true);
+                          }}
+                          onBlur={() => {
+                            window.setTimeout(() => {
+                              setIsSignatureAutocompleteOpen(false);
+                            }, 120);
+                          }}
+                          onChange={(event) => {
+                            setIsManualSignatureOverride(true);
+                            setSelectedSelector("");
+                            setSelectedSignature(event.target.value);
+                            setIsSignatureAutocompleteOpen(true);
+                          }}
+                          placeholder="e.g. getCommunityFee()"
+                        />
+                        {isSignatureAutocompleteOpen &&
+                          signatureAutocompleteOptions.length > 0 && (
+                            <div className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-y-auto rounded-xl border border-border-neutral bg-neutral shadow-2xl">
+                              {signatureAutocompleteOptions.map((option) => (
+                                <button
+                                  key={option.signature}
+                                  type="button"
+                                  className={`flex w-full flex-col gap-1 border-b border-border-neutral px-3 py-3 text-left last:border-b-0 hover:bg-neutral/70 ${
+                                    (
+                                      signatureAutocompleteOptions[
+                                        highlightedSignatureAutocompleteIndex
+                                      ]?.signature === option.signature
+                                    ) ?
+                                      "bg-neutral/70"
+                                    : ""
+                                  }`}
+                                  onMouseEnter={() => {
+                                    const nextIndex =
+                                      signatureAutocompleteOptions.findIndex(
+                                        (entry) =>
+                                          entry.signature === option.signature,
+                                      );
+                                    if (nextIndex >= 0) {
+                                      setHighlightedSignatureAutocompleteIndex(
+                                        nextIndex,
+                                      );
+                                    }
+                                  }}
+                                  onMouseDown={(event) => {
+                                    event.preventDefault();
+                                    applySignatureAutocompleteOption(option);
+                                  }}
+                                >
+                                  <span className="text-sm font-medium text-neutral-content">
+                                    {option.signature}
+                                  </span>
+                                  <span className="font-mono text-xs text-neutral-muted">
+                                    {option.selector}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                      </div>
+                    </label>
+
+                    <label className="flex flex-col gap-1 text-xs text-neutral-muted">
+                      <span>Arguments (JSON array)</span>
+                      <textarea
+                        className="min-h-[88px] rounded-lg border border-border-neutral bg-neutral px-3 py-2 font-mono text-xs text-neutral-content placeholder:text-neutral-muted focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
+                        value={argsInput}
+                        onChange={(event) => {
+                          const nextValue = event.target.value;
+                          setArgsInput(nextValue);
+                          try {
+                            const maybeArgs = JSON.parse(nextValue || "[]");
+                            if (
+                              Array.isArray(maybeArgs) &&
+                              selectedAbiFunction
+                            ) {
+                              setArgFieldValues(
+                                (selectedAbiFunction.inputs ?? []).map(
+                                  (input, index) =>
+                                    stringifyFieldValue(
+                                      maybeArgs[index] ??
+                                        (input.type === "bool" ? false : ""),
+                                    ),
+                                ),
+                              );
+                            }
+                          } catch {
+                            // keep manual JSON free-form if invalid
+                          }
+                        }}
+                        placeholder='Example: ["0xabc...", "1000000000000000000"]'
+                      />
+                    </label>
+
+                    {generatedArgFields.length > 0 && (
+                      <div className="space-y-3 rounded-xl border border-border-neutral/40 bg-neutral/30 p-4">
+                        <div className="space-y-1">
+                          <p className="text-xs font-semibold text-neutral-content">
+                            Generated argument fields
+                          </p>
+                          <p className="text-xs text-neutral-muted">
+                            Inputs are inferred from the selected function
+                            signature and keep the JSON args array in sync.
+                          </p>
+                        </div>
+                        <div className="grid gap-3">
+                          {generatedArgFields.map((field) => (
+                            <GeneratedArgFieldEditor
+                              key={field.key}
+                              field={field}
+                              onChange={(path, value) => {
+                                const nextValues = setNestedPathValue(
+                                  argFieldValues,
+                                  path,
+                                  value,
+                                );
+                                setArgFieldValues(nextValues);
+                                syncArgTextareaFromFields(
+                                  nextValues,
+                                  selectedAbiFunction,
+                                );
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <label className="flex flex-col gap-1 text-xs text-neutral-muted">
+                      <span>Value (wei, for write calls)</span>
+                      <input
+                        className="rounded-lg border border-border-neutral bg-neutral px-3 py-2 font-mono text-xs text-neutral-content placeholder:text-neutral-muted focus:border-primary-content focus:outline-none focus:ring-1 focus:ring-primary-content"
+                        value={valueInput}
+                        onChange={(event) => setValueInput(event.target.value)}
+                        placeholder="0"
+                      />
+                    </label>
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        btnStyle="outline"
+                        color="primary"
+                        className="sm:w-auto"
+                        onClick={() => void executeFunction("simulate")}
+                        isLoading={isSimulatingWrite}
+                        disabled={
+                          !diamondAddress ||
+                          !selectedSignature.trim() ||
+                          selectedFunctionKind === "read" ||
+                          !isConnected ||
+                          !walletClient?.account
+                        }
+                      >
+                        Simulate transaction
+                      </Button>
+                      <Button
+                        btnStyle="outline"
+                        color={
+                          selectedFunctionKind === "read" ? "primary" : (
+                            "secondary"
+                          )
+                        }
+                        className="sm:w-auto"
+                        onClick={() => void executeFunction("read")}
+                        isLoading={isExecutingRead}
+                        disabled={!diamondAddress || !selectedSignature.trim()}
+                      >
+                        Read (eth_call)
+                      </Button>
+                      <Button
+                        btnStyle="filled"
+                        color="primary"
+                        className="sm:w-auto"
+                        onClick={() => void executeFunction("write")}
+                        isLoading={isExecutingWrite || isSwitchingNetwork}
+                        disabled={
+                          !diamondAddress ||
+                          !selectedSignature.trim() ||
+                          selectedFunctionKind === "read" ||
+                          !isConnected ||
+                          !walletClient?.account
+                        }
+                      >
+                        Send transaction
+                      </Button>
+                    </div>
                     <p className="text-xs text-neutral-muted">
-                      Using signature:{" "}
+                      Detected mode:{" "}
                       <span className="font-mono text-neutral-content">
-                        {resolvedSelectedSignature}
+                        {selectedFunctionKind}
                       </span>
                     </p>
-                  )}
-
-                  {!isConnected && (
-                    <p className="text-xs text-neutral-muted">
-                      Connect a wallet on {selectedChain?.name ?? "this chain"}{" "}
-                      to send write transactions.
-                    </p>
-                  )}
-                  {isConnected && chain?.id !== selectedChainId && (
-                    <p className="text-xs text-neutral-muted">
-                      Wallet network ({chain?.name ?? chain?.id}) will switch to{" "}
-                      {selectedChain?.name ?? selectedChainId} before sending.
-                    </p>
-                  )}
-
-                  {executionError && (
-                    <InfoBox
-                      infoBoxType="error"
-                      title="Execution error"
-                      content={executionError}
-                      contentStyle="whitespace-pre-wrap break-all"
-                    />
-                  )}
-
-                  {readOutput && (
-                    <div className="space-y-1">
-                      <p className="text-xs text-neutral-muted">Call result</p>
-                      <pre className="overflow-auto rounded-lg border border-border-neutral/50 bg-neutral/30 p-3 text-xs text-neutral-content">
-                        {readOutput}
-                      </pre>
-                    </div>
-                  )}
-
-                  {simulationOutput && (
-                    <div className="space-y-1">
+                    {resolvedSelectedSignature && (
                       <p className="text-xs text-neutral-muted">
-                        Simulation result
+                        Using signature:{" "}
+                        <span className="font-mono text-neutral-content">
+                          {resolvedSelectedSignature}
+                        </span>
                       </p>
-                      <pre className="overflow-auto rounded-lg border border-border-neutral/50 bg-neutral/30 p-3 text-xs text-neutral-content">
-                        {simulationOutput}
-                      </pre>
-                    </div>
-                  )}
+                    )}
 
-                  {txHash && (
-                    <div className="space-y-1 text-xs text-neutral-muted">
-                      <p>Transaction sent</p>
-                      <p className="font-mono text-neutral-content break-all">
-                        {txHash}
+                    {!isConnected && (
+                      <p className="text-xs text-neutral-muted">
+                        Connect a wallet on{" "}
+                        {selectedChain?.name ?? "this chain"} to send write
+                        transactions.
                       </p>
-                      {txExplorerBase && (
-                        <a
-                          href={`${txExplorerBase}/tx/${txHash}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-primary-content underline"
-                        >
-                          View on explorer
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                    {isConnected && chain?.id !== selectedChainId && (
+                      <p className="text-xs text-neutral-muted">
+                        Wallet network ({chain?.name ?? chain?.id}) will switch
+                        to {selectedChain?.name ?? selectedChainId} before
+                        sending.
+                      </p>
+                    )}
+
+                    {executionError && (
+                      <InfoBox
+                        infoBoxType="error"
+                        title="Execution error"
+                        content={executionError}
+                        contentStyle="whitespace-pre-wrap break-all"
+                      />
+                    )}
+
+                    {readOutput && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-neutral-muted">
+                          Call result
+                        </p>
+                        <pre className="overflow-auto rounded-lg border border-border-neutral/50 bg-neutral/30 p-3 text-xs text-neutral-content">
+                          {readOutput}
+                        </pre>
+                      </div>
+                    )}
+
+                    {simulationOutput && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-neutral-muted">
+                          Simulation result
+                        </p>
+                        <pre className="overflow-auto rounded-lg border border-border-neutral/50 bg-neutral/30 p-3 text-xs text-neutral-content">
+                          {simulationOutput}
+                        </pre>
+                      </div>
+                    )}
+
+                    {txHash && (
+                      <div className="space-y-1 text-xs text-neutral-muted">
+                        <p>Transaction sent</p>
+                        <p className="font-mono text-neutral-content break-all">
+                          {txHash}
+                        </p>
+                        {txExplorerBase && (
+                          <a
+                            href={`${txExplorerBase}/tx/${txHash}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-primary-content underline"
+                          >
+                            View on explorer
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
             </>
           }
         </div>
