@@ -51,7 +51,6 @@ import {
   dismissPendingSubgraphRefreshToast,
   useSubgraphQuery,
 } from "@/hooks/useSubgraphQuery";
-import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
@@ -645,15 +644,6 @@ export default function ClientPage({
     | bigint
     | null
     | undefined;
-  const {
-    totalAmountDistributedBn: totalStreamedFromGDA,
-    liveTotalStreamedBn: liveTotalStreamedFromGDA,
-  } = useSuperfluidStream({
-      receiver: streamInfo?.superfluidGDA as Address,
-      superToken: effectiveSuperToken as Address,
-      chainId,
-      containerId: poolId ?? strategyAddress,
-    });
   const totalStreamedFromProposalSnapshotsBn = useMemo(() => {
     if (!isStreamingPool || !strategy?.proposals?.length) return null;
 
@@ -686,11 +676,6 @@ export default function ClientPage({
 
     return total > 0n ? total : null;
   }, [isStreamingPool, nowTs, strategy?.proposals]);
-  const displayedTotalStreamedFromGDA =
-    totalStreamedFromGDA ??
-    liveTotalStreamedFromGDA ??
-    totalStreamedFromProposalSnapshotsBn;
-
   useEffect(() => {
     if (isMissingFundingToken && strategy && !error) {
       const timer = window.setTimeout(() => {
@@ -794,7 +779,7 @@ export default function ClientPage({
       <section className="section-layout">
         <div className="flex flex-col gap-3">
           <h4>Stream Info</h4>
-          <div className="rounded-lg border border-neutral-soft-content/20 p-3 flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
               <p className="subtitle2">Budget</p>
               <p className="text-right">
@@ -812,8 +797,8 @@ export default function ClientPage({
               <div className="flex items-center gap-2">
                 <DisplayNumber
                   number={
-                    displayedTotalStreamedFromGDA != null ?
-                      [displayedTotalStreamedFromGDA, streamTokenDecimals]
+                    totalStreamedFromProposalSnapshotsBn != null ?
+                      [totalStreamedFromProposalSnapshotsBn, streamTokenDecimals]
                     : "--"
                   }
                   valueClassName="text-right"

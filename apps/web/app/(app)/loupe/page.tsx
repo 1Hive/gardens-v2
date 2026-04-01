@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { AbiFunction, AbiParameter } from "abitype";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   Address,
   decodeErrorResult,
@@ -44,6 +44,7 @@ import { InfoBox } from "@/components/InfoBox";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { CHAINS } from "@/configs/chains";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import {
   alloABI,
   cvStrategyABI,
@@ -227,6 +228,20 @@ const stringifyFieldValue = (value: unknown) => {
   } catch {
     return String(value);
   }
+};
+
+const areFieldValuesEqual = (left: unknown[], right: unknown[]) => {
+  if (left.length !== right.length) return false;
+
+  return left.every((value, index) => {
+    const other = right[index];
+
+    if (typeof value === "boolean" || typeof other === "boolean") {
+      return value === other;
+    }
+
+    return stringifyFieldValue(value) === stringifyFieldValue(other);
+  });
 };
 
 const getTupleChildValue = (
@@ -661,20 +676,34 @@ export default function DiamondAdminPage() {
   const [valueInput, setValueInput] = useState("0");
   const [executionError, setExecutionError] = useState<string | null>(null);
   const [readOutput, setReadOutput] = useState<string | null>(null);
-  const [simulationOutput, setSimulationOutput] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
+  const [loupeTransactionHash, setLoupeTransactionHash] = useState<
+    `0x${string}` | undefined
+  >(undefined);
+  const [loupeTransactionStatus, setLoupeTransactionStatus] = useState<
+    "waiting" | "loading" | "success" | "error" | undefined
+  >(undefined);
+  const [loupeTransactionError, setLoupeTransactionError] = useState<
+    Error | null
+  >(null);
   const [isExecutingRead, setIsExecutingRead] = useState(false);
-  const [isSimulatingWrite, setIsSimulatingWrite] = useState(false);
   const [isExecutingWrite, setIsExecutingWrite] = useState(false);
   const [probedProxyAbiLabel, setProbedProxyAbiLabel] = useState<string | null>(
     null,
   );
   const [selectedProxyAbiLabel, setSelectedProxyAbiLabel] = useState("");
   const didApplyQueryParamsRef = useRef(false);
+  const lastAutoScrolledSelectorRef = useRef("");
   const functionRunnerRef = useRef<HTMLDivElement | null>(null);
+  const addressAutocompleteRef = useRef<HTMLDivElement | null>(null);
+  const signatureAutocompleteRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const [locationSearch, setLocationSearch] = useState("");
+  const pushUrlWithoutScroll = (nextUrl: string) => {
+    window.history.pushState(window.history.state, "", nextUrl);
+    const nextSearch = nextUrl.includes("?") ? nextUrl.slice(nextUrl.indexOf("?")) : "";
+    setLocationSearch(nextSearch);
+  };
 
   const isAddressValid = Boolean(addressInput) && isAddress(addressInput);
   const publicClient = usePublicClient({ chainId: selectedChainId });
@@ -682,7 +711,7 @@ export default function DiamondAdminPage() {
   const { chain } = useNetwork();
   const { switchNetworkAsync, isLoading: isSwitchingNetwork } =
     useAppSwitchNetwork();
-  const { isConnected } = useAccount();
+  const { address: connectedAddress, isConnected } = useAccount();
 
   const {
     data: rawFacets,
@@ -784,10 +813,23 @@ export default function DiamondAdminPage() {
       })
       .slice(0, 7);
   }, [contractOptions, normalizedAddressInput]);
-
+  const activeAutocompleteIndex =
+    autocompleteContractOptions.length > 0 ?
+      Math.min(
+        Math.max(highlightedAutocompleteIndex, 0),
+        autocompleteContractOptions.length - 1,
+      )
+    : -1;
   useEffect(() => {
-    setHighlightedAutocompleteIndex(0);
-  }, [autocompleteContractOptions, isAddressAutocompleteOpen]);
+    if (!isAddressAutocompleteOpen || activeAutocompleteIndex < 0) return;
+
+    const activeElement = addressAutocompleteRef.current?.querySelector(
+      `[data-autocomplete-index="${activeAutocompleteIndex}"]`,
+    );
+    if (!(activeElement instanceof HTMLElement)) return;
+
+    activeElement.scrollIntoView({ block: "nearest" });
+  }, [activeAutocompleteIndex, isAddressAutocompleteOpen]);
   const knownAbiFunctions = useMemo<AbiFunction[]>(
     () =>
       KNOWN_ABI_CATALOG.flatMap(({ abi }) => abi as readonly unknown[])
@@ -1042,27 +1084,60 @@ export default function DiamondAdminPage() {
       }),
     [facets, knownFacetCatalog],
   );
+  const resolvedFacetFunctions = useMemo<AbiFunction[]>(
+    () =>
+      Array.from(
+        new Map(
+          facetsWithNames
+            .map((facet) => facet.inferredName)
+            .filter((label): label is string => Boolean(label))
+            .flatMap((label) => {
+              const facetAbi = KNOWN_FACET_ABI_CATALOG.find(
+                (entry) => entry.label === label,
+              )?.abi;
+              if (!facetAbi) return [];
+
+              return (facetAbi as readonly unknown[])
+                .filter(isAbiFunctionItem)
+                .map((item) => item as AbiFunction);
+            })
+            .map((fn) => [toCanonicalSignature(fn), fn] as const),
+        ).values(),
+      ),
+    [facetsWithNames],
+  );
+  const knownAutocompleteFunctions = useMemo<AbiFunction[]>(
+    () =>
+      Array.from(
+        new Map(
+          [...knownAbiFunctions, ...resolvedFacetFunctions].map(
+            (fn) => [toCanonicalSignature(fn), fn] as const,
+          ),
+        ).values(),
+      ),
+    [knownAbiFunctions, resolvedFacetFunctions],
+  );
 
   const knownFunctionBySignature = useMemo(() => {
-    const entries = knownAbiFunctions.map(
+    const entries = knownAutocompleteFunctions.map(
       (fn) => [toCanonicalSignature(fn), fn] as const,
     );
     return new Map(entries);
-  }, []);
+  }, [knownAutocompleteFunctions]);
 
   const knownFunctionsBySelector = useMemo(() => {
     const map = new Map<string, AbiFunction[]>();
-    knownAbiFunctions.forEach((fn) => {
+    knownAutocompleteFunctions.forEach((fn) => {
       const selector = selectorFromSignature(toCanonicalSignature(fn));
       const list = map.get(selector) ?? [];
       map.set(selector, [...list, fn]);
     });
     return map;
-  }, [knownAbiFunctions]);
+  }, [knownAutocompleteFunctions]);
 
   const localSignatureMap = useMemo<SignatureMap>(() => {
     const map: SignatureMap = {};
-    knownAbiFunctions.forEach((fn) => {
+    knownAutocompleteFunctions.forEach((fn) => {
       const signature = toCanonicalSignature(fn);
       const selector = selectorFromSignature(signature);
       map[selector] = Array.from(
@@ -1070,7 +1145,7 @@ export default function DiamondAdminPage() {
       );
     });
     return map;
-  }, [knownAbiFunctions]);
+  }, [knownAutocompleteFunctions]);
 
   const selectedKnownFunction = useMemo(() => {
     if (!selectedSignature.trim() && !selectedSelector) return null;
@@ -1130,6 +1205,20 @@ export default function DiamondAdminPage() {
     }
   }, [selectedKnownFunction, selectedSignature]);
 
+  useTransactionNotification({
+    toastId: "loupe-transaction-runner",
+    transactionData: undefined,
+    transactionHash: loupeTransactionHash,
+    transactionError: loupeTransactionError,
+    transactionStatus: loupeTransactionStatus,
+    enabled: loupeTransactionStatus != null,
+    fallbackErrorMessage: executionError ?? undefined,
+    contractName: resolvedSelectedSignature || "Facet function runner",
+    chainId: selectedChainId,
+    targetAddress: diamondAddress,
+    watchTransaction: true,
+  });
+
   const availableSignaturesForSelectedSelector = useMemo(
     () => Array.from(new Set(signatureMap[selectedSelector] ?? [])),
     [selectedSelector, signatureMap],
@@ -1154,10 +1243,9 @@ export default function DiamondAdminPage() {
 
     availableSignaturesForSelectedSelector.forEach(addOption);
     proxyFunctions.forEach((fn) => addOption(toCanonicalSignature(fn)));
-
-    if (signatureOptions.size === 0) {
-      knownAbiFunctions.forEach((fn) => addOption(toCanonicalSignature(fn)));
-    }
+    knownAutocompleteFunctions.forEach((fn) =>
+      addOption(toCanonicalSignature(fn)),
+    );
 
     const options = Array.from(signatureOptions.values());
     const filteredOptions =
@@ -1183,14 +1271,29 @@ export default function DiamondAdminPage() {
       .slice(0, 10);
   }, [
     availableSignaturesForSelectedSelector,
-    knownAbiFunctions,
+    knownAutocompleteFunctions,
     proxyFunctions,
     selectedSignature,
   ]);
-
+  const activeSignatureAutocompleteIndex =
+    signatureAutocompleteOptions.length > 0 ?
+      Math.min(
+        Math.max(highlightedSignatureAutocompleteIndex, 0),
+        signatureAutocompleteOptions.length - 1,
+      )
+    : -1;
   useEffect(() => {
-    setHighlightedSignatureAutocompleteIndex(0);
-  }, [isSignatureAutocompleteOpen, signatureAutocompleteOptions]);
+    if (!isSignatureAutocompleteOpen || activeSignatureAutocompleteIndex < 0) {
+      return;
+    }
+
+    const activeElement = signatureAutocompleteRef.current?.querySelector(
+      `[data-autocomplete-index="${activeSignatureAutocompleteIndex}"]`,
+    );
+    if (!(activeElement instanceof HTMLElement)) return;
+
+    activeElement.scrollIntoView({ block: "nearest" });
+  }, [activeSignatureAutocompleteIndex, isSignatureAutocompleteOpen]);
 
   const selectedAbiFunction = useMemo(() => {
     if (selectedKnownFunction) return selectedKnownFunction;
@@ -1242,7 +1345,7 @@ export default function DiamondAdminPage() {
 
   useEffect(() => {
     if (!selectedAbiFunction) {
-      setArgFieldValues([]);
+      setArgFieldValues((current) => (current.length === 0 ? current : []));
       return;
     }
 
@@ -1257,8 +1360,7 @@ export default function DiamondAdminPage() {
       parsedArgs = [];
     }
 
-    setArgFieldValues(
-      inputs.map((input, index) => {
+    const nextArgFieldValues = inputs.map((input, index) => {
         const current = parsedArgs[index];
         if (current === undefined) {
           return input.type === "bool" ? false : "";
@@ -1267,23 +1369,53 @@ export default function DiamondAdminPage() {
           return current;
         }
         return stringifyFieldValue(current);
-      }),
+      });
+
+    setArgFieldValues((current) =>
+      areFieldValuesEqual(current, nextArgFieldValues) ?
+        current
+      : nextArgFieldValues,
     );
   }, [argsInput, selectedAbiFunction]);
 
-  const queryParams = useMemo(
-    () => ({
-      chainId: searchParams.get("chainId") ?? undefined,
-      chain: searchParams.get("chain") ?? undefined,
-      address: searchParams.get("address") ?? undefined,
-      diamond: searchParams.get("diamond") ?? undefined,
-      selector: searchParams.get("selector") ?? undefined,
-      signature: searchParams.get("signature") ?? undefined,
-      args: searchParams.get("args") ?? undefined,
-      value: searchParams.get("value") ?? undefined,
-    }),
-    [searchParams],
-  );
+  useEffect(() => {
+    const syncLocationSearch = () => {
+      setLocationSearch(window.location.search);
+    };
+
+    syncLocationSearch();
+    window.addEventListener("popstate", syncLocationSearch);
+    return () => {
+      window.removeEventListener("popstate", syncLocationSearch);
+    };
+  }, []);
+
+  const queryParams = useMemo(() => {
+    const params = new URLSearchParams(locationSearch);
+    return {
+      chainId: params.get("chainId") ?? undefined,
+      chain: params.get("chain") ?? undefined,
+      address: params.get("address") ?? undefined,
+      diamond: params.get("diamond") ?? undefined,
+      selector: params.get("selector") ?? undefined,
+      signature: params.get("signature") ?? undefined,
+      args: params.get("args") ?? undefined,
+      value: params.get("value") ?? undefined,
+    };
+  }, [locationSearch]);
+  const querySelectedSelector = useMemo(() => {
+    const selectorParam = queryParams.selector;
+    const signatureParam = queryParams.signature;
+
+    if (selectorParam != null && SELECTOR_REGEX.test(selectorParam)) {
+      return selectorParam.toLowerCase();
+    }
+    if (signatureParam != null && SELECTOR_REGEX.test(signatureParam)) {
+      return signatureParam.toLowerCase();
+    }
+
+    return "";
+  }, [queryParams.selector, queryParams.signature]);
 
   useEffect(() => {
     let isActive = true;
@@ -1356,28 +1488,41 @@ export default function DiamondAdminPage() {
       setSelectedSignature("");
       setExecutionError(null);
       setReadOutput(null);
-      setSimulationOutput(null);
       setTxHash(null);
       return;
     }
 
     const normalizedAddress = selectedContract.address as Address;
-    setAddressInput(normalizedAddress);
-    setSelectedProxyAbiLabel(selectedContract.abiLabel);
+    const isSameAddress =
+      diamondAddress?.toLowerCase() === normalizedAddress.toLowerCase();
+    const currentParams = new URLSearchParams(locationSearch);
+    const currentChainId = currentParams.get("chainId") ?? currentParams.get("chain");
+    const currentAddress = currentParams.get("address") ?? currentParams.get("diamond");
+    const shouldPushUrl =
+      currentChainId !== String(selectedChainId) ||
+      currentAddress?.toLowerCase() !== normalizedAddress.toLowerCase();
 
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.set("chainId", String(selectedChainId));
-    nextParams.set("address", normalizedAddress);
-    nextParams.delete("diamond");
-    nextParams.delete("chain");
-    nextParams.delete("selector");
-    nextParams.delete("signature");
-    nextParams.delete("args");
-    nextParams.delete("value");
-    router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
+    if (addressInput !== normalizedAddress) {
+      setAddressInput(normalizedAddress);
+    }
+    if (selectedProxyAbiLabel !== selectedContract.abiLabel) {
+      setSelectedProxyAbiLabel(selectedContract.abiLabel);
+    }
 
-    if (diamondAddress?.toLowerCase() === normalizedAddress.toLowerCase()) {
-      refetch?.();
+    if (shouldPushUrl) {
+      const nextParams = new URLSearchParams(locationSearch);
+      nextParams.set("chainId", String(selectedChainId));
+      nextParams.set("address", normalizedAddress);
+      nextParams.delete("diamond");
+      nextParams.delete("chain");
+      nextParams.delete("selector");
+      nextParams.delete("signature");
+      nextParams.delete("args");
+      nextParams.delete("value");
+      pushUrlWithoutScroll(`${pathname}?${nextParams.toString()}`);
+    }
+
+    if (isSameAddress) {
       return;
     }
 
@@ -1388,22 +1533,19 @@ export default function DiamondAdminPage() {
     setExecutionError(null);
     setReadOutput(null);
     setTxHash(null);
-    setSimulationOutput(null);
     setDiamondAddress(normalizedAddress);
   }, [
+    addressInput,
     contractOptions,
     diamondAddress,
+    locationSearch,
     pathname,
-    refetch,
-    router,
-    searchParams,
     selectedChainId,
     selectedContractKey,
+    selectedProxyAbiLabel,
   ]);
 
   useEffect(() => {
-    if (didApplyQueryParamsRef.current) return;
-
     const chainIdParam = queryParams.chainId ?? queryParams.chain;
     const addressParam = queryParams.address ?? queryParams.diamond;
     const selectorParam = queryParams.selector;
@@ -1435,9 +1577,15 @@ export default function DiamondAdminPage() {
 
     if (selectorParam != null && SELECTOR_REGEX.test(selectorParam)) {
       setSelectedSelector(selectorParam.toLowerCase());
+    } else if (signatureParam != null && SELECTOR_REGEX.test(signatureParam)) {
+      setSelectedSelector(signatureParam.toLowerCase());
     }
 
-    if (signatureParam != null && signatureParam.trim() !== "") {
+    if (
+      signatureParam != null &&
+      signatureParam.trim() !== "" &&
+      !SELECTOR_REGEX.test(signatureParam)
+    ) {
       setSelectedSignature(signatureParam);
     }
 
@@ -1521,17 +1669,32 @@ export default function DiamondAdminPage() {
 
   useEffect(() => {
     if (!availableSelectors.length) {
-      setSelectedSelector("");
-      setSelectedSignature("");
+      if (!diamondAddress) {
+        setSelectedSelector("");
+        setSelectedSignature("");
+      }
       return;
     }
     if (isManualSignatureOverride) {
       return;
     }
+    if (
+      querySelectedSelector &&
+      availableSelectors.includes(querySelectedSelector) &&
+      selectedSelector !== querySelectedSelector
+    ) {
+      setSelectedSelector(querySelectedSelector);
+      return;
+    }
     if (!selectedSelector || !availableSelectors.includes(selectedSelector)) {
       setSelectedSelector(availableSelectors[0]);
     }
-  }, [availableSelectors, isManualSignatureOverride, selectedSelector]);
+  }, [
+    availableSelectors,
+    isManualSignatureOverride,
+    querySelectedSelector,
+    selectedSelector,
+  ]);
 
   useEffect(() => {
     if (isManualSignatureOverride) {
@@ -1592,10 +1755,51 @@ export default function DiamondAdminPage() {
     }
   }, [isManualSignatureOverride, selectedSelector, selectedSignature]);
 
+  useEffect(() => {
+    if (!querySelectedSelector) return;
+    if (selectedSelector !== querySelectedSelector) return;
+    if (lastAutoScrolledSelectorRef.current === querySelectedSelector) return;
+
+    lastAutoScrolledSelectorRef.current = querySelectedSelector;
+    requestAnimationFrame(() => {
+      functionRunnerRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    });
+  }, [querySelectedSelector, selectedSelector]);
+
+  const updateSelectedSelectorQueryParam = (selector?: string) => {
+    if (!didApplyQueryParamsRef.current) return;
+    if (!diamondAddress) return;
+
+    const normalizedSelector =
+      selector != null && SELECTOR_REGEX.test(selector) ?
+        selector.toLowerCase()
+      : "";
+    const currentParams = new URLSearchParams(locationSearch);
+    const currentSelector = currentParams.get("selector") ?? "";
+    const currentSignature = currentParams.get("signature") ?? "";
+
+    if (normalizedSelector === currentSelector && currentSignature === "") {
+      return;
+    }
+
+    const nextParams = new URLSearchParams(locationSearch);
+    if (normalizedSelector) {
+      nextParams.set("selector", normalizedSelector);
+    } else {
+      nextParams.delete("selector");
+    }
+    nextParams.delete("signature");
+
+    pushUrlWithoutScroll(`${pathname}?${nextParams.toString()}`);
+  };
+
   const handleInspectClick = () => {
     if (!isAddressValid) return;
     const normalized = addressInput as Address;
-    const nextParams = new URLSearchParams(searchParams.toString());
+    const nextParams = new URLSearchParams(locationSearch);
     nextParams.set("chainId", String(selectedChainId));
     nextParams.set("address", normalized);
     nextParams.delete("diamond");
@@ -1604,7 +1808,7 @@ export default function DiamondAdminPage() {
     nextParams.delete("signature");
     nextParams.delete("args");
     nextParams.delete("value");
-    router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
+    pushUrlWithoutScroll(`${pathname}?${nextParams.toString()}`);
     if (diamondAddress === normalized) {
       refetch?.();
       return;
@@ -1617,7 +1821,6 @@ export default function DiamondAdminPage() {
     setExecutionError(null);
     setReadOutput(null);
     setTxHash(null);
-    setSimulationOutput(null);
     setDiamondAddress(normalized);
   };
 
@@ -1635,36 +1838,49 @@ export default function DiamondAdminPage() {
       return;
     }
 
-    if (event.key === "Tab" && isAddressAutocompleteOpen) {
+    if (event.key === "Tab") {
       event.preventDefault();
-      applyAutocompleteContract(autocompleteContractOptions[0]);
+      setIsAddressAutocompleteOpen(true);
+      setHighlightedAutocompleteIndex((current) => {
+        if (!isAddressAutocompleteOpen) return 0;
+        if (event.shiftKey) {
+          return current <= 0 ? autocompleteContractOptions.length - 1 : current - 1;
+        }
+        return current >= autocompleteContractOptions.length - 1 ? 0 : current + 1;
+      });
       return;
     }
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setIsAddressAutocompleteOpen(true);
-      setHighlightedAutocompleteIndex((current) =>
-        current >= autocompleteContractOptions.length - 1 ? 0 : current + 1,
-      );
+      setHighlightedAutocompleteIndex((current) => {
+        if (!isAddressAutocompleteOpen) return 0;
+        return current >= autocompleteContractOptions.length - 1 ? 0 : current + 1;
+      });
       return;
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
       setIsAddressAutocompleteOpen(true);
-      setHighlightedAutocompleteIndex((current) =>
-        current <= 0 ? autocompleteContractOptions.length - 1 : current - 1,
-      );
+      setHighlightedAutocompleteIndex((current) => {
+        if (!isAddressAutocompleteOpen) {
+          return autocompleteContractOptions.length - 1;
+        }
+        return current <= 0 ? autocompleteContractOptions.length - 1 : current - 1;
+      });
       return;
     }
 
     if (event.key === "Enter" && isAddressAutocompleteOpen) {
       event.preventDefault();
       const contract =
-        autocompleteContractOptions[highlightedAutocompleteIndex] ??
+        autocompleteContractOptions[activeAutocompleteIndex] ??
         autocompleteContractOptions[0];
-      applyAutocompleteContract(contract);
+      if (contract) {
+        applyAutocompleteContract(contract);
+      }
       return;
     }
 
@@ -1679,6 +1895,7 @@ export default function DiamondAdminPage() {
     if (signature !== undefined) {
       setSelectedSignature(signature);
     }
+    updateSelectedSelectorQueryParam(selector);
     requestAnimationFrame(() => {
       functionRunnerRef.current?.scrollIntoView({
         behavior: "smooth",
@@ -1693,6 +1910,7 @@ export default function DiamondAdminPage() {
     setIsManualSignatureOverride(false);
     setSelectedSelector(option.selector);
     setSelectedSignature(option.signature);
+    updateSelectedSelectorQueryParam(option.selector);
     setIsSignatureAutocompleteOpen(false);
     setHighlightedSignatureAutocompleteIndex(0);
   };
@@ -1704,36 +1922,49 @@ export default function DiamondAdminPage() {
       return;
     }
 
-    if (event.key === "Tab" && isSignatureAutocompleteOpen) {
+    if (event.key === "Tab") {
       event.preventDefault();
-      applySignatureAutocompleteOption(signatureAutocompleteOptions[0]);
+      setIsSignatureAutocompleteOpen(true);
+      setHighlightedSignatureAutocompleteIndex((current) => {
+        if (!isSignatureAutocompleteOpen) return 0;
+        if (event.shiftKey) {
+          return current <= 0 ? signatureAutocompleteOptions.length - 1 : current - 1;
+        }
+        return current >= signatureAutocompleteOptions.length - 1 ? 0 : current + 1;
+      });
       return;
     }
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setIsSignatureAutocompleteOpen(true);
-      setHighlightedSignatureAutocompleteIndex((current) =>
-        current >= signatureAutocompleteOptions.length - 1 ? 0 : current + 1,
-      );
+      setHighlightedSignatureAutocompleteIndex((current) => {
+        if (!isSignatureAutocompleteOpen) return 0;
+        return current >= signatureAutocompleteOptions.length - 1 ? 0 : current + 1;
+      });
       return;
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
       setIsSignatureAutocompleteOpen(true);
-      setHighlightedSignatureAutocompleteIndex((current) =>
-        current <= 0 ? signatureAutocompleteOptions.length - 1 : current - 1,
-      );
+      setHighlightedSignatureAutocompleteIndex((current) => {
+        if (!isSignatureAutocompleteOpen) {
+          return signatureAutocompleteOptions.length - 1;
+        }
+        return current <= 0 ? signatureAutocompleteOptions.length - 1 : current - 1;
+      });
       return;
     }
 
     if (event.key === "Enter" && isSignatureAutocompleteOpen) {
       event.preventDefault();
       const option =
-        signatureAutocompleteOptions[highlightedSignatureAutocompleteIndex] ??
+        signatureAutocompleteOptions[activeSignatureAutocompleteIndex] ??
         signatureAutocompleteOptions[0];
-      applySignatureAutocompleteOption(option);
+      if (option) {
+        applySignatureAutocompleteOption(option);
+      }
       return;
     }
 
@@ -1742,7 +1973,7 @@ export default function DiamondAdminPage() {
     }
   };
 
-  const executeFunction = async (mode: "read" | "simulate" | "write") => {
+  const executeFunction = async (mode: "read" | "write") => {
     if (!diamondAddress) {
       setExecutionError("Set a valid diamond address first.");
       return;
@@ -1753,14 +1984,14 @@ export default function DiamondAdminPage() {
     }
     if (mode === "read") {
       setIsExecutingRead(true);
-    } else if (mode === "simulate") {
-      setIsSimulatingWrite(true);
     } else {
       setIsExecutingWrite(true);
+      setLoupeTransactionStatus("waiting");
+      setLoupeTransactionError(null);
+      setLoupeTransactionHash(undefined);
     }
     setExecutionError(null);
     setReadOutput(null);
-    setSimulationOutput(null);
     setTxHash(null);
 
     try {
@@ -1806,52 +2037,13 @@ export default function DiamondAdminPage() {
         return;
       }
 
-      if (mode === "simulate") {
-        if (!walletClient?.account) {
-          throw new Error(
-            "Connect a wallet on the selected chain to simulate write transactions.",
-          );
-        }
-        if (selectedFunctionKind === "read") {
-          throw new Error(
-            "Detected read-only function. Use Call (eth_call), no simulation needed.",
-          );
-        }
-
-        const sanitizedValue = valueInput.trim();
-        const value =
-          sanitizedValue && DECIMAL_REGEX.test(sanitizedValue) ?
-            BigInt(sanitizedValue)
-          : 0n;
-
-        const response = await publicClient.call({
-          account: walletClient.account.address,
-          to: diamondAddress,
-          data,
-          value,
-        });
-        const rawResult = response.data ?? "0x";
-        if ((functionAbi.outputs ?? []).length === 0) {
-          setSimulationOutput(
-            rawResult !== "0x" ?
-              `Simulation succeeded.\nRaw return data:\n${rawResult}`
-            : "Simulation succeeded (no return value).",
-          );
-          return;
-        }
-        const decoded = decodeFunctionResult({
-          abi,
-          functionName: functionAbi.name,
-          data: rawResult,
-        });
-        setSimulationOutput(
-          `Simulation succeeded.\n${stringifyResult(decoded)}`,
-        );
-        return;
-      }
-
       if (!walletClient?.account) {
         throw new Error("Connect a wallet on the selected chain to write.");
+      }
+      if (!connectedAddress) {
+        throw new Error(
+          "Connect a wallet on the selected chain to send transactions.",
+        );
       }
       if (selectedFunctionKind === "read") {
         throw new Error(
@@ -1869,6 +2061,13 @@ export default function DiamondAdminPage() {
           BigInt(sanitizedValue)
         : 0n;
 
+      await publicClient.call({
+        account: connectedAddress,
+        to: diamondAddress,
+        data,
+        value,
+      });
+
       const hash = await walletClient.sendTransaction({
         account: walletClient.account,
         to: diamondAddress,
@@ -1876,6 +2075,9 @@ export default function DiamondAdminPage() {
         value,
       });
       setTxHash(hash);
+      setLoupeTransactionHash(hash);
+      setLoupeTransactionStatus("loading");
+      setLoupeTransactionError(null);
     } catch (runError) {
       const revertData = extractRevertData(runError);
       let message =
@@ -1902,9 +2104,12 @@ export default function DiamondAdminPage() {
         }
       }
       setExecutionError(message);
+      setLoupeTransactionError(
+        runError instanceof Error ? runError : new Error(message),
+      );
+      setLoupeTransactionStatus("error");
     } finally {
       setIsExecutingRead(false);
-      setIsSimulatingWrite(false);
       setIsExecutingWrite(false);
     }
   };
@@ -1974,18 +2179,22 @@ export default function DiamondAdminPage() {
               />
               {isAddressAutocompleteOpen &&
                 autocompleteContractOptions.length > 0 && (
-                  <div className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-y-auto rounded-xl border border-border-neutral bg-neutral shadow-2xl">
-                    {autocompleteContractOptions.map((contract) => (
+                  <div
+                    ref={addressAutocompleteRef}
+                    className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-y-auto rounded-xl border border-border-neutral bg-neutral shadow-2xl"
+                  >
+                    {autocompleteContractOptions.map((contract, index) => (
                       <button
                         key={contract.key}
+                        data-autocomplete-index={index}
                         type="button"
                         className={`flex w-full flex-col gap-1 border-b border-border-neutral px-3 py-3 text-left last:border-b-0 hover:bg-neutral/70 ${
                           (
                             autocompleteContractOptions[
-                              highlightedAutocompleteIndex
+                              activeAutocompleteIndex
                             ]?.key === contract.key
                           ) ?
-                            "bg-neutral/70"
+                            "bg-primary-content/10 ring-1 ring-primary-content/40"
                           : ""
                         }`}
                         onMouseEnter={() => {
@@ -2324,18 +2533,22 @@ export default function DiamondAdminPage() {
                         />
                         {isSignatureAutocompleteOpen &&
                           signatureAutocompleteOptions.length > 0 && (
-                            <div className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-y-auto rounded-xl border border-border-neutral bg-neutral shadow-2xl">
-                              {signatureAutocompleteOptions.map((option) => (
+                            <div
+                              ref={signatureAutocompleteRef}
+                              className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-y-auto rounded-xl border border-border-neutral bg-neutral shadow-2xl"
+                            >
+                              {signatureAutocompleteOptions.map((option, index) => (
                                 <button
                                   key={option.signature}
+                                  data-autocomplete-index={index}
                                   type="button"
                                   className={`flex w-full flex-col gap-1 border-b border-border-neutral px-3 py-3 text-left last:border-b-0 hover:bg-neutral/70 ${
                                     (
                                       signatureAutocompleteOptions[
-                                        highlightedSignatureAutocompleteIndex
+                                        activeSignatureAutocompleteIndex
                                       ]?.signature === option.signature
                                     ) ?
-                                      "bg-neutral/70"
+                                      "bg-primary-content/10 ring-1 ring-primary-content/40"
                                     : ""
                                   }`}
                                   onMouseEnter={() => {
@@ -2447,22 +2660,6 @@ export default function DiamondAdminPage() {
                     <div className="flex flex-wrap gap-2">
                       <Button
                         btnStyle="outline"
-                        color="primary"
-                        className="sm:w-auto"
-                        onClick={() => void executeFunction("simulate")}
-                        isLoading={isSimulatingWrite}
-                        disabled={
-                          !diamondAddress ||
-                          !selectedSignature.trim() ||
-                          selectedFunctionKind === "read" ||
-                          !isConnected ||
-                          !walletClient?.account
-                        }
-                      >
-                        Simulate transaction
-                      </Button>
-                      <Button
-                        btnStyle="outline"
                         color={
                           selectedFunctionKind === "read" ? "primary" : (
                             "secondary"
@@ -2538,17 +2735,6 @@ export default function DiamondAdminPage() {
                         </p>
                         <pre className="overflow-auto rounded-lg border border-border-neutral/50 bg-neutral/30 p-3 text-xs text-neutral-content">
                           {readOutput}
-                        </pre>
-                      </div>
-                    )}
-
-                    {simulationOutput && (
-                      <div className="space-y-1">
-                        <p className="text-xs text-neutral-muted">
-                          Simulation result
-                        </p>
-                        <pre className="overflow-auto rounded-lg border border-border-neutral/50 bg-neutral/30 p-3 text-xs text-neutral-content">
-                          {simulationOutput}
                         </pre>
                       </div>
                     )}

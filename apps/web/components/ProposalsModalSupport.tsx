@@ -180,11 +180,15 @@ export const ProposalsModalSupport = forwardRef<
 
     const streamingStatusLabel =
       isStreamingType ?
-        (resolvedProposalStatus === "disputed" ?
-          "disputed"
+        (resolvedProposalStatus === "cancelled" ?
+          "Cancelled"
+        : resolvedProposalStatus === "disputed" ?
+          "Disputed"
+        : resolvedProposalStatus === "executed" ?
+          "Closed"
         : readyToBeExecuted || proposalWillPass ?
-          "about to stream"
-        : "active, not streaming")
+          "About to stream"
+        : "Active, not streaming")
       : undefined;
 
     const ProposalCountDown = (
