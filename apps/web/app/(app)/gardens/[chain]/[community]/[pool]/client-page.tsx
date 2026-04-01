@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowPathIcon,
   ArrowTopRightOnSquareIcon,
@@ -77,6 +77,73 @@ const toBigInt = (value: unknown): bigint => {
   }
   return 0n;
 };
+
+const LivePoolStreamedTotal = memo(function LivePoolStreamedTotal({
+  proposals,
+  poolToken,
+}: {
+  proposals:
+    | Array<{
+        proposalStream?: {
+          currentFlowRate?: bigint | string | number | null;
+          streamedUntilSnapshot?: bigint | string | number | null;
+          lastSnapshotAt?: bigint | string | number | null;
+        } | null;
+      }>
+    | undefined;
+  poolToken?: { decimals: number; symbol: string } | null;
+}) {
+  const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
+
+  const hasActiveFlow = useMemo(
+    () =>
+      (proposals ?? []).some(
+        (proposal) =>
+          toBigInt(proposal.proposalStream?.currentFlowRate) > 0n,
+      ),
+    [proposals],
+  );
+
+  useEffect(() => {
+    if (!hasActiveFlow) return;
+    const interval = window.setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      setNowMs(BigInt(Date.now()));
+    }, 100);
+    return () => clearInterval(interval);
+  }, [hasActiveFlow]);
+
+  const totalStreamedBn = useMemo(() => {
+    const total = (proposals ?? []).reduce((acc, proposal) => {
+      const proposalStream = proposal.proposalStream;
+      if (!proposalStream) return acc;
+
+      const currentFlowRate = toBigInt(proposalStream.currentFlowRate);
+      const streamedUntilSnapshot = toBigInt(
+        proposalStream.streamedUntilSnapshot,
+      );
+      const lastSnapshotAtMs = toBigInt(proposalStream.lastSnapshotAt) * 1000n;
+      const elapsedMs =
+        currentFlowRate > 0n && lastSnapshotAtMs > 0n && nowMs > lastSnapshotAtMs ?
+          nowMs - lastSnapshotAtMs
+        : 0n;
+
+      return acc + streamedUntilSnapshot + (currentFlowRate * elapsedMs) / 1000n;
+    }, 0n);
+
+    return total > 0n ? total : null;
+  }, [nowMs, proposals]);
+
+  if (!poolToken || totalStreamedBn == null) {
+    return <span className="font-mono tabular-nums">--</span>;
+  }
+
+  return (
+    <span className="font-mono tabular-nums">
+      {Number(formatUnits(totalStreamedBn, poolToken.decimals)).toFixed(5)}
+    </span>
+  );
+});
 
 export default function ClientPage({
   params: { chain, pool: poolSlug, community: _community },
@@ -644,38 +711,6 @@ export default function ClientPage({
     | bigint
     | null
     | undefined;
-  const totalStreamedFromProposalSnapshotsBn = useMemo(() => {
-    if (!isStreamingPool || !strategy?.proposals?.length) return null;
-
-    const nowMs = BigInt(nowTs) * 1000n;
-    const total = strategy.proposals.reduce((acc, proposal) => {
-      const proposalStream = (
-        proposal as {
-          proposalStream?: {
-            currentFlowRate?: bigint | string | number | null;
-            streamedUntilSnapshot?: bigint | string | number | null;
-            lastSnapshotAt?: bigint | string | number | null;
-          } | null;
-        }
-      ).proposalStream;
-
-      if (!proposalStream) return acc;
-
-      const currentFlowRate = toBigInt(proposalStream.currentFlowRate);
-      const streamedUntilSnapshot = toBigInt(
-        proposalStream.streamedUntilSnapshot,
-      );
-      const lastSnapshotAtMs = toBigInt(proposalStream.lastSnapshotAt) * 1000n;
-      const elapsedMs =
-        currentFlowRate > 0n && lastSnapshotAtMs > 0n && nowMs > lastSnapshotAtMs ?
-          nowMs - lastSnapshotAtMs
-        : 0n;
-
-      return acc + streamedUntilSnapshot + (currentFlowRate * elapsedMs) / 1000n;
-    }, 0n);
-
-    return total > 0n ? total : null;
-  }, [isStreamingPool, nowTs, strategy?.proposals]);
   useEffect(() => {
     if (isMissingFundingToken && strategy && !error) {
       const timer = window.setTimeout(() => {
@@ -795,14 +830,12 @@ export default function ClientPage({
             <div className="flex items-center justify-between gap-3">
               <p className="subtitle2">Total</p>
               <div className="flex items-center gap-2">
-                <DisplayNumber
-                  number={
-                    totalStreamedFromProposalSnapshotsBn != null ?
-                      [totalStreamedFromProposalSnapshotsBn, streamTokenDecimals]
-                    : "--"
-                  }
-                  valueClassName="text-right"
-                />
+                <p className="text-right font-mono tabular-nums">
+                  <LivePoolStreamedTotal
+                    proposals={strategy?.proposals as any}
+                    poolToken={poolToken}
+                  />
+                </p>
                 {poolToken?.address && poolToken?.symbol && (
                   <EthAddress
                     address={poolToken.address}

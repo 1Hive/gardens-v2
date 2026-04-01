@@ -38,6 +38,7 @@ import diamondLoupeFacetArtifact from "#/contracts/abis/DiamondLoupeFacet.sol/Di
 import globalPauseControllerArtifact from "#/contracts/abis/GlobalPauseController.sol/GlobalPauseController.json";
 import proxyOwnableUpgraderArtifact from "#/contracts/abis/ProxyOwnableUpgrader.sol/ProxyOwnableUpgrader.json";
 import proxyOwnerArtifact from "#/contracts/abis/ProxyOwner.sol/ProxyOwner.json";
+import streamingEscrowArtifact from "#/contracts/abis/StreamingEscrow.sol/StreamingEscrow.json";
 import streamingEscrowFactoryArtifact from "#/contracts/abis/StreamingEscrowFactory.sol/StreamingEscrowFactory.json";
 import { Button } from "@/components/Button";
 import { InfoBox } from "@/components/InfoBox";
@@ -109,6 +110,7 @@ const KNOWN_ABI_CATALOG = [
   { label: "RegistryFactory", abi: registryFactoryABI },
   { label: "RegistryCommunity", abi: registryCommunityABI },
   { label: "SafeArbitrator", abi: safeArbitratorABI },
+  { label: "StreamingEscrow", abi: streamingEscrowArtifact.abi },
   { label: "StreamingEscrowFactory", abi: streamingEscrowFactoryArtifact.abi },
   { label: "CVStrategy", abi: cvStrategyABI },
   { label: "GlobalPauseController", abi: globalPauseControllerArtifact.abi },
