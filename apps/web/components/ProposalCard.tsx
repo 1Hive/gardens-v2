@@ -416,13 +416,17 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const resolvedProposalStatus = ProposalStatus[proposalStatus];
     const streamingStatusLabel =
       isStreamingType ?
-        (resolvedProposalStatus === "disputed" ?
-          "disputed"
+        (resolvedProposalStatus === "cancelled" ?
+          "Cancelled"
+        : resolvedProposalStatus === "disputed" ?
+          "Disputed"
+        : resolvedProposalStatus === "executed" ?
+          "Closed"
         : (currentFlowRateBn ?? 0n) > 0n ?
-          "streaming"
+          "Streaming"
         : readyToBeExecuted || proposalWillPass ?
-          "about to stream"
-        : "active, not streaming")
+          "About to stream"
+        : "Active, not streaming")
       : undefined;
 
     const ProposalCountDown = (

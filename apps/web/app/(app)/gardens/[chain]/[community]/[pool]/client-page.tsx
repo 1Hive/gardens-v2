@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowPathIcon,
   ArrowTopRightOnSquareIcon,
@@ -51,7 +51,6 @@ import {
   dismissPendingSubgraphRefreshToast,
   useSubgraphQuery,
 } from "@/hooks/useSubgraphQuery";
-import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
@@ -65,6 +64,86 @@ import {
 
 export type AlloQuery = getAlloQuery["allos"][number];
 const SYNC_STREAM_HIDE_WINDOW_SECONDS = 15 * 60;
+
+const toBigInt = (value: unknown): bigint => {
+  if (typeof value === "bigint") return value;
+  if (typeof value === "number") return BigInt(Math.trunc(value));
+  if (typeof value === "string") {
+    try {
+      return BigInt(value);
+    } catch {
+      return 0n;
+    }
+  }
+  return 0n;
+};
+
+const LivePoolStreamedTotal = memo(function LivePoolStreamedTotal({
+  proposals,
+  poolToken,
+}: {
+  proposals:
+    | Array<{
+        proposalStream?: {
+          currentFlowRate?: bigint | string | number | null;
+          streamedUntilSnapshot?: bigint | string | number | null;
+          lastSnapshotAt?: bigint | string | number | null;
+        } | null;
+      }>
+    | undefined;
+  poolToken?: { decimals: number; symbol: string } | null;
+}) {
+  const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
+
+  const hasActiveFlow = useMemo(
+    () =>
+      (proposals ?? []).some(
+        (proposal) =>
+          toBigInt(proposal.proposalStream?.currentFlowRate) > 0n,
+      ),
+    [proposals],
+  );
+
+  useEffect(() => {
+    if (!hasActiveFlow) return;
+    const interval = window.setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      setNowMs(BigInt(Date.now()));
+    }, 100);
+    return () => clearInterval(interval);
+  }, [hasActiveFlow]);
+
+  const totalStreamedBn = useMemo(() => {
+    const total = (proposals ?? []).reduce((acc, proposal) => {
+      const proposalStream = proposal.proposalStream;
+      if (!proposalStream) return acc;
+
+      const currentFlowRate = toBigInt(proposalStream.currentFlowRate);
+      const streamedUntilSnapshot = toBigInt(
+        proposalStream.streamedUntilSnapshot,
+      );
+      const lastSnapshotAtMs = toBigInt(proposalStream.lastSnapshotAt) * 1000n;
+      const elapsedMs =
+        currentFlowRate > 0n && lastSnapshotAtMs > 0n && nowMs > lastSnapshotAtMs ?
+          nowMs - lastSnapshotAtMs
+        : 0n;
+
+      return acc + streamedUntilSnapshot + (currentFlowRate * elapsedMs) / 1000n;
+    }, 0n);
+
+    return total > 0n ? total : null;
+  }, [nowMs, proposals]);
+
+  if (!poolToken || totalStreamedBn == null) {
+    return <span className="font-mono tabular-nums">--</span>;
+  }
+
+  return (
+    <span className="font-mono tabular-nums">
+      {Number(formatUnits(totalStreamedBn, poolToken.decimals)).toFixed(5)}
+    </span>
+  );
+});
 
 export default function ClientPage({
   params: { chain, pool: poolSlug, community: _community },
@@ -632,14 +711,6 @@ export default function ClientPage({
     | bigint
     | null
     | undefined;
-  const { totalAmountDistributedBn: totalStreamedFromGDA } =
-    useSuperfluidStream({
-      receiver: streamInfo?.superfluidGDA as Address,
-      superToken: effectiveSuperToken as Address,
-      chainId,
-      containerId: poolId ?? strategyAddress,
-    });
-
   useEffect(() => {
     if (isMissingFundingToken && strategy && !error) {
       const timer = window.setTimeout(() => {
@@ -735,14 +806,6 @@ export default function ClientPage({
     });
     return poolToken?.symbol ? `${value} ${poolToken.symbol}` : value;
   };
-  const formatTotalStreamed = (amount?: bigint | null) => {
-    if (amount == null) return "--";
-    const value = Number(formatUnits(amount, streamTokenDecimals));
-    if (!Number.isFinite(value)) return "--";
-    return value.toLocaleString(undefined, {
-      maximumFractionDigits: 5,
-    });
-  };
 
   const StreamingInfoCard = () => {
     if (!isStreamingPool) return null;
@@ -751,7 +814,7 @@ export default function ClientPage({
       <section className="section-layout">
         <div className="flex flex-col gap-3">
           <h4>Stream Info</h4>
-          <div className="rounded-lg border border-neutral-soft-content/20 p-3 flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
               <p className="subtitle2">Budget</p>
               <p className="text-right">
@@ -767,10 +830,12 @@ export default function ClientPage({
             <div className="flex items-center justify-between gap-3">
               <p className="subtitle2">Total</p>
               <div className="flex items-center gap-2">
-                <DisplayNumber
-                  number={formatTotalStreamed(totalStreamedFromGDA)}
-                  valueClassName="text-right"
-                />
+                <p className="text-right font-mono tabular-nums">
+                  <LivePoolStreamedTotal
+                    proposals={strategy?.proposals as any}
+                    poolToken={poolToken}
+                  />
+                </p>
                 {poolToken?.address && poolToken?.symbol && (
                   <EthAddress
                     address={poolToken.address}

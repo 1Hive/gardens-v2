@@ -150,7 +150,59 @@ const LiveStreamedTotal = memo(function LiveStreamedTotal({
       `${(+formatUnits(totalStreamedToBeneficiaryBn, poolToken.decimals)).toFixed(5)} ${poolToken.symbol}`
     : "--";
 
-  return <>{proposalTotalStreamedDisplay}</>;
+  return <span className="font-mono tabular-nums">{proposalTotalStreamedDisplay}</span>;
+});
+
+const LiveAccumulatedAmount = memo(function LiveAccumulatedAmount({
+  poolToken,
+  proposalFlowRateBn,
+  escrowBalanceSnapshotBn,
+  escrowBalanceSnapshotAtMs,
+  escrowSuperTokenBalanceValue,
+  escrowDepositAmount,
+}: {
+  poolToken?: { decimals: number; symbol: string } | null;
+  proposalFlowRateBn: bigint;
+  escrowBalanceSnapshotBn: bigint | null;
+  escrowBalanceSnapshotAtMs: bigint;
+  escrowSuperTokenBalanceValue?: bigint;
+  escrowDepositAmount?: bigint;
+}) {
+  const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
+
+  useEffect(() => {
+    if (proposalFlowRateBn <= 0n) return;
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      setNowMs(BigInt(Date.now()));
+    }, 100);
+    return () => clearInterval(interval);
+  }, [proposalFlowRateBn]);
+
+  const escrowBalanceElapsedMs =
+    escrowBalanceSnapshotBn != null &&
+    proposalFlowRateBn > 0n &&
+    nowMs > escrowBalanceSnapshotAtMs ?
+      nowMs - escrowBalanceSnapshotAtMs
+    : 0n;
+  const liveEscrowSuperTokenBalanceBn =
+    escrowBalanceSnapshotBn != null ?
+      escrowBalanceSnapshotBn +
+      (proposalFlowRateBn * escrowBalanceElapsedMs) / 1000n
+    : null;
+  const currentEscrowSuperTokenBalanceBn =
+    liveEscrowSuperTokenBalanceBn ?? escrowSuperTokenBalanceValue ?? 0n;
+  const accumulatedAmountBn =
+    escrowDepositAmount != null &&
+    currentEscrowSuperTokenBalanceBn > escrowDepositAmount ?
+      currentEscrowSuperTokenBalanceBn - escrowDepositAmount
+    : 0n;
+  const accumulatedAmountDisplay =
+    poolToken ?
+      Number(formatUnits(accumulatedAmountBn, poolToken.decimals)).toFixed(6)
+    : "--";
+
+  return <span className="font-mono tabular-nums">{accumulatedAmountDisplay}</span>;
 });
 
 export type ProposalPageParams = {
@@ -427,7 +479,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     ) ?
       `${superfluidExplorerBaseUrl}/accounts/${resolvedStreamingEscrow.toLowerCase()}?tab=streams`
     : undefined;
-  const showEscrow = useFlag("showEscrow", { defaultValue: !isProd });
+  const showEscrow = useFlag("showEscrow");
   const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
   const shouldShowSupportersTab =
     proposalStatus !== "executed" && proposalStatus !== "cancelled";
@@ -584,20 +636,14 @@ export default function ClientPage({ params }: ClientPageProps) {
     !isDisputedStreamingProposal &&
     (currentFlowRateForDisplay ?? 0n) > 0n &&
     beneficiaryBalanceSnapshotBn != null;
-  const shouldTickAccumulated =
-    isStreamingType &&
-    isDisputedStreamingProposal &&
-    proposalFlowRateBn > 0n &&
-    escrowBalanceSnapshotBn != null;
-
   useEffect(() => {
-    if (!shouldTickClaimable && !shouldTickAccumulated) return;
+    if (!shouldTickClaimable) return;
     const interval = setInterval(() => {
       if (typeof document !== "undefined" && document.hidden) return;
       setClaimableNowMs(BigInt(Date.now()));
     }, 500);
     return () => clearInterval(interval);
-  }, [shouldTickAccumulated, shouldTickClaimable]);
+  }, [shouldTickClaimable]);
 
   useEffect(() => {
     if (convictionRefreshing && currentConvictionPct != null) {
@@ -834,41 +880,20 @@ export default function ClientPage({ params }: ClientPageProps) {
         formatUnits(liveBeneficiarySuperTokenBalanceBn, streamTokenDecimals),
       ).toFixed(6)
     : "--";
+  const claimableDisplayWithSymbol =
+    claimableDisplay !== "--" && poolToken?.symbol ?
+      `${claimableDisplay} ${poolToken.symbol}`
+    : claimableDisplay;
+  const liveBeneficiarySuperTokenBalanceForClaimBn =
+    liveBeneficiarySuperTokenBalanceBn ?? beneficiarySuperTokenBalance?.value ?? 0n;
+  const minimumClaimableDisplayBn =
+    streamTokenDecimals > 6 ? 10n ** BigInt(streamTokenDecimals - 6) : 1n;
+  const hasMeaningfulClaimableAmount =
+    liveBeneficiarySuperTokenBalanceForClaimBn >= minimumClaimableDisplayBn;
 
-  const nowMs = claimableNowMs;
-  const escrowBalanceElapsedMs =
-    escrowBalanceSnapshotBn != null &&
-    proposalFlowRateBn > 0n &&
-    nowMs > escrowBalanceSnapshotAtMs ?
-      nowMs - escrowBalanceSnapshotAtMs
-    : 0n;
-  const liveEscrowSuperTokenBalanceBn =
-    escrowBalanceSnapshotBn != null ?
-      escrowBalanceSnapshotBn +
-      (proposalFlowRateBn * escrowBalanceElapsedMs) / 1000n
-    : null;
-
-  const accumulatedAmountBn =
-    isDisputedStreamingProposal &&
-    liveEscrowSuperTokenBalanceBn != null &&
-    escrowDepositAmount != null ?
-      (liveEscrowSuperTokenBalanceBn as bigint) > (escrowDepositAmount as unknown as bigint) ?
-        (liveEscrowSuperTokenBalanceBn as bigint) - (escrowDepositAmount as unknown as bigint)
-      : 0n
-    : null;
-
-  const accumulatedAmountDisplay =
-    poolToken && accumulatedAmountBn != null ?
-      Number(
-        formatUnits(accumulatedAmountBn, poolToken.decimals),
-      ).toFixed(6)
-    : null;
   const showUnwrapSuperTokenButton =
-    isStreamingType && isBeneficiaryConnected;
-  const showClaimFundsInfo =
-    isStreamingType &&
-    !isBeneficiaryConnected &&
-    (beneficiarySuperTokenBalance?.value ?? 0n) > 0n;
+    isStreamingType && isBeneficiaryConnected && hasMeaningfulClaimableAmount;
+  const showClaimFundsInfo = showUnwrapSuperTokenButton;
   const disableUnwrapBtnConditions: ConditionObject[] = [
     {
       condition: !isBeneficiaryConnected,
@@ -927,14 +952,18 @@ export default function ClientPage({ params }: ClientPageProps) {
   const status = ProposalStatus[proposalData.proposalStatus];
   const streamingStatusLabel =
     isStreamingType ?
-      (status === "disputed" ?
-        "disputed"
+      (status === "cancelled" ?
+        "Cancelled"
+      : status === "disputed" ?
+        "Disputed"
+      : status === "executed" ?
+        "Closed"
       : currentFlowRateForDisplay > 0n ?
-        "streaming"
+        "Streaming"
       : (currentConvictionPct ?? 0) > (thresholdPct ?? 0) ?
-        "about to stream"
+        "About to stream"
       : status === "active" ?
-        "active, not streaming"
+        "Active, not streaming"
       : undefined)
     : undefined;
   const hasThreshold = thresholdPct != null;
@@ -1118,17 +1147,17 @@ export default function ClientPage({ params }: ClientPageProps) {
           {isStreamingType && (
             <section className="section-layout gap-4 flex flex-col">
               <h5>Stream Info</h5>
-              <div className="rounded-lg border border-neutral-soft-content/20 p-3 flex flex-col gap-2">
+              <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between gap-3">
                   <p className="subtitle2">Streaming</p>
-                  <p className="text-right">
+                  <p className="text-right font-mono tabular-nums">
                     {formatFlowPerMonth(currentFlowRateForDisplay)}/m
                   </p>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <p className="subtitle2">Total</p>
                   <div className="flex items-center gap-2">
-                    <p className="text-right">
+                    <p className="text-right font-mono tabular-nums">
                       <LiveStreamedTotal
                         poolToken={poolToken}
                         proposalFlowRateBn={proposalFlowRateBn}
@@ -1168,30 +1197,30 @@ export default function ClientPage({ params }: ClientPageProps) {
                 )}
                 <div className="flex items-center justify-between gap-3">
                   <p className="subtitle2">Claimable</p>
-                  <div className="flex items-center gap-2">
+                  <p className="text-right font-mono tabular-nums">
                     {beneficiarySuperTokenBalance != null ?
-                      <DisplayNumber
-                        number={claimableDisplay}
-                        valueClassName="text-right font-semibold"
-                      />
-                    : <p className="text-right font-semibold">--</p>}
-                    {superTokenAddress &&
-                      beneficiarySuperTokenBalance?.symbol && (
-                        <EthAddress
-                          address={superTokenAddress}
-                          label={beneficiarySuperTokenBalance.symbol}
-                          actions="none"
-                          shortenAddress={false}
-                          icon={false}
-                        />
-                      )}
-                  </div>
+                      claimableDisplayWithSymbol
+                    : "--"}
+                  </p>
                 </div>
-                {isDisputedStreamingProposal && accumulatedAmountDisplay != null && (
+                {isDisputedStreamingProposal && (
                   <div className="flex items-center justify-between gap-3">
                     <p className="subtitle2">Accumulated</p>
                     <div className="flex items-center gap-2">
-                      <p className="text-right font-semibold">{accumulatedAmountDisplay}</p>
+                      <p className="text-right font-semibold font-mono tabular-nums">
+                        <LiveAccumulatedAmount
+                          poolToken={poolToken}
+                          proposalFlowRateBn={proposalFlowRateBn}
+                          escrowBalanceSnapshotBn={escrowBalanceSnapshotBn}
+                          escrowBalanceSnapshotAtMs={escrowBalanceSnapshotAtMs}
+                          escrowSuperTokenBalanceValue={
+                            escrowSuperTokenBalance?.value
+                          }
+                          escrowDepositAmount={
+                            escrowDepositAmount as bigint | undefined
+                          }
+                        />
+                      </p>
                       {superTokenAddress &&
                         poolToken?.symbol && (
                           <EthAddress
@@ -1235,7 +1264,7 @@ export default function ClientPage({ params }: ClientPageProps) {
               {showSyncStreamButton && (
                 <Button
                   btnStyle="outline"
-                  color="primary"
+                  color="tertiary"
                   className="w-full"
                   disabled={!isSyncStreamConnected || isSyncStreamWrongNetwork}
                   tooltip={syncStreamTooltipMessage}
@@ -1247,8 +1276,8 @@ export default function ClientPage({ params }: ClientPageProps) {
               )}
               {showUnwrapSuperTokenButton && (
                 <Button
-                  btnStyle="outline"
-                  color="secondary"
+                  btnStyle="filled"
+                  color="primary"
                   className="w-full"
                   disabled={!isUnwrapConnected || isUnwrapWrongNetwork}
                   tooltip={unwrapSuperTokenTooltipMessage}
@@ -1311,7 +1340,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   </div>
                   <div className="timeline-end  flex flex-col pt-2">
                     <p className="text-md font-semibold">
-                      {isStreamingType ? "Started streaming" : "Executed"}
+                      {isStreamingType ? "Closed" : "Executed"}
                     </p>
                     <p className="text-sm text-neutral-soft-content">
                       {prettyTimestamp(proposalData?.executedAt)}
@@ -1711,17 +1740,17 @@ export default function ClientPage({ params }: ClientPageProps) {
               {isStreamingType && (
                 <section className="section-layout gap-4 flex flex-col mb-4">
                   <h5>Stream Info</h5>
-                  <div className="rounded-lg border border-neutral-soft-content/20 p-3 flex flex-col gap-2">
+                  <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between gap-3">
                       <p className="subtitle2">Streaming</p>
-                      <p className="text-right">
+                      <p className="text-right font-mono tabular-nums">
                         {formatFlowPerMonth(currentFlowRateForDisplay)}/m
                       </p>
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <p className="subtitle2">Total</p>
                       <div className="flex items-center gap-2">
-                        <p className="text-right">
+                        <p className="text-right font-mono tabular-nums">
                           <LiveStreamedTotal
                             poolToken={poolToken}
                             proposalFlowRateBn={proposalFlowRateBn}
@@ -1762,30 +1791,32 @@ export default function ClientPage({ params }: ClientPageProps) {
                     )}
                     <div className="flex items-center justify-between gap-3">
                       <p className="subtitle2">Claimable</p>
-                      <div className="flex items-center gap-2">
+                      <p className="text-right font-mono tabular-nums">
                         {beneficiarySuperTokenBalance != null ?
-                          <DisplayNumber
-                            number={claimableDisplay}
-                            valueClassName="text-right font-semibold"
-                          />
-                        : <p className="text-right font-semibold">--</p>}
-                        {superTokenAddress &&
-                          beneficiarySuperTokenBalance?.symbol && (
-                            <EthAddress
-                              address={superTokenAddress}
-                              label={beneficiarySuperTokenBalance.symbol}
-                              shortenAddress={false}
-                              icon={false}
-                              actions="none"
-                            />
-                          )}
-                      </div>
+                          claimableDisplayWithSymbol
+                        : "--"}
+                      </p>
                     </div>
-                    {isDisputedStreamingProposal && accumulatedAmountDisplay != null && (
+                    {isDisputedStreamingProposal && (
                       <div className="flex items-center justify-between gap-3">
                         <p className="subtitle2">Accumulated</p>
                         <div className="flex items-center gap-2">
-                          <p className="text-right font-semibold">{accumulatedAmountDisplay}</p>
+                          <p className="text-right font-semibold font-mono tabular-nums">
+                            <LiveAccumulatedAmount
+                              poolToken={poolToken}
+                              proposalFlowRateBn={proposalFlowRateBn}
+                              escrowBalanceSnapshotBn={escrowBalanceSnapshotBn}
+                              escrowBalanceSnapshotAtMs={
+                                escrowBalanceSnapshotAtMs
+                              }
+                              escrowSuperTokenBalanceValue={
+                                escrowSuperTokenBalance?.value
+                              }
+                              escrowDepositAmount={
+                                escrowDepositAmount as bigint | undefined
+                              }
+                            />
+                          </p>
                           {superTokenAddress &&
                             poolToken?.symbol && (
                               <EthAddress
@@ -1829,7 +1860,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   {showSyncStreamButton && (
                     <Button
                       btnStyle="outline"
-                      color="primary"
+                      color="tertiary"
                       className="w-full"
                       disabled={
                         !isSyncStreamConnected || isSyncStreamWrongNetwork
@@ -1843,8 +1874,8 @@ export default function ClientPage({ params }: ClientPageProps) {
                   )}
                   {showUnwrapSuperTokenButton && (
                     <Button
-                      btnStyle="outline"
-                      color="secondary"
+                      btnStyle="filled"
+                      color="primary"
                       className="w-full"
                       disabled={!isUnwrapConnected || isUnwrapWrongNetwork}
                       tooltip={unwrapSuperTokenTooltipMessage}
@@ -1937,7 +1968,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                         </div>
                         <div className="timeline-end  flex flex-col pt-2">
                           <p className="text-md font-semibold">
-                            {isStreamingType ? "Started streaming" : "Executed"}
+                            {isStreamingType ? "Closed" : "Executed"}
                           </p>
                           <p className="text-sm text-neutral-soft-content">
                             {prettyTimestamp(proposalData?.executedAt)}
