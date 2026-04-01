@@ -884,9 +884,15 @@ export default function ClientPage({ params }: ClientPageProps) {
     claimableDisplay !== "--" && poolToken?.symbol ?
       `${claimableDisplay} ${poolToken.symbol}`
     : claimableDisplay;
+  const liveBeneficiarySuperTokenBalanceForClaimBn =
+    liveBeneficiarySuperTokenBalanceBn ?? beneficiarySuperTokenBalance?.value ?? 0n;
+  const minimumClaimableDisplayBn =
+    streamTokenDecimals > 6 ? 10n ** BigInt(streamTokenDecimals - 6) : 1n;
+  const hasMeaningfulClaimableAmount =
+    liveBeneficiarySuperTokenBalanceForClaimBn >= minimumClaimableDisplayBn;
 
   const showUnwrapSuperTokenButton =
-    isStreamingType && isBeneficiaryConnected;
+    isStreamingType && isBeneficiaryConnected && hasMeaningfulClaimableAmount;
   const showClaimFundsInfo = showUnwrapSuperTokenButton;
   const disableUnwrapBtnConditions: ConditionObject[] = [
     {
@@ -1258,7 +1264,7 @@ export default function ClientPage({ params }: ClientPageProps) {
               {showSyncStreamButton && (
                 <Button
                   btnStyle="outline"
-                  color="primary"
+                  color="tertiary"
                   className="w-full"
                   disabled={!isSyncStreamConnected || isSyncStreamWrongNetwork}
                   tooltip={syncStreamTooltipMessage}
@@ -1270,8 +1276,8 @@ export default function ClientPage({ params }: ClientPageProps) {
               )}
               {showUnwrapSuperTokenButton && (
                 <Button
-                  btnStyle="outline"
-                  color="secondary"
+                  btnStyle="filled"
+                  color="primary"
                   className="w-full"
                   disabled={!isUnwrapConnected || isUnwrapWrongNetwork}
                   tooltip={unwrapSuperTokenTooltipMessage}
@@ -1854,7 +1860,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   {showSyncStreamButton && (
                     <Button
                       btnStyle="outline"
-                      color="primary"
+                      color="tertiary"
                       className="w-full"
                       disabled={
                         !isSyncStreamConnected || isSyncStreamWrongNetwork
@@ -1868,8 +1874,8 @@ export default function ClientPage({ params }: ClientPageProps) {
                   )}
                   {showUnwrapSuperTokenButton && (
                     <Button
-                      btnStyle="outline"
-                      color="secondary"
+                      btnStyle="filled"
+                      color="primary"
                       className="w-full"
                       disabled={!isUnwrapConnected || isUnwrapWrongNetwork}
                       tooltip={unwrapSuperTokenTooltipMessage}
