@@ -78,6 +78,92 @@ type ProposalSupporter = {
 type SupporterColumn = Column<ProposalSupporter>;
 const SYNC_STREAM_HIDE_WINDOW_SECONDS = 15 * 60;
 
+const getElapsedMs = ({
+  flowRateBn,
+  lastSnapshotAtMs,
+  nowMs,
+}: {
+  flowRateBn: bigint;
+  lastSnapshotAtMs: bigint;
+  nowMs: bigint;
+}) =>
+  flowRateBn > 0n && lastSnapshotAtMs > 0n && nowMs > lastSnapshotAtMs ?
+    nowMs - lastSnapshotAtMs
+  : 0n;
+
+const getLiveEscrowBalanceBn = ({
+  escrowBalanceSnapshotBn,
+  escrowBalanceSnapshotAtMs,
+  proposalFlowRateBn,
+  nowMs,
+  fallbackEscrowBalanceBn,
+}: {
+  escrowBalanceSnapshotBn: bigint | null;
+  escrowBalanceSnapshotAtMs: bigint;
+  proposalFlowRateBn: bigint;
+  nowMs: bigint;
+  fallbackEscrowBalanceBn?: bigint;
+}) => {
+  const escrowBalanceElapsedMs =
+    escrowBalanceSnapshotBn != null &&
+    proposalFlowRateBn > 0n &&
+    nowMs > escrowBalanceSnapshotAtMs ?
+      nowMs - escrowBalanceSnapshotAtMs
+    : 0n;
+
+  return escrowBalanceSnapshotBn != null ?
+      escrowBalanceSnapshotBn +
+        (proposalFlowRateBn * escrowBalanceElapsedMs) / 1000n
+    : fallbackEscrowBalanceBn;
+};
+
+const getProposalTotalStreamedToBeneficiaryBn = ({
+  proposalFlowRateBn,
+  streamedUntilSnapshotBn,
+  lastSnapshotAtBn,
+  nowMs,
+  explorerTotalStreamedBn,
+  isDisputedStreamingProposal,
+  escrowBalanceSnapshotBn,
+  escrowBalanceSnapshotAtMs,
+  escrowSuperTokenBalanceValue,
+}: {
+  proposalFlowRateBn: bigint;
+  streamedUntilSnapshotBn: bigint;
+  lastSnapshotAtBn: bigint;
+  nowMs: bigint;
+  explorerTotalStreamedBn?: bigint | null;
+  isDisputedStreamingProposal: boolean;
+  escrowBalanceSnapshotBn: bigint | null;
+  escrowBalanceSnapshotAtMs: bigint;
+  escrowSuperTokenBalanceValue?: bigint;
+}) => {
+  const lastSnapshotAtMs = lastSnapshotAtBn * 1000n;
+  const elapsedMs = getElapsedMs({
+    flowRateBn: proposalFlowRateBn,
+    lastSnapshotAtMs,
+    nowMs,
+  });
+  const totalReceivedByEscrowBn =
+    streamedUntilSnapshotBn + (proposalFlowRateBn * elapsedMs) / 1000n;
+  const liveEscrowSuperTokenBalanceBn = getLiveEscrowBalanceBn({
+    escrowBalanceSnapshotBn,
+    escrowBalanceSnapshotAtMs,
+    proposalFlowRateBn,
+    nowMs,
+    fallbackEscrowBalanceBn: escrowSuperTokenBalanceValue,
+  });
+  const currentEscrowSuperTokenBalanceBn =
+    isDisputedStreamingProposal ?
+      (liveEscrowSuperTokenBalanceBn ?? 0n)
+    : (escrowSuperTokenBalanceValue ?? liveEscrowSuperTokenBalanceBn ?? 0n);
+  const totalReceivedBn = explorerTotalStreamedBn ?? totalReceivedByEscrowBn;
+
+  return totalReceivedBn > currentEscrowSuperTokenBalanceBn ?
+      totalReceivedBn - currentEscrowSuperTokenBalanceBn
+    : 0n;
+};
+
 const LiveStreamedTotal = memo(function LiveStreamedTotal({
   poolToken,
   proposalFlowRateBn,
@@ -100,7 +186,6 @@ const LiveStreamedTotal = memo(function LiveStreamedTotal({
   escrowSuperTokenBalanceValue?: bigint;
 }) {
   const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
-  const lastSnapshotAtMs = lastSnapshotAtBn * 1000n;
   const shouldTickFallback = explorerTotalStreamedBn == null;
   const shouldTickLiveValues =
     shouldTickFallback ||
@@ -116,35 +201,17 @@ const LiveStreamedTotal = memo(function LiveStreamedTotal({
     }, 100);
     return () => clearInterval(interval);
   }, [shouldTickLiveValues]);
-
-  const elapsedMs =
-    proposalFlowRateBn > 0n && lastSnapshotAtMs > 0n && nowMs > lastSnapshotAtMs ?
-      nowMs - lastSnapshotAtMs
-    : 0n;
-  const totalReceivedByEscrowBn =
-    streamedUntilSnapshotBn + (proposalFlowRateBn * elapsedMs) / 1000n;
-  const escrowBalanceElapsedMs =
-    escrowBalanceSnapshotBn != null &&
-    proposalFlowRateBn > 0n &&
-    nowMs > escrowBalanceSnapshotAtMs ?
-      nowMs - escrowBalanceSnapshotAtMs
-    : 0n;
-  const liveEscrowSuperTokenBalanceBn =
-    escrowBalanceSnapshotBn != null ?
-      escrowBalanceSnapshotBn +
-      (proposalFlowRateBn * escrowBalanceElapsedMs) / 1000n
-    : null;
-  const currentEscrowSuperTokenBalanceBn =
-    isDisputedStreamingProposal ?
-      (liveEscrowSuperTokenBalanceBn ??
-        escrowSuperTokenBalanceValue ??
-        0n)
-    : (escrowSuperTokenBalanceValue ?? 0n);
-  const totalReceivedBn = explorerTotalStreamedBn ?? totalReceivedByEscrowBn;
-  const totalStreamedToBeneficiaryBn =
-    totalReceivedBn > currentEscrowSuperTokenBalanceBn ?
-      totalReceivedBn - currentEscrowSuperTokenBalanceBn
-    : 0n;
+  const totalStreamedToBeneficiaryBn = getProposalTotalStreamedToBeneficiaryBn({
+    proposalFlowRateBn,
+    streamedUntilSnapshotBn,
+    lastSnapshotAtBn,
+    nowMs,
+    explorerTotalStreamedBn,
+    isDisputedStreamingProposal,
+    escrowBalanceSnapshotBn,
+    escrowBalanceSnapshotAtMs,
+    escrowSuperTokenBalanceValue,
+  });
   const proposalTotalStreamedDisplay =
     poolToken ?
       `${(+formatUnits(totalStreamedToBeneficiaryBn, poolToken.decimals)).toFixed(5)} ${poolToken.symbol}`
@@ -840,6 +907,9 @@ export default function ClientPage({ params }: ClientPageProps) {
       fallbackErrorMessage:
         "Failed to unwrap super token for this proposal. Please try again.",
       onConfirmations: async () => {
+        setBeneficiaryBalanceSnapshotBn(0n);
+        setBeneficiaryBalanceSnapshotAtMs(BigInt(Date.now()));
+        setClaimableNowMs(BigInt(Date.now()));
         await refetchSuperToken();
       },
     });
@@ -874,18 +944,35 @@ export default function ClientPage({ params }: ClientPageProps) {
       beneficiaryBalanceSnapshotBn +
       ((currentFlowRateForDisplay ?? 0n) * claimableElapsedMs) / 1000n
     : null;
-  const claimableDisplay =
+  const proposalClaimableCapBn = getProposalTotalStreamedToBeneficiaryBn({
+    proposalFlowRateBn,
+    streamedUntilSnapshotBn,
+    lastSnapshotAtBn,
+    nowMs: claimableNowMs,
+    explorerTotalStreamedBn,
+    isDisputedStreamingProposal,
+    escrowBalanceSnapshotBn,
+    escrowBalanceSnapshotAtMs,
+    escrowSuperTokenBalanceValue: escrowSuperTokenBalance?.value,
+  });
+  const liveProposalClaimableBn =
     liveBeneficiarySuperTokenBalanceBn != null ?
-      Number(
-        formatUnits(liveBeneficiarySuperTokenBalanceBn, streamTokenDecimals),
-      ).toFixed(6)
+      (liveBeneficiarySuperTokenBalanceBn < proposalClaimableCapBn ?
+        liveBeneficiarySuperTokenBalanceBn
+      : proposalClaimableCapBn)
+    : null;
+  const claimableDisplay =
+    liveProposalClaimableBn != null ?
+      Number(formatUnits(liveProposalClaimableBn, streamTokenDecimals)).toFixed(
+        6,
+      )
     : "--";
   const claimableDisplayWithSymbol =
     claimableDisplay !== "--" && poolToken?.symbol ?
       `${claimableDisplay} ${poolToken.symbol}`
     : claimableDisplay;
   const liveBeneficiarySuperTokenBalanceForClaimBn =
-    liveBeneficiarySuperTokenBalanceBn ?? beneficiarySuperTokenBalance?.value ?? 0n;
+    liveProposalClaimableBn ?? 0n;
   const minimumClaimableDisplayBn =
     streamTokenDecimals > 6 ? 10n ** BigInt(streamTokenDecimals - 6) : 1n;
   const hasMeaningfulClaimableAmount =
@@ -893,7 +980,6 @@ export default function ClientPage({ params }: ClientPageProps) {
 
   const showUnwrapSuperTokenButton =
     isStreamingType && isBeneficiaryConnected && hasMeaningfulClaimableAmount;
-  const showClaimFundsInfo = showUnwrapSuperTokenButton;
   const disableUnwrapBtnConditions: ConditionObject[] = [
     {
       condition: !isBeneficiaryConnected,
@@ -1276,7 +1362,7 @@ export default function ClientPage({ params }: ClientPageProps) {
               )}
               {showUnwrapSuperTokenButton && (
                 <Button
-                  btnStyle="filled"
+                  btnStyle="outline"
                   color="primary"
                   className="w-full"
                   disabled={!isUnwrapConnected || isUnwrapWrongNetwork}
@@ -1286,15 +1372,6 @@ export default function ClientPage({ params }: ClientPageProps) {
                 >
                   Claim funds
                 </Button>
-              )}
-              {showClaimFundsInfo && (
-                <InfoBox
-                  infoBoxType="info"
-                  className="w-full"
-                  title="Claim funds"
-                >
-                  Only the proposal beneficiary can claim streamed funds.
-                </InfoBox>
               )}
             </section>
           )}
@@ -1423,7 +1500,9 @@ export default function ClientPage({ params }: ClientPageProps) {
                       isSignalingType ?
                         "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel"
                       : isStreamingType ?
-                        "This proposal is active. Once it reaches the threshold, it will start streaming automatically unless successfully disputed."
+                        alreadyStreaming ?
+                          "This proposal is currently streaming. It can still be disputed while active."
+                        : "This proposal is active. Once it reaches the threshold, it will start streaming automatically unless successfully disputed."
                       : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."
                     }`}
                   />
@@ -1874,7 +1953,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   )}
                   {showUnwrapSuperTokenButton && (
                     <Button
-                      btnStyle="filled"
+                      btnStyle="outline"
                       color="primary"
                       className="w-full"
                       disabled={!isUnwrapConnected || isUnwrapWrongNetwork}
@@ -1884,15 +1963,6 @@ export default function ClientPage({ params }: ClientPageProps) {
                     >
                       Claim funds
                     </Button>
-                  )}
-                  {showClaimFundsInfo && (
-                    <InfoBox
-                      infoBoxType="info"
-                      className="w-full"
-                      title="Claim funds"
-                    >
-                      Only the proposal beneficiary can claim streamed funds.
-                    </InfoBox>
                   )}
                 </section>
               )}
@@ -1926,7 +1996,9 @@ export default function ClientPage({ params }: ClientPageProps) {
                           isSignalingType ?
                             "This proposal is open and can be supported or disputed by the community. Only the proposal creator can cancel"
                           : isStreamingType ?
-                            "This proposal is active. Once it reaches the threshold, it will start streaming automatically unless successfully disputed."
+                            alreadyStreaming ?
+                              "This proposal is currently streaming. It can still be disputed while active."
+                            : "This proposal is active. Once it reaches the threshold, it will start streaming automatically unless successfully disputed."
                           : "This proposal is currently open. It will pass if nobody successfully disputes it and it receives enough support."
                         }`}
                       />

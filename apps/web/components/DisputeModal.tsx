@@ -491,7 +491,7 @@ export const DisputeModal: FC<Props> = ({
       {(proposalStatus === "active" || lastDispute != null) && (
         <>
           <Button
-            color="danger"
+            color="secondary"
             btnStyle="outline"
             onClick={() => setIsModalOpened(true)}
             className="w-full"
