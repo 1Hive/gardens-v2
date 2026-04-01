@@ -14,6 +14,7 @@ import {
   Maybe,
   ProposalMetadata,
 } from "#/subgraph/.graphclient";
+import { Countdown } from "./Countdown";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import TooltipIfOverflow from "./TooltipIfOverflow";
@@ -114,6 +115,7 @@ export const ProposalsModalSupport = forwardRef<
       thresholdPct,
       totalSupportPct,
       timeToPass,
+      triggerConvictionRefetch,
       updatedConviction,
     } = useConvictionRead({
       proposalData,
@@ -174,6 +176,12 @@ export const ProposalsModalSupport = forwardRef<
       Number(supportNeededToPass) < 0 &&
       (currentConvictionPct ?? 0) < (thresholdPct ?? 0) &&
       !alreadyExecuted;
+    const hasProposalPassCountdown =
+      proposalWillPass &&
+      !readyToBeExecuted &&
+      timeToPass != null &&
+      Number.isFinite(Number(timeToPass)) &&
+      Number(timeToPass) > 0;
 
     const impossibleToPass =
       (thresholdPct != null && thresholdPct >= 100) || thresholdPct === 0;
@@ -220,11 +228,12 @@ export const ProposalsModalSupport = forwardRef<
             !readyToBeExecuted
           ) ?
             `At least ${supportNeededToPass}% needed`
-          : proposalWillPass ?
+          : hasProposalPassCountdown ?
             PoolTypes[strategyConfig.proposalType] === "funding" ?
               "Estimated time to pass:"
             : "Before streaming starts:"
           : !alreadyExecuted &&
+            resolvedProposalStatus !== "disputed" &&
             readyToBeExecuted &&
             !isSignalingType ?
             isStreamingType ?
@@ -232,6 +241,15 @@ export const ProposalsModalSupport = forwardRef<
             : "Ready to be executed"
           : ""}
         </div>
+        {hasProposalPassCountdown && (
+          <Countdown
+            endTimestamp={Number(timeToPass)}
+            display="inline"
+            className="text-neutral-soft-content text-xs sm:text-sm"
+            onTimeout={triggerConvictionRefetch}
+            showTimeout={false}
+          />
+        )}
       </>
     );
 

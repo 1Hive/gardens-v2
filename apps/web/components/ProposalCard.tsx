@@ -27,6 +27,7 @@ import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import {
   ProposalDataLight,
@@ -175,9 +176,13 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const pathname = usePathname();
     const proposalSlug = formatProposalSlug(proposalNumber);
     const searchParams = useCollectQueryParams();
+    const { subscribe, unsubscribe } = usePubSubContext();
     const isNewProposal =
       searchParams[QUERY_PARAMS.poolPage.newProposal] ==
       proposalNumber.toString();
+    const [optimisticProposalStatus, setOptimisticProposalStatus] = useState<
+      string | null
+    >(null);
 
     const {
       currentConvictionPct,
@@ -196,6 +201,33 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       if (updatedConviction != null && currentConvictionPct != null) {
       }
     }, [updatedConviction, currentConvictionPct]);
+
+    useEffect(() => {
+      setOptimisticProposalStatus(null);
+    }, [proposalStatus]);
+
+    useEffect(() => {
+      const subscriptionId = subscribe(
+        {
+          topic: "proposal",
+          type: "update",
+          containerId: poolId,
+          id: proposalNumber,
+        },
+        (payload) => {
+          if (payload.function === "cancelProposal") {
+            setOptimisticProposalStatus("cancelled");
+          }
+          if (payload.function === "disputeProposal") {
+            setOptimisticProposalStatus("disputed");
+          }
+        },
+      );
+
+      return () => {
+        unsubscribe(subscriptionId);
+      };
+    }, [poolId, proposalNumber, subscribe, unsubscribe]);
 
     useImperativeHandle(
       ref,
@@ -262,10 +294,19 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       proposalStream?.streamedUntilSnapshot,
     );
     const lastSnapshotAtBn = toBigInt(proposalStream?.lastSnapshotAt);
+    const resolvedProposalStatus =
+      optimisticProposalStatus ?? ProposalStatus[proposalStatus];
+    const isFrozenStreamingProposal =
+      isStreamingType &&
+      (resolvedProposalStatus === "disputed" ||
+        resolvedProposalStatus === "cancelled");
 
     const lastSnapshotAtMs = lastSnapshotAtBn * 1000n;
     const elapsedMs =
-      currentFlowRateBn > 0n && lastSnapshotAtMs > 0n && nowMs > lastSnapshotAtMs ?
+      !isFrozenStreamingProposal &&
+      currentFlowRateBn > 0n &&
+      lastSnapshotAtMs > 0n &&
+      nowMs > lastSnapshotAtMs ?
         nowMs - lastSnapshotAtMs
       : 0n;
     const totalReceivedByEscrowBn =
@@ -280,11 +321,14 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       },
     );
     const shouldTickFallback = useMemo(
-      () => isStreamingType && explorerTotalStreamedBn == null,
-      [isStreamingType, explorerTotalStreamedBn],
+      () =>
+        isStreamingType &&
+        !isFrozenStreamingProposal &&
+        explorerTotalStreamedBn == null,
+      [explorerTotalStreamedBn, isFrozenStreamingProposal, isStreamingType],
     );
     const isDisputedStreamingProposal =
-      isStreamingType && ProposalStatus[proposalStatus] === "disputed";
+      isStreamingType && resolvedProposalStatus === "disputed";
 
     useEffect(() => {
       setEscrowBalanceSnapshotBn(null);
@@ -294,6 +338,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const shouldTickLiveValues =
       shouldTickFallback ||
       (isDisputedStreamingProposal &&
+        !isFrozenStreamingProposal &&
         currentFlowRateBn > 0n &&
         escrowBalanceSnapshotBn != null);
 
@@ -348,6 +393,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
     const escrowBalanceElapsedMs =
       escrowBalanceSnapshotBn != null &&
+      !isFrozenStreamingProposal &&
       currentFlowRateBn > 0n &&
       nowMs > escrowBalanceSnapshotAtMs ?
         nowMs - escrowBalanceSnapshotAtMs
@@ -365,7 +411,9 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       isStreamingType ?
         (() => {
           const totalReceivedBn =
-            explorerTotalStreamedBn ?? totalReceivedByEscrowBn;
+            isFrozenStreamingProposal ?
+              streamedUntilSnapshotBn
+            : (explorerTotalStreamedBn ?? totalReceivedByEscrowBn);
           return totalReceivedBn > currentEscrowSuperTokenBalanceBn ?
               totalReceivedBn - currentEscrowSuperTokenBalanceBn
             : 0n;
@@ -393,7 +441,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         `${(+formatUnits(accumulatedAmountBn, poolToken.decimals)).toFixed(5)} ${poolToken.symbol}`
       : null;
 
-    const alreadyExecuted = ProposalStatus[proposalStatus] === "executed";
+    const alreadyExecuted = resolvedProposalStatus === "executed";
 
     const hasThreshold = thresholdPct != null;
     const thresholdValue = thresholdPct ?? 0;
@@ -409,11 +457,17 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       Number(supportNeededToPass) < 0 &&
       (currentConvictionPct ?? 0) < thresholdValue &&
       !alreadyExecuted;
+    const hasProposalPassCountdown =
+      proposalWillPass &&
+      !readyToBeExecuted &&
+      timeToPass != null &&
+      Number.isFinite(Number(timeToPass)) &&
+      Number(timeToPass) > 0;
+    const hasActiveStream = (currentFlowRateBn ?? 0n) > 0n;
 
     const impossibleToPass =
       hasThreshold && (thresholdValue >= 100 || thresholdValue === 0);
 
-    const resolvedProposalStatus = ProposalStatus[proposalStatus];
     const streamingStatusLabel =
       isStreamingType ?
         (resolvedProposalStatus === "cancelled" ?
@@ -422,7 +476,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
           "Disputed"
         : resolvedProposalStatus === "executed" ?
           "Closed"
-        : (currentFlowRateBn ?? 0n) > 0n ?
+        : hasActiveStream ?
           "Streaming"
         : readyToBeExecuted || proposalWillPass ?
           "About to stream"
@@ -458,11 +512,13 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             !readyToBeExecuted
           ) ?
             `At least ${supportNeededToPass} VP needed`
-          : proposalWillPass ?
+          : hasProposalPassCountdown ?
             PoolTypes[strategyConfig.proposalType] === "funding" ?
               "Estimated time to pass:"
             : "Before streaming starts:"
           : !alreadyExecuted &&
+            resolvedProposalStatus !== "disputed" &&
+            !hasActiveStream &&
             readyToBeExecuted &&
             !isSignalingType ?
             isStreamingType ?
@@ -470,7 +526,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             : "Ready to be executed"
           : ""}
         </div>
-        {proposalWillPass && !readyToBeExecuted && timeToPass != null && (
+        {hasProposalPassCountdown && (
           <Countdown
             endTimestamp={Number(timeToPass)}
             display="inline"
@@ -483,9 +539,9 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     );
 
     const isProposalEnded =
-      ProposalStatus[proposalStatus] === "cancelled" ||
-      ProposalStatus[proposalStatus] === "rejected" ||
-      ProposalStatus[proposalStatus] === "executed";
+      resolvedProposalStatus === "cancelled" ||
+      resolvedProposalStatus === "rejected" ||
+      resolvedProposalStatus === "executed";
 
     const proposalCardContent = (
       <>
@@ -557,7 +613,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           <p className="text-sm dark:text-neutral-soft-content">
                             Stream:{" "}
                           </p>
-                          <span className="text-sm dark:text-neutral-soft-content">
+                          <span className="text-sm font-mono tabular-nums dark:text-neutral-soft-content">
                             {proposalFlowPerMonth != null ?
                               `${roundToSignificant(proposalFlowPerMonth, 4)} ${poolToken.symbol}/mo`
                             : "No active stream"}
@@ -570,7 +626,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                             Total:
                           </p>
 
-                          <p className="text-sm dark:text-neutral-soft-content">
+                          <p className="text-sm font-mono tabular-nums dark:text-neutral-soft-content">
                             {proposalTotalStreamedDisplay}
                           </p>
                         </div>
