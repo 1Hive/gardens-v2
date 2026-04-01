@@ -66,6 +66,19 @@ import {
 export type AlloQuery = getAlloQuery["allos"][number];
 const SYNC_STREAM_HIDE_WINDOW_SECONDS = 15 * 60;
 
+const toBigInt = (value: unknown): bigint => {
+  if (typeof value === "bigint") return value;
+  if (typeof value === "number") return BigInt(Math.trunc(value));
+  if (typeof value === "string") {
+    try {
+      return BigInt(value);
+    } catch {
+      return 0n;
+    }
+  }
+  return 0n;
+};
+
 export default function ClientPage({
   params: { chain, pool: poolSlug, community: _community },
 }: {
@@ -641,18 +654,6 @@ export default function ClientPage({
       chainId,
       containerId: poolId ?? strategyAddress,
     });
-  const toBigInt = (value: unknown): bigint => {
-    if (typeof value === "bigint") return value;
-    if (typeof value === "number") return BigInt(Math.trunc(value));
-    if (typeof value === "string") {
-      try {
-        return BigInt(value);
-      } catch {
-        return 0n;
-      }
-    }
-    return 0n;
-  };
   const totalStreamedFromProposalSnapshotsBn = useMemo(() => {
     if (!isStreamingPool || !strategy?.proposals?.length) return null;
 
@@ -785,12 +786,6 @@ export default function ClientPage({
     });
     return poolToken?.symbol ? `${value} ${poolToken.symbol}` : value;
   };
-  const formatTotalStreamed = (amount?: bigint | null) => {
-    if (amount == null) return "--";
-    const value = Number(formatUnits(amount, streamTokenDecimals));
-    if (!Number.isFinite(value)) return "--";
-    return value.toFixed(5).replace(/\.?0+$/, "");
-  };
 
   const StreamingInfoCard = () => {
     if (!isStreamingPool) return null;
@@ -816,7 +811,11 @@ export default function ClientPage({
               <p className="subtitle2">Total</p>
               <div className="flex items-center gap-2">
                 <DisplayNumber
-                  number={formatTotalStreamed(displayedTotalStreamedFromGDA)}
+                  number={
+                    displayedTotalStreamedFromGDA != null ?
+                      [displayedTotalStreamedFromGDA, streamTokenDecimals]
+                    : "--"
+                  }
                   valueClassName="text-right"
                 />
                 {poolToken?.address && poolToken?.symbol && (
