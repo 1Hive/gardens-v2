@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowPathIcon,
   ArrowTopRightOnSquareIcon,
@@ -632,13 +632,63 @@ export default function ClientPage({
     | bigint
     | null
     | undefined;
-  const { totalAmountDistributedBn: totalStreamedFromGDA } =
-    useSuperfluidStream({
+  const {
+    totalAmountDistributedBn: totalStreamedFromGDA,
+    liveTotalStreamedBn: liveTotalStreamedFromGDA,
+  } = useSuperfluidStream({
       receiver: streamInfo?.superfluidGDA as Address,
       superToken: effectiveSuperToken as Address,
       chainId,
       containerId: poolId ?? strategyAddress,
     });
+  const toBigInt = (value: unknown): bigint => {
+    if (typeof value === "bigint") return value;
+    if (typeof value === "number") return BigInt(Math.trunc(value));
+    if (typeof value === "string") {
+      try {
+        return BigInt(value);
+      } catch {
+        return 0n;
+      }
+    }
+    return 0n;
+  };
+  const totalStreamedFromProposalSnapshotsBn = useMemo(() => {
+    if (!isStreamingPool || !strategy?.proposals?.length) return null;
+
+    const nowMs = BigInt(nowTs) * 1000n;
+    const total = strategy.proposals.reduce((acc, proposal) => {
+      const proposalStream = (
+        proposal as {
+          proposalStream?: {
+            currentFlowRate?: bigint | string | number | null;
+            streamedUntilSnapshot?: bigint | string | number | null;
+            lastSnapshotAt?: bigint | string | number | null;
+          } | null;
+        }
+      ).proposalStream;
+
+      if (!proposalStream) return acc;
+
+      const currentFlowRate = toBigInt(proposalStream.currentFlowRate);
+      const streamedUntilSnapshot = toBigInt(
+        proposalStream.streamedUntilSnapshot,
+      );
+      const lastSnapshotAtMs = toBigInt(proposalStream.lastSnapshotAt) * 1000n;
+      const elapsedMs =
+        currentFlowRate > 0n && lastSnapshotAtMs > 0n && nowMs > lastSnapshotAtMs ?
+          nowMs - lastSnapshotAtMs
+        : 0n;
+
+      return acc + streamedUntilSnapshot + (currentFlowRate * elapsedMs) / 1000n;
+    }, 0n);
+
+    return total > 0n ? total : null;
+  }, [isStreamingPool, nowTs, strategy?.proposals]);
+  const displayedTotalStreamedFromGDA =
+    totalStreamedFromGDA ??
+    liveTotalStreamedFromGDA ??
+    totalStreamedFromProposalSnapshotsBn;
 
   useEffect(() => {
     if (isMissingFundingToken && strategy && !error) {
@@ -739,9 +789,7 @@ export default function ClientPage({
     if (amount == null) return "--";
     const value = Number(formatUnits(amount, streamTokenDecimals));
     if (!Number.isFinite(value)) return "--";
-    return value.toLocaleString(undefined, {
-      maximumFractionDigits: 5,
-    });
+    return value.toFixed(5).replace(/\.?0+$/, "");
   };
 
   const StreamingInfoCard = () => {
@@ -768,7 +816,7 @@ export default function ClientPage({
               <p className="subtitle2">Total</p>
               <div className="flex items-center gap-2">
                 <DisplayNumber
-                  number={formatTotalStreamed(totalStreamedFromGDA)}
+                  number={formatTotalStreamed(displayedTotalStreamedFromGDA)}
                   valueClassName="text-right"
                 />
                 {poolToken?.address && poolToken?.symbol && (

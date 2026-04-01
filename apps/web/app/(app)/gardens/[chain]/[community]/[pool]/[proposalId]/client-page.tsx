@@ -1311,7 +1311,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   </div>
                   <div className="timeline-end  flex flex-col pt-2">
                     <p className="text-md font-semibold">
-                      {isStreamingType ? "Started streaming" : "Executed"}
+                      {isStreamingType ? "Closed" : "Executed"}
                     </p>
                     <p className="text-sm text-neutral-soft-content">
                       {prettyTimestamp(proposalData?.executedAt)}
@@ -1937,7 +1937,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                         </div>
                         <div className="timeline-end  flex flex-col pt-2">
                           <p className="text-md font-semibold">
-                            {isStreamingType ? "Started streaming" : "Executed"}
+                            {isStreamingType ? "Closed" : "Executed"}
                           </p>
                           <p className="text-sm text-neutral-soft-content">
                             {prettyTimestamp(proposalData?.executedAt)}

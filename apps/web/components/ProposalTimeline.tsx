@@ -56,7 +56,7 @@ export const ProposalTimeline: FC<Props> = ({
   const isStreamingType = poolType === "streaming";
   const endNodeLabel =
     isFundingType ? "Executed"
-    : isStreamingType ? "Started streaming"
+    : isStreamingType ? "Closed"
     : "Ended";
   const endNodeTooltip =
     proposalStatus === "cancelled" ?

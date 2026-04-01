@@ -91,6 +91,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     currentFlowRateBn,
     currentUserFlowRateBn,
     totalAmountDistributedBn,
+    liveTotalStreamedBn,
     setCurrentUserFlowRateBn,
     setCurrentFlowRateBn,
   } = useSuperfluidStream({
@@ -142,10 +143,13 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       SEC_TO_MONTH
     : null;
 
+  const displayedTotalAmountDistributedBn =
+    totalAmountDistributedBn ?? liveTotalStreamedBn;
+
   const totalAmountDistributed =
-    totalAmountDistributedBn != null ?
+    displayedTotalAmountDistributedBn != null ?
       +formatUnits(
-        totalAmountDistributedBn,
+        displayedTotalAmountDistributedBn,
         superToken?.decimals ?? poolToken.decimals,
       )
     : null;
