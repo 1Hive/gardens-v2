@@ -980,12 +980,7 @@ export function useProposalFilter<
   //
   // FILTER
   //
-  type FilterType =
-    | "all"
-    | "active"
-    | "closed"
-    | "executed"
-    | null;
+  type FilterType = "all" | "active" | "closed" | "executed" | null;
 
   const [filter, setFilter] = useState<FilterType>("active");
 
