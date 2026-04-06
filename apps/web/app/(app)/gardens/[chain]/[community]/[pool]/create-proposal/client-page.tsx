@@ -109,10 +109,7 @@ export default function ClientPage({
     <div className="page-layout col-span-12 mx-auto">
       <section className="section-layout">
         <div className="text-center sm:mt-5 mb-12">
-          <h2 className="mb-2">Create a Proposal in Pool #{resolvedPoolId}</h2>
-          <div className="">
-            <h4 className="">{metadata.title}</h4>
-          </div>
+          <h2 className="mb-2">Create a Proposal in {metadata.title} Pool</h2>
         </div>
         <ProposalForm
           arbitrableConfig={data.arbitrableConfigs[0]}

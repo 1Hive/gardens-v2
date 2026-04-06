@@ -56,7 +56,7 @@ export const ChartWrapper = ({
       },
       className: "w-5 border-t-[1px] border-dashed rotate-90 -mx-3",
       info: "The minimum level of conviction required for a proposal to pass.",
-      value: threshold ?? 0,
+      value: threshold == 0 ? "out of reach" : threshold ?? 0,
     },
   ] as const;
 

@@ -339,6 +339,7 @@ export const ProposalForm = ({
   function getThresholdColor(
     thresholdPctArgument: number,
   ): "info" | "warning" | "error" {
+    if (thresholdPctArgument === 0) return "error";
     if (thresholdPctArgument < 50) return "info";
     if (thresholdPctArgument < 100) return "warning";
     return "error";
@@ -396,9 +397,9 @@ export const ProposalForm = ({
             </div>
           )}
 
-          {requestedAmount && thresholdPct !== 0 && (
+          {requestedAmount && (
             <InfoBox
-              title={`Conviction required:${" "} ${thresholdPct > 100 ? "Over 100" : thresholdPct}%`}
+              title={`Conviction required:${" "} ${thresholdPct > 100 || thresholdPct === 0 ? "Over 100" : thresholdPct}%`}
               infoBoxType={thColor}
             >
               <div className="flex flex-wrap w-full">
@@ -413,12 +414,14 @@ export const ProposalForm = ({
                   conviction
                 </InfoWrapper>{" "}
                 required for the proposal to pass within the request amount is{" "}
-                {thresholdPct}%.{" "}
+                {thresholdPct === 0 ? "Over 100" : thresholdPct}%.{" "}
                 {requestedAmount &&
                   thresholdPct > 50 &&
                   (thresholdPct < 100 ?
                     "It may be difficult to pass."
                   : "It will not pass unless more funds are added to the pool")}
+                {thresholdPct === 0 &&
+                  "It will not pass unless more funds are added to the pool"}
               </div>
             </InfoBox>
           )}

@@ -14,6 +14,7 @@ type ScenarioMapping = {
 };
 
 type ConvictionBarChartProps = {
+  hasInsufficientPoolFunds: boolean;
   currentConvictionPct: number;
   thresholdPct: number;
   proposalSupportPct: number;
@@ -45,6 +46,7 @@ export function getChartColors(isDarkTheme?: boolean) {
 }
 
 const ConvictionBarChartBase = ({
+  hasInsufficientPoolFunds,
   currentConvictionPct,
   thresholdPct,
   proposalSupportPct,
@@ -86,6 +88,16 @@ const ConvictionBarChartBase = ({
         {
           message: "",
           growing: false,
+        },
+      ],
+    },
+    //Firstr check if there are insufficient funds in the pool to pass the proposal.
+    hasInsufficientFundsInPool: {
+      condition: () => hasInsufficientPoolFunds == true,
+      details: [
+        {
+          message: "Not enough funds in the pool to execute this proposal.",
+          growing: null,
         },
       ],
     },
@@ -259,7 +271,7 @@ const ConvictionBarChartBase = ({
         ...markLine,
         data: [
           {
-            xAxis: thresholdPct,
+            xAxis: hasInsufficientPoolFunds ? "" : thresholdPct,
             symbol:
               "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
             symbolSize: [16, 16],

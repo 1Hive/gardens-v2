@@ -154,6 +154,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       )
     : null;
 
+
   const requestedStreamPerMonth =
     streamDuration != null ? amount / +streamDuration : 0;
 
