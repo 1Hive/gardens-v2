@@ -5,6 +5,26 @@ Focus on **correctness, upgrade safety, protocol invariants, and cross-package c
 
 ---
 
+## 0. Repo Skills For Gardens-Specific Contract Tasks
+
+This repository includes a local skill library under `skills/`. When the task is Gardens-specific and not generic coding, consult the matching skill before inventing a workflow.
+
+- `skills/query-subgraph/SKILL.md`
+  Use for indexed data lookup, GraphQL queries, community or pool resolution, and subgraph-backed answers.
+- `skills/read-contracts/SKILL.md`
+  Use for deployed address lookup, ABI selection, live contract state reads, and `cast call` workflows.
+- `skills/write-contract/SKILL.md`
+  Use for calldata encoding, target contract selection, multisig payload construction, and write transaction preparation.
+
+If more than one applies, use them in this order:
+1. `query-subgraph`
+2. `read-contracts`
+3. `write-contract`
+
+For state-changing operations, prefer preparing `to`, `data`, `value`, and `chainId` for review before suggesting broadcast commands.
+
+---
+
 ## 1. Project Context (High-Level)
 
 Gardens v2 is a modular governance framework implementing **Conviction Voting** on top of **Allo Protocol v2**, deployed across multiple EVM chains (Gnosis, Polygon, Arbitrum, Optimism, Base, Celo).
