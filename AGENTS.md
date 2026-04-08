@@ -79,6 +79,9 @@ pnpm lint
 # Format code
 pnpm format
 
+# Build docs app only
+pnpm build:docs
+
 # Run tests across workspace
 pnpm test
 ```
@@ -108,8 +111,15 @@ forge inspect pkg/contracts/src/CVStrategy/CVStrategy.sol storageLayout --md
 # Format Solidity files
 forge fmt
 
-# Deploy (uses Makefile in pkg/contracts/)
-make deploy
+# List available task commands
+task --list
+
+# Deploy (Taskfile-based workflow in pkg/contracts/)
+task deploy
+
+# Sync and aggregate ABIs after deployment/build changes
+task sync-abis
+task aggregate-abi
 ```
 
 ### Frontend Commands (apps/web)
@@ -268,9 +278,9 @@ The verification script automatically discovers diamond contracts and their face
 # Show detailed differences if mismatches found
 ./scripts/verify-storage-layout.sh --verbose
 
-# Use Makefile targets
-make verify-storage        # With build (recommended for deployments)
-make verify-storage-quick  # Skip build (faster if already compiled)
+# Use Taskfile targets
+task verify-storage        # With build (recommended for deployments)
+task verify-storage-quick  # Skip build (faster if already compiled)
 ```
 
 **Auto-Discovery Features:**
@@ -293,23 +303,29 @@ make verify-storage-quick  # Skip build (faster if already compiled)
 
 **When to verify**:
 
-- **Before deployments**: Use `make verify-storage` as prerequisite in deployment targets
+- **Before deployments**: Use `task verify-storage` as prerequisite in deployment targets
 - After adding new storage variables to base contracts
 - Before deploying upgrades
 - When creating new facets
 - In CI/CD pipeline before merging facet changes
 
 **Integrating with deployments**:
-Add `verify-storage` as a prerequisite to deployment targets in Makefile:
+Add `verify-storage` as a dependency in Taskfile deployment targets:
 
-```makefile
+```yaml
 # For production deployments (always build + verify)
-deploy-my-contract: verify-storage
-	forge script script/DeployMyContract.s.sol ...
+deploy-my-contract:
+  deps:
+    - verify-storage
+  cmds:
+    - forge script script/DeployMyContract.s.sol ...
 
 # For local testing (quick verification)
-deploy-local: verify-storage-quick
-	forge script script/DeployLocal.s.sol ...
+deploy-local:
+  deps:
+    - verify-storage-quick
+  cmds:
+    - forge script script/DeployLocal.s.sol ...
 ```
 
 This ensures storage alignment is verified (and contracts are built) before any deployment proceeds.
