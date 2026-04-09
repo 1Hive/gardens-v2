@@ -47,6 +47,7 @@ interface PoolMetricsProps {
   strategy: Pick<CVStrategy, "id" | "poolId" | "token"> & {
     config: Pick<CVStrategy["config"], "superfluidToken">;
   };
+  poolType?: string;
   poolToken: {
     address: Address;
     symbol: string;
@@ -71,6 +72,7 @@ interface PoolMetricsProps {
 
 export const PoolMetrics: FC<PoolMetricsProps> = ({
   strategy,
+  poolType,
   poolToken,
   chainId,
   superToken,
@@ -855,7 +857,9 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                   </div>
                 </div>
               )}
-            {totalAmountDistributed != null && totalAmountDistributed > 0 && (
+            {poolType === "streaming" &&
+              totalAmountDistributed != null &&
+              totalAmountDistributed > 0 && (
               <div className="flex justify-between items-center gap-3">
                 <p className="text-sm">Total:</p>
                 <p className="text-sm font-medium">
