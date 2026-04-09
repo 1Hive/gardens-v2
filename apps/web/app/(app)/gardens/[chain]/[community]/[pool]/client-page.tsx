@@ -1075,6 +1075,7 @@ export default function ClientPage({
                 <PoolMetrics
                   communityAddress={communityAddress}
                   strategy={effectiveStrategy}
+                  poolType={poolType}
                   poolId={poolId}
                   poolToken={poolToken}
                   chainId={Number(chain)}
@@ -1157,6 +1158,7 @@ export default function ClientPage({
                   <PoolMetrics
                     communityAddress={communityAddress}
                     strategy={effectiveStrategy}
+                    poolType={poolType}
                     poolId={poolId}
                     poolToken={poolToken}
                     chainId={Number(chain)}
