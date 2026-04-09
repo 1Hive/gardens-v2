@@ -38,7 +38,6 @@ import { LoupeButton } from "@/components/LoupeButton";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
 import { chainConfigMap } from "@/configs/chains";
-import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { usePubSubContext } from "@/contexts/pubsub.context";

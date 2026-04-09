@@ -27,7 +27,6 @@ import {
   ActivatePoints,
   Button,
   CheckSybil,
-  DisplayNumber,
   EthAddress,
   InfoBox,
   PoolGovernance,
@@ -98,8 +97,7 @@ const LivePoolStreamedTotal = memo(function LivePoolStreamedTotal({
   const hasActiveFlow = useMemo(
     () =>
       (proposals ?? []).some(
-        (proposal) =>
-          toBigInt(proposal.proposalStream?.currentFlowRate) > 0n,
+        (proposal) => toBigInt(proposal.proposalStream?.currentFlowRate) > 0n,
       ),
     [proposals],
   );
@@ -124,11 +122,17 @@ const LivePoolStreamedTotal = memo(function LivePoolStreamedTotal({
       );
       const lastSnapshotAtMs = toBigInt(proposalStream.lastSnapshotAt) * 1000n;
       const elapsedMs =
-        currentFlowRate > 0n && lastSnapshotAtMs > 0n && nowMs > lastSnapshotAtMs ?
+        (
+          currentFlowRate > 0n &&
+          lastSnapshotAtMs > 0n &&
+          nowMs > lastSnapshotAtMs
+        ) ?
           nowMs - lastSnapshotAtMs
         : 0n;
 
-      return acc + streamedUntilSnapshot + (currentFlowRate * elapsedMs) / 1000n;
+      return (
+        acc + streamedUntilSnapshot + (currentFlowRate * elapsedMs) / 1000n
+      );
     }, 0n);
 
     return total > 0n ? total : null;

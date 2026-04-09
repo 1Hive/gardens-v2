@@ -14,7 +14,7 @@ type ScenarioMapping = {
 };
 
 type ConvictionBarChartProps = {
-  hasInsufficientPoolFunds?: boolean;
+  hasInsufficientPoolFunds: boolean;
   currentConvictionPct: number;
   thresholdPct: number;
   proposalSupportPct: number;
@@ -46,7 +46,7 @@ export function getChartColors(isDarkTheme?: boolean) {
 }
 
 const ConvictionBarChartBase = ({
-  hasInsufficientPoolFunds = false,
+  hasInsufficientPoolFunds,
   currentConvictionPct,
   thresholdPct,
   proposalSupportPct,
