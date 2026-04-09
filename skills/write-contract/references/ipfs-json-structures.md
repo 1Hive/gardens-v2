@@ -5,6 +5,10 @@ Source of truth for this file: the frontend implementation in `apps/web`.
 Use this reference when a Gardens write requires an IPFS CID, metadata pointer, or `ipfsHash`.
 The frontend currently uploads JSON with `ipfsJsonUpload(...)` in six places.
 
+Hosted upload endpoint:
+- In production, the frontend route resolves to `https://app.gardens.fund/api/ipfs`.
+- In the app source, uploads are made to the relative route `/api/ipfs`.
+
 ## Shared Metadata Wrapper
 
 When a write expects a `Metadata` struct onchain, the frontend uses:

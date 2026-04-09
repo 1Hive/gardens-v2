@@ -33,6 +33,7 @@ forge --version
 - Do not broadcast automatically unless the user explicitly asks for it and the execution context is trusted.
 - Prefer returning calldata, target address, chain id, value, and a clear summary of the intended effect.
 - If a function requires an IPFS metadata pointer or `ipfsHash`, prepare the metadata payload first, upload it to IPFS, and only then encode the write using the resulting hash or pointer.
+- In the hosted Gardens app, the frontend IPFS upload route is `https://app.gardens.fund/api/ipfs`. Inside the app code this appears as the relative route `/api/ipfs`.
 
 ## Address Source
 

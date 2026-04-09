@@ -7,13 +7,12 @@ import {
   getPoolCreationDataDocument,
   getPoolCreationDataQuery,
 } from "#/subgraph/.graphclient";
-import { blueLand, grass, grassLarge } from "@/assets";
+import { blueLand, grass, StreamingPool } from "@/assets";
 import { Badge } from "@/components";
 import { Button } from "@/components/Button";
 import { PoolForm } from "@/components/Forms/PoolForm";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { StreamingPoolGraphic } from "@/components/StreamingPoolGraphic";
-import { useFlag } from "@/hooks/useFlag";
+import { useStreamingPoolsAccess } from "@/hooks/useStreamingPoolsAccess";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { logOnce } from "@/utils/log";
 
@@ -24,7 +23,7 @@ type ClientPageProps = {
 export default function ClientPage({
   params: { community },
 }: ClientPageProps) {
-  const showStreamingPools = useFlag("showStreamingPools");
+  const canAccessStreamingPools = useStreamingPoolsAccess(community);
 
   useEffect(() => {
     logOnce(
@@ -35,10 +34,10 @@ export default function ClientPage({
   const [selectedPoolType, setSelectedPoolType] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!showStreamingPools && selectedPoolType === 2) {
+    if (!canAccessStreamingPools && selectedPoolType === 2) {
       setSelectedPoolType(null);
     }
-  }, [selectedPoolType, showStreamingPools]);
+  }, [canAccessStreamingPools, selectedPoolType]);
 
   const { data: result } = useSubgraphQuery<getPoolCreationDataQuery>({
     query: getPoolCreationDataDocument,
@@ -62,7 +61,7 @@ export default function ClientPage({
       title: "Streaming",
       description:
         "Add tokens for a community cause that can be requested in streams.",
-      image: grassLarge,
+      image: StreamingPool,
     },
     {
       type: 0,
@@ -73,7 +72,7 @@ export default function ClientPage({
     },
   ];
   const visiblePoolTypeOptions = poolTypeOptions.filter(
-    (option) => showStreamingPools || option.type !== 2,
+    (option) => canAccessStreamingPools || option.type !== 2,
   );
 
   if (!token || result == null) {
@@ -110,16 +109,13 @@ export default function ClientPage({
                   <p className="text-sm text-neutral-soft-content min-h-[58px]">
                     {option.description}
                   </p>
-                  {option.type === 2 ?
-                    <StreamingPoolGraphic />
-                  : <Image
-                      src={option.image}
-                      alt={`${option.title} pool`}
-                      width={640}
-                      height={160}
-                      className="h-16 w-full rounded-lg object-cover mt-4"
-                    />
-                  }
+                  <Image
+                    src={option.image}
+                    alt={`${option.title} pool`}
+                    width={640}
+                    height={160}
+                    className="h-16 w-full rounded-lg object-cover mt-4"
+                  />
                 </button>
               ))}
             </div>

@@ -22,7 +22,7 @@ type BadgeProps = {
 const POOL_TYPE_STYLES = [
   "border border-primary-content/35 bg-primary-content/10 text-primary-content dark:border-primary-dark-border/60 dark:bg-primary-dark-base/25 dark:text-primary-dark-text-hover",
   "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
-  "bg-secondary-soft text-secondary-content dark:bg-secondary-dark-base/70 dark:text-secondary-dark-text",
+  "border border-[#78aacb]/40 bg-[#78aacb]/15 text-[#78aacb] dark:border-[#78aacb]/45 dark:bg-[#78aacb]/18 dark:text-[#9cc0da]",
 ];
 
 // Styles for different proposal status badge

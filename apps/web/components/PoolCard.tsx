@@ -17,9 +17,8 @@ import {
   PoolMetadata,
 } from "#/subgraph/.graphclient";
 import { Skeleton } from "./Skeleton";
-import { StreamingPoolGraphic } from "./StreamingPoolGraphic";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { blueLand, grass } from "@/assets";
+import { blueLand, grass, StreamingPool } from "@/assets";
 import { Badge, Card, DisplayNumber, Statistic } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
@@ -129,7 +128,11 @@ export function PoolCard({ pool, token }: Props) {
             <h6>{pool.archived ? "Archived" : "Waiting for approval"}</h6>
           </div>
         : poolType != null && PoolTypes[poolType] === "streaming" ?
-          <StreamingPoolGraphic className="mt-0 h-12 sm:h-14 border-[#0f645f]/35" />
+          <Image
+            src={StreamingPool}
+            alt="Streaming pool"
+            className="h-12 sm:h-14 w-full rounded-lg object-cover"
+          />
         : <Image
             src={
               poolType != null && PoolTypes[poolType] === "funding" ?
