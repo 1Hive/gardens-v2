@@ -373,22 +373,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         !!strategyConfig.superfluidToken,
     });
 
-    const { data: escrowDepositAmount } = useContractRead({
-      address: proposalData.streamingEscrow as Address,
-      chainId,
-      abi: [
-        {
-          type: "function",
-          stateMutability: "view",
-          name: "depositAmount",
-          inputs: [],
-          outputs: [{ name: "", type: "uint256" }],
-        },
-      ] as const,
-      functionName: "depositAmount",
-      enabled: isDisputedStreamingProposal && !!proposalData.streamingEscrow,
-    });
-
     useEffect(() => {
       if (escrowSuperTokenBalance?.value == null) return;
       setEscrowBalanceSnapshotBn(escrowSuperTokenBalance.value);
@@ -434,21 +418,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         `${(proposalTotalStreamed ?? 0).toFixed(5)} ${poolToken.symbol}`
       : null;
 
-    const accumulatedAmountBn =
-      (
-        isDisputedStreamingProposal &&
-        liveEscrowSuperTokenBalanceBn != null &&
-        escrowDepositAmount != null
-      ) ?
-        liveEscrowSuperTokenBalanceBn > escrowDepositAmount ?
-          liveEscrowSuperTokenBalanceBn - escrowDepositAmount
-        : 0n
-      : null;
-    const accumulatedAmountDisplay =
-      poolToken && accumulatedAmountBn != null ?
-        `${(+formatUnits(accumulatedAmountBn, poolToken.decimals)).toFixed(5)} ${poolToken.symbol}`
-      : null;
-
     const alreadyExecuted = resolvedProposalStatus === "executed";
 
     const hasThreshold = thresholdPct != null;
@@ -460,7 +429,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const readyToBeExecuted =
       hasThreshold && (currentConvictionPct ?? 0) > thresholdValue;
 
-    const ReqAmountGTPoolFunds =
+    const hasInsufficientPoolFundsForRequest =
       requestedAmount != null &&
       poolToken?.balance != null &&
       requestedAmount > poolToken.balance;
@@ -483,8 +452,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const impossibleToPass =
       hasThreshold && (thresholdValue >= 100 || thresholdValue === 0);
 
-    console.log(impossibleToPass);
-
     const streamingStatusLabel =
       isStreamingType ?
         resolvedProposalStatus === "cancelled" ? "Cancelled"
@@ -498,7 +465,17 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const ProposalCountDown = (
       <>
         <div className="text-neutral-soft-content text-xs sm:text-sm">
-          {!isSignalingType && (impossibleToPass || ReqAmountGTPoolFunds) ?
+          {!isSignalingType && hasInsufficientPoolFundsForRequest ?
+            <div
+              className="flex items-center justify-center gap-1 tooltip tooltip-right"
+              data-tip="This proposal cannot execute until more funds are added to the pool."
+            >
+              <ExclamationTriangleIcon className="w-5 h-5 text-secondary-content" />
+              <span className="text-xs sm:text-sm text-secondary-content">
+                Insufficient pool funds
+              </span>
+            </div>
+          : !isSignalingType && impossibleToPass ?
             <div
               className="flex items-center justify-center gap-1 tooltip tooltip-right"
               data-tip={`${
@@ -704,6 +681,9 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           refreshConviction={triggerConvictionRefetch}
                           proposalStatus={proposalStatus}
                           proposalType={PoolTypes[strategyConfig.proposalType]}
+                          hasInsufficientPoolFunds={
+                            hasInsufficientPoolFundsForRequest
+                          }
                         />
                       </div>
                     </div>

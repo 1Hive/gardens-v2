@@ -391,7 +391,7 @@ export default function PoolHeader({
     ...(PoolTypes[proposalType] === "streaming" ?
       [
         {
-          label: "Max monthly streaming",
+          label: "Monthly budget",
           info: "Target flow rate once 100% conviction has been reached.",
           value:
             streamingRatePerMonth != null ?

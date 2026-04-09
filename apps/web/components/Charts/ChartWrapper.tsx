@@ -84,7 +84,9 @@ export const ChartWrapper = ({
                     : <div className={`${item.className}`} style={item.style} />
                     }
                     <p className="text-sm">{item.name}: </p>
-                    <p className="font-medium">{item.value} VP</p>
+                    <p className="font-medium">
+                      {typeof item.value === "number" ? `${item.value} VP` : item.value}
+                    </p>
                   </div>
                 </InfoWrapper>
               </Fragment>

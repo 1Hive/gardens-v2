@@ -615,6 +615,7 @@ export default function DesignSystemPage() {
                 thresholdPct={60}
                 proposalSupportPct={52}
                 proposalNumber={21}
+                hasInsufficientPoolFunds={false}
                 isSignalingType={false}
                 compact={false}
                 proposalStatus="active"

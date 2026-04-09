@@ -712,7 +712,6 @@ const pinataClient =
     })()
   : null;
 const CAN_WRITE_PINATA = Boolean(pinataClient);
-const CAN_READ_IPFS = Boolean(IPFS_GATEWAY);
 
 const getIpfsGatewayUrl = (cid: string) => {
   const gateway = IPFS_GATEWAY?.replace(/\/$/, "");
@@ -1188,7 +1187,7 @@ const ensureLatestTransferCacheCid = async (): Promise<string | null> => {
 const fetchIpfsJson = async (
   cid: string,
 ): Promise<{ entries?: Record<string, string | null> } | null> => {
-  if (!CAN_READ_IPFS || !cid) return null;
+  if (!cid) return null;
   try {
     const url = getIpfsGatewayUrl(cid);
     const res = await fetch(url, { method: "GET" });
@@ -2347,10 +2346,12 @@ const computeFundUsdToPool = async ({
 
 const processChain = async ({
   chainId,
+  includeWalletCommunityDebug,
   windowStart,
   windowEnd,
 }: {
   chainId: ChainId;
+  includeWalletCommunityDebug: boolean;
   windowStart: number;
   windowEnd: number;
   campaignStart: number;
@@ -2870,45 +2871,46 @@ const processChain = async ({
     }
   }
 
-  for (const comm of communitiesResult.data?.registryCommunities ?? []) {
-    const processedCommunity = processedCommunities.get(comm.id);
-    const fundUsd = processedCommunity?.fundUsd ?? 0;
-    const streamUsd = processedCommunity?.streamUsd ?? 0;
-    const totalCommunityUsd = fundUsd + streamUsd;
-    const totalStake = (comm.members ?? []).reduce(
-      (acc, member) => acc + BigInt(member.stakedTokens ?? "0"),
-      0n,
-    );
-    for (const member of comm.members ?? []) {
-      if (!isValidAddr(member.memberAddress)) continue;
-      const stakedTokens = BigInt(member.stakedTokens ?? "0");
-      const stakeSharePercent =
-        totalStake > 0n ?
-          (Number(stakedTokens) / Number(totalStake)) * 100
-        : 0;
-      const communityPoints =
-        totalStake > 0n ? totalCommunityUsd * (stakeSharePercent / 100) : 0;
-      const key = toLower(member.memberAddress);
-      const list = walletCommunities.get(key) ?? [];
-      list.push({
-        communityId: toLower(comm.id),
-        communityName: comm.communityName ?? null,
-        chainId,
-        stakedTokens: stakedTokens.toString(),
-        stakeSharePercent,
-        fundUsd,
-        streamUsd,
-        totalCommunityUsd,
-        communityPoints,
-        pools:
-          processedCommunity?.pools.map((pool) => ({
-            poolAddress: pool.poolAddress,
-            token: pool.token,
-            superfluidToken: pool.superfluidToken ?? null,
-            title: pool.title ?? null,
-          })) ?? [],
-      });
-      walletCommunities.set(key, list);
+  if (includeWalletCommunityDebug) {
+    for (const comm of communitiesResult.data?.registryCommunities ?? []) {
+      const processedCommunity = processedCommunities.get(comm.id);
+      const fundUsd = processedCommunity?.fundUsd ?? 0;
+      const streamUsd = processedCommunity?.streamUsd ?? 0;
+      const totalCommunityUsd = fundUsd + streamUsd;
+      const totalStake = (comm.members ?? []).reduce(
+        (acc, member) => acc + BigInt(member.stakedTokens ?? "0"),
+        0n,
+      );
+      for (const member of comm.members ?? []) {
+        if (!isValidAddr(member.memberAddress)) continue;
+        const stakedTokens = BigInt(member.stakedTokens ?? "0");
+        const stakeShareRatioScaled =
+          totalStake > 0n ? (stakedTokens * 1_000_000n) / totalStake : 0n;
+        const stakeSharePercent = Number(stakeShareRatioScaled) / 10_000;
+        const communityPoints =
+          totalCommunityUsd * (Number(stakeShareRatioScaled) / 1_000_000);
+        const key = toLower(member.memberAddress);
+        const list = walletCommunities.get(key) ?? [];
+        list.push({
+          communityId: toLower(comm.id),
+          communityName: comm.communityName ?? null,
+          chainId,
+          stakedTokens: stakedTokens.toString(),
+          stakeSharePercent,
+          fundUsd,
+          streamUsd,
+          totalCommunityUsd,
+          communityPoints,
+          pools:
+            processedCommunity?.pools.map((pool) => ({
+              poolAddress: pool.poolAddress,
+              token: pool.token,
+              superfluidToken: pool.superfluidToken ?? null,
+              title: pool.title ?? null,
+            })) ?? [],
+        });
+        walletCommunities.set(key, list);
+      }
     }
   }
 
@@ -2976,6 +2978,7 @@ export async function GET(req: Request) {
     url.searchParams.get("traceOnly"),
   );
   const traceOnly = traceOnlyRequested || Boolean(targetWallet);
+  const includeWalletCommunityDebug = targetWallet != null;
   const hasCampaignIdOverride = campaignIdParam.length > 0;
   const parsedCampaignId = hasCampaignIdOverride ? Number(campaignIdParam) : 0;
   const campaignIdOverride = hasCampaignIdOverride ? parsedCampaignId : null;
@@ -3210,6 +3213,7 @@ export async function GET(req: Request) {
         walletCommunities,
       } = await processChain({
         chainId,
+        includeWalletCommunityDebug,
         windowStart: start,
         windowEnd: end,
         campaignStart: start,
@@ -3276,10 +3280,12 @@ export async function GET(req: Request) {
         list.push(...acts);
         walletActivitiesByWallet.set(addr, list);
       }
-      for (const [addr, communities] of walletCommunities.entries()) {
-        const list = walletCommunitiesByWallet.get(addr) ?? [];
-        list.push(...communities);
-        walletCommunitiesByWallet.set(addr, list);
+      if (includeWalletCommunityDebug) {
+        for (const [addr, communities] of walletCommunities.entries()) {
+          const list = walletCommunitiesByWallet.get(addr) ?? [];
+          list.push(...communities);
+          walletCommunitiesByWallet.set(addr, list);
+        }
       }
     }
 
@@ -3321,7 +3327,7 @@ export async function GET(req: Request) {
       ...farcasterFollowerWalletsSet.values(),
       ...farcasterDiscardedWallets.values(),
       ...walletActivitiesByWallet.keys(),
-      ...walletCommunitiesByWallet.keys(),
+      ...(includeWalletCommunityDebug ? walletCommunitiesByWallet.keys() : []),
     ]);
     const scopedAddresses =
       targetWallet ?
@@ -3824,8 +3830,8 @@ export async function GET(req: Request) {
             activities: wallet.activities,
             communitiesJoined: walletCommunitiesByWallet.get(targetWallet) ?? [],
           },
-          dryRun: true,
-          traceOnly: true,
+          dryRun: STACK_DRY_RUN || traceOnly,
+          traceOnly,
           debug: chainDebug,
         },
         { status: 200 },
