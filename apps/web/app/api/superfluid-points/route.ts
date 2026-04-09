@@ -75,6 +75,24 @@ type ProcessedCommunity = {
   }[];
 };
 
+type WalletCommunityDebug = {
+  communityId: string;
+  communityName?: string | null;
+  chainId: ChainId;
+  stakedTokens: string;
+  stakeSharePercent: number;
+  fundUsd: number;
+  streamUsd: number;
+  totalCommunityUsd: number;
+  communityPoints: number;
+  pools: {
+    poolAddress: string;
+    token: string;
+    superfluidToken?: string | null;
+    title?: string | null;
+  }[];
+};
+
 const TARGET_CHAINS: ChainId[] = [137, 42220, 8453, 100, 42161, 10];
 const SUPERFLUID_POOLS_QUERY = gql`
   query superfluidPools {
@@ -665,7 +683,16 @@ const PINATA_PRICE_CACHE_NAME =
   process.env.SUPERFLUID_PRICE_CACHE_NAME ?? "superfluid-token-prices";
 const PINATA_GROUP_ID =
   process.env.PINATA_GROUP_ID ?? "37bf2b9a-5a2e-4049-b138-8b1e180d44a4";
-const IPFS_GATEWAY = `https://${process.env.IPFS_GATEWAY}`;
+const normalizeIpfsGateway = (gateway?: string | null) => {
+  if (!gateway || gateway.trim() === "") return null;
+  const trimmed = gateway.trim().replace(/\/$/, "");
+  return (
+    trimmed.startsWith("http://") || trimmed.startsWith("https://") ?
+      trimmed
+    : `https://${trimmed}`
+  );
+};
+const IPFS_GATEWAY = normalizeIpfsGateway(process.env.IPFS_GATEWAY);
 const PINATA_JWT = process.env.PINATA_JWT;
 const PINATA_KEY = process.env.PINATA_KEY;
 const PINATA_SECRET = process.env.PINATA_SECRET;
@@ -686,6 +713,18 @@ const pinataClient =
   : null;
 const CAN_WRITE_PINATA = Boolean(pinataClient);
 const CAN_READ_IPFS = Boolean(IPFS_GATEWAY);
+
+const getIpfsGatewayUrl = (cid: string) => {
+  const gateway = IPFS_GATEWAY?.replace(/\/$/, "");
+  if (!gateway) {
+    return `https://gateway.pinata.cloud/ipfs/${cid}`;
+  }
+
+  const gatewayToken =
+    PINATA_KEY ? `?pinataGatewayToken=${PINATA_KEY}` : "";
+
+  return `${gateway}/ipfs/${cid}${gatewayToken}`;
+};
 const SKIP_IDENTITY_RESOLUTION =
   (process.env.SUPERFLUID_SKIP_IDENTITY_RESOLUTION ?? "").toLowerCase() ===
   "true";
@@ -1151,13 +1190,12 @@ const fetchIpfsJson = async (
 ): Promise<{ entries?: Record<string, string | null> } | null> => {
   if (!CAN_READ_IPFS || !cid) return null;
   try {
-    const gateway =
-      IPFS_GATEWAY?.replace(/\/$/, "") ?? "https://gateway.pinata.cloud";
-    const url = `${gateway}/ipfs/${cid}`;
+    const url = getIpfsGatewayUrl(cid);
     const res = await fetch(url, { method: "GET" });
     if (!res.ok) {
       console.warn("[superfluid-points] IPFS fetch failed", {
         cid,
+        url,
         status: res.status,
         statusText: res.statusText,
       });
@@ -2332,6 +2370,7 @@ const processChain = async ({
   processedCommunities: ProcessedCommunity[];
   fetchedPrices: { token: Address; symbol: string; priceUsd: number }[];
   walletActivities: Map<string, WalletActivity[]>;
+  walletCommunities: Map<string, WalletCommunityDebug[]>;
 }> => {
   const chainConfig = chainConfigMap[chainId];
   if (!chainConfig?.subgraphUrl || !chainConfig?.rpcUrl) {
@@ -2413,6 +2452,7 @@ const processChain = async ({
   const fetchedPrices: { token: Address; symbol: string; priceUsd: number }[] =
     [];
   const walletActivities = new Map<string, WalletActivity[]>();
+  const walletCommunities = new Map<string, WalletCommunityDebug[]>();
 
   let [startBlock, endBlock] = await Promise.all([
     findBlockNumberAtOrAfter(publicClient, windowStart),
@@ -2830,6 +2870,48 @@ const processChain = async ({
     }
   }
 
+  for (const comm of communitiesResult.data?.registryCommunities ?? []) {
+    const processedCommunity = processedCommunities.get(comm.id);
+    const fundUsd = processedCommunity?.fundUsd ?? 0;
+    const streamUsd = processedCommunity?.streamUsd ?? 0;
+    const totalCommunityUsd = fundUsd + streamUsd;
+    const totalStake = (comm.members ?? []).reduce(
+      (acc, member) => acc + BigInt(member.stakedTokens ?? "0"),
+      0n,
+    );
+    for (const member of comm.members ?? []) {
+      if (!isValidAddr(member.memberAddress)) continue;
+      const stakedTokens = BigInt(member.stakedTokens ?? "0");
+      const stakeSharePercent =
+        totalStake > 0n ?
+          (Number(stakedTokens) / Number(totalStake)) * 100
+        : 0;
+      const communityPoints =
+        totalStake > 0n ? totalCommunityUsd * (stakeSharePercent / 100) : 0;
+      const key = toLower(member.memberAddress);
+      const list = walletCommunities.get(key) ?? [];
+      list.push({
+        communityId: toLower(comm.id),
+        communityName: comm.communityName ?? null,
+        chainId,
+        stakedTokens: stakedTokens.toString(),
+        stakeSharePercent,
+        fundUsd,
+        streamUsd,
+        totalCommunityUsd,
+        communityPoints,
+        pools:
+          processedCommunity?.pools.map((pool) => ({
+            poolAddress: pool.poolAddress,
+            token: pool.token,
+            superfluidToken: pool.superfluidToken ?? null,
+            title: pool.title ?? null,
+          })) ?? [],
+      });
+      walletCommunities.set(key, list);
+    }
+  }
+
   return {
     totals: userTotals,
     missingPrices,
@@ -2845,6 +2927,7 @@ const processChain = async ({
     processedCommunities: Array.from(processedCommunities.values()),
     fetchedPrices,
     walletActivities,
+    walletCommunities,
   };
 };
 
@@ -3082,6 +3165,7 @@ export async function GET(req: Request) {
     const nativeSuperTokens: { address: string; token: string | null }[] = [];
     const nativeTokens: { address: string; token: string | null }[] = [];
     const walletActivitiesByWallet = new Map<string, WalletActivity[]>();
+    const walletCommunitiesByWallet = new Map<string, WalletCommunityDebug[]>();
 
     if (!FARCASTER_DISABLED) {
       const gardensFid = await fetchGardensFid();
@@ -3123,6 +3207,7 @@ export async function GET(req: Request) {
         fetchedPrices,
         streamTotalsByPool,
         walletActivities,
+        walletCommunities,
       } = await processChain({
         chainId,
         windowStart: start,
@@ -3191,6 +3276,11 @@ export async function GET(req: Request) {
         list.push(...acts);
         walletActivitiesByWallet.set(addr, list);
       }
+      for (const [addr, communities] of walletCommunities.entries()) {
+        const list = walletCommunitiesByWallet.get(addr) ?? [];
+        list.push(...communities);
+        walletCommunitiesByWallet.set(addr, list);
+      }
     }
 
     const manualBounds = {
@@ -3231,6 +3321,7 @@ export async function GET(req: Request) {
       ...farcasterFollowerWalletsSet.values(),
       ...farcasterDiscardedWallets.values(),
       ...walletActivitiesByWallet.keys(),
+      ...walletCommunitiesByWallet.keys(),
     ]);
     const scopedAddresses =
       targetWallet ?
@@ -3671,6 +3762,75 @@ export async function GET(req: Request) {
           ),
         )
       : Object.fromEntries(totals.entries());
+
+    if (targetWallet) {
+      const wallet = walletBreakdown.find(
+        (entry) => entry.address === targetWallet,
+      ) ?? {
+        address: targetWallet,
+        fundUsd: responseTotals[targetWallet]?.fundUsd ?? 0,
+        streamUsd: responseTotals[targetWallet]?.streamUsd ?? 0,
+        fundPoints: 0,
+        streamPoints: 0,
+        governanceStakePoints: 0,
+        farcasterPoints: 0,
+        totalPoints: 0,
+        farcasterUsername: farcasterUsernameByWallet.get(targetWallet) ?? null,
+        ensName: ensNameByWallet.get(targetWallet) || null,
+        ensAvatar: ensAvatarByWallet.get(targetWallet) || null,
+        nativeSuperToken: nativeSuperTokenByWallet.get(targetWallet) ?? null,
+        nativeToken: nativeTokenByWallet.get(targetWallet) ?? null,
+        activities: walletActivitiesByWallet.get(targetWallet) ?? [],
+        checksum: [
+          targetWallet,
+          0,
+          0,
+          0,
+          0,
+          0,
+        ].join("|"),
+      };
+
+      return NextResponse.json(
+        {
+          message: "Superfluid wallet debug completed",
+          targetWallet,
+          campaignId: effectiveCampaignId,
+          campaignWindow: {
+            start,
+            end,
+            startIso: new Date(start * 1000).toISOString(),
+            endIso: new Date(end * 1000).toISOString(),
+          },
+          walletDebug: {
+            address: wallet.address,
+            totalsUsd: {
+              fundUsd: wallet.fundUsd,
+              streamUsd: wallet.streamUsd,
+              totalUsd: wallet.fundUsd + wallet.streamUsd,
+            },
+            points: {
+              fundPoints: wallet.fundPoints,
+              streamPoints: wallet.streamPoints,
+              governanceStakePoints: wallet.governanceStakePoints,
+              farcasterPoints: wallet.farcasterPoints,
+              totalPoints: wallet.totalPoints,
+            },
+            identity: {
+              farcasterUsername: wallet.farcasterUsername,
+              ensName: wallet.ensName,
+              ensAvatar: wallet.ensAvatar,
+            },
+            activities: wallet.activities,
+            communitiesJoined: walletCommunitiesByWallet.get(targetWallet) ?? [],
+          },
+          dryRun: true,
+          traceOnly: true,
+          debug: chainDebug,
+        },
+        { status: 200 },
+      );
+    }
 
     const pinned = await flushCaches();
     responseCreationCid = pinned.creationBlockCacheCid;
