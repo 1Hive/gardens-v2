@@ -80,6 +80,7 @@ export default function MarkeeModal({
   // Keyed by markee address (lowercase) → totalViews
   const [entryViews, setEntryViews] = useState<Record<string, number>>({});
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const suppressDialogCloseRef = useRef(false);
 
   const { address } = useAccount();
   const connectedChainId = useChainId();
@@ -90,6 +91,7 @@ export default function MarkeeModal({
   } = useAppSwitchNetwork();
   const { openConnectModal, connectModalOpen } = useConnectModal();
   const [hiddenForConnect, setHiddenForConnect] = useState(false);
+  const [connectModalWasOpened, setConnectModalWasOpened] = useState(false);
 
   const activeAddress = address;
   const isOnBase = connectedChainId === MarkeeNetwork.id;
@@ -119,12 +121,28 @@ export default function MarkeeModal({
   }, []);
 
   useEffect(() => {
-    if (!hiddenForConnect || connectModalOpen) return;
+    if (!hiddenForConnect || !connectModalOpen) {
+      return;
+    }
+
+    if (!connectModalWasOpened) {
+      setConnectModalWasOpened(true);
+    }
+  }, [connectModalOpen, connectModalWasOpened, hiddenForConnect]);
+
+  useEffect(() => {
+    if (!hiddenForConnect || !connectModalWasOpened || connectModalOpen) {
+      return;
+    }
+
     if (!dialogRef.current?.open) {
       dialogRef.current?.showModal();
     }
+
+    suppressDialogCloseRef.current = false;
     setHiddenForConnect(false);
-  }, [connectModalOpen, hiddenForConnect]);
+    setConnectModalWasOpened(false);
+  }, [connectModalOpen, connectModalWasOpened, hiddenForConnect]);
 
   // Fetch leaderboard + batch views by individual markee address
   useEffect(() => {
@@ -265,8 +283,23 @@ export default function MarkeeModal({
   };
 
   const handleDialogClose = () => {
-    if (hiddenForConnect) return;
+    if (suppressDialogCloseRef.current || hiddenForConnect) return;
     onClose();
+  };
+
+  const handleOpenWalletConnect = () => {
+    if (!openConnectModal) {
+      return;
+    }
+
+    suppressDialogCloseRef.current = true;
+    setHiddenForConnect(true);
+    setConnectModalWasOpened(false);
+    dialogRef.current?.close();
+
+    requestAnimationFrame(() => {
+      openConnectModal();
+    });
   };
 
   return (
@@ -572,11 +605,7 @@ export default function MarkeeModal({
           <div className="flex justify-center mt-5">
             {!isConnected ?
               <button
-                onClick={() => {
-                  setHiddenForConnect(true);
-                  dialogRef.current?.close();
-                  openConnectModal?.();
-                }}
+                onClick={handleOpenWalletConnect}
                 className="btn btn-sm bg-primary text-primary-content hover:opacity-80 border-0 px-8"
               >
                 Connect Wallet

@@ -1,7 +1,14 @@
 import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
-import { access, copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  access,
+  copyFile,
+  mkdtemp,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
@@ -15,12 +22,16 @@ const mode = process.argv[2];
 const forwardedArgs = process.argv.slice(3);
 
 if (mode !== "check" && mode !== "resolve") {
-  console.error("Usage: node ./scripts/audit-resolver.mjs <check|resolve> [audit args...]");
+  console.error(
+    "Usage: node ./scripts/audit-resolver.mjs <check|resolve> [audit args...]",
+  );
   process.exit(1);
 }
 
 const binPath = require.resolve(
-  mode === "check" ? "npm-audit-resolver/check.js" : "npm-audit-resolver/resolve.js",
+  mode === "check" ?
+    "npm-audit-resolver/check.js"
+  : "npm-audit-resolver/resolve.js",
 );
 
 const appPackage = JSON.parse(
@@ -77,7 +88,13 @@ try {
 
   const npmInstallResult = await run({
     command: "npm",
-    args: ["install", "--package-lock-only", "--ignore-scripts", "--no-audit", "--no-fund"],
+    args: [
+      "install",
+      "--package-lock-only",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund",
+    ],
     cwd: tempDir,
   });
 
@@ -88,9 +105,10 @@ try {
   let resolverExitCode = 0;
 
   if (mode === "check") {
-    const checkArgs = forwardedArgs.includes("--json")
-      ? forwardedArgs
-      : [...forwardedArgs, "--json"];
+    const checkArgs =
+      forwardedArgs.includes("--json") ? forwardedArgs : (
+        [...forwardedArgs, "--json"]
+      );
 
     const result = await run({
       command: process.execPath,
@@ -131,7 +149,9 @@ try {
       });
       resolverExitCode = 1;
     } else {
-      process.stdout.write("No unresolved high or critical advisories in apps/web.\n");
+      process.stdout.write(
+        "No unresolved high or critical advisories in apps/web.\n",
+      );
     }
   } else {
     const result = await run({
