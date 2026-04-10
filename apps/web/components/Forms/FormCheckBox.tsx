@@ -36,12 +36,15 @@ export function FormCheckBox({
   disabled = false,
 }: Props) {
   const hasError = errors?.[registerKey];
+  const isNonInteractive = disabled === true || readOnly === true;
   const registered = register?.(registerKey, {
     ...registerOptions,
     required: required ?? registerOptions?.required,
     value: value ?? registerOptions?.value,
     onChange: onChange ?? registerOptions?.onChange,
-    disabled: disabled ?? registerOptions?.disabled,
+    disabled:
+      isNonInteractive ? true
+      : registerOptions?.disabled,
   });
 
   const checkboxClasses = [
@@ -55,13 +58,14 @@ export function FormCheckBox({
     "border-neutral-soft-content",
     "bg-transparent",
     "dark:bg-transparent",
-    disabled || readOnly ?
-      "cursor-not-allowed !opacity-10 border-neutral-soft-content bg-neutral/70 dark:bg-neutral/40"
+    isNonInteractive ?
+      "cursor-not-allowed border-neutral-content/70 bg-neutral/30 dark:border-neutral-content/70 dark:bg-neutral/20 pointer-events-none hover:border-neutral-content/70 hover:bg-neutral/30"
     : "",
     "disabled:border-neutral-soft-content",
-    "disabled:bg-neutral/70",
-    "disabled:checked:bg-neutral/70",
+    "disabled:bg-neutral/30",
+    "disabled:checked:bg-neutral/30",
     "disabled:checked:text-neutral-content",
+    "disabled:opacity-100",
   ]
     .filter(Boolean)
     .join(" ");
@@ -73,7 +77,7 @@ export function FormCheckBox({
   const labelClasses = [
     "text-sm",
     "font-medium",
-    disabled || readOnly ?
+    isNonInteractive ?
       "cursor-not-allowed text-neutral-soft-content"
     : "cursor-pointer",
   ].join(" ");
@@ -87,12 +91,18 @@ export function FormCheckBox({
           type="checkbox"
           id={registerKey}
           {...registered}
-          onChange={registered?.onChange ?? onChange}
+          onChange={
+            readOnly ? undefined
+            : (registered?.onChange ?? onChange)
+          }
           readOnly={readOnly}
-          disabled={disabled}
+          disabled={isNonInteractive}
           className={checkboxClasses}
         />
-        <label htmlFor={registerKey} className={labelClasses}>
+        <label
+          htmlFor={isNonInteractive ? undefined : registerKey}
+          className={labelClasses}
+        >
           {tooltip ?
             <InfoWrapper tooltip={tooltip} customIcon={customTooltipIcon}>
               {label}

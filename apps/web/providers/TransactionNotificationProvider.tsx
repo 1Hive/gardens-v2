@@ -199,6 +199,7 @@ const TransactionToastManager = ({ entries, notify, remove }: ManagerProps) => {
           message={notifProps.message}
           contractName={entry.contractName}
           showClickToExplorer={notifProps.showClickToExplorer}
+          auxiliaryLink={notifProps.auxiliaryLink}
         />
       );
 
@@ -230,6 +231,10 @@ type NotificationRenderConfig = {
   message: React.ReactNode;
   type: ToastOptions["type"];
   showClickToExplorer: boolean;
+  auxiliaryLink?: {
+    href: string;
+    label: React.ReactNode;
+  };
   onClick?: () => void;
   autoClose?: ToastOptions["autoClose"];
 };
@@ -249,6 +254,7 @@ const mapStatusToNotification = (
   entry: TransactionToastPayload,
 ): NotificationRenderConfig => {
   const chainUrl = getExplorerUrl(entry.chainId);
+  const safeQueueUrl = getSafeQueueUrl(entry.chainId, entry.safeAddress);
   const explorerTransactionHash =
     isRpcTransactionHash(entry.transactionHash) ? entry.transactionHash : null;
   const openExplorer = () => {
@@ -263,6 +269,13 @@ const mapStatusToNotification = (
         message: "Waiting for signature",
         type: "warning" as ToastOptions["type"],
         showClickToExplorer: false,
+        auxiliaryLink:
+          safeQueueUrl && entry.safeTransactionHash ?
+            {
+              href: safeQueueUrl,
+              label: "Open in Safe",
+            }
+          : undefined,
         autoClose: false,
       };
     case "loading":
@@ -597,8 +610,24 @@ const TransactionStatusWatcher = ({
 };
 
 function getExplorerUrl(chainId?: number) {
-  if (chainId && chainConfigMap[chainId]?.explorer) {
+  if (chainId != null && chainConfigMap[chainId]?.explorer) {
     return chainConfigMap[chainId].explorer;
   }
   return "https://etherscan.io";
+}
+
+function getSafeQueueUrl(
+  chainId?: number,
+  safeAddress?: `0x${string}` | string,
+) {
+  if (chainId == null || !safeAddress) {
+    return undefined;
+  }
+
+  const safePrefix = chainConfigMap[chainId]?.safePrefix;
+  if (!safePrefix) {
+    return undefined;
+  }
+
+  return `https://app.safe.global/transactions/queue?safe=${safePrefix}:${safeAddress}`;
 }

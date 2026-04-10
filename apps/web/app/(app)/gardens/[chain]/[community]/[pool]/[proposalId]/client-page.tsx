@@ -560,13 +560,14 @@ export default function ClientPage({ params }: ClientPageProps) {
   const shouldShowSupportersTab =
     proposalStatus !== "executed" && proposalStatus !== "cancelled";
 
-  const poolToken = usePoolToken({
+  const poolTokenResult = usePoolToken({
     poolAddress: proposalData?.strategy?.id,
     poolTokenAddr,
     chainId,
     enabled:
       !!poolTokenAddr && !!proposalData?.strategy?.id && !isSignalingType,
   });
+  const poolToken = poolTokenResult?.poolToken;
 
   const proposalStream =
     // Backward-compatible read while graph client schema catches up.
@@ -1568,7 +1569,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                 <>
                   <EditProposalButton
                     proposalData={proposalDataForActions}
-                    poolToken={poolToken}
+                    poolToken={poolTokenResult}
                   />
                   <CancelButton proposalData={proposalDataForActions} />
                 </>
@@ -2149,7 +2150,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                     <>
                       <EditProposalButton
                         proposalData={proposalDataForActions}
-                        poolToken={poolToken}
+                        poolToken={poolTokenResult}
                       />
                       <CancelButton proposalData={proposalDataForActions} />
                     </>

@@ -60,7 +60,7 @@ export function PoolCard({ pool, token }: Props) {
 
   const poolType = config?.proposalType as number | undefined;
 
-  const poolToken = usePoolToken({
+  const { poolToken } = usePoolToken({
     poolAddress: pool.id,
     poolTokenAddr: token,
     enabled: isEnabled && poolType != null && PoolTypes[poolType] === "funding",
@@ -131,7 +131,7 @@ export function PoolCard({ pool, token }: Props) {
           <Image
             src={StreamingPool}
             alt="Streaming pool"
-            className="h-12 sm:h-14 w-full rounded-lg object-cover"
+            className="h-12 sm:h-14 w-full rounded-lg object-fill"
           />
         : <Image
             src={
