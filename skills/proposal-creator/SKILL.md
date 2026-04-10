@@ -248,7 +248,7 @@ Use `submitterCollateralAmount` from `arbitrableConfigs` as `msg.value` when pre
 7. Prepare the proposal metadata JSON and IPFS CID if metadata is required.
 8. Encode the proposal write through `Allo.registerRecipient(poolId, data)` using the canonical tuple in this skill.
 9. If the user asked for preparation only, return a reviewed payload with target address, chain id, calldata, ETH value, signer prerequisites, and a short explanation.
-10. If the user explicitly asked to submit, execute the transaction with keystore-backed signing after the checks pass and return the transaction hash and a short execution summary.
+10. If the user explicitly asked to submit, execute the transaction with keystore-backed signing after the checks pass and return the transaction hash, the Gardens proposal link, and a short execution summary.
 11. If any required input or gating check is missing, stop, report what was resolved, and state exactly what remains missing.
 
 ## Gating Checks
@@ -298,6 +298,7 @@ If the transaction is submitted, also return:
 
 - transaction hash
 - signer used
+- proposal link in this format: `https://app.gardens.fund/gardens/[chainId]/[community address]/[pool address]/proposal-[proposal-number]`
 - short execution status summary
 
 When the action is sensitive, prefer this payload shape:
@@ -322,4 +323,4 @@ When the action is sensitive, prefer this payload shape:
 - If interactive entry is not practical, fall back to a local `--keystore` path plus a local `--password-file` path.
 - If the current environment does not have Foundry or a keystore available, do not ask for secrets in chat and do not attempt execution there. Instead, return a plug-and-play local command template such as `cast send <TO> --data <DATA> --value <VALUE> --rpc-url <RPC_URL> --private-key <PRIVATE_KEY>` and tell the user to append the private key locally on their own machine.
 - Keep password handling local to the machine and outside versioned agent files.
-- After submission, report the exact transaction hash and the chain it was sent on.
+- After submission, report the exact transaction hash, the chain it was sent on, and the Gardens proposal link in this format: `https://app.gardens.fund/gardens/[chainId]/[community address]/[pool address]/proposal-[proposal-number]`.
