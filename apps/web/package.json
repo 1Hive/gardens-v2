@@ -9,6 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
+    "audit:check": "node ./scripts/audit-resolver.mjs check --audit-level=high",
+    "audit:resolve": "node ./scripts/audit-resolver.mjs resolve --audit-level=high",
     "query-passport-account": "curl -X GET http://localhost:3000/api/passport/0x584ddfb0bdd922ff1fbf3e85e7e781d5816b4f23",
     "query-all-scorer": "curl -X GET http://localhost:3000/api/passport/scores",
     "get-sign-message": "curl -X GET http://localhost:3000/api/passport/signMessage",
@@ -68,6 +70,17 @@
     "viem": "~1",
     "wagmi": "~1"
   },
+  "overrides": {
+    "axios": "1.15.0",
+    "base-x": "3.0.11",
+    "defu": "6.1.7",
+    "h3": "1.15.11",
+    "lodash": "4.18.1",
+    "node-forge": "1.4.0",
+    "rollup": "4.60.1",
+    "serialize-javascript": "7.0.5",
+    "undici": "7.24.0"
+  },
   "devDependencies": {
     "@eslint/js": "^9.6.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.1.1",
@@ -92,6 +105,7 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "node-gyp-build": "^4.8.4",
+    "npm-audit-resolver": "3.0.0-RC.0",
     "postcss": "^8.4.32",
     "prettier": "^3.1.0",
     "prettier-eslint": "^16.3.0",

@@ -1,0 +1,49 @@
+name: Web Audit
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/web-audit.yml
+      - apps/web/**
+      - package.json
+      - pnpm-lock.yaml
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/web-audit.yml
+      - apps/web/**
+      - package.json
+      - pnpm-lock.yaml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Enforce Web Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8.14.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check high and critical web advisories
+        run: pnpm --dir apps/web audit:check

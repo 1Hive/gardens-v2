@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "decisions": {
+    "1098392|@rainbow-me/rainbowkit>viem>ws": {
+      "decision": "ignore",
+      "madeAt": 1775832300000,
+      "reason": "Pending coordinated viem and wagmi major upgrade to consume ws >= 8.17.1 safely.",
+      "expiresAt": 1778424300000
+    },
+    "1098392|@wagmi/cli>esbuild>viem>ws": {
+      "decision": "ignore",
+      "madeAt": 1775832300000,
+      "reason": "Pending coordinated viem and wagmi major upgrade to consume ws >= 8.17.1 safely.",
+      "expiresAt": 1778424300000
+    },
+    "1098392|@wagmi/core>@wagmi/connectors>@safe-global/safe-apps-sdk>viem>ws": {
+      "decision": "ignore",
+      "madeAt": 1775832300000,
+      "reason": "Pending coordinated viem and wagmi major upgrade to consume ws >= 8.17.1 safely.",
+      "expiresAt": 1778424300000
+    },
+    "1098392|viem>ws": {
+      "decision": "ignore",
+      "madeAt": 1775832300000,
+      "reason": "Pending coordinated viem and wagmi major upgrade to consume ws >= 8.17.1 safely.",
+      "expiresAt": 1778424300000
+    },
+    "1098392|wagmi>@wagmi/core>@wagmi/connectors>@safe-global/safe-apps-sdk>viem>ws": {
+      "decision": "ignore",
+      "madeAt": 1775832300000,
+      "reason": "Pending coordinated viem and wagmi major upgrade to consume ws >= 8.17.1 safely.",
+      "expiresAt": 1778424300000
+    },
+    "1112653|next": {
+      "decision": "ignore",
+      "madeAt": 1775832300000,
+      "reason": "Pending Next.js major upgrade validation before moving from 14.x to a fixed release line.",
+      "expiresAt": 1778424300000
+    }
+  }
+}
