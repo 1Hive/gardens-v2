@@ -50,9 +50,12 @@ target: workspace
   - `pnpm --filter foundry build`
   - `forge build --sizes --root ../.. pkg/contracts/src`
 - Tests:
+  - Tests are located under `pkg/contracts/test/**`.
+  - Run targeted Foundry commands from `pkg/contracts`.
   - `pnpm --filter foundry test`
   - `forge test -vvv`
-  - Targeted: `forge test --match-path pkg/contracts/test/<File>.t.sol -vvv`
+  - Targeted by path: `forge test --match-path test/<File>.t.sol -vvv`
+  - Targeted by contract: `forge test --match-contract <ContractTestName> -vvv`
 - Storage layout (CRITICAL before deploys/upgrades):
   - `cd pkg/contracts && ./scripts/verify-storage-layout.sh`
   - Quick: `./scripts/verify-storage-layout.sh --skip-build`

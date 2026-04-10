@@ -28,7 +28,7 @@ contract MockHost {
         return gda;
     }
 
-    function registerAppByFactory(ISuperApp app, uint256 configWord) external {
+    function registerApp(ISuperApp app, uint256 configWord) external {
         if (revertOnRegister) {
             revert("NOT_WHITELISTED");
         }

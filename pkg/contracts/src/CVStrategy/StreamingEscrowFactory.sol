@@ -15,7 +15,7 @@ import {StreamingEscrow} from "./StreamingEscrow.sol";
 
 /**
  * @title StreamingEscrowFactory
- * @notice Factory that deploys and registers StreamingEscrow SuperApps via registerAppByFactory.
+ * @notice Factory that deploys and registers StreamingEscrow SuperApps via registerApp.
  */
 contract StreamingEscrowFactory is ProxyOwnableUpgrader {
     error UnauthorizedCaller(address sender, address strategy); // 0x6e154f1f
@@ -68,7 +68,7 @@ contract StreamingEscrowFactory is ProxyOwnableUpgrader {
 
         uint256 configWord = SuperAppDefinitions.APP_LEVEL_FINAL | SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP
             | SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP | SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
-        try host.registerAppByFactory(ISuperApp(escrow), configWord) {
+        try host.registerApp(ISuperApp(escrow), configWord) {
             isSuperAppRegistered[escrow] = true;
             emit EscrowSuperAppRegistrationStatus(escrow, true);
         } catch (bytes memory reason) {
