@@ -102,6 +102,7 @@ type Props = {
       }
     | undefined;
   superTokenCandidate: SuperToken | null;
+  isSuperTokenCandidateFetching: boolean;
   setSuperTokenCandidate: (token: SuperToken | null) => void;
   minThGtTotalEffPoints: boolean;
   communityName: string;
@@ -143,6 +144,7 @@ export default function PoolHeader({
   maxAmount,
   superToken,
   superTokenCandidate,
+  isSuperTokenCandidateFetching,
   setSuperTokenCandidate,
   minThGtTotalEffPoints,
   communityName,
@@ -614,10 +616,20 @@ export default function PoolHeader({
   const disableCouncilSafeButtons = disableCouncilSafeBtnCondition.some(
     (cond) => cond.condition,
   );
-
   const { tooltipMessage, missmatchUrl, isConnected } = useDisableButtons(
     disableCouncilSafeBtnCondition,
   );
+  const canOpenPoolEditModal =
+    isConnected && !missmatchUrl && (isCouncilMember || isCouncilSafe);
+  const editPoolTooltip =
+    !isConnected || missmatchUrl ? tooltipMessage
+    : !isCouncilSafe ? "View only. Connect with Council safe to edit."
+    : tooltipMessage;
+  const hasStreamingEnabled =
+    Boolean(strategy.config.superfluidToken) ||
+    Boolean(superTokenCandidate?.sameAsUnderlying);
+  const hasResolvedStreamingVisibility =
+    hasStreamingEnabled || !isSuperTokenCandidateFetching;
 
   const handleEnableStreamFunding = () => {
     let superTokenAddress = superTokenCandidate?.id;
@@ -862,17 +874,14 @@ export default function PoolHeader({
                     <Button
                       btnStyle="outline"
                       icon={<Cog6ToothIcon height={20} width={20} />}
-                      disabled={
-                        !isConnected ||
-                        missmatchUrl ||
-                        disableCouncilSafeButtons
-                      }
-                      tooltip={tooltipMessage}
+                      disabled={!canOpenPoolEditModal}
+                      tooltip={editPoolTooltip}
                       onClick={() => setIsOpenModal(true)}
                     >
                       Edit
                     </Button>
-                    {!superToken &&
+                    {!hasStreamingEnabled &&
+                      hasResolvedStreamingVisibility &&
                       PoolTypes[proposalType] !== "signaling" &&
                       networkSfMetadata?.contractsV1.superTokenFactory && (
                         <>
@@ -992,6 +1001,7 @@ export default function PoolHeader({
                     rulingTime,
                   }}
                   setModalOpen={setIsOpenModal}
+                  readOnly={!isCouncilSafe}
                 />
               )}
             </Modal>

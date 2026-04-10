@@ -36,6 +36,7 @@ export function FormCheckBox({
   disabled = false,
 }: Props) {
   const hasError = errors?.[registerKey];
+  const isNonInteractive = disabled || readOnly;
   const registered = register?.(registerKey, {
     ...registerOptions,
     required: required ?? registerOptions?.required,
@@ -55,8 +56,8 @@ export function FormCheckBox({
     "border-neutral-soft-content",
     "bg-transparent",
     "dark:bg-transparent",
-    disabled || readOnly ?
-      "cursor-not-allowed !opacity-10 border-neutral-soft-content bg-neutral/70 dark:bg-neutral/40"
+    isNonInteractive ?
+      "cursor-not-allowed !opacity-50 border-neutral-soft-content bg-neutral/70 dark:bg-neutral/40 pointer-events-none hover:border-neutral-soft-content hover:bg-neutral/70"
     : "",
     "disabled:border-neutral-soft-content",
     "disabled:bg-neutral/70",
@@ -73,7 +74,7 @@ export function FormCheckBox({
   const labelClasses = [
     "text-sm",
     "font-medium",
-    disabled || readOnly ?
+    isNonInteractive ?
       "cursor-not-allowed text-neutral-soft-content"
     : "cursor-pointer",
   ].join(" ");
@@ -87,12 +88,18 @@ export function FormCheckBox({
           type="checkbox"
           id={registerKey}
           {...registered}
-          onChange={registered?.onChange ?? onChange}
+          onChange={
+            readOnly ? undefined
+            : (registered?.onChange ?? onChange)
+          }
           readOnly={readOnly}
           disabled={disabled}
           className={checkboxClasses}
         />
-        <label htmlFor={registerKey} className={labelClasses}>
+        <label
+          htmlFor={isNonInteractive ? undefined : registerKey}
+          className={labelClasses}
+        >
           {tooltip ?
             <InfoWrapper tooltip={tooltip} customIcon={customTooltipIcon}>
               {label}

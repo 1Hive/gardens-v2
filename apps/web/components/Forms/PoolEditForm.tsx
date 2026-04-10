@@ -94,6 +94,7 @@ type Props = {
   pointSystemType: number;
   proposalOnDispute: boolean;
   setModalOpen: (value: boolean) => void;
+  readOnly?: boolean;
 };
 
 const sybilResistancePreview = (
@@ -178,6 +179,7 @@ export default function PoolEditForm({
   initValues,
   proposalType,
   setModalOpen,
+  readOnly = false,
 }: Props) {
   const {
     id: chainId,
@@ -520,14 +522,14 @@ export default function PoolEditForm({
 
   return (
     <>
-      <form onSubmit={handleSubmit(handlePreview)}>
+      <form onSubmit={readOnly ? undefined : handleSubmit(handlePreview)}>
         <input
           type="hidden"
           {...register("sybilResistanceType")}
           value={formSybilType}
         />
 
-        {showPreview ?
+        {showPreview && !readOnly ?
           <FormPreview
             formRows={formatFormRows()}
             onEdit={() => {
@@ -542,6 +544,7 @@ export default function PoolEditForm({
                 <FormInput
                   label="Gitcoin Passport score"
                   register={register}
+                  readOnly={readOnly}
                   required={derivedType === "gitcoinPassport"}
                   registerOptions={{
                     valueAsNumber: true,
@@ -562,6 +565,7 @@ export default function PoolEditForm({
               : derivedType === "allowList" && (
                   <AddressListInput
                     label="Allow list"
+                    readOnly={readOnly}
                     register={register}
                     registerKey="sybilResistanceValue"
                     addresses={sybilResistanceValue}
@@ -579,6 +583,7 @@ export default function PoolEditForm({
                 <div className="flex flex-col">
                   <FormInput
                     label="Monthly stream budget"
+                    readOnly={readOnly}
                     tooltip="Amount to stream per month. This updates streamingRatePerSecond in setPoolParams."
                     register={register}
                     errors={errors}
@@ -603,6 +608,7 @@ export default function PoolEditForm({
                 <div className="flex flex-col">
                   <FormInput
                     label="Spending limit"
+                    readOnly={readOnly}
                     register={register}
                     required
                     errors={errors}
@@ -628,6 +634,7 @@ export default function PoolEditForm({
                 <div className="flex flex-col">
                   <FormInput
                     label="Minimum conviction"
+                    readOnly={readOnly}
                     register={register}
                     required
                     errors={errors}
@@ -657,6 +664,7 @@ export default function PoolEditForm({
                 <div className="flex flex-col">
                   <FormInput
                     label="Conviction growth"
+                    readOnly={readOnly}
                     register={register}
                     required
                     errors={errors}
@@ -686,6 +694,7 @@ export default function PoolEditForm({
                 <div className="flex flex-col">
                   <FormInput
                     label="Minimum threshold points"
+                    readOnly={readOnly}
                     register={register}
                     registerOptions={{
                       min: {
@@ -710,6 +719,7 @@ export default function PoolEditForm({
             <div className="flex flex-col gap-4">
               <h6 className="mt-4">Arbitration settings</h6>
               <FormInput
+                readOnly={readOnly}
                 tooltip={
                   'Deposited by proposal creator and forfeited if the proposal is ruled as "Rejected" by the Tribunal (violation of Covenant found).\n Deposit is returned when the proposal is either cancelled by the creator or executed successfully.'
                 }
@@ -725,6 +735,7 @@ export default function PoolEditForm({
                 suffix={nativeCurrency?.symbol ?? ""}
               />
               <FormInput
+                readOnly={readOnly}
                 tooltip={
                   'Deposited by the proposal disputer and forfeited if the proposal is ruled as "Allowed" by the Tribunal (no violation of Covenant found). Deposit is returned if the proposal is ruled as "Rejected."'
                 }
@@ -741,6 +752,7 @@ export default function PoolEditForm({
               />
               <FormInput
                 label="Ruling Time"
+                readOnly={readOnly}
                 registerKey="rulingTime"
                 register={register}
                 type="number"
@@ -752,6 +764,7 @@ export default function PoolEditForm({
                 tooltip="Number of days Tribunal has to make a decision on the dispute. Past that time, the default resolution will be applied."
               />
               <FormSelect
+                readOnly={readOnly}
                 tooltip={
                   'Resolution executed if the Tribunal rules "Abstain", or doesn\'t make a ruling in time.'
                 }
@@ -770,6 +783,7 @@ export default function PoolEditForm({
                 <FormAddressInput
                   tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
                   label="Tribunal address"
+                  readOnly={readOnly}
                   required
                   validateSafe
                   value={tribunalAddress}
@@ -779,6 +793,7 @@ export default function PoolEditForm({
                 />
                 <FormCheckBox
                   label="Use global tribunal"
+                  readOnly={readOnly}
                   registerKey="useGlobalTribunal"
                   tooltip="Check this box to use the Gardens global tribunal Safe to rule on proposal disputes in the Pool, a service we offer if your community does not have an impartial 3rd party that can rule on violations of the Covenant."
                   value={
@@ -802,7 +817,18 @@ export default function PoolEditForm({
           </div>
         }
         <div className="flex w-full items-center justify-end pt-6">
-          {showPreview ?
+          {readOnly ?
+            <div className="flex items-center gap-4">
+              <Button
+                className="flex-1"
+                btnStyle="ghost"
+                color="secondary"
+                onClick={() => setModalOpen(false)}
+              >
+                Close
+              </Button>
+            </div>
+          : showPreview ?
             <div className="flex items-center gap-4">
               <Button
                 onClick={() => {

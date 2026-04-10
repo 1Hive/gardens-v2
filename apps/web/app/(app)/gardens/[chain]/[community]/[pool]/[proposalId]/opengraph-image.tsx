@@ -66,7 +66,7 @@ const POOL_TYPE_STYLES: Record<
 > = {
   signaling: { text: "#065F46", background: "#D1FAE5" },
   funding: { text: "#1B5370", background: "#D1ECF3" },
-  streaming: { text: "#312E81", background: "#EDE9FE" },
+  streaming: { text: "#78AACB", background: "#EBF2F7" },
 };
 
 const DEFAULT_POOL_STYLE = { text: "#1F2937", background: "#E5E7EB" };

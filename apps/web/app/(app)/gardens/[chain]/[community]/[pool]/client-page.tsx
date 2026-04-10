@@ -541,6 +541,7 @@ export default function ClientPage({
 
   const {
     superToken: superTokenCandidate,
+    isFetching: isSuperTokenCandidateFetching,
     setSuperToken: setSuperTokenCandidate,
   } = useSuperfluidToken({
     token: strategy?.token,
@@ -1045,6 +1046,7 @@ export default function ClientPage({
             isEnabled={isEnabled}
             maxAmount={maxAmount}
             superTokenCandidate={superTokenCandidate}
+            isSuperTokenCandidateFetching={isSuperTokenCandidateFetching}
             superToken={
               superTokenInfo && {
                 ...superTokenInfo,
@@ -1147,6 +1149,9 @@ export default function ClientPage({
                   isEnabled={isEnabled}
                   maxAmount={maxAmount}
                   superTokenCandidate={superTokenCandidate}
+                  isSuperTokenCandidateFetching={
+                    isSuperTokenCandidateFetching
+                  }
                   superToken={
                     superTokenInfo && {
                       ...superTokenInfo,

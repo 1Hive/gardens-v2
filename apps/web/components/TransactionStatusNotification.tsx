@@ -20,6 +20,10 @@ type Props = {
   contractName?: React.ReactNode;
   showContractName?: boolean;
   showClickToExplorer?: boolean;
+  auxiliaryLink?: {
+    href: string;
+    label: React.ReactNode;
+  };
   index?: number;
 };
 
@@ -45,6 +49,7 @@ export function TransactionStatusNotification({
   contractName,
   showContractName = false,
   showClickToExplorer,
+  auxiliaryLink,
   index,
 }: Props) {
   const chain = useChainFromPath();
@@ -93,6 +98,16 @@ export function TransactionStatusNotification({
           <div className={`${textClass} text-sm break-words whitespace-normal`}>
             {message}
           </div>
+        )}
+        {auxiliaryLink && (
+          <a
+            href={auxiliaryLink.href}
+            target="_blank"
+            rel="noreferrer"
+            className="w-fit text-sm italic underline underline-offset-2"
+          >
+            {auxiliaryLink.label}
+          </a>
         )}
         {chain?.blockExplorers?.default.url && showClickToExplorer && (
           <div className="w-full text-sm italic">

@@ -64,8 +64,10 @@ export function FormSelect({
   ]
     .filter(Boolean)
     .join(" ");
+  const disabledSelectClassname =
+    "!border-gray-400 focus:border-gray-400 focus:outline-none text-neutral-content cursor-not-allowed opacity-40";
   const readOnlyClasses = readOnly ?
-    "!border-gray-300 focus:none !outline-gray-300 !pointer-events-none bg-transparent !cursor-not-allowed"
+    disabledSelectClassname
   : "";
   const errorFocusClasses = hasError ?
     "focus-visible:!outline-danger-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0"
@@ -93,7 +95,8 @@ export function FormSelect({
         {...registered}
         onChange={onChange ?? registered?.onChange}
         required={required}
-        disabled={disabled}
+        disabled={disabled ?? readOnly}
+        aria-readonly={readOnly ? "true" : "false"}
         defaultValue={value}
       >
         {placeholder && (
