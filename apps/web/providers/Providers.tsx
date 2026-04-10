@@ -68,7 +68,7 @@ const createCustomConfig = (
 ) => {
   const usedChains = getConfiguredChains();
   const chains = usedChains;
-  const baseConnectors = connectorsForWallets([
+  const connectorFactory = connectorsForWallets([
     {
       groupName: "Recommended",
       wallets: [
@@ -111,17 +111,14 @@ const createCustomConfig = (
     });
   }
 
-  const resolveConnectors = () => {
-    const connectors = baseConnectors();
-    return simulatedConnector ?
-        [simulatedConnector, ...connectors]
-      : connectors;
-  };
+  const connectors = connectorFactory();
+  const resolvedConnectors =
+    simulatedConnector ? [simulatedConnector, ...connectors] : connectors;
 
   return {
     config: createConfig({
       autoConnect: !skipAutoConnect,
-      connectors: resolveConnectors,
+      connectors: resolvedConnectors,
       publicClient: ({ chainId }): PublicClient => getEnvPublicClient(chainId),
     }),
     simulatedConnector,
