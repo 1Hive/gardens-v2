@@ -20,6 +20,7 @@ export const usePoolToken = ({
 }) => {
   const resolvedChainId = useResolvedChainId(chainId);
   const tokenClient = usePreferredReadClient(resolvedChainId);
+  const [isTokenLoading, setIsTokenLoading] = useState(false);
   const [poolToken, setPoolToken] = useState<
     | {
         name: string;
@@ -43,6 +44,7 @@ export const usePoolToken = ({
       poolTokenAddr === zeroAddress ||
       !tokenClient
     ) {
+      setIsTokenLoading(false);
       setPoolToken(undefined);
       return;
     }
@@ -50,6 +52,9 @@ export const usePoolToken = ({
     let cancelled = false;
 
     const readToken = async () => {
+      if (!cancelled) {
+        setIsTokenLoading(true);
+      }
       try {
         const [name, symbol, decimals] = await Promise.all([
           tokenClient.readContract({
@@ -75,9 +80,11 @@ export const usePoolToken = ({
             symbol,
             decimals,
           });
+          setIsTokenLoading(false);
         }
       } catch (error) {
         if (!cancelled) {
+          setIsTokenLoading(false);
           setPoolToken(undefined);
           console.error("Failed to load pool token metadata", {
             poolTokenAddr,
@@ -95,24 +102,22 @@ export const usePoolToken = ({
     };
   }, [enabled, poolTokenAddr, resolvedChainId, tokenClient]);
 
-  if (poolAmount == null && !poolToken && enabled) {
-    console.debug("Waiting for", {
-      poolAmount,
-      poolToken,
-    });
-    return undefined;
-  }
-
   if (poolToken == null || poolAmount == null) {
-    return undefined;
+    return {
+      poolToken: undefined,
+      isLoading: enabled && (isTokenLoading || poolAmount == null),
+    };
   }
 
   return {
-    address: poolTokenAddr as Address,
-    symbol: poolToken.symbol,
-    decimals: poolToken.decimals,
-    balance: poolAmount,
-    formatted: (poolAmount / 10n ** BigInt(poolToken.decimals)).toString(),
-    name: poolToken.name,
+    poolToken: {
+      address: poolTokenAddr as Address,
+      symbol: poolToken.symbol,
+      decimals: poolToken.decimals,
+      balance: poolAmount,
+      formatted: (poolAmount / 10n ** BigInt(poolToken.decimals)).toString(),
+      name: poolToken.name,
+    },
+    isLoading: false,
   };
 };

@@ -54,7 +54,7 @@ export default function ClientPage({
   const poolTokenAddr = strategyObj?.token;
   const proposalType = strategyObj?.config?.proposalType as number;
 
-  const poolToken = usePoolToken({
+  const { poolToken, isLoading: isPoolTokenLoading } = usePoolToken({
     poolAddress: strategyObj?.id as Address,
     poolTokenAddr: poolTokenAddr as Address,
     enabled:
@@ -69,7 +69,7 @@ export default function ClientPage({
     metadata == null ||
     !strategyObj ||
     resolvedPoolId == null ||
-    (poolToken == undefined && PoolTypes[proposalType] === "funding")
+    (isPoolTokenLoading && PoolTypes[proposalType] === "funding")
   ) {
     return (
       <div className="mt-96 col-span-12">

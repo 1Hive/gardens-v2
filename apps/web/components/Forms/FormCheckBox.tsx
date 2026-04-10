@@ -59,12 +59,13 @@ export function FormCheckBox({
     "bg-transparent",
     "dark:bg-transparent",
     isNonInteractive ?
-      "cursor-not-allowed !opacity-50 border-neutral-soft-content bg-neutral/70 dark:bg-neutral/40 pointer-events-none hover:border-neutral-soft-content hover:bg-neutral/70"
+      "cursor-not-allowed border-neutral-content/70 bg-neutral/30 dark:border-neutral-content/70 dark:bg-neutral/20 pointer-events-none hover:border-neutral-content/70 hover:bg-neutral/30"
     : "",
     "disabled:border-neutral-soft-content",
-    "disabled:bg-neutral/70",
-    "disabled:checked:bg-neutral/70",
+    "disabled:bg-neutral/30",
+    "disabled:checked:bg-neutral/30",
     "disabled:checked:text-neutral-content",
+    "disabled:opacity-100",
   ]
     .filter(Boolean)
     .join(" ");

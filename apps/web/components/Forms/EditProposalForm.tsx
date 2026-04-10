@@ -87,7 +87,10 @@ export const EditProposalForm = ({
       title: proposal.metadata?.title ?? "",
       description: proposal.metadata?.description ?? "",
       amount: Number(
-        formatUnits(proposal.requestedAmount, poolToken?.decimals ?? 18),
+        formatUnits(
+          proposal.requestedAmount,
+          poolToken?.poolToken?.decimals ?? 18,
+        ),
       ),
       beneficiary: proposal.beneficiary,
     },
@@ -105,7 +108,7 @@ export const EditProposalForm = ({
   const proposalConviction = useConvictionRead({
     strategyConfig: strategy.config,
     proposalData: { ...proposal, strategy: strategy },
-    tokenData: poolToken,
+    tokenData: poolToken?.poolToken,
     enabled: Boolean(strategy.id && proposal.proposalNumber),
   });
   const currentConvictionPct = proposalConviction.currentConvictionPct ?? 0;
@@ -119,7 +122,7 @@ export const EditProposalForm = ({
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {
       label: "Requested amount:",
-      parse: (value: number) => `${value} ${poolToken?.symbol}`,
+      parse: (value: number) => `${value} ${poolToken?.poolToken?.symbol}`,
     },
     beneficiary: {
       label: "Beneficiary:",
@@ -184,9 +187,12 @@ export const EditProposalForm = ({
 
   useEffect(() => {
     setRequestedAmount(
-      formatUnits(proposal.requestedAmount, poolToken?.decimals ?? 18),
+      formatUnits(
+        proposal.requestedAmount,
+        poolToken?.poolToken?.decimals ?? 18,
+      ),
     );
-  }, [proposal.requestedAmount, poolToken?.decimals]);
+  }, [proposal.requestedAmount, poolToken?.poolToken?.decimals]);
 
   useEffect(() => {
     setIsDisabled?.(isButtonDisabled);
@@ -214,7 +220,7 @@ export const EditProposalForm = ({
 
       const amount = parseUnits(
         requestedAmount ?? "0",
-        poolToken?.decimals ?? 0,
+        poolToken?.poolToken?.decimals ?? 0,
       );
 
       write({
@@ -264,7 +270,9 @@ export const EditProposalForm = ({
   });
 
   const INPUT_TOKEN_MIN_VALUE =
-    Number(requestedAmount) == 0 ? 0 : 1 / 10 ** (poolToken?.decimals ?? 0);
+    Number(requestedAmount) == 0 ?
+      0
+    : 1 / 10 ** (poolToken?.poolToken?.decimals ?? 0);
 
   const { data: thresholdFromContract } = useContractRead({
     address: strategy.id as Address,
@@ -273,7 +281,7 @@ export const EditProposalForm = ({
     functionName: "calculateThreshold",
     args: [
       requestedAmount ?
-        safeParseUnits(requestedAmount, poolToken?.decimals ?? 0)
+        safeParseUnits(requestedAmount, poolToken?.poolToken?.decimals ?? 0)
       : 0n,
     ],
     enabled:
@@ -286,7 +294,7 @@ export const EditProposalForm = ({
     BigInt(strategy.maxCVSupply),
   );
 
-  if (!poolToken && PoolTypes[strategy.config.proposalType] === "funding") {
+  if (!poolToken?.poolToken && PoolTypes[strategy.config.proposalType] === "funding") {
     return (
       <div className="m-40 col-span-12">
         <LoadingSpinner />
@@ -360,7 +368,7 @@ export const EditProposalForm = ({
               </InfoBox>
               <FormInput
                 label="Requested amount"
-                subLabel={`Pool Funds: ${poolToken?.formatted} ${poolToken?.symbol} - Spending limit: ${spendingLimitPct.toFixed(1)}% = ${spendingLimit} ${poolToken?.symbol}.`}
+                subLabel={`Pool Funds: ${poolToken?.poolToken?.formatted} ${poolToken?.poolToken?.symbol} - Spending limit: ${spendingLimitPct.toFixed(1)}% = ${spendingLimit} ${poolToken?.poolToken?.symbol}.`}
                 register={register}
                 required
                 onChange={(e) => {
@@ -386,7 +394,7 @@ export const EditProposalForm = ({
                 registerKey="amount"
                 type="number"
                 placeholder="0"
-                suffix={poolToken?.symbol}
+                suffix={poolToken?.poolToken?.symbol}
               />
 
               {requestedAmount && thresholdPct !== 0 && canEditAmount && (

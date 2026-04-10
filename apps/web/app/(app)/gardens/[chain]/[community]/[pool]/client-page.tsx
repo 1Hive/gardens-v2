@@ -595,7 +595,7 @@ export default function ClientPage({
 
   const maxAmount = strategy?.config?.maxAmount ?? 0;
 
-  const poolToken = usePoolToken({
+  const { poolToken, isLoading: isPoolTokenLoading } = usePoolToken({
     poolAddress: strategy?.id,
     poolTokenAddr: poolTokenAddr,
     chainId,
@@ -626,13 +626,13 @@ export default function ClientPage({
   const poolType = proposalType != null ? PoolTypes[proposalType] : undefined;
   const isStreamingPool = poolType === "streaming";
   const needsFundingToken = poolType === "funding";
-  const isMissingFundingToken = needsFundingToken && !poolToken;
+  const isMissingFundingToken =
+    needsFundingToken && !isPoolTokenLoading && !poolToken;
   const isAwaitingNewPoolIndexing =
     Boolean(newPoolId) &&
     !strategy &&
     !error &&
     !hasResolvedInitialNewPoolLookup;
-  const [hasWaitedForPoolToken, setHasWaitedForPoolToken] = useState(false);
 
   const [nowTs, setNowTs] = useState(() => Math.floor(Date.now() / 1000));
   useEffect(() => {
@@ -716,26 +716,12 @@ export default function ClientPage({
     | bigint
     | null
     | undefined;
-  useEffect(() => {
-    if (isMissingFundingToken && strategy && !error) {
-      const timer = window.setTimeout(() => {
-        setHasWaitedForPoolToken(true);
-      }, 1500);
-      return () => {
-        clearTimeout(timer);
-      };
-    }
-
-    setHasWaitedForPoolToken(false);
-    return undefined;
-  }, [isMissingFundingToken, strategy, error]);
-
   const stillLoading =
     fetching ||
     isAwaitingNewPoolIndexing ||
     (!data && !error) ||
     (strategy != null && poolId == null) ||
-    (isMissingFundingToken && !error && !hasWaitedForPoolToken);
+    (needsFundingToken && isPoolTokenLoading);
 
   if ((!strategy || isMissingFundingToken) && stillLoading) {
     return (

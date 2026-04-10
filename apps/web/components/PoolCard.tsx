@@ -60,7 +60,7 @@ export function PoolCard({ pool, token }: Props) {
 
   const poolType = config?.proposalType as number | undefined;
 
-  const poolToken = usePoolToken({
+  const { poolToken } = usePoolToken({
     poolAddress: pool.id,
     poolTokenAddr: token,
     enabled: isEnabled && poolType != null && PoolTypes[poolType] === "funding",
