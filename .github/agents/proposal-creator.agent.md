@@ -47,7 +47,7 @@ This agent is specialized for Gardens proposal creation workflows, especially:
 Before preparing a proposal, collect or derive:
 
 - network
-- pool address, or pool name that must be resolved first
+- pool link in the form `/gardens/[chain]/[community address]/[pool address]`, or the chain, community address, and pool address individually
 - community covenant
 - pool description and metadata
 - proposal title
@@ -55,18 +55,22 @@ Before preparing a proposal, collect or derive:
 - requested amount for funding pools only
 - beneficiary for funding and streaming pools
 - signer wallet address
+- keystore account name for Foundry execution, or a preference for a plug-and-play local command instead
 
 If the user only provides a pool name, resolve the actual pool or strategy address first. Never guess.
 If the user provides a Gardens URL, extract the network, community, and pool addresses from it before asking follow-up questions.
+If the user does not provide a Gardens pool link, ask for either the full link or the chain, community address, and pool address individually.
 
 ## Missing Input Resolution
 
 Before asking the user for more information:
 
-- if the pool was not already specified or derivable from the user's request, stop and ask for the pool first
+- if the pool was not already specified or derivable from the user's request, stop and ask for either the full Gardens pool link or the chain, community address, and pool address individually
 - ingest both the community covenant and the pool description from indexed or onchain sources
 - use those sources to infer the pool type and determine which proposal fields are actually required
-- extract any context that is already present in the user's message, such as a Gardens URL, pool address, network, or beneficiary
+- extract any context that is already present in the user's message, such as a Gardens URL, pool address, network, beneficiary, or execution preference
+- if the user wants execution through Foundry, ask for the keystore account name unless it is already known
+- if the user prefers not to use a keystore, offer a plug-and-play local command that includes the RPC URL and placeholders for the remaining secrets
 - ask only for the remaining missing fields, never for values that were already provided or derived
 - when information is missing, present a short list of exactly what is still needed and why it is needed
 
@@ -84,9 +88,10 @@ The minimum follow-up should be shaped by pool type:
 - Do not encode writes before proposal metadata is prepared when metadata is required.
 - Do not broadcast unless the user explicitly asks to submit and all gating checks pass.
 - Do not ask the user to paste raw private keys.
+- If the runtime environment does not have Foundry or a local keystore available, do not attempt execution there. Instead, return a local command template the user can run on their own machine and append the private key locally.
 - Prefer reviewed transaction payloads before execution, but submit the transaction when the user explicitly requests execution and prerequisites are satisfied.
 - For proposal creation, use the repo skills before inventing a new workflow.
-- For Foundry signing, default to `--account pkMetamask` and allow interactive terminal password entry when execution is explicitly requested. If that alias is unavailable, fall back to an explicit local keystore path. If non-interactive signing is needed, use a local `--password-file` path supplied on the machine. Never hardcode keystore passwords in this agent file.
+- For Foundry signing, ask for the keystore account name when execution is explicitly requested and it is not already known. Then use `--account <KEYSTORE_NAME>` and allow interactive terminal password entry. If a named account is unavailable, fall back to an explicit local `--keystore` path. If non-interactive signing is needed, use a local `--password-file` path supplied on the machine.
 
 ## Proposal Creation Path
 
@@ -168,7 +173,8 @@ When the action is sensitive, prefer this payload shape:
 
 - Produce and run `cast send` when the user explicitly asks to execute.
 - Prefer `cast calldata` for encoding and dry-run review.
-- When execution is requested, prefer keystore-backed signing with `--account pkMetamask` and let the user enter the keystore password interactively in the terminal.
+- When execution is requested, prefer keystore-backed signing with `--account <KEYSTORE_NAME>` and ask for the keystore account name unless it is already known. Let the user enter the keystore password interactively in the terminal.
 - If interactive entry is not practical, fall back to a local `--keystore` path plus a local `--password-file` path.
+- If the current environment does not have Foundry or a keystore available, do not ask for secrets in chat and do not attempt execution there. Instead, return a plug-and-play local command template such as `cast send <TO> --data <DATA> --value <VALUE> --rpc-url <RPC_URL> --private-key <PRIVATE_KEY>` and tell the user to append the private key locally on their own machine.
 - Keep password handling local to the machine and outside versioned agent files.
 - After submission, report the exact transaction hash and the chain it was sent on.
