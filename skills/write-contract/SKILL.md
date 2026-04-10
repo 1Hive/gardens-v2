@@ -101,6 +101,21 @@ The relevant subgraph entity ids are usually the contract addresses.
 
 Use the `read-contracts` skill first when the task needs confirmation of the current on-chain state before preparing a write.
 
+## Proposal Creation Delegation
+
+When the task is specifically Gardens proposal creation, do not carry an independent workflow in this skill.
+Delegate to `skills/proposal-creator/SKILL.md` as the source of truth for:
+
+- required inputs by pool type
+- canonical pool type mapping
+- indexed fields to fetch
+- membership and collateral gating checks
+- IPFS metadata preparation
+- `Allo.registerRecipient(poolId, data)` payload encoding
+- duplicate protection and replacement flow
+
+Use this skill only for generic calldata assembly or broadcast mechanics after `proposal-creator` has resolved the proposal-specific transaction plan.
+
 ## Contract Selection Rules
 
 - Use `PROXIES.REGISTRY_FACTORY` with the `RegistryFactory` ABI for registry factory writes.
@@ -118,38 +133,18 @@ Use direct encoding tools and return the encoded result rather than broadcasting
 
 ## Proposal Creation Requirements
 
-When preparing a proposal creation write for Gardens, ingest both:
-- the community covenant
-- the pool description and metadata
+When the task is Gardens proposal creation:
 
-Use the `query-subgraph` skill to retrieve this context before encoding the transaction.
+- load and follow `skills/proposal-creator/SKILL.md`
+- use `query-subgraph` and `read-contracts` through that workflow to resolve pool context and gating checks
+- do not duplicate proposal-specific field rules, metadata rules, or tuple encoding logic in this skill
 
-If the user gives a pool name instead of a pool address:
-- use the `query-subgraph` skill first to resolve the pool or strategy address
-- do not guess the target address
+After `proposal-creator` has produced the reviewed transaction plan, this skill may still be used for generic tasks such as:
 
-Before preparing a proposal creation transaction, collect or derive all of the following:
-
-- Network
-- Pool address, or pool name that can be resolved to the pool address through `query-subgraph`
-- Proposal title
-- Requested amount for funding pools only (check pool token for symbol and decimals with `read-contracts` if not provided)
-- Beneficiary for funding and streaming pools
-- Proposal description
-
-Before suggesting broadcast:
-- make sure the signer wallet has enough native token to cover the required proposal collateral deposit
-- use the `read-contracts` skill to retrieve the chain-specific requirement and relevant onchain configuration
-- if needed, also verify the wallet's native balance on the target chain before finalizing the transaction plan
-
-## Proposal Creation Gating Checks
-
-Before preparing or broadcasting a proposal creation transaction, confirm both of the following:
-
-- Collateral deposit requirement
-  Fetch the required proposal collateral from the target chain using the `read-contracts` skill instead of assuming a fixed amount.
-- Community membership
-  Confirm that the signer wallet is a member of the target community and therefore eligible to create the proposal.
+- ABI-aware calldata generation
+- `cast calldata` assembly
+- `cast send` command shaping
+- multisig payload formatting
 
 For proposal creation metadata and dispute-reason JSON shapes, see `references/ipfs-json-structures.md`.
 
