@@ -281,11 +281,13 @@ export default function PoolHeader({
   };
 
   const poolConfig = [
-    {
-      label: "Spending limit",
-      value: `${roundToSignificant(spendingLimit, 2, { showPrecisionMissIndicator: false })} %`,
-      info: "Max percentage of the pool funds that can be spent in a single proposal.",
-    },
+    ...(PoolTypes[proposalType] === "funding" ? [
+      {
+        label: "Spending limit",
+        value: `${roundToSignificant(spendingLimit, 2, { showPrecisionMissIndicator: false })} %`,
+        info: "Max percentage of the pool funds that can be spent in a single proposal.",
+      },
+    ] : []),
     {
       label: "Min conviction",
       value: `${roundToSignificant(minimumConviction, 2, { showPrecisionMissIndicator: false })} %`,

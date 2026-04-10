@@ -45,16 +45,31 @@ jobs:
         with:
           version: nightly
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Slither
+        run: python -m pip install --upgrade pip slither-analyzer==0.10.3
+
       - name: Run Slither
         id: slither
         continue-on-error: true
-        uses: crytic/slither-action@v0.4.1
-        with:
-          target: .
-          node-version: 20
-          sarif: results.sarif
-          slither-args: --foundry-out-directory=pkg/contracts/out --exclude-dependencies --exclude-low --exclude-informational --exclude-optimization
-          fail-on: none
+        run: |
+          set +e
+          slither . \
+            --sarif results.sarif \
+            --foundry-out-directory=pkg/contracts/out \
+            --exclude-dependencies \
+            --exclude-low \
+            --exclude-informational \
+            --exclude-optimization
+          status=$?
+          if [ -f results.sarif ]; then
+            echo "sarif=results.sarif" >> "$GITHUB_OUTPUT"
+          fi
+          exit $status
 
       - name: Upload SARIF file
         if: always() && steps.slither.outputs.sarif != ''

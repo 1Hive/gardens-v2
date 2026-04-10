@@ -33,7 +33,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: stable
+          version: nightly
 
       - name: Run SecurityPoC tests
         run: forge test --match-path 'pkg/contracts/test/no-coverage/SecurityPoC.t.sol' -vvv

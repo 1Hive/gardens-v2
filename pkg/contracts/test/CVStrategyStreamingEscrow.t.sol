@@ -92,7 +92,7 @@ contract MockHost {
         return "";
     }
 
-    function registerAppByFactory(ISuperApp app, uint256) external {
+    function registerApp(ISuperApp app, uint256) external {
         lastApp = address(app);
     }
 }
