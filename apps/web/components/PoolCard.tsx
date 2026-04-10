@@ -131,7 +131,7 @@ export function PoolCard({ pool, token }: Props) {
           <Image
             src={StreamingPool}
             alt="Streaming pool"
-            className="h-12 sm:h-14 w-full rounded-lg object-cover"
+            className="h-12 sm:h-14 w-full rounded-lg object-fill"
           />
         : <Image
             src={

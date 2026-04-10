@@ -522,7 +522,13 @@ export default function PoolEditForm({
 
   return (
     <>
-      <form onSubmit={readOnly ? undefined : handleSubmit(handlePreview)}>
+      <form
+        onSubmit={
+          readOnly ?
+            (e) => e.preventDefault()
+          : handleSubmit(handlePreview)
+        }
+      >
         <input
           type="hidden"
           {...register("sybilResistanceType")}

@@ -36,13 +36,15 @@ export function FormCheckBox({
   disabled = false,
 }: Props) {
   const hasError = errors?.[registerKey];
-  const isNonInteractive = disabled || readOnly;
+  const isNonInteractive = disabled === true || readOnly === true;
   const registered = register?.(registerKey, {
     ...registerOptions,
     required: required ?? registerOptions?.required,
     value: value ?? registerOptions?.value,
     onChange: onChange ?? registerOptions?.onChange,
-    disabled: disabled ?? registerOptions?.disabled,
+    disabled:
+      isNonInteractive ? true
+      : registerOptions?.disabled,
   });
 
   const checkboxClasses = [
@@ -93,7 +95,7 @@ export function FormCheckBox({
             : (registered?.onChange ?? onChange)
           }
           readOnly={readOnly}
-          disabled={disabled}
+          disabled={isNonInteractive}
           className={checkboxClasses}
         />
         <label

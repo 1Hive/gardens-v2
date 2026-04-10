@@ -42,12 +42,15 @@ export function FormSelect({
   onChange,
 }: Props) {
   const hasError = errors?.[registerKey];
+  const isNonInteractive = disabled === true || readOnly === true;
 
   // Register with react-hook-form
   const registered = register?.(registerKey, {
     ...registerOptions,
     required: required ?? registerOptions?.required,
-    disabled: disabled ?? registerOptions?.disabled,
+    disabled:
+      isNonInteractive ? true
+      : registerOptions?.disabled,
     onChange: (e) => {
       (onChange ?? registerOptions?.onChange)?.(e);
     },
@@ -66,7 +69,7 @@ export function FormSelect({
     .join(" ");
   const disabledSelectClassname =
     "!border-gray-400 focus:border-gray-400 focus:outline-none text-neutral-content cursor-not-allowed opacity-40";
-  const readOnlyClasses = readOnly ?
+  const readOnlyClasses = isNonInteractive ?
     disabledSelectClassname
   : "";
   const errorFocusClasses = hasError ?
@@ -95,7 +98,7 @@ export function FormSelect({
         {...registered}
         onChange={onChange ?? registered?.onChange}
         required={required}
-        disabled={disabled ?? readOnly}
+        disabled={isNonInteractive}
         aria-readonly={readOnly ? "true" : "false"}
         defaultValue={value}
       >
