@@ -29,6 +29,58 @@ Use them for:
 - onchain reads for collateral, membership, signer balance, and pool configuration
 - calldata encoding, transaction preparation, and Foundry-compatible execution commands
 
+## Foundry Requirement
+
+`cast` and `cast send` are Foundry commands.
+If Foundry is not installed, install it before suggesting or attempting local execution:
+
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+```
+
+Confirm the install with:
+
+```bash
+cast --version
+forge --version
+```
+
+When the agent has terminal access and the user wants local execution, prefer running the install flow directly instead of only describing it.
+Only fall back to command snippets when the environment does not permit local installation or the user wants preparation-only output.
+
+## Local Keystore Setup
+
+If a local Foundry keystore is required for proposal execution and none is available, explicitly guide the user to create or import one.
+Prefer an interactive local workflow over asking for secrets in chat.
+
+Recommended import flow for an existing signer:
+
+```bash
+cast wallet import <ACCOUNT_NAME> --interactive
+```
+
+This will prompt locally for:
+- the private key
+- the keystore password
+
+Useful follow-up commands:
+
+```bash
+cast wallet list
+cast wallet address --account <ACCOUNT_NAME>
+```
+
+If the user needs a brand new wallet instead of importing an existing signer, suggest one of:
+
+```bash
+cast wallet new
+cast wallet new-mnemonic
+```
+
+When the agent has terminal access and the user wants interactive setup, prefer running these commands directly and letting the user complete the prompts locally.
+Do not ask the user to paste raw private keys or keystore passwords into chat.
+
 ## Canonical Sources
 
 Use these as the default trusted sources for proposal creation. Do not inspect additional frontend files unless one of these sources is missing or contradictory.
@@ -93,6 +145,7 @@ Before asking the user for more information:
 - ingest both the community covenant and the pool description from indexed or onchain sources
 - use those sources and the pool-type mapping in this skill to determine which proposal fields are actually required
 - extract any context already present in the user's message, such as a Gardens URL, pool address, network, beneficiary, or execution preference
+- if the user wants execution through Foundry, first confirm Foundry is installed and a usable local keystore exists; if either is missing, help the user establish it before continuing
 - if the user wants execution through Foundry, try to infer the signer from a local Foundry keystore before asking for a signer address
 - if a keystore account alias is already known or strongly implied by local instructions, try that account first before asking for a keystore account name
 - if the user prefers not to use a keystore, offer a plug-and-play local command that includes the RPC URL and placeholders for the remaining secrets
@@ -130,7 +183,7 @@ If the indexed metadata object is absent but `metadataHash` exists, resolve the 
 - Do not encode writes before proposal metadata is prepared when metadata is required.
 - Do not broadcast unless the user explicitly asks to submit and all gating checks pass.
 - Do not ask the user to paste raw private keys.
-- If the runtime environment does not have Foundry or a local keystore available, do not attempt execution there. Instead, return a local command template the user can run on their own machine and append the private key locally.
+- If the runtime environment does not have Foundry or a local keystore available, help the user install Foundry or create/import a keystore first when interactive local setup is possible. Only fall back to a local command template when the environment cannot support that setup.
 - Prefer reviewed transaction payloads before execution, but submit the transaction when the user explicitly requests execution and prerequisites are satisfied.
 - For proposal creation, use the repo skills and the canonical rules in this skill before inventing a new workflow.
 - If signer information is missing, inspect local Foundry keystores before asking the user for a signer address.
@@ -264,6 +317,7 @@ When the action is sensitive, prefer this payload shape:
 
 - Produce and run `cast send` when the user explicitly asks to execute.
 - Prefer `cast calldata` for encoding and dry-run review.
+- When execution is requested, confirm that Foundry is installed and the required local keystore exists before finalizing the execution plan. If either is missing and the environment allows it, run the interactive setup flow directly.
 - When execution is requested, prefer keystore-backed signing with `--account <KEYSTORE_NAME>` and try to derive the signer from a local keystore before asking for a signer address. Let the user enter the keystore password interactively in the terminal.
 - If interactive entry is not practical, fall back to a local `--keystore` path plus a local `--password-file` path.
 - If the current environment does not have Foundry or a keystore available, do not ask for secrets in chat and do not attempt execution there. Instead, return a plug-and-play local command template such as `cast send <TO> --data <DATA> --value <VALUE> --rpc-url <RPC_URL> --private-key <PRIVATE_KEY>` and tell the user to append the private key locally on their own machine.
