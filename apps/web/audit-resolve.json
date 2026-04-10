@@ -36,6 +36,12 @@
       "madeAt": 1775832300000,
       "reason": "Pending Next.js major upgrade validation before moving from 14.x to a fixed release line.",
       "expiresAt": 1778424300000
+    },
+    "1116376|next": {
+      "decision": "ignore",
+      "madeAt": 1775832300000,
+      "reason": "Pending Next.js upgrade to a tested fixed release line at or above 15.5.15.",
+      "expiresAt": 1778424300000
     }
   }
 }
