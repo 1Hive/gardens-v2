@@ -1,37 +1,40 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPublicClient, custom } from "viem";
-import { PublicClient, useAccount, useChainId, usePublicClient } from "wagmi";
+import { PublicClient, useAccount, useChainId } from "wagmi";
 import { useResolvedChainId } from "./useResolvedChainId";
+import { getEnvPublicClient } from "@/utils/publicClient";
 
 export function usePreferredReadClient(chainId?: number) {
   const resolvedChainId = useResolvedChainId(chainId);
   const { connector, isConnected, isConnecting, isReconnecting } = useAccount();
   const walletChainId = useChainId();
-  const publicClient = usePublicClient({ chainId: resolvedChainId });
+  const envClient = useMemo(
+    () => getEnvPublicClient(resolvedChainId),
+    [resolvedChainId],
+  );
   const shouldWaitForWallet = isConnecting || isReconnecting;
   const shouldUseWalletClient =
     isConnected &&
     resolvedChainId != null &&
     walletChainId === resolvedChainId &&
-    !!connector;
-  const [preferredClient, setPreferredClient] = useState<
-    PublicClient | undefined
-  >(shouldUseWalletClient ? undefined : publicClient);
+    !!connector &&
+    connector.id !== "walletConnect";
+  const [preferredClient, setPreferredClient] = useState<PublicClient>(envClient);
 
   useEffect(() => {
     let cancelled = false;
 
     if (shouldWaitForWallet) {
-      setPreferredClient(undefined);
+      setPreferredClient(envClient);
       return;
     }
 
     if (!shouldUseWalletClient) {
-      setPreferredClient(publicClient);
+      setPreferredClient(envClient);
       return;
     }
 
-    setPreferredClient(undefined);
+    setPreferredClient(envClient);
 
     const loadProviderClient = async () => {
       try {
@@ -44,7 +47,7 @@ export function usePreferredReadClient(chainId?: number) {
         }
 
         const nextClient = createPublicClient({
-          chain: publicClient.chain,
+          chain: envClient.chain,
           transport: custom(provider),
         }) as PublicClient;
 
@@ -54,7 +57,7 @@ export function usePreferredReadClient(chainId?: number) {
           if (process.env.NODE_ENV === "development") {
             console.warn("usePreferredReadClient: provider load failed", error);
           }
-          setPreferredClient(undefined);
+          setPreferredClient(envClient);
         }
       }
     };
@@ -66,7 +69,7 @@ export function usePreferredReadClient(chainId?: number) {
     };
   }, [
     connector,
-    publicClient,
+    envClient,
     resolvedChainId,
     shouldWaitForWallet,
     shouldUseWalletClient,

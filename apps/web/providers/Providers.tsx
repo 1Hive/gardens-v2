@@ -18,7 +18,6 @@ import { AddrethConfig } from "addreth";
 import { Bounce, ToastContainer } from "react-toastify";
 import {
   Address,
-  createPublicClient,
   createWalletClient,
   custom,
   isAddress,
@@ -46,7 +45,7 @@ import {
 import { PubSubProvider } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useTheme } from "@/providers/ThemeProvider";
-import { getEnvPublicClient, resolveClientChain } from "@/utils/publicClient";
+import { getEnvPublicClient } from "@/utils/publicClient";
 import { logOnce } from "@/utils/log";
 
 const dedupeChains = (chainList: Chain[]) =>
@@ -264,85 +263,6 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
       cancelled = true;
     };
   }, [activeSimulatedWallet, simulatedConnector, simulatedWallet, wagmiConfig]);
-
-  useEffect(() => {
-    if (!wagmiConfig) {
-      return;
-    }
-
-    let cancelled = false;
-    let requestId = 0;
-
-    const setEnvPublicClient = () => {
-      wagmiConfig.setPublicClient(
-        ({ chainId }): PublicClient => getEnvPublicClient(chainId),
-      );
-    };
-
-    const syncPublicClient = async () => {
-      const currentRequestId = ++requestId;
-      const connector = wagmiConfig.connector;
-      const walletChainId = wagmiConfig.data?.chain?.id;
-      const status = wagmiConfig.status;
-
-      if (
-        cancelled ||
-        simulatedWallet ||
-        status !== "connected" ||
-        !connector ||
-        walletChainId == null
-      ) {
-        setEnvPublicClient();
-        return;
-      }
-
-      try {
-        const provider = await (connector as any).getProvider?.({
-          chainId: walletChainId,
-        });
-
-        if (
-          cancelled ||
-          currentRequestId !== requestId ||
-          provider == null
-        ) {
-          return;
-        }
-
-        const walletPublicClient = createPublicClient({
-          chain: resolveClientChain(walletChainId),
-          transport: custom(provider),
-        }) as PublicClient;
-
-        wagmiConfig.setPublicClient(
-          ({ chainId }): PublicClient =>
-            chainId == null || chainId === walletChainId ?
-              walletPublicClient
-            : getEnvPublicClient(chainId),
-        );
-      } catch (error) {
-        logOnce("warn", "[Wagmi] Falling back to env RPC public client", error);
-        if (!cancelled && currentRequestId === requestId) {
-          setEnvPublicClient();
-        }
-      }
-    };
-
-    const unsubscribe = wagmiConfig.subscribe(
-      (state) =>
-        `${state.status}:${state.connector?.id ?? "none"}:${state.data?.chain?.id ?? "none"}`,
-      () => {
-        void syncPublicClient();
-      },
-    );
-
-    void syncPublicClient();
-
-    return () => {
-      cancelled = true;
-      unsubscribe();
-    };
-  }, [simulatedWallet, wagmiConfig]);
 
   if (!mounted || !wagmiConfig) {
     return null;
