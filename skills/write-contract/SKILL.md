@@ -27,6 +27,41 @@ cast --version
 forge --version
 ```
 
+When the agent has terminal access and the user wants local execution, prefer running the install flow directly instead of only describing it.
+Only fall back to a command snippet when the environment does not permit local installation or the user wants review-only output.
+
+## Local Keystore Setup
+
+If a local Foundry keystore is required for signing and none is available, explicitly guide the user to create or import one.
+Prefer an interactive local workflow over asking for secrets in chat.
+
+Recommended import flow for an existing private key:
+
+```bash
+cast wallet import <ACCOUNT_NAME> --interactive
+```
+
+This will prompt locally for:
+- the private key
+- the keystore password
+
+Useful follow-up commands:
+
+```bash
+cast wallet list
+cast wallet address --account <ACCOUNT_NAME>
+```
+
+If the user needs a brand new wallet instead of importing an existing signer, suggest one of:
+
+```bash
+cast wallet new
+cast wallet new-mnemonic
+```
+
+When the agent has terminal access and the user wants interactive setup, prefer running these commands directly and letting the user complete the prompts locally.
+Do not ask the user to paste raw private keys or keystore passwords into chat.
+
 ## Safety First
 
 - Treat this skill as transaction preparation by default.
@@ -34,6 +69,7 @@ forge --version
 - Prefer returning calldata, target address, chain id, value, and a clear summary of the intended effect.
 - If a function requires an IPFS metadata pointer or `ipfsHash`, prepare the metadata payload first, upload it to IPFS, and only then encode the write using the resulting hash or pointer.
 - In the hosted Gardens app, the frontend IPFS upload route is `https://app.gardens.fund/api/ipfs`. Inside the app code this appears as the relative route `/api/ipfs`.
+- If execution depends on missing local prerequisites such as Foundry or a keystore, help the user establish them first instead of silently falling back to an incomplete execution plan.
 
 ## Address Source
 
@@ -170,6 +206,11 @@ Prefer keystore-backed signing over passing a raw private key on the command lin
 Use either a named Foundry account or a direct keystore path.
 Prefer prompting for the password locally at runtime or using `--password-file` rather than pasting the password into chat.
 
+Before suggesting or running a keystore-backed send:
+- check whether the named account already exists with `cast wallet list`
+- if it does not exist, guide the user through `cast wallet import <ACCOUNT_NAME> --interactive` or run it directly if the agent can use the terminal interactively
+- if Foundry itself is missing, install it first instead of presenting a broken `cast send` command
+
 Named account example:
 
 ```bash
@@ -201,3 +242,4 @@ cast send 0x... "setSomething(address,uint256)" 0x... 123 \
 - Confirm the ABI matches the target contract type.
 - Re-read relevant state first for sensitive operations.
 - For proxies, use the proxy address unless the task explicitly targets the implementation.
+- If the user requested execution, confirm Foundry and the required keystore are available before finalizing the execution plan.
