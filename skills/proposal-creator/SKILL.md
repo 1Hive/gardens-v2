@@ -1,13 +1,11 @@
 ---
-name: Proposal Creator
-description: "Use when preparing Gardens proposal creation transactions in gardens-v2: funding proposals, streaming proposals, signaling proposals, calldata preparation, signer readiness checks, IPFS metadata, Allo registerRecipient flows, covenant and pool description ingestion, missing-input extraction, and Foundry keystore execution review."
+name: proposal-creator
+description: "Prepare Gardens proposal creation transactions in gardens-v2. Use for funding proposals, streaming proposals, signaling proposals, calldata preparation, signer readiness checks, IPFS metadata, Allo registerRecipient flows, covenant and pool description ingestion, missing-input extraction, and Foundry keystore execution review."
 argument-hint: "Network, pool URL/address/name, proposal title/description, beneficiary, amount if funding, signer address"
-tools: [read, search, execute]
 user-invocable: true
-target: vscode
 ---
 
-# Proposal Creator Agent — Gardens v2
+# Proposal Creator Skill — Gardens v2
 
 ## Mission
 
@@ -15,9 +13,9 @@ target: vscode
 - Resolve protocol context with the repo skill library before encoding any write.
 - Default to transaction preparation and reviewed payloads unless the user explicitly asks to submit the transaction.
 
-## Repo Skills To Use
+## Load These Repo Skills First
 
-Load and follow these skills in this order whenever they apply:
+Use and follow these skills in this order whenever they apply:
 
 1. `skills/query-subgraph/SKILL.md`
 2. `skills/read-contracts/SKILL.md`
@@ -26,13 +24,13 @@ Load and follow these skills in this order whenever they apply:
 Use them for:
 
 - indexed resolution of community, pool, strategy, covenant, and pool metadata
-- ingestion of both the community covenant and the pool description before asking the user for missing proposal inputs
+- ingestion of both the community covenant and the pool description before asking for missing proposal inputs
 - onchain reads for collateral, membership, signer balance, and pool configuration
 - calldata encoding, transaction preparation, and Foundry-compatible execution commands
 
-## Scope
+## When To Use
 
-This agent is specialized for Gardens proposal creation workflows, especially:
+Use this skill for Gardens proposal creation workflows, especially:
 
 - funding proposals
 - streaming proposals

@@ -1,21 +1,22 @@
 name: gardens-v2-agents
-description: "Workspace agent index for Gardens v2. Provides purpose-built agents for contracts, web, and subgraph with project-specific safety rails and verification steps."
+description: "Workspace customization index for Gardens v2. Lists project agents and reusable skills with project-specific safety rails and verification steps."
 ---
 
-# Gardens v2 — Agent Instructions Index
+# Gardens v2 — Agent And Skill Index
 
-This workspace defines focused agents under `.github/agents/`:
+This workspace defines focused customizations under `.github/agents/` and `skills/`:
 
 - Smart Contracts: `.github/agents/smart-contract.agent.md` — Solidity, Foundry, storage safety, diamonds, upgrades.
-- Proposal Creator: `.github/agents/proposal-creator.agent.md` — Gardens proposal preparation, calldata review, gating checks, metadata, and keystore-backed execution guidance.
+- Proposal Creator Skill: `skills/proposal-creator/SKILL.md` — Gardens proposal preparation, calldata review, gating checks, metadata, and keystore-backed execution guidance that other agents can load on demand.
 - Web Developer: `.github/agents/web-dev.agent.md` — Next.js app, wagmi/viem, urql, providers, API routes.
 - Subgraph Developer: `.github/agents/subgraph.agent.md` — The Graph subgraph: mappings, schema, manifests, network config.
 
-These agents embed key product knowledge: communities, pools (CVStrategy), proposals, staking/support → conviction → threshold/execution, disputes with collateral and arbitrator rulings, plus Safe and Superfluid integrations. They also encode cross-package expectations for ABIs, subgraph, and frontend bindings.
+These customizations embed key product knowledge: communities, pools (CVStrategy), proposals, staking/support → conviction → threshold/execution, disputes with collateral and arbitrator rulings, plus Safe and Superfluid integrations. They also encode cross-package expectations for ABIs, subgraph, and frontend bindings.
 
 ## How to Use
 
-- Invoke the agent most relevant to your task. Each agent exposes a concise `description` and shows up in the agent picker.
+- Invoke the agent most relevant to your task. Agents show up in the agent picker.
+- Invoke the proposal workflow as a reusable skill, or let the model load it automatically when the task matches its description.
 - For contract state reads/writes or subgraph queries, prefer existing skills and scripts in this repo, and follow package-local AGENTS.md guides.
 
 ## Quick Commands
