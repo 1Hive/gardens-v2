@@ -1,7 +1,13 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react";
 import {
   HandRaisedIcon,
   ExclamationTriangleIcon,
@@ -141,8 +147,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       address: proposalData?.strategy?.id as Address,
       abi: cvStrategyABI,
       functionName: "getProposalMetadataPointer",
-      args:
-        proposalIdNumber != null ? [proposalIdNumber] : ([0n] as const),
+      args: proposalIdNumber != null ? [proposalIdNumber] : ([0n] as const),
       chainId,
       enabled: shouldReadOnchainMetadataHash,
     });
@@ -159,8 +164,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         (isOnchainMetadataHashLoading || !isOnchainMetadataHashFetched)) ||
         (!!resolvedMetadataHash && isMetadataIpfsFetching));
 
-    const metadata =
-      proposalData.metadata ??
+    const metadata = proposalData.metadata ??
       metadataResult ?? {
         title: `Proposal #${proposalData.proposalNumber}`,
       };
@@ -269,9 +273,8 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const [escrowBalanceSnapshotBn, setEscrowBalanceSnapshotBn] = useState<
       bigint | null
     >(null);
-    const [escrowBalanceSnapshotAtMs, setEscrowBalanceSnapshotAtMs] = useState<
-      bigint
-    >(0n);
+    const [escrowBalanceSnapshotAtMs, setEscrowBalanceSnapshotAtMs] =
+      useState<bigint>(0n);
 
     const proposalStream =
       proposalData.proposalStream ?? proposalData.proposalStreams?.[0];
@@ -303,23 +306,24 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
     const lastSnapshotAtMs = lastSnapshotAtBn * 1000n;
     const elapsedMs =
-      !isFrozenStreamingProposal &&
-      currentFlowRateBn > 0n &&
-      lastSnapshotAtMs > 0n &&
-      nowMs > lastSnapshotAtMs ?
+      (
+        !isFrozenStreamingProposal &&
+        currentFlowRateBn > 0n &&
+        lastSnapshotAtMs > 0n &&
+        nowMs > lastSnapshotAtMs
+      ) ?
         nowMs - lastSnapshotAtMs
       : 0n;
     const totalReceivedByEscrowBn =
       streamedUntilSnapshotBn + (currentFlowRateBn * elapsedMs) / 1000n;
 
-    const { liveTotalStreamedBn: explorerTotalStreamedBn } = useSuperfluidStream(
-      {
+    const { liveTotalStreamedBn: explorerTotalStreamedBn } =
+      useSuperfluidStream({
         receiver: proposalData.streamingEscrow as Address,
         superToken: strategyConfig.superfluidToken as Address,
         chainId,
         containerId: poolId,
-      },
-    );
+      });
     const shouldTickFallback = useMemo(
       () =>
         isStreamingType &&
@@ -369,22 +373,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         !!strategyConfig.superfluidToken,
     });
 
-    const { data: escrowDepositAmount } = useContractRead({
-      address: proposalData.streamingEscrow as Address,
-      chainId,
-      abi: [
-        {
-          type: "function",
-          stateMutability: "view",
-          name: "depositAmount",
-          inputs: [],
-          outputs: [{ name: "", type: "uint256" }],
-        },
-      ] as const,
-      functionName: "depositAmount",
-      enabled: isDisputedStreamingProposal && !!proposalData.streamingEscrow,
-    });
-
     useEffect(() => {
       if (escrowSuperTokenBalance?.value == null) return;
       setEscrowBalanceSnapshotBn(escrowSuperTokenBalance.value);
@@ -392,10 +380,12 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     }, [escrowSuperTokenBalance?.value]);
 
     const escrowBalanceElapsedMs =
-      escrowBalanceSnapshotBn != null &&
-      !isFrozenStreamingProposal &&
-      currentFlowRateBn > 0n &&
-      nowMs > escrowBalanceSnapshotAtMs ?
+      (
+        escrowBalanceSnapshotBn != null &&
+        !isFrozenStreamingProposal &&
+        currentFlowRateBn > 0n &&
+        nowMs > escrowBalanceSnapshotAtMs
+      ) ?
         nowMs - escrowBalanceSnapshotAtMs
       : 0n;
     const liveEscrowSuperTokenBalanceBn =
@@ -405,15 +395,15 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       : null;
     const currentEscrowSuperTokenBalanceBn =
       isDisputedStreamingProposal ?
-        (liveEscrowSuperTokenBalanceBn ?? escrowSuperTokenBalance?.value ?? 0n)
-      : (escrowSuperTokenBalance?.value ?? 0n);
+        liveEscrowSuperTokenBalanceBn ?? escrowSuperTokenBalance?.value ?? 0n
+      : escrowSuperTokenBalance?.value ?? 0n;
     const totalStreamedToBeneficiaryBn =
       isStreamingType ?
         (() => {
           const totalReceivedBn =
             isFrozenStreamingProposal ?
               streamedUntilSnapshotBn
-            : (explorerTotalStreamedBn ?? totalReceivedByEscrowBn);
+            : explorerTotalStreamedBn ?? totalReceivedByEscrowBn;
           return totalReceivedBn > currentEscrowSuperTokenBalanceBn ?
               totalReceivedBn - currentEscrowSuperTokenBalanceBn
             : 0n;
@@ -428,41 +418,35 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         `${(proposalTotalStreamed ?? 0).toFixed(5)} ${poolToken.symbol}`
       : null;
 
-    const accumulatedAmountBn =
-      isDisputedStreamingProposal &&
-      liveEscrowSuperTokenBalanceBn != null &&
-      escrowDepositAmount != null ?
-        liveEscrowSuperTokenBalanceBn > escrowDepositAmount ?
-          liveEscrowSuperTokenBalanceBn - escrowDepositAmount
-        : 0n
-      : null;
-    const accumulatedAmountDisplay =
-      poolToken && accumulatedAmountBn != null ?
-        `${(+formatUnits(accumulatedAmountBn, poolToken.decimals)).toFixed(5)} ${poolToken.symbol}`
-      : null;
-
     const alreadyExecuted = resolvedProposalStatus === "executed";
 
     const hasThreshold = thresholdPct != null;
     const thresholdValue = thresholdPct ?? 0;
-    const supportNeededToPass = (thresholdValue - (totalSupportPct ?? 0)).toFixed(
-      2,
-    );
+    const supportNeededToPass = (
+      thresholdValue - (totalSupportPct ?? 0)
+    ).toFixed(2);
 
     const readyToBeExecuted =
       hasThreshold && (currentConvictionPct ?? 0) > thresholdValue;
+
+    const hasInsufficientPoolFundsForRequest =
+      requestedAmount != null &&
+      poolToken?.balance != null &&
+      requestedAmount > poolToken.balance;
 
     const proposalWillPass =
       hasThreshold &&
       Number(supportNeededToPass) < 0 &&
       (currentConvictionPct ?? 0) < thresholdValue &&
       !alreadyExecuted;
+
     const hasProposalPassCountdown =
       proposalWillPass &&
       !readyToBeExecuted &&
       timeToPass != null &&
       Number.isFinite(Number(timeToPass)) &&
       Number(timeToPass) > 0;
+
     const hasActiveStream = (currentFlowRateBn ?? 0n) > 0n;
 
     const impossibleToPass =
@@ -470,25 +454,30 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
     const streamingStatusLabel =
       isStreamingType ?
-        (resolvedProposalStatus === "cancelled" ?
-          "Cancelled"
-        : resolvedProposalStatus === "disputed" ?
-          "Disputed"
-        : resolvedProposalStatus === "executed" ?
-          "Closed"
-        : hasActiveStream ?
-          "Streaming"
-        : readyToBeExecuted || proposalWillPass ?
-          "About to stream"
-        : "Active, not streaming")
+        resolvedProposalStatus === "cancelled" ? "Cancelled"
+        : resolvedProposalStatus === "disputed" ? "Disputed"
+        : resolvedProposalStatus === "executed" ? "Closed"
+        : hasActiveStream ? "Streaming"
+        : readyToBeExecuted || proposalWillPass ? "About to stream"
+        : "Active, not streaming"
       : undefined;
 
     const ProposalCountDown = (
       <>
         <div className="text-neutral-soft-content text-xs sm:text-sm">
-          {!isSignalingType && impossibleToPass ?
+          {!isSignalingType && hasInsufficientPoolFundsForRequest ?
             <div
-              className="flex items-center justify-center gap-1 tooltip tooltip-top sm:tooltip-right"
+              className="flex items-center justify-center gap-1 tooltip tooltip-right"
+              data-tip="This proposal cannot execute until more funds are added to the pool."
+            >
+              <ExclamationTriangleIcon className="w-5 h-5 text-secondary-content" />
+              <span className="text-xs sm:text-sm text-secondary-content">
+                Insufficient pool funds
+              </span>
+            </div>
+          : !isSignalingType && impossibleToPass ?
+            <div
+              className="flex items-center justify-center gap-1 tooltip tooltip-right"
               data-tip={`${
                 thresholdPct === 0 ?
                   "Not enough eligible voters in this pool have activated their governance."
@@ -501,9 +490,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             >
               <ExclamationTriangleIcon className="w-5 h-5 text-secondary-content" />
               <span className="text-xs sm:text-sm text-secondary-content">
-                {thresholdPct === 0 ?
-                  "Threshold out of reach"
-                : "Threshold over 100 VP"}
+                Threshold out of reach
               </span>
             </div>
           : (
@@ -516,11 +503,13 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             PoolTypes[strategyConfig.proposalType] === "funding" ?
               "Estimated time to pass:"
             : "Before streaming starts:"
-          : !alreadyExecuted &&
+          : (
+            !alreadyExecuted &&
             resolvedProposalStatus !== "disputed" &&
             !hasActiveStream &&
             readyToBeExecuted &&
-            !isSignalingType ?
+            !isSignalingType
+          ) ?
             isStreamingType ?
               "About to stream"
             : "Ready to be executed"
@@ -651,54 +640,54 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             <div className="flex gap-4 flex-wrap w-full  mb-2">
               <div className={`w-full  ${isSignalingType ? "mt-0" : "mt-2"}`}>
                 <div className="w-full ">
-                  {currentConvictionPct != null &&
-                    totalSupportPct != null && (
-                      <div>
-                        <div
-                          className={`flex flex-col-reverse sm:flex-row items-baseline justify-between gap-1 ${isSignalingType ? "mb-0" : "mb-1"}`}
-                        >
-                          <div>
-                            <span className="text-xs">{ProposalCountDown}</span>
-                          </div>
-                          <ul className="flex gap-1.5 sm:gap-2 items-center text-xs sm:text-sm">
+                  {currentConvictionPct != null && totalSupportPct != null && (
+                    <div>
+                      <div
+                        className={`flex flex-col-reverse sm:flex-row items-baseline justify-between gap-1 ${isSignalingType ? "mb-0" : "mb-1"}`}
+                      >
+                        <div>
+                          <span className="text-xs">{ProposalCountDown}</span>
+                        </div>
+                        <ul className="flex gap-1.5 sm:gap-2 items-center text-xs sm:text-sm">
+                          <li>
+                            <span className="text-xs text-[#74c898] dark:text-primary-dark-base text-justify ">
+                              conviction: {currentConvictionPct} VP
+                            </span>
+                          </li>
+                          <li>
+                            <span className="text-xs text-primary-button dark:text-dark-chart-support">
+                              support: {totalSupportPct} VP
+                            </span>
+                          </li>
+
+                          {!isSignalingType && hasThreshold && (
                             <li>
-                              <span className="text-xs text-[#74c898] dark:text-primary-dark-base text-justify ">
-                                conviction: {currentConvictionPct} VP
+                              <span className="text-xs text-neutral-soft-content">
+                                threshold: {thresholdPct} VP
                               </span>
                             </li>
-                            <li>
-                              <span className="text-xs text-primary-button dark:text-dark-chart-support">
-                                support: {totalSupportPct} VP
-                              </span>
-                            </li>
-
-                            {!isSignalingType && hasThreshold && (
-                              <li>
-                                <span className="text-xs text-neutral-soft-content">
-                                  threshold: {thresholdPct} VP
-                                </span>
-                              </li>
-                            )}
-                          </ul>
-                        </div>
-
-                        <div className="flex items-center h-2 sm:h-3">
-                          <ConvictionBarChart
-                            compact
-                            currentConvictionPct={currentConvictionPct}
-                            thresholdPct={thresholdPct ?? 0}
-                            proposalSupportPct={totalSupportPct ?? 0}
-                            isSignalingType={isSignalingType}
-                            proposalNumber={proposalNumber}
-                            refreshConviction={triggerConvictionRefetch}
-                            proposalStatus={proposalStatus}
-                            proposalType={
-                              PoolTypes[strategyConfig.proposalType]
-                            }
-                          />
-                        </div>
+                          )}
+                        </ul>
                       </div>
-                    )}
+
+                      <div className="flex items-center h-2 sm:h-3">
+                        <ConvictionBarChart
+                          compact
+                          currentConvictionPct={currentConvictionPct}
+                          thresholdPct={thresholdPct ?? 0}
+                          proposalSupportPct={totalSupportPct ?? 0}
+                          isSignalingType={isSignalingType}
+                          proposalNumber={proposalNumber}
+                          refreshConviction={triggerConvictionRefetch}
+                          proposalStatus={proposalStatus}
+                          proposalType={PoolTypes[strategyConfig.proposalType]}
+                          hasInsufficientPoolFunds={
+                            hasInsufficientPoolFundsForRequest
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

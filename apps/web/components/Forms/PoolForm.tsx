@@ -436,11 +436,13 @@ export function PoolForm({
 
     const maxAmountStr = (previewData?.maxAmount ?? 0).toString();
 
-    const monthlyBudget = (previewData.monthlyBudget ?? 0).toString().trim();
+    const monthlyBudgetValue = Number(previewData.monthlyBudget ?? 0);
     const streamingRatePerSecond =
       isStreamingPool ?
-        safeParseUnits(monthlyBudget, governanceToken.decimals) /
-          BigInt(MONTH_TO_SEC)
+        safeParseUnits(
+          monthlyBudgetValue * MONTH_TO_SEC,
+          governanceToken.decimals,
+        )
       : 0n;
 
     const tribunalSafeAddress =
@@ -618,18 +620,25 @@ export function PoolForm({
 
   const createPool = async () => {
     setLoading(true);
-    const json = {
-      title: getValues("title"),
-      description: getValues("description"),
-    };
+    try {
+      const json = {
+        title: getValues("title"),
+        description: getValues("description"),
+      };
 
-    const ipfsHash = await ipfsJsonUpload(json);
-    if (ipfsHash) {
-      if (previewData === undefined) {
-        throw new Error("No preview data");
+      const ipfsHash = await ipfsJsonUpload(json);
+      if (ipfsHash) {
+        if (previewData === undefined) {
+          throw new Error("No preview data");
+        }
+        contractWrite(ipfsHash);
+        return;
       }
-      contractWrite(ipfsHash);
+    } catch (error) {
+      console.error("Error creating pool:", error);
     }
+
+    setLoading(false);
   };
 
   const formatFormRows = () => {
@@ -1262,6 +1271,7 @@ export function PoolForm({
             <Button
               onClick={() => {
                 setShowPreview(false);
+                setLoading(false);
               }}
               btnStyle="outline"
             >

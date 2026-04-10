@@ -14,6 +14,7 @@ type ScenarioMapping = {
 };
 
 type ConvictionBarChartProps = {
+  hasInsufficientPoolFunds: boolean;
   currentConvictionPct: number;
   thresholdPct: number;
   proposalSupportPct: number;
@@ -45,6 +46,7 @@ export function getChartColors(isDarkTheme?: boolean) {
 }
 
 const ConvictionBarChartBase = ({
+  hasInsufficientPoolFunds,
   currentConvictionPct,
   thresholdPct,
   proposalSupportPct,
@@ -63,6 +65,16 @@ const ConvictionBarChartBase = ({
   const chartColors = getChartColors(isDarkTheme);
   const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
   const scenarioMappings: Record<string, ScenarioMapping> = {
+    // First check if there are insufficient funds in the pool to pass the proposal.
+    hasInsufficientFundsInPool: {
+      condition: () => hasInsufficientPoolFunds,
+      details: [
+        {
+          message: "Not enough funds in the pool to execute this proposal.",
+          growing: null,
+        },
+      ],
+    },
     //1-SignalingType) Support > 0 && > Conviction
     isSignalingTypeAndCovictionEqSupport: {
       condition: () =>
@@ -225,7 +237,12 @@ const ConvictionBarChartBase = ({
         growing: null,
       }
     );
-  }, [timeToPass, currentConvictionPct, proposalSupportPct, thresholdPct]);
+  }, [
+    currentConvictionPct,
+    hasInsufficientPoolFunds,
+    proposalSupportPct,
+    thresholdPct,
+  ]);
 
   useEffect(() => {
     if (convictionRefreshing && currentConvictionPct != null) {
@@ -257,15 +274,18 @@ const ConvictionBarChartBase = ({
       {}
     : {
         ...markLine,
-        data: [
-          {
-            xAxis: thresholdPct,
-            symbol:
-              "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
-            symbolSize: [16, 16],
-            symbolOffset: [-7, 50],
-          },
-        ],
+        data:
+          hasInsufficientPoolFunds ?
+            []
+          : [
+              {
+                xAxis: thresholdPct,
+                symbol:
+                  "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
+                symbolSize: [16, 16],
+                symbolOffset: [-7, 50],
+              },
+            ],
         lineStyle: {
           width: compact ? 0.75 : 1,
           color: chartColors.markLine,
@@ -470,6 +490,7 @@ function areConvictionBarChartPropsEqual(
     prev.compact === next.compact &&
     prev.timeToPass === next.timeToPass &&
     prev.defaultChartMaxValue === next.defaultChartMaxValue &&
+    prev.hasInsufficientPoolFunds === next.hasInsufficientPoolFunds &&
     prev.proposalStatus === next.proposalStatus &&
     prev.proposalType === next.proposalType
   );

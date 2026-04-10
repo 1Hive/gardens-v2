@@ -609,17 +609,33 @@ export default function DesignSystemPage() {
           </DemoCard>
 
           <DemoCard title="Conviction Chart">
-            <div className="h-80">
-              <ConvictionBarChart
-                currentConvictionPct={45}
-                thresholdPct={60}
-                proposalSupportPct={52}
-                proposalNumber={21}
-                isSignalingType={false}
-                compact={false}
-                proposalStatus="active"
-                proposalType="funding"
-              />
+            <div className="flex flex-col gap-6">
+              <div className="h-80">
+                <ConvictionBarChart
+                  currentConvictionPct={45}
+                  thresholdPct={60}
+                  proposalSupportPct={52}
+                  proposalNumber={21}
+                  hasInsufficientPoolFunds={false}
+                  isSignalingType={false}
+                  compact={false}
+                  proposalStatus="active"
+                  proposalType="funding"
+                />
+              </div>
+              <div className="h-80">
+                <ConvictionBarChart
+                  currentConvictionPct={45}
+                  thresholdPct={60}
+                  proposalSupportPct={52}
+                  proposalNumber={22}
+                  hasInsufficientPoolFunds={true}
+                  isSignalingType={false}
+                  compact={false}
+                  proposalStatus="active"
+                  proposalType="funding"
+                />
+              </div>
             </div>
           </DemoCard>
         </div>

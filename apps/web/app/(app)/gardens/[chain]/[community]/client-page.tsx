@@ -60,6 +60,7 @@ import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
 import { useHasContractCode } from "@/hooks/useHasContractCode";
 import { useIpfsFetch } from "@/hooks/useIpfsFetch";
+import { useStreamingPoolsAccess } from "@/hooks/useStreamingPoolsAccess";
 import {
   dismissPendingSubgraphRefreshToast,
   useSubgraphQuery,
@@ -100,7 +101,7 @@ export default function ClientPage({
     searchParams[QUERY_PARAMS.communityPage.newCommunity] !== undefined;
   const { address: accountAddress } = useAccount();
   const showArchived = useFlag("showArchived");
-  const showStreamingPools = useFlag("showStreamingPools");
+  const canAccessStreamingPools = useStreamingPoolsAccess(communityAddr);
   const isFetchingNFT = useRef<boolean>(false);
   const pendingNewCommunityRefetch = useRef<string | null>(null);
   const { publish } = usePubSubContext();
@@ -380,9 +381,9 @@ export default function ClientPage({
     () =>
       (strategies ?? []).filter(
         (strategy) =>
-          showStreamingPools || strategyPoolType(strategy) !== "streaming",
+          canAccessStreamingPools || strategyPoolType(strategy) !== "streaming",
       ),
-    [strategies, showStreamingPools],
+    [canAccessStreamingPools, strategies],
   );
 
   const canSeeArchivedPools =

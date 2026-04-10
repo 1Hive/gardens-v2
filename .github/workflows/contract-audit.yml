@@ -10,6 +10,9 @@ on:
       - pkg/contracts/src/**/*.sol
       - .github/workflows/contract-audit.yml
   pull_request:
+    paths:
+      - pkg/contracts/src/**/*.sol
+      - .github/workflows/contract-audit.yml
 
 jobs:
   analyze:
