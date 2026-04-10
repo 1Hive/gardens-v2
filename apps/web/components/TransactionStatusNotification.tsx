@@ -103,7 +103,7 @@ export function TransactionStatusNotification({
           <a
             href={auxiliaryLink.href}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="w-fit text-sm italic underline underline-offset-2"
           >
             {auxiliaryLink.label}
