@@ -59,7 +59,7 @@ Scopes:
   global      Run pause + escrow verifiers
   state       Verify live contract state against config/networks.json
   pause       Run only global pause controller verifier
-  escrow      Run only streaming escrow verifier
+  escrow      Run only streaming escrow + escrow factory verifiers
   factory     Run factory verification (skips pre/postflight)
   communities Run community verification (skips pre/postflight)
   strategies  Run strategy verification (skips pre/postflight)

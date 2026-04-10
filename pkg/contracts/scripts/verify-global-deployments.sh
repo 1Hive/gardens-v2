@@ -19,6 +19,7 @@ while [[ $# -gt 0 ]]; do
     *)
       echo "Unknown argument: $1" >&2
       echo "Usage: $0 [--only pause|escrow|both] [--network <name>]..." >&2
+      echo "  escrow verifies both StreamingEscrow and StreamingEscrowFactory." >&2
       exit 1
       ;;
   esac
@@ -26,6 +27,7 @@ done
 
 if [[ "$ONLY" != "pause" && "$ONLY" != "escrow" && "$ONLY" != "both" ]]; then
   echo "--only must be one of: pause, escrow, both" >&2
+  echo "  escrow verifies both StreamingEscrow and StreamingEscrowFactory." >&2
   exit 1
 fi
 

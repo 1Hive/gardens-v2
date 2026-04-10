@@ -3493,14 +3493,6 @@ tasks:
           --legacy \
           --chain-id 42161 \
           -vvv
-          --password "${PK_DEPLOYER_PW}" \
-          --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,address)" 'arbitrum' ${I:-0x0000000000000000000000000000000000000000} \
-          --ffi \
-          --broadcast \
-          ${RESUME_FLAG} \
-          --chain-id 42161 \
-          -vvv
   deploy-or-upgrade-good-dollar-sybil-arbitrum:
     desc: Deploy or upgrade good dollar sybil arbitrum
     cmds:
@@ -3874,14 +3866,6 @@ tasks:
           ${RESUME_FLAG} \
           ${GAS_FLAGS} \
           --legacy \
-          --chain-id 10 \
-          -vvv
-          --password "${PK_DEPLOYER_PW}" \
-          --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,address)" 'optimism' ${I:-0x0000000000000000000000000000000000000000} \
-          --ffi \
-          --broadcast \
-          ${RESUME_FLAG} \
           --chain-id 10 \
           -vvv
   deploy-or-upgrade-good-dollar-sybil-optimism:
@@ -4342,14 +4326,6 @@ tasks:
           ${RESUME_FLAG} \
           ${GAS_FLAGS} \
           --legacy \
-          --chain-id 137 \
-          -vvv
-          --password "${PK_DEPLOYER_PW}" \
-          --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,address)" 'polygon' ${I:-0x0000000000000000000000000000000000000000} \
-          --ffi \
-          --broadcast \
-          ${RESUME_FLAG} \
           --chain-id 137 \
           -vvv
   deploy-or-upgrade-good-dollar-sybil-polygon:
@@ -7755,14 +7731,6 @@ tasks:
           ${RESUME_FLAG} \
           ${GAS_FLAGS} \
           --legacy \
-          --chain-id 42220 \
-          -vvv
-          --password "${PK_DEPLOYER_PW}" \
-          --etherscan-api-key ${ETHERSCAN_API_KEY} \
-          --sig "run(string,address)" 'celo' ${I:-0x0000000000000000000000000000000000000000} \
-          --ffi \
-          --broadcast \
-          ${RESUME_FLAG} \
           --chain-id 42220 \
           -vvv
   transfer-gas:

@@ -57,7 +57,6 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
         bool safePayload = safePayloadRequested && !directBroadcast;
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
         require(proxyOwner != address(0), "PROXY_OWNER is zero");
-        address safeOwner = ProxyOwner(proxyOwner).mainOwner();
 
         address factoryProxy = _readAddressOrZero(".ENVS.STREAMING_ESCROW_FACTORY");
         address configuredHost = _readAddressOrZero(".ENVS.SUPERFLUID_HOST");
@@ -71,6 +70,7 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
         }
 
         if (safePayload) {
+            address safeOwner = ProxyOwner(proxyOwner).mainOwner();
             payloadWriter = _initPayloadWriter(safeOwner, networkJson);
         }
 
