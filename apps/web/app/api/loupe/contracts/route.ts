@@ -27,11 +27,7 @@ const LOUPE_CONTRACTS_QUERY = gql`
     ) {
       id
     }
-    globalPauseControllers(
-      first: 1
-      orderBy: updatedAt
-      orderDirection: desc
-    ) {
+    globalPauseControllers(first: 1, orderBy: updatedAt, orderDirection: desc) {
       id
     }
   }
@@ -129,7 +125,9 @@ export async function GET(request: Request) {
 
   const chainConfig = getConfigByChain(chainId as ChainId);
   const warnings: string[] = [];
-  let subgraphContracts: Partial<Record<ResolvedContract["key"], string | null>> = {};
+  let subgraphContracts: Partial<
+    Record<ResolvedContract["key"], string | null>
+  > = {};
 
   if (chainConfig != null) {
     try {
@@ -147,13 +145,14 @@ export async function GET(request: Request) {
             result.data?.passportSybilProtections?.[0]?.id ?? null,
           goodDollarSybil:
             result.data?.goodDollarSybilProtections?.[0]?.id ?? null,
-          pauseController:
-            result.data?.globalPauseControllers?.[0]?.id ?? null,
+          pauseController: result.data?.globalPauseControllers?.[0]?.id ?? null,
         };
       }
     } catch (error) {
       warnings.push(
-        error instanceof Error ? error.message : "Unknown subgraph lookup error",
+        error instanceof Error ?
+          error.message
+        : "Unknown subgraph lookup error",
       );
     }
   }

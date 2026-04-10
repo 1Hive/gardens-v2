@@ -7,6 +7,7 @@ description: "Workspace agent index for Gardens v2. Provides purpose-built agent
 This workspace defines focused agents under `.github/agents/`:
 
 - Smart Contracts: `.github/agents/smart-contract.agent.md` — Solidity, Foundry, storage safety, diamonds, upgrades.
+- Proposal Creator: `.github/agents/proposal-creator.agent.md` — Gardens proposal preparation, calldata review, gating checks, metadata, and keystore-backed execution guidance.
 - Web Developer: `.github/agents/web-dev.agent.md` — Next.js app, wagmi/viem, urql, providers, API routes.
 - Subgraph Developer: `.github/agents/subgraph.agent.md` — The Graph subgraph: mappings, schema, manifests, network config.
 
