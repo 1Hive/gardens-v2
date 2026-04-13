@@ -85,11 +85,12 @@ export const useConvictionRead = ({
     logOnce("error", "Error reading conviction", errorConviction);
   }
   const poolType = PoolTypes[strategyConfig?.proposalType];
+  const isStreamingPool = poolType === "streaming";
   const requestedAmount = BigInt(proposalData?.requestedAmount ?? 0);
   const hasRequestedAmount = requestedAmount > 0n;
   const shouldReadThreshold = shouldReadConviction && poolType !== "signaling";
   const shouldReadThresholdFromContract =
-    shouldReadThreshold && hasRequestedAmount;
+    shouldReadThreshold && (hasRequestedAmount || isStreamingPool);
 
   const {
     data: thresholdFromContract,
@@ -109,8 +110,8 @@ export const useConvictionRead = ({
       return undefined;
     }
 
-    return hasRequestedAmount ? thresholdFromContract : 0n;
-  }, [hasRequestedAmount, shouldReadThreshold, thresholdFromContract]);
+    return shouldReadThresholdFromContract ? thresholdFromContract : 0n;
+  }, [shouldReadThreshold, shouldReadThresholdFromContract, thresholdFromContract]);
 
   if (
     thresholdReadError &&
