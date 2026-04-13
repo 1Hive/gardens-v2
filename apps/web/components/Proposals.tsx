@@ -831,7 +831,7 @@ export function Proposals({
 
         {sortedProposals.length > 0 && <Divider className="sm:hidden" />}
 
-        {strategy.isEnabled && sortedProposals.length > 0 && (
+        {sortedProposals.length > 0 && (
           <ProposalFiltersUI
             filter={filter}
             setFilter={setFilter}

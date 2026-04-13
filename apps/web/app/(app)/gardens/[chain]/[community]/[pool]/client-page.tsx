@@ -1045,19 +1045,17 @@ export default function ClientPage({
             communityName={communityName ?? ""}
           />
           {registerAndActivateFromPool}
-          {isEnabled && (
-            <section className="flex flex-col gap-4 sm:gap-8">
-              <Proposals
-                poolToken={poolToken}
-                strategy={{ ...effectiveStrategy, title: metadata?.title }}
-                alloInfo={alloInfo}
-                communityAddress={communityAddress}
-                createProposalUrl={createProposalUrl}
-                proposalType={proposalType}
-                minThGtTotalEffPoints={minThGtTotalEffPoints}
-              />
-            </section>
-          )}
+          <section className="flex flex-col gap-4 sm:gap-8">
+            <Proposals
+              poolToken={poolToken}
+              strategy={{ ...effectiveStrategy, title: metadata?.title }}
+              alloInfo={alloInfo}
+              communityAddress={communityAddress}
+              createProposalUrl={createProposalUrl}
+              proposalType={proposalType}
+              minThGtTotalEffPoints={minThGtTotalEffPoints}
+            />
+          </section>
         </div>
 
         {isEnabled && (
@@ -1135,9 +1133,7 @@ export default function ClientPage({
                   isEnabled={isEnabled}
                   maxAmount={maxAmount}
                   superTokenCandidate={superTokenCandidate}
-                  isSuperTokenCandidateFetching={
-                    isSuperTokenCandidateFetching
-                  }
+                  isSuperTokenCandidateFetching={isSuperTokenCandidateFetching}
                   superToken={
                     superTokenInfo && {
                       ...superTokenInfo,
@@ -1169,7 +1165,7 @@ export default function ClientPage({
               </div>
             )}
 
-            {selectedTab === 1 && isEnabled && (
+            {selectedTab === 1 && (
               <Proposals
                 poolToken={poolToken}
                 strategy={{ ...effectiveStrategy, title: metadata?.title }}
