@@ -191,6 +191,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const {
       currentConvictionPct,
       thresholdPct,
+      isThresholdBelowDisplayPrecision,
       totalSupportPct,
       timeToPass,
       triggerConvictionRefetch,
@@ -450,7 +451,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const hasActiveStream = (currentFlowRateBn ?? 0n) > 0n;
 
     const impossibleToPass =
-      hasThreshold && (thresholdValue >= 100 || thresholdValue === 0);
+      hasThreshold && (thresholdValue >= 100 || minThGtTotalEffPoints);
 
     const streamingStatusLabel =
       isStreamingType ?
@@ -479,7 +480,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             <div
               className="flex items-center justify-center gap-1 tooltip tooltip-right"
               data-tip={`${
-                thresholdPct === 0 ?
+                minThGtTotalEffPoints ?
                   "Not enough eligible voters in this pool have activated their governance."
                 : `This proposal will not pass unless more ${
                     minThGtTotalEffPoints ?
@@ -490,7 +491,9 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
             >
               <ExclamationTriangleIcon className="w-5 h-5 text-secondary-content" />
               <span className="text-xs sm:text-sm text-secondary-content">
-                Threshold out of reach
+                {minThGtTotalEffPoints ?
+                  "Threshold out of reach"
+                : "Threshold over 100%."}
               </span>
             </div>
           : (
@@ -683,6 +686,10 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           proposalType={PoolTypes[strategyConfig.proposalType]}
                           hasInsufficientPoolFunds={
                             hasInsufficientPoolFundsForRequest
+                          }
+                          isThresholdOutOfReach={minThGtTotalEffPoints}
+                          isThresholdBelowDisplayPrecision={
+                            isThresholdBelowDisplayPrecision
                           }
                         />
                       </div>

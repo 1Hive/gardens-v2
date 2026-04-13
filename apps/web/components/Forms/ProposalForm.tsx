@@ -400,7 +400,7 @@ export const ProposalForm = ({
           {requestedAmount && (
             <InfoBox
               title={`Conviction required:${" "} ${
-                thresholdPct === 0 ? "Out of reach"
+                thresholdPct === 0 ? "Below 0.01%"
                 : thresholdPct > 100 ? "Over 100%"
                 : `${thresholdPct}%`
               }`}
@@ -418,9 +418,12 @@ export const ProposalForm = ({
                   conviction
                 </InfoWrapper>{" "}
                 required for the proposal to pass within the request amount is{" "}
-                {thresholdPct === 0 ? "currently out of reach" : `${thresholdPct}%`}.{" "}
                 {thresholdPct === 0 ?
-                  "Not enough eligible voters in this pool have activated their governance."
+                  "currently below 0.01%"
+                : `${thresholdPct}%`}
+                .{" "}
+                {thresholdPct === 0 ?
+                  "It is below the current display precision, not necessarily unreachable."
                 : requestedAmount && thresholdPct > 50 ?
                   thresholdPct < 100 ?
                     "It may be difficult to pass."

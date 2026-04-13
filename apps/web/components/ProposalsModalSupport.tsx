@@ -184,7 +184,7 @@ export const ProposalsModalSupport = forwardRef<
       Number(timeToPass) > 0;
 
     const impossibleToPass =
-      (thresholdPct != null && thresholdPct >= 100) || thresholdPct === 0;
+      (thresholdPct != null && thresholdPct >= 100) || minThGtTotalEffPoints;
 
     const streamingStatusLabel =
       isStreamingType ?
@@ -206,7 +206,7 @@ export const ProposalsModalSupport = forwardRef<
             <div
               className="flex items-center justify-center gap-1 tooltip tooltip-top sm:tooltip-right"
               data-tip={`${
-                thresholdPct === 0 ?
+                minThGtTotalEffPoints ?
                   "Not enough eligible voters in this pool have activated their governance."
                 : `This proposal will not pass unless more ${
                     minThGtTotalEffPoints ?
@@ -217,7 +217,7 @@ export const ProposalsModalSupport = forwardRef<
             >
               <ExclamationTriangleIcon className="w-5 h-5 text-secondary-content" />
               <span className="text-xs sm:text-sm text-secondary-content">
-                {thresholdPct === 0 ?
+                {minThGtTotalEffPoints ?
                   "Threshold out of reach"
                 : "Threshold over 100%."}
               </span>

@@ -87,8 +87,7 @@ export const useConvictionRead = ({
   const poolType = PoolTypes[strategyConfig?.proposalType];
   const requestedAmount = BigInt(proposalData?.requestedAmount ?? 0);
   const hasRequestedAmount = requestedAmount > 0n;
-  const shouldReadThreshold =
-    shouldReadConviction && poolType !== "signaling";
+  const shouldReadThreshold = shouldReadConviction && poolType !== "signaling";
   const shouldReadThresholdFromContract =
     shouldReadThreshold && hasRequestedAmount;
 
@@ -167,6 +166,18 @@ export const useConvictionRead = ({
     ],
   );
 
+  const isThresholdBelowDisplayPrecision = useMemo(
+    () => {
+      if (!initialized || resolvedThreshold == null || resolvedThreshold <= 0n) {
+        return false;
+      }
+
+      const maxCvSupply = BigInt(proposalData.strategy.maxCVSupply ?? 0);
+      return maxCvSupply > 0n && resolvedThreshold * 10000n < maxCvSupply;
+    },
+    [initialized, proposalData?.strategy.maxCVSupply, resolvedThreshold],
+  );
+
   let totalSupportPct = useMemo(
     () =>
       initialized ?
@@ -209,6 +220,7 @@ export const useConvictionRead = ({
   return initialized ?
       {
         thresholdPct,
+        isThresholdBelowDisplayPrecision,
         totalSupportPct,
         currentConvictionPct,
         updatedConviction,
@@ -222,6 +234,7 @@ export const useConvictionRead = ({
       }
     : {
         thresholdPct: undefined,
+        isThresholdBelowDisplayPrecision: undefined,
         totalSupportPct: undefined,
         currentConvictionPct: undefined,
         updatedConviction: undefined,

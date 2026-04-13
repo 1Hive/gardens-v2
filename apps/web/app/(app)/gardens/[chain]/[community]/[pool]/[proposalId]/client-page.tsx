@@ -716,6 +716,9 @@ export default function ClientPage({ params }: ClientPageProps) {
     ) ?
       toBigInt(proposalStream.lastSnapshotAt)
     : 0n;
+  const minThresholdPointsBn = toBigInt(
+    proposalData?.strategy?.config?.minThresholdPoints ?? 0,
+  );
   const superfluidStreamResult = useSuperfluidStream({
     receiver: resolvedStreamingEscrow as Address,
     superToken: proposalData?.strategy?.config?.superfluidToken as Address,
@@ -745,6 +748,9 @@ export default function ClientPage({ params }: ClientPageProps) {
   const isBeneficiaryConnected = beneficiary === address?.toLowerCase();
   const streamTokenDecimals = poolToken?.decimals ?? 18;
   const currentFlowRateForDisplay = proposalFlowRateBn;
+  const isThresholdOutOfReach =
+    minThresholdPointsBn >
+    BigInt(proposalData?.strategy?.totalEffectiveActivePoints ?? 0);
   const { data: beneficiarySuperTokenBalance, refetch: refetchSuperToken } =
     useBalance({
       address: beneficiary,
@@ -762,6 +768,7 @@ export default function ClientPage({ params }: ClientPageProps) {
   const {
     currentConvictionPct,
     thresholdPct,
+    isThresholdBelowDisplayPrecision,
     totalSupportPct,
     updatedConviction,
     timeToPass,
@@ -1256,6 +1263,10 @@ export default function ClientPage({ params }: ClientPageProps) {
                                   proposalData.strategy.config.proposalType
                                 ]
                               }
+                              isThresholdOutOfReach={isThresholdOutOfReach}
+                              isThresholdBelowDisplayPrecision={
+                                isThresholdBelowDisplayPrecision
+                              }
                             />
                           </div>
                         </div>
@@ -1391,9 +1402,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                       streamedUntilSnapshotBn={streamedUntilSnapshotBn}
                       lastSnapshotAtBn={lastSnapshotAtBn}
                       explorerTotalStreamedBn={explorerTotalStreamedBn}
-                      isDisputedStreamingProposal={
-                        isDisputedStreamingProposal
-                      }
+                      isDisputedStreamingProposal={isDisputedStreamingProposal}
                       escrowBalanceSnapshotBn={escrowBalanceSnapshotBn}
                       escrowBalanceSnapshotAtMs={escrowBalanceSnapshotAtMs}
                       escrowSuperTokenBalanceValue={
@@ -1858,6 +1867,12 @@ export default function ClientPage({ params }: ClientPageProps) {
                                       proposalData.strategy.config.proposalType
                                     ]
                                   }
+                                  isThresholdOutOfReach={
+                                    isThresholdOutOfReach
+                                  }
+                                  isThresholdBelowDisplayPrecision={
+                                    isThresholdBelowDisplayPrecision
+                                  }
                                 />
                               </div>
                             </div>
@@ -2002,9 +2017,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                             isDisputedStreamingProposal
                           }
                           escrowBalanceSnapshotBn={escrowBalanceSnapshotBn}
-                          escrowBalanceSnapshotAtMs={
-                            escrowBalanceSnapshotAtMs
-                          }
+                          escrowBalanceSnapshotAtMs={escrowBalanceSnapshotAtMs}
                           escrowSuperTokenBalanceValue={
                             escrowSuperTokenBalance?.value
                           }

@@ -27,6 +27,8 @@ type ConvictionBarChartProps = {
   proposalType: "funding" | "streaming" | "signaling";
   onReadyToExecute?: () => void;
   refreshConviction?: () => Promise<any> | void;
+  isThresholdOutOfReach?: boolean;
+  isThresholdBelowDisplayPrecision?: boolean;
 };
 
 export function getChartColors(isDarkTheme?: boolean) {
@@ -58,6 +60,8 @@ const ConvictionBarChartBase = ({
   defaultChartMaxValue = false,
   proposalStatus,
   proposalType,
+  isThresholdOutOfReach = false,
+  isThresholdBelowDisplayPrecision = false,
 }: ConvictionBarChartProps) => {
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
   const { resolvedTheme } = useTheme();
@@ -450,6 +454,8 @@ const ConvictionBarChartBase = ({
             support={proposalSupportPct}
             threshold={thresholdPct}
             conviction={currentConvictionPct}
+            isThresholdOutOfReach={isThresholdOutOfReach}
+            isThresholdBelowDisplayPrecision={isThresholdBelowDisplayPrecision}
           >
             {chart}
           </ChartWrapper>
@@ -492,7 +498,10 @@ function areConvictionBarChartPropsEqual(
     prev.defaultChartMaxValue === next.defaultChartMaxValue &&
     prev.hasInsufficientPoolFunds === next.hasInsufficientPoolFunds &&
     prev.proposalStatus === next.proposalStatus &&
-    prev.proposalType === next.proposalType
+    prev.proposalType === next.proposalType &&
+    prev.isThresholdOutOfReach === next.isThresholdOutOfReach &&
+    prev.isThresholdBelowDisplayPrecision ===
+      next.isThresholdBelowDisplayPrecision
   );
 }
 
