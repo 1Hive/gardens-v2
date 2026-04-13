@@ -165,6 +165,32 @@ const getProposalTotalStreamedToBeneficiaryBn = ({
     : 0n;
 };
 
+const getLiveBeneficiaryBalanceBn = ({
+  beneficiaryBalanceSnapshotBn,
+  beneficiaryBalanceSnapshotAtMs,
+  proposalFlowRateBn,
+  nowMs,
+}: {
+  beneficiaryBalanceSnapshotBn: bigint | null;
+  beneficiaryBalanceSnapshotAtMs: bigint;
+  proposalFlowRateBn: bigint;
+  nowMs: bigint;
+}) => {
+  const beneficiaryElapsedMs =
+    (
+      beneficiaryBalanceSnapshotBn != null &&
+      proposalFlowRateBn > 0n &&
+      nowMs > beneficiaryBalanceSnapshotAtMs
+    ) ?
+      nowMs - beneficiaryBalanceSnapshotAtMs
+    : 0n;
+
+  return beneficiaryBalanceSnapshotBn != null ?
+      beneficiaryBalanceSnapshotBn +
+        (proposalFlowRateBn * beneficiaryElapsedMs) / 1000n
+    : null;
+};
+
 const LiveStreamedTotal = memo(function LiveStreamedTotal({
   poolToken,
   proposalFlowRateBn,
@@ -280,6 +306,79 @@ const LiveAccumulatedAmount = memo(function LiveAccumulatedAmount({
 
   return (
     <span className="font-mono tabular-nums">{accumulatedAmountDisplay}</span>
+  );
+});
+
+const LiveClaimableAmount = memo(function LiveClaimableAmount({
+  poolToken,
+  proposalFlowRateBn,
+  streamedUntilSnapshotBn,
+  lastSnapshotAtBn,
+  explorerTotalStreamedBn,
+  isDisputedStreamingProposal,
+  escrowBalanceSnapshotBn,
+  escrowBalanceSnapshotAtMs,
+  escrowSuperTokenBalanceValue,
+  beneficiaryBalanceSnapshotBn,
+  beneficiaryBalanceSnapshotAtMs,
+}: {
+  poolToken?: { decimals: number; symbol: string } | null;
+  proposalFlowRateBn: bigint;
+  streamedUntilSnapshotBn: bigint;
+  lastSnapshotAtBn: bigint;
+  explorerTotalStreamedBn?: bigint | null;
+  isDisputedStreamingProposal: boolean;
+  escrowBalanceSnapshotBn: bigint | null;
+  escrowBalanceSnapshotAtMs: bigint;
+  escrowSuperTokenBalanceValue?: bigint;
+  beneficiaryBalanceSnapshotBn: bigint | null;
+  beneficiaryBalanceSnapshotAtMs: bigint;
+}) {
+  const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
+  const shouldTickLiveValues =
+    !isDisputedStreamingProposal && proposalFlowRateBn > 0n;
+
+  useEffect(() => {
+    if (!shouldTickLiveValues) return;
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      setNowMs(BigInt(Date.now()));
+    }, 100);
+    return () => clearInterval(interval);
+  }, [shouldTickLiveValues]);
+
+  const proposalClaimableCapBn = getProposalTotalStreamedToBeneficiaryBn({
+    proposalFlowRateBn,
+    streamedUntilSnapshotBn,
+    lastSnapshotAtBn,
+    nowMs,
+    explorerTotalStreamedBn,
+    isDisputedStreamingProposal,
+    escrowBalanceSnapshotBn,
+    escrowBalanceSnapshotAtMs,
+    escrowSuperTokenBalanceValue,
+  });
+  const liveBeneficiaryBalanceBn = getLiveBeneficiaryBalanceBn({
+    beneficiaryBalanceSnapshotBn,
+    beneficiaryBalanceSnapshotAtMs,
+    proposalFlowRateBn,
+    nowMs,
+  });
+  const claimableBn =
+    liveBeneficiaryBalanceBn != null ?
+      liveBeneficiaryBalanceBn < proposalClaimableCapBn ?
+        liveBeneficiaryBalanceBn
+      : proposalClaimableCapBn
+    : proposalClaimableCapBn;
+  const claimableDisplay =
+    poolToken ?
+      `${Number(formatUnits(claimableBn, poolToken.decimals)).toFixed(6)} ${poolToken.symbol}`
+    : "--";
+
+  return (
+    <span className="block w-full text-right font-mono tabular-nums">
+      {claimableDisplay}
+    </span>
   );
 });
 
@@ -709,8 +808,7 @@ export default function ClientPage({ params }: ClientPageProps) {
   const shouldTickClaimable =
     isStreamingType &&
     !isDisputedStreamingProposal &&
-    (currentFlowRateForDisplay ?? 0n) > 0n &&
-    beneficiaryBalanceSnapshotBn != null;
+    (currentFlowRateForDisplay ?? 0n) > 0n;
   useEffect(() => {
     if (!shouldTickClaimable) return;
     const interval = setInterval(() => {
@@ -972,16 +1070,6 @@ export default function ClientPage({ params }: ClientPageProps) {
         liveBeneficiarySuperTokenBalanceBn
       : proposalClaimableCapBn
     : null;
-  const claimableDisplay =
-    liveProposalClaimableBn != null ?
-      Number(formatUnits(liveProposalClaimableBn, streamTokenDecimals)).toFixed(
-        6,
-      )
-    : "--";
-  const claimableDisplayWithSymbol =
-    claimableDisplay !== "--" && poolToken?.symbol ?
-      `${claimableDisplay} ${poolToken.symbol}`
-    : claimableDisplay;
   const liveBeneficiarySuperTokenBalanceForClaimBn =
     liveProposalClaimableBn ?? 0n;
   const minimumClaimableDisplayBn =
@@ -1296,11 +1384,29 @@ export default function ClientPage({ params }: ClientPageProps) {
                 )}
                 <div className="flex items-center justify-between gap-3">
                   <p className="subtitle2">Claimable</p>
-                  <p className="text-right font-mono tabular-nums">
-                    {beneficiarySuperTokenBalance != null ?
-                      claimableDisplayWithSymbol
-                    : "--"}
-                  </p>
+                  <div className="min-w-0 flex-1">
+                    <LiveClaimableAmount
+                      poolToken={poolToken}
+                      proposalFlowRateBn={proposalFlowRateBn}
+                      streamedUntilSnapshotBn={streamedUntilSnapshotBn}
+                      lastSnapshotAtBn={lastSnapshotAtBn}
+                      explorerTotalStreamedBn={explorerTotalStreamedBn}
+                      isDisputedStreamingProposal={
+                        isDisputedStreamingProposal
+                      }
+                      escrowBalanceSnapshotBn={escrowBalanceSnapshotBn}
+                      escrowBalanceSnapshotAtMs={escrowBalanceSnapshotAtMs}
+                      escrowSuperTokenBalanceValue={
+                        escrowSuperTokenBalance?.value
+                      }
+                      beneficiaryBalanceSnapshotBn={
+                        beneficiaryBalanceSnapshotBn
+                      }
+                      beneficiaryBalanceSnapshotAtMs={
+                        beneficiaryBalanceSnapshotAtMs
+                      }
+                    />
+                  </div>
                 </div>
                 {isDisputedStreamingProposal && (
                   <div className="flex items-center justify-between gap-3">
@@ -1885,11 +1991,31 @@ export default function ClientPage({ params }: ClientPageProps) {
                     )}
                     <div className="flex items-center justify-between gap-3">
                       <p className="subtitle2">Claimable</p>
-                      <p className="text-right font-mono tabular-nums">
-                        {beneficiarySuperTokenBalance != null ?
-                          claimableDisplayWithSymbol
-                        : "--"}
-                      </p>
+                      <div className="min-w-0 flex-1">
+                        <LiveClaimableAmount
+                          poolToken={poolToken}
+                          proposalFlowRateBn={proposalFlowRateBn}
+                          streamedUntilSnapshotBn={streamedUntilSnapshotBn}
+                          lastSnapshotAtBn={lastSnapshotAtBn}
+                          explorerTotalStreamedBn={explorerTotalStreamedBn}
+                          isDisputedStreamingProposal={
+                            isDisputedStreamingProposal
+                          }
+                          escrowBalanceSnapshotBn={escrowBalanceSnapshotBn}
+                          escrowBalanceSnapshotAtMs={
+                            escrowBalanceSnapshotAtMs
+                          }
+                          escrowSuperTokenBalanceValue={
+                            escrowSuperTokenBalance?.value
+                          }
+                          beneficiaryBalanceSnapshotBn={
+                            beneficiaryBalanceSnapshotBn
+                          }
+                          beneficiaryBalanceSnapshotAtMs={
+                            beneficiaryBalanceSnapshotAtMs
+                          }
+                        />
+                      </div>
                     </div>
                     {isDisputedStreamingProposal && (
                       <div className="flex items-center justify-between gap-3">
