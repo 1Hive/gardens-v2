@@ -54,6 +54,7 @@ const STRATEGY_PAGE_SIZE = 500;
 const STREAMING_PROPOSAL_TYPE = 2;
 const ACTIVE_STATUS = 1;
 const DISPUTED_STATUS = 5;
+const REBALANCE_KEEPER_EXCLUDED_CHAIN_IDS = new Set<number>([421614]);
 
 const STRATEGY_QUERY = `
   query RebalanceCandidates($first: Int!, $skip: Int!) {
@@ -368,7 +369,11 @@ export async function GET(req: Request, { params }: Params) {
         new Set(
           Object.values(chainConfigMap)
             .map((cfg) => cfg.id)
-            .filter((id): id is number => typeof id === "number"),
+            .filter(
+              (id): id is number =>
+                typeof id === "number" &&
+                !REBALANCE_KEEPER_EXCLUDED_CHAIN_IDS.has(id),
+            ),
         ),
       )
     : [chainId as ChainId];

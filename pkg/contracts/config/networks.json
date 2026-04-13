@@ -289,6 +289,7 @@
           "0x41a9ed5de7998583cd20bf738ca38e649e0eafe3",
           "0x44b7be0ec29a831c847895ce7b2a045c28c907b1",
           "0x46cbcf5879c0279119512b621be056755f99e836",
+          "0x4c6d1e6afd4da230868ec492872c634cf0ff02e8",
           "0x5396c94ea47916f5661734fee769d0d7cc8b14c6",
           "0x561f7c4c65f42af17eab52b7065a5d2c080a3904",
           "0x5a48adf540cb5c79edb027bef3ebf551ce63661f",
@@ -308,6 +309,7 @@
           "0xab90f7d562edac4fdfcac4d1cd93a45ac4a1fdab",
           "0xb747bf0e9bc114c2ed63b3e5cdac9c5afdc93ea3",
           "0xbb8b8ddc3775d825b6cf33bfa9ddcd771b88c6ee",
+          "0xbd881199f09502621093616ab08de83f4491ba36",
           "0xc3ba42da1d9f6b09d4d1315ac04f873a5ba64d3c",
           "0xd6c828e18114683208d24be26494b038357a829e",
           "0xdd65d3eac26d91f1040fe3beca11863cd354788e",
@@ -316,6 +318,7 @@
           "0xe5937a5d9ef051643c0b7cb8226b61ef82f7a20b",
           "0xe8cb705f0f29c554e71972af1bfbe16bb2673683",
           "0xee843ac13f23ce668845f7e82384730f5e6721c0",
+          "0xee86b4e71a740bf37483a76351379f56b47f0ed2",
           "0xee9cc69179697f3bf8172624c5803b58bf6bf73f",
           "0xf62a2e4ecf3bf73313b3bbbfb1563cb4433c8933",
           "0xfa1d8bdb95e0288779df13f40ff32567647e7ffa",
@@ -331,6 +334,7 @@
           "0x14328c6d6cd5521a08eb08b3b3a08409bc366009",
           "0x19a0f3d7734dca40f1847c44ef717ef3ef5c50a5",
           "0x2e00fd8fff4417c9d76ac44e35f039861b7e8f86",
+          "0x348dc2a7a75bcf5a0487f3cb68fa5ae5b28bf59a",
           "0x41474014b6809e8a1aec0e265204a85627c3490d",
           "0x424fc753af82bff026b839a2e8f92709242dec97",
           "0x42dd83119c915e75b9f92d64786e0acaad6d0eea",
@@ -340,6 +344,7 @@
           "0x4d2c9571bd9f157fb558fe6ca3cf366067e7515e",
           "0x55b309ee4270448d312a15c4f71eb9ef38b35f8d",
           "0x5b7d4523862981219c74b9e081221011e4f45182",
+          "0x5f34955ae9b11cd0b94a3d92d5a61ade4eb47c67",
           "0x6098d6e300df853187517482a1fa9fd4388a4840",
           "0x61fd2b423f5c2a388306ad8c6e1d373d194bd8f5",
           "0x64b67685b2a4272df0f700ad216b47be1d502dc1",
@@ -348,16 +353,20 @@
           "0x67291aa22149fa55ef2fd210a619937b247f0621",
           "0x68764aae68630a0b9a3f3219d496de38037c38fd",
           "0x73aeae331cb6ce374c0c496abce52db2f6d5364c",
+          "0x7629b8eaed2cafe4b3370f85d251d40a0acd1d51",
           "0x7749aee50faeca5d7eed53bcbcf07db5aaf72e51",
           "0x7ac5b73eb757f64d69cfa89f4050e5a598f289f2",
           "0x7f79a423464b8bdd7a4dc43fe6736a0936e0d6f2",
+          "0x99a1cc81b0f5931570d7ea5700f29f0a7a32a7c2",
           "0x9b40cd69d4bfb28f82c0fd64df979449974e659f",
           "0x9e2b9f2bcead1d15a064379030e9f7715e79c64e",
           "0x9e39cea859b30bb88aa2ad2ea259b1f3549f8918",
           "0xa2e69ffef428865bf6a4ebc25ccf41f72e54fd17",
+          "0xa59fc898e3a3a21319e1deda879630ff0a4aeea3",
           "0xad3d78ed1b03f26238845612eeb3c5b2677fa359",
           "0xae366d30daef92fb6b927cf3ec721090803b2dc0",
           "0xaf893ffeb244ada520e842eea4a6f3864113f1f5",
+          "0xb105a0317cd6bb0cbcbea4f7f8aad2cc35446489",
           "0xb9739585e54374268c231f042d384bfa57e41c95",
           "0xba18f15ecc881b7606b5c6e28cb900dfb29e8139",
           "0xbd0c6aa5a670ebe77bd0225f345abe0058ece703",
@@ -377,7 +386,7 @@
           "0xfa7299335e6b6d1305ec968ef23471d27002d682"
         ]
       },
-      "hash": "2f6350b9c4c9274b75e1d0aeffb1ad05bc2ec7c7",
+      "hash": "a6b6e0437125fe7e1b58c641da388c0e17116109",
       "IMPLEMENTATIONS": {
         "CV_STRATEGY": "0xc6ae1b80ce5bdd77e07ff0612a4710ca2d8b4470",
         "REGISTRY_COMMUNITY": "0x9dd48dc0aa885e6a0506c32c0441ee4f06efb5fb",
@@ -479,6 +488,7 @@
         ],
         "CV_STRATEGIES": [
           "0x0323015258478a030a655e75a63a73106d5e3f26",
+          "0x09de77c01f8906340b27ff2d70c464b4ccc24701",
           "0x0a552942a6eb43d01c845f3a354b83ec30146950",
           "0x0a9d78ea6de07fddbc71f1181d52f78052654b15",
           "0x0d0b0de6493ff38ebfd5580ed2a38cf5400f82e1",
@@ -493,6 +503,7 @@
           "0x2189ef55f6b0ce5538b27b63a2665d8ee319451a",
           "0x238283944de306a639653f3c72a3d74ff2322953",
           "0x29d0c8dbe01e5bd7dec96c024cf54fb3bdd50f9a",
+          "0x2b1915a2e0293b3a434df58b921d8f7e320da077",
           "0x2f3cebb1850aa2c10b43f74a1bb0b39f25532200",
           "0x336aa86505bdeefceedad46ddaa66a5d3d5bae67",
           "0x346c63ab5b47302ae1d70e7fdb7f37fdd82d9a02",
@@ -557,12 +568,13 @@
           "0xf4a3e1883fd7ba75def1b56e307e90c90d200200",
           "0xf6f39fc77a7118f49a6fc05585751a0cd19a583d",
           "0xf793cfaa35ce36c213bd0e226d9c14afa8cfd8f8",
+          "0xfc3fd2d3f7d1cfe713cdb10d44b657e185c1838f",
           "0xfe40b643000a47c63c1367b37090ae0a752d7433",
           "0xfeca5fc72deb98b41198a5dce90e00bbafbe5888",
           "0xfed43acfa82e0e924d507124892878b6086b581d"
         ]
       },
-      "hash": "8aefe420b55fa670be8367ce134e00752bf9b292",
+      "hash": "ffa05f8965b0b10a301fd4f794bb4693e009c63e",
       "IMPLEMENTATIONS": {
         "CV_STRATEGY": "0x428d69afa04242d61109d67bf686141a26257bb0",
         "REGISTRY_COMMUNITY": "0x5b39e9e7da9adda9569404ec72c54b638163286d",
@@ -1046,6 +1058,7 @@
           "0x335af2c52fd700639f7ceb2cbb86544fb0739ee5",
           "0x3764607a0a721981780b798a02c2b1691d6baa39",
           "0x38258ae8832bf6f1de12586df0b1ea96cd839134",
+          "0x38c0ce3fb948c86dbda17d573d66a7a05c8a7a56",
           "0x3911cf457544cdbf949a58e592b0e4964e4a0c53",
           "0x3f39af5c2d5356c1c0a8d0d67c2c4cf68374b59e",
           "0x432952e34729f92b08443a573b8a9cd60557cea7",
@@ -1062,6 +1075,7 @@
           "0x76ffd1d4317d351c3834a60818a9e5784b523154",
           "0x7789ad82b8c0e8726325fba6363600de56eb60a0",
           "0x78c316103297b2ccacd01e422804ded636709826",
+          "0x7b37d228ba42629bddf2b16f52294c28da523897",
           "0x86888c171c280676b15d63ae443a901640f182c1",
           "0x8a8e6ac00d93ac766a25b7d6bbf0ca2e873f7725",
           "0x8adec3abe2b44480a1094d50830676971e06049d",
@@ -1106,7 +1120,7 @@
           "0xf917f955ca02eb7455a399cd4e1b2ca7ed1b84b4"
         ]
       },
-      "hash": "8263e132ffdc01ca7aad0aba74649ee4fffbca22",
+      "hash": "83362d05d1dce9cda9aab6e908597242f93c405d",
       "IMPLEMENTATIONS": {
         "CV_STRATEGY": "0x1052b15c581683c7dcfb50970f5bae8e04091a05",
         "REGISTRY_COMMUNITY": "0x32d1cfef6163e5d032dbca56d116409b00fabcb4",
@@ -1167,7 +1181,8 @@
       "PROXIES": {
         "REGISTRY_FACTORY": "0x7d26c5b083b85b848645fcbd18fe01168989333b",
         "REGISTRY_COMMUNITIES": [
-          "0xee637307e9ca4efe5bea26ad2a395d0736e0f904"
+          "0xee637307e9ca4efe5bea26ad2a395d0736e0f904",
+          "0xf3bfc1f278ad4e62e64fe52a49459c72d71789d9"
         ],
         "CV_STRATEGIES": [
           "0xdd2de4862bf9a435aff95636d19297a21f10958f",
@@ -1210,7 +1225,7 @@
         "REGISTRY_COMMUNITY_DIAMOND_INIT": "0x13370c93abe347e588f684d57fffc19b5a105e86",
         "CV_STRATEGY_DIAMOND_INIT": "0x311ece7fc8111897c8e72738159adc0bda6f3a7e"
       },
-      "hash": "27425dd8fd8c652f3dfbed563fd67cf196959e07",
+      "hash": "6efb129e7e3b4a769738703e0fffd62e284b14fa",
       "FACTORY_STATE": {
         "COMMUNITY_CUTS_DIGEST": "0xea022412b0f5eae0c3a762424bc525e239b941ac616fac666136a5baf22892b2",
         "STRATEGY_CUTS_DIGEST": "0x754965bde79d94f7e05da2e8a247d41201adc10f4ebf03e7bf70c35d0852ea14"
