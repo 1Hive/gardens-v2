@@ -124,8 +124,21 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
 
     function runCurrentNetwork(string memory networkJson) public virtual;
 
-    function _flagEnabled(string memory) internal view virtual returns (bool) {
-        return false;
+    function _flagEnabled(string memory key) internal view virtual returns (bool) {
+        string memory raw = vm.envOr(key, string(""));
+        bytes32 valueHash = keccak256(bytes(raw));
+        if (bytes(raw).length == 0) return false;
+        if (
+            valueHash == keccak256(bytes("1")) || valueHash == keccak256(bytes("true"))
+                || valueHash == keccak256(bytes("TRUE")) || valueHash == keccak256(bytes("yes"))
+                || valueHash == keccak256(bytes("YES"))
+        ) return true;
+        if (
+            valueHash == keccak256(bytes("0")) || valueHash == keccak256(bytes("false"))
+                || valueHash == keccak256(bytes("FALSE")) || valueHash == keccak256(bytes("no"))
+                || valueHash == keccak256(bytes("NO"))
+        ) return false;
+        revert("invalid boolean env flag");
     }
 
     function run(string memory network) public virtual {

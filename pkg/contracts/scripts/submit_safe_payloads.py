@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import getpass
 import json
 import os
 import sys
@@ -169,7 +170,9 @@ def _post_safe_tx(base_url, safe_address, payload):
 def _load_private_key(keystore_path, password_env):
     password = os.environ.get(password_env)
     if not password:
-        raise RuntimeError(f"Missing {password_env} env var for keystore password.")
+        if not sys.stdin.isatty():
+            raise RuntimeError(f"Missing {password_env} env var for keystore password.")
+        password = getpass.getpass(f"Enter password for {keystore_path}: ")
     key_data = json.loads(Path(keystore_path).read_text())
     priv_key = Account.decrypt(key_data, password)
     acct = Account.from_key(priv_key)

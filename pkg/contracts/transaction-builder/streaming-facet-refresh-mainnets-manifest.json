@@ -1,0 +1,86 @@
+{
+  "safe": "0x9a17De1f0caD0c592F656410997E4B685d339029",
+  "streamingSelectors": [
+    "0x7d7c2a1c",
+    "0x53a3d62e",
+    "0x736dcb8b",
+    "0xe0ab98b5",
+    "0x7d40af98"
+  ],
+  "networks": [
+    {
+      "name": "ethereum",
+      "chainId": 1,
+      "payloadFile": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/ethereum-registry-factory-streaming-facet-refresh-payload.json",
+      "latestCvStreamingFacet": "0x5c01cb95af18f0c71d85522d6582f7c8962c3be1",
+      "transactions": [
+        {
+          "index": 0,
+          "to": "0x7d26c5b083b85b848645fcbd18fe01168989333b",
+          "method": "setStrategyFacets",
+          "summary": "Updates the RegistryFactory strategy facet template so newly created pools use the latest CV_STREAMING facet on Ethereum."
+        }
+      ]
+    },
+    {
+      "name": "arbitrum",
+      "chainId": 42161,
+      "payloadFile": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/arbitrum-registry-factory-streaming-facet-refresh-payload.json",
+      "latestCvStreamingFacet": "0x387eb85cdec4aa938cc0c3b02e1a68dd11927757",
+      "transactions": [
+        {
+          "index": 0,
+          "to": "0xc1c2e092b7dbc8413e1ac02e92c161b0bda783f6",
+          "method": "setStrategyFacets",
+          "summary": "Updates the RegistryFactory strategy facet template so newly created pools use the latest CV_STREAMING facet on Arbitrum."
+        }
+      ]
+    },
+    {
+      "name": "optimism",
+      "chainId": 10,
+      "payloadFile": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/optimism-registry-factory-and-pool-streaming-facet-refresh-payload.json",
+      "latestCvStreamingFacet": "0xe0db1a2d2b2b84095d3e44f043363a4d5024252b",
+      "transactions": [
+        {
+          "index": 0,
+          "to": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
+          "method": "setStrategyFacets",
+          "summary": "Updates the RegistryFactory strategy facet template so newly created pools use the latest CV_STREAMING facet on Optimism."
+        },
+        {
+          "index": 1,
+          "to": "0x2b1915a2e0293b3a434df58b921d8f7e320da077",
+          "method": "diamondCut",
+          "summary": "Upgrades the existing Optimism pool 0x2b1915a2e0293b3a434df58b921d8f7e320da077 to the latest CV_STREAMING facet using FacetCutAction.Auto for the five streaming selectors."
+        },
+        {
+          "index": 2,
+          "to": "0x09de77c01f8906340b27ff2d70c464b4ccc24701",
+          "method": "diamondCut",
+          "summary": "Upgrades the archived Optimism pool 0x09de77c01f8906340b27ff2d70c464b4ccc24701 to the latest CV_STREAMING facet so verification sees the current selector mapping."
+        },
+        {
+          "index": 3,
+          "to": "0xfc3fd2d3f7d1cfe713cdb10d44b657e185c1838f",
+          "method": "diamondCut",
+          "summary": "Upgrades the archived Optimism pool 0xfc3fd2d3f7d1cfe713cdb10d44b657e185c1838f to the latest CV_STREAMING facet so verification sees the current selector mapping."
+        }
+      ]
+    },
+    {
+      "name": "gnosis",
+      "chainId": 100,
+      "payloadFile": "/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/gnosis-registry-factory-streaming-facet-refresh-payload.json",
+      "latestCvStreamingFacet": "0xe0db1a2d2b2b84095d3e44f043363a4d5024252b",
+      "transactions": [
+        {
+          "index": 0,
+          "to": "0x08df82f74d1f56f650e98da2dd4240f1a31711bc",
+          "method": "setStrategyFacets",
+          "summary": "Updates the RegistryFactory strategy facet template so newly created pools use the latest CV_STREAMING facet on Gnosis."
+        }
+      ]
+    }
+  ]
+}

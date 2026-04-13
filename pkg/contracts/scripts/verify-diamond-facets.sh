@@ -125,6 +125,122 @@ if [[ -z "$ETHERSCAN_API_KEY" ]]; then
 fi
 
 declare -A HASH_TO_CONTRACT
+declare -A LINKED_HASH_TO_CONTRACT
+declare -A CONTRACT_TO_LINK_SPECS
+
+normalize_bytecode() {
+  local bytecode="$1"
+  local specs="$2"
+  local normalized="${bytecode#0x}"
+  local spec
+
+  if [[ -z "$specs" ]]; then
+    printf '0x%s\n' "$normalized"
+    return 0
+  fi
+
+  IFS=',' read -r -a spec_items <<< "$specs"
+  for spec in "${spec_items[@]}"; do
+    [[ -z "$spec" ]] && continue
+
+    IFS=':' read -r start length _lib_source _lib_name <<< "$spec"
+    local char_start=$((start * 2))
+    local char_length=$((length * 2))
+    local zero_fill
+    zero_fill=$(printf '%0*s' "$char_length" '' | tr ' ' '0')
+    normalized="${normalized:0:char_start}${zero_fill}${normalized:char_start + char_length}"
+  done
+
+  printf '0x%s\n' "$normalized"
+}
+
+extract_libraries_from_bytecode() {
+  local bytecode="$1"
+  local specs="$2"
+  local stripped="${bytecode#0x}"
+  local libraries=()
+  local spec
+
+  [[ -z "$specs" ]] && return 0
+
+  IFS=',' read -r -a spec_items <<< "$specs"
+  for spec in "${spec_items[@]}"; do
+    [[ -z "$spec" ]] && continue
+
+    IFS=':' read -r start length lib_source lib_name <<< "$spec"
+    local char_start=$((start * 2))
+    local char_length=$((length * 2))
+    local address="0x${stripped:char_start:char_length}"
+    libraries+=("${lib_source}:${lib_name}:${address}")
+  done
+
+  IFS=','
+  printf '%s\n' "${libraries[*]}"
+  unset IFS
+}
+
+resolve_contract_for_bytecode() {
+  local facet="$1"
+  local rpc_url="$2"
+  local codehash="$3"
+  local linked_hash
+  local bytecode
+
+  RESOLVED_CONTRACT="${HASH_TO_CONTRACT[$codehash]:-}"
+  RESOLVED_LIBRARIES=""
+  if [[ -n "$RESOLVED_CONTRACT" ]]; then
+    return 0
+  fi
+
+  if ! bytecode=$(verify_with_retry "bytecode for $facet" cast code --rpc-url "$rpc_url" "$facet"); then
+    return 1
+  fi
+
+  for linked_hash in "${!LINKED_HASH_TO_CONTRACT[@]}"; do
+    local contract="${LINKED_HASH_TO_CONTRACT[$linked_hash]}"
+    local specs="${CONTRACT_TO_LINK_SPECS[$contract]:-}"
+    local normalized
+
+    normalized=$(normalize_bytecode "$bytecode" "$specs")
+    if [[ "$(cast keccak "$normalized")" != "$linked_hash" ]]; then
+      continue
+    fi
+
+    RESOLVED_CONTRACT="$contract"
+    RESOLVED_LIBRARIES=$(extract_libraries_from_bytecode "$bytecode" "$specs")
+    return 0
+  done
+
+  return 1
+}
+
+verify_resolved_contract() {
+  local facet="$1"
+  local chain_id="$2"
+  local description="$3"
+  shift 3
+  local verifier_args=("$@")
+  local -a library_args=()
+  local verify_cmd=(
+    forge verify-contract
+    --chain-id "$chain_id"
+    "${verifier_args[@]}"
+    --etherscan-api-key "$ETHERSCAN_API_KEY"
+  )
+
+  if [[ -n "$RESOLVED_LIBRARIES" ]]; then
+    local library_spec
+    IFS=',' read -r -a resolved_library_items <<< "$RESOLVED_LIBRARIES"
+    for library_spec in "${resolved_library_items[@]}"; do
+      [[ -z "$library_spec" ]] && continue
+      library_args+=(--libraries "$library_spec")
+    done
+    verify_cmd+=("${library_args[@]}")
+  fi
+
+  verify_cmd+=("$facet" "$RESOLVED_CONTRACT")
+  verify_with_retry "$description" "${verify_cmd[@]}"
+}
 
 is_retryable_rpc_error() {
   grep -Eqi 'rate limit|max calls per sec|expected value|SourcifyResponse|429|timeout|failed to get storage|HTTP error 429|Max retries exceeded' <<< "$1"
@@ -169,12 +285,18 @@ build_contract_map() {
     source=$(jq -r '.metadata.settings.compilationTarget // {} | keys[0] // empty' "$artifact")
     name=$(jq -r '.metadata.settings.compilationTarget // {} | .[] // empty' "$artifact")
     bytecode=$(jq -r '.deployedBytecode.object // empty' "$artifact")
+    link_specs=$(jq -r '[
+      .deployedBytecode.linkReferences // {}
+      | to_entries[]?
+      | .key as $lib_source
+      | .value
+      | to_entries[]?
+      | .key as $lib_name
+      | .value[]?
+      | "\(.start):\(.length):\($lib_source):\($lib_name)"
+    ] | join(",")' "$artifact")
 
     if [[ -z "$source" || -z "$name" || -z "$bytecode" || "$bytecode" == "0x" || "$bytecode" == "null" ]]; then
-      continue
-    fi
-
-    if [[ ! "$bytecode" =~ ^0x[0-9a-fA-F]+$ ]]; then
       continue
     fi
 
@@ -182,14 +304,29 @@ build_contract_map() {
       continue
     fi
 
+    contract="$source:$name"
+    if [[ -n "$link_specs" ]]; then
+      normalized_bytecode=$(normalize_bytecode "$bytecode" "$link_specs")
+      hash=$(cast keccak "$normalized_bytecode")
+      if [[ -z "${LINKED_HASH_TO_CONTRACT[$hash]:-}" ]]; then
+        LINKED_HASH_TO_CONTRACT["$hash"]="$contract"
+        CONTRACT_TO_LINK_SPECS["$contract"]="$link_specs"
+      fi
+      continue
+    fi
+
+    if [[ ! "$bytecode" =~ ^0x[0-9a-fA-F]+$ ]]; then
+      continue
+    fi
+
     hash=$(cast keccak "$bytecode")
     if [[ -z "${HASH_TO_CONTRACT[$hash]:-}" ]]; then
-      HASH_TO_CONTRACT["$hash"]="$source:$name"
+      HASH_TO_CONTRACT["$hash"]="$contract"
     fi
   done < <(find "$OUT_DIR" -type f -path "*/out/*Facet.sol/*.json" -print0)
   local hash_count
-  hash_count=$(printf '%s\n' "${!HASH_TO_CONTRACT[@]}" | wc -l | tr -d ' ')
-  echo "Loaded ${hash_count} facet bytecode hashes"
+  hash_count=$(printf '%s\n' "${!HASH_TO_CONTRACT[@]}" "${!LINKED_HASH_TO_CONTRACT[@]}" | sed '/^$/d' | wc -l | tr -d ' ')
+  echo "Loaded ${hash_count} facet bytecode hash template(s)"
 }
 
 get_facet_addresses() {
@@ -301,20 +438,14 @@ verify_network() {
 
       echo "    - Fetching codehash for $facet"
       codehash=$(verify_with_retry "codehash for $facet on $display_name" cast codehash --rpc-url "$rpc_url" "$facet")
-      contract=${HASH_TO_CONTRACT[$codehash]:-}
-      if [[ -z "$contract" ]]; then
+      if ! resolve_contract_for_bytecode "$facet" "$rpc_url" "$codehash"; then
         unknown_codehash_count=$((unknown_codehash_count + 1))
         unknown_codehash_messages+=("live facet $facet")
         continue
       fi
 
-      echo "    - Verifying $facet as $contract"
-      verify_with_retry "$facet on $display_name" forge verify-contract \
-        --chain-id "$chain_id" \
-        "${verifier_args[@]}" \
-        --etherscan-api-key "$ETHERSCAN_API_KEY" \
-        "$facet" \
-        "$contract"
+      echo "    - Verifying $facet as $RESOLVED_CONTRACT"
+      verify_resolved_contract "$facet" "$chain_id" "$facet on $display_name" "${verifier_args[@]}"
     done < <(printf '%s\n' "$facet_addresses" | sort -u)
   done
 
@@ -328,20 +459,14 @@ verify_network() {
 
       echo "    - Fetching codehash for declared facet $facet"
       codehash=$(verify_with_retry "declared facet codehash for $facet on $display_name" cast codehash --rpc-url "$rpc_url" "$facet")
-      contract=${HASH_TO_CONTRACT[$codehash]:-}
-      if [[ -z "$contract" ]]; then
+      if ! resolve_contract_for_bytecode "$facet" "$rpc_url" "$codehash"; then
         unknown_codehash_count=$((unknown_codehash_count + 1))
         unknown_codehash_messages+=("declared facet $facet")
         continue
       fi
 
-      echo "    - Verifying declared facet $facet as $contract"
-      verify_with_retry "declared facet $facet on $display_name" forge verify-contract \
-        --chain-id "$chain_id" \
-        "${verifier_args[@]}" \
-        --etherscan-api-key "$ETHERSCAN_API_KEY" \
-        "$facet" \
-        "$contract"
+      echo "    - Verifying declared facet $facet as $RESOLVED_CONTRACT"
+      verify_resolved_contract "$facet" "$chain_id" "declared facet $facet on $display_name" "${verifier_args[@]}"
       seen["$facet_lc"]="$facet"
     done
   fi

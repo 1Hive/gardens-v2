@@ -732,11 +732,12 @@ tasks:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          START_TIME_MS="$(date +%s%3N)"
           RESUME_FLAG=""
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          SKIP_NETWORK_WRITES=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_SEP_TESTNET} \
           --sig "run(string)" 'ethsepolia' \
           --account PK_DEPLOYER \
@@ -747,6 +748,11 @@ tasks:
           ${RESUME_FLAG} \
           --chain-id 11155111 \
           -vv
+          node scripts/sync-refreshed-facets.js \
+          --network ethsepolia \
+          --chain-id 11155111 \
+          --rpc-url ${RPC_URL_SEP_TESTNET} \
+          --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-ethsep:
     desc: Verify live diamond facets on ethsepolia
     cmds:
@@ -767,11 +773,12 @@ tasks:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          START_TIME_MS="$(date +%s%3N)"
           RESUME_FLAG=""
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          SKIP_NETWORK_WRITES=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --sig "run(string)" 'opsepolia' \
           --account PK_DEPLOYER \
@@ -782,6 +789,11 @@ tasks:
           ${RESUME_FLAG} \
           --chain-id 11155420 \
           -vv
+          node scripts/sync-refreshed-facets.js \
+          --network opsepolia \
+          --chain-id 11155420 \
+          --rpc-url ${RPC_URL_OP_TESTNET} \
+          --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-opsep:
     desc: Verify live diamond facets on opsepolia
     cmds:
@@ -802,11 +814,12 @@ tasks:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          START_TIME_MS="$(date +%s%3N)"
           RESUME_FLAG=""
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          SKIP_NETWORK_WRITES=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --sig "run(string)" 'arbsepolia' \
           --account PK_DEPLOYER \
@@ -817,6 +830,11 @@ tasks:
           ${RESUME_FLAG} \
           --chain-id 421614 \
           -vv
+          node scripts/sync-refreshed-facets.js \
+          --network arbsepolia \
+          --chain-id 421614 \
+          --rpc-url ${RPC_URL_ARB_TESTNET} \
+          --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-arbsep:
     desc: Verify live diamond facets on arbsepolia
     cmds:
@@ -837,11 +855,12 @@ tasks:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          START_TIME_MS="$(date +%s%3N)"
           RESUME_FLAG=""
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          SKIP_NETWORK_WRITES=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_ARB} \
           --sig "run(string)" 'arbitrum' \
           --account PK_DEPLOYER \
@@ -852,6 +871,11 @@ tasks:
           ${RESUME_FLAG} \
           --chain-id 42161 \
           -vv
+          node scripts/sync-refreshed-facets.js \
+          --network arbitrum \
+          --chain-id 42161 \
+          --rpc-url ${RPC_URL_ARB} \
+          --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-arbitrum:
     desc: Verify live diamond facets on arbitrum
     cmds:
@@ -872,11 +896,12 @@ tasks:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          START_TIME_MS="$(date +%s%3N)"
           RESUME_FLAG=""
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          SKIP_NETWORK_WRITES=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_OPT} \
           --sig "run(string)" 'optimism' \
           --account PK_DEPLOYER \
@@ -887,6 +912,11 @@ tasks:
           ${RESUME_FLAG} \
           --chain-id 10 \
           -vv
+          node scripts/sync-refreshed-facets.js \
+          --network optimism \
+          --chain-id 10 \
+          --rpc-url ${RPC_URL_OPT} \
+          --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-optimism:
     desc: Verify live diamond facets on optimism
     cmds:
@@ -907,11 +937,12 @@ tasks:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          START_TIME_MS="$(date +%s%3N)"
           RESUME_FLAG=""
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          SKIP_NETWORK_WRITES=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_POLYGON} \
           --sig "run(string)" 'polygon' \
           --account PK_DEPLOYER \
@@ -922,6 +953,11 @@ tasks:
           ${RESUME_FLAG} \
           --chain-id 137 \
           -vv
+          node scripts/sync-refreshed-facets.js \
+          --network polygon \
+          --chain-id 137 \
+          --rpc-url ${RPC_URL_POLYGON} \
+          --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-polygon:
     desc: Verify live diamond facets on polygon
     cmds:
@@ -942,11 +978,12 @@ tasks:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          START_TIME_MS="$(date +%s%3N)"
           RESUME_FLAG=""
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          SKIP_NETWORK_WRITES=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_GNOSIS} \
           --sig "run(string)" 'gnosis' \
           --account PK_DEPLOYER \
@@ -957,6 +994,11 @@ tasks:
           ${RESUME_FLAG} \
           --chain-id 100 \
           -vv
+          node scripts/sync-refreshed-facets.js \
+          --network gnosis \
+          --chain-id 100 \
+          --rpc-url ${RPC_URL_GNOSIS} \
+          --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-gnosis:
     desc: Verify live diamond facets on gnosis
     cmds:
@@ -977,11 +1019,12 @@ tasks:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          START_TIME_MS="$(date +%s%3N)"
           RESUME_FLAG=""
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          SKIP_NETWORK_WRITES=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_BASE} \
           --sig "run(string)" 'base' \
           --account PK_DEPLOYER \
@@ -992,6 +1035,11 @@ tasks:
           ${RESUME_FLAG} \
           --chain-id 8453 \
           -vv
+          node scripts/sync-refreshed-facets.js \
+          --network base \
+          --chain-id 8453 \
+          --rpc-url ${RPC_URL_BASE} \
+          --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-base:
     desc: Verify live diamond facets on base
     cmds:
@@ -1012,11 +1060,12 @@ tasks:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          START_TIME_MS="$(date +%s%3N)"
           RESUME_FLAG=""
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          SKIP_NETWORK_WRITES=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_CELO} \
           --sig "run(string)" 'celo' \
           --account PK_DEPLOYER \
@@ -1027,6 +1076,11 @@ tasks:
           ${RESUME_FLAG} \
           --chain-id 42220 \
           -vv
+          node scripts/sync-refreshed-facets.js \
+          --network celo \
+          --chain-id 42220 \
+          --rpc-url ${RPC_URL_CELO} \
+          --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-celo:
     desc: Verify live diamond facets on celo
     cmds:
@@ -1091,11 +1145,12 @@ tasks:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          START_TIME_MS="$(date +%s%3N)"
           RESUME_FLAG=""
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
-          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+          SKIP_NETWORK_WRITES=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
           --rpc-url ${RPC_URL_ETHEREUM} \
           --sig "run(string)" 'ethereum' \
           --account PK_DEPLOYER \
@@ -1106,6 +1161,11 @@ tasks:
           --broadcast \
           ${RESUME_FLAG} \
           -vvv
+            node scripts/sync-refreshed-facets.js \
+            --network ethereum \
+            --chain-id 1 \
+            --rpc-url ${RPC_URL_ETHEREUM} \
+            --min-mtime-ms "${START_TIME_MS}"
       - task: sync-abis
   refresh-facets-ethereum:
     desc: Alias for refresh-facets-mainnet
@@ -7097,13 +7157,25 @@ tasks:
     desc: Verify deployments on ethereum, arbitrum, optimism, polygon, gnosis, base, celo; pass SCOPE=global|state|pause|escrow|factory|communities|strategies|facets|all
     cmds:
       - cmd: |
-          bash ./scripts/verify-all-deployments.sh --scope "${SCOPE:-global}"
+          TASK_SCOPE='{{.SCOPE}}'
+          if [ -n "${TASK_SCOPE}" ] && [ "${TASK_SCOPE}" != "<no value>" ]; then
+            VERIFY_SCOPE="${TASK_SCOPE}"
+          else
+            VERIFY_SCOPE="${SCOPE:-global}"
+          fi
+          bash ./scripts/verify-all-deployments.sh --scope "${VERIFY_SCOPE}"
 
   verify-all-mainnets:
     desc: Verify all deployments on ethereum, arbitrum, optimism, polygon, gnosis, base, celo; pass SCOPE=global|state|pause|escrow|factory|communities|strategies|facets|all
     cmds:
       - cmd: |
-          bash ./scripts/verify-all-deployments.sh --scope "${SCOPE:-all}"
+          TASK_SCOPE='{{.SCOPE}}'
+          if [ -n "${TASK_SCOPE}" ] && [ "${TASK_SCOPE}" != "<no value>" ]; then
+            VERIFY_SCOPE="${TASK_SCOPE}"
+          else
+            VERIFY_SCOPE="${SCOPE:-all}"
+          fi
+          bash ./scripts/verify-all-deployments.sh --scope "${VERIFY_SCOPE}"
 
   pause-all-networks-with-pause-controller:
     desc: Pause factory, communities and strategies on every network with ENVS.PAUSE_CONTROLLER set
