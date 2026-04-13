@@ -85,8 +85,12 @@ export const useConvictionRead = ({
     logOnce("error", "Error reading conviction", errorConviction);
   }
   const poolType = PoolTypes[strategyConfig?.proposalType];
+  const requestedAmount = BigInt(proposalData?.requestedAmount ?? 0);
+  const hasRequestedAmount = requestedAmount > 0n;
   const shouldReadThreshold =
     shouldReadConviction && poolType !== "signaling";
+  const shouldReadThresholdFromContract =
+    shouldReadThreshold && hasRequestedAmount;
 
   const {
     data: thresholdFromContract,
@@ -96,10 +100,18 @@ export const useConvictionRead = ({
     ...cvStrategyContract,
     chainId: resolvedChainId,
     functionName: "calculateThreshold",
-    args: [proposalData?.requestedAmount ?? 0],
-    enabled: shouldReadThreshold,
+    args: [requestedAmount],
+    enabled: shouldReadThresholdFromContract,
     watch: true,
   });
+
+  const resolvedThreshold = useMemo(() => {
+    if (!shouldReadThreshold) {
+      return undefined;
+    }
+
+    return hasRequestedAmount ? thresholdFromContract : 0n;
+  }, [hasRequestedAmount, shouldReadThreshold, thresholdFromContract]);
 
   if (
     thresholdReadError &&
@@ -118,12 +130,12 @@ export const useConvictionRead = ({
   const remainingBlocksToPass = useMemo(
     () =>
       getRemainingBlocksToPass(
-        Number(thresholdFromContract),
+        Number(resolvedThreshold ?? 0n),
         Number(updatedConviction),
         Number(proposalData?.stakedAmount),
         alphaDecay,
       ),
-    [thresholdFromContract, updatedConviction, proposalData?.stakedAmount],
+    [resolvedThreshold, updatedConviction, proposalData?.stakedAmount],
   );
   const blockTime = chain?.blockTime;
 
@@ -141,14 +153,14 @@ export const useConvictionRead = ({
 
   let thresholdPct = useMemo(
     () =>
-      initialized && thresholdFromContract != null ?
+      initialized && resolvedThreshold != null ?
         calculatePercentageBigInt(
-          thresholdFromContract as bigint,
+          resolvedThreshold,
           BigInt(proposalData.strategy.maxCVSupply),
         )
       : undefined,
     [
-      thresholdFromContract,
+      resolvedThreshold,
       proposalData?.strategy.maxCVSupply,
       token?.decimals,
       initialized,
@@ -189,7 +201,7 @@ export const useConvictionRead = ({
 
   logOnce("debug", "Conviction computed numbers", {
     thresholdPct,
-    thresholdFromContract,
+    thresholdFromContract: resolvedThreshold,
     totalSupportPct,
     currentConvictionPct,
   });
@@ -203,7 +215,9 @@ export const useConvictionRead = ({
         timeToPass,
         triggerConvictionRefetch: () => {
           void triggerConvictionRefetch();
-          void triggerThresholdRefetch();
+          if (shouldReadThresholdFromContract) {
+            void triggerThresholdRefetch();
+          }
         },
       }
     : {

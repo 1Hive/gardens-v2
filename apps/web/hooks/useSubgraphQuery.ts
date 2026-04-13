@@ -93,6 +93,7 @@ export function useSubgraphQuery<
 
   const latestResponse = useRef({ variables, response });
   const subscritionId = useRef<SubscriptionId>();
+  const stableChangeScopeRef = useRef<ChangeEventScope[] | undefined>();
   const fetchingRef = useRef(false);
   const fetchPromiseRef = useRef<Promise<Awaited<ReturnType<typeof fetch>>> | null>(
     null,
@@ -119,15 +120,22 @@ export function useSubgraphQuery<
       chainId: scope.chainId ?? resolvedChainId,
     }));
   }, [changeScope, resolvedChainId]);
+
+  if (!isEqual(stableChangeScopeRef.current, normalizedChangeScope)) {
+    stableChangeScopeRef.current = normalizedChangeScope;
+  }
+
+  const stableNormalizedChangeScope = stableChangeScopeRef.current;
+
   useEffect(() => {
-    if (!normalizedChangeScope || normalizedChangeScope.length === 0) {
+    if (!stableNormalizedChangeScope || stableNormalizedChangeScope.length === 0) {
       return;
     }
     if (!connected) {
       return;
     }
 
-    const subscriptionId = subscribe(normalizedChangeScope, () => {
+    const subscriptionId = subscribe(stableNormalizedChangeScope, () => {
       return refetchFromOutside.call({
         response,
         fetching,
@@ -144,7 +152,7 @@ export function useSubgraphQuery<
       }
       dismissPendingSubgraphRefreshToast();
     };
-  }, [connected, normalizedChangeScope]);
+  }, [connected, stableNormalizedChangeScope]);
 
   const fetch = async () => {
     if (!config) {
