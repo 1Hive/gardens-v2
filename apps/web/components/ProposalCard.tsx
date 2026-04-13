@@ -192,6 +192,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       currentConvictionPct,
       thresholdPct,
       isThresholdBelowDisplayPrecision,
+      hasReachedThreshold,
       totalSupportPct,
       timeToPass,
       triggerConvictionRefetch,
@@ -427,8 +428,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       thresholdValue - (totalSupportPct ?? 0)
     ).toFixed(2);
 
-    const readyToBeExecuted =
-      hasThreshold && (currentConvictionPct ?? 0) > thresholdValue;
+    const readyToBeExecuted = hasThreshold && hasReachedThreshold === true;
 
     const hasInsufficientPoolFundsForRequest =
       requestedAmount != null &&
@@ -459,8 +459,8 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         : resolvedProposalStatus === "disputed" ? "Disputed"
         : resolvedProposalStatus === "executed" ? "Closed"
         : hasActiveStream ? "Streaming"
-        : readyToBeExecuted || proposalWillPass ? "About to stream"
-        : "Active, not streaming"
+        : readyToBeExecuted ? "About to stream"
+        : "Not Streaming"
       : undefined;
 
     const ProposalCountDown = (

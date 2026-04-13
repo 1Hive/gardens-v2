@@ -111,7 +111,11 @@ export const useConvictionRead = ({
     }
 
     return shouldReadThresholdFromContract ? thresholdFromContract : 0n;
-  }, [shouldReadThreshold, shouldReadThresholdFromContract, thresholdFromContract]);
+  }, [
+    shouldReadThreshold,
+    shouldReadThresholdFromContract,
+    thresholdFromContract,
+  ]);
 
   if (
     thresholdReadError &&
@@ -167,16 +171,21 @@ export const useConvictionRead = ({
     ],
   );
 
-  const isThresholdBelowDisplayPrecision = useMemo(
-    () => {
-      if (!initialized || resolvedThreshold == null || resolvedThreshold <= 0n) {
-        return false;
-      }
+  const isThresholdBelowDisplayPrecision = useMemo(() => {
+    if (!initialized || resolvedThreshold == null || resolvedThreshold <= 0n) {
+      return false;
+    }
 
-      const maxCvSupply = BigInt(proposalData.strategy.maxCVSupply ?? 0);
-      return maxCvSupply > 0n && resolvedThreshold * 10000n < maxCvSupply;
-    },
-    [initialized, proposalData?.strategy.maxCVSupply, resolvedThreshold],
+    const maxCvSupply = BigInt(proposalData.strategy.maxCVSupply ?? 0);
+    return maxCvSupply > 0n && resolvedThreshold * 10000n < maxCvSupply;
+  }, [initialized, proposalData?.strategy.maxCVSupply, resolvedThreshold]);
+
+  const hasReachedThreshold = useMemo(
+    () =>
+      initialized && resolvedThreshold != null && updatedConviction != null ?
+        BigInt(updatedConviction.toString()) >= resolvedThreshold
+      : undefined,
+    [initialized, resolvedThreshold, updatedConviction],
   );
 
   let totalSupportPct = useMemo(
@@ -222,6 +231,7 @@ export const useConvictionRead = ({
       {
         thresholdPct,
         isThresholdBelowDisplayPrecision,
+        hasReachedThreshold,
         totalSupportPct,
         currentConvictionPct,
         updatedConviction,
@@ -234,6 +244,7 @@ export const useConvictionRead = ({
         },
       }
     : {
+        hasReachedThreshold: undefined,
         thresholdPct: undefined,
         isThresholdBelowDisplayPrecision: undefined,
         totalSupportPct: undefined,

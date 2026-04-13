@@ -769,6 +769,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     currentConvictionPct,
     thresholdPct,
     isThresholdBelowDisplayPrecision,
+    hasReachedThreshold,
     totalSupportPct,
     updatedConviction,
     timeToPass,
@@ -1148,8 +1149,8 @@ export default function ClientPage({ params }: ClientPageProps) {
       : status === "disputed" ? "Disputed"
       : status === "executed" ? "Closed"
       : currentFlowRateForDisplay > 0n ? "Streaming"
-      : (currentConvictionPct ?? 0) > (thresholdPct ?? 0) ? "About to stream"
-      : status === "active" ? "Active, not streaming"
+      : hasReachedThreshold ? "About to stream"
+      : status === "active" ? "Not Streaming"
       : undefined
     : undefined;
   const hasThreshold = thresholdPct != null;
