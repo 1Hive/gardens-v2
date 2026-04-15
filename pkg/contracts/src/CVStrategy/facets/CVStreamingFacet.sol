@@ -206,6 +206,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         if (poolToken == NATIVE_TOKEN) {
             return; // Cannot wrap native token directly
         }
+        if (poolToken == address(superfluidToken)) {
+            return; // Pure SuperToken pool: balance already lives in the streaming asset
+        }
 
         // Get underlying token from supertoken
         address underlyingToken = superfluidToken.getUnderlyingToken();

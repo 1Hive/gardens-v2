@@ -507,6 +507,36 @@ contract CVAdminFacetTest is Test {
         assertEq(address(facet.superfluidToken()), address(newToken));
     }
 
+    function test_setPoolParams_streaming_samePureTokenAddress_skips_migration() public {
+        factoryAllowlist.setAllowed(address(arbitrator), true);
+        MockGDAAgreement gdaAgreement = new MockGDAAgreement();
+        MockSuperfluidHost host = new MockSuperfluidHost(address(gdaAgreement));
+        MockSuperToken pureToken = new MockSuperToken(address(host), address(underlyingToken));
+
+        allo.setPoolToken(1, address(pureToken));
+        facet.setProposalType(ProposalType.Streaming);
+        facet.setSuperfluidToken(address(pureToken));
+        pureToken.setBalance(address(facet), 25 ether);
+
+        ArbitrableConfig memory arb = ArbitrableConfig({
+            arbitrator: IArbitrator(address(arbitrator)),
+            tribunalSafe: address(0xBEEF),
+            submitterCollateralAmount: 1,
+            challengerCollateralAmount: 1,
+            defaultRuling: 1,
+            defaultRulingTimeout: 10
+        });
+        CVParams memory params = CVParams({maxRatio: 0, weight: 0, decay: 0, minThresholdPoints: 0});
+
+        vm.prank(councilSafe);
+        facet.setPoolParams(arb, params, 0, new address[](0), new address[](0), address(pureToken), 0);
+
+        assertEq(pureToken.balanceOf(address(facet)), 25 ether);
+        assertEq(pureToken.lastDowngradeAmount(), 0);
+        assertEq(pureToken.lastUpgradeAmount(), 0);
+        assertEq(address(facet.superfluidToken()), address(pureToken));
+    }
+
     function test_setPoolParams_streaming_rate_change_updates_flow_only() public {
         factoryAllowlist.setAllowed(address(arbitrator), true);
         MockGDAAgreement gdaAgreement = new MockGDAAgreement();

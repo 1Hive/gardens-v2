@@ -380,6 +380,22 @@ get_prod_networks() {
     "$CONTRACTS_DIR/config/networks.json"
 }
 
+lookup_broadcast_contract_name() {
+  local facet_lc
+  facet_lc=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+  local chain_id="$2"
+
+  [[ -d "$ROOT_DIR/broadcast" ]] || return 1
+
+  while IFS= read -r file; do
+    jq -r --arg addr "$facet_lc" '
+      .. | objects
+      | select((.contractAddress? // "" | ascii_downcase) == $addr)
+      | .contractName // empty
+    ' "$file"
+  done < <(rg -l --fixed-strings "\"contractAddress\": \"$facet_lc\"" "$ROOT_DIR/broadcast" -g "**/${chain_id}/*.json" 2>/dev/null) | awk 'NF { print; exit }'
+}
+
 verify_network() {
   local network="$1"
   local chain_id="$2"
@@ -390,9 +406,13 @@ verify_network() {
   local -A expected_facets=()
   local display_name="${network:-custom}"
   local unknown_facet_count=0
+  local undeclared_resolved_count=0
+  local historical_undeclared_count=0
   local unknown_codehash_count=0
   local skipped_proxy_count=0
   local -a unknown_codehash_messages=()
+  local -a undeclared_resolved_messages=()
+  local -a historical_undeclared_messages=()
   local -a verifier_args=(--verifier etherscan)
 
   if [[ -n "$VERIFIER_URL" ]]; then
@@ -430,18 +450,29 @@ verify_network() {
       fi
       seen["$facet_lc"]="$facet"
 
-      if [[ ${#expected_facets[@]} -gt 0 && -z "${expected_facets[$facet_lc]:-}" ]]; then
-        echo "    - ERROR: facet $facet is not declared in config/networks.json FACETS for $network"
-        unknown_facet_count=$((unknown_facet_count + 1))
-        continue
-      fi
-
       echo "    - Fetching codehash for $facet"
       codehash=$(verify_with_retry "codehash for $facet on $display_name" cast codehash --rpc-url "$rpc_url" "$facet")
       if ! resolve_contract_for_bytecode "$facet" "$rpc_url" "$codehash"; then
+        if [[ ${#expected_facets[@]} -gt 0 && -z "${expected_facets[$facet_lc]:-}" ]]; then
+          historical_contract_name=$(lookup_broadcast_contract_name "$facet" "$chain_id" || true)
+          if [[ -n "$historical_contract_name" ]]; then
+            echo "    - WARNING: facet $facet is live but not declared in config/networks.json FACETS for $network; broadcast history identifies it as $historical_contract_name"
+            historical_undeclared_count=$((historical_undeclared_count + 1))
+            historical_undeclared_messages+=("$facet -> $historical_contract_name")
+          else
+            echo "    - ERROR: facet $facet is not declared in config/networks.json FACETS for $network and has no matching local artifact or broadcast history"
+            unknown_facet_count=$((unknown_facet_count + 1))
+          fi
+        fi
         unknown_codehash_count=$((unknown_codehash_count + 1))
         unknown_codehash_messages+=("live facet $facet")
         continue
+      fi
+
+      if [[ ${#expected_facets[@]} -gt 0 && -z "${expected_facets[$facet_lc]:-}" ]]; then
+        echo "    - WARNING: facet $facet is live but not declared in config/networks.json FACETS for $network; resolved as $RESOLVED_CONTRACT"
+        undeclared_resolved_count=$((undeclared_resolved_count + 1))
+        undeclared_resolved_messages+=("$facet -> $RESOLVED_CONTRACT")
       fi
 
       echo "    - Verifying $facet as $RESOLVED_CONTRACT"
@@ -476,6 +507,34 @@ verify_network() {
   echo "  - Done. Verified ${total} unique facet address(es)."
   if [[ "$skipped_proxy_count" -gt 0 ]]; then
     echo "  - WARNING: Skipped live facet discovery for ${skipped_proxy_count} proxy(s) that do not expose loupe selectors." >&2
+  fi
+  if [[ "$undeclared_resolved_count" -gt 0 ]]; then
+    echo "  - WARNING: Found ${undeclared_resolved_count} live facet address(es) missing from config/networks.json FACETS that still resolved to known local facet artifacts." >&2
+    local preview_count=${#undeclared_resolved_messages[@]}
+    if [[ "$preview_count" -gt 5 ]]; then
+      preview_count=5
+    fi
+    local i
+    for ((i=0; i<preview_count; i++)); do
+      echo "    - ${undeclared_resolved_messages[$i]}" >&2
+    done
+    if [[ ${#undeclared_resolved_messages[@]} -gt "$preview_count" ]]; then
+      echo "    - ... and $(( ${#undeclared_resolved_messages[@]} - preview_count )) more" >&2
+    fi
+  fi
+  if [[ "$historical_undeclared_count" -gt 0 ]]; then
+    echo "  - WARNING: Found ${historical_undeclared_count} undeclared live facet address(es) that were identified only from broadcast history." >&2
+    local preview_count=${#historical_undeclared_messages[@]}
+    if [[ "$preview_count" -gt 5 ]]; then
+      preview_count=5
+    fi
+    local i
+    for ((i=0; i<preview_count; i++)); do
+      echo "    - ${historical_undeclared_messages[$i]}" >&2
+    done
+    if [[ ${#historical_undeclared_messages[@]} -gt "$preview_count" ]]; then
+      echo "    - ... and $(( ${#historical_undeclared_messages[@]} - preview_count )) more" >&2
+    fi
   fi
   if [[ "$unknown_facet_count" -gt 0 ]]; then
     if [[ "$STRICT_FACET_MATCH" == "true" ]]; then
