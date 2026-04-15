@@ -524,8 +524,12 @@ export function PoolForm({
           ),
           initialAllowlist: allowList,
           superfluidToken:
-            (superToken?.sameAsUnderlying ? undefined : superToken?.id) ??
-            zeroAddress,
+            ((
+              superToken?.sameAsUnderlying &&
+              PoolTypes[strategyType] === "funding"
+            ) ?
+              undefined
+            : superToken?.id) ?? zeroAddress,
           votingPowerRegistry: zeroAddress, // Zero address is community address by default
           streamingRatePerSecond: streamingRatePerSecond,
         },
