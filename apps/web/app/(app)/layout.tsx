@@ -6,12 +6,14 @@ import {
   Bars3Icon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { newLogo } from "@/assets";
 import { Button, ConnectWallet, ThemeButton } from "@/components";
 import Footer from "@/components/Footer";
+import { useIsPaused } from "@/hooks/useIsPaused";
 
 const CAMPAIGN_BADGE_STORAGE_KEY = "gardensCampaignsBadgeSeen-1";
 
@@ -38,10 +40,18 @@ export function HeadphoneIcon() {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dismissPauseBanner, setDismissPauseBanner] = useState(false);
   const originalBodyOverflow = useRef("");
   const originalHtmlOverflow = useRef("");
   const [showCampaignBadge, setShowCampaignBadge] = useState(true);
   const pathname = usePathname();
+  const { isPaused, pausedUntil } = useIsPaused();
+  const pausedUntilLabel = useMemo(() => {
+    if (pausedUntil == null) return null;
+    return formatDistanceToNow(new Date(pausedUntil * 1000), {
+      addSuffix: false,
+    });
+  }, [pausedUntil]);
   const searchParams = useSearchParams();
   const currentUrl = useMemo(() => {
     const query = searchParams?.toString();
@@ -267,6 +277,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Bootom floating divs */}
+      {isPaused && !dismissPauseBanner && (
+        <div className="fixed top-[96px] left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 rounded-full border border-transparent bg-secondary-soft px-4 py-2 text-sm font-semibold text-secondary-hover-content shadow-lg dark:bg-secondary-dark-base dark:text-secondary-dark-text-hover dark:border-secondary-dark-border">
+          Contracts are in maintenance for {pausedUntilLabel}
+          <button
+            type="button"
+            aria-label="Dismiss maintenance banner"
+            className="inline-flex items-center justify-center rounded-full p-1 hover:bg-secondary-soft-dark/20 dark:hover:bg-secondary-dark-border/30"
+            onClick={() => setDismissPauseBanner(true)}
+          >
+            <XMarkIcon className="h-4 w-4" />
+          </button>
+        </div>
+      )}
       <div
         className="hidden sm:fixed bottom-4 left-4 tooltip tooltip-top-right tooltip-warning z-50 badge bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content cursor-pointer"
         data-tip="️️Disclaimer: our smart contracts have not undergone a third party security audit, use at your own risk."

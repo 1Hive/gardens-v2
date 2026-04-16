@@ -1,5 +1,10 @@
 import React, { FC } from "react";
-import { Arbitrum, Optimism, Polygon } from "@thirdweb-dev/chain-icons";
+import {
+  Arbitrum,
+  Ethereum,
+  Optimism,
+  Polygon,
+} from "@thirdweb-dev/chain-icons";
 import { Address } from "viem";
 import {
   arbitrum,
@@ -8,6 +13,7 @@ import {
   celo,
   Chain,
   gnosis,
+  mainnet,
   optimism,
   optimismSepolia,
   polygon,
@@ -33,7 +39,7 @@ export const CHAINS: Chain[] = [
   gnosis,
   base,
   celo,
-  // mainnet,
+  mainnet,
 ];
 
 // if (process.env.NODE_ENV === "development") {
@@ -47,11 +53,12 @@ export type ChainData = {
   explorer: string;
   blockTime: number;
   confirmations: number;
-  rpcUrl: string;
+  rpcUrl?: string;
   subgraphUrl: string;
   publishedSubgraphUrl?: string;
   superfluidSubgraphUrl?: string;
   publishedSuperfluidSubgraphUrl?: string;
+  superfluidExplorerUrl?: string;
   globalTribunal?: Address;
   arbitrator: Address;
   passportScorer: Address;
@@ -64,6 +71,8 @@ export type ChainData = {
 
 const SUBGRAPH_ARBSEP_VERSION = Subgraph.VERSION_ARBSEP;
 const SUBGRAPH_OPSEP_VERSION = Subgraph.VERSION_OPSEP;
+const SUBGRAPH_ETHSEP_VERSION = Subgraph.VERSION_ETHSEP;
+const SUBGRAPH_VERSION_ETHEREUM = Subgraph.VERSION_ETHEREUM;
 const SUBGRAPH_PRODNET_VERSION = Subgraph.VERSION_PROD;
 
 const getGatewayKey = () => {
@@ -72,6 +81,14 @@ const getGatewayKey = () => {
   // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
   return serverKey || process.env.NEXT_PUBLIC_SUBGRAPH_KEY || "";
 };
+
+const getAlchemyRpcUrl = (network: string) => {
+  const apiKey = process.env.NEXT_PUBLIC_ALCHEMY_KEY;
+  return apiKey ? `https://${network}.g.alchemy.com/v2/${apiKey}` : undefined;
+};
+
+const getRpcUrl = (serverUrl: string | undefined, alchemyUrl?: string) =>
+  serverUrl?.trim() ?? alchemyUrl?.trim() ?? undefined;
 
 const getSuperfluidSubgraphUrls = (publishedId: string) => {
   const gatewayKey = getGatewayKey();
@@ -82,6 +99,9 @@ const getSuperfluidSubgraphUrls = (publishedId: string) => {
       : undefined,
   };
 };
+
+const getSuperfluidExplorerUrl = (networkSlug: string) =>
+  `https://explorer.superfluid.org/${networkSlug}`;
 
 const getSubgraphUrls = (
   publishedId: string,
@@ -125,17 +145,21 @@ export const chainConfigMap: {
     explorer: "https://sepolia.arbiscan.io/",
     blockTime: 12,
     confirmations: 2,
-    rpcUrl: process.env.RPC_URL_ARB_TESTNET!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_ARB_TESTNET,
+      getAlchemyRpcUrl("arb-sepolia"),
+    ),
     ...getSubgraphUrls(
       "BfZYwhZ1rTb22Nah1u6YyXtUtAdgGNtZhW1EBb4mFzAU",
       "gardens-v2---arbitrum-sepolia",
       SUBGRAPH_ARBSEP_VERSION,
       70985,
     ),
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("arbitrum-sepolia"),
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x49222C53695C77a0F8b78Eb42606B893E98DfE6a",
-    passportScorer: "0x2053E225672776deb23Af0A3EBa9CE2c87838a72",
+    passportScorer: "0x6ad70508f44aa0e86e7af80ccc4fc1f160c2df46",
     goodDollar: "0x9DdE3cE47cC11ee04Ea1e2C440116B3De6f11Ed8",
     isTestnet: true,
   },
@@ -146,7 +170,10 @@ export const chainConfigMap: {
     explorer: "https://sepolia-optimism.etherscan.io/",
     blockTime: 2,
     confirmations: 1,
-    rpcUrl: process.env.RPC_URL_OP_TESTNET!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_OP_TESTNET,
+      getAlchemyRpcUrl("opt-sepolia"),
+    ),
     ...getSubgraphUrls(
       "5B7swx86RJEpywgvS63kMLVx9U6RKfERfU5tWYnUuGXe",
       "gardens-v-2-optimism-sepolia",
@@ -155,6 +182,7 @@ export const chainConfigMap: {
     ),
     superfluidSubgraphUrl:
       "https://subgraph-endpoints.superfluid.dev/optimism-sepolia/protocol-v1",
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("optimism-sepolia"),
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xCcbAc15Eb0D8C241D4b6A74E650dE089c292D131",
@@ -162,21 +190,33 @@ export const chainConfigMap: {
     goodDollar: "0xb01AC9015E04ecC424E646eBAb32dfa7670Ae8a6",
     isTestnet: true,
   },
-  // 11155111: {
-  //   id: 11155111,
-  //   name: sepolia.name,
-  //   icon: Ethereum,
-  //   explorer: "https://eth-sepolia.blockscout.com",
-  //   blockTime: 12,
-  //   confirmations: 1, // 3
-  //   rpcUrl: process.env.RPC_URL_ETH_TESTNET!,
-  //   subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP?.replace("/version/latest", "")}/${SUBGRAPH_TESTNET_VERSION}`,
-  //   globalTribunal: "0xc6Eaf449f79B081300F5317122B2Dff3f039ad0b",
-  //   allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
-  //   arbitrator: "0x",
-  //   passportScorer: "0xc137c30ac0f21ce75bb484e88fb8701024f82d25",
-  //   isTestnet: true,
-  // },
+  11155111: {
+    id: 11155111,
+    name: sepolia.name,
+    icon: Ethereum,
+    explorer: "https://sepolia.etherscan.io/",
+    blockTime: 12,
+    confirmations: 1, // 3
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_ETH_TESTNET,
+      getAlchemyRpcUrl("eth-sepolia"),
+    ),
+    ...getSubgraphUrls(
+      "5xWqmgdaKXziaJg4EuV5pzWFCNmX2eRLsHKBissnbDNx",
+      "gardens-v-2-sepolia",
+      SUBGRAPH_ETHSEP_VERSION,
+      70985,
+    ),
+    superfluidSubgraphUrl:
+      "https://subgraph-endpoints.superfluid.dev/eth-sepolia/protocol-v1",
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("eth-sepolia"),
+    globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+    allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+    arbitrator: "0x3678d8f5d4f04cb033b8ab4d85df384d0df9cb08",
+    passportScorer: "0x082cbb29a444f14053787f93f6c7689f14d91377",
+    goodDollar: "0x2946190b615163a34c245ff6661e6172584467bb",
+    isTestnet: true,
+  },
 
   // Prodnets
   42161: {
@@ -186,7 +226,10 @@ export const chainConfigMap: {
     explorer: "https://arbiscan.io",
     blockTime: 12,
     confirmations: 2, // 7
-    rpcUrl: process.env.RPC_URL_ARBITRUM!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_ARBITRUM,
+      getAlchemyRpcUrl("arb-mainnet"),
+    ),
     ...getSubgraphUrls(
       "9ejruFicuLT6hfuXNTnS8UCwxTWrHz4uinesdZu1dKmk",
       "gardens-v2---arbitrum",
@@ -195,7 +238,8 @@ export const chainConfigMap: {
     ...getSuperfluidSubgraphUrls(
       "7hoLgMuj3LcWkUfH5iNWqVn69rmVbk4mrdgx1FX3sa3M",
     ),
-    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("arbitrum-one"),
+    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x1c62F449058BbeeD546823A1a581D28233f7A69c",
     passportScorer: "0x8cd4bA4ad10d85A550fe45d567a49E49e1D23CE1",
@@ -210,7 +254,10 @@ export const chainConfigMap: {
     explorer: "http://optimistic.etherscan.io",
     blockTime: 2,
     confirmations: 2, // 2
-    rpcUrl: process.env.RPC_URL_OPTIMISM!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_OPTIMISM,
+      getAlchemyRpcUrl("opt-mainnet"),
+    ),
     ...getSubgraphUrls(
       "FmcVWeR9xdJyjM53DPuCvEdH24fSXARdq4K5K8EZRZVp",
       "gardens-v2---optimism",
@@ -219,7 +266,8 @@ export const chainConfigMap: {
     ...getSuperfluidSubgraphUrls(
       "48YRvi7PHbX4RJChq4nF8DpmJGZxcvUgwfdf8QoHBXxT",
     ),
-    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("optimism-mainnet"),
+    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xaf6628d7347fc4D65F1D5C69663C875a00c56d9F",
     passportScorer: "0x084a5504dCFeac0ec3E10517247639e50c8DcFFd",
@@ -234,7 +282,10 @@ export const chainConfigMap: {
     explorer: "https://polygonscan.com",
     blockTime: 2.1,
     confirmations: 2, // 4
-    rpcUrl: process.env.RPC_URL_MATIC!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_MATIC,
+      getAlchemyRpcUrl("polygon-mainnet"),
+    ),
     ...getSubgraphUrls(
       "4vsznmRkUGm9DZFBwvC6PDvGPVfVLQcUUr5ExdTNZiUc",
       "gardens-v2---polygon",
@@ -243,7 +294,8 @@ export const chainConfigMap: {
     ...getSuperfluidSubgraphUrls(
       "CvVf1MiypnZhwWZjbxMH9A8nR2qdcfTozC5DQ1cw4X9n",
     ),
-    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("matic"),
+    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x8D9EAed9D3D23EF30ADAA706c8352c5655AEd814",
     passportScorer: "0x190Fa730E6FfC64Ebd0031bE59b3007cC9eE2bB3",
@@ -258,7 +310,10 @@ export const chainConfigMap: {
     explorer: "https://gnosisscan.io",
     blockTime: 5.2,
     confirmations: 2, // 4
-    rpcUrl: process.env.RPC_URL_GNOSIS!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_GNOSIS,
+      getAlchemyRpcUrl("gnosis-mainnet"),
+    ),
     ...getSubgraphUrls(
       "ELGHrYhvJJQrYkVsYWS5iDuFpQ1p834Q2k2kBmUAVZAi",
       "gardens-v2---gnosis",
@@ -267,7 +322,8 @@ export const chainConfigMap: {
     ...getSuperfluidSubgraphUrls(
       "CFe2JWsPy9eiT9B49m2E2gwxdCzWdm5kfYHRXi5VseXV",
     ),
-    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("xdai"),
+    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x92bc0af737f55FF7B677cd942Aafd52934Fc751d",
     passportScorer: "0x20965C5C8a021ac6fFeD5dE7A402f7CEaC3b0A82",
@@ -282,7 +338,10 @@ export const chainConfigMap: {
     explorer: "https://basescan.org",
     blockTime: 2,
     confirmations: 2, // 4
-    rpcUrl: process.env.RPC_URL_BASE!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_BASE,
+      getAlchemyRpcUrl("base-mainnet"),
+    ),
     ...getSubgraphUrls(
       "HAjsxiYJEkV8oDZgVTaJE9NQ2XzgqekFbY99tMGu53eJ",
       "gardens-v2---base",
@@ -291,6 +350,7 @@ export const chainConfigMap: {
     ...getSuperfluidSubgraphUrls(
       "5P6vRdU8BQUKMSc9v5sVDMczBRvURyK7hnrQCKf24PXW",
     ),
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("base-mainnet"),
     globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xab98D1D6Ce18e537715126614278d1A4D26bbc7d",
@@ -306,7 +366,10 @@ export const chainConfigMap: {
     explorer: "https://celoscan.io/",
     blockTime: 1,
     confirmations: 4, // 4
-    rpcUrl: process.env.RPC_URL_CELO!,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_CELO,
+      getAlchemyRpcUrl("celo-mainnet"),
+    ),
     ...getSubgraphUrls(
       "BsXEnGaXdj3CkGRn95bswGcv2mQX7m8kNq7M7WBxxPx8",
       "gardens-v2---celo",
@@ -315,6 +378,7 @@ export const chainConfigMap: {
     ...getSuperfluidSubgraphUrls(
       "DnAAo2aA676F8DYkcUPrRTgpH4smc1Yo7D7BnzC3ErBh",
     ),
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("celo"),
     globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd",
@@ -323,21 +387,34 @@ export const chainConfigMap: {
     isTestnet: false,
     safePrefix: "celo",
   },
-  // 1: {
-  //   id: 1,
-  //   name: mainnet.name,
-  //   icon: Ethereum,
-  //   explorer: "https://eth.blockscout.com",
-  //   blockTime: 12,
-  //   confirmations: 3, // 3
-  //   rpcUrl: process.env.RPC_URL_ETHEREUM!,
-  //   subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
-  //   globalTribunal: "0x",
-  //   allo: "0x",
-  //   arbitrator: "0x",
-  //   passportScorer: "0x",
-  //   isTestnet: false,
-  // },
+  1: {
+    id: 1,
+    name: mainnet.name,
+    icon: Ethereum,
+    explorer: "https://etherscan.io",
+    blockTime: 12,
+    confirmations: 3,
+    rpcUrl: getRpcUrl(
+      process.env.RPC_URL_ETHEREUM,
+      getAlchemyRpcUrl("eth-mainnet"),
+    ),
+    ...getSubgraphUrls(
+      "39E6r8bqUTeyrSb4JWMkqcVBKqeKAwJVp6mPhoDCtgbB",
+      "gardens-v-2-ethereum",
+      SUBGRAPH_VERSION_ETHEREUM,
+    ),
+    ...getSuperfluidSubgraphUrls(
+      "3ALqHuNpxGPi1ecKSzxBQrTiKznoVk9cQYemY2RR5pgd",
+    ),
+    superfluidExplorerUrl: getSuperfluidExplorerUrl("eth-mainnet"),
+    globalTribunal: "0x9a17De1f0caD0c592F656410997E4B685d339029",
+    allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+    arbitrator: "0xbdf24e13e0228fd0f2f432252655d3738c7a015a",
+    passportScorer: "0x4a9f8c35b55aabc45112dadf5b5adf689605b397",
+    goodDollar: "0x8d6131910eb9a74fab60dfebdd414ee76e425c7f",
+    isTestnet: false,
+    safePrefix: "eth",
+  },
 };
 
 export function getConfigByChain(chainId: ChainId): ChainData | undefined {

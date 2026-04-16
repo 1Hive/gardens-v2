@@ -1,18 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { blo } from "blo";
 import Image from "next/image";
 import { RegisterOptions } from "react-hook-form";
-import { Address, isAddress } from "viem";
-import {
-  useEnsAddress,
-  useEnsAvatar,
-  useEnsName,
-  useNetwork,
-  usePublicClient,
-} from "wagmi";
+import { Address, createPublicClient, http, isAddress } from "viem";
+import { useEnsAddress, useEnsAvatar, useEnsName, useNetwork } from "wagmi";
 import { FormInput } from "./FormInput";
 import { LoadingSpinner } from "../LoadingSpinner";
-import { getConfigByChain } from "@/configs/chains";
+import { getChain, getConfigByChain } from "@/configs/chains";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useFlag } from "@/hooks/useFlag";
 import { safeABI } from "@/src/customAbis";
@@ -31,6 +26,7 @@ type Props = {
   className?: string;
   value?: string;
   tooltip?: string;
+  tooltipClassName?: string;
   validateSafe?: boolean;
   validateERC20?: boolean;
   registerOptions?: RegisterOptions;
@@ -52,6 +48,7 @@ export const FormAddressInput = ({
   className,
   value,
   tooltip,
+  tooltipClassName,
   validateSafe = false,
   validateERC20 = false,
   onChange,
@@ -62,9 +59,27 @@ export const FormAddressInput = ({
   ...rest
 }: Props) => {
   const debouncedValue = useDebounce(value, 500);
-  const { chain } = useNetwork();
-  // const connectedChainId = chain?.id;
-  const publicClient = usePublicClient();
+  const { chain: connectedChain } = useNetwork();
+  const chainIdFromPath = useChainIdFromPath();
+  const validationChain = useMemo(
+    () =>
+      (chainIdFromPath != null ? getChain(chainIdFromPath) : undefined) ??
+      (connectedChain?.id != null ? getChain(connectedChain.id) : undefined) ??
+      connectedChain,
+    [chainIdFromPath, connectedChain],
+  );
+  const validationClient = useMemo(() => {
+    if (!validationChain) {
+      return undefined;
+    }
+
+    const rpcUrl = getConfigByChain(validationChain.id)?.rpcUrl?.trim();
+
+    return createPublicClient({
+      chain: validationChain,
+      transport: rpcUrl ? http(rpcUrl) : http(),
+    });
+  }, [validationChain]);
 
   const [inputValue, setInputValue] = useState<string>(value ?? "");
   const [isValidatingSafe, setIsValidatingSafe] = useState<boolean>(false);
@@ -101,22 +116,31 @@ export const FormAddressInput = ({
     if (ensAddress) {
       setInputValue(ensAddress);
       (onChange ?? registerOptions?.onChange)?.({
-        target: { value: ensAddress },
+        target: { name: registerKey, value: ensAddress },
+        currentTarget: { name: registerKey, value: ensAddress },
       } as React.ChangeEvent<HTMLInputElement>);
     }
-  }, [ensAddress]);
+  }, [ensAddress, onChange, registerKey, registerOptions]);
 
   const validateSafeAddress = async (address: string) => {
+    if (bypassSafeCheck) {
+      return true;
+    }
+    
+    if (!validationClient) {
+      return "Unable to validate Safe address without an RPC client.";
+    }
+
     if (
       bypassSafeCheck ||
-      !getConfigByChain(publicClient.chain.id)?.safePrefix
+      getConfigByChain(validationClient.chain.id)?.safePrefix == null
     ) {
       return true;
     }
     try {
       setIsValidatingSafe(true);
       const isSafe = await Promise.all([
-        publicClient?.readContract({
+        validationClient.readContract({
           address: address as Address,
           abi: safeABI,
           functionName: "getOwners",
@@ -131,11 +155,13 @@ export const FormAddressInput = ({
       if (isSafe) {
         return true;
       } else {
-        return `Not a valid Safe address in ${chain?.name} network`;
+        return `Not a valid Safe address in ${validationChain?.name} network`;
       }
-    } catch (err) {
-      console.error(err);
-      return `Not a valid Safe address in ${chain?.name} network`;
+    } catch {
+      console.warn(
+        `Safe validation failed for ${address} on ${validationChain?.name ?? "unknown network"}`,
+      );
+      return `Not a valid Safe address in ${validationChain?.name} network`;
     } finally {
       setIsValidatingSafe(false);
     }
@@ -146,19 +172,20 @@ export const FormAddressInput = ({
       return true;
     }
 
-    if (!Boolean(publicClient)) {
+    const client = validationClient;
+    if (!client) {
       return "Unable to validate token address without an RPC client.";
     }
 
     try {
       setIsValidatingERC20(true);
       const [symbol, decimals] = await Promise.all([
-        publicClient.readContract({
+        client.readContract({
           address: address as Address,
           abi: erc20ABI,
           functionName: "symbol",
         }),
-        publicClient.readContract({
+        client.readContract({
           address: address as Address,
           abi: erc20ABI,
           functionName: "decimals",
@@ -180,26 +207,28 @@ export const FormAddressInput = ({
   const extendedRegisterOptions = {
     ...registerOptions,
     validate: async (validateValue: string) => {
+      const resolvedValue =
+        (isENS(validateValue) ? ensAddress : validateValue) ?? "";
+
       // ENS validation
       if (isENS(validateValue)) {
         if (ensError) return "Invalid ENS name";
         if (!ensAddress) return "Unable to resolve ENS name";
-        return true;
       }
 
       // Address format validation
-      if (!isAddress(validateValue)) {
+      if (!isAddress(resolvedValue ?? "")) {
         return "Invalid Ethereum address format";
       }
 
       // SAFE validation if required
       if (validateSafe) {
-        const isValid = await validateSafeAddress(validateValue);
+        const isValid = await validateSafeAddress(resolvedValue);
         return isValid;
       }
 
       if (validateERC20) {
-        const erc20Validation = await validateErc20Address(validateValue);
+        const erc20Validation = await validateErc20Address(resolvedValue);
         return erc20Validation;
       }
 
@@ -209,6 +238,16 @@ export const FormAddressInput = ({
 
   const isValidInputAddress = isAddress(inputValue ?? "");
   const hasEnsAvatar = Boolean(avatarUrl);
+  const resolvedEnsVisualErrorCleared =
+    errors?.[registerKey]?.message === "Unable to resolve ENS name" &&
+    (Boolean(ensAddress) || isValidInputAddress);
+  const displayErrors =
+    resolvedEnsVisualErrorCleared ?
+      {
+        ...errors,
+        [registerKey]: undefined,
+      }
+    : errors;
 
   return (
     <div className="w-full max-w-[29rem]">
@@ -216,12 +255,13 @@ export const FormAddressInput = ({
         {...rest}
         label={label}
         tooltip={tooltip}
+        tooltipClassName={tooltipClassName}
         type="text"
         registerKey={registerKey}
         register={register}
         required={required}
         placeholder={placeholder}
-        errors={errors}
+        errors={displayErrors}
         disabled={disabled}
         readOnly={readOnly}
         className={`${className} pr-12`}

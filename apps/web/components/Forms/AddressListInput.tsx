@@ -21,8 +21,6 @@ import { mainnet } from "wagmi";
 import { FormAddressInput } from "./FormAddressInput";
 import { Button } from "../Button";
 import { InfoWrapper } from "../InfoWrapper";
-import { useFlag } from "@/hooks/useFlag";
-import { PointSystems } from "@/types";
 import { isENS } from "@/utils/web3";
 
 type AddressListInputProps = {
@@ -38,7 +36,7 @@ type AddressListInputProps = {
   registerOptions?: RegisterOptions;
   className?: string;
   tooltip?: string;
-  pointSystemType: number;
+  readOnly?: boolean;
 };
 
 export function AddressListInput({
@@ -53,7 +51,7 @@ export function AddressListInput({
   registerOptions,
   className,
   tooltip,
-  pointSystemType,
+  readOnly = false,
 }: AddressListInputProps) {
   const [addresses, setAddresses] = useState<Address[]>(
     Array.isArray(initialAddresses) ? initialAddresses : [],
@@ -63,10 +61,6 @@ export function AddressListInput({
   const [inputMode, setInputMode] = useState<"single" | "bulk">("single");
   const [errorMessage, setErrorMessage] = useState("");
   const [ensLoading, setEnsLoading] = useState(false);
-  const allowNoProtectionCheat = useFlag("allowNoProtection");
-
-  const allowNoProtection =
-    PointSystems[pointSystemType] === "unlimited" || allowNoProtectionCheat;
 
   const isValidEthereumAddress = (address: string) => {
     return /^0x[a-fA-F0-9]{40}$/.test(address);
@@ -257,86 +251,91 @@ export function AddressListInput({
       )}
       {subLabel && <p className="mb-1 text-xs">{subLabel}</p>}
 
-      <div
-        className={`mb-4 flex gap-1 rounded-xl bg-neutral-soft p-1 text-neutral-content dark:bg-[#1f1f1f] dark:text-neutral-soft-content ${
-          !label && "mt-4"
-        }`}
-      >
-        <button
-          type="button"
-          className={`flex-1 rounded-lg px-3 py-2 text-center text-sm font-semibold transition-colors ${
-            inputMode === "single" ?
-              "bg-neutral text-neutral-content shadow-sm dark:bg-[#2c2c2c] dark:text-white"
-            : "text-neutral-soft-content hover:bg-neutral/60 dark:text-neutral-soft-2"
-          }`}
-          onClick={() => setInputMode("single")}
-        >
-          Single Input
-        </button>
-        <button
-          type="button"
-          className={`flex-1 rounded-lg px-3 py-2 text-center text-sm font-semibold transition-colors ${
-            inputMode === "bulk" ?
-              "bg-neutral text-neutral-content shadow-sm dark:bg-[#2c2c2c] dark:text-white"
-            : "text-neutral-soft-content hover:bg-neutral/60 dark:text-neutral-soft-2"
-          }`}
-          onClick={() => setInputMode("bulk")}
-        >
-          Bulk Input
-        </button>
-      </div>
-      {inputMode === "single" ?
-        <div
-          className="flex mb-4 gap-2"
-          onKeyUp={(e) => {
-            if (e.key === "Enter") {
-              addAddresses(newAddress);
-              e.preventDefault();
-              e.stopPropagation();
-            }
-          }}
-        >
-          <FormAddressInput
-            placeholder={placeholder}
-            required={required && addresses.length === 0}
-            onChange={(e) => setNewAddress(e.target.value)}
-            value={newAddress}
-            className="w-[22rem] sm:w-full"
-          />
-          <Button
-            type="button"
-            btnStyle="outline"
-            className="!py-3 !px-4 flex items-center"
-            onClick={() => addAddresses(newAddress)}
-            tooltip="Add"
-            icon={<PlusIcon className="w-5 h-5" />}
-          />
-        </div>
-      : <div className="mb-4 flex flex-col justify-end">
-          <textarea
-            value={bulkAddresses}
-            required={required && addresses.length === 0}
-            onChange={(e) => setBulkAddresses(e.target.value)}
-            placeholder={`Enter multiple Ethereum addresses 
-(one per line or comma-separated)`}
-            className={`textarea textarea-info dark:bg-primary-soft-dark w-full h-24 mb-2 ${
-              className ?? ""
+      {!readOnly && (
+        <>
+          <div
+            className={`mb-4 flex gap-1 rounded-xl bg-neutral-soft p-1 text-neutral-content dark:bg-[#1f1f1f] dark:text-neutral-soft-content ${
+              !label && "mt-4"
             }`}
-            onKeyDown={handleSubmit}
-          />
-          <Button
-            type="button"
-            btnStyle="filled"
-            className="w-full"
-            onClick={() => addAddresses(bulkAddresses)}
-            disabled={!bulkAddresses.trim()}
-            tooltip="Add Bulk Addresses"
-            isLoading={ensLoading}
           >
-            <ArrowUpTrayIcon className="w-5 h-5 stroke-2" /> Add Bulk Addresses
-          </Button>
-        </div>
-      }
+            <button
+              type="button"
+              className={`flex-1 rounded-lg px-3 py-2 text-center text-sm font-semibold transition-colors ${
+                inputMode === "single" ?
+                  "bg-neutral text-neutral-content shadow-sm dark:bg-[#2c2c2c] dark:text-white"
+                : "text-neutral-soft-content hover:bg-neutral/60 dark:text-neutral-soft-2"
+              }`}
+              onClick={() => setInputMode("single")}
+            >
+              Single Input
+            </button>
+            <button
+              type="button"
+              className={`flex-1 rounded-lg px-3 py-2 text-center text-sm font-semibold transition-colors ${
+                inputMode === "bulk" ?
+                  "bg-neutral text-neutral-content shadow-sm dark:bg-[#2c2c2c] dark:text-white"
+                : "text-neutral-soft-content hover:bg-neutral/60 dark:text-neutral-soft-2"
+              }`}
+              onClick={() => setInputMode("bulk")}
+            >
+              Bulk Input
+            </button>
+          </div>
+          {inputMode === "single" ?
+            <div
+              className="flex mb-4 gap-2"
+              onKeyUp={(e) => {
+                if (e.key === "Enter") {
+                  addAddresses(newAddress);
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
+              }}
+            >
+              <FormAddressInput
+                placeholder={placeholder}
+                required={required && addresses.length === 0}
+                onChange={(e) => setNewAddress(e.target.value)}
+                value={newAddress}
+                className="w-[22rem] sm:w-full"
+              />
+              <Button
+                type="button"
+                btnStyle="outline"
+                className="!py-3 !px-4 flex items-center"
+                onClick={() => addAddresses(newAddress)}
+                tooltip="Add"
+                icon={<PlusIcon className="w-5 h-5" />}
+              />
+            </div>
+          : <div className="mb-4 flex flex-col justify-end">
+              <textarea
+                value={bulkAddresses}
+                required={required && addresses.length === 0}
+                onChange={(e) => setBulkAddresses(e.target.value)}
+                placeholder={`Enter multiple Ethereum addresses 
+(one per line or comma-separated)`}
+                className={`textarea textarea-info dark:bg-primary-soft-dark w-full h-24 mb-2 ${
+                  className ?? ""
+                }`}
+                onKeyDown={handleSubmit}
+              />
+              <Button
+                type="button"
+                btnStyle="filled"
+                className="w-full"
+                onClick={() => addAddresses(bulkAddresses)}
+                disabled={!bulkAddresses.trim()}
+                tooltip="Add Bulk Addresses"
+                isLoading={ensLoading}
+              >
+                <ArrowUpTrayIcon className="w-5 h-5 stroke-2" /> Add Bulk
+                Addresses
+              </Button>
+            </div>
+          }
+        </>
+      )}
 
       {errorMessage && (
         <div className="text-error flex items-center gap-2 my-2 [&>svg]:stroke-2">
@@ -353,42 +352,39 @@ export function AddressListInput({
           : `${addresses.length} address${addresses.length !== 1 ? "es" : ""}`}
           )
         </label>
-        <div className="flex gap-2 items-center flex-wrap">
-          <Button
-            type="button"
-            btnStyle="outline"
-            className={"font-normal text-[14px] leading-4"}
-            onClick={handleAllowEveryone}
-            disabled={!allowNoProtection}
-            icon={<UserGroupIcon className="w-4 h-4" />}
-            tooltip={
-              !allowNoProtection ?
-                "Only unlimited points system pools\n can allow everyone"
-              : "Allow everyone in the pool"
-            }
-          >
-            Everyone
-          </Button>
-          <Button
-            type="button"
-            btnStyle="outline"
-            color="danger"
-            onClick={clearAllAddresses}
-            forceShowTooltip
-            tooltip="Clear All"
-          >
-            <TrashIcon className="w-4 h-4" />
-          </Button>
-          <Button
-            type="button"
-            btnStyle="outline"
-            onClick={exportAddresses}
-            forceShowTooltip
-            tooltip="Export"
-          >
-            <ArrowDownTrayIcon className="w-4 h-4" />
-          </Button>
-        </div>
+        {!readOnly && (
+          <div className="flex gap-2 items-center flex-wrap">
+            <Button
+              type="button"
+              btnStyle="outline"
+              className={"font-normal text-[14px] leading-4"}
+              onClick={handleAllowEveryone}
+              icon={<UserGroupIcon className="w-4 h-4" />}
+              tooltip="Allow everyone in the pool"
+            >
+              Everyone
+            </Button>
+            <Button
+              type="button"
+              btnStyle="outline"
+              color="danger"
+              onClick={clearAllAddresses}
+              forceShowTooltip
+              tooltip="Clear All"
+            >
+              <TrashIcon className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              btnStyle="outline"
+              onClick={exportAddresses}
+              forceShowTooltip
+              tooltip="Export"
+            >
+              <ArrowDownTrayIcon className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
       </div>
       {addresses.length > 0 && (
         <ul className="space-y-2 max-h-60 overflow-y-auto border1 p-2 rounded-xl">
@@ -414,7 +410,7 @@ export function AddressListInput({
                   </div>
                 }
               </div>
-              {address !== zeroAddress && (
+              {!readOnly && address !== zeroAddress && (
                 <Button
                   type="button"
                   btnStyle="link"

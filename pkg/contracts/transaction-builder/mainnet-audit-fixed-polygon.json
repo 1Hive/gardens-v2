@@ -1,0 +1,29 @@
+{
+  "chain": "polygon",
+  "factory": {
+    "registryCommunityTemplate": {
+      "value": "0x45cc16fe2635a30bd41264756da0061fbbf180d7",
+      "matchesExpected": true,
+      "error": null
+    },
+    "strategyTemplate": {
+      "value": "0xde613a01542ed495304711214bb42bdc896b6dbb",
+      "matchesExpected": true,
+      "error": null
+    }
+  },
+  "communityMismatch": [],
+  "communityErrors": [],
+  "ownerMismatch": [],
+  "vprZero": [],
+  "resetNonCallable": [],
+  "strategyErrors": [],
+  "summary": {
+    "communityMismatch": 0,
+    "communityErrors": 0,
+    "ownerMismatch": 0,
+    "vprZero": 0,
+    "resetNonCallable": 0,
+    "strategyErrors": 0
+  }
+}

@@ -2,9 +2,14 @@
 pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
+import {CVStreamingBase} from "../CVStreamingStorage.sol";
 import {IArbitrator} from "../../interfaces/IArbitrator.sol";
-import {Proposal, ArbitrableConfig, CVParams} from "../ICVStrategy.sol";
+import {IVotingPowerRegistry} from "../../interfaces/IVotingPowerRegistry.sol";
+import {IRegistryFactory} from "../../IRegistryFactory.sol";
+import {Proposal, ArbitrableConfig, CVParams, ProposalType, ProposalStatus} from "../ICVStrategy.sol";
+import {LibDiamond} from "../../diamonds/libraries/LibDiamond.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title CVAdminFacet
@@ -12,7 +17,7 @@ import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Librar
  * @dev This facet is called via delegatecall from CVStrategy
  *      CRITICAL: Inherits storage layout from CVStrategyBaseFacet
  */
-contract CVAdminFacet is CVStrategyBaseFacet {
+contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
     using SuperTokenV1Library for ISuperToken;
 
     /*|--------------------------------------------|*/
@@ -20,6 +25,13 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
     error SuperfluidGDAConnectFailed(address gda, address superToken, address caller); // 0x9bd2355f
     error SuperfluidGDADisconnectFailed(address gda, address superToken, address caller); // 0x3746bbff
+    error VotingPowerRegistryNotAllowed(address target);
+    error ArbitratorNotAllowed(address target);
+    error RebalanceCallFailed();
+    error ProposalActive(uint256 proposalId);
+    error SuperfluidUnderlyingTokenMismatch(address expectedUnderlying, address actualUnderlying);
+    error ApproveFailed(address token, address spender, uint256 amount);
+    error StreamingRateOverflow(uint256 streamingRatePerSecond);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -37,14 +49,17 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     event AllowlistMembersRemoved(uint256 poolId, address[] members);
     event AllowlistMembersAdded(uint256 poolId, address[] members);
     event SuperfluidTokenUpdated(address superfluidToken);
+    event SuperfluidStreamingRateUpdated(uint256 streamingRatePerSecond);
     event SuperfluidGDAConnected(address indexed gda, address indexed by);
     event SuperfluidGDADisconnected(address indexed gda, address indexed by);
     event PointsDeactivated(address member);
+    event VotingPowerRegistryUpdated(address indexed oldRegistry, address indexed newRegistry);
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0xd5b7cc54
     function setPoolParams(
         ArbitrableConfig memory _arbitrableConfig,
         CVParams memory _cvParams,
@@ -53,18 +68,74 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         address[] memory _membersToRemove,
         address _superfluidToken
     ) external {
+        _setPoolParamsCore(
+            _arbitrableConfig,
+            _cvParams,
+            _sybilScoreThreshold,
+            _membersToAdd,
+            _membersToRemove,
+            _superfluidToken,
+            streamingRatePerSecond
+        );
+    }
+
+    // Sig: 0x2bbe0cae
+    function setPoolParams(
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
+        uint256 _sybilScoreThreshold,
+        address[] memory _membersToAdd,
+        address[] memory _membersToRemove,
+        address _superfluidToken,
+        uint256 _streamingRatePerSecond
+    ) external {
+        _setPoolParamsCore(
+            _arbitrableConfig,
+            _cvParams,
+            _sybilScoreThreshold,
+            _membersToAdd,
+            _membersToRemove,
+            _superfluidToken,
+            _streamingRatePerSecond
+        );
+    }
+
+    function _setPoolParamsCore(
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
+        uint256 _sybilScoreThreshold,
+        address[] memory _membersToAdd,
+        address[] memory _membersToRemove,
+        address _superfluidToken,
+        uint256 _streamingRatePerSecond
+    ) internal {
         onlyCouncilSafe();
 
+        uint256 previousStreamingRatePerSecond = streamingRatePerSecond;
+        ISuperToken previousSuperfluidToken = superfluidToken;
+
+        if (proposalType == ProposalType.Streaming && address(previousSuperfluidToken) != _superfluidToken) {
+            _ensureNoUnclosedStreamingProposals();
+            _migrateStreamingTokenBalance(previousSuperfluidToken, ISuperToken(_superfluidToken));
+        }
+
         superfluidToken = ISuperToken(_superfluidToken);
+        streamingRatePerSecond = _streamingRatePerSecond;
         emit SuperfluidTokenUpdated(_superfluidToken);
+        emit SuperfluidStreamingRateUpdated(_streamingRatePerSecond);
 
         _setPoolParams(_arbitrableConfig, _cvParams, _membersToAdd, _membersToRemove);
 
         if (address(sybilScorer) != address(0) && _sybilScoreThreshold > 0) {
             sybilScorer.modifyThreshold(address(this), _sybilScoreThreshold);
         }
+
+        if (proposalType == ProposalType.Streaming && previousStreamingRatePerSecond != _streamingRatePerSecond) {
+            _updateStreamingFlowRateOnly();
+        }
     }
 
+    // Sig: 0x924e6704
     function connectSuperfluidGDA(address gda) external {
         onlyCouncilSafeOrMember();
         ISuperToken supertoken =
@@ -76,6 +147,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         emit SuperfluidGDAConnected(gda, msg.sender);
     }
 
+    // Sig: 0xc69271ec
     function disconnectSuperfluidGDA(address gda) external {
         onlyCouncilSafeOrMember();
         ISuperToken supertoken =
@@ -88,6 +160,29 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     }
 
     /*|--------------------------------------------|*/
+    /*|      VOTING POWER REGISTRY MANAGEMENT     |*/
+    /*|--------------------------------------------|*/
+
+    /// @notice Update the voting power registry for this pool
+    /// @dev Only callable by council safe.
+    ///      Registry must be registered on RegistryFactory
+    function setVotingPowerRegistry(address _registry) public {
+        onlyCouncilSafe();
+
+        if (_registry != address(0) && _registry != address(registryCommunity)) {
+            if (!IRegistryFactory(registryCommunity.registryFactory()).isContractRegistered(_registry)) {
+                revert VotingPowerRegistryNotAllowed(_registry);
+            }
+        }
+
+        address oldRegistry = address(votingPowerRegistry);
+        votingPowerRegistry = _registry == address(0)
+            ? IVotingPowerRegistry(address(registryCommunity))
+            : IVotingPowerRegistry(_registry);
+        emit VotingPowerRegistryUpdated(oldRegistry, address(votingPowerRegistry));
+    }
+
+    /*|--------------------------------------------|*/
     /*|              INTERNAL HELPERS              |*/
     /*|--------------------------------------------|*/
 
@@ -97,6 +192,13 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         address[] memory membersToAdd,
         address[] memory membersToRemove
     ) internal {
+        if (
+            address(_arbitrableConfig.arbitrator) != address(0)
+                && !IRegistryFactory(registryCommunity.registryFactory()).isContractRegistered(address(_arbitrableConfig.arbitrator))
+        ) {
+            revert ArbitratorNotAllowed(address(_arbitrableConfig.arbitrator));
+        }
+
         if (membersToAdd.length > 0) {
             _addToAllowList(membersToAdd);
         }
@@ -145,6 +247,72 @@ contract CVAdminFacet is CVStrategyBaseFacet {
         }
     }
 
+    function _ensureNoUnclosedStreamingProposals() internal view {
+        for (uint256 i = 1; i <= proposalCounter; i++) {
+            Proposal storage proposal = proposals[i];
+            if (proposal.proposalId == 0) {
+                continue;
+            }
+            if (
+                proposal.proposalStatus != ProposalStatus.Cancelled
+                    && proposal.proposalStatus != ProposalStatus.Rejected
+                    && proposal.proposalStatus != ProposalStatus.Executed
+            ) {
+                revert ProposalActive(i);
+            }
+        }
+    }
+
+    function _migrateStreamingTokenBalance(ISuperToken previousToken, ISuperToken nextToken) internal {
+        if (
+            address(previousToken) == address(0) || address(nextToken) == address(0)
+                || address(previousToken) == address(nextToken)
+        ) {
+            return;
+        }
+
+        uint256 previousBalance = previousToken.balanceOf(address(this));
+        if (previousBalance == 0) {
+            return;
+        }
+
+        previousToken.downgrade(previousBalance);
+
+        address poolToken = allo.getPool(poolId).token;
+        address nextUnderlyingToken = nextToken.getUnderlyingToken();
+        if (nextUnderlyingToken != poolToken) {
+            revert SuperfluidUnderlyingTokenMismatch(poolToken, nextUnderlyingToken);
+        }
+
+        uint256 unwrappedBalance = IERC20(poolToken).balanceOf(address(this));
+        if (unwrappedBalance == 0) {
+            return;
+        }
+
+        if (!IERC20(poolToken).approve(address(nextToken), unwrappedBalance)) {
+            revert ApproveFailed(poolToken, address(nextToken), unwrappedBalance);
+        }
+
+        nextToken.upgrade(unwrappedBalance);
+    }
+
+    function _updateStreamingFlowRateOnly() internal {
+        if (address(superfluidToken) == address(0) || address(superfluidGDA) == address(0)) {
+            return;
+        }
+
+        uint256 requestedFlowRate = streamingRatePerSecond;
+        if (requestedFlowRate > uint256(uint96(type(int96).max))) {
+            revert StreamingRateOverflow(requestedFlowRate);
+        }
+
+        int96 currentFlowRate = superfluidToken.getGDAFlowRate(address(this), superfluidGDA);
+        int96 actualFlowRate = superfluidToken.distributeFlow(superfluidGDA, int96(uint96(requestedFlowRate)));
+        if (currentFlowRate != actualFlowRate) {
+            emit StreamRateUpdated(address(superfluidGDA), actualFlowRate > 0 ? uint256(uint96(actualFlowRate)) : 0);
+        }
+    }
+
     function _addToAllowList(address[] memory members) internal {
         bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
 
@@ -176,7 +344,7 @@ contract CVAdminFacet is CVStrategyBaseFacet {
     }
 
     function _deactivatePoints(address _member) internal {
-        totalPointsActivated -= registryCommunity.getMemberPowerInStrategy(_member, address(this));
+        totalPointsActivated -= votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
         // remove support from all proposals
         _withdraw(_member);
@@ -196,5 +364,6 @@ contract CVAdminFacet is CVStrategyBaseFacet {
             }
         }
         totalVoterStakePct[_member] = 0;
+        delete voterStakedProposals[_member];
     }
 }

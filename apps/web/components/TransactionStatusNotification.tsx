@@ -18,7 +18,12 @@ type Props = {
   message: React.ReactNode;
   status: TransactionStatus;
   contractName?: React.ReactNode;
+  showContractName?: boolean;
   showClickToExplorer?: boolean;
+  auxiliaryLink?: {
+    href: string;
+    label: React.ReactNode;
+  };
   index?: number;
 };
 
@@ -41,15 +46,27 @@ const statusToTextColor: Record<TransactionStatus, string> = {
 export function TransactionStatusNotification({
   message,
   status,
+  contractName,
+  showContractName = false,
   showClickToExplorer,
+  auxiliaryLink,
   index,
 }: Props) {
   const chain = useChainFromPath();
   const icon = statusToIcon[status];
   const textColor = statusToTextColor[status];
-
+  const hasContractName =
+    contractName !== undefined &&
+    contractName !== null &&
+    contractName !== false;
+  const hasMessage =
+    message !== undefined && message !== null && message !== false;
   const textClass =
     showClickToExplorer ? textColor : "dark:text-neutral-inverted-content";
+  const contractNameClass =
+    status === "idle" ?
+      "text-neutral-content/70 dark:text-neutral-inverted-content/70"
+    : "text-neutral-content dark:text-neutral-inverted-content";
 
   return (
     <div
@@ -73,11 +90,28 @@ export function TransactionStatusNotification({
         </div>
       )}
       <div className="flex flex-col gap-1 min-w-0">
-        <div
-          className={`${textClass} font-medium text-base break-words whitespace-normal`}
-        >
-          {message}
-        </div>
+        {showContractName && hasContractName && (
+          <div
+            className={`font-medium text-base break-words whitespace-normal ${contractNameClass}`}
+          >
+            {contractName}
+          </div>
+        )}
+        {hasMessage && (
+          <div className={`${textClass} text-sm break-words whitespace-normal`}>
+            {message}
+          </div>
+        )}
+        {auxiliaryLink && (
+          <a
+            href={auxiliaryLink.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-fit text-sm italic underline underline-offset-2"
+          >
+            {auxiliaryLink.label}
+          </a>
+        )}
         {chain?.blockExplorers?.default.url && showClickToExplorer && (
           <div className="w-full text-sm italic">
             Click to see in block explorer

@@ -3,10 +3,17 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { Address, createPublicClient, http, isAddress, parseUnits } from "viem";
-import { erc20ABI, useNetwork, useSwitchNetwork } from "wagmi";
+import {
+  Address,
+  createPublicClient,
+  http,
+  isAddress,
+  parseUnits,
+  zeroAddress,
+} from "viem";
+import { erc20ABI, useNetwork } from "wagmi";
 import { getRegistryFactoryDataDocument } from "#/subgraph/.graphclient";
 import { getRegistryFactoryDataQuery } from "#/subgraph/.graphclient";
 import FormAddressInput from "./FormAddressInput";
@@ -16,10 +23,16 @@ import { FormPreview, FormRow } from "./FormPreview";
 import { FormSelect } from "./FormSelect";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { Button } from "@/components";
-import { chainConfigMap, ChainIcon } from "@/configs/chains";
+import {
+  chainConfigMap,
+  ChainIcon,
+  getChain,
+  getConfigByChain,
+} from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
@@ -37,7 +50,6 @@ import { getViemChain } from "@/utils/web3";
 
 // Constants
 const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** 18;
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 type FormInputs = {
   title: string;
@@ -69,10 +81,17 @@ export const CommunityForm = () => {
     handleSubmit,
     formState: { errors },
     getValues,
+    setError,
     setValue,
     trigger,
     watch,
-  } = useForm<FormInputs>({ mode: "onBlur" });
+  } = useForm<FormInputs>({
+    mode: "onBlur",
+    defaultValues: {
+      feeReceiver: "",
+      councilSafe: "",
+    },
+  });
 
   // States and contexts
   const selectedChainId = watch("chainId");
@@ -80,14 +99,33 @@ export const CommunityForm = () => {
   const connectedChainId = chain?.id;
   const tokenAddress = watch("tokenAddress");
   const councilSafe = watch("councilSafe");
+  const feeAmount = watch("feeAmount");
+  const feeReceiver = watch("feeReceiver");
   const { publish } = usePubSubContext();
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const publicClient = useMemo(() => {
+    if (!selectedChainId) {
+      return undefined;
+    }
+
+    const selectedChain = getChain(selectedChainId);
+    if (!selectedChain) {
+      return undefined;
+    }
+
+    const rpcUrl = getConfigByChain(selectedChainId)?.rpcUrl?.trim();
+
+    return createPublicClient({
+      chain: selectedChain,
+      transport: rpcUrl ? http(rpcUrl) : http(),
+    });
+  }, [selectedChainId]);
   const pathname = usePathname();
   const { isConnected, tooltipMessage } = useDisableButtons();
-  const { switchNetwork, data: switchNetworkData } = useSwitchNetwork();
+  const { switchNetwork, data: switchNetworkData } = useAppSwitchNetwork();
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
   const [tokenIsFetching, setTokenIsFetching] = useState<boolean>(false);
   const normalizedChainId = Number.isFinite(Number(selectedChainId)) ?
@@ -111,6 +149,15 @@ export const CommunityForm = () => {
       trigger("tokenAddress");
     }
   }, [switchNetworkData?.id, connectedChainId, selectedChainId]);
+
+  useEffect(() => {
+    if (!councilSafe || feeReceiver?.trim().length) return;
+    setValue("feeReceiver", councilSafe, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
+  }, [councilSafe, feeReceiver, setValue]);
 
   // Registry factory data query
   const { data: registryFactoryData } =
@@ -230,14 +277,10 @@ export const CommunityForm = () => {
         containerId: getValues("tokenAddress"),
         id: newCommunityAddr,
       });
-      if (pathname) {
+      if (selectedChainId) {
         router.push(
-          pathname?.replace(
-            "/create-community",
-            `/${selectedChainId}/${tokenAddress}/${newCommunityAddr}?${QUERY_PARAMS.communityPage.newCommunity}=true`,
-          ),
+          `/gardens/${selectedChainId}/${newCommunityAddr.toLowerCase()}?${QUERY_PARAMS.communityPage.newCommunity}=true`,
         );
-        setLoading(false);
       }
     },
     chainId: selectedChainId,
@@ -275,11 +318,7 @@ export const CommunityForm = () => {
       setLoading(true);
 
       // Switch network if necessary
-      if (
-        selectedChainId &&
-        switchNetwork &&
-        selectedChainId !== connectedChainId
-      ) {
+      if (selectedChainId && selectedChainId !== connectedChainId) {
         try {
           await switchNetwork(selectedChainId);
           // Wait for network switch to complete
@@ -302,7 +341,7 @@ export const CommunityForm = () => {
       }
 
       // Prepare transaction data
-      const govTokenAddr = getValues("tokenAddress") as Address;
+      const govTokenAddr = getValues("tokenAddress");
       const communityName = previewData.title;
       const stakeAmount = parseUnits(
         previewData.stakeAmount.toString(),
@@ -313,9 +352,48 @@ export const CommunityForm = () => {
         CV_PERCENTAGE_SCALE_DECIMALS,
       );
 
-      const communityFeeReceiver = previewData.feeReceiver || ZERO_ADDRESS;
-      const councilSafeAddress = previewData.councilSafe;
+      const hasCommunityFee = communityFeeAmount > 0n;
+      const feeReceiverAddress = getValues("feeReceiver").trim();
+      const communityFeeReceiver =
+        hasCommunityFee && isAddress(feeReceiverAddress) ?
+          feeReceiverAddress
+        : zeroAddress;
+      const councilSafeAddress = getValues("councilSafe").trim();
       const isKickMemberEnabled = previewData.isKickMemberEnabled;
+
+      if (!isAddress(govTokenAddr)) {
+        setError("tokenAddress", {
+          type: "manual",
+          message: "Invalid community token address",
+        });
+        setShowPreview(false);
+        setLoading(false);
+        return;
+      }
+
+      if (!isAddress(councilSafeAddress)) {
+        setError("councilSafe", {
+          type: "manual",
+          message: "Invalid council Safe address",
+        });
+        setShowPreview(false);
+        setLoading(false);
+        return;
+      }
+
+      if (hasCommunityFee && !isAddress(feeReceiverAddress)) {
+        setError("feeReceiver", {
+          type: "manual",
+          message: "Invalid community fee receiver address",
+        });
+        setShowPreview(false);
+        setLoading(false);
+        return;
+      }
+
+      if (!registryFactoryAddr || !isAddress(registryFactoryAddr)) {
+        throw new Error("Invalid registry factory address");
+      }
 
       write?.({
         args: [
@@ -326,7 +404,7 @@ export const CommunityForm = () => {
             _registerStakeAmount: stakeAmount,
             _communityFee: communityFeeAmount,
             _councilSafe: councilSafeAddress as Address,
-            _gardenToken: govTokenAddr as Address,
+            _gardenToken: govTokenAddr,
             _isKickEnabled: isKickMemberEnabled,
             _nonce: 0n,
             _registryFactory: registryFactoryAddr,
@@ -345,6 +423,7 @@ export const CommunityForm = () => {
     connectedChainId,
     switchNetwork,
     getValues,
+    setError,
     tokenData?.decimals,
     registryFactoryAddr,
     write,
@@ -357,7 +436,13 @@ export const CommunityForm = () => {
     }
 
     return Object.entries(previewData)
-      .filter(([key]) => formRowTypes[key])
+      .filter(([key]) => {
+        if (!Boolean(formRowTypes[key])) return false;
+        if (key === "feeReceiver") {
+          return Number(previewData.feeAmount || 0) > 0;
+        }
+        return true;
+      })
       .map(([key, value]) => {
         const formRow = formRowTypes[key];
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
@@ -521,23 +606,25 @@ export const CommunityForm = () => {
               tooltip="A percentage fee applied from the membership stake amount when joining a community."
             />
           </div>
-          <div className="flex flex-col">
-            <FormInput
-              label="Community fee Receiver address"
-              register={register}
-              registerOptions={{
-                pattern: {
-                  value: ethAddressRegEx,
-                  message: "Invalid Eth Address",
-                },
-              }}
-              errors={errors}
-              registerKey="feeReceiver"
-              placeholder="0x.."
-              type="text"
-              tooltip="Safe or Ethereum address that receives the fees paid by members."
-            />
-          </div>
+          {Number(feeAmount || 0) > 0 && (
+            <div className="flex flex-col">
+              <FormInput
+                label="Community fee Receiver address"
+                register={register}
+                registerOptions={{
+                  pattern: {
+                    value: ethAddressRegEx,
+                    message: "Invalid Eth Address",
+                  },
+                }}
+                errors={errors}
+                registerKey="feeReceiver"
+                placeholder="0x.."
+                type="text"
+                tooltip="Safe or Ethereum address that receives the fees paid by members."
+              />
+            </div>
+          )}
           <div className="flex flex-col">
             <FormAddressInput
               tooltip="The moderators of the community. Choose a Safe address that can create pools and manage settings in the community."
@@ -594,7 +681,11 @@ export const CommunityForm = () => {
           </div>
         </div>
       }
-      <div className="flex w-full items-center justify-center py-6">
+      <div
+        className={`flex w-full items-center py-6 ${
+          showPreview ? "justify-center" : "justify-end"
+        }`}
+      >
         {showPreview ?
           <div className="flex items-center gap-10">
             <Button onClick={handleBackToEdit} btnStyle="outline">

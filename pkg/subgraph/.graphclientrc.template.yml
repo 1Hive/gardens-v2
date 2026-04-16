@@ -2,6 +2,6 @@ sources:
   - name: gv2
     handler:
       graphql:
-        endpoint: https://api.studio.thegraph.com/query/70985/gardens-v-2-optimism-sepolia/version/latest
+        endpoint: https://api.studio.thegraph.com/query/70985/gardens-v-2-sepolia/{{VERSION_ETHSEP}}
 documents:
   - ./src/query/queries.graphql

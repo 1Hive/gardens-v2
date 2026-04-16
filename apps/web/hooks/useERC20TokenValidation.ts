@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Address, isAddress } from "viem";
-import { useNetwork, useToken } from "wagmi";
+import { erc20ABI } from "wagmi";
+import { usePreferredReadClient } from "./usePreferredReadClient";
+import { useResolvedChainId } from "./useResolvedChainId";
 
 interface UseERC20ValidationProps {
   address?: Address | string;
@@ -24,18 +26,57 @@ export function useERC20Validation({
   enabled = true,
   chainId,
 }: UseERC20ValidationProps) {
-  const { chain } = useNetwork();
+  const resolvedChainId = useResolvedChainId(chainId);
+  const readClient = usePreferredReadClient(resolvedChainId);
+  const [data, setData] = useState<TokenData | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   // Prepare the address for validation
   const validAddress =
     !address || !isAddress(address) ? undefined : (address as Address);
 
-  // Use wagmi's useToken hook
-  const { data, isLoading, error, refetch } = useToken({
-    address: validAddress,
-    enabled: !!validAddress && enabled && !!chain?.id,
-    chainId: chainId || chain?.id,
-  });
+  const canRead = !!validAddress && enabled && !!resolvedChainId && !!readClient;
+
+  const refetch = async () => {
+    if (!canRead) {
+      setData(undefined);
+      setError(null);
+      return { data: undefined };
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const [symbol, decimals] = await Promise.all([
+        readClient.readContract({
+          address: validAddress,
+          abi: erc20ABI,
+          functionName: "symbol",
+        }),
+        readClient.readContract({
+          address: validAddress,
+          abi: erc20ABI,
+          functionName: "decimals",
+        }),
+      ]);
+
+      const nextData = { symbol, decimals };
+      setData(nextData);
+      return { data: nextData };
+    } catch (readError) {
+      setData(undefined);
+      setError(readError as Error);
+      return { data: undefined };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void refetch();
+  }, [validAddress, enabled, resolvedChainId, readClient]);
 
   const tokenData: TokenData = {
     symbol: data?.symbol,

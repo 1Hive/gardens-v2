@@ -1,4 +1,4 @@
-name: Lint
+name: Build, Lint and Test
 
 permissions:
   contents: read
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: Lint
+    name: Build, Lint and Test
     timeout-minutes: 15
     runs-on: ubuntu-latest
     env:

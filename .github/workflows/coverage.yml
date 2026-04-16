@@ -5,13 +5,14 @@ on:
   push:
     branches:
       - main
-      - develop
-      - edit-proposal
     paths:
       - pkg/contracts/**/*
       - foundry.toml
       - .github/workflows/coverage.yml
   pull_request:
+    branches:
+      - main
+      - dev
     paths:
       - pkg/contracts/**/*
       - foundry.toml
@@ -21,26 +22,46 @@ permissions:
   contents: read
 jobs:
   coverage:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: false
+          submodules: recursive
+
+      - name: Setup swap space
+        run: |
+          sudo fallocate -l 8G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          free -h
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
 
+      - name: Cache forge build
+        uses: actions/cache@v4
+        with:
+          path: |
+            pkg/contracts/cache
+            pkg/contracts/out
+          key: forge-coverage-${{ hashFiles('pkg/contracts/src/**/*.sol', 'pkg/contracts/test/**/*.sol', 'foundry.toml', 'lib/**', 'remappings.txt', 'foundry.lock', '.gitmodules') }}
+          restore-keys: |
+            forge-coverage-
+
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: 8.14.0
-          run_install: false
 
-      - name: Init required submodules
-        run: git submodule update --init --recursive --depth 1 --jobs 4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
       - name: Run coverage
         run: pnpm --dir pkg/contracts run coverage

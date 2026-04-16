@@ -5,6 +5,26 @@ Focus on **correctness, upgrade safety, protocol invariants, and cross-package c
 
 ---
 
+## 0. Repo Skills For Gardens-Specific Contract Tasks
+
+This repository includes a local skill library under `skills/`. When the task is Gardens-specific and not generic coding, consult the matching skill before inventing a workflow.
+
+- `skills/query-subgraph/SKILL.md`
+  Use for indexed data lookup, GraphQL queries, community or pool resolution, and subgraph-backed answers.
+- `skills/read-contracts/SKILL.md`
+  Use for deployed address lookup, ABI selection, live contract state reads, and `cast call` workflows.
+- `skills/write-contract/SKILL.md`
+  Use for calldata encoding, target contract selection, multisig payload construction, and write transaction preparation.
+
+If more than one applies, use them in this order:
+1. `query-subgraph`
+2. `read-contracts`
+3. `write-contract`
+
+For state-changing operations, prefer preparing `to`, `data`, `value`, and `chainId` for review before suggesting broadcast commands.
+
+---
+
 ## 1. Project Context (High-Level)
 
 Gardens v2 is a modular governance framework implementing **Conviction Voting** on top of **Allo Protocol v2**, deployed across multiple EVM chains (Gnosis, Polygon, Arbitrum, Optimism, Base, Celo).
@@ -294,3 +314,37 @@ Check:
 * `pkg/subgraph/schema.graphql`
 * `pkg/subgraph/src/**`
 * `apps/web` 
+
+---
+
+## 11. Reviewer Checklist (Quick Commands)
+
+Use these targeted commands to validate changes quickly. Run them from the repo root unless a path is specified.
+
+Contracts
+
+```bash
+pnpm --filter foundry build
+forge build --sizes --root ../.. pkg/contracts/src
+cd pkg/contracts && ./scripts/verify-storage-layout.sh
+pnpm --filter foundry test
+# Targeted examples
+forge test --match-path pkg/contracts/test/<File>.t.sol -vvv
+forge test --match-test testSpecificBehavior -vvv
+```
+
+Subgraph (when events/ABIs change)
+
+```bash
+pnpm --filter subgraph build
+```
+
+Frontend (when ABIs/types or routing/server code change)
+
+```bash
+pnpm --filter web generate
+pnpm --filter web typecheck
+pnpm --filter web build
+```
+
+If any storage, facet, or upgrade-related change is present, treat `./scripts/verify-storage-layout.sh` as mandatory before approving.

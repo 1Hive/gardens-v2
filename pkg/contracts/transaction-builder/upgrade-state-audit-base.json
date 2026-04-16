@@ -1,0 +1,83 @@
+{
+  "chain": "base",
+  "factory": {
+    "implementation": "0x2315ee63c0972e93bb3248a77980a69de11bf325",
+    "expectedImplementationFromPayload": "0x2315ee63c0972e93bb3248a77980a69de11bf325",
+    "implementationMatchesPayload": true,
+    "communityInit": {
+      "value": "0x7ac76cc3e5af469fdcfe2b7cf4e0a090bebd1d35",
+      "expected": "0x7ac76cc3e5af469fdcfe2b7cf4e0a090bebd1d35",
+      "matches": true,
+      "calldata": "0xe1c7392a"
+    },
+    "communityFacets": {
+      "value": [
+        "0x713a34abbb5c877cc5ae0bb634b58236047ee0d8",
+        "0xb535380612531c6948f334130a99b095f988f0bf",
+        "0x937c5313aa31d819b78ad3167cba5cf1c448a79c",
+        "0xf73d57c9bb3aa22549dab901cbb00225ed0f2eb3",
+        "0xe780783defb0388d194765907ec29c6f31651ca6",
+        "0x17526c816c50441d011cf8aa7f59e34099ec946f",
+        "0x1c4002408f0e9dff83927b728e041663cb9fa793"
+      ],
+      "expected": [
+        "0x713a34abbb5c877cc5ae0bb634b58236047ee0d8",
+        "0xb535380612531c6948f334130a99b095f988f0bf",
+        "0x937c5313aa31d819b78ad3167cba5cf1c448a79c",
+        "0xf73d57c9bb3aa22549dab901cbb00225ed0f2eb3",
+        "0xe780783defb0388d194765907ec29c6f31651ca6",
+        "0x17526c816c50441d011cf8aa7f59e34099ec946f",
+        "0x1c4002408f0e9dff83927b728e041663cb9fa793"
+      ],
+      "matches": true
+    },
+    "strategyInit": {
+      "value": "0xb9dbc6a79ed8b991732b7fb3fab4eff55397f853",
+      "expected": "0xb9dbc6a79ed8b991732b7fb3fab4eff55397f853",
+      "matches": true,
+      "calldata": "0xe1c7392a"
+    },
+    "strategyFacets": {
+      "value": [
+        "0x713a34abbb5c877cc5ae0bb634b58236047ee0d8",
+        "0x996d8f10e8d32e9b3b4ff15de1ad570b088d3ea5",
+        "0xfb9815d42c2f02bfa56ecf3b429260d085f80184",
+        "0xe289a1cc77bf748fd5aa36339bc065772f7d1db7",
+        "0x322ba390f66c459b8da69eb8062740225614b500",
+        "0x0a53a90f5fdb18740551c7c37c14ceda073c9686",
+        "0xfef831f32ac8091bf6a33522e0fb2b153f4926c2",
+        "0x07e0d3e794f39b61f1664cfe9d3a0c074ab787de",
+        "0x009e0f9acb1a9f0d2d431f34ec1fc77c213f98dc"
+      ],
+      "expected": [
+        "0x713a34abbb5c877cc5ae0bb634b58236047ee0d8",
+        "0x996d8f10e8d32e9b3b4ff15de1ad570b088d3ea5",
+        "0xfb9815d42c2f02bfa56ecf3b429260d085f80184",
+        "0xe289a1cc77bf748fd5aa36339bc065772f7d1db7",
+        "0x322ba390f66c459b8da69eb8062740225614b500",
+        "0x0a53a90f5fdb18740551c7c37c14ceda073c9686",
+        "0xfef831f32ac8091bf6a33522e0fb2b153f4926c2",
+        "0x07e0d3e794f39b61f1664cfe9d3a0c074ab787de",
+        "0x009e0f9acb1a9f0d2d431f34ec1fc77c213f98dc"
+      ],
+      "matches": true
+    }
+  },
+  "communityImplementations": {
+    "total": 34,
+    "mismatch": []
+  },
+  "strategyImplementations": {
+    "total": 20,
+    "mismatch": []
+  },
+  "summary": {
+    "factoryCommunityInitMatch": true,
+    "factoryStrategyInitMatch": true,
+    "factoryCommunityFacetsMatch": true,
+    "factoryStrategyFacetsMatch": true,
+    "factoryImplementationMatchesPayload": true,
+    "communityImplementationMismatches": 0,
+    "strategyImplementationMismatches": 0
+  }
+}

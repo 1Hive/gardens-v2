@@ -193,7 +193,7 @@ all_cached_for_directory() {
         return 0
     fi
 
-    local skip_facets=("DiamondCutFacet" "DiamondLoupeFacet" "OwnershipFacet")
+    local skip_facets=("DiamondLoupeFacet")
     for facet_file in "$facets_dir"/*Facet.sol; do
         if [ ! -f "$facet_file" ]; then
             continue
@@ -260,7 +260,7 @@ process_directory() {
     local failed_facets=0
 
     # Standard diamond library facets to skip (don't share storage with main contract)
-    local skip_facets=("DiamondCutFacet" "DiamondLoupeFacet" "OwnershipFacet")
+    local skip_facets=("DiamondLoupeFacet")
 
     for facet_file in "$facets_dir"/*Facet.sol; do
         if [ ! -f "$facet_file" ]; then
@@ -297,6 +297,66 @@ process_directory() {
     echo ""
 
     return $failed_facets
+}
+
+# Function to verify RegistryFactory storage layout invariants.
+# This catches accidental slot shifts in non-diamond upgradeable contracts.
+verify_registry_factory_storage() {
+    local contract_name="RegistryFactory"
+    local contract_path="src/RegistryFactory/RegistryFactory.sol"
+
+    if [ ! -f "$contract_path" ]; then
+        echo -e "${YELLOW}Skipping RegistryFactory check (file not found: $contract_path)${NC}"
+        return 0
+    fi
+
+    echo -e "${BLUE}=== Processing RegistryFactory ===${NC}"
+    printf "  Checking storage layout invariants... "
+
+    local layout_tmp="/tmp/registry_factory_layout_$$.txt"
+    FOUNDRY_DISABLE_NIGHTLY_WARNING=1 forge inspect "$contract_name" storageLayout > "$layout_tmp" 2>/dev/null
+
+    if [ ! -s "$layout_tmp" ]; then
+        echo -e "${RED}✗ FAILED${NC}"
+        echo -e "${RED}  Could not inspect RegistryFactory storage layout${NC}"
+        rm -f "$layout_tmp"
+        return 1
+    fi
+
+    local ok=true
+
+    if ! grep -Eq "\|[[:space:]]*streamingEscrowFactory[[:space:]]*\|[[:space:]]*address[[:space:]]*\|" "$layout_tmp"; then
+        ok=false
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Missing streamingEscrowFactory storage field${NC}"
+    fi
+    if ! grep -Eq "\|[[:space:]]*globalPauseController[[:space:]]*\|[[:space:]]*address[[:space:]]*\|" "$layout_tmp"; then
+        ok=false
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Missing globalPauseController storage field${NC}"
+    fi
+    if ! grep -Eq "\|[[:space:]]*streamRebalanceCallerAllowlist[[:space:]]*\|[[:space:]]*mapping\(address => bool\)[[:space:]]*\|" "$layout_tmp" \
+        && ! grep -Eq "\|[[:space:]]*rebalanceCallerAllowlist[[:space:]]*\|[[:space:]]*mapping\(address => bool\)[[:space:]]*\|" "$layout_tmp"; then
+        ok=false
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Missing streamRebalanceCallerAllowlist storage field${NC}"
+    fi
+    if ! grep -Eq "\|[[:space:]]*__gap[[:space:]]*\|[[:space:]]*uint256\[41\][[:space:]]*\|[[:space:]]*119([[:space:]]*\||$)" "$layout_tmp"; then
+        ok=false
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Expected __gap (uint256[41]) at slot 119${NC}"
+    fi
+
+    rm -f "$layout_tmp"
+
+    if [ "$ok" = true ]; then
+        echo -e "${GREEN}✓ MATCH${NC}"
+        echo ""
+        return 0
+    fi
+
+    echo -e "${RED}✗ MISMATCH${NC}"
+    if [ "$VERBOSE" = false ]; then
+        echo -e "${YELLOW}  Run with --verbose to see detailed differences${NC}"
+    fi
+    echo ""
+    return 1
 }
 
 # Build contracts if not skipped
@@ -365,6 +425,11 @@ else
             ((TOTAL_FAILED += failed))
         fi
     done
+
+    # Verify non-diamond upgradeable contracts that still require storage safety checks
+    if ! verify_registry_factory_storage; then
+        ((TOTAL_FAILED += 1))
+    fi
 fi
 
 # Cleanup any remaining temp files
@@ -374,10 +439,10 @@ rm -f /tmp/main_*_$$.txt /tmp/facet_*_$$.txt
 echo -e "${BLUE}=== Summary ===${NC}"
 if [ $TOTAL_FAILED -eq 0 ]; then
     echo -e "${GREEN}✓ All storage layouts match!${NC}"
-    echo -e "${GREEN}  Diamond pattern storage alignment verified.${NC}"
+    echo -e "${GREEN}  Storage alignment verified (diamond facets + RegistryFactory).${NC}"
     exit 0
 else
-    echo -e "${RED}✗ $TOTAL_FAILED facet(s) have storage layout mismatches${NC}"
+    echo -e "${RED}✗ $TOTAL_FAILED storage check(s) failed${NC}"
     echo -e "${RED}  CRITICAL: Fix storage alignment before deployment!${NC}"
     echo -e "${YELLOW}  Run with --verbose to see detailed differences${NC}"
     exit 1

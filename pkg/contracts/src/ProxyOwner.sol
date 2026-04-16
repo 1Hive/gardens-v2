@@ -7,13 +7,36 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeab
 
 contract ProxyOwner is OwnableUpgradeable, UUPSUpgradeable {
     address public pendingOwner;
+    address public upgradeAccess;
 
     event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);
+    event UpgradeAccessGranted(address indexed owner, address indexed upgradeWallet);
+    event UpgradeAccessRenounced(address indexed upgradeWallet);
+    event UpgradeAccessReclaimed(address indexed owner, address indexed previousUpgradeWallet);
 
     error OwnableUnauthorizedAccount(address account);
 
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(address initialOwner) public initializer {
         _transferOwnership(initialOwner);
+    }
+
+    function proxyOwner() public view returns (address) {
+        return OwnableUpgradeable.owner();
+    }
+
+    function mainOwner() public view returns (address) {
+        return proxyOwner();
+    }
+
+    function owner() public view virtual override returns (address) {
+        if (upgradeAccess != address(0)) {
+            return upgradeAccess;
+        }
+        return proxyOwner();
     }
 
     /**
@@ -33,6 +56,7 @@ contract ProxyOwner is OwnableUpgradeable, UUPSUpgradeable {
      */
     function _transferOwnership(address newOwner) internal virtual override {
         delete pendingOwner;
+        delete upgradeAccess;
         super._transferOwnership(newOwner);
     }
 
@@ -45,6 +69,32 @@ contract ProxyOwner is OwnableUpgradeable, UUPSUpgradeable {
             revert OwnableUnauthorizedAccount(sender);
         }
         _transferOwnership(sender);
+    }
+
+    function grantUpgradeAccess(address upgradeWallet) external onlyOwner {
+        upgradeAccess = upgradeWallet;
+        emit UpgradeAccessGranted(_msgSender(), upgradeWallet);
+    }
+
+    function renounceUpgradeAccess() external {
+        address sender = _msgSender();
+        if (upgradeAccess != sender) {
+            revert OwnableUnauthorizedAccount(sender);
+        }
+        delete upgradeAccess;
+        emit UpgradeAccessRenounced(sender);
+    }
+
+    function reclaimUpgradeAccess() external onlyOwner {
+        address previousUpgradeWallet = upgradeAccess;
+        delete upgradeAccess;
+        emit UpgradeAccessReclaimed(_msgSender(), previousUpgradeWallet);
+    }
+
+    function _checkOwner() internal view virtual override {
+        if (proxyOwner() != _msgSender()) {
+            revert OwnableUnauthorizedAccount(_msgSender());
+        }
     }
 
     function _authorizeUpgrade(address) internal view override onlyOwner {}

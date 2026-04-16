@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
 import { isEqual } from "lodash-es";
 import { toast } from "react-toastify";
@@ -20,7 +20,21 @@ import { initUrqlClient } from "@/providers/urql";
 import { ChainId } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
 
-const pendingRefreshToastId = "pending-refresh";
+export const PENDING_SUBGRAPH_REFRESH_TOAST_ID = "pending-refresh";
+
+type RefetchOptions = {
+  showToast?: boolean;
+};
+
+export function dismissPendingSubgraphRefreshToast() {
+  try {
+    if (toast.isActive(PENDING_SUBGRAPH_REFRESH_TOAST_ID)) {
+      toast.dismiss(PENDING_SUBGRAPH_REFRESH_TOAST_ID);
+    }
+  } catch (error) {
+    // ignore dismiss error
+  }
+}
 
 /**
  *  Fetches data from a subgraph by chain id
@@ -50,14 +64,24 @@ export function useSubgraphQuery<
   changeScope?: ChangeEventScope[] | ChangeEventScope;
   enabled?: boolean;
   modifier?: (data: Data) => Data;
-}) {
+}): {
+  hasNext: boolean;
+  stale: boolean;
+  data: Data | undefined;
+  error: any | undefined;
+  refetch: (
+    options?: RefetchOptions,
+  ) => Promise<Awaited<ReturnType<typeof fetch>>>;
+  fetching: boolean;
+} {
   const mounted = useIsMounted();
   const pathChainId = useChainIdFromPath();
-  chainId = (chainId ?? pathChainId)!;
+  const resolvedChainId = chainId ?? pathChainId;
   const { urqlClient } = initUrqlClient();
   const { connected, subscribe, unsubscribe } = usePubSubContext();
   const [fetching, setFetching] = useState(false);
-  const config = getConfigByChain(chainId);
+  const config =
+    resolvedChainId != null ? getConfigByChain(resolvedChainId) : undefined;
   const [response, setResponse] = useState<
     Omit<Awaited<ReturnType<typeof fetch>>, "operation">
   >({
@@ -69,54 +93,77 @@ export function useSubgraphQuery<
 
   const latestResponse = useRef({ variables, response });
   const subscritionId = useRef<SubscriptionId>();
+  const stableChangeScopeRef = useRef<ChangeEventScope[] | undefined>();
   const fetchingRef = useRef(false);
+  const fetchPromiseRef = useRef<Promise<Awaited<ReturnType<typeof fetch>>> | null>(
+    null,
+  );
   const skipPublished = useFlag("skipPublished");
 
   useEffect(() => {
     latestResponse.current.response = response; // Update ref on every response change
   }, [response]);
 
-  if (!config) {
-    console.error(`No subgraph address found for chain ${chainId}`);
+  if (enabled && resolvedChainId != null && !config) {
+    console.error(`No subgraph address found for chain ${resolvedChainId}`);
   }
 
+  const normalizedChangeScope = useMemo(() => {
+    if (
+      !changeScope ||
+      (Array.isArray(changeScope) && changeScope.length === 0)
+    )
+      return undefined;
+    const scopes = Array.isArray(changeScope) ? changeScope : [changeScope];
+    return scopes.map((scope) => ({
+      ...scope,
+      chainId: scope.chainId ?? resolvedChainId,
+    }));
+  }, [changeScope, resolvedChainId]);
+
+  if (!isEqual(stableChangeScopeRef.current, normalizedChangeScope)) {
+    stableChangeScopeRef.current = normalizedChangeScope;
+  }
+
+  const stableNormalizedChangeScope = stableChangeScopeRef.current;
+
   useEffect(() => {
-    if (!changeScope || changeScope.length === 0) {
+    if (!stableNormalizedChangeScope || stableNormalizedChangeScope.length === 0) {
+      return;
+    }
+    if (!connected) {
       return;
     }
 
-    changeScope = Array.isArray(changeScope) ? changeScope : [changeScope];
-    changeScope.forEach((scope) => {
-      if (!scope.chainId) {
-        scope.chainId = chainId;
-      }
-    });
-
-    subscritionId.current = subscribe(changeScope, () => {
+    const subscriptionId = subscribe(stableNormalizedChangeScope, () => {
       return refetchFromOutside.call({
         response,
         fetching,
         setResponse,
-        chain: chainId,
+        chain: resolvedChainId,
         mounted,
       });
     });
+    subscritionId.current = subscriptionId;
 
     return () => {
-      if (subscritionId.current) {
-        unsubscribe(subscritionId.current);
+      if (subscriptionId) {
+        unsubscribe(subscriptionId);
       }
-      try {
-        if (toast.isActive(pendingRefreshToastId)) {
-          toast.dismiss(pendingRefreshToastId);
-        }
-      } catch (error) {
-        // ignore when toast is already dismissed
-      }
+      dismissPendingSubgraphRefreshToast();
     };
-  }, [connected]);
+  }, [connected, stableNormalizedChangeScope]);
 
   const fetch = async () => {
+    if (!config) {
+      return {
+        hasNext: false,
+        stale: false,
+        data: undefined,
+        error: undefined,
+      };
+    }
+
     const withLowercaseAddresses: AnyVariables = {};
     Object.entries({ ...variables }).forEach(([key, value]) => {
       withLowercaseAddresses[key] =
@@ -129,9 +176,9 @@ export function useSubgraphQuery<
       urqlClient.query<Data>(query, variables, {
         ...context,
         url:
-          useDev || !config?.publishedSubgraphUrl ?
-            config?.subgraphUrl
-          : config?.publishedSubgraphUrl,
+          useDev || !config.publishedSubgraphUrl ?
+            config.subgraphUrl
+          : config.publishedSubgraphUrl,
         requestPolicy: "network-only",
       });
 
@@ -152,20 +199,32 @@ export function useSubgraphQuery<
     return modifier && res?.data ? { ...res, data: modifier(res.data) } : res;
   };
 
-  const refetchFromOutside = async () => {
+  const refetchFromOutside = async (
+    options?: RefetchOptions,
+  ): Promise<Awaited<ReturnType<typeof fetch>>> => {
     if (!enabled) {
       console.debug(
         "⚡ Query not enabled when refetching from outside, skipping",
       );
-      return;
+      return latestResponse.current.response as Awaited<ReturnType<typeof fetch>>;
     }
     if (fetchingRef.current) {
-      console.debug("⚡ Already fetching, skipping refetch");
-      return;
+      console.debug(
+        "⚡ Already fetching, waiting for current fetch before retrying",
+      );
+      try {
+        await fetchPromiseRef.current;
+      } catch (error) {
+        console.debug("⚡ Current fetch failed before external refetch", error);
+      }
+      if (fetchingRef.current) {
+        return latestResponse.current
+          .response as Awaited<ReturnType<typeof fetch>>;
+      }
     }
     setFetching(true);
     fetchingRef.current = true;
-    const res = await refetch(undefined);
+    const res = await refetch(undefined, options);
     setResponse(res);
     setFetching(false);
     fetchingRef.current = false;
@@ -174,34 +233,58 @@ export function useSubgraphQuery<
 
   const refetch = async (
     retryCount?: number,
+    options?: RefetchOptions,
   ): Promise<Awaited<ReturnType<typeof fetch>>> => {
     if (retryCount == null) {
       retryCount = 0;
     }
 
-    const toastContent = React.createElement(LoadingToast, {
-      message: "Pulling new data",
-    });
+    const showToast = options?.showToast ?? true;
+    if (showToast) {
+      const toastContent = React.createElement(LoadingToast, {
+        message: "Pulling new data",
+      });
 
-    if (toast.isActive(pendingRefreshToastId)) {
-      toast.update(pendingRefreshToastId, {
-        render: toastContent,
-      });
-    } else {
-      toast.loading(toastContent, {
-        toastId: pendingRefreshToastId,
-        autoClose: false,
-        closeOnClick: true,
-        closeButton: false,
-        icon: false,
-        style: {
-          width: "fit-content",
-          marginLeft: "auto",
-        },
-      });
+      if (toast.isActive(PENDING_SUBGRAPH_REFRESH_TOAST_ID)) {
+        toast.update(PENDING_SUBGRAPH_REFRESH_TOAST_ID, {
+          render: toastContent,
+        });
+      } else {
+        toast.loading(toastContent, {
+          toastId: PENDING_SUBGRAPH_REFRESH_TOAST_ID,
+          autoClose: false,
+          closeOnClick: true,
+          closeButton: false,
+          icon: false,
+          style: {
+            width: "fit-content",
+            marginLeft: "auto",
+          },
+        });
+      }
     }
 
-    const result = await fetch();
+    const resultPromise = fetch();
+    fetchPromiseRef.current = resultPromise;
+    const result = await resultPromise.finally(() => {
+      if (fetchPromiseRef.current === resultPromise) {
+        fetchPromiseRef.current = null;
+      }
+    });
+
+    if (retryCount >= CHANGE_EVENT_MAX_RETRIES || !mounted.current) {
+      if (retryCount >= CHANGE_EVENT_MAX_RETRIES) {
+        console.debug(
+          `⚡ Stopping retries after reaching max retries. (retry count: ${retryCount})`,
+        );
+      } else {
+        console.debug("⚡ Component unmounted, cancelling");
+      }
+      setFetching(false);
+      fetchingRef.current = false;
+      dismissPendingSubgraphRefreshToast();
+      return result;
+    }
 
     if (result.error) {
       console.error("⚡ Error fetching subgraph data:", result.error);
@@ -209,30 +292,14 @@ export function useSubgraphQuery<
     }
     if (
       result.data &&
-      (!isEqual(result.data, latestResponse.current.response.data) ||
-        retryCount >= CHANGE_EVENT_MAX_RETRIES ||
-        !mounted.current)
+      !isEqual(result.data, latestResponse.current.response.data)
     ) {
-      if (retryCount >= CHANGE_EVENT_MAX_RETRIES) {
-        console.debug(
-          `⚡ Still not updated but max retries reached. (retry count: ${retryCount})`,
-        );
-      } else if (!mounted.current) {
-        console.debug("⚡ Component unmounted, cancelling");
-      } else {
-        console.debug(
-          `⚡ Subgraph result updated after ${retryCount} retries.`,
-        );
-      }
+      console.debug(
+        `⚡ Subgraph result updated after ${retryCount} retries.`,
+      );
       setFetching(false);
       fetchingRef.current = false;
-      try {
-        if (toast.isActive(pendingRefreshToastId)) {
-          toast.dismiss(pendingRefreshToastId);
-        }
-      } catch (error) {
-        // ignore dismiss error
-      }
+      dismissPendingSubgraphRefreshToast();
       return result;
     } else {
       console.debug(
@@ -244,13 +311,14 @@ export function useSubgraphQuery<
       );
       const delay = CHANGE_EVENT_INITIAL_DELAY * 2 ** retryCount;
       await delayAsync(delay);
-      return refetch(retryCount + 1);
+      return refetch(retryCount + 1, options);
     }
   };
 
   useEffect(() => {
     if (
       !enabled ||
+      !config ||
       fetching ||
       (!!latestResponse.current.response.data &&
         isEqual(variables, latestResponse.current.variables)) || // Skip if variables are the same
@@ -272,7 +340,13 @@ export function useSubgraphQuery<
       ) {
         resp = await refetch();
       } else {
-        resp = await fetch();
+        const resultPromise = fetch();
+        fetchPromiseRef.current = resultPromise;
+        resp = await resultPromise.finally(() => {
+          if (fetchPromiseRef.current === resultPromise) {
+            fetchPromiseRef.current = null;
+          }
+        });
       }
       setResponse(resp);
       setFetching(false);
@@ -281,9 +355,12 @@ export function useSubgraphQuery<
   }, [enabled, variables]);
 
   return {
-    ...response,
-    refetch: () => {
-      return refetchFromOutside();
+    hasNext: response.hasNext,
+    stale: response.stale,
+    data: response.data,
+    error: response.error,
+    refetch: (options) => {
+      return refetchFromOutside(options);
     },
     fetching,
   };

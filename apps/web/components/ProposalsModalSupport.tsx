@@ -14,6 +14,7 @@ import {
   Maybe,
   ProposalMetadata,
 } from "#/subgraph/.graphclient";
+import { Countdown } from "./Countdown";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import TooltipIfOverflow from "./TooltipIfOverflow";
@@ -114,6 +115,7 @@ export const ProposalsModalSupport = forwardRef<
       thresholdPct,
       totalSupportPct,
       timeToPass,
+      triggerConvictionRefetch,
       updatedConviction,
     } = useConvictionRead({
       proposalData,
@@ -158,8 +160,11 @@ export const ProposalsModalSupport = forwardRef<
 
     const isSignalingType =
       PoolTypes[strategyConfig.proposalType] === "signaling";
+    const isStreamingType =
+      PoolTypes[strategyConfig.proposalType] === "streaming";
 
-    const alreadyExecuted = ProposalStatus[proposalStatus] === "executed";
+    const resolvedProposalStatus = ProposalStatus[proposalStatus];
+    const alreadyExecuted = resolvedProposalStatus === "executed";
 
     const supportNeededToPass = (
       (thresholdPct ?? 0) - (totalSupportPct ?? 0)
@@ -171,9 +176,28 @@ export const ProposalsModalSupport = forwardRef<
       Number(supportNeededToPass) < 0 &&
       (currentConvictionPct ?? 0) < (thresholdPct ?? 0) &&
       !alreadyExecuted;
+    const hasProposalPassCountdown =
+      proposalWillPass &&
+      !readyToBeExecuted &&
+      timeToPass != null &&
+      Number.isFinite(Number(timeToPass)) &&
+      Number(timeToPass) > 0;
 
     const impossibleToPass =
-      (thresholdPct != null && thresholdPct >= 100) || thresholdPct === 0;
+      (thresholdPct != null && thresholdPct >= 100) || minThGtTotalEffPoints;
+
+    const streamingStatusLabel =
+      isStreamingType ?
+        (resolvedProposalStatus === "cancelled" ?
+          "Cancelled"
+        : resolvedProposalStatus === "disputed" ?
+          "Disputed"
+        : resolvedProposalStatus === "executed" ?
+          "Closed"
+        : readyToBeExecuted || proposalWillPass ?
+          "About to stream"
+        : "Active, not streaming")
+      : undefined;
 
     const ProposalCountDown = (
       <>
@@ -182,7 +206,7 @@ export const ProposalsModalSupport = forwardRef<
             <div
               className="flex items-center justify-center gap-1 tooltip tooltip-top sm:tooltip-right"
               data-tip={`${
-                thresholdPct === 0 ?
+                minThGtTotalEffPoints ?
                   "Not enough eligible voters in this pool have activated their governance."
                 : `This proposal will not pass unless more ${
                     minThGtTotalEffPoints ?
@@ -193,7 +217,7 @@ export const ProposalsModalSupport = forwardRef<
             >
               <ExclamationTriangleIcon className="w-5 h-5 text-secondary-content" />
               <span className="text-xs sm:text-sm text-secondary-content">
-                {thresholdPct === 0 ?
+                {minThGtTotalEffPoints ?
                   "Threshold out of reach"
                 : "Threshold over 100%."}
               </span>
@@ -204,12 +228,28 @@ export const ProposalsModalSupport = forwardRef<
             !readyToBeExecuted
           ) ?
             `At least ${supportNeededToPass}% needed`
-          : proposalWillPass ?
-            "Estimated time to pass:"
-          : !alreadyExecuted && readyToBeExecuted && !isSignalingType ?
-            "Ready to be executed"
+          : hasProposalPassCountdown ?
+            PoolTypes[strategyConfig.proposalType] === "funding" ?
+              "Estimated time to pass:"
+            : "Before streaming starts:"
+          : !alreadyExecuted &&
+            resolvedProposalStatus !== "disputed" &&
+            readyToBeExecuted &&
+            !isSignalingType ?
+            isStreamingType ?
+              "About to stream"
+            : "Ready to be executed"
           : ""}
         </div>
+        {hasProposalPassCountdown && (
+          <Countdown
+            endTimestamp={Number(timeToPass)}
+            display="inline"
+            className="text-neutral-soft-content text-xs sm:text-sm"
+            onTimeout={triggerConvictionRefetch}
+            showTimeout={false}
+          />
+        )}
       </>
     );
 
@@ -234,7 +274,11 @@ export const ProposalsModalSupport = forwardRef<
                 </Skeleton>
                 {isPoolEnabled && (
                   <div className="flex items-center gap-4 ">
-                    <Badge status={proposalStatus} icon={<HandRaisedIcon />} />
+                    <Badge
+                      status={proposalStatus}
+                      label={streamingStatusLabel}
+                      icon={<HandRaisedIcon />}
+                    />
                   </div>
                 )}
               </div>

@@ -63,33 +63,44 @@ contract CommunityAdminFacet is CommunityBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0xebd7dc52
     function isCouncilMember(address _member) public view returns (bool) {
         return hasRole(COUNCIL_MEMBER, _member);
     }
 
+    // Sig: 0x1b71f0e4
+    /// @dev Deprecated. Existing storage field is kept for compatibility but pool creation now uses
+    ///      RegistryFactory.strategyTemplate().
     function setStrategyTemplate(address template) external {
         require(msg.sender == owner(), "Ownable: caller is not the owner");
         strategyTemplate = template;
     }
 
+    // Sig: 0xb0d3713a
     function setCollateralVaultTemplate(address template) external {
         require(msg.sender == owner(), "Ownable: caller is not the owner");
         collateralVaultTemplate = template;
     }
 
+    // Sig: 0x0b03bb9a
     function setArchived(bool _isArchived) external {
+        if (msg.sig == bytes4(0)) revert();
         onlyCouncilSafe();
         emit CommunityArchived(_isArchived);
     }
 
+    // Sig: 0x31f61bca
     function setBasisStakedAmount(uint256 _newAmount) public {
+        if (msg.sig == bytes4(0)) revert();
         onlyCouncilSafe();
         onlyEmptyCommunity();
         registerStakeAmount = _newAmount;
         emit BasisStakedAmountUpdated(_newAmount);
     }
 
+    // Sig: 0x0d12bbdb
     function setCommunityFee(uint256 _newCommunityFee) public {
+        if (msg.sig == bytes4(0)) revert();
         onlyCouncilSafe();
         if (_newCommunityFee > MAX_FEE) {
             revert NewFeeGreaterThanMax();
@@ -98,7 +109,9 @@ contract CommunityAdminFacet is CommunityBaseFacet {
         emit CommunityFeeUpdated(_newCommunityFee);
     }
 
+    // Sig: 0x397e2543
     function setCouncilSafe(address payable _safe) public {
+        if (msg.sig == bytes4(0)) revert();
         onlyCouncilSafe();
         if (_safe == address(0)) {
             revert ValueCannotBeZero();
@@ -107,18 +120,23 @@ contract CommunityAdminFacet is CommunityBaseFacet {
         emit CouncilSafeChangeStarted(address(councilSafe), pendingCouncilSafe);
     }
 
+    // Sig: 0xb5058c50
     function acceptCouncilSafe() public {
         if (msg.sender != pendingCouncilSafe) {
             revert SenderNotNewOwner();
         }
-        _grantRole(COUNCIL_MEMBER, pendingCouncilSafe);
-        _revokeRole(COUNCIL_MEMBER, address(councilSafe));
-        councilSafe = ISafe(pendingCouncilSafe);
+        if (address(councilSafe) != pendingCouncilSafe) {
+            _grantRole(COUNCIL_MEMBER, pendingCouncilSafe);
+            _revokeRole(COUNCIL_MEMBER, address(councilSafe));
+            councilSafe = ISafe(pendingCouncilSafe);
+            emit CouncilSafeUpdated(address(councilSafe));
+        }
         delete pendingCouncilSafe;
-        emit CouncilSafeUpdated(address(councilSafe));
     }
 
+    // Sig: 0xf2d774e7
     function setCommunityParams(CommunityParams memory _params) external {
+        if (msg.sig == bytes4(0)) revert();
         onlyCouncilSafe();
         if (
             _params.registerStakeAmount != registerStakeAmount || _params.isKickEnabled != isKickEnabled
@@ -148,7 +166,7 @@ contract CommunityAdminFacet is CommunityBaseFacet {
             feeReceiver = _params.feeReceiver;
             emit FeeReceiverChanged(_params.feeReceiver);
         }
-        if (_params.councilSafe != address(0)) {
+        if (_params.councilSafe != address(0) && _params.councilSafe != address(councilSafe)) {
             setCouncilSafe(payable(_params.councilSafe));
         }
     }

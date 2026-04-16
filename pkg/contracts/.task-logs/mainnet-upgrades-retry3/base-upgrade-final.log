@@ -1,0 +1,29 @@
+No files changed, compilation skipped
+Script ran successfully.
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 8453
+
+Estimated gas price: 0.006 gwei
+
+Estimated total gas used for script: 41588055
+
+Estimated amount required: 0.00024952833 ETH
+
+==========================
+Warning: server returned a null response when a non-null response was expected (2 tries remaining)
+Warning: server returned a null response when a non-null response was expected (2 tries remaining)
+Warning: server returned a null response when a non-null response was expected (2 tries remaining)
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/UpgradeCVMultichainProd.s.sol/8453/run-latest.json
+
+Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/cache/UpgradeCVMultichainProd.s.sol/8453/run-latest.json
+

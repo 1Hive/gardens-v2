@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { Address } from "wagmi";
+import { Address } from "viem";
 import { CVProposal, CVStrategy, Maybe } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { Modal } from "./Modal";
@@ -57,37 +56,32 @@ function CancelButton({ proposalData }: Props) {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={`Cancel proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
-        icon={<ExclamationTriangleIcon color="#e74b4d" />}
+        title={"Cancel proposal"}
       >
         <div>
-          <div>
-            This action cannot be undone.
-            <span className="font-semibold ml-1">
-              Are you sure you want to cancel?
-            </span>
-          </div>
+          This proposal will be cancelled: {proposalData.title}, this action
+          cannot be undone.
+        </div>
 
-          <div className="modal-action">
-            <Button
-              btnStyle="outline"
-              color="danger"
-              onClick={() => setIsModalOpen(false)}
-            >
-              No, close
-            </Button>
-            <Button
-              btnStyle="filled"
-              color="danger"
-              isLoading={isLoading}
-              testId="btn-confirm-cancel-proposal"
-              onClick={() =>
-                writeCancel({ args: [BigInt(proposalData.proposalNumber)] })
-              }
-            >
-              Yes, cancel
-            </Button>
-          </div>
+        <div className="modal-action !mt-4">
+          <Button
+            btnStyle="ghost"
+            color="secondary"
+            onClick={() => setIsModalOpen(false)}
+          >
+            Close
+          </Button>
+          <Button
+            btnStyle="filled"
+            color="danger"
+            isLoading={isLoading}
+            onClick={() =>
+              writeCancel({ args: [BigInt(proposalData.proposalNumber)] })
+            }
+            testId="btn-confirm-cancel-proposal"
+          >
+            Cancel
+          </Button>
         </div>
       </Modal>
     </>

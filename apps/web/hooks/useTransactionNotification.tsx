@@ -9,6 +9,10 @@ import { useTransactionNotificationManager } from "@/providers/TransactionNotifi
 type UseTransactionNotificationArgs = {
   toastId?: string;
   transactionData: WriteContractResult | null | undefined;
+  transactionHash?: `0x${string}` | string | undefined;
+  safeTransactionHash?: `0x${string}` | string | undefined;
+  safeAddress?: `0x${string}` | string | undefined;
+  targetAddress?: `0x${string}` | string | undefined;
   transactionError: Error | null | undefined;
   transactionStatus?: ComputedStatus;
   enabled?: boolean;
@@ -21,7 +25,11 @@ type UseTransactionNotificationArgs = {
 
 export const useTransactionNotification = ({
   toastId: toastIdProp,
-  transactionData,
+  transactionData: _transactionData,
+  transactionHash,
+  safeTransactionHash,
+  safeAddress,
+  targetAddress,
   transactionError,
   transactionStatus,
   enabled = true,
@@ -47,7 +55,10 @@ export const useTransactionNotification = ({
       toastId,
       status: transactionStatus,
       contractName,
-      transactionHash: transactionData?.hash,
+      transactionHash,
+      safeTransactionHash,
+      safeAddress,
+      targetAddress,
       transactionError,
       fallbackErrorMessage,
       enabled,
@@ -58,7 +69,10 @@ export const useTransactionNotification = ({
   }, [
     toastId,
     transactionStatus,
-    transactionData?.hash,
+    transactionHash,
+    safeTransactionHash,
+    safeAddress,
+    targetAddress,
     transactionError,
     contractName,
     enabled,

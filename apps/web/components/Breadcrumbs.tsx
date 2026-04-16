@@ -2,11 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
-import { fetchToken } from "@wagmi/core";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { toast } from "react-toastify";
-import { Address } from "viem";
+import TooltipIfOverflow from "./TooltipIfOverflow";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useFlag } from "@/hooks/useFlag";
 import { queryByChain } from "@/providers/urql";
@@ -44,21 +42,6 @@ export function Breadcrumbs() {
     const entityIndex =
       isStaticSegment ? segmentsLength - 2 : segmentsLength - 1;
 
-    if (entityIndex === 2) {
-      const tokenArgs = {
-        address: segments[2] as Address,
-        chainId: parseInt(segments[1]),
-      };
-      const tokenData = await fetchToken(tokenArgs)
-        .then((token) => token?.name)
-        .catch(() => {
-          console.error("Error fetching token from address: ", tokenArgs);
-          toast.error("Token not found");
-          return undefined;
-        });
-      return [tokenData, parseStaticSegment(segments[segmentsLength - 1])];
-    }
-
     const queryItem = queryMap[entityIndex];
 
     try {
@@ -68,7 +51,7 @@ export function Breadcrumbs() {
       const result = await queryByChain(
         chain,
         queryItem.document,
-        queryItem.getVariables(segments[entityIndex]),
+        queryItem.getVariables(segments[entityIndex], segments),
         undefined,
         skipPublished,
       );
@@ -97,7 +80,7 @@ export function Breadcrumbs() {
 
     return segments
       .map((segment, index) => {
-        if (index < 3) {
+        if (index < 2) {
           return undefined;
         }
 
@@ -132,24 +115,24 @@ export function Breadcrumbs() {
     <>
       <div className="my-[2px] border-l-2 border-solid border-neutral-soft-content h-5" />
       <div aria-label="Breadcrumbs" className="flex w-full items-center pt-px">
-        <ol className="flex w-full items-center overflow-hidden">
+        <ol className="flex w-fit max-w-full items-center overflow-hidden">
           {breadcrumbs.map(({ href, label }, index) => (
             <li
               key={href}
-              className="flex max-w-[30%] items-center overflow-hidden text-neutral-soft-content"
+              className="flex min-w-0 items-center overflow-hidden text-neutral-soft-content"
             >
               {index !== 0 && (
                 <ChevronRightIcon className="mx-1 h-5 w-5 flex-shrink-0" />
               )}
               {index === breadcrumbs.length - 1 ?
-                <span className="subtitle2 truncate font-semibold text-neutral-soft-content">
-                  {label}
-                </span>
+                <div className="subtitle2 w-full font-semibold text-neutral-soft-content">
+                  <TooltipIfOverflow>{label}</TooltipIfOverflow>
+                </div>
               : <Link
                   href={href}
-                  className="subtitle2 truncate font-semibold text-primary-content"
+                  className="subtitle2 block w-full font-semibold text-primary-content"
                 >
-                  {label}
+                  <TooltipIfOverflow>{label}</TooltipIfOverflow>
                 </Link>
               }
             </li>

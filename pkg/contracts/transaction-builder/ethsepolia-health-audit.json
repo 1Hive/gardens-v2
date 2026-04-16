@@ -1,0 +1,49 @@
+{
+  "network": "ethsepolia",
+  "chainId": 11155111,
+  "factory": {
+    "address": "0xe01464829b1b888bf92a8d1cec3114bb9787984d",
+    "implementation": "0xf2d2a99d5309736904c7100b0e30cb31614a8200",
+    "expectedRegistryCommunityTemplate": "0xb7f17f162715e51a446e5348b5a651c77814008a",
+    "expectedStrategyTemplate": "0x734bbd97448dcbe91e8fd17b36174776f74bd59e",
+    "registryCommunityTemplate": "0xB7F17f162715e51a446e5348B5a651C77814008A",
+    "strategyTemplate": "0x734Bbd97448dCbe91E8Fd17B36174776F74Bd59E",
+    "collateralVaultTemplate": "0x32Ef7222b5291b3710f0A59Ab042118F9dD06A47",
+    "communityFacets": "[(0x8ee541646122d2E29369CD1CC2999E49F0b30913, 3, [0x7a0ed627, 0xadfca15e, 0x52ef6b2c, 0xcdffacc6, 0x01ffc9a7]), (0x2Cc63F051672fb3731f88064eC7499eBe0eD6171, 3, [0x1b71f0e4, 0xb0d3713a, 0x0b03bb9a, 0x31f61bca, 0x0d12bbdb, 0x397e2543, 0xb5058c50, 0xf2d774e7, 0xebd7dc52]), (0x32eeB46f62883FFA0EC50E8D18c9bD938973d411, 3, [0x9a1f46e2, 0xb99b4370, 0x6871eb4d, 0xa230c524, 0x0331383c, 0x28c309e9]), (0x8e511054067eF37d6e3Bfc2D035Bb40eb412dd79, 3, [0x1add1a0d, 0x222a3a04, 0xadaf157b, 0x60b47789, 0x136439dd, 0x80c4a65f, 0x3f4ba83a, 0xbac1e94b, 0xb187bd26, 0x09b65e66, 0xda748b10, 0x2d2ebbef]), (0x2a86272e64821F0b38269C57112276794fE65E6B, 3, [0xce7e2cd3, 0x82b18ef4]), (0xe3E29769e9BA7B660D637b2D08EffC6514979dc4, 3, [0x0d4a8b49, 0x22bcf999, 0x559de05d, 0x5ecf71c5, 0x7817ee4f, 0x2c611c4a, 0xeb5cbe43]), (0xe0d3d155bB4f29605cf1905Af6C7Be81afDE11fc, 3, [0x82d6a1e7, 0x223e5479, 0x73265c37, 0x175188e8, 0xfb1f6917])]\n0x0259E8F8689034D043A1e8Bd0c5F23d43a1Dc289\n0xe1c7392a",
+    "strategyFacets": "[]\n0xf0D3f695dD6dea9211AC4e8f43014ed92A7D54c1\n0xe1c7392a"
+  },
+  "community": {
+    "address": "0x116eaa654e867d15e9def43560d9145ec12f4838",
+    "implementation": "0xb7f17f162715e51a446e5348b5a651c77814008a",
+    "expectedImplementation": "0xb7f17f162715e51a446e5348b5a651c77814008a",
+    "strategyTemplate": "0x734Bbd97448dCbe91E8Fd17B36174776F74Bd59E",
+    "facets": "[(0x8ee541646122d2E29369CD1CC2999E49F0b30913, [0x7a0ed627, 0xadfca15e, 0x52ef6b2c, 0xcdffacc6, 0x01ffc9a7]), (0x2Cc63F051672fb3731f88064eC7499eBe0eD6171, [0x1b71f0e4, 0xb0d3713a, 0x0b03bb9a, 0x31f61bca, 0x0d12bbdb, 0x397e2543, 0xb5058c50, 0xf2d774e7, 0xebd7dc52]), (0x32eeB46f62883FFA0EC50E8D18c9bD938973d411, [0x9a1f46e2, 0xb99b4370, 0x6871eb4d, 0xa230c524, 0x0331383c, 0x28c309e9]), (0x8e511054067eF37d6e3Bfc2D035Bb40eb412dd79, [0x1add1a0d, 0x222a3a04, 0xadaf157b, 0x60b47789, 0x136439dd, 0x80c4a65f, 0x3f4ba83a, 0xbac1e94b, 0xb187bd26, 0x09b65e66, 0xda748b10, 0x2d2ebbef]), (0x2a86272e64821F0b38269C57112276794fE65E6B, [0xce7e2cd3, 0x82b18ef4]), (0xe3E29769e9BA7B660D637b2D08EffC6514979dc4, [0x0d4a8b49, 0x22bcf999, 0x559de05d, 0x5ecf71c5, 0x7817ee4f, 0x2c611c4a, 0xeb5cbe43]), (0xe0d3d155bB4f29605cf1905Af6C7Be81afDE11fc, [0x82d6a1e7, 0x223e5479, 0x73265c37, 0x175188e8, 0xfb1f6917])]"
+  },
+  "strategy": {
+    "address": "0x1d5027d7fd0ee051072550c373e20903cdc2d092",
+    "implementation": "0x734bbd97448dcbe91e8fd17b36174776f74bd59e",
+    "expectedImplementation": "0x734bbd97448dcbe91e8fd17b36174776f74bd59e",
+    "owner": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
+    "votingPowerRegistry": "0x116eaA654E867D15E9def43560D9145ec12F4838",
+    "facets": {
+      "ok": false,
+      "out": "",
+      "code": 1
+    },
+    "setVotingPowerRegistry": {
+      "ok": false,
+      "out": "",
+      "code": 1
+    }
+  },
+  "summary": {
+    "factoryTemplatesMatch": true,
+    "factoryCommunityFacetsHealthy": true,
+    "factoryStrategyFacetsHealthy": false,
+    "communityImplementationMatches": true,
+    "strategyImplementationMatches": true,
+    "communityFacetsHealthy": true,
+    "strategyFacetsHealthy": false,
+    "strategyResetCallable": false
+  }
+}

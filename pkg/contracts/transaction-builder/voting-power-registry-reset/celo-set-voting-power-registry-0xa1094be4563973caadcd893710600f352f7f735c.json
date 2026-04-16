@@ -1,0 +1,27 @@
+{
+  "version": "1.0",
+  "chainId": "42220",
+  "createdAt": 1773693119356,
+  "meta": {
+    "name": "Set Voting Power Registry Batch",
+    "description": "Safe Transaction Builder payload to reset votingPowerRegistry to registryCommunity for all strategies owned by this council safe.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "0xa1094be4563973caadcd893710600f352f7f735c",
+    "createdFromOwnerAddress": "0xa1094be4563973caadcd893710600f352f7f735c",
+    "hash": "45e7a482bf575ec32b340f61635042ac179021d5"
+  },
+  "transactions": [
+    {
+      "to": "0xa6a408914dc6e1ac9a8db8ce472923374b1b6beb",
+      "value": "0",
+      "data": "0xc6cdc9800000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [],
+        "name": "",
+        "payable": false
+      },
+      "contractInputsValues": {}
+    }
+  ]
+}

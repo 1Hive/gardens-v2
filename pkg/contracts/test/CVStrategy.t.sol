@@ -12,7 +12,7 @@ import {
     CVParams,
     PointSystemConfig,
     ArbitrableConfig,
-    CVStrategyInitializeParamsV0_2
+    CVStrategyInitializeParamsV0_3
 } from "../src/CVStrategy/CVStrategy.sol";
 import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
 import {IDiamondLoupe} from "../src/diamonds/interfaces/IDiamondLoupe.sol";
@@ -21,7 +21,16 @@ import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
+import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {MockPauseController} from "./helpers/PauseHelpers.sol";
+import {GlobalPauseController} from "../src/pausing/GlobalPauseController.sol";
+import {ISuperfluidToken} from
+    "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import {ISuperfluidPool} from
+    "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
+import {PoolConfig} from
+    "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/IGeneralDistributionAgreementV1.sol";
 
 import {TERC20} from "./shared/TERC20.sol";
 
@@ -47,10 +56,153 @@ contract CVStrategyStubFacet {
     }
 }
 
+contract CVStrategyRevertFacet {
+    function activatePoints() external pure {
+        revert("revert");
+    }
+}
+
+contract CVStrategyStubFacetFull {
+    event Pinged();
+
+    function registerRecipient(bytes memory, address) external payable returns (address) {
+        return address(0x1);
+    }
+
+    function activatePoints() external {
+        emit Pinged();
+    }
+
+    function deactivatePoints() external {
+        emit Pinged();
+    }
+
+    function increasePower(address, uint256) external returns (uint256) {
+        return 1;
+    }
+
+    function decreasePower(address, uint256) external returns (uint256) {
+        return 1;
+    }
+
+    function deactivatePoints(address) external {
+        emit Pinged();
+    }
+
+    function allocate(bytes memory, address) external payable {
+        emit Pinged();
+    }
+
+    function distribute(address[] memory, bytes memory, address) external {
+        emit Pinged();
+    }
+
+    function setPoolParams(
+        ArbitrableConfig memory,
+        CVParams memory,
+        uint256,
+        address[] memory,
+        address[] memory,
+        address
+    ) external {
+        emit Pinged();
+    }
+
+    function connectSuperfluidGDA(address) external {
+        emit Pinged();
+    }
+
+    function disconnectSuperfluidGDA(address) external {
+        emit Pinged();
+    }
+
+    function disputeProposal(uint256, string calldata, bytes calldata) external payable returns (uint256) {
+        emit Pinged();
+        return 1;
+    }
+
+    function rule(uint256, uint256) external {
+        emit Pinged();
+    }
+
+    function cancelProposal(uint256) external {
+        emit Pinged();
+    }
+
+    function editProposal(uint256, Metadata memory, address, uint256) external {
+        emit Pinged();
+    }
+
+    function rebalance() external {
+        emit Pinged();
+    }
+
+    function ping() external pure returns (uint256) {
+        return 1;
+    }
+}
+
+contract MockGDAv1Forwarder {
+    function createPool(ISuperfluidToken, address, PoolConfig memory) external returns (bool, ISuperfluidPool) {
+        return (true, ISuperfluidPool(address(0xBEEF)));
+    }
+}
+
+contract MockExternalVotingPowerRegistryForStrategy {
+    mapping(address => uint256) public power;
+
+    function setMemberPower(address _member, uint256 amount) external {
+        power[_member] = amount;
+    }
+
+    function getMemberPowerInStrategy(address _member, address) external view returns (uint256) {
+        return power[_member];
+    }
+
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
+
+    function ercAddress() external pure returns (address) {
+        return address(0);
+    }
+
+    function isMember(address _member) external view returns (bool) {
+        return power[_member] > 0;
+    }
+}
+
+contract MockContractRegistryForStrategy {
+    mapping(address => bool) public allowed;
+
+    function setAllowed(address target, bool isAllowed) external {
+        allowed[target] = isAllowed;
+    }
+
+    function isContractRegistered(address target) external view returns (bool) {
+        return allowed[target];
+    }
+}
+
+contract CVStrategyCoverageHarness is CVStrategyHarness {
+    function setSuperfluidGDA(address gda) external {
+        superfluidGDA = ISuperfluidPool(gda);
+    }
+
+    function exposedInitializeFacets() external {
+        _initializeFacets();
+    }
+
+    function exposedGetBasisStakedAmount() external returns (uint256) {
+        return getBasisStakedAmount();
+    }
+}
+
 contract CVStrategyTest is Test {
     CVStrategyHarness internal strategy;
     MockAlloWithPool internal allo;
     MockRegistryCommunity internal registryCommunity;
+    MockContractRegistryForStrategy internal contractRegistry;
     MockSybilScorer internal sybil;
     MockCollateralVault internal collateralVault;
     DummyFacet internal dummyFacet;
@@ -63,6 +215,7 @@ contract CVStrategyTest is Test {
     function setUp() public {
         allo = new MockAlloWithPool();
         registryCommunity = new MockRegistryCommunity();
+        contractRegistry = new MockContractRegistryForStrategy();
         sybil = new MockSybilScorer();
         collateralVault = new MockCollateralVault();
         dummyFacet = new DummyFacet();
@@ -72,10 +225,32 @@ contract CVStrategyTest is Test {
         strategy.setPoolId(1);
 
         registryCommunity.setCouncilSafe(councilSafe);
+        registryCommunity.setRegistryFactory(address(contractRegistry));
         registryCommunity.setMember(member, true);
         strategy.setRegistryCommunity(address(registryCommunity));
+        strategy.setVotingPowerRegistry(address(registryCommunity));
+        contractRegistry.setAllowed(address(sybil), true);
 
         allo.setPoolToken(1, address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
+    }
+
+    function _facetCutsForPause(address facet) internal pure returns (IDiamond.FacetCut[] memory cuts) {
+        cuts = new IDiamond.FacetCut[](1);
+        bytes4[] memory selectors = new bytes4[](12);
+        selectors[0] = bytes4(keccak256("setPauseController(address)"));
+        selectors[1] = bytes4(keccak256("setPauseFacet(address)"));
+        selectors[2] = bytes4(keccak256("pauseFacet()"));
+        selectors[3] = bytes4(keccak256("pause(uint256)"));
+        selectors[4] = bytes4(keccak256("pause(bytes4,uint256)"));
+        selectors[5] = bytes4(keccak256("unpause()"));
+        selectors[6] = bytes4(keccak256("unpause(bytes4)"));
+        selectors[7] = bytes4(keccak256("pauseController()"));
+        selectors[8] = bytes4(keccak256("isPaused()"));
+        selectors[9] = bytes4(keccak256("isPaused(bytes4)"));
+        selectors[10] = bytes4(keccak256("pausedUntil()"));
+        selectors[11] = bytes4(keccak256("pausedSelectorUntil(bytes4)"));
+        cuts[0] =
+            IDiamond.FacetCut({facetAddress: facet, action: IDiamond.FacetCutAction.Add, functionSelectors: selectors});
     }
 
     function test_checkSenderIsMember_branches() public {
@@ -94,6 +269,16 @@ contract CVStrategyTest is Test {
             abi.encodeWithSelector(CVStrategy.UserNotInRegistry.selector, member, address(registryCommunity))
         );
         strategy.exposedCheckSenderIsMember(member);
+    }
+
+    function test_checkSenderIsMember_success() public {
+        registryCommunity.setMember(member, true);
+        strategy.exposedCheckSenderIsMember(member);
+    }
+
+    function test_getProposalVoterStake_defaults_to_zero() public {
+        uint256 stake = strategy.getProposalVoterStake(1, member);
+        assertEq(stake, 0);
     }
 
     function test_onlyRegistryCommunity_and_onlyCouncilSafe() public {
@@ -130,10 +315,27 @@ contract CVStrategyTest is Test {
         assertTrue(strategy.exposedCanExecuteAction(other));
     }
 
+    function test_canExecuteAction_customPointSystem_nftGating() public {
+        MockExternalVotingPowerRegistryForStrategy extRegistry = new MockExternalVotingPowerRegistryForStrategy();
+
+        strategy.setPointSystem(PointSystem.Custom);
+        strategy.setVotingPowerRegistry(address(extRegistry));
+
+        // Non-member denied
+        assertFalse(strategy.exposedCanExecuteAction(other));
+
+        // Member allowed
+        extRegistry.setMemberPower(other, 3);
+        assertTrue(strategy.exposedCanExecuteAction(other));
+
+        // Sybil scorer takes priority when set
+        strategy.setSybilScorer(address(sybil));
+        sybil.setCanExecute(other, false);
+        assertFalse(strategy.exposedCanExecuteAction(other));
+    }
+
     function test_onlyCouncilSafeOrMember_branches() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(CVStrategy.OnlyCouncilSafeOrMember.selector, address(this), councilSafe)
-        );
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.OnlyCouncilSafeOrMember.selector, address(this), councilSafe));
         strategy.exposedOnlyCouncilSafeOrMember();
 
         bytes32 role = keccak256(abi.encodePacked("ALLOWLIST", uint256(1)));
@@ -180,6 +382,18 @@ contract CVStrategyTest is Test {
         assertEq(strategy.getProposalThreshold(2), 0);
     }
 
+    function test_getProposal_threshold_over_max_ratio() public {
+        strategy.setCvParams(CVParams(1, 1, ConvictionsUtils.D / 2, 0));
+        strategy.setTotalPointsActivated(100);
+        vm.deal(address(strategy), 1 ether);
+
+        uint256 poolAmount = strategy.getPoolAmount();
+        uint256 maxAllowed = (poolAmount * (ConvictionsUtils.D / 2)) / ConvictionsUtils.D;
+        strategy.setProposal(4, member, maxAllowed + 1, ProposalStatus.Active, block.number - 1, 0);
+
+        assertEq(strategy.getProposalThreshold(4), 0);
+    }
+
     function test_getProposal_threshold_calculation() public {
         CVParams memory params = CVParams(1, 1_000_000_000_000, 5_000_000, 0);
         strategy.setCvParams(params);
@@ -214,6 +428,13 @@ contract CVStrategyTest is Test {
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.AddressCannotBeZero.selector, address(0)));
         strategy.setSybilScorer(address(0), 10);
 
+        address unregisteredSybilScorer = makeAddr("unregisteredSybilScorer");
+        vm.prank(councilSafe);
+        vm.expectRevert(
+            abi.encodeWithSelector(CVStrategy.SybilScorerNotAllowed.selector, unregisteredSybilScorer)
+        );
+        strategy.setSybilScorer(unregisteredSybilScorer, 10);
+
         vm.prank(councilSafe);
         strategy.setSybilScorer(address(sybil), 10);
         assertEq(sybil.lastStrategy(), address(strategy));
@@ -238,8 +459,7 @@ contract CVStrategyTest is Test {
 
     function test_getters_and_conviction() public {
         MockArbitrator arb = new MockArbitrator();
-        ArbitrableConfig memory config =
-            ArbitrableConfig(IArbitrator(address(arb)), address(0xBEEF), 1, 2, 3, 4);
+        ArbitrableConfig memory config = ArbitrableConfig(IArbitrator(address(arb)), address(0xBEEF), 1, 2, 3, 4);
         strategy.setArbitrableConfig(2, config);
 
         (
@@ -353,7 +573,14 @@ contract CVStrategyTest is Test {
         strategy.distribute(new address[](0), "", address(0));
 
         vm.expectRevert(
-            abi.encodeWithSelector(CVStrategy.StrategyFunctionDoesNotExist.selector, CVStrategy.setPoolParams.selector)
+            abi.encodeWithSelector(
+                CVStrategy.StrategyFunctionDoesNotExist.selector,
+                bytes4(
+                    keccak256(
+                        "setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)"
+                    )
+                )
+            )
         );
         strategy.setPoolParams(
             ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0),
@@ -365,12 +592,16 @@ contract CVStrategyTest is Test {
         );
 
         vm.expectRevert(
-            abi.encodeWithSelector(CVStrategy.StrategyFunctionDoesNotExist.selector, CVStrategy.connectSuperfluidGDA.selector)
+            abi.encodeWithSelector(
+                CVStrategy.StrategyFunctionDoesNotExist.selector, CVStrategy.connectSuperfluidGDA.selector
+            )
         );
         strategy.connectSuperfluidGDA(address(0));
 
         vm.expectRevert(
-            abi.encodeWithSelector(CVStrategy.StrategyFunctionDoesNotExist.selector, CVStrategy.disconnectSuperfluidGDA.selector)
+            abi.encodeWithSelector(
+                CVStrategy.StrategyFunctionDoesNotExist.selector, CVStrategy.disconnectSuperfluidGDA.selector
+            )
         );
         strategy.disconnectSuperfluidGDA(address(0));
 
@@ -401,14 +632,12 @@ contract CVStrategyTest is Test {
         CVStrategyStubFacet facet = new CVStrategyStubFacet();
 
         CVStrategyHarness local = CVStrategyHarness(
-            payable(
-                address(
+            payable(address(
                     new ERC1967Proxy(
                         address(new CVStrategyHarness()),
                         abi.encodeWithSelector(CVStrategy.init.selector, address(allo), address(0xBEEF), ownerAddr)
                     )
-                )
-            )
+                ))
         );
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
@@ -416,9 +645,7 @@ contract CVStrategyTest is Test {
         selectors[0] = CVStrategy.activatePoints.selector;
         selectors[1] = CVStrategyStubFacet.ping.selector;
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(facet),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(facet), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
 
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
@@ -450,6 +677,7 @@ contract CVStrategyTest is Test {
         CVStrategyHarness local = new CVStrategyHarness();
         MockAlloWithPool localAllo = new MockAlloWithPool();
         MockRegistryCommunity localRegistry = new MockRegistryCommunity();
+        MockContractRegistryForStrategy localContractRegistry = new MockContractRegistryForStrategy();
         MockSybilScorer localSybil = new MockSybilScorer();
         MockCollateralVault template = new MockCollateralVault();
         MockArbitrator arb = new MockArbitrator();
@@ -457,8 +685,11 @@ contract CVStrategyTest is Test {
         localAllo.setPoolToken(1, address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
         local.setAllo(address(localAllo));
         local.setCollateralVaultTemplateRaw(address(template));
+        localRegistry.setRegistryFactory(address(localContractRegistry));
+        localContractRegistry.setAllowed(address(localSybil), true);
+        localContractRegistry.setAllowed(address(arb), true);
 
-        CVStrategyInitializeParamsV0_2 memory params;
+        CVStrategyInitializeParamsV0_3 memory params;
         params.registryCommunity = address(localRegistry);
         params.proposalType = ProposalType.Funding;
         params.pointSystem = PointSystem.Unlimited;
@@ -491,7 +722,7 @@ contract CVStrategyTest is Test {
         local.setAllo(address(localAllo));
         local.setCollateralVaultTemplateRaw(address(template));
 
-        CVStrategyInitializeParamsV0_2 memory params;
+        CVStrategyInitializeParamsV0_3 memory params;
         params.registryCommunity = address(registryCommunity);
         params.proposalType = ProposalType.Funding;
         params.pointSystem = PointSystem.Unlimited;
@@ -509,9 +740,184 @@ contract CVStrategyTest is Test {
         assertEq(address(local.sybilScorer()), address(0));
     }
 
+    function test_initialize_reverts_when_arbitrator_not_registered() public {
+        CVStrategyHarness local = new CVStrategyHarness();
+        MockAlloWithPool localAllo = new MockAlloWithPool();
+        MockRegistryCommunity localRegistry = new MockRegistryCommunity();
+        MockContractRegistryForStrategy localContractRegistry = new MockContractRegistryForStrategy();
+        MockCollateralVault template = new MockCollateralVault();
+        MockArbitrator arb = new MockArbitrator();
+
+        localAllo.setPoolToken(1, address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
+        local.setAllo(address(localAllo));
+        local.setCollateralVaultTemplateRaw(address(template));
+        localRegistry.setRegistryFactory(address(localContractRegistry));
+
+        CVStrategyInitializeParamsV0_3 memory params;
+        params.registryCommunity = address(localRegistry);
+        params.proposalType = ProposalType.Funding;
+        params.pointSystem = PointSystem.Unlimited;
+        params.pointConfig = PointSystemConfig(100);
+        params.arbitrableConfig = ArbitrableConfig(IArbitrator(address(arb)), address(0xBEEF), 0, 0, 1, 2);
+
+        vm.prank(address(localAllo));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.ArbitratorNotAllowed.selector, address(arb)));
+        local.initialize(1, abi.encode(params));
+    }
+
+    function test_initialize_reverts_when_sybil_scorer_not_registered() public {
+        CVStrategyHarness local = new CVStrategyHarness();
+        MockAlloWithPool localAllo = new MockAlloWithPool();
+        MockRegistryCommunity localRegistry = new MockRegistryCommunity();
+        MockContractRegistryForStrategy localContractRegistry = new MockContractRegistryForStrategy();
+        MockSybilScorer localSybil = new MockSybilScorer();
+        MockCollateralVault template = new MockCollateralVault();
+
+        localAllo.setPoolToken(1, address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
+        local.setAllo(address(localAllo));
+        local.setCollateralVaultTemplateRaw(address(template));
+        localRegistry.setRegistryFactory(address(localContractRegistry));
+
+        CVStrategyInitializeParamsV0_3 memory params;
+        params.registryCommunity = address(localRegistry);
+        params.proposalType = ProposalType.Funding;
+        params.pointSystem = PointSystem.Unlimited;
+        params.pointConfig = PointSystemConfig(100);
+        params.sybilScorer = address(localSybil);
+        params.sybilScorerThreshold = 7;
+
+        vm.prank(address(localAllo));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.SybilScorerNotAllowed.selector, address(localSybil)));
+        local.initialize(1, abi.encode(params));
+    }
+
+    function test_initialize_streaming_reverts_without_superfluid_data() public {
+        CVStrategyHarness local = new CVStrategyHarness();
+        MockAlloWithPool localAllo = new MockAlloWithPool();
+        MockCollateralVault template = new MockCollateralVault();
+
+        localAllo.setPoolToken(1, address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
+        local.setAllo(address(localAllo));
+        local.setCollateralVaultTemplateRaw(address(template));
+
+        CVStrategyInitializeParamsV0_3 memory params;
+        params.registryCommunity = address(registryCommunity);
+        params.proposalType = ProposalType.Streaming;
+        params.pointSystem = PointSystem.Unlimited;
+        params.pointConfig = PointSystemConfig(100);
+        params.sybilScorer = address(0);
+        params.sybilScorerThreshold = 0;
+        params.superfluidToken = address(0);
+        params.streamingRatePerSecond = 0;
+        params.cvParams = CVParams(0, 0, 0, 0);
+        params.arbitrableConfig = ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0);
+
+        vm.prank(address(localAllo));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.TokenCannotBeZero.selector, address(0)));
+        local.initialize(1, abi.encode(params));
+    }
+
     function test_init_and_setCollateralVaultTemplate_ownerCheck() public {
         address ownerAddr = makeAddr("strategyOwner");
         address otherAddr = makeAddr("otherAddr");
+
+        CVStrategyHarness local = CVStrategyHarness(
+            payable(address(
+                    new ERC1967Proxy(
+                        address(new CVStrategyHarness()),
+                        abi.encodeWithSelector(CVStrategy.init.selector, address(allo), address(0xBEEF), ownerAddr)
+                    )
+                ))
+        );
+
+        vm.prank(ownerAddr);
+        local.setCollateralVaultTemplate(address(0xCAFE));
+
+        vm.prank(otherAddr);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        local.setCollateralVaultTemplate(address(0xD00D));
+    }
+
+    function test_pause_enforcement_and_selector_exceptions() public {
+        address ownerAddr = makeAddr("strategyOwner");
+        CVStrategyStubFacet facet = new CVStrategyStubFacet();
+        CVPauseFacet pauseFacet = new CVPauseFacet();
+        GlobalPauseController controllerImpl = new GlobalPauseController();
+        GlobalPauseController controller = GlobalPauseController(
+            address(
+                new ERC1967Proxy(
+                    address(controllerImpl), abi.encodeWithSelector(GlobalPauseController.initialize.selector, ownerAddr)
+                )
+            )
+        );
+        MockPauseController selectorController = new MockPauseController();
+
+        CVStrategyHarness local = CVStrategyHarness(
+            payable(address(
+                    new ERC1967Proxy(
+                        address(new CVStrategyHarness()),
+                        abi.encodeWithSelector(CVStrategy.init.selector, address(allo), address(0xBEEF), ownerAddr)
+                    )
+                ))
+        );
+
+        IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
+        bytes4[] memory stubSelectors = new bytes4[](2);
+        stubSelectors[0] = CVStrategy.activatePoints.selector;
+        stubSelectors[1] = CVStrategyStubFacet.ping.selector;
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: address(facet), action: IDiamond.FacetCutAction.Add, functionSelectors: stubSelectors
+        });
+        cuts[1] = _facetCutsForPause(address(pauseFacet))[0];
+
+        vm.prank(ownerAddr);
+        local.diamondCut(cuts, address(0), "");
+
+        vm.prank(ownerAddr);
+        CVPauseFacet(address(local)).setPauseController(address(controller));
+
+        vm.prank(ownerAddr);
+        controller.pauseGlobal();
+
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.StrategyPaused.selector, address(controller)));
+        local.activatePoints();
+
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.StrategyPaused.selector, address(controller)));
+        CVStrategyStubFacet(address(local)).ping();
+
+        vm.prank(ownerAddr);
+        CVPauseFacet(address(local)).pause(1);
+
+        vm.prank(ownerAddr);
+        CVPauseFacet(address(local)).unpause();
+
+        CVPauseFacet(address(local)).pauseController();
+        CVPauseFacet(address(local)).isPaused();
+        CVPauseFacet(address(local)).isPaused(CVStrategy.activatePoints.selector);
+        CVPauseFacet(address(local)).pausedUntil();
+        CVPauseFacet(address(local)).pausedSelectorUntil(CVStrategy.activatePoints.selector);
+
+        vm.prank(ownerAddr);
+        controller.unpauseGlobal();
+
+        vm.prank(ownerAddr);
+        CVPauseFacet(address(local)).setPauseController(address(selectorController));
+
+        selectorController.setSelectorPaused(CVStrategy.activatePoints.selector, true);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVStrategy.StrategySelectorPaused.selector,
+                CVStrategy.activatePoints.selector,
+                address(selectorController)
+            )
+        );
+        local.activatePoints();
+    }
+
+    function test_pause_selector_bypass_before_controller_set() public {
+        address ownerAddr = makeAddr("strategyOwner");
+        CVPauseFacet pauseFacet = new CVPauseFacet();
 
         CVStrategyHarness local = CVStrategyHarness(
             payable(
@@ -525,10 +931,202 @@ contract CVStrategyTest is Test {
         );
 
         vm.prank(ownerAddr);
-        local.setCollateralVaultTemplate(address(0xCAFE));
+        local.diamondCut(_facetCutsForPause(address(pauseFacet)), address(0), "");
 
-        vm.prank(otherAddr);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        local.setCollateralVaultTemplate(address(0xD00D));
+        assertEq(CVPauseFacet(address(local)).pauseController(), address(0));
+
+        MockPauseController controller = new MockPauseController();
+        vm.prank(ownerAddr);
+        CVPauseFacet(address(local)).setPauseController(address(controller));
+
+        assertEq(CVPauseFacet(address(local)).pauseController(), address(controller));
+    }
+
+    function test_initialize_streaming_hits_branch_and_sets_pool() public {
+        CVStrategyCoverageHarness local = new CVStrategyCoverageHarness();
+        MockAlloWithPool localAllo = new MockAlloWithPool();
+        MockRegistryCommunity localRegistry = new MockRegistryCommunity();
+        MockCollateralVault template = new MockCollateralVault();
+
+        localAllo.setPoolToken(1, address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
+        local.setAllo(address(localAllo));
+        local.setCollateralVaultTemplateRaw(address(template));
+        local.setRegistryCommunity(address(localRegistry));
+        local.setSuperfluidGDA(address(0xDEAD));
+
+        MockGDAv1Forwarder forwarder = new MockGDAv1Forwarder();
+        address forwarderAddr = address(0x6DA13Bde224A05a288748d857b9e7DDEffd1dE08);
+        vm.etch(forwarderAddr, address(forwarder).code);
+
+        CVStrategyInitializeParamsV0_3 memory params;
+        params.registryCommunity = address(localRegistry);
+        params.proposalType = ProposalType.Streaming;
+        params.pointSystem = PointSystem.Unlimited;
+        params.pointConfig = PointSystemConfig(1);
+        params.sybilScorer = address(0);
+        params.sybilScorerThreshold = 0;
+        params.superfluidToken = address(0xCAFE);
+        params.streamingRatePerSecond = 1;
+        params.cvParams = CVParams(0, 0, 0, 0);
+        params.arbitrableConfig = ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0);
+
+        vm.prank(address(localAllo));
+        local.initialize(1, abi.encode(params));
+
+        assertEq(address(local.superfluidGDA()), address(0xBEEF));
+    }
+
+    function test_initializeFacets_and_getBasisStakedAmount() public {
+        CVStrategyCoverageHarness local = new CVStrategyCoverageHarness();
+        MockRegistryCommunity localRegistry = new MockRegistryCommunity();
+
+        local.setRegistryCommunity(address(localRegistry));
+        local.exposedInitializeFacets();
+
+        assertEq(local.exposedGetBasisStakedAmount(), 1);
+    }
+
+    function _deployCoverageStrategy(address ownerAddr) internal returns (CVStrategyCoverageHarness local) {
+        MockAlloWithPool localAllo = new MockAlloWithPool();
+        MockCollateralVault template = new MockCollateralVault();
+
+        CVStrategyCoverageHarness impl = new CVStrategyCoverageHarness();
+        ERC1967Proxy proxy = new ERC1967Proxy(
+            address(impl),
+            abi.encodeWithSelector(CVStrategy.init.selector, address(localAllo), address(template), ownerAddr)
+        );
+        local = CVStrategyCoverageHarness(payable(address(proxy)));
+        local.setPoolId(1);
+    }
+
+    function _addRevertFacet(CVStrategyCoverageHarness local, address ownerAddr) internal {
+        CVStrategyRevertFacet revertFacet = new CVStrategyRevertFacet();
+
+        IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
+        bytes4[] memory selectors = new bytes4[](1);
+        selectors[0] = CVStrategy.activatePoints.selector;
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: address(revertFacet),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: selectors
+        });
+
+        vm.prank(ownerAddr);
+        local.diamondCut(cuts, address(0), "");
+    }
+
+    function _addStubAndPauseFacets(CVStrategyCoverageHarness local, address ownerAddr) internal {
+        CVStrategyStubFacetFull stubFacet = new CVStrategyStubFacetFull();
+        CVPauseFacet pauseFacet = new CVPauseFacet();
+
+        bytes4 deactivatePointsAddrSelector = bytes4(keccak256("deactivatePoints(address)"));
+        bytes4[] memory addSelectors = new bytes4[](16);
+        addSelectors[0] = CVStrategy.registerRecipient.selector;
+        addSelectors[1] = bytes4(keccak256("deactivatePoints()"));
+        addSelectors[2] = CVStrategy.increasePower.selector;
+        addSelectors[3] = CVStrategy.decreasePower.selector;
+        addSelectors[4] = deactivatePointsAddrSelector;
+        addSelectors[5] = CVStrategy.allocate.selector;
+        addSelectors[6] = CVStrategy.distribute.selector;
+        addSelectors[7] = bytes4(
+            keccak256(
+                "setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)"
+            )
+        );
+        addSelectors[8] = CVStrategy.connectSuperfluidGDA.selector;
+        addSelectors[9] = CVStrategy.disconnectSuperfluidGDA.selector;
+        addSelectors[10] = CVStrategy.disputeProposal.selector;
+        addSelectors[11] = CVStrategy.rule.selector;
+        addSelectors[12] = CVStrategy.cancelProposal.selector;
+        addSelectors[13] = CVStrategy.editProposal.selector;
+        addSelectors[14] = CVStrategy.rebalance.selector;
+        addSelectors[15] = CVStrategyStubFacetFull.ping.selector;
+
+        IDiamond.FacetCut[] memory replaceCuts = new IDiamond.FacetCut[](2);
+        bytes4[] memory replaceSelectors = new bytes4[](1);
+        replaceSelectors[0] = CVStrategy.activatePoints.selector;
+        replaceCuts[0] = IDiamond.FacetCut({
+            facetAddress: address(stubFacet),
+            action: IDiamond.FacetCutAction.Replace,
+            functionSelectors: replaceSelectors
+        });
+        replaceCuts[1] = IDiamond.FacetCut({
+            facetAddress: address(stubFacet),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: addSelectors
+        });
+
+        vm.prank(ownerAddr);
+        local.diamondCut(replaceCuts, address(0), "");
+
+        IDiamond.FacetCut[] memory pauseCuts = _facetCutsForPause(address(pauseFacet));
+        vm.prank(ownerAddr);
+        local.diamondCut(pauseCuts, address(0), "");
+    }
+
+    function test_stub_delegate_and_fallback_paths() public {
+        address ownerAddr = makeAddr("strategyOwner");
+        CVStrategyCoverageHarness local = _deployCoverageStrategy(ownerAddr);
+        _addRevertFacet(local, ownerAddr);
+
+        vm.expectRevert();
+        local.activatePoints();
+        _addStubAndPauseFacets(local, ownerAddr);
+
+        local.registerRecipient("", address(0));
+        local.activatePoints();
+        local.deactivatePoints();
+        local.increasePower(address(0), 1);
+        local.decreasePower(address(0), 1);
+        local.deactivatePoints(address(0));
+        local.allocate("", address(0));
+        local.distribute(new address[](0), "", address(0));
+        local.setPoolParams(
+            ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0),
+            CVParams(0, 0, 0, 0),
+            0,
+            new address[](0),
+            new address[](0),
+            address(0)
+        );
+        local.connectSuperfluidGDA(address(0));
+        local.disconnectSuperfluidGDA(address(0));
+        local.disputeProposal(1, "", "");
+        local.rule(0, 0);
+        local.cancelProposal(1);
+        local.editProposal(1, Metadata({protocol: 1, pointer: "p"}), address(0), 0);
+        local.rebalance();
+
+        MockPauseController controller = new MockPauseController();
+        vm.prank(ownerAddr);
+        local.setPauseController(address(controller));
+        vm.prank(ownerAddr);
+        local.pause(1);
+        vm.prank(ownerAddr);
+        local.unpause();
+        vm.prank(ownerAddr);
+        local.pause(bytes4(keccak256("pause(uint256)")), 1);
+        vm.prank(ownerAddr);
+        local.unpause(bytes4(keccak256("pause(uint256)")));
+        local.pauseFacet();
+        local.pauseController();
+        local.isPaused();
+        local.isPaused(bytes4(keccak256("pause(uint256)")));
+        local.pausedUntil();
+        local.pausedSelectorUntil(bytes4(keccak256("pause(uint256)")));
+
+        (bool ok, bytes memory data) =
+            address(local).call(abi.encodeWithSelector(CVStrategyStubFacetFull.ping.selector));
+        assertTrue(ok);
+        assertEq(abi.decode(data, (uint256)), 1);
+
+        (ok,) = address(local).call(abi.encodeWithSelector(bytes4(0xdeadbeef)));
+        assertFalse(ok);
+
+        IDiamondLoupe.Facet[] memory facets = local.getFacets();
+        assertGt(facets.length, 0);
+
+        vm.prank(ownerAddr);
+        local.setCollateralVaultTemplate(address(0xCAFE));
     }
 }

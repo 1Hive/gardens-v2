@@ -1,0 +1,30 @@
+{
+  "network": "mainnet",
+  "chainId": 1,
+  "dataSources": [
+    {
+      "name": "RegistryFactory",
+      "startBlock": 24717800,
+      "address": "0x7d26c5b083b85b848645fcbd18fe01168989333b",
+      "customTemplate": "registryFactory"
+    },
+    {
+      "name": "PassportScorer",
+      "startBlock": 24717800,
+      "address": "0x4a9f8c35b55aabc45112dadf5b5adf689605b397",
+      "customTemplate": "passportScorer"
+    },
+    {
+      "name": "GoodDollarSybil",
+      "startBlock": 24717800,
+      "address": "0x8d6131910eb9a74fab60dfebdd414ee76e425c7f",
+      "customTemplate": "goodDollarSybil"
+    },
+    {
+      "name": "GlobalPauseController",
+      "startBlock": 24717800,
+      "address": "0x5800aafd1c613f1b2b7575ba36c5bf92f2b89b29",
+      "customTemplate": "globalPauseController"
+    }
+  ]
+}

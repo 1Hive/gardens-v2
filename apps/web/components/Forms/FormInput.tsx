@@ -24,6 +24,7 @@ type Props = {
   value?: string | number;
   step?: number | string;
   tooltip?: string;
+  tooltipClassName?: string;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
   suffix?: React.ReactNode;
   wide?: boolean;
@@ -48,6 +49,7 @@ export function FormInput({
   value = undefined,
   step,
   tooltip,
+  tooltipClassName,
   onChange,
   suffix,
   wide = true,
@@ -80,7 +82,7 @@ export function FormInput({
           onClick={handleLabelClick}
         >
           {tooltip ?
-            <InfoWrapper tooltip={tooltip}>
+            <InfoWrapper tooltip={tooltip} className={tooltipClassName}>
               {label}
               {required && <span>*</span>}
             </InfoWrapper>
@@ -119,6 +121,7 @@ export function FormInput({
             step={step}
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
+            value={value}
             onChange={registered?.onChange ?? onChange}
             data-testid={testId}
             {...otherProps}

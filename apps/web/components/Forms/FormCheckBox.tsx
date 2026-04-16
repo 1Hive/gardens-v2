@@ -36,40 +36,50 @@ export function FormCheckBox({
   disabled = false,
 }: Props) {
   const hasError = errors?.[registerKey];
+  const isNonInteractive = disabled === true || readOnly === true;
   const registered = register?.(registerKey, {
     ...registerOptions,
     required: required ?? registerOptions?.required,
     value: value ?? registerOptions?.value,
     onChange: onChange ?? registerOptions?.onChange,
-    disabled: disabled ?? registerOptions?.disabled,
+    disabled:
+      isNonInteractive ? true
+      : registerOptions?.disabled,
   });
 
   const checkboxClasses = [
     "checkbox",
+    "shrink-0",
+    "h-5",
+    "w-5",
+    "rounded-md",
+    "border-2",
     hasError ? "checkbox-error" : "checkbox-info",
-    "dark:bg-primary-soft-dark",
-    disabled || readOnly ? "cursor-not-allowed opacity-50" : "",
-    "disabled:opacity-40",
-    "disabled:border-neutral-soft",
-    "disabled:bg-neutral-soft",
-    "disabled:checked:bg-neutral-soft",
+    "border-neutral-soft-content",
+    "bg-transparent",
+    "dark:bg-transparent",
+    isNonInteractive ?
+      "cursor-not-allowed border-neutral-content/70 bg-neutral/30 dark:border-neutral-content/70 dark:bg-neutral/20 pointer-events-none hover:border-neutral-content/70 hover:bg-neutral/30"
+    : "",
+    "disabled:border-neutral-soft-content",
+    "disabled:bg-neutral/30",
+    "disabled:checked:bg-neutral/30",
+    "disabled:checked:text-neutral-content",
+    "disabled:opacity-100",
   ]
     .filter(Boolean)
     .join(" ");
 
-  const labelWrapperClasses = [
-    "flex",
-    "items-center",
-    "gap-2",
-    disabled || readOnly ? "opacity-60" : "",
-  ]
+  const labelWrapperClasses = ["flex", "items-center", "gap-2"]
     .filter(Boolean)
     .join(" ");
 
   const labelClasses = [
     "text-sm",
     "font-medium",
-    disabled || readOnly ? "cursor-not-allowed text-neutral-soft-content" : "cursor-pointer",
+    isNonInteractive ?
+      "cursor-not-allowed text-neutral-soft-content"
+    : "cursor-pointer",
   ].join(" ");
 
   return (
@@ -81,12 +91,18 @@ export function FormCheckBox({
           type="checkbox"
           id={registerKey}
           {...registered}
-          onChange={registered?.onChange ?? onChange}
+          onChange={
+            readOnly ? undefined
+            : (registered?.onChange ?? onChange)
+          }
           readOnly={readOnly}
-          disabled={disabled}
+          disabled={isNonInteractive}
           className={checkboxClasses}
         />
-        <label htmlFor={registerKey} className={labelClasses}>
+        <label
+          htmlFor={isNonInteractive ? undefined : registerKey}
+          className={labelClasses}
+        >
           {tooltip ?
             <InfoWrapper tooltip={tooltip} customIcon={customTooltipIcon}>
               {label}

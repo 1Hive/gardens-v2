@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Client, gql } from "urql";
 import { Address, parseAbi, zeroAddress } from "viem";
-import { usePublicClient } from "wagmi";
+import { usePreferredReadClient } from "./usePreferredReadClient";
+import { useResolvedChainId } from "./useResolvedChainId";
 import { useSuperfluidSugraphClient } from "./useSuperfluidSubgraphClient";
 import { ChainId } from "@/types";
 
@@ -47,13 +48,18 @@ export function useSuperfluidToken({
 }) {
   const [superToken, setSuperToken] = useState<SuperToken | null>(null);
   const [isFetching, setIsFetching] = useState(false);
-  const publicClient = usePublicClient();
+  const resolvedChainId = useResolvedChainId(chainId);
+  const publicClient = usePreferredReadClient(resolvedChainId);
   const client = useSuperfluidSugraphClient({ chainId });
 
   const fetch: (client: Client, token: string) => Promise<void> = async (
     _client: Client,
     _token: string,
   ): Promise<void> => {
+    const currentPublicClient = publicClient;
+    if (!currentPublicClient) {
+      return;
+    }
     setIsFetching(true);
     try {
       const result = await _client.query(SUPER_TOKEN_QUERY, {
@@ -95,7 +101,7 @@ export function useSuperfluidToken({
             const createdAtBlock = BigInt(
               returnedToken.createdAtBlockNumber ?? "latest",
             );
-            const logs = await publicClient.getLogs({
+            const logs = await currentPublicClient.getLogs({
               address: returnedToken.id,
               event: adminChangedAbi[0],
               fromBlock: createdAtBlock,
@@ -144,9 +150,9 @@ export function useSuperfluidToken({
   };
 
   useEffect(() => {
-    if (!client || !token || !enabled) return;
+    if (!client || !token || !enabled || !publicClient) return;
     fetch(client, token);
-  }, [client, token, enabled]);
+  }, [client, token, enabled, publicClient]);
 
   return {
     superToken,

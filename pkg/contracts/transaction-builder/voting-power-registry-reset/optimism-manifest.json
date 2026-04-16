@@ -1,0 +1,603 @@
+{
+  "chain": "optimism",
+  "chainId": "10",
+  "payloads": [
+    {
+      "file": "optimism-set-voting-power-registry-0xd7d5aedb6faf61cd17e395d586a7c9b365e685cd.json",
+      "safe": "0xd7d5aedb6faf61cd17e395d586a7c9b365e685cd",
+      "strategyCount": 9,
+      "strategies": [
+        {
+          "strategy": "0x6b22c89287ae0e6bf68436000699690d0ec57f7c",
+          "poolId": "148",
+          "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+          "communityName": "Internal testing 🧪"
+        },
+        {
+          "strategy": "0x557f7f22a3f6aa38f17d00ae1ec161d2f41f5850",
+          "poolId": "151",
+          "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+          "communityName": "Internal testing 🧪"
+        },
+        {
+          "strategy": "0xf4a3e1883fd7ba75def1b56e307e90c90d200200",
+          "poolId": "152",
+          "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+          "communityName": "Internal testing 🧪"
+        },
+        {
+          "strategy": "0x0323015258478a030a655e75a63a73106d5e3f26",
+          "poolId": "153",
+          "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+          "communityName": "Internal testing 🧪"
+        },
+        {
+          "strategy": "0xba1b0de347da5b4f50b9fb0840c957081b74ad2d",
+          "poolId": "156",
+          "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+          "communityName": "Internal testing 🧪"
+        },
+        {
+          "strategy": "0x95d1f6df93ce208affdf01dd3e9998976bf36c04",
+          "poolId": "157",
+          "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+          "communityName": "Internal testing 🧪"
+        },
+        {
+          "strategy": "0x346c63ab5b47302ae1d70e7fdb7f37fdd82d9a02",
+          "poolId": "158",
+          "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+          "communityName": "Internal testing 🧪"
+        },
+        {
+          "strategy": "0x700068416593a3da20cd7b8488961d3421079212",
+          "poolId": "159",
+          "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+          "communityName": "Internal testing 🧪"
+        },
+        {
+          "strategy": "0xe1e19cab1c84b3d3123af8c49b26e141a8ac4163",
+          "poolId": "160",
+          "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+          "communityName": "Internal testing 🧪"
+        }
+      ]
+    },
+    {
+      "file": "optimism-set-voting-power-registry-0x68e7b920e1e4b539c0cc4d5b646949d1aeca7557.json",
+      "safe": "0x68e7b920e1e4b539c0cc4d5b646949d1aeca7557",
+      "strategyCount": 8,
+      "strategies": [
+        {
+          "strategy": "0x8ace844a662569786a0d12b5364ba27fe4e74106",
+          "poolId": "97",
+          "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+          "communityName": "Greenpill Gov Guild"
+        },
+        {
+          "strategy": "0x0a552942a6eb43d01c845f3a354b83ec30146950",
+          "poolId": "98",
+          "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+          "communityName": "Greenpill Gov Guild"
+        },
+        {
+          "strategy": "0xf3772fcf3f172abd43ae9b1d11c87e3d5c265be8",
+          "poolId": "99",
+          "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+          "communityName": "Greenpill Gov Guild"
+        },
+        {
+          "strategy": "0x93b06f336b3bca1c15d5ce7c8ceb2600f4b914b3",
+          "poolId": "133",
+          "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+          "communityName": "Greenpill Gov Guild"
+        },
+        {
+          "strategy": "0xed6704f988ffe321be99cf2a8625ec2551fbe36c",
+          "poolId": "147",
+          "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+          "communityName": "Greenpill Gov Guild"
+        },
+        {
+          "strategy": "0xa9950441cb07361d095e625d286f737cbc501845",
+          "poolId": "149",
+          "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+          "communityName": "Greenpill Gov Guild"
+        },
+        {
+          "strategy": "0x5b6d5417b6ecd310fec24521c96c213a8f4945a6",
+          "poolId": "171",
+          "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+          "communityName": "Greenpill Gov Guild"
+        },
+        {
+          "strategy": "0xcc9e3c6134b4d369c7d87ee7ee61526acccd559e",
+          "poolId": "190",
+          "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+          "communityName": "Greenpill Gov Guild"
+        }
+      ]
+    },
+    {
+      "file": "optimism-set-voting-power-registry-0x5c64bae67dbafe5025f69a855acdfc5966b3f044.json",
+      "safe": "0x5c64bae67dbafe5025f69a855acdfc5966b3f044",
+      "strategyCount": 11,
+      "strategies": [
+        {
+          "strategy": "0x0a9d78ea6de07fddbc71f1181d52f78052654b15",
+          "poolId": "114",
+          "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+          "communityName": "Gitcoin Grants Garden 🌱"
+        },
+        {
+          "strategy": "0x2189ef55f6b0ce5538b27b63a2665d8ee319451a",
+          "poolId": "116",
+          "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+          "communityName": "Gitcoin Grants Garden 🌱"
+        },
+        {
+          "strategy": "0x3715bac18af8f0d27aa2121abc70c8051c632799",
+          "poolId": "121",
+          "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+          "communityName": "Gitcoin Grants Garden 🌱"
+        },
+        {
+          "strategy": "0x29d0c8dbe01e5bd7dec96c024cf54fb3bdd50f9a",
+          "poolId": "122",
+          "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+          "communityName": "Gitcoin Grants Garden 🌱"
+        },
+        {
+          "strategy": "0x4ceda4f34d3512900cc03c813e7eff4619ce5cfa",
+          "poolId": "123",
+          "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+          "communityName": "Gitcoin Grants Garden 🌱"
+        },
+        {
+          "strategy": "0xee9a549fe93e06c0291dc89fcfcd224c9245d6c9",
+          "poolId": "124",
+          "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+          "communityName": "Gitcoin Grants Garden 🌱"
+        },
+        {
+          "strategy": "0x442f6424f5b533dff6da469334dc3b81c80a7aca",
+          "poolId": "127",
+          "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+          "communityName": "Gitcoin Grants Garden 🌱"
+        },
+        {
+          "strategy": "0xcec4c6ca57b3494a8fd0abdc4604d534d451d8a2",
+          "poolId": "128",
+          "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+          "communityName": "Gitcoin Grants Garden 🌱"
+        },
+        {
+          "strategy": "0xa77206dae5a57ded39f295fd64b64a98cfb1f16d",
+          "poolId": "135",
+          "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+          "communityName": "Gitcoin Grants Garden 🌱"
+        },
+        {
+          "strategy": "0x84e67b84709ae4473cff1141a083a24f80518570",
+          "poolId": "161",
+          "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+          "communityName": "Gitcoin Grants Garden 🌱"
+        },
+        {
+          "strategy": "0xf6f39fc77a7118f49a6fc05585751a0cd19a583d",
+          "poolId": "162",
+          "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+          "communityName": "Gitcoin Grants Garden 🌱"
+        }
+      ]
+    },
+    {
+      "file": "optimism-set-voting-power-registry-0x9fe17647d062b2a13f74742c8be03eb7431a96ae.json",
+      "safe": "0x9fe17647d062b2a13f74742c8be03eb7431a96ae",
+      "strategyCount": 2,
+      "strategies": [
+        {
+          "strategy": "0x0d0b0de6493ff38ebfd5580ed2a38cf5400f82e1",
+          "poolId": "169",
+          "community": "0xd58c8122831c2f4705e59a33da1723690b310239",
+          "communityName": "Allo Garden"
+        },
+        {
+          "strategy": "0x6496cee44e5fd64f636cc689fd5160700006684a",
+          "poolId": "170",
+          "community": "0xd58c8122831c2f4705e59a33da1723690b310239",
+          "communityName": "Allo Garden"
+        }
+      ]
+    },
+    {
+      "file": "optimism-set-voting-power-registry-0xd7a3d3a7dd35b8e81fc0b83c032d0ed3261417d9.json",
+      "safe": "0xd7a3d3a7dd35b8e81fc0b83c032d0ed3261417d9",
+      "strategyCount": 11,
+      "strategies": [
+        {
+          "strategy": "0x5b977869aea25fa0c49c6d3ea044e5140a83c144",
+          "poolId": "139",
+          "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+          "communityName": "Gardineros 🌱"
+        },
+        {
+          "strategy": "0x1644457dcdb45e6bb07b100ad0837b021ca1319a",
+          "poolId": "140",
+          "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+          "communityName": "Gardineros 🌱"
+        },
+        {
+          "strategy": "0x677ba2d56852bbf1eef22a234b14a91b0638dda5",
+          "poolId": "142",
+          "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+          "communityName": "Gardineros 🌱"
+        },
+        {
+          "strategy": "0x336aa86505bdeefceedad46ddaa66a5d3d5bae67",
+          "poolId": "145",
+          "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+          "communityName": "Gardineros 🌱"
+        },
+        {
+          "strategy": "0x0df82861284051ed49c2eb5ef9dd626724f63ad1",
+          "poolId": "146",
+          "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+          "communityName": "Gardineros 🌱"
+        },
+        {
+          "strategy": "0x115c61ce04720cba6c647fedaa694ebbac3f201a",
+          "poolId": "165",
+          "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+          "communityName": "Gardineros 🌱"
+        },
+        {
+          "strategy": "0x8d24fb40164a26c320808aa00c567f3f65bce284",
+          "poolId": "168",
+          "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+          "communityName": "Gardineros 🌱"
+        },
+        {
+          "strategy": "0xbd49a3020277ce697c918bea2044b02557d0c8b3",
+          "poolId": "172",
+          "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+          "communityName": "Gardineros 🌱"
+        },
+        {
+          "strategy": "0x238283944de306a639653f3c72a3d74ff2322953",
+          "poolId": "173",
+          "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+          "communityName": "Gardineros 🌱"
+        },
+        {
+          "strategy": "0xf3ff898717f7e9c430a70b7ea1ad84de1dc2f405",
+          "poolId": "175",
+          "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+          "communityName": "Gardineros 🌱"
+        },
+        {
+          "strategy": "0x114964e7d57288eb8e117b98dd8972c514027025",
+          "poolId": "176",
+          "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+          "communityName": "Gardineros 🌱"
+        }
+      ]
+    },
+    {
+      "file": "optimism-set-voting-power-registry-0x472d17252416525dbd06b707f0c1cbb719e938c2.json",
+      "safe": "0x472d17252416525dbd06b707f0c1cbb719e938c2",
+      "strategyCount": 4,
+      "strategies": [
+        {
+          "strategy": "0xb3551608e7833f517d77419f4035e1a6b14391b7",
+          "poolId": "75",
+          "community": "0xf515b83f7e0ab851f822e56b0fe63dfa973e74f0",
+          "communityName": "GreenPill India "
+        },
+        {
+          "strategy": "0x62592b50c68fc511862e96d861a81048fb19ac8f",
+          "poolId": "120",
+          "community": "0xf515b83f7e0ab851f822e56b0fe63dfa973e74f0",
+          "communityName": "GreenPill India "
+        },
+        {
+          "strategy": "0x0e09df5ea5c0a93f7acfc03148e26fb246cdc68e",
+          "poolId": "137",
+          "community": "0xf515b83f7e0ab851f822e56b0fe63dfa973e74f0",
+          "communityName": "GreenPill India "
+        },
+        {
+          "strategy": "0x56c014f23380d1c4e15438904d66de8e4555533c",
+          "poolId": "138",
+          "community": "0xf515b83f7e0ab851f822e56b0fe63dfa973e74f0",
+          "communityName": "GreenPill India "
+        }
+      ]
+    },
+    {
+      "file": "optimism-set-voting-power-registry-0x327f6aa1870731235a57bc785523daf0054b7394.json",
+      "safe": "0x327f6aa1870731235a57bc785523daf0054b7394",
+      "strategyCount": 9,
+      "strategies": [
+        {
+          "strategy": "0x411f00636b53776c3bff34f837415c598fff4222",
+          "poolId": "181",
+          "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+          "communityName": "🧪 End-to-End Test Playground"
+        },
+        {
+          "strategy": "0xa62e6c86f49de4d3aa655d1f733d0c0c9d13cad0",
+          "poolId": "182",
+          "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+          "communityName": "🧪 End-to-End Test Playground"
+        },
+        {
+          "strategy": "0x2f3cebb1850aa2c10b43f74a1bb0b39f25532200",
+          "poolId": "183",
+          "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+          "communityName": "🧪 End-to-End Test Playground"
+        },
+        {
+          "strategy": "0x0e12b430409e4748de176b50c39f111a321a5db8",
+          "poolId": "184",
+          "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+          "communityName": "🧪 End-to-End Test Playground"
+        },
+        {
+          "strategy": "0xbee669ae394ef7ecbf020a8c3e7746cf46995f5f",
+          "poolId": "185",
+          "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+          "communityName": "🧪 End-to-End Test Playground"
+        },
+        {
+          "strategy": "0xbc3a4c9b9372fa24223b0618eae191caca31162e",
+          "poolId": "186",
+          "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+          "communityName": "🧪 End-to-End Test Playground"
+        },
+        {
+          "strategy": "0xdaed833eb4c401332ec890beafec08efe678f46f",
+          "poolId": "187",
+          "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+          "communityName": "🧪 End-to-End Test Playground"
+        },
+        {
+          "strategy": "0x83d1f1a2ccfe9ba80a99ba44507b5aaa01b5b65c",
+          "poolId": "188",
+          "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+          "communityName": "🧪 End-to-End Test Playground"
+        },
+        {
+          "strategy": "0x3c1d37c92e075bd71afc88b17364b5713414cf48",
+          "poolId": "189",
+          "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+          "communityName": "🧪 End-to-End Test Playground"
+        }
+      ]
+    },
+    {
+      "file": "optimism-set-voting-power-registry-0x4201698f2a7389d6e85d7c4b799be8aeb3cf0d62.json",
+      "safe": "0x4201698f2a7389d6e85d7c4b799be8aeb3cf0d62",
+      "strategyCount": 2,
+      "strategies": [
+        {
+          "strategy": "0x15a4ec8c5bf8fa1da8a911aad5c4260be73b9059",
+          "poolId": "129",
+          "community": "0x2171ec78778dda68a993704b607f23e6e4f17783",
+          "communityName": "Public Nouns"
+        },
+        {
+          "strategy": "0x8d87fb19181a480828f70eaed7eb85b05b7355ae",
+          "poolId": "131",
+          "community": "0x2171ec78778dda68a993704b607f23e6e4f17783",
+          "communityName": "Public Nouns"
+        }
+      ]
+    },
+    {
+      "file": "optimism-set-voting-power-registry-0x2f4204fcb336ee5decf54140d178c81e85c094ac.json",
+      "safe": "0x2f4204fcb336ee5decf54140d178c81e85c094ac",
+      "strategyCount": 7,
+      "strategies": [
+        {
+          "strategy": "0x63e2b63072e131c0e5ad72205e03cbe6ca1484fa",
+          "poolId": "67",
+          "community": "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+          "communityName": "MCON III - Detroit"
+        },
+        {
+          "strategy": "0x8f80c90ef85254bd1c401804058bb68f2eb7cfab",
+          "poolId": "68",
+          "community": "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+          "communityName": "MCON III - Detroit"
+        },
+        {
+          "strategy": "0xd9cf1f7d077166236e260819257a567b1ca22c8c",
+          "poolId": "69",
+          "community": "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+          "communityName": "MCON III - Detroit"
+        },
+        {
+          "strategy": "0x964251300e577801ce3e21897c6a335505fedee5",
+          "poolId": "70",
+          "community": "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+          "communityName": "MCON III - Detroit"
+        },
+        {
+          "strategy": "0x1c720bfa4a2535fb6675b859a717b4cba56fd97b",
+          "poolId": "71",
+          "community": "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+          "communityName": "MCON III - Detroit"
+        },
+        {
+          "strategy": "0xaeecbc91e44541204d0c784e4ac3e8eca6a47cc8",
+          "poolId": "72",
+          "community": "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+          "communityName": "MCON III - Detroit"
+        },
+        {
+          "strategy": "0x94daa3f0e1380139e178f8cc523eea39395bcf78",
+          "poolId": "73",
+          "community": "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+          "communityName": "MCON III - Detroit"
+        }
+      ]
+    },
+    {
+      "file": "optimism-set-voting-power-registry-0x07ad02e0c1fa0b09fc945ff197e18e9c256838c6.json",
+      "safe": "0x07ad02e0c1fa0b09fc945ff197e18e9c256838c6",
+      "strategyCount": 6,
+      "strategies": [
+        {
+          "strategy": "0x528bfb7875a7134bb14b02a96d1e8e97d886e5c5",
+          "poolId": "150",
+          "community": "0xbec85d99c6f4ec34af0a9222cdd280127e06ab44",
+          "communityName": "Gossman"
+        },
+        {
+          "strategy": "0xf11ea19ca2d6dbd9aea9075f8b899093f1a5593e",
+          "poolId": "154",
+          "community": "0xbec85d99c6f4ec34af0a9222cdd280127e06ab44",
+          "communityName": "Gossman"
+        },
+        {
+          "strategy": "0xfe40b643000a47c63c1367b37090ae0a752d7433",
+          "poolId": "155",
+          "community": "0xbec85d99c6f4ec34af0a9222cdd280127e06ab44",
+          "communityName": "Gossman"
+        },
+        {
+          "strategy": "0xc12cb9c057c708eeeca45164a120ad1971e52eec",
+          "poolId": "163",
+          "community": "0xbec85d99c6f4ec34af0a9222cdd280127e06ab44",
+          "communityName": "Gossman"
+        },
+        {
+          "strategy": "0xe2aee72d564f933f12fb13b2694d1ac49b93ba34",
+          "poolId": "164",
+          "community": "0xbec85d99c6f4ec34af0a9222cdd280127e06ab44",
+          "communityName": "Gossman"
+        },
+        {
+          "strategy": "0x5e53068c175107564a751f3fc2baadac59d69043",
+          "poolId": "167",
+          "community": "0xbec85d99c6f4ec34af0a9222cdd280127e06ab44",
+          "communityName": "Gossman"
+        }
+      ]
+    },
+    {
+      "file": "optimism-set-voting-power-registry-0x69a525d63b7f1490b3e6d0bb1d9b4556138b0b58.json",
+      "safe": "0x69a525d63b7f1490b3e6d0bb1d9b4556138b0b58",
+      "strategyCount": 4,
+      "strategies": [
+        {
+          "strategy": "0x6ff884f45d0932b6d41ef538478c275d96a9bce3",
+          "poolId": "177",
+          "community": "0xd95bf6da95c77466674bd1210e77a23492f6eef9",
+          "communityName": "Public Goods Tooling Development Garden"
+        },
+        {
+          "strategy": "0x588e935cf4dae4361f33af2aadd4c3c3a06cab7d",
+          "poolId": "178",
+          "community": "0xd95bf6da95c77466674bd1210e77a23492f6eef9",
+          "communityName": "Public Goods Tooling Development Garden"
+        },
+        {
+          "strategy": "0x9b63d37fc5f7a7b497c1a3107a10f6ff9c2232d8",
+          "poolId": "179",
+          "community": "0xd95bf6da95c77466674bd1210e77a23492f6eef9",
+          "communityName": "Public Goods Tooling Development Garden"
+        },
+        {
+          "strategy": "0xca1a9dda3d2753c073f25c8271365152fabe7ca6",
+          "poolId": "180",
+          "community": "0xd95bf6da95c77466674bd1210e77a23492f6eef9",
+          "communityName": "Public Goods Tooling Development Garden"
+        }
+      ]
+    },
+    {
+      "file": "optimism-set-voting-power-registry-0x329a0ca99972c5c544d72860f5cf50336aa7aabe.json",
+      "safe": "0x329a0ca99972c5c544d72860f5cf50336aa7aabe",
+      "strategyCount": 3,
+      "strategies": [
+        {
+          "strategy": "0xfeca5fc72deb98b41198a5dce90e00bbafbe5888",
+          "poolId": "76",
+          "community": "0xe5b10de982897a60cfae8481bac5848816c0f705",
+          "communityName": "BrightID"
+        },
+        {
+          "strategy": "0x6a27a7454bfbf17aa22566519778b58f3d4adcc2",
+          "poolId": "93",
+          "community": "0xe5b10de982897a60cfae8481bac5848816c0f705",
+          "communityName": "BrightID"
+        },
+        {
+          "strategy": "0x9d2d7f1ba9e02905f944ce2636aba524a4b734f6",
+          "poolId": "174",
+          "community": "0xe5b10de982897a60cfae8481bac5848816c0f705",
+          "communityName": "BrightID"
+        }
+      ]
+    },
+    {
+      "file": "optimism-set-voting-power-registry-0x81c5c4047f84c3842f9b7ac841c96504517c7d8f.json",
+      "safe": "0x81c5c4047f84c3842f9b7ac841c96504517c7d8f",
+      "strategyCount": 4,
+      "strategies": [
+        {
+          "strategy": "0x977c7d12e28bd42fc0739be73f0f7423d5a64b94",
+          "poolId": "115",
+          "community": "0x9b0d2fbc6a0efacb69d716bfd15db8734c550a7c",
+          "communityName": "DHK dao"
+        },
+        {
+          "strategy": "0xfed43acfa82e0e924d507124892878b6086b581d",
+          "poolId": "130",
+          "community": "0x9b0d2fbc6a0efacb69d716bfd15db8734c550a7c",
+          "communityName": "DHK dao"
+        },
+        {
+          "strategy": "0xd6620f7576894543f5225ab44f9eb32133710db3",
+          "poolId": "132",
+          "community": "0x9b0d2fbc6a0efacb69d716bfd15db8734c550a7c",
+          "communityName": "DHK dao"
+        },
+        {
+          "strategy": "0x757e04b47663d1f0b2605d843cad0cef248b9372",
+          "poolId": "166",
+          "community": "0x9b0d2fbc6a0efacb69d716bfd15db8734c550a7c",
+          "communityName": "DHK dao"
+        }
+      ]
+    },
+    {
+      "file": "optimism-set-voting-power-registry-0x8ea0749ea936762b7a5bfdd6c0f5beab02ff0bf4.json",
+      "safe": "0x8ea0749ea936762b7a5bfdd6c0f5beab02ff0bf4",
+      "strategyCount": 1,
+      "strategies": [
+        {
+          "strategy": "0x9f856dd557a46025851c048e846ed4f84435afce",
+          "poolId": "136",
+          "community": "0x48db6422155a037bbb347eb97aaba88e651f4003",
+          "communityName": "Amigos Nación Black Flag"
+        }
+      ]
+    },
+    {
+      "file": "optimism-set-voting-power-registry-0x4e228c7ee12a8b256ec158d67e91900a3850fd09.json",
+      "safe": "0x4e228c7ee12a8b256ec158d67e91900a3850fd09",
+      "strategyCount": 1,
+      "strategies": [
+        {
+          "strategy": "0xf793cfaa35ce36c213bd0e226d9c14afa8cfd8f8",
+          "poolId": "134",
+          "community": "0xb1f32397d6db17db39f625f14286e6e620c3cdc0",
+          "communityName": "Los Jardineros de Gaia"
+        }
+      ]
+    }
+  ]
+}

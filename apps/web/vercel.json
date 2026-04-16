@@ -1,4 +1,5 @@
 {
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- .",
   "crons": [
     {
       "path": "/api/passport-oracles/daily-job/10",
@@ -22,6 +23,10 @@
     },
     {
       "path": "/api/superfluid-points?campaignId=510",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/rebalance-keeper/all",
       "schedule": "*/15 * * * *"
     }
   ]

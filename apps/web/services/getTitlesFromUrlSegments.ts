@@ -8,6 +8,7 @@ import {
   RegistryCommunity,
   TokenGarden,
 } from "#/subgraph/.graphclient";
+import { buildProposalEntityId } from "@/utils/proposals";
 import { capitalize } from "@/utils/text";
 
 interface CommunityTitlesResult {
@@ -38,56 +39,78 @@ interface ProposalTitlesResult {
 
 interface QueryMapItem {
   document: DocumentNode;
-  getVariables: (arg: string) => Record<string, unknown>;
+  getVariables: (arg: string, segments: string[]) => Record<string, unknown>;
   parseResult: (arg: any) => Promise<(string | undefined)[]>;
 }
 
 export const queryMap: Record<number, QueryMapItem> = {
-  3: {
+  2: {
     document: getCommunityTitlesDocument,
-    getVariables: (communityAddr: string) => ({
+    getVariables: (communityAddr: string, _segments: string[]) => ({
       communityAddr: communityAddr.toLowerCase(),
     }),
     parseResult: async (
       resData: CommunityTitlesResult,
     ): Promise<(string | undefined)[]> => {
       const community = resData?.registryCommunity;
-      return [community?.garden?.name, community?.communityName ?? undefined];
+      return [community?.communityName ?? undefined];
     },
   },
-  4: {
+  3: {
     document: getPoolTitlesDocument,
-    getVariables: (poolId: string) => ({ poolId }),
+    getVariables: (strategyId: string) => ({
+      strategyId: strategyId.toLowerCase(),
+    }),
     parseResult: async (
       resData: PoolTitlesResult,
     ): Promise<(string | undefined)[]> => {
       const pool = resData?.cvstrategies[0];
-      // const poolTitle = await getPoolTitle(pool);
+      const poolTitle = getMetadataTitle(pool?.metadata);
       return [
-        pool?.registryCommunity?.garden?.name,
         pool?.registryCommunity?.communityName ?? undefined,
-        `Pool #${pool?.poolId}`,
+        poolTitle ??
+          (pool?.poolId != null ? `Pool #${pool.poolId}` : undefined),
       ];
     },
   },
-  5: {
+  4: {
     document: getProposalTitlesDocument,
-    getVariables: (proposalId: string) => ({ proposalId }),
+    getVariables: (proposalSegment: string, segments: string[]) => {
+      const strategySegment = segments[3] ?? "";
+      return {
+        proposalId: buildProposalEntityId(
+          strategySegment.toLowerCase(),
+          proposalSegment,
+        ).toLowerCase(),
+      };
+    },
     parseResult: async (
       resData: ProposalTitlesResult,
     ): Promise<(string | undefined)[]> => {
       const proposal = resData?.cvproposal;
-      // const strategyTitle = await getPoolTitle(proposal?.strategy);
-      // const proposalTitle = await getProposalTitle(proposal);
+      const strategyTitle = getMetadataTitle(proposal?.strategy?.metadata);
+      const proposalTitle = getMetadataTitle(proposal?.metadata);
       return [
-        proposal?.strategy?.registryCommunity?.garden?.name,
         proposal?.strategy?.registryCommunity?.communityName ?? undefined,
-        `Pool #${proposal?.strategy?.poolId}`,
-        `Proposal #${proposal?.proposalNumber}`,
+        strategyTitle ??
+          (proposal?.strategy?.poolId != null ?
+            `Pool #${proposal.strategy.poolId}`
+          : undefined),
+        proposalTitle ??
+          (proposal?.proposalNumber != null ?
+            `Proposal #${proposal.proposalNumber}`
+          : undefined),
       ];
     },
   },
 };
+
+function getMetadataTitle(
+  metadata: { title?: string | null } | null | undefined,
+): string | undefined {
+  const title = metadata?.title?.trim();
+  return title || undefined;
+}
 
 /**
  * Parses a static segment from the URL.
@@ -97,35 +120,3 @@ export const queryMap: Record<number, QueryMapItem> = {
 export const parseStaticSegment = (str: string): string => {
   return capitalize(str.replace(/-/g, " "));
 };
-
-/**
- * Fetches and returns the pool title.
- * @param pool - The pool data.
- * @returns A promise that resolves to the formatted pool title or undefined.
- */
-// async function getPoolTitle(
-//   pool: Pick<CVStrategy, "poolId" | "metadata"> | undefined,
-// ): Promise<string | undefined> {
-//   if (!pool) return undefined;
-//   const poolTitle = pool.metadata
-//     ? await getIpfsMetadata(pool.metadata).then((data) => data?.title)
-//     : undefined;
-//   return poolTitle && pool.poolId ? `#${pool.poolId} ${poolTitle} ` : undefined;
-// }
-
-/**
- * Fetches and returns the proposal title.
- * @param proposal - The proposal data.
- * @returns A promise that resolves to the formatted proposal title or undefined.
- */
-// async function getProposalTitle(
-//   proposal: Pick<CVProposal, "proposalNumber" | "metadata"> | undefined,
-// ): Promise<string | undefined> {
-//   if (!proposal) return undefined;
-//   const proposalTitle = proposal.metadata
-//     ? await getIpfsMetadata(proposal.metadata).then((data) => data?.title)
-//     : undefined;
-//   return proposalTitle && proposal.proposalNumber
-//     ? `#${proposal.proposalNumber} ${proposalTitle}`
-//     : undefined;
-// }

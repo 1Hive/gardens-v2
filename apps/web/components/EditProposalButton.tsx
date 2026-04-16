@@ -34,10 +34,11 @@ function EditProposalButton({ proposalData, poolToken }: Props) {
     100;
 
   const spendingLimitValueNum =
-    poolToken &&
-    ((+poolToken.formatted * +Math.round(spendingLimitValuePct)) / 100).toFixed(
-      2,
-    );
+    poolToken?.poolToken &&
+    (
+      (+poolToken.poolToken.formatted * +Math.round(spendingLimitValuePct)) /
+      100
+    ).toFixed(2);
 
   const { data: proposalMetadata } = useMetadataIpfsFetch({
     hash: proposalData?.metadataHash,

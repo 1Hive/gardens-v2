@@ -63,7 +63,8 @@ export type ChangeEventTopic =
   | "garden"
   | "pool"
   | "proposal"
-  | "member";
+  | "member"
+  | "stream";
 
 type Native = string | number | boolean | null | undefined;
 
@@ -196,7 +197,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       const subscriptionId = uniqueId();
       console.debug(`⚡ WS: subscribe ${subscriptionId}`, scope);
       subMap.set(subscriptionId, {
-        scopes: (scope.length ? scope : [scope]) as ChangeEventScope[],
+        scopes: (Array.isArray(scope) ? scope : [scope]) as ChangeEventScope[],
         onChangeEvent,
       });
       return subscriptionId;
@@ -204,27 +205,34 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
-  const unsubscribe = (subscriptionId: SubscriptionId) => {
-    console.debug(`⚡ WS: unsubscribe ${subscriptionId}`);
+  const unsubscribe = useCallback((subscriptionId: SubscriptionId) => {
+    console.debug(
+      `⚡ WS: unsubscribe ${subscriptionId}`,
+      subMap.get(subscriptionId)?.scopes,
+    );
     subMap.delete(subscriptionId);
-  };
+  }, []);
 
-  const publish = (payload: ChangeEventScope) => {
-    payload = {
-      ...payload,
-      chainId: +(payload.chainId ?? chainId ?? "NaN"),
-    };
-    console.debug("⚡ WS: publish", payload);
-    ablyClient.channels
-      .get(CHANGE_EVENT_CHANNEL_NAME)
-      .publish(payload.topic, payload);
-  };
+  const publish = useCallback(
+    (payload: ChangeEventScope) => {
+      payload = {
+        ...payload,
+        chainId: +(payload.chainId ?? chainId ?? "NaN"),
+      };
+      console.debug("⚡ WS: publish", payload);
+      ablyClient.channels
+        .get(CHANGE_EVENT_CHANNEL_NAME)
+        .publish(payload.topic, payload);
+    },
+    [ablyClient.channels, chainId],
+  );
+
+  const value = useMemo(
+    () => ({ connected, subscribe, unsubscribe, publish, messages }),
+    [connected, messages, publish, subscribe, unsubscribe],
+  );
 
   return (
-    <PubSubContext.Provider
-      value={{ connected, subscribe, unsubscribe, publish, messages }}
-    >
-      {children}
-    </PubSubContext.Provider>
+    <PubSubContext.Provider value={value}>{children}</PubSubContext.Provider>
   );
 }

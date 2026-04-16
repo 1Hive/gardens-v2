@@ -3,6 +3,9 @@ import {
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
+  StreamInfo,
+  ProposalStream,
+  ProposalEscrowIndex,
   MemberStrategy,
   Stake,
   Member,
@@ -36,12 +39,20 @@ import {
   SybilScorerUpdated,
   InitializedCV3,
   InitializedCV3DataStruct,
+  InitializedCV4,
+  InitializedCV4DataStruct,
   ProposalEdited,
+  SuperfluidPoolCreated,
   SuperfluidTokenUpdated,
+  SuperfluidStreamingRateUpdated,
   SuperfluidGDAConnected,
-  SuperfluidGDADisconnected
+  SuperfluidGDADisconnected,
+  StreamRateUpdated
 } from "../../generated/templates/CVStrategy/CVStrategy";
-
+import {
+  CVStrategyLegacy as LegacyCVStrategyContract,
+  CVStrategyLegacy__proposalsResult
+} from "../../generated/templates/CVStrategy/CVStrategyLegacy";
 import { Allo as AlloContract } from "../../generated/templates/CVStrategy/Allo";
 
 import {
@@ -65,6 +76,7 @@ const PROPOSAL_STATUS_REJECTED = BigInt.fromI32(6);
 
 const DISPUTE_STATUS_WAITING = BigInt.fromI32(0);
 const DISPUTE_STATUS_SOLVED = BigInt.fromI32(1);
+const ZERO = BigInt.fromI32(0);
 
 // 10**7
 const D = BigInt.fromI32(10000000);
@@ -73,28 +85,90 @@ function getMaxConviction(staked: BigInt, _decay: BigInt): BigInt {
   return staked.times(D).div(D.minus(_decay));
 }
 
+function getProposalMetadataPointer(
+  address: Address,
+  proposalNumber: BigInt
+): string {
+  const current = CVStrategyContract.bind(address);
+  const pointerResult = current.try_getProposalMetadataPointer(proposalNumber);
+  if (!pointerResult.reverted && pointerResult.value.length > 0) {
+    return pointerResult.value;
+  }
+
+  const legacy = LegacyCVStrategyContract.bind(address);
+  const legacyProposal = legacy.try_proposals(proposalNumber);
+  if (!legacyProposal.reverted) {
+    const pointer = legacyProposal.value.getMetadata().pointer;
+    if (pointer.length > 0) {
+      return pointer;
+    }
+  }
+
+  log.error(
+    "CVStrategy: metadata pointer lookup failed for strategy:{} proposal:{}",
+    [address.toHexString(), proposalNumber.toString()]
+  );
+  return "";
+}
+
+function getLegacyProposal(
+  address: Address,
+  proposalNumber: BigInt
+): ethereum.CallResult<CVStrategyLegacy__proposalsResult> {
+  const legacy = LegacyCVStrategyContract.bind(address);
+  return legacy.try_proposals(proposalNumber);
+}
+
 export function handleInitialized(event: InitializedCV): void {
   // @ts-ignore
   const data3 = changetype<InitializedCV3DataStruct>(event.params.data);
   data3[8] = ethereum.Value.fromAddressArray([Address.zero()]); // Initialize allowlist to everyone allowed
   data3[9] = ethereum.Value.fromAddress(Address.zero()); // Initialize allowlist to everyone allowed
-  computeInitialize(event.address, event.params.poolId, data3);
+  computeInitialize(
+    event.address,
+    event.params.poolId,
+    data3,
+    event.block.timestamp
+  );
 }
 
 export function handleInitializedV2(event: InitializedCV2): void {
   // @ts-ignore
   const data3 = changetype<InitializedCV3DataStruct>(event.params.data);
   data3[9] = ethereum.Value.fromAddress(Address.zero()); // Initialize allowlist to everyone allowed
-  computeInitialize(event.address, event.params.poolId, data3);
+  computeInitialize(
+    event.address,
+    event.params.poolId,
+    data3,
+    event.block.timestamp
+  );
 }
 
 export function handleInitializedV3(event: InitializedCV3): void {
-  computeInitialize(event.address, event.params.poolId, event.params.data);
+  computeInitialize(
+    event.address,
+    event.params.poolId,
+    event.params.data,
+    event.block.timestamp
+  );
 }
 
-export function handleProposalCreated(event: ProposalCreated): void {
+export function handleInitializedV4(event: InitializedCV4): void {
+  computeInitializeV4(
+    event.address,
+    event.params.poolId,
+    event.params.data,
+    event.block.timestamp
+  );
+}
+
+function handleProposalCreatedCore(
+  event: ethereum.Event,
+  proposalNumber: BigInt,
+  escrow: string | null
+): void {
   const cvsId = event.address.toHexString();
-  const proposalIdString = `${cvsId}-${event.params.proposalId.toString()}`;
+  const proposalIdString = `${cvsId}-${proposalNumber.toString()}`;
 
   const cvc = CVStrategyContract.bind(event.address);
 
@@ -103,19 +177,76 @@ export function handleProposalCreated(event: ProposalCreated): void {
     cvsId
   ]);
 
-  let p = cvc.try_proposals(event.params.proposalId);
-  if (p.reverted) {
-    log.error(
-      "CvStrategy: handleProposalCreated proposal reverted:{} (block:{})",
-      [proposalIdString, event.block.number.toString()]
-    );
+  let existingProposal = CVProposal.load(proposalIdString);
+  if (existingProposal != null) {
+    if (
+      existingProposal.metadataHash.length == 0 ||
+      existingProposal.metadata == null
+    ) {
+      const pointer = getProposalMetadataPointer(event.address, proposalNumber);
+      if (pointer.length > 0) {
+        existingProposal.metadataHash = pointer;
+        existingProposal.metadata = pointer;
+        ProposalMetadataTemplate.create(pointer);
+      }
+    }
+    if (escrow != null) {
+      existingProposal.streamingEscrow = escrow;
+    }
+    existingProposal.updatedAt = event.block.timestamp;
+    existingProposal.save();
+    if (escrow != null) {
+      upsertProposalStreamForEscrow(
+        event.address,
+        proposalIdString,
+        escrow as string,
+        event.block.timestamp
+      );
+    }
     return;
   }
-  let proposal = p.value;
 
-  const proposalStakedAmount = cvc
-    .proposals(event.params.proposalId)
-    .getStakedAmount();
+  let p = cvc.try_getProposal(proposalNumber);
+  let beneficiary: string;
+  let requestedToken: Address;
+  let blockLast: BigInt;
+  let convictionLast: BigInt;
+  let proposalStakedAmount: BigInt;
+  let requestedAmount: BigInt;
+  let arbitrableConfigVersion: BigInt;
+  let submitter: string;
+
+  if (p.reverted) {
+    const legacyProposal = getLegacyProposal(event.address, proposalNumber);
+    if (legacyProposal.reverted) {
+      log.error(
+        "CvStrategy: handleProposalCreated proposal lookup reverted:{} (block:{})",
+        [proposalIdString, event.block.number.toString()]
+      );
+      return;
+    }
+
+    const legacyValue = legacyProposal.value;
+    beneficiary = legacyValue.getBeneficiary().toHex();
+    requestedToken = legacyValue.getRequestedToken();
+    blockLast = legacyValue.getBlockLast();
+    convictionLast = legacyValue.getConvictionLast();
+    proposalStakedAmount = legacyValue.getStakedAmount();
+    requestedAmount = legacyValue.getRequestedAmount();
+    arbitrableConfigVersion = legacyValue.getArbitrableConfigVersion();
+    submitter = legacyValue.getSubmitter().toHex();
+  } else {
+    const proposal = p.value;
+    beneficiary = proposal.getBeneficiary().toHex();
+    requestedToken = proposal.getRequestedToken();
+    blockLast = proposal.getBlockLast();
+    convictionLast = proposal.getConvictionLast();
+    proposalStakedAmount = proposal.getStakedAmount();
+    requestedAmount = proposal.getRequestedAmount();
+    arbitrableConfigVersion = proposal.getArbitrableConfigVersion();
+    submitter = proposal.getSubmitter().toHex();
+  }
+
   const maxConviction = getMaxConviction(
     proposalStakedAmount,
     cvc.cvParams().getDecay()
@@ -123,35 +254,39 @@ export function handleProposalCreated(event: ProposalCreated): void {
 
   let newProposal = new CVProposal(proposalIdString);
   newProposal.strategy = cvsId;
-  newProposal.proposalNumber = event.params.proposalId;
+  newProposal.proposalNumber = proposalNumber;
 
-  newProposal.beneficiary = proposal.getBeneficiary().toHex();
-  let requestedToken = proposal.getRequestedToken();
+  newProposal.beneficiary = beneficiary;
   newProposal.requestedToken = requestedToken.toHex();
 
-  newProposal.blockLast = proposal.getBlockLast();
-  newProposal.convictionLast = proposal.getConvictionLast();
-  newProposal.stakedAmount = proposal.getStakedAmount();
+  newProposal.blockLast = blockLast;
+  newProposal.convictionLast = convictionLast;
+  newProposal.stakedAmount = proposalStakedAmount;
 
-  newProposal.requestedAmount = proposal.getRequestedAmount();
+  newProposal.requestedAmount = requestedAmount;
   newProposal.maxCVStaked = maxConviction;
-  newProposal.arbitrableConfig = `${event.address.toHex()}-${proposal.getArbitrableConfigVersion().toString()}`;
+  newProposal.arbitrableConfig = `${event.address.toHex()}-${arbitrableConfigVersion.toString()}`;
 
   newProposal.proposalStatus = getProposalStatus(
     event.address,
-    event.params.proposalId,
+    proposalNumber,
     PROPOSAL_STATUS_ACTIVE
   );
   // newProposal.proposalType = BigInt.fromI32(proposal.proposalType());
-  newProposal.submitter = proposal.getSubmitter().toHex();
+  newProposal.submitter = submitter;
   // newProposal.voterStakedPointsPct = proposal.getVoterStakedPointsPct();
   // newProposal.agreementActionId = proposal.getAgreementActionId();
 
-  const pointer = cvc.proposals(event.params.proposalId).getMetadata().pointer;
+  const pointer = getProposalMetadataPointer(event.address, proposalNumber);
 
   newProposal.metadataHash = pointer;
   newProposal.metadata = pointer;
-  ProposalMetadataTemplate.create(pointer);
+  if (escrow != null) {
+    newProposal.streamingEscrow = escrow;
+  }
+  if (pointer.length > 0) {
+    ProposalMetadataTemplate.create(pointer);
+  }
 
   // newProposal.proposalMeta = metadataID;
   log.debug("CVStrategy: handleProposalCreated: {}", [proposalIdString]);
@@ -167,6 +302,28 @@ export function handleProposalCreated(event: ProposalCreated): void {
   // }
 
   newProposal.save();
+  if (escrow != null) {
+    upsertProposalStreamForEscrow(
+      event.address,
+      proposalIdString,
+      escrow as string,
+      event.block.timestamp
+    );
+  }
+}
+
+export function handleProposalCreated(event: ProposalCreated): void {
+  handleProposalCreatedCore(event, event.params.proposalId, null);
+}
+
+// Backward-compatible: keep old ProposalCreated handler and enrich with this one
+// when the newer event signature (with escrow address) is emitted.
+export function handleProposalCreatedWithEscrow(event: ethereum.Event): void {
+  if (event.parameters.length < 3) return;
+
+  const proposalNumber = event.parameters[1].value.toBigInt();
+  const escrow = event.parameters[2].value.toAddress().toHexString();
+  handleProposalCreatedCore(event, proposalNumber, escrow);
 }
 
 export function handleSupportAdded(event: SupportAdded): void {
@@ -227,9 +384,12 @@ export function handleSupportAdded(event: SupportAdded): void {
   stake.save();
 
   const cvc = CVStrategyContract.bind(event.address);
-  const proposalStakedAmount = cvc
-    .proposals(event.params.proposalId)
-    .getStakedAmount();
+  const proposalStakedAmountResult = cvc.try_getProposalStakedAmount(
+    event.params.proposalId
+  );
+  const proposalStakedAmount = proposalStakedAmountResult.reverted
+    ? cvp.stakedAmount
+    : proposalStakedAmountResult.value;
 
   const maxConviction = getMaxConviction(
     proposalStakedAmount,
@@ -264,10 +424,12 @@ export function handlePointsDeactivated(event: PointsDeactivated): void {
               proposal.stakedAmount = proposal.stakedAmount.minus(stakedAmount);
               const cvc = CVStrategyContract.bind(event.address);
 
-              let contractProposal = cvc.try_proposals(proposal.proposalNumber);
+              let contractProposal = cvc.try_getProposal(
+                proposal.proposalNumber
+              );
               if (contractProposal.reverted) {
                 log.error(
-                  "handlePointsDeactivated contractProposal reverted:{}",
+                  "handlePointsDeactivated getProposal reverted:{}",
                   [proposal.proposalNumber.toString()]
                 );
                 return;
@@ -666,64 +828,198 @@ export function handleSybilScorerUpdated(event: SybilScorerUpdated): void {
 export function handleSuperfluidTokenUpdated(
   event: SuperfluidTokenUpdated
 ): void {
+  let streamInfo = getOrCreateStrategyStreamInfo(
+    event.address,
+    event.block.timestamp
+  );
+
   let config = CVStrategyConfig.load(`${event.address.toHex()}-config`);
+
+  const token = event.params.superfluidToken;
+
+  if (token == Address.zero()) {
+    streamInfo.superfluidToken = null;
+  } else {
+    streamInfo.superfluidToken = token.toHexString();
+  }
 
   if (config == null) {
     log.error(
       "CVStrategy: handleSuperfluidTokenUpdated config not found: {} (block: {})",
       [`${event.address.toHex()}-config`, event.block.number.toString()]
     );
-    return;
-  }
-  const token = event.params.superfluidToken;
-
-  if (token == Address.zero()) {
-    config.superfluidToken = null;
   } else {
-    config.superfluidToken = token.toHexString();
+    config.superfluidToken = streamInfo.superfluidToken;
+    config.save();
   }
 
-  config.save();
+  hydrateMissingStreamInfoFromContract(event.address, streamInfo);
+  streamInfo.updatedAt = event.block.timestamp;
+  streamInfo.save();
 }
 
 export function handleSuperfluidGDAConnected(
   event: SuperfluidGDAConnected
 ): void {
-  let config = CVStrategyConfig.load(`${event.address.toHex()}-config`);
-  if (config == null) {
-    log.error(
-      "CVStrategy: handleSuperfluidGDAConnected config not found: {} (block: {})",
-      [`${event.address.toHex()}-config`, event.block.number.toString()]
-    );
-    return;
-  }
+  let streamInfo = getOrCreateStrategyStreamInfo(
+    event.address,
+    event.block.timestamp
+  );
 
-  config.superfluidGDA.push(event.params.gda.toHexString());
-  config.save();
+  streamInfo.superfluidGDA = event.params.gda.toHexString();
+  hydrateMissingStreamInfoFromContract(event.address, streamInfo);
+  streamInfo.updatedAt = event.block.timestamp;
+  streamInfo.save();
+}
+
+export function handleSuperfluidStreamingRateUpdated(
+  event: SuperfluidStreamingRateUpdated
+): void {
+  let streamInfo = getOrCreateStrategyStreamInfo(
+    event.address,
+    event.block.timestamp
+  );
+
+  streamInfo.maxFlowRate = event.params.streamingRatePerSecond;
+  hydrateMissingStreamInfoFromContract(event.address, streamInfo);
+  streamInfo.updatedAt = event.block.timestamp;
+  streamInfo.save();
 }
 
 export function handleSuperfluidGDADisconnected(
   event: SuperfluidGDADisconnected
 ): void {
-  let config = CVStrategyConfig.load(`${event.address.toHex()}-config`);
-  if (config == null) {
-    log.error(
-      "CVStrategy: handleSuperfluidGDADisconnected config not found: {} (block: {})",
-      [`${event.address.toHex()}-config`, event.block.number.toString()]
+  let streamInfo = getOrCreateStrategyStreamInfo(
+    event.address,
+    event.block.timestamp
+  );
+
+  if (streamInfo.superfluidGDA == event.params.gda.toHexString()) {
+    streamInfo.superfluidGDA = Address.zero().toHexString();
+  }
+  hydrateMissingStreamInfoFromContract(event.address, streamInfo);
+  streamInfo.updatedAt = event.block.timestamp;
+  streamInfo.save();
+}
+
+export function handleStreamRateUpdated(event: StreamRateUpdated): void {
+  let streamInfo = getOrCreateStrategyStreamInfo(
+    event.address,
+    event.block.timestamp
+  );
+
+  streamInfo.streamLastFlowRate = event.params.flowRate;
+  streamInfo.superfluidGDA = event.params.gda.toHexString();
+  hydrateMissingStreamInfoFromContract(event.address, streamInfo);
+  streamInfo.updatedAt = event.block.timestamp;
+  streamInfo.save();
+
+  recomputeProposalStreamRates(event.address, event.block.timestamp);
+}
+
+// Generic handler to support event indexing independently of ABI class generation.
+export function handleStreamMemberUnitUpdated(event: ethereum.Event): void {
+  if (event.parameters.length < 2) return;
+
+  const escrow = event.parameters[0].value.toAddress().toHexString();
+  const indexId = proposalEscrowIndexId(event.address, escrow);
+  const index = ProposalEscrowIndex.load(indexId);
+  if (index == null) return;
+
+  const proposalStream = ProposalStream.load(index.proposalStream);
+  if (proposalStream == null) return;
+
+  let streamInfo = getOrCreateStrategyStreamInfo(
+    event.address,
+    event.block.timestamp
+  );
+
+  accrueProposalStreamSnapshot(proposalStream, event.block.timestamp);
+
+  let nextUnits = event.parameters[1].value.toBigInt();
+  if (nextUnits.lt(ZERO)) {
+    nextUnits = ZERO;
+  }
+  const prevUnits = proposalStream.currentUnits;
+  proposalStream.currentUnits = nextUnits;
+  proposalStream.updatedAt = event.block.timestamp;
+  proposalStream.save();
+
+  const deltaUnits = nextUnits.minus(prevUnits);
+  let totalUnits = streamInfo.totalMemberUnits.plus(deltaUnits);
+  if (totalUnits.lt(ZERO)) {
+    totalUnits = ZERO;
+  }
+  streamInfo.totalMemberUnits = totalUnits;
+  streamInfo.updatedAt = event.block.timestamp;
+  streamInfo.save();
+
+  recomputeProposalStreamRates(event.address, event.block.timestamp);
+}
+
+// Generic handler to support event indexing independently of ABI class generation.
+export function handleEscrowStreamStopped(event: ethereum.Event): void {
+  if (event.parameters.length < 1) return;
+
+  const escrow = event.parameters[0].value.toAddress().toHexString();
+  const indexId = proposalEscrowIndexId(event.address, escrow);
+  const index = ProposalEscrowIndex.load(indexId);
+  if (index == null) return;
+
+  const proposalStream = ProposalStream.load(index.proposalStream);
+  if (proposalStream == null) return;
+
+  let streamInfo = getOrCreateStrategyStreamInfo(
+    event.address,
+    event.block.timestamp
+  );
+
+  accrueProposalStreamSnapshot(proposalStream, event.block.timestamp);
+
+  if (proposalStream.currentUnits.gt(ZERO)) {
+    const reduced = streamInfo.totalMemberUnits.minus(proposalStream.currentUnits);
+    streamInfo.totalMemberUnits = reduced.lt(ZERO) ? ZERO : reduced;
+  }
+
+  proposalStream.currentUnits = ZERO;
+  proposalStream.currentFlowRate = ZERO;
+  proposalStream.isStopped = true;
+  proposalStream.lastSnapshotAt = event.block.timestamp;
+  proposalStream.updatedAt = event.block.timestamp;
+  proposalStream.save();
+
+  streamInfo.updatedAt = event.block.timestamp;
+  streamInfo.save();
+
+  recomputeProposalStreamRates(event.address, event.block.timestamp);
+}
+
+export function handleSuperfluidPoolCreated(
+  event: SuperfluidPoolCreated
+): void {
+  let streamInfo = getOrCreateStrategyStreamInfo(
+    event.address,
+    event.block.timestamp
+  );
+
+  let cvs = CVStrategy.load(event.address.toHexString());
+  if (cvs == null) {
+    log.warning(
+      "CVStrategy: handleSuperfluidPoolCreated cvs not found: {} (block: {})",
+      [event.address.toHexString(), event.block.number.toString()]
     );
     return;
   }
 
-  const index = config.superfluidGDA.indexOf(event.params.gda.toHexString());
-  if (index > -1) {
-    config.superfluidGDA.splice(index, 1);
-    config.save();
-  } else {
-    log.warning(
-      "CVStrategy: handleSuperfluidGDADisconnected gda not found in config: {} (block: {})",
-      [`${event.address.toHex()}-config`, event.block.number.toString()]
-    );
-  }
+  streamInfo.superfluidToken = event.params.superfluidToken.toHexString();
+  streamInfo.maxFlowRate = event.params.maxStreamingRate;
+  streamInfo.superfluidGDA = event.params.gda.toHexString();
+  hydrateMissingStreamInfoFromContract(event.address, streamInfo);
+  streamInfo.updatedAt = event.block.timestamp;
+  streamInfo.save();
+
+  cvs.stream = streamInfo.id;
+  cvs.save();
 }
 
 export function handlePoolMetadata(content: Bytes): void {
@@ -822,7 +1118,8 @@ function computeAllowList(
 function computeInitialize(
   contractAddress: Address,
   poolId: BigInt,
-  data: InitializedCV3DataStruct
+  data: InitializedCV3DataStruct,
+  timestamp: BigInt
 ): void {
   log.debug("CVStrategy: handleInitialized {}", [poolId.toString()]);
   const registryCommunity = data.registryCommunity.toHexString();
@@ -857,7 +1154,9 @@ function computeInitialize(
   cvs.poolId = poolId;
   cvs.registryCommunity = registryCommunity;
   let config = new CVStrategyConfig(`${contractAddress.toHex()}-config`);
-  config.superfluidGDA = [];
+  const streamInfoId = `${contractAddress.toHexString()}-streaming`;
+  let streamInfo = getOrCreateStrategyStreamInfo(contractAddress, timestamp);
+  cvs.stream = streamInfoId;
   cvs.maxCVSupply = BigInt.fromI32(0);
   cvs.totalEffectiveActivePoints = cvc.totalPointsActivated();
   cvs.isEnabled = false;
@@ -869,9 +1168,14 @@ function computeInitialize(
   const superfluidToken = data.superfluidToken;
   if (superfluidToken == Address.zero()) {
     config.superfluidToken = null;
+    streamInfo.superfluidToken = null;
   } else {
     config.superfluidToken = superfluidToken.toHexString();
+    streamInfo.superfluidToken = superfluidToken.toHexString();
   }
+  hydrateMissingStreamInfoFromContract(contractAddress, streamInfo);
+  streamInfo.updatedAt = timestamp;
+  streamInfo.save();
 
   // @ts-ignore
   let cvParams = changetype<CVParamsUpdatedCvParamsStruct>(data.cvParams);
@@ -887,13 +1191,84 @@ function computeInitialize(
   cvs.save();
 }
 
+function computeInitializeV4(
+  contractAddress: Address,
+  poolId: BigInt,
+  data: InitializedCV4DataStruct,
+  timestamp: BigInt
+): void {
+  log.debug("CVStrategy: handleInitializedV4 {}", [poolId.toString()]);
+  const registryCommunity = data.registryCommunity.toHexString();
+  const pType = data.proposalType;
+  const maxAmount = data.pointConfig.maxAmount;
+  const pointSystem = data.pointSystem;
+
+  const cvc = CVStrategyContract.bind(contractAddress);
+  const strategyId = contractAddress.toHex();
+  let cvs = CVStrategy.load(strategyId);
+  if (cvs == null) {
+    cvs = new CVStrategy(strategyId);
+  }
+  let alloAddr = cvc.getAllo();
+  log.debug("CVStrategy: alloAddr:{}", [alloAddr.toHexString()]);
+  const allo = AlloContract.bind(alloAddr);
+  const alloPool = allo.getPool(poolId);
+  let metadata = alloPool.metadata.pointer;
+  if (metadata.length > 0) {
+    log.debug("CVStrategy: metadata:{}", [metadata.toString()]);
+    PoolMetadataTemplate.create(metadata);
+    cvs.metadata = metadata;
+    cvs.metadataHash = metadata;
+  } else {
+    cvs.metadata = null;
+    cvs.metadataHash = null;
+  }
+  cvs.token = alloPool.token.toHexString();
+  cvs.poolId = poolId;
+  cvs.registryCommunity = registryCommunity;
+  let config = new CVStrategyConfig(`${contractAddress.toHex()}-config`);
+  const streamInfoId = `${contractAddress.toHexString()}-streaming`;
+  let streamInfo = getOrCreateStrategyStreamInfo(contractAddress, timestamp);
+  cvs.stream = streamInfoId;
+  cvs.maxCVSupply = BigInt.fromI32(0);
+  cvs.totalEffectiveActivePoints = cvc.totalPointsActivated();
+  cvs.isEnabled = false;
+  cvs.sybil = data.sybilScorer.toHexString();
+  cvs.archived = false;
+  config.proposalType = BigInt.fromI32(pType);
+  config.pointSystem = BigInt.fromI32(pointSystem);
+  config.maxAmount = maxAmount;
+  const superfluidToken = data.superfluidToken;
+  if (superfluidToken == Address.zero()) {
+    config.superfluidToken = null;
+    streamInfo.superfluidToken = null;
+  } else {
+    config.superfluidToken = superfluidToken.toHexString();
+    streamInfo.superfluidToken = superfluidToken.toHexString();
+  }
+  streamInfo.maxFlowRate = data.streamingRatePerSecond;
+  hydrateMissingStreamInfoFromContract(contractAddress, streamInfo);
+  streamInfo.updatedAt = timestamp;
+  streamInfo.save();
+
+  // @ts-ignore
+  let cvParams = changetype<CVParamsUpdatedCvParamsStruct>(data.cvParams);
+  computeConfig(config, cvParams);
+  computeAllowList(config, data.initialAllowlist, []);
+
+  config.D = D;
+  config.save();
+  cvs.config = config.id;
+  cvs.save();
+}
+
 function getProposalStatus(
   contractAddress: Address,
   proposalId: BigInt,
   defaultStatus: BigInt
 ): BigInt {
   const cvc = CVStrategyContract.bind(contractAddress);
-  const proposal = cvc.try_proposals(proposalId);
+  const proposal = cvc.try_getProposal(proposalId);
   if (proposal.reverted) {
     log.warning("CVStrategy: proposal not found: {}-{}", [
       contractAddress.toHexString(),
@@ -902,4 +1277,193 @@ function getProposalStatus(
     return defaultStatus;
   }
   return BigInt.fromI32(proposal.value.getProposalStatus());
+}
+
+function proposalEscrowIndexId(strategyAddress: Address, escrow: string): string {
+  return `${strategyAddress.toHexString()}-${escrow.toLowerCase()}`;
+}
+
+function proposalStreamIdFromProposalId(proposalId: string): string {
+  return `${proposalId}-stream`;
+}
+
+function upsertProposalStreamForEscrow(
+  strategyAddress: Address,
+  proposalId: string,
+  escrow: string,
+  timestamp: BigInt
+): void {
+  let proposal = CVProposal.load(proposalId);
+  if (proposal == null) return;
+
+  const psId = proposalStreamIdFromProposalId(proposalId);
+  let proposalStream = ProposalStream.load(psId);
+  if (proposalStream == null) {
+    proposalStream = new ProposalStream(psId);
+    proposalStream.strategy = strategyAddress.toHexString();
+    proposalStream.proposal = proposalId;
+    proposalStream.currentUnits = ZERO;
+    proposalStream.currentFlowRate = ZERO;
+    proposalStream.streamedUntilSnapshot = ZERO;
+    proposalStream.lastSnapshotAt = timestamp;
+    proposalStream.isStopped = false;
+    proposalStream.createdAt = timestamp;
+  }
+  proposalStream.escrow = escrow.toLowerCase();
+  proposalStream.updatedAt = timestamp;
+  proposalStream.save();
+
+  if (proposal.proposalStream == null || proposal.proposalStream != psId) {
+    proposal.proposalStream = psId;
+    proposal.updatedAt = timestamp;
+    proposal.save();
+  }
+
+  const indexId = proposalEscrowIndexId(strategyAddress, escrow);
+  let index = ProposalEscrowIndex.load(indexId);
+  if (index == null) {
+    index = new ProposalEscrowIndex(indexId);
+    index.strategy = strategyAddress.toHexString();
+    index.proposal = proposalId;
+    index.proposalStream = psId;
+    index.escrow = escrow.toLowerCase();
+    index.save();
+  }
+
+  let streamInfo = getOrCreateStrategyStreamInfo(strategyAddress, timestamp);
+  let ids = streamInfo.proposalStreamIds;
+  if (ids.indexOf(psId) == -1) {
+    ids.push(psId);
+    streamInfo.proposalStreamIds = ids;
+    streamInfo.updatedAt = timestamp;
+    streamInfo.save();
+  }
+}
+
+function accrueProposalStreamSnapshot(
+  proposalStream: ProposalStream,
+  timestamp: BigInt
+): void {
+  if (timestamp.le(proposalStream.lastSnapshotAt)) return;
+  if (proposalStream.currentFlowRate.equals(ZERO)) {
+    proposalStream.lastSnapshotAt = timestamp;
+    return;
+  }
+  const elapsed = timestamp.minus(proposalStream.lastSnapshotAt);
+  proposalStream.streamedUntilSnapshot = proposalStream.streamedUntilSnapshot
+    .plus(proposalStream.currentFlowRate.times(elapsed));
+  proposalStream.lastSnapshotAt = timestamp;
+}
+
+function recomputeProposalStreamRates(
+  strategyAddress: Address,
+  timestamp: BigInt
+): void {
+  let streamInfo = getOrCreateStrategyStreamInfo(strategyAddress, timestamp);
+  const totalUnits = streamInfo.totalMemberUnits;
+  const strategyFlowRate = streamInfo.streamLastFlowRate
+    ? streamInfo.streamLastFlowRate!
+    : ZERO;
+  const ids = streamInfo.proposalStreamIds;
+
+  for (let i = 0; i < ids.length; i++) {
+    const proposalStream = ProposalStream.load(ids[i]);
+    if (proposalStream == null) continue;
+
+    accrueProposalStreamSnapshot(proposalStream, timestamp);
+
+    if (
+      totalUnits.gt(ZERO) &&
+      proposalStream.currentUnits.gt(ZERO) &&
+      strategyFlowRate.gt(ZERO)
+    ) {
+      proposalStream.currentFlowRate = strategyFlowRate
+        .times(proposalStream.currentUnits)
+        .div(totalUnits);
+    } else {
+      proposalStream.currentFlowRate = ZERO;
+    }
+    proposalStream.lastSnapshotAt = timestamp;
+    proposalStream.updatedAt = timestamp;
+    proposalStream.save();
+  }
+}
+
+function getOrCreateStrategyStreamInfo(
+  strategyAddress: Address,
+  timestamp: BigInt
+): StreamInfo {
+  const id = `${strategyAddress.toHexString()}-streaming`;
+  let streamInfo = StreamInfo.load(id);
+
+  if (streamInfo == null) {
+    streamInfo = new StreamInfo(id);
+    streamInfo.contractAddress = strategyAddress.toHexString();
+    streamInfo.contractType = "CVStrategy";
+    streamInfo.strategy = strategyAddress.toHexString();
+    streamInfo.superfluidToken = null;
+    streamInfo.maxFlowRate = null;
+    streamInfo.superfluidGDA = Address.zero().toHexString();
+    streamInfo.streamLastFlowRate = null;
+    streamInfo.totalMemberUnits = ZERO;
+    streamInfo.proposalStreamIds = [];
+    streamInfo.createdAt = timestamp;
+    streamInfo.updatedAt = timestamp;
+    return streamInfo;
+  }
+
+  // Backfill required fields for entities created before streaming
+  // snapshot data was added to the schema.
+  if (streamInfo.get("contractAddress") == null) {
+    streamInfo.contractAddress = strategyAddress.toHexString();
+  }
+  if (streamInfo.get("contractType") == null) {
+    streamInfo.contractType = "CVStrategy";
+  }
+  if (streamInfo.get("strategy") == null) {
+    streamInfo.strategy = strategyAddress.toHexString();
+  }
+  if (streamInfo.get("superfluidGDA") == null) {
+    streamInfo.superfluidGDA = Address.zero().toHexString();
+  }
+  if (streamInfo.get("totalMemberUnits") == null) {
+    streamInfo.totalMemberUnits = ZERO;
+  }
+  if (streamInfo.get("proposalStreamIds") == null) {
+    streamInfo.proposalStreamIds = [];
+  }
+  if (streamInfo.get("createdAt") == null) {
+    streamInfo.createdAt = timestamp;
+  }
+  if (streamInfo.get("updatedAt") == null) {
+    streamInfo.updatedAt = timestamp;
+  }
+
+  return streamInfo;
+}
+
+function hydrateMissingStreamInfoFromContract(
+  strategyAddress: Address,
+  streamInfo: StreamInfo
+): void {
+  const cvc = CVStrategyContract.bind(strategyAddress);
+  const zero = Address.zero().toHexString();
+
+  const superfluidTokenResult = cvc.try_superfluidToken();
+  if (
+    !superfluidTokenResult.reverted &&
+    superfluidTokenResult.value.toHexString() != zero
+  ) {
+    streamInfo.superfluidToken = superfluidTokenResult.value.toHexString();
+  }
+
+  const streamingRateResult = cvc.try_streamingRatePerSecond();
+  if (!streamingRateResult.reverted) {
+    streamInfo.maxFlowRate = streamingRateResult.value;
+  }
+
+  const gdaResult = cvc.try_superfluidGDA();
+  if (!gdaResult.reverted && gdaResult.value.toHexString() != zero) {
+    streamInfo.superfluidGDA = gdaResult.value.toHexString();
+  }
 }

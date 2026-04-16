@@ -2,6 +2,8 @@ import { Address, useAccount, useContractRead } from "wagmi";
 import { Maybe, RegistryCommunity } from "#/subgraph/.graphclient";
 import { useChainFromPath } from "./useChainFromPath";
 import { useFlag } from "./useFlag";
+import { useHasContractCode } from "./useHasContractCode";
+import { useResolvedChainId } from "./useResolvedChainId";
 import { safeABI } from "@/src/customAbis";
 
 type StrategyOrCommunity =
@@ -24,20 +26,26 @@ export const useCouncil = ({
   const showAsCouncil = useFlag("showAsCouncilSafe");
   const { address } = useAccount();
   const chain = useChainFromPath();
+  const resolvedChainId = useResolvedChainId(chain?.id);
   const councilSafeAddress =
     strategyOrCommunity &&
     ("registryCommunity" in strategyOrCommunity ?
       strategyOrCommunity.registryCommunity?.councilSafe
     : strategyOrCommunity.councilSafe);
+  const { hasContractCode: hasCouncilSafeCode } = useHasContractCode({
+    address: councilSafeAddress ?? undefined,
+    chainId: resolvedChainId,
+    enabled: !!councilSafeAddress && detectCouncilMember,
+  });
 
   const { data: councilMembers } = useContractRead({
     abi: safeABI,
     address: councilSafeAddress as Address,
     functionName: "getOwners",
-    chainId: chain?.id,
-    enabled: !!councilSafeAddress && detectCouncilMember,
-    onError: (err) => {
-      console.error("Error reading council safe owners:", err);
+    chainId: resolvedChainId,
+    enabled: !!councilSafeAddress && detectCouncilMember && hasCouncilSafeCode,
+    onError: () => {
+      console.warn("Council Safe owners could not be read.");
     },
   });
 

@@ -2,10 +2,12 @@ import { RegistryCommunity as CommunityTemplate } from "../../generated/template
 import {
   RegistryFactory,
   RegistryCommunity,
-  Member
+  Member,
+  StreamInfo
 } from "../../generated/schema";
 
 import {
+  Address,
   BigInt,
   DataSourceContext,
   dataSource,
@@ -17,7 +19,9 @@ import {
   ProtocolFeeSet,
   Initialized,
   KeepersChanged,
-  ProtopiansChanged
+  ProtopiansChanged,
+  StreamRebalanceCallerAllowlistSet,
+  StreamingEscrowFactorySet
 } from "../../generated/RegistryFactory/RegistryFactory";
 // import {RegistryCommunity}from "../../generated/RegistryCommunity/RegistryCommunity";
 
@@ -35,7 +39,25 @@ export function handleRegistryInitialized(event: Initialized): void {
   }
   const chainId = dataSource.context().getI32(CTX_CHAIN_ID);
   factory.chainId = BigInt.fromI32(chainId);
+  factory.rebalanceCallerAllowlist = [];
   factory.save();
+}
+
+function getOrCreateFactory(eventAddress: Address): RegistryFactory {
+  const addrId = eventAddress.toHexString();
+  let factory = RegistryFactory.load(addrId);
+
+  if (factory == null) {
+    factory = new RegistryFactory(addrId);
+    const chainId = dataSource.context().getI32(CTX_CHAIN_ID);
+    factory.chainId = BigInt.fromI32(chainId);
+    factory.rebalanceCallerAllowlist = [];
+  } else if (factory.rebalanceCallerAllowlist == null) {
+    // Backward compatibility for entities indexed before this field existed.
+    factory.rebalanceCallerAllowlist = [];
+  }
+
+  return factory as RegistryFactory;
 }
 
 export function handleCommunityCreated(event: CommunityCreated): void {
@@ -136,4 +158,63 @@ export function handleProtopiansChanged(event: ProtopiansChanged): void {
     member.isProtopian = false;
     member.save();
   }
+}
+
+export function handleStreamingEscrowFactorySet(
+  event: StreamingEscrowFactorySet
+): void {
+  const id = `${event.address.toHexString()}-streaming`;
+  let streamInfo = StreamInfo.load(id);
+  if (streamInfo == null) {
+    streamInfo = new StreamInfo(id);
+    streamInfo.contractAddress = event.address.toHexString();
+    streamInfo.contractType = "RegistryFactory";
+    streamInfo.strategy = null;
+    streamInfo.superfluidToken = null;
+    streamInfo.maxFlowRate = null;
+    streamInfo.superfluidGDA = Address.zero().toHexString();
+    streamInfo.streamLastFlowRate = null;
+    streamInfo.createdAt = event.block.timestamp;
+  }
+
+  // Keep required fields initialized for backward compatibility
+  // with entities created before these fields existed in schema.
+  streamInfo.totalMemberUnits = BigInt.fromI32(0);
+  streamInfo.proposalStreamIds = [];
+  streamInfo.updatedAt = event.block.timestamp;
+  streamInfo.save();
+}
+
+export function handleStreamRebalanceCallerAllowlistSet(
+  event: StreamRebalanceCallerAllowlistSet
+): void {
+  const factory = getOrCreateFactory(event.address);
+
+  let allowlist = factory.rebalanceCallerAllowlist;
+  const caller = event.params.caller.toHexString();
+
+  let index = -1;
+  for (let i = 0; i < allowlist.length; i++) {
+    if (allowlist[i] == caller) {
+      index = i;
+      break;
+    }
+  }
+
+  if (event.params.allowed) {
+    if (index == -1) {
+      allowlist.push(caller);
+    }
+  } else if (index >= 0) {
+    const nextAllowlist = new Array<string>();
+    for (let i = 0; i < allowlist.length; i++) {
+      if (allowlist[i] != caller) {
+        nextAllowlist.push(allowlist[i]);
+      }
+    }
+    allowlist = nextAllowlist;
+  }
+
+  factory.rebalanceCallerAllowlist = allowlist;
+  factory.save();
 }

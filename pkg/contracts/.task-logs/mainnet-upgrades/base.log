@@ -1,0 +1,213 @@
+🔍 Verifying diamond storage layouts...
+[0;34mAll storage layouts cached in cache/storage-layout; skipping build.[0m
+[0;34mStarting storage layout verification...[0m
+
+[0;34m=== Processing CVStrategy ===[0m
+  Main contract: [0;34mCVStrategy[0m
+  Checking CVAdminFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVAdminFacet-405082e64fda29edd19aa9d3d402217825ba39a4774b988361f9995e7f54100c.txt
+[0;32m✓ MATCH[0m
+  Checking CVAllocationFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVAllocationFacet-74516ece933c38ebfc8e91c9a384b254616a0c0a8f4fe611afbcf692f8d4b788.txt
+[0;32m✓ MATCH[0m
+  Checking CVDisputeFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVDisputeFacet-4cea66d303d30816e34fbb088b26f92caaa0e6b084298359efa1805fad46f396.txt
+[0;32m✓ MATCH[0m
+  Checking CVPauseFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVPauseFacet-c60f6fc43d99959369444d6e7bf4c1fe1c356ea2be13215b87ed8290aa6376df.txt
+[0;32m✓ MATCH[0m
+  Checking CVPowerFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVPowerFacet-645557d813a8663fa395d18686138542b301fe29ef67a4638eecfd7123de85ab.txt
+[0;32m✓ MATCH[0m
+  Checking CVProposalFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVProposalFacet-27398445f568b8161a5a26f694461a0a2b9a80958805be668e17f19304cb20c5.txt
+[0;32m✓ MATCH[0m
+  Checking CVStreamingFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVStreamingFacet-5691a93fe150536303b9108b9f844aa15b1b181f9bd2caeec73b7da317c581e6.txt
+[0;32m✓ MATCH[0m
+  Checking CVSyncPowerFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVSyncPowerFacet-5dab80e5dabbddd595acffd99230f5075c505a899129ab674a77e246da2de788.txt
+[0;32m✓ MATCH[0m
+
+[1;33mSkipping src/diamonds (generic diamond utilities)[0m
+
+[0;34m=== Processing RegistryCommunity ===[0m
+  Main contract: [0;34mRegistryCommunity[0m
+  Checking CommunityAdminFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityAdminFacet-21328e4c5d04da2b927925acf69e59d1b80b1adc88cd9bc06e49aa07bbca662a.txt
+[0;32m✓ MATCH[0m
+  Checking CommunityMemberFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityMemberFacet-2df90697b14c68814cb3bef5d6f8cbcebe4d05007216e332162598cdb661e892.txt
+[0;32m✓ MATCH[0m
+  Checking CommunityPauseFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityPauseFacet-fccfdd45d13a69d9c7eeddbbadf3a8759034ac38a3e8bbb0189e5de5ef380685.txt
+[0;32m✓ MATCH[0m
+  Checking CommunityPoolFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityPoolFacet-b25bf00e5a3a093466fb37e8079605417b6f86e70629b0863de9a35694d9e25e.txt
+[0;32m✓ MATCH[0m
+  Checking CommunityPowerFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityPowerFacet-be6a53ab48ada11dd8e78b6d13370b1a11c63e48d9758f89cb0dec011e7778fe.txt
+[0;32m✓ MATCH[0m
+  Checking CommunityStrategyFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityStrategyFacet-6ee42d273c3961872afa04f5b966f89923a0deb1961632bd7cc0fa8dd7c08bd3.txt
+[0;32m✓ MATCH[0m
+
+[0;34m=== Processing RegistryFactory ===[0m
+  Checking storage layout invariants... No files changed, compilation skipped
+[0;32m✓ MATCH[0m
+
+[0;34m=== Summary ===[0m
+[0;32m✓ All storage layouts match![0m
+[0;32m  Storage alignment verified (diamond facets + RegistryFactory).[0m
+✅ Storage verification passed
+Script ran successfully.
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 8453
+
+Estimated gas price: 0.010000001 gwei
+
+Estimated total gas used for script: 39964488
+
+Estimated amount required: 0.000399644919964488 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/RefreshFacetSnapshots.s.sol/8453/run-latest.json
+
+Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/cache/RefreshFacetSnapshots.s.sol/8453/run-latest.json
+
+No files changed, compilation skipped
+Traces:
+  [56240004] → new UpgradeCVMultichainProd@0x5b73C5498c1E3b4dbA84de0F1833c4a029d90519
+    └─ ← [Return] 278730 bytes of code
+
+  [14060297] UpgradeCVMultichainProd::run("base")
+    ├─ [0] VM::startBroadcast(0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD)
+    │   └─ ← [Return]
+    ├─ [0] VM::projectRoot() [staticcall]
+    │   └─ ← [Return] "/home/corantin/Documents/GitHub/gardens-v2"
+    ├─ [0] VM::readFile("/home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/config/networks.json") [staticcall]
+    │   └─ ← [Return] <file>
+    ├─ [0] VM::parseJsonUint("<stringified JSON>", "$.networks[?(@.name=='base')].chainId") [staticcall]
+    │   └─ ← [Return] 8453
+    ├─ [0] VM::parseJsonString("<stringified JSON>", "$.networks[?(@.name=='base')].name") [staticcall]
+    │   └─ ← [Return] "base"
+    ├─ [0] VM::parseJsonAddress("<stringified JSON>", "$.networks[?(@.name=='base')].ENVS.SENDER") [staticcall]
+    │   └─ ← [Return] 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD
+    ├─ [2981408] → new RegistryFactory@0xBf790DDe0cCd3b43da51224933F4Fc0204233075
+    │   ├─ emit Initialized(version: 255)
+    │   └─ ← [Return] 14773 bytes of code
+    ├─ [3543110] → new RegistryCommunity@0x1f5af586bDB56181e31A1aa570E83D2c0d3c4961
+    │   ├─ emit Initialized(version: 255)
+    │   └─ ← [Return] 17578 bytes of code
+    ├─ [4622734] → new CVStrategy@0xa6185BF6405d74E3f458268c13c395c1B119360a
+    │   ├─ emit Initialized(version: 255)
+    │   └─ ← [Return] 22969 bytes of code
+    ├─ [0] VM::parseJsonAddress("<stringified JSON>", "$.networks[?(@.name=='base')].ENVS.PROXY_OWNER") [staticcall]
+    │   └─ ← [Return] 0x99EBeF5E196a9e8e39d92B18663C9236661607b1
+    ├─ [0] VM::parseJsonAddress("<stringified JSON>", "$.networks[?(@.name=='base')].ENVS.PAUSE_CONTROLLER") [staticcall]
+    │   └─ ← [Return] 0xB32991C77ff0a57a1fb04b76BBa03970198DcdBF
+    ├─ [0] VM::projectRoot() [staticcall]
+    │   └─ ← [Return] "/home/corantin/Documents/GitHub/gardens-v2"
+    ├─ [0] VM::ffi(["bash", "-c", "jq -r '(.networks[] | select(.name==\"base\") | .ENVS.STREAMING_ESCROW_FACTORY // empty)' /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/config/networks.json"])
+    │   └─ ← [Return] 0x3b3333665de09494c2491171c06a6a161f319032
+    ├─ [7272] 0x99EBeF5E196a9e8e39d92B18663C9236661607b1::owner() [staticcall]
+    │   ├─ [2405] 0xaE77dC0B14DAd0F2Db9440D38B03568bfB432382::owner() [delegatecall]
+    │   │   └─ ← [Return] 0x9a17De1f0caD0c592F656410997E4B685d339029
+    │   └─ ← [Return] 0x9a17De1f0caD0c592F656410997E4B685d339029
+    ├─ [0] VM::parseJsonAddress("<stringified JSON>", "$.networks[?(@.name=='base')].PROXIES.REGISTRY_FACTORY") [staticcall]
+    │   └─ ← [Return] 0xc93830dd463516ED5f28f6cd4F837173B87FF389
+    ├─ [0] VM::envOr("SKIP_PREFLIGHT", false) [staticcall]
+    │   └─ ← [Return] <env var value>
+    ├─ [0] VM::parseJsonAddressArray("<stringified JSON>", "$.networks[?(@.name=='base')].PROXIES.REGISTRY_COMMUNITIES") [staticcall]
+    │   └─ ← [Return] [0x01a91Cc74F1916a1f8fc1caA2A2a4f70002e6196, 0x02A3A16E63b446b52beeF977a3fa8EF416838c0d, 0x0Cf2FEb81c4E8902f15f4740f7E513021c08C0Db, 0x11D2300A113f1bDFF9dCC17BE8BFC28F59A3558a, 0x1e00Ac71F40d1156F7E37AF8A3aCf51F930ef376, 0x253930b3aE9aF00BBec1cb03656f507480340a48, 0x3BC577894CC71f649B0b0e2499a60304A508134D, 0x3cb37cFc1A9564256702Eb254B5804726c345110, 0x3d9f6fBb8C84f098E3B2AC4ffA6EEFB27691b1CD, 0x4a912F78500101Cd35103EBe40CAdD713f5C4e29, 0x585094BC142b67A184F53dB6bbB9b7439ef11C17, 0x5da9Fa78eE847387DDcCD5319faFA2f699087faD, 0x641dFCB54cedD749ed97CD8169e8C95872395144, 0x69C85B99E2cEcb18dF235D751406A0E6338c7234, 0x75112eB479DAE30C34F2c2B60792a29c8D17d66a, 0x7c6f82C77CD0ca1EaC659D73ce75bdD9F44DF8Af, 0x897CE468d3968b5Ca7376faEdCdAA705E9B34856, 0x95c4BF86Ce70f495951813c11595AB060968e188, 0x96aA42Ac2a15b897A12D736a28fbbc831F389d96, 0x9Bd4d71aAd40DC68120d8a35907eABeFeeFb91Ad, 0xa856e6d83884C9b7C217d1A899861c9eee71b7dC, 0xacC779d8CF69e64D016C1C79895851F139Bc7c2B, 0xAF7da81DE51841CA905CbC205fD357BDD4Db9478, 0xB4630d53219f04d29B68b6078d0ea4171F08E7Db, 0xb8F04ae1044fF4CaB7dfCfac5B8BDbcb760a0193, 0xBCEC9ad3B6B561a1E5Dee9953f87c39a01628E4C, 0xc18a4dE8C69948bC1322b5aA85a94d4195136913, 0xcE6B968c8bd130CA08F1FcC97B509A824380D867, 0xcEb70621AE510967D6F864949907bDd7CAB9EAe5, 0xdAc6e19E4fD51D48caE4e25e7604D7Ab83935278, 0xE190096F15354d80618F4D5C0239f7a3fB584342, 0xe398008359BeC631EA4c7dfD0c30045a48de4eE3, 0xec83D957F8aa4E9601BC74608eBCBc862ECA52ab, 0xf8a75F2a6937475a67A5CDE2B4508d3527d6b0A2]
+    ├─ [141747] ERC1967Proxy::fallback() [staticcall]
+    │   ├─ [136844] RegistryCommunity::fallback() [delegatecall]
+    │   │   ├─ [130157] DiamondLoupeFacet::facetAddresses() [delegatecall]
+    │   │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    ├─ [136747] 0x02A3A16E63b446b52beeF977a3fa8EF416838c0d::facetAddresses() [staticcall]
+    │   ├─ [134344] RegistryCommunity::fallback() [delegatecall]
+    │   │   ├─ [130157] DiamondLoupeFacet::facetAddresses() [delegatecall]
+    │   │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    ├─ [136747] 0x0Cf2FEb81c4E8902f15f4740f7E513021c08C0Db::facetAddresses() [staticcall]
+    │   ├─ [134344] RegistryCommunity::fallback() [delegatecall]
+    │   │   ├─ [130157] DiamondLoupeFacet::facetAddresses() [delegatecall]
+    │   │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    ├─ [136747] 0x11D2300A113f1bDFF9dCC17BE8BFC28F59A3558a::facetAddresses() [staticcall]
+    │   ├─ [134344] RegistryCommunity::fallback() [delegatecall]
+    │   │   ├─ [130157] DiamondLoupeFacet::facetAddresses() [delegatecall]
+    │   │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    ├─ [136747] 0x1e00Ac71F40d1156F7E37AF8A3aCf51F930ef376::facetAddresses() [staticcall]
+    │   ├─ [134344] RegistryCommunity::fallback() [delegatecall]
+    │   │   ├─ [130157] DiamondLoupeFacet::facetAddresses() [delegatecall]
+    │   │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    ├─ [136747] 0x253930b3aE9aF00BBec1cb03656f507480340a48::facetAddresses() [staticcall]
+    │   ├─ [134344] RegistryCommunity::fallback() [delegatecall]
+    │   │   ├─ [130157] DiamondLoupeFacet::facetAddresses() [delegatecall]
+    │   │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    ├─ [136747] 0x3BC577894CC71f649B0b0e2499a60304A508134D::facetAddresses() [staticcall]
+    │   ├─ [134344] RegistryCommunity::fallback() [delegatecall]
+    │   │   ├─ [130157] DiamondLoupeFacet::facetAddresses() [delegatecall]
+    │   │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    ├─ [136747] 0x3cb37cFc1A9564256702Eb254B5804726c345110::facetAddresses() [staticcall]
+    │   ├─ [134344] RegistryCommunity::fallback() [delegatecall]
+    │   │   ├─ [130157] DiamondLoupeFacet::facetAddresses() [delegatecall]
+    │   │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    ├─ [136747] 0x3d9f6fBb8C84f098E3B2AC4ffA6EEFB27691b1CD::facetAddresses() [staticcall]
+    │   ├─ [134344] RegistryCommunity::fallback() [delegatecall]
+    │   │   ├─ [130157] DiamondLoupeFacet::facetAddresses() [delegatecall]
+    │   │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    ├─ [136747] 0x4a912F78500101Cd35103EBe40CAdD713f5C4e29::facetAddresses() [staticcall]
+    │   ├─ [134344] RegistryCommunity::fallback() [delegatecall]
+    │   │   ├─ [130157] DiamondLoupeFacet::facetAddresses() [delegatecall]
+    │   │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    ├─ [136747] 0x585094BC142b67A184F53dB6bbB9b7439ef11C17::facetAddresses() [staticcall]
+    │   ├─ [134344] RegistryCommunity::fallback() [delegatecall]
+    │   │   ├─ [130157] DiamondLoupeFacet::facetAddresses() [delegatecall]
+    │   │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    ├─ [136747] ERC1967Proxy::fallback() [staticcall]
+    │   ├─ [134344] RegistryCommunity::fallback() [delegatecall]
+    │   │   ├─ [130157] DiamondLoupeFacet::facetAddresses() [delegatecall]
+    │   │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    │   └─ ← [Return] [0x4Ba0105a8D97c2cf12606B55E19D20f20219f444, 0xD8d1302C95b239D245777764e25D8B22dC5Ec2A6, 0xB3cfFe7bBEB182de3380B75692d9030F4Eb8e054, 0x24c5345F10Bb2FEc6F154E92D6CD5Db3ec71d2D4, 0x412f2180aa48Edeb6B9742d1cD67B0062F57aD13, 0xFf1f6dF27FA8431962ee33B3A62A164C60C3085D]
+    ├─ [6506] 0x641dFCB54cedD749ed97CD8169e8C95872395144::facetAddresses() [staticcall]
+    │   ├─ [4135] RegistryCommunity::fallback() [delegatecall]
+    │   │   └─ ← [Revert] CommunityFunctionDoesNotExist(0x52ef6b2c)
+    │   └─ ← [Revert] CommunityFunctionDoesNotExist(0x52ef6b2c)
+    └─ ← [Revert] registry community loupe mismatch
+
+
+Error: script failed: registry community loupe mismatch
+task: Failed to run task "upgrade-base": exit status 1

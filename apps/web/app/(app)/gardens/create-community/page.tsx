@@ -1,11 +1,12 @@
 import React from "react";
 import type { Metadata } from "next";
 import { CommunityForm } from "@/components/Forms";
+import { logOnce } from "@/utils/log";
 
 const TITLE = "Gardens - Create your community";
 const DESCRIPTION =
   "Launch a new Gardens community and invite members to collaborate, govern, and fund shared ideas.";
-const OG_IMAGE_PATH = "/gardens/opengraph-image-1sk5tc";
+const OG_IMAGE_PATH = "/gardens/create-community/opengraph-image?v=1";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -24,6 +25,7 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
+  logOnce("debug", "Loading page: (app)/gardens/create-community/page.tsx");
   return (
     <div className="page-layout mx-auto">
       <section className="section-layout">
@@ -35,3 +37,4 @@ export default function Page() {
     </div>
   );
 }
+

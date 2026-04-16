@@ -1,0 +1,83 @@
+{
+  "chain": "gnosis",
+  "factory": {
+    "implementation": "0x571ef6c6ee1b6ac29f47e086b14945e4ec05e366",
+    "expectedImplementationFromPayload": "0x571ef6c6ee1b6ac29f47e086b14945e4ec05e366",
+    "implementationMatchesPayload": true,
+    "communityInit": {
+      "value": "0x29372ae18ebba55c6bb34aa80bcc52e065a741b6",
+      "expected": "0x29372ae18ebba55c6bb34aa80bcc52e065a741b6",
+      "matches": true,
+      "calldata": "0xe1c7392a"
+    },
+    "communityFacets": {
+      "value": [
+        "0xd29d9eecbb4d42ec871431e06bc666f43779404b",
+        "0x20a997d08e801366ea742f03d2fcc43e8e47acf2",
+        "0x3712a864d1a87e0f43651bdbe87595cf557c99aa",
+        "0xace64cc12fdcfea260a1e028113d5c0e2d52eb47",
+        "0xa48452b5ca54415bd0dfe0eccbba931b52367006",
+        "0x14d9580c59b5ebb9c031e09d69e2471b9203c930",
+        "0x1a14d524d6ba2fea156a9371dfe2bc4ed4fcbf23"
+      ],
+      "expected": [
+        "0xd29d9eecbb4d42ec871431e06bc666f43779404b",
+        "0x20a997d08e801366ea742f03d2fcc43e8e47acf2",
+        "0x3712a864d1a87e0f43651bdbe87595cf557c99aa",
+        "0xace64cc12fdcfea260a1e028113d5c0e2d52eb47",
+        "0xa48452b5ca54415bd0dfe0eccbba931b52367006",
+        "0x14d9580c59b5ebb9c031e09d69e2471b9203c930",
+        "0x1a14d524d6ba2fea156a9371dfe2bc4ed4fcbf23"
+      ],
+      "matches": true
+    },
+    "strategyInit": {
+      "value": "0x71253ab7eb2b7b83bd43984ebe534ab6adb31e7b",
+      "expected": "0x71253ab7eb2b7b83bd43984ebe534ab6adb31e7b",
+      "matches": true,
+      "calldata": "0xe1c7392a"
+    },
+    "strategyFacets": {
+      "value": [
+        "0xd29d9eecbb4d42ec871431e06bc666f43779404b",
+        "0x3952d6783314d64eb2187d9ed199905f4fa3bf3b",
+        "0x2329250493ed927fc6eeb12d0223b03ac09394ac",
+        "0xebea5c64dc1fa676e6c75fced2493b7b5e904e9e",
+        "0x8a593cbea18409ac8f931313eadea719a1b43525",
+        "0x69a7ab884e38810ca9bf0de758eb29c00d65fff8",
+        "0xe5a6c4c469014a1d2dc11b94e31843b4a82f84ed",
+        "0xc7984ad49e471c2044d1660e5d1f4958c2699c5e",
+        "0x00674ee9e63758329f532902bb196159f763d34c"
+      ],
+      "expected": [
+        "0xd29d9eecbb4d42ec871431e06bc666f43779404b",
+        "0x3952d6783314d64eb2187d9ed199905f4fa3bf3b",
+        "0x2329250493ed927fc6eeb12d0223b03ac09394ac",
+        "0xebea5c64dc1fa676e6c75fced2493b7b5e904e9e",
+        "0x8a593cbea18409ac8f931313eadea719a1b43525",
+        "0x69a7ab884e38810ca9bf0de758eb29c00d65fff8",
+        "0xe5a6c4c469014a1d2dc11b94e31843b4a82f84ed",
+        "0xc7984ad49e471c2044d1660e5d1f4958c2699c5e",
+        "0x00674ee9e63758329f532902bb196159f763d34c"
+      ],
+      "matches": true
+    }
+  },
+  "communityImplementations": {
+    "total": 21,
+    "mismatch": []
+  },
+  "strategyImplementations": {
+    "total": 75,
+    "mismatch": []
+  },
+  "summary": {
+    "factoryCommunityInitMatch": true,
+    "factoryStrategyInitMatch": true,
+    "factoryCommunityFacetsMatch": true,
+    "factoryStrategyFacetsMatch": true,
+    "factoryImplementationMatchesPayload": true,
+    "communityImplementationMismatches": 0,
+    "strategyImplementationMismatches": 0
+  }
+}

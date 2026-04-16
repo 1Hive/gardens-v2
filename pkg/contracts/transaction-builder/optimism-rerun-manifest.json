@@ -1,0 +1,86 @@
+{
+  "template_repair_txs": 40,
+  "strategy_batches": [
+    {
+      "file": "optimism-strategy-repair-payload-part1.json",
+      "strategies": 10,
+      "transactions": 20,
+      "start_index": 0,
+      "end_index_exclusive": 10,
+      "first_strategy": "0x0323015258478a030a655e75a63a73106d5e3f26",
+      "last_strategy": "0x15a4ec8c5bf8fa1da8a911aad5c4260be73b9059"
+    },
+    {
+      "file": "optimism-strategy-repair-payload-part2.json",
+      "strategies": 10,
+      "transactions": 20,
+      "start_index": 10,
+      "end_index_exclusive": 20,
+      "first_strategy": "0x1644457dcdb45e6bb07b100ad0837b021ca1319a",
+      "last_strategy": "0x3c1d37c92e075bd71afc88b17364b5713414cf48"
+    },
+    {
+      "file": "optimism-strategy-repair-payload-part3.json",
+      "strategies": 10,
+      "transactions": 20,
+      "start_index": 20,
+      "end_index_exclusive": 30,
+      "first_strategy": "0x411f00636b53776c3bff34f837415c598fff4222",
+      "last_strategy": "0x5e53068c175107564a751f3fc2baadac59d69043"
+    },
+    {
+      "file": "optimism-strategy-repair-payload-part4.json",
+      "strategies": 10,
+      "transactions": 20,
+      "start_index": 30,
+      "end_index_exclusive": 40,
+      "first_strategy": "0x62592b50c68fc511862e96d861a81048fb19ac8f",
+      "last_strategy": "0x83d1f1a2ccfe9ba80a99ba44507b5aaa01b5b65c"
+    },
+    {
+      "file": "optimism-strategy-repair-payload-part5.json",
+      "strategies": 10,
+      "transactions": 20,
+      "start_index": 40,
+      "end_index_exclusive": 50,
+      "first_strategy": "0x84e67b84709ae4473cff1141a083a24f80518570",
+      "last_strategy": "0x977c7d12e28bd42fc0739be73f0f7423d5a64b94"
+    },
+    {
+      "file": "optimism-strategy-repair-payload-part6.json",
+      "strategies": 10,
+      "transactions": 20,
+      "start_index": 50,
+      "end_index_exclusive": 60,
+      "first_strategy": "0x9b63d37fc5f7a7b497c1a3107a10f6ff9c2232d8",
+      "last_strategy": "0xbc3a4c9b9372fa24223b0618eae191caca31162e"
+    },
+    {
+      "file": "optimism-strategy-repair-payload-part7.json",
+      "strategies": 10,
+      "transactions": 20,
+      "start_index": 60,
+      "end_index_exclusive": 70,
+      "first_strategy": "0xbd49a3020277ce697c918bea2044b02557d0c8b3",
+      "last_strategy": "0xe1e19cab1c84b3d3123af8c49b26e141a8ac4163"
+    },
+    {
+      "file": "optimism-strategy-repair-payload-part8.json",
+      "strategies": 10,
+      "transactions": 20,
+      "start_index": 70,
+      "end_index_exclusive": 80,
+      "first_strategy": "0xe2aee72d564f933f12fb13b2694d1ac49b93ba34",
+      "last_strategy": "0xfe40b643000a47c63c1367b37090ae0a752d7433"
+    },
+    {
+      "file": "optimism-strategy-repair-payload-part9.json",
+      "strategies": 2,
+      "transactions": 4,
+      "start_index": 80,
+      "end_index_exclusive": 82,
+      "first_strategy": "0xfeca5fc72deb98b41198a5dce90e00bbafbe5888",
+      "last_strategy": "0xfed43acfa82e0e924d507124892878b6086b581d"
+    }
+  ]
+}

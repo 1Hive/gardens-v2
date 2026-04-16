@@ -17,6 +17,8 @@ type ChartWrapperProps = {
   support?: number;
   threshold?: number;
   conviction?: number;
+  isThresholdOutOfReach?: boolean;
+  isThresholdBelowDisplayPrecision?: boolean;
 };
 
 export const ChartWrapper = ({
@@ -28,6 +30,8 @@ export const ChartWrapper = ({
   support,
   threshold,
   conviction,
+  isThresholdOutOfReach = false,
+  isThresholdBelowDisplayPrecision = false,
 }: ChartWrapperProps) => {
   const growthClassname =
     growing ? "text-primary-content" : "text-danger-content";
@@ -56,7 +60,10 @@ export const ChartWrapper = ({
       },
       className: "w-5 border-t-[1px] border-dashed rotate-90 -mx-3",
       info: "The minimum level of conviction required for a proposal to pass.",
-      value: threshold,
+      value:
+        isThresholdOutOfReach ? "Out of reach"
+        : isThresholdBelowDisplayPrecision ? "< 0.01 VP"
+        : threshold ?? 0,
     },
   ] as const;
 
@@ -84,7 +91,11 @@ export const ChartWrapper = ({
                     : <div className={`${item.className}`} style={item.style} />
                     }
                     <p className="text-sm">{item.name}: </p>
-                    <p className="font-medium">{item.value} VP</p>
+                    <p className="font-medium">
+                      {typeof item.value === "number" ?
+                        `${item.value} VP`
+                      : item.value}
+                    </p>
                   </div>
                 </InfoWrapper>
               </Fragment>

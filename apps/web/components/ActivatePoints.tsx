@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { PowerIcon } from "@heroicons/react/24/outline";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Address, useAccount } from "wagmi";
 import { CVStrategy, CVStrategyConfig } from "#/subgraph/.graphclient";
@@ -126,17 +125,19 @@ export function ActivatePoints({
   // ACTIVATE BUTTON
   if (activate) {
     return (
-      <Button
-        onClick={handleActivate}
-        btnStyle="filled"
-        color="primary"
-        disabled={missmatchUrl || disableActiveBtn}
-        tooltip={tooltipMessage}
-        isLoading={isLoadingActivatePoints}
-        testId="btn-activate-governance"
-      >
-        Activate governance
-      </Button>
+      <div className="w-full flex justify-end">
+        <Button
+          onClick={handleActivate}
+          btnStyle="filled"
+          color="primary"
+          disabled={missmatchUrl || disableActiveBtn}
+          tooltip={tooltipMessage}
+          isLoading={isLoadingActivatePoints}
+          testId="btn-activate-governance"
+        >
+          Activate governance
+        </Button>
+      </div>
     );
   }
 
@@ -146,11 +147,10 @@ export function ActivatePoints({
       onClick={handleDeactivate}
       btnStyle="filled"
       color="danger"
+      className="!w-full"
       disabled={missmatchUrl || disableActiveBtn || !isMemberActivated}
       tooltip={tooltipMessage}
       isLoading={isLoadingDeactivatePoints}
-      className="!w-full"
-      icon={<PowerIcon className="h-5 w-5" />}
     >
       Deactivate governance
     </Button>

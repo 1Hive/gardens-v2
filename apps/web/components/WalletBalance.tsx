@@ -1,9 +1,11 @@
-import { FC, useEffect, useRef } from "react";
+import { FC, useEffect } from "react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { formatEther } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
 import { DisplayNumber } from "./DisplayNumber";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useHasContractCode } from "@/hooks/useHasContractCode";
+import { logOnce } from "@/utils/log";
 import { roundToSignificant } from "@/utils/numbers";
 
 type Props = {
@@ -30,35 +32,69 @@ export const WalletBalance: FC<Props> = ({
   setIsEnoughBalance,
 }) => {
   const { address, isDisconnected } = useAccount();
-  const isEnoughBalanceRef = useRef(false);
   const chainId = useChainIdFromPath();
+  const isNativeToken = token === "native";
+  const { hasContractCode } = useHasContractCode({
+    address: isNativeToken ? undefined : token,
+    chainId,
+    enabled: !isNativeToken,
+  });
 
-  const { data } = useBalance({
+  const { data, isLoading, isFetching } = useBalance({
     address,
     formatUnits: "ether",
-    token: token === "native" ? undefined : (token as Address),
+    token: isNativeToken ? undefined : (token as Address),
     watch: true,
     chainId,
+    enabled: isNativeToken || hasContractCode,
   });
+
+  useEffect(() => {
+    if (isDisconnected || data) {
+      return;
+    }
+
+    logOnce("debug", "[WalletBalance] loading condition", {
+      label,
+      token,
+      chainId,
+      address,
+      isNativeToken,
+      hasContractCode,
+      isLoading,
+      isFetching,
+      balanceReadEnabled: isNativeToken || hasContractCode,
+    });
+  }, [
+    address,
+    chainId,
+    data,
+    hasContractCode,
+    isDisconnected,
+    isFetching,
+    isLoading,
+    isNativeToken,
+    label,
+    token,
+  ]);
 
   const balance = data && data.value;
   const askedFormated = (+formatEther(askedAmount)).toFixed(4);
+  const isEnoughBalance = balance != null && balance >= askedAmount;
 
   useEffect(() => {
-    if (balance != null) {
-      isEnoughBalanceRef.current = balance != null && balance >= askedAmount;
-      setIsEnoughBalance(isEnoughBalanceRef.current);
-    }
+    setIsEnoughBalance(isEnoughBalance);
   }, [balance, askedAmount, setIsEnoughBalance]);
-
-  const isEnoughBalance = askedAmount != null && isEnoughBalanceRef.current;
 
   return (
     <div>
       {!data ?
         isDisconnected ?
           <div />
-        : <div className="skeleton h-14 w-56 bg-neutral" />
+        : !isNativeToken && !hasContractCode ?
+          <div className="text-sm text-neutral-soft-content">Unavailable</div>
+        : <div className="skeleton h-14 w-56 [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#353535]" />
+
       : <div className="flex flex-col gap-1">
           <div className="flex">
             <p className="font-medium">{label}:</p>

@@ -1,0 +1,2402 @@
+[
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-0x72f86851a8eaa24158e55ccfa04d22ab71c0111b.json",
+    "safe": "0x72f86851a8eaa24158e55ccfa04d22ab71c0111b",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0x020885a90d7c72079856c3ee7f7bb1e1d30c6e71",
+        "poolId": "860",
+        "community": "0x561f7c4c65f42af17eab52b7065a5d2c080a3904",
+        "communityName": "Fun Arb Community"
+      },
+      {
+        "strategy": "0x14328c6d6cd5521a08eb08b3b3a08409bc366009",
+        "poolId": "911",
+        "community": "0x561f7c4c65f42af17eab52b7065a5d2c080a3904",
+        "communityName": "Fun Arb Community"
+      }
+    ]
+  },
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-0xfb29ffc490fddb7f10d4f0edbaabf9b03b011986.json",
+    "safe": "0xfb29ffc490fddb7f10d4f0edbaabf9b03b011986",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0x083de9da44ebd145368440c9c88cad95536fc2b3",
+        "poolId": "805",
+        "community": "0xdd65d3eac26d91f1040fe3beca11863cd354788e",
+        "communityName": "DeSci Asia"
+      },
+      {
+        "strategy": "0x424fc753af82bff026b839a2e8f92709242dec97",
+        "poolId": "906",
+        "community": "0xdd65d3eac26d91f1040fe3beca11863cd354788e",
+        "communityName": "DeSci Asia"
+      }
+    ]
+  },
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-0xa867a6ae6ab637f3f3e6502270034e890d9b0233.json",
+    "safe": "0xa867a6ae6ab637f3f3e6502270034e890d9b0233",
+    "strategyCount": 3,
+    "strategies": [
+      {
+        "strategy": "0xeefd5923d88bdcc74afa56943dcc163f1de2be4d",
+        "poolId": "659",
+        "community": "0x0f143af46eef341b3f0dbf98c3ecb47f57067fef",
+        "communityName": "Pop-up Commons"
+      },
+      {
+        "strategy": "0x19a0f3d7734dca40f1847c44ef717ef3ef5c50a5",
+        "poolId": "759",
+        "community": "0x0f143af46eef341b3f0dbf98c3ecb47f57067fef",
+        "communityName": "Pop-up Commons"
+      },
+      {
+        "strategy": "0x46408b210e77408c17c183470c4693f458f5aed8",
+        "poolId": "760",
+        "community": "0x0f143af46eef341b3f0dbf98c3ecb47f57067fef",
+        "communityName": "Pop-up Commons"
+      }
+    ]
+  },
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-0x5c391e901a332f02a6fa6785be42dcf4c8eff3f7.json",
+    "safe": "0x5c391e901a332f02a6fa6785be42dcf4c8eff3f7",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0x2e00fd8fff4417c9d76ac44e35f039861b7e8f86",
+        "poolId": "678",
+        "community": "0x110f4a8153c04eace288e712eb4b975b46376b8c",
+        "communityName": "Convex Funding(ex-Gitcoin reviewers)"
+      }
+    ]
+  },
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-0xd85b9072939af9942dab3ffaa1839f9aa504346f.json",
+    "safe": "0xd85b9072939af9942dab3ffaa1839f9aa504346f",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0xba18f15ecc881b7606b5c6e28cb900dfb29e8139",
+        "poolId": "907",
+        "community": "0xee9cc69179697f3bf8172624c5803b58bf6bf73f",
+        "communityName": "Edge Esmeralda "
+      },
+      {
+        "strategy": "0x457027fef40d9894e8ae33b25b60b5116ecf3014",
+        "poolId": "910",
+        "community": "0xee9cc69179697f3bf8172624c5803b58bf6bf73f",
+        "communityName": "Edge Esmeralda "
+      }
+    ]
+  },
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-0xb05a948b5c1b057b88d381bde3a375efea87ebad.json",
+    "safe": "0xb05a948b5c1b057b88d381bde3a375efea87ebad",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0x4d2c9571bd9f157fb558fe6ca3cf366067e7515e",
+        "poolId": "952",
+        "community": "0xe8cb705f0f29c554e71972af1bfbe16bb2673683",
+        "communityName": "Gossman"
+      },
+      {
+        "strategy": "0xed53f090a4a0183570f7ec7a304bc0d9295c1903",
+        "poolId": "1024",
+        "community": "0xe8cb705f0f29c554e71972af1bfbe16bb2673683",
+        "communityName": "Gossman"
+      }
+    ]
+  },
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-0x758989f05b30c11f300264d0a4246dc773c40b88.json",
+    "safe": "0x758989f05b30c11f300264d0a4246dc773c40b88",
+    "strategyCount": 4,
+    "strategies": [
+      {
+        "strategy": "0xfa7299335e6b6d1305ec968ef23471d27002d682",
+        "poolId": "951",
+        "community": "0x68a2dc70d3fa0ff990979c5467d62bdcd2e6e9b4",
+        "communityName": "Holon Lab"
+      },
+      {
+        "strategy": "0x73aeae331cb6ce374c0c496abce52db2f6d5364c",
+        "poolId": "978",
+        "community": "0x68a2dc70d3fa0ff990979c5467d62bdcd2e6e9b4",
+        "communityName": "Holon Lab"
+      },
+      {
+        "strategy": "0x7f79a423464b8bdd7a4dc43fe6736a0936e0d6f2",
+        "poolId": "982",
+        "community": "0x68a2dc70d3fa0ff990979c5467d62bdcd2e6e9b4",
+        "communityName": "Holon Lab"
+      },
+      {
+        "strategy": "0x55b309ee4270448d312a15c4f71eb9ef38b35f8d",
+        "poolId": "983",
+        "community": "0x68a2dc70d3fa0ff990979c5467d62bdcd2e6e9b4",
+        "communityName": "Holon Lab"
+      }
+    ]
+  },
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-0xcdfae3698de3138ac85b0b4a59c1418e335780ee.json",
+    "safe": "0xcdfae3698de3138ac85b0b4a59c1418e335780ee",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0x5b7d4523862981219c74b9e081221011e4f45182",
+        "poolId": "652",
+        "community": "0xbb8b8ddc3775d825b6cf33bfa9ddcd771b88c6ee",
+        "communityName": "ProductShare DAO"
+      }
+    ]
+  },
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-0xa26968c03c372bb8cba0c7fecfcdfff205a4a18d.json",
+    "safe": "0xa26968c03c372bb8cba0c7fecfcdfff205a4a18d",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0xea03978db787d89572cb7a07b60ac65b98111143",
+        "poolId": "617",
+        "community": "0x8281fd9c5f709a681813c49843a253a05d9b837c",
+        "communityName": "Cartographers 🧭"
+      },
+      {
+        "strategy": "0x7749aee50faeca5d7eed53bcbcf07db5aaf72e51",
+        "poolId": "619",
+        "community": "0x8281fd9c5f709a681813c49843a253a05d9b837c",
+        "communityName": "Cartographers 🧭"
+      }
+    ]
+  },
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-0x1b8c7f06f537711a7caf6770051a43b4f3e69a7e.json",
+    "safe": "0x1b8c7f06f537711a7caf6770051a43b4f3e69a7e",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0xad3d78ed1b03f26238845612eeb3c5b2677fa359",
+        "poolId": "582",
+        "community": "0xf62a2e4ecf3bf73313b3bbbfb1563cb4433c8933",
+        "communityName": "Gardens on Arbitrum"
+      },
+      {
+        "strategy": "0xb9739585e54374268c231f042d384bfa57e41c95",
+        "poolId": "589",
+        "community": "0xf62a2e4ecf3bf73313b3bbbfb1563cb4433c8933",
+        "communityName": "Gardens on Arbitrum"
+      }
+    ]
+  },
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-0x485bc10185c333c83375637456165c77b7b53bb5.json",
+    "safe": "0x485bc10185c333c83375637456165c77b7b53bb5",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0xaf893ffeb244ada520e842eea4a6f3864113f1f5",
+        "poolId": "647",
+        "community": "0x8c3e27f075bb82e8730660828a1159c9438f3e58",
+        "communityName": "Treegens Garden"
+      }
+    ]
+  },
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-0x701497c2e32fda8d6a48112a89552ff26768d810.json",
+    "safe": "0x701497c2e32fda8d6a48112a89552ff26768d810",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0xbd0c6aa5a670ebe77bd0225f345abe0058ece703",
+        "poolId": "653",
+        "community": "0xa50d2ce829ea7b731c3b0a244032b639ff94cb92",
+        "communityName": "Cartographer Syndicate 🧭"
+      }
+    ]
+  },
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-0xacd59e854adf632d2322404198624f757c868c97.json",
+    "safe": "0xacd59e854adf632d2322404198624f757c868c97",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0xe1143d0a5b313b3f4da2d2be24f0edd8ce923ac5",
+        "poolId": "960",
+        "community": "0xb747bf0e9bc114c2ed63b3e5cdac9c5afdc93ea3",
+        "communityName": "test"
+      },
+      {
+        "strategy": "0xf97acfdad5d9996560a14947eba2575abc7d0492",
+        "poolId": "965",
+        "community": "0xb747bf0e9bc114c2ed63b3e5cdac9c5afdc93ea3",
+        "communityName": "test"
+      }
+    ]
+  },
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-0x852a1fceba48ee2daa2e5277c0213ca3884d3fad.json",
+    "safe": "0x852a1fceba48ee2daa2e5277c0213ca3884d3fad",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0xf474d3d714b89ca0ada658a8105838f34cbbe1fa",
+        "poolId": "849",
+        "community": "0x98d84697794f4aae7540c1f85433e2ab39ab1206",
+        "communityName": "Mars Garden"
+      }
+    ]
+  },
+  {
+    "chain": "arbitrum",
+    "chainId": "42161",
+    "file": "arbitrum-set-voting-power-registry-0x4eff1d9f303b157abf72b48e07ad8e603f916691.json",
+    "safe": "0x4eff1d9f303b157abf72b48e07ad8e603f916691",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0xf659101919e1de3dca2fd7aa47840189506055ff",
+        "poolId": "650",
+        "community": "0xc3ba42da1d9f6b09d4d1315ac04f873a5ba64d3c",
+        "communityName": "HyperDeSci"
+      }
+    ]
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-0xd7d5aedb6faf61cd17e395d586a7c9b365e685cd.json",
+    "safe": "0xd7d5aedb6faf61cd17e395d586a7c9b365e685cd",
+    "strategyCount": 9,
+    "strategies": [
+      {
+        "strategy": "0x6b22c89287ae0e6bf68436000699690d0ec57f7c",
+        "poolId": "148",
+        "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+        "communityName": "Internal testing 🧪"
+      },
+      {
+        "strategy": "0x557f7f22a3f6aa38f17d00ae1ec161d2f41f5850",
+        "poolId": "151",
+        "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+        "communityName": "Internal testing 🧪"
+      },
+      {
+        "strategy": "0xf4a3e1883fd7ba75def1b56e307e90c90d200200",
+        "poolId": "152",
+        "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+        "communityName": "Internal testing 🧪"
+      },
+      {
+        "strategy": "0x0323015258478a030a655e75a63a73106d5e3f26",
+        "poolId": "153",
+        "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+        "communityName": "Internal testing 🧪"
+      },
+      {
+        "strategy": "0xba1b0de347da5b4f50b9fb0840c957081b74ad2d",
+        "poolId": "156",
+        "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+        "communityName": "Internal testing 🧪"
+      },
+      {
+        "strategy": "0x95d1f6df93ce208affdf01dd3e9998976bf36c04",
+        "poolId": "157",
+        "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+        "communityName": "Internal testing 🧪"
+      },
+      {
+        "strategy": "0x346c63ab5b47302ae1d70e7fdb7f37fdd82d9a02",
+        "poolId": "158",
+        "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+        "communityName": "Internal testing 🧪"
+      },
+      {
+        "strategy": "0x700068416593a3da20cd7b8488961d3421079212",
+        "poolId": "159",
+        "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+        "communityName": "Internal testing 🧪"
+      },
+      {
+        "strategy": "0xe1e19cab1c84b3d3123af8c49b26e141a8ac4163",
+        "poolId": "160",
+        "community": "0x14dd526025140d9fccda1358a50cbbdde122cdb1",
+        "communityName": "Internal testing 🧪"
+      }
+    ]
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-0x68e7b920e1e4b539c0cc4d5b646949d1aeca7557.json",
+    "safe": "0x68e7b920e1e4b539c0cc4d5b646949d1aeca7557",
+    "strategyCount": 8,
+    "strategies": [
+      {
+        "strategy": "0x8ace844a662569786a0d12b5364ba27fe4e74106",
+        "poolId": "97",
+        "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+        "communityName": "Greenpill Gov Guild"
+      },
+      {
+        "strategy": "0x0a552942a6eb43d01c845f3a354b83ec30146950",
+        "poolId": "98",
+        "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+        "communityName": "Greenpill Gov Guild"
+      },
+      {
+        "strategy": "0xf3772fcf3f172abd43ae9b1d11c87e3d5c265be8",
+        "poolId": "99",
+        "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+        "communityName": "Greenpill Gov Guild"
+      },
+      {
+        "strategy": "0x93b06f336b3bca1c15d5ce7c8ceb2600f4b914b3",
+        "poolId": "133",
+        "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+        "communityName": "Greenpill Gov Guild"
+      },
+      {
+        "strategy": "0xed6704f988ffe321be99cf2a8625ec2551fbe36c",
+        "poolId": "147",
+        "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+        "communityName": "Greenpill Gov Guild"
+      },
+      {
+        "strategy": "0xa9950441cb07361d095e625d286f737cbc501845",
+        "poolId": "149",
+        "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+        "communityName": "Greenpill Gov Guild"
+      },
+      {
+        "strategy": "0x5b6d5417b6ecd310fec24521c96c213a8f4945a6",
+        "poolId": "171",
+        "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+        "communityName": "Greenpill Gov Guild"
+      },
+      {
+        "strategy": "0xcc9e3c6134b4d369c7d87ee7ee61526acccd559e",
+        "poolId": "190",
+        "community": "0x5b1a1dcbf48c0f317102d05d10caa258b9c9d1c5",
+        "communityName": "Greenpill Gov Guild"
+      }
+    ]
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-0x5c64bae67dbafe5025f69a855acdfc5966b3f044.json",
+    "safe": "0x5c64bae67dbafe5025f69a855acdfc5966b3f044",
+    "strategyCount": 11,
+    "strategies": [
+      {
+        "strategy": "0x0a9d78ea6de07fddbc71f1181d52f78052654b15",
+        "poolId": "114",
+        "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+        "communityName": "Gitcoin Grants Garden 🌱"
+      },
+      {
+        "strategy": "0x2189ef55f6b0ce5538b27b63a2665d8ee319451a",
+        "poolId": "116",
+        "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+        "communityName": "Gitcoin Grants Garden 🌱"
+      },
+      {
+        "strategy": "0x3715bac18af8f0d27aa2121abc70c8051c632799",
+        "poolId": "121",
+        "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+        "communityName": "Gitcoin Grants Garden 🌱"
+      },
+      {
+        "strategy": "0x29d0c8dbe01e5bd7dec96c024cf54fb3bdd50f9a",
+        "poolId": "122",
+        "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+        "communityName": "Gitcoin Grants Garden 🌱"
+      },
+      {
+        "strategy": "0x4ceda4f34d3512900cc03c813e7eff4619ce5cfa",
+        "poolId": "123",
+        "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+        "communityName": "Gitcoin Grants Garden 🌱"
+      },
+      {
+        "strategy": "0xee9a549fe93e06c0291dc89fcfcd224c9245d6c9",
+        "poolId": "124",
+        "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+        "communityName": "Gitcoin Grants Garden 🌱"
+      },
+      {
+        "strategy": "0x442f6424f5b533dff6da469334dc3b81c80a7aca",
+        "poolId": "127",
+        "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+        "communityName": "Gitcoin Grants Garden 🌱"
+      },
+      {
+        "strategy": "0xcec4c6ca57b3494a8fd0abdc4604d534d451d8a2",
+        "poolId": "128",
+        "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+        "communityName": "Gitcoin Grants Garden 🌱"
+      },
+      {
+        "strategy": "0xa77206dae5a57ded39f295fd64b64a98cfb1f16d",
+        "poolId": "135",
+        "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+        "communityName": "Gitcoin Grants Garden 🌱"
+      },
+      {
+        "strategy": "0x84e67b84709ae4473cff1141a083a24f80518570",
+        "poolId": "161",
+        "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+        "communityName": "Gitcoin Grants Garden 🌱"
+      },
+      {
+        "strategy": "0xf6f39fc77a7118f49a6fc05585751a0cd19a583d",
+        "poolId": "162",
+        "community": "0xd3345828914b740fddd1b8ae4f4d2ce03d1e0960",
+        "communityName": "Gitcoin Grants Garden 🌱"
+      }
+    ]
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-0x9fe17647d062b2a13f74742c8be03eb7431a96ae.json",
+    "safe": "0x9fe17647d062b2a13f74742c8be03eb7431a96ae",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0x0d0b0de6493ff38ebfd5580ed2a38cf5400f82e1",
+        "poolId": "169",
+        "community": "0xd58c8122831c2f4705e59a33da1723690b310239",
+        "communityName": "Allo Garden"
+      },
+      {
+        "strategy": "0x6496cee44e5fd64f636cc689fd5160700006684a",
+        "poolId": "170",
+        "community": "0xd58c8122831c2f4705e59a33da1723690b310239",
+        "communityName": "Allo Garden"
+      }
+    ]
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-0xd7a3d3a7dd35b8e81fc0b83c032d0ed3261417d9.json",
+    "safe": "0xd7a3d3a7dd35b8e81fc0b83c032d0ed3261417d9",
+    "strategyCount": 11,
+    "strategies": [
+      {
+        "strategy": "0x5b977869aea25fa0c49c6d3ea044e5140a83c144",
+        "poolId": "139",
+        "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+        "communityName": "Gardineros 🌱"
+      },
+      {
+        "strategy": "0x1644457dcdb45e6bb07b100ad0837b021ca1319a",
+        "poolId": "140",
+        "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+        "communityName": "Gardineros 🌱"
+      },
+      {
+        "strategy": "0x677ba2d56852bbf1eef22a234b14a91b0638dda5",
+        "poolId": "142",
+        "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+        "communityName": "Gardineros 🌱"
+      },
+      {
+        "strategy": "0x336aa86505bdeefceedad46ddaa66a5d3d5bae67",
+        "poolId": "145",
+        "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+        "communityName": "Gardineros 🌱"
+      },
+      {
+        "strategy": "0x0df82861284051ed49c2eb5ef9dd626724f63ad1",
+        "poolId": "146",
+        "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+        "communityName": "Gardineros 🌱"
+      },
+      {
+        "strategy": "0x115c61ce04720cba6c647fedaa694ebbac3f201a",
+        "poolId": "165",
+        "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+        "communityName": "Gardineros 🌱"
+      },
+      {
+        "strategy": "0x8d24fb40164a26c320808aa00c567f3f65bce284",
+        "poolId": "168",
+        "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+        "communityName": "Gardineros 🌱"
+      },
+      {
+        "strategy": "0xbd49a3020277ce697c918bea2044b02557d0c8b3",
+        "poolId": "172",
+        "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+        "communityName": "Gardineros 🌱"
+      },
+      {
+        "strategy": "0x238283944de306a639653f3c72a3d74ff2322953",
+        "poolId": "173",
+        "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+        "communityName": "Gardineros 🌱"
+      },
+      {
+        "strategy": "0xf3ff898717f7e9c430a70b7ea1ad84de1dc2f405",
+        "poolId": "175",
+        "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+        "communityName": "Gardineros 🌱"
+      },
+      {
+        "strategy": "0x114964e7d57288eb8e117b98dd8972c514027025",
+        "poolId": "176",
+        "community": "0x59c47c30da2a0ca7359590f023da0284fef83e73",
+        "communityName": "Gardineros 🌱"
+      }
+    ]
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-0x472d17252416525dbd06b707f0c1cbb719e938c2.json",
+    "safe": "0x472d17252416525dbd06b707f0c1cbb719e938c2",
+    "strategyCount": 4,
+    "strategies": [
+      {
+        "strategy": "0xb3551608e7833f517d77419f4035e1a6b14391b7",
+        "poolId": "75",
+        "community": "0xf515b83f7e0ab851f822e56b0fe63dfa973e74f0",
+        "communityName": "GreenPill India "
+      },
+      {
+        "strategy": "0x62592b50c68fc511862e96d861a81048fb19ac8f",
+        "poolId": "120",
+        "community": "0xf515b83f7e0ab851f822e56b0fe63dfa973e74f0",
+        "communityName": "GreenPill India "
+      },
+      {
+        "strategy": "0x0e09df5ea5c0a93f7acfc03148e26fb246cdc68e",
+        "poolId": "137",
+        "community": "0xf515b83f7e0ab851f822e56b0fe63dfa973e74f0",
+        "communityName": "GreenPill India "
+      },
+      {
+        "strategy": "0x56c014f23380d1c4e15438904d66de8e4555533c",
+        "poolId": "138",
+        "community": "0xf515b83f7e0ab851f822e56b0fe63dfa973e74f0",
+        "communityName": "GreenPill India "
+      }
+    ]
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-0x327f6aa1870731235a57bc785523daf0054b7394.json",
+    "safe": "0x327f6aa1870731235a57bc785523daf0054b7394",
+    "strategyCount": 9,
+    "strategies": [
+      {
+        "strategy": "0x411f00636b53776c3bff34f837415c598fff4222",
+        "poolId": "181",
+        "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+        "communityName": "🧪 End-to-End Test Playground"
+      },
+      {
+        "strategy": "0xa62e6c86f49de4d3aa655d1f733d0c0c9d13cad0",
+        "poolId": "182",
+        "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+        "communityName": "🧪 End-to-End Test Playground"
+      },
+      {
+        "strategy": "0x2f3cebb1850aa2c10b43f74a1bb0b39f25532200",
+        "poolId": "183",
+        "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+        "communityName": "🧪 End-to-End Test Playground"
+      },
+      {
+        "strategy": "0x0e12b430409e4748de176b50c39f111a321a5db8",
+        "poolId": "184",
+        "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+        "communityName": "🧪 End-to-End Test Playground"
+      },
+      {
+        "strategy": "0xbee669ae394ef7ecbf020a8c3e7746cf46995f5f",
+        "poolId": "185",
+        "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+        "communityName": "🧪 End-to-End Test Playground"
+      },
+      {
+        "strategy": "0xbc3a4c9b9372fa24223b0618eae191caca31162e",
+        "poolId": "186",
+        "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+        "communityName": "🧪 End-to-End Test Playground"
+      },
+      {
+        "strategy": "0xdaed833eb4c401332ec890beafec08efe678f46f",
+        "poolId": "187",
+        "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+        "communityName": "🧪 End-to-End Test Playground"
+      },
+      {
+        "strategy": "0x83d1f1a2ccfe9ba80a99ba44507b5aaa01b5b65c",
+        "poolId": "188",
+        "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+        "communityName": "🧪 End-to-End Test Playground"
+      },
+      {
+        "strategy": "0x3c1d37c92e075bd71afc88b17364b5713414cf48",
+        "poolId": "189",
+        "community": "0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
+        "communityName": "🧪 End-to-End Test Playground"
+      }
+    ]
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-0x4201698f2a7389d6e85d7c4b799be8aeb3cf0d62.json",
+    "safe": "0x4201698f2a7389d6e85d7c4b799be8aeb3cf0d62",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0x15a4ec8c5bf8fa1da8a911aad5c4260be73b9059",
+        "poolId": "129",
+        "community": "0x2171ec78778dda68a993704b607f23e6e4f17783",
+        "communityName": "Public Nouns"
+      },
+      {
+        "strategy": "0x8d87fb19181a480828f70eaed7eb85b05b7355ae",
+        "poolId": "131",
+        "community": "0x2171ec78778dda68a993704b607f23e6e4f17783",
+        "communityName": "Public Nouns"
+      }
+    ]
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-0x2f4204fcb336ee5decf54140d178c81e85c094ac.json",
+    "safe": "0x2f4204fcb336ee5decf54140d178c81e85c094ac",
+    "strategyCount": 7,
+    "strategies": [
+      {
+        "strategy": "0x63e2b63072e131c0e5ad72205e03cbe6ca1484fa",
+        "poolId": "67",
+        "community": "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+        "communityName": "MCON III - Detroit"
+      },
+      {
+        "strategy": "0x8f80c90ef85254bd1c401804058bb68f2eb7cfab",
+        "poolId": "68",
+        "community": "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+        "communityName": "MCON III - Detroit"
+      },
+      {
+        "strategy": "0xd9cf1f7d077166236e260819257a567b1ca22c8c",
+        "poolId": "69",
+        "community": "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+        "communityName": "MCON III - Detroit"
+      },
+      {
+        "strategy": "0x964251300e577801ce3e21897c6a335505fedee5",
+        "poolId": "70",
+        "community": "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+        "communityName": "MCON III - Detroit"
+      },
+      {
+        "strategy": "0x1c720bfa4a2535fb6675b859a717b4cba56fd97b",
+        "poolId": "71",
+        "community": "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+        "communityName": "MCON III - Detroit"
+      },
+      {
+        "strategy": "0xaeecbc91e44541204d0c784e4ac3e8eca6a47cc8",
+        "poolId": "72",
+        "community": "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+        "communityName": "MCON III - Detroit"
+      },
+      {
+        "strategy": "0x94daa3f0e1380139e178f8cc523eea39395bcf78",
+        "poolId": "73",
+        "community": "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+        "communityName": "MCON III - Detroit"
+      }
+    ]
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-0x07ad02e0c1fa0b09fc945ff197e18e9c256838c6.json",
+    "safe": "0x07ad02e0c1fa0b09fc945ff197e18e9c256838c6",
+    "strategyCount": 6,
+    "strategies": [
+      {
+        "strategy": "0x528bfb7875a7134bb14b02a96d1e8e97d886e5c5",
+        "poolId": "150",
+        "community": "0xbec85d99c6f4ec34af0a9222cdd280127e06ab44",
+        "communityName": "Gossman"
+      },
+      {
+        "strategy": "0xf11ea19ca2d6dbd9aea9075f8b899093f1a5593e",
+        "poolId": "154",
+        "community": "0xbec85d99c6f4ec34af0a9222cdd280127e06ab44",
+        "communityName": "Gossman"
+      },
+      {
+        "strategy": "0xfe40b643000a47c63c1367b37090ae0a752d7433",
+        "poolId": "155",
+        "community": "0xbec85d99c6f4ec34af0a9222cdd280127e06ab44",
+        "communityName": "Gossman"
+      },
+      {
+        "strategy": "0xc12cb9c057c708eeeca45164a120ad1971e52eec",
+        "poolId": "163",
+        "community": "0xbec85d99c6f4ec34af0a9222cdd280127e06ab44",
+        "communityName": "Gossman"
+      },
+      {
+        "strategy": "0xe2aee72d564f933f12fb13b2694d1ac49b93ba34",
+        "poolId": "164",
+        "community": "0xbec85d99c6f4ec34af0a9222cdd280127e06ab44",
+        "communityName": "Gossman"
+      },
+      {
+        "strategy": "0x5e53068c175107564a751f3fc2baadac59d69043",
+        "poolId": "167",
+        "community": "0xbec85d99c6f4ec34af0a9222cdd280127e06ab44",
+        "communityName": "Gossman"
+      }
+    ]
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-0x69a525d63b7f1490b3e6d0bb1d9b4556138b0b58.json",
+    "safe": "0x69a525d63b7f1490b3e6d0bb1d9b4556138b0b58",
+    "strategyCount": 4,
+    "strategies": [
+      {
+        "strategy": "0x6ff884f45d0932b6d41ef538478c275d96a9bce3",
+        "poolId": "177",
+        "community": "0xd95bf6da95c77466674bd1210e77a23492f6eef9",
+        "communityName": "Public Goods Tooling Development Garden"
+      },
+      {
+        "strategy": "0x588e935cf4dae4361f33af2aadd4c3c3a06cab7d",
+        "poolId": "178",
+        "community": "0xd95bf6da95c77466674bd1210e77a23492f6eef9",
+        "communityName": "Public Goods Tooling Development Garden"
+      },
+      {
+        "strategy": "0x9b63d37fc5f7a7b497c1a3107a10f6ff9c2232d8",
+        "poolId": "179",
+        "community": "0xd95bf6da95c77466674bd1210e77a23492f6eef9",
+        "communityName": "Public Goods Tooling Development Garden"
+      },
+      {
+        "strategy": "0xca1a9dda3d2753c073f25c8271365152fabe7ca6",
+        "poolId": "180",
+        "community": "0xd95bf6da95c77466674bd1210e77a23492f6eef9",
+        "communityName": "Public Goods Tooling Development Garden"
+      }
+    ]
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-0x329a0ca99972c5c544d72860f5cf50336aa7aabe.json",
+    "safe": "0x329a0ca99972c5c544d72860f5cf50336aa7aabe",
+    "strategyCount": 3,
+    "strategies": [
+      {
+        "strategy": "0xfeca5fc72deb98b41198a5dce90e00bbafbe5888",
+        "poolId": "76",
+        "community": "0xe5b10de982897a60cfae8481bac5848816c0f705",
+        "communityName": "BrightID"
+      },
+      {
+        "strategy": "0x6a27a7454bfbf17aa22566519778b58f3d4adcc2",
+        "poolId": "93",
+        "community": "0xe5b10de982897a60cfae8481bac5848816c0f705",
+        "communityName": "BrightID"
+      },
+      {
+        "strategy": "0x9d2d7f1ba9e02905f944ce2636aba524a4b734f6",
+        "poolId": "174",
+        "community": "0xe5b10de982897a60cfae8481bac5848816c0f705",
+        "communityName": "BrightID"
+      }
+    ]
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-0x81c5c4047f84c3842f9b7ac841c96504517c7d8f.json",
+    "safe": "0x81c5c4047f84c3842f9b7ac841c96504517c7d8f",
+    "strategyCount": 4,
+    "strategies": [
+      {
+        "strategy": "0x977c7d12e28bd42fc0739be73f0f7423d5a64b94",
+        "poolId": "115",
+        "community": "0x9b0d2fbc6a0efacb69d716bfd15db8734c550a7c",
+        "communityName": "DHK dao"
+      },
+      {
+        "strategy": "0xfed43acfa82e0e924d507124892878b6086b581d",
+        "poolId": "130",
+        "community": "0x9b0d2fbc6a0efacb69d716bfd15db8734c550a7c",
+        "communityName": "DHK dao"
+      },
+      {
+        "strategy": "0xd6620f7576894543f5225ab44f9eb32133710db3",
+        "poolId": "132",
+        "community": "0x9b0d2fbc6a0efacb69d716bfd15db8734c550a7c",
+        "communityName": "DHK dao"
+      },
+      {
+        "strategy": "0x757e04b47663d1f0b2605d843cad0cef248b9372",
+        "poolId": "166",
+        "community": "0x9b0d2fbc6a0efacb69d716bfd15db8734c550a7c",
+        "communityName": "DHK dao"
+      }
+    ]
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-0x8ea0749ea936762b7a5bfdd6c0f5beab02ff0bf4.json",
+    "safe": "0x8ea0749ea936762b7a5bfdd6c0f5beab02ff0bf4",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0x9f856dd557a46025851c048e846ed4f84435afce",
+        "poolId": "136",
+        "community": "0x48db6422155a037bbb347eb97aaba88e651f4003",
+        "communityName": "Amigos Nación Black Flag"
+      }
+    ]
+  },
+  {
+    "chain": "optimism",
+    "chainId": "10",
+    "file": "optimism-set-voting-power-registry-0x4e228c7ee12a8b256ec158d67e91900a3850fd09.json",
+    "safe": "0x4e228c7ee12a8b256ec158d67e91900a3850fd09",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0xf793cfaa35ce36c213bd0e226d9c14afa8cfd8f8",
+        "poolId": "134",
+        "community": "0xb1f32397d6db17db39f625f14286e6e620c3cdc0",
+        "communityName": "Los Jardineros de Gaia"
+      }
+    ]
+  },
+  {
+    "chain": "polygon",
+    "chainId": "137",
+    "file": "polygon-set-voting-power-registry-0xf66592cc9298dec2df0db2b53fd3ebe0e6ef6037.json",
+    "safe": "0xf66592cc9298dec2df0db2b53fd3ebe0e6ef6037",
+    "strategyCount": 5,
+    "strategies": [
+      {
+        "strategy": "0xa310ee35430899dcdc48767bc00bb13d03174146",
+        "poolId": "43",
+        "community": "0x3c289ad849f7c95002d6689b162b67eb1dfe64a1",
+        "communityName": "Durgan Dynasty Deliberation "
+      },
+      {
+        "strategy": "0x3a4edd6691e16cce8c40eef348a970ffc96eb637",
+        "poolId": "44",
+        "community": "0x3c289ad849f7c95002d6689b162b67eb1dfe64a1",
+        "communityName": "Durgan Dynasty Deliberation "
+      },
+      {
+        "strategy": "0x4f7fe6efd4c0315a4a5a89a759b7c4f0c0233016",
+        "poolId": "45",
+        "community": "0x3c289ad849f7c95002d6689b162b67eb1dfe64a1",
+        "communityName": "Durgan Dynasty Deliberation "
+      },
+      {
+        "strategy": "0x53353999257c20f6037019959e8834a1b3b66b1e",
+        "poolId": "46",
+        "community": "0x3c289ad849f7c95002d6689b162b67eb1dfe64a1",
+        "communityName": "Durgan Dynasty Deliberation "
+      },
+      {
+        "strategy": "0x069475f8ca027de61cefe7287d72aed01c734d52",
+        "poolId": "47",
+        "community": "0x3c289ad849f7c95002d6689b162b67eb1dfe64a1",
+        "communityName": "Durgan Dynasty Deliberation "
+      }
+    ]
+  },
+  {
+    "chain": "polygon",
+    "chainId": "137",
+    "file": "polygon-set-voting-power-registry-0x758989f05b30c11f300264d0a4246dc773c40b88.json",
+    "safe": "0x758989f05b30c11f300264d0a4246dc773c40b88",
+    "strategyCount": 4,
+    "strategies": [
+      {
+        "strategy": "0x22a9bc80cf832393dc88fc564cfe97e3daa116db",
+        "poolId": "28",
+        "community": "0x4aa4677ea4ab3e52aad99741b90c76c677739d24",
+        "communityName": "Holon Lab"
+      },
+      {
+        "strategy": "0xd6f30d1f35069299e709bcac58fe7cda6bc9595f",
+        "poolId": "31",
+        "community": "0x4aa4677ea4ab3e52aad99741b90c76c677739d24",
+        "communityName": "Holon Lab"
+      },
+      {
+        "strategy": "0x0eab3bf7f6c651fc645c70543f34c117a1615adc",
+        "poolId": "32",
+        "community": "0x4aa4677ea4ab3e52aad99741b90c76c677739d24",
+        "communityName": "Holon Lab"
+      },
+      {
+        "strategy": "0xa942f089cd376f005dc86444f70f607969847959",
+        "poolId": "48",
+        "community": "0x4aa4677ea4ab3e52aad99741b90c76c677739d24",
+        "communityName": "Holon Lab"
+      }
+    ]
+  },
+  {
+    "chain": "polygon",
+    "chainId": "137",
+    "file": "polygon-set-voting-power-registry-0x1b8c7f06f537711a7caf6770051a43b4f3e69a7e.json",
+    "safe": "0x1b8c7f06f537711a7caf6770051a43b4f3e69a7e",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0x1489446ce0557a2d43e31b903f962a283f1a6c09",
+        "poolId": "53",
+        "community": "0x9eee52873350c26d6c7fa23d048d22c4ab82db09",
+        "communityName": "Gardens on Polygon"
+      },
+      {
+        "strategy": "0x2a00cefb0676043c5a0ce7c9b6990b50dbf98cad",
+        "poolId": "54",
+        "community": "0x9eee52873350c26d6c7fa23d048d22c4ab82db09",
+        "communityName": "Gardens on Polygon"
+      }
+    ]
+  },
+  {
+    "chain": "polygon",
+    "chainId": "137",
+    "file": "polygon-set-voting-power-registry-0xc0c300a304b160870f855150d3e0efd2a0bef38b.json",
+    "safe": "0xc0c300a304b160870f855150d3e0efd2a0bef38b",
+    "strategyCount": 7,
+    "strategies": [
+      {
+        "strategy": "0x6138338450c5bfbd646e49cf9f8c68a9152cad17",
+        "poolId": "27",
+        "community": "0x65bf57a410ed5fa69669f307c2da65eae06279f4",
+        "communityName": "Greenpill Brasil"
+      },
+      {
+        "strategy": "0x81745dba1273411825f18b50ead84a3fc2c8fd2c",
+        "poolId": "36",
+        "community": "0x65bf57a410ed5fa69669f307c2da65eae06279f4",
+        "communityName": "Greenpill Brasil"
+      },
+      {
+        "strategy": "0xe8216b6a9e8b87560dbeb0f4dc0f256fb9fedf1b",
+        "poolId": "37",
+        "community": "0x65bf57a410ed5fa69669f307c2da65eae06279f4",
+        "communityName": "Greenpill Brasil"
+      },
+      {
+        "strategy": "0x8848552c193d426c3cd5f1efe19155bfef13be61",
+        "poolId": "49",
+        "community": "0x65bf57a410ed5fa69669f307c2da65eae06279f4",
+        "communityName": "Greenpill Brasil"
+      },
+      {
+        "strategy": "0xb63c9a22adea83fd095f3e6e418f80ffb3226959",
+        "poolId": "50",
+        "community": "0x65bf57a410ed5fa69669f307c2da65eae06279f4",
+        "communityName": "Greenpill Brasil"
+      },
+      {
+        "strategy": "0xdf8d1bc90799d32429205e0ae85de79a14ee1e2d",
+        "poolId": "51",
+        "community": "0x65bf57a410ed5fa69669f307c2da65eae06279f4",
+        "communityName": "Greenpill Brasil"
+      },
+      {
+        "strategy": "0x511776b742df6edcfe386c397e75b4feb256036f",
+        "poolId": "52",
+        "community": "0x65bf57a410ed5fa69669f307c2da65eae06279f4",
+        "communityName": "Greenpill Brasil"
+      }
+    ]
+  },
+  {
+    "chain": "polygon",
+    "chainId": "137",
+    "file": "polygon-set-voting-power-registry-0x07ad02e0c1fa0b09fc945ff197e18e9c256838c6.json",
+    "safe": "0x07ad02e0c1fa0b09fc945ff197e18e9c256838c6",
+    "strategyCount": 3,
+    "strategies": [
+      {
+        "strategy": "0x67a1d8955fa9d1e83de9f3f5394ce83f02a4d250",
+        "poolId": "55",
+        "community": "0x08cb9088d8e903d3b1ab3313157a8484f9e40fe8",
+        "communityName": "Test Gossman"
+      },
+      {
+        "strategy": "0xac3f6fd7ece00c43526d455b779056bf2a53721f",
+        "poolId": "56",
+        "community": "0x4855571cdf18d41320316a945671d04ea679ca15",
+        "communityName": "Gossman Diamond"
+      },
+      {
+        "strategy": "0xc93fa6150f31524b3db1fcbcc94e58eac7ebf4e4",
+        "poolId": "57",
+        "community": "0x08cb9088d8e903d3b1ab3313157a8484f9e40fe8",
+        "communityName": "Test Gossman"
+      }
+    ]
+  },
+  {
+    "chain": "base",
+    "chainId": "8453",
+    "file": "base-set-voting-power-registry-0xb4fdd35b90c847af5ffa0aa2eafb541806e84f2a.json",
+    "safe": "0xb4fdd35b90c847af5ffa0aa2eafb541806e84f2a",
+    "strategyCount": 5,
+    "strategies": [
+      {
+        "strategy": "0x336866f1ad9db88100f23924323119136a192df5",
+        "poolId": "145",
+        "community": "0x96aa42ac2a15b897a12d736a28fbbc831f389d96",
+        "communityName": "xHyperDeSci"
+      },
+      {
+        "strategy": "0x07739850ca2121690139c33b3c42dc43de239743",
+        "poolId": "146",
+        "community": "0x96aa42ac2a15b897a12d736a28fbbc831f389d96",
+        "communityName": "xHyperDeSci"
+      },
+      {
+        "strategy": "0xaaaa24e573d86c9e8b7bfccea38e3b4e864cf8fa",
+        "poolId": "150",
+        "community": "0x96aa42ac2a15b897a12d736a28fbbc831f389d96",
+        "communityName": "xHyperDeSci"
+      },
+      {
+        "strategy": "0x8fe008e79f1f66453865e611224d66ad4cb536aa",
+        "poolId": "151",
+        "community": "0x96aa42ac2a15b897a12d736a28fbbc831f389d96",
+        "communityName": "xHyperDeSci"
+      },
+      {
+        "strategy": "0x8ad5953a53b7a69203e87de928481e6066011e82",
+        "poolId": "184",
+        "community": "0x96aa42ac2a15b897a12d736a28fbbc831f389d96",
+        "communityName": "xHyperDeSci"
+      }
+    ]
+  },
+  {
+    "chain": "base",
+    "chainId": "8453",
+    "file": "base-set-voting-power-registry-0x5d9551d7b0d2581878121606d0012b7bd5e375b3.json",
+    "safe": "0x5d9551d7b0d2581878121606d0012b7bd5e375b3",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0x25863eed6cb38422f74d4aff476e8962fed9241b",
+        "poolId": "152",
+        "community": "0xa856e6d83884c9b7c217d1a899861c9eee71b7dc",
+        "communityName": "Ipe City Gardens"
+      },
+      {
+        "strategy": "0x240e7c37ba4027e2ac38ede57e4c13e0e11d08cf",
+        "poolId": "167",
+        "community": "0xa856e6d83884c9b7c217d1a899861c9eee71b7dc",
+        "communityName": "Ipe City Gardens"
+      }
+    ]
+  },
+  {
+    "chain": "base",
+    "chainId": "8453",
+    "file": "base-set-voting-power-registry-0xff621d7361e0c93bedd29de00133e9c7f7afb6ab.json",
+    "safe": "0xff621d7361e0c93bedd29de00133e9c7f7afb6ab",
+    "strategyCount": 6,
+    "strategies": [
+      {
+        "strategy": "0x3f281d944b8272a84765dd397ae87cb4076df085",
+        "poolId": "175",
+        "community": "0xec83d957f8aa4e9601bc74608ebcbc862eca52ab",
+        "communityName": "Superfluid DAO"
+      },
+      {
+        "strategy": "0x7b569e081796dd8fd72e386fb1671091c2604bd3",
+        "poolId": "176",
+        "community": "0xec83d957f8aa4e9601bc74608ebcbc862eca52ab",
+        "communityName": "Superfluid DAO"
+      },
+      {
+        "strategy": "0x28a94d291ffcd62b75c2b523a2b6348ced13fa06",
+        "poolId": "179",
+        "community": "0xec83d957f8aa4e9601bc74608ebcbc862eca52ab",
+        "communityName": "Superfluid DAO"
+      },
+      {
+        "strategy": "0xabe49f543f5abcc1c90b353fa38aae70ec889692",
+        "poolId": "180",
+        "community": "0xec83d957f8aa4e9601bc74608ebcbc862eca52ab",
+        "communityName": "Superfluid DAO"
+      },
+      {
+        "strategy": "0xc207f48c402e3b60e99d37cd9293953db835c9dc",
+        "poolId": "181",
+        "community": "0xec83d957f8aa4e9601bc74608ebcbc862eca52ab",
+        "communityName": "Superfluid DAO"
+      },
+      {
+        "strategy": "0x6cf124c57ddd95d17559e3caf07539bc63cc7728",
+        "poolId": "182",
+        "community": "0xec83d957f8aa4e9601bc74608ebcbc862eca52ab",
+        "communityName": "Superfluid DAO"
+      }
+    ]
+  },
+  {
+    "chain": "base",
+    "chainId": "8453",
+    "file": "base-set-voting-power-registry-0x2f2db7779341612a2d671d822350fb5099e66279.json",
+    "safe": "0x2f2db7779341612a2d671d822350fb5099e66279",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0x36a3a40d1afff6392cd1f4591d4f2d46aff779d9",
+        "poolId": "183",
+        "community": "0x7c6f82c77cd0ca1eac659d73ce75bdd9f44df8af",
+        "communityName": "HyperLiquids Garden"
+      }
+    ]
+  },
+  {
+    "chain": "base",
+    "chainId": "8453",
+    "file": "base-set-voting-power-registry-0x54c2133eeb6355852f9887276502d515c401e2eb.json",
+    "safe": "0x54c2133eeb6355852f9887276502d515c401e2eb",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0x5e492f773dc17d7796efe64c3cd1614d46c69df8",
+        "poolId": "178",
+        "community": "0xceb70621ae510967d6f864949907bdd7cab9eae5",
+        "communityName": "The Streme Team"
+      }
+    ]
+  },
+  {
+    "chain": "base",
+    "chainId": "8453",
+    "file": "base-set-voting-power-registry-0xb7b95de6e73319ce64440eec6be8b8bdaa85c45f.json",
+    "safe": "0xb7b95de6e73319ce64440eec6be8b8bdaa85c45f",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0x6b57c434de064306e7981662895868d700683dcc",
+        "poolId": "155",
+        "community": "0x9bd4d71aad40dc68120d8a35907eabefeefb91ad",
+        "communityName": "Earth"
+      },
+      {
+        "strategy": "0x9127bf81bdd0526ca992579e9bc8f232d880d650",
+        "poolId": "156",
+        "community": "0x9bd4d71aad40dc68120d8a35907eabefeefb91ad",
+        "communityName": "Earth"
+      }
+    ]
+  },
+  {
+    "chain": "base",
+    "chainId": "8453",
+    "file": "base-set-voting-power-registry-0x5ebb21361166f53569a129cc5f7f887cf89c1814.json",
+    "safe": "0x5ebb21361166f53569a129cc5f7f887cf89c1814",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0x944c64f899f48dc5b84b5eab3cba93af32ad729a",
+        "poolId": "185",
+        "community": "0x630dcb0eae7231c7afc8a6414c8c6732b25f8b84",
+        "communityName": "MemeForTrees"
+      }
+    ]
+  },
+  {
+    "chain": "base",
+    "chainId": "8453",
+    "file": "base-set-voting-power-registry-0x9a17de1f0cad0c592f656410997e4b685d339029.json",
+    "safe": "0x9a17de1f0cad0c592f656410997e4b685d339029",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0xabf6f3e646056218bc857fa9ea313aa31a03454b",
+        "poolId": "144",
+        "community": "0xdac6e19e4fd51d48cae4e25e7604d7ab83935278",
+        "communityName": "Gardens on Base"
+      }
+    ]
+  },
+  {
+    "chain": "base",
+    "chainId": "8453",
+    "file": "base-set-voting-power-registry-0xacd59e854adf632d2322404198624f757c868c97.json",
+    "safe": "0xacd59e854adf632d2322404198624f757c868c97",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0xcc3845c008a0942ac1965abe1c6872e1ea9951c3",
+        "poolId": "173",
+        "community": "0x897ce468d3968b5ca7376faedcdaa705e9b34856",
+        "communityName": "test 2"
+      }
+    ]
+  },
+  {
+    "chain": "base",
+    "chainId": "8453",
+    "file": "base-set-voting-power-registry-0x6b6b2a2a2cb83ad068e0cf022c65f36c4dfc725c.json",
+    "safe": "0x6b6b2a2a2cb83ad068e0cf022c65f36c4dfc725c",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0xf51f81d34fbfc56bb57dca0a3a4f1591065bf499",
+        "poolId": "177",
+        "community": "0x585094bc142b67a184f53db6bbb9b7439ef11c17",
+        "communityName": "$SUP to the Moon"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0x68060388c7d97b4bf779a2ead46c86e5588f073f.json",
+    "safe": "0x68060388c7d97b4bf779a2ead46c86e5588f073f",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0xcb857f1f2e36e0ee393125efa39802ece6363f80",
+        "poolId": "48",
+        "community": "0x13e71c56c5b048e9b8b6a9dbb4a4f346b5dab986",
+        "communityName": "ReFi DAO Garden"
+      },
+      {
+        "strategy": "0x0f52002482c3188575f2e751dc948ab2fdd39d10",
+        "poolId": "49",
+        "community": "0x13e71c56c5b048e9b8b6a9dbb4a4f346b5dab986",
+        "communityName": "ReFi DAO Garden"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0x26746ddb7a853ddb5b12677da60f40fa7e8f794a.json",
+    "safe": "0x26746ddb7a853ddb5b12677da60f40fa7e8f794a",
+    "strategyCount": 11,
+    "strategies": [
+      {
+        "strategy": "0x3764607a0a721981780b798a02c2b1691d6baa39",
+        "poolId": "80",
+        "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+        "communityName": "GoodDollar Builders"
+      },
+      {
+        "strategy": "0x4d28599ddcba0b041dca0cfee3337048120405cf",
+        "poolId": "81",
+        "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+        "communityName": "GoodDollar Builders"
+      },
+      {
+        "strategy": "0xf917f955ca02eb7455a399cd4e1b2ca7ed1b84b4",
+        "poolId": "85",
+        "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+        "communityName": "GoodDollar Builders"
+      },
+      {
+        "strategy": "0x86888c171c280676b15d63ae443a901640f182c1",
+        "poolId": "86",
+        "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+        "communityName": "GoodDollar Builders"
+      },
+      {
+        "strategy": "0xd20a0c8f6ec1026a1960c6f0f4a6df1a381d9938",
+        "poolId": "94",
+        "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+        "communityName": "GoodDollar Builders"
+      },
+      {
+        "strategy": "0xe38e44de6b3537aa74081b6c3120f512a06fdd8d",
+        "poolId": "98",
+        "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+        "communityName": "GoodDollar Builders"
+      },
+      {
+        "strategy": "0xbbe2a2a0e48bace7271325f5501c01fdda7f3d54",
+        "poolId": "99",
+        "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+        "communityName": "GoodDollar Builders"
+      },
+      {
+        "strategy": "0xc3ec9d39fb870d077b58f567f92dc2f5de7520af",
+        "poolId": "100",
+        "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+        "communityName": "GoodDollar Builders"
+      },
+      {
+        "strategy": "0x0fd1b99da7a2802934b16373d1a3cb2f9db50b08",
+        "poolId": "101",
+        "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+        "communityName": "GoodDollar Builders"
+      },
+      {
+        "strategy": "0x4aff6d90e295360a012d2f1f42d9c7ccab44e5f4",
+        "poolId": "102",
+        "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+        "communityName": "GoodDollar Builders"
+      },
+      {
+        "strategy": "0xc7cf1a0496c358a3b51ac1822bf878ff7a93b76f",
+        "poolId": "104",
+        "community": "0xf42c9ca2b10010142e2bac34ebdddb0b82177684",
+        "communityName": "GoodDollar Builders"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0x90458fb74e8ca7861b5cf8b1d1cd79e4b394bfdd.json",
+    "safe": "0x90458fb74e8ca7861b5cf8b1d1cd79e4b394bfdd",
+    "strategyCount": 3,
+    "strategies": [
+      {
+        "strategy": "0x4db6295640c3d87e3fae7bd150b4ac58e33870fa",
+        "poolId": "55",
+        "community": "0x2ac2b63689a33fe0c8d3d4f70a45cf589ecdd0ac",
+        "communityName": "GoodGov"
+      },
+      {
+        "strategy": "0x186660411ef4b1975834f29b5912b64de91252a2",
+        "poolId": "59",
+        "community": "0x2ac2b63689a33fe0c8d3d4f70a45cf589ecdd0ac",
+        "communityName": "GoodGov"
+      },
+      {
+        "strategy": "0x255ced14c5380a4995338491c85ce7de8558f1a0",
+        "poolId": "79",
+        "community": "0x2ac2b63689a33fe0c8d3d4f70a45cf589ecdd0ac",
+        "communityName": "GoodGov"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0xfcb81c1b0e0d4fea01e5a0fbf0aebb91e78a67e1.json",
+    "safe": "0xfcb81c1b0e0d4fea01e5a0fbf0aebb91e78a67e1",
+    "strategyCount": 4,
+    "strategies": [
+      {
+        "strategy": "0xe67566f8cdd30d426668d84189550c64289a1867",
+        "poolId": "57",
+        "community": "0x0eec46f8431bbd669cbb6dae4655006ba650cbba",
+        "communityName": "Regen Coordination Garden 🌿"
+      },
+      {
+        "strategy": "0x3f39af5c2d5356c1c0a8d0d67c2c4cf68374b59e",
+        "poolId": "58",
+        "community": "0x0eec46f8431bbd669cbb6dae4655006ba650cbba",
+        "communityName": "Regen Coordination Garden 🌿"
+      },
+      {
+        "strategy": "0x57db3264a363379b2c66a6914c0bf1d70f4763f6",
+        "poolId": "69",
+        "community": "0x0eec46f8431bbd669cbb6dae4655006ba650cbba",
+        "communityName": "Regen Coordination Garden 🌿"
+      },
+      {
+        "strategy": "0x1ef2c3a529af71b575c788bfe5300161c1861b79",
+        "poolId": "95",
+        "community": "0x0eec46f8431bbd669cbb6dae4655006ba650cbba",
+        "communityName": "Regen Coordination Garden 🌿"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0x705a58f9c33d0a5be425b87dc34b157c508fe467.json",
+    "safe": "0x705a58f9c33d0a5be425b87dc34b157c508fe467",
+    "strategyCount": 7,
+    "strategies": [
+      {
+        "strategy": "0xdc1567c66c63eefd1cfba84720e3bad73d0df930",
+        "poolId": "111",
+        "community": "0x299ed29ebef17309d3e86638a7879485cd09dd59",
+        "communityName": "GoodDollar Ecosystem"
+      },
+      {
+        "strategy": "0x8adec3abe2b44480a1094d50830676971e06049d",
+        "poolId": "112",
+        "community": "0x299ed29ebef17309d3e86638a7879485cd09dd59",
+        "communityName": "GoodDollar Ecosystem"
+      },
+      {
+        "strategy": "0xa3162a0ec1dd06f7f7c1b54748836757ca64ea7b",
+        "poolId": "113",
+        "community": "0x299ed29ebef17309d3e86638a7879485cd09dd59",
+        "communityName": "GoodDollar Ecosystem"
+      },
+      {
+        "strategy": "0xdaeeed0e9f48e5efd023d774ab19415de8aedd8f",
+        "poolId": "114",
+        "community": "0x299ed29ebef17309d3e86638a7879485cd09dd59",
+        "communityName": "GoodDollar Ecosystem"
+      },
+      {
+        "strategy": "0xa25c5756ee48211185bcffa9e12d219be151d29d",
+        "poolId": "115",
+        "community": "0x299ed29ebef17309d3e86638a7879485cd09dd59",
+        "communityName": "GoodDollar Ecosystem"
+      },
+      {
+        "strategy": "0x20454a1d4613529c8e1947217241910848664413",
+        "poolId": "116",
+        "community": "0x299ed29ebef17309d3e86638a7879485cd09dd59",
+        "communityName": "GoodDollar Ecosystem"
+      },
+      {
+        "strategy": "0xd339c8f96e25743733a2019ece30b1c15c00ce55",
+        "poolId": "117",
+        "community": "0x299ed29ebef17309d3e86638a7879485cd09dd59",
+        "communityName": "GoodDollar Ecosystem"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0x85641ebdce97c27ef424e17d2be81ae6d40776c7.json",
+    "safe": "0x85641ebdce97c27ef424e17d2be81ae6d40776c7",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0x2085aa46b04ba20f93f24cc51e26e4fc3f0b631d",
+        "poolId": "53",
+        "community": "0xb499593950aa6b45afdad3dc237c72da09292bbb",
+        "communityName": "AgroforestDAO"
+      },
+      {
+        "strategy": "0xd251c52c091c54a14e00ad1a31a4cffb9e6c8197",
+        "poolId": "60",
+        "community": "0xb499593950aa6b45afdad3dc237c72da09292bbb",
+        "communityName": "AgroforestDAO"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0x2d454e659fe9422c953807c80bf40dd06d55a3ca.json",
+    "safe": "0x2d454e659fe9422c953807c80bf40dd06d55a3ca",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0x33080d27f98747f092021bdee4a006eda42ff2f7",
+        "poolId": "54",
+        "community": "0xb5f19cef9efda3cec99ea0242e972d04cea44e87",
+        "communityName": "GreenPill Toronto"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0xacd59e854adf632d2322404198624f757c868c97.json",
+    "safe": "0xacd59e854adf632d2322404198624f757c868c97",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0xb90cabb1863ed341babe31a2d0126a5985e4c770",
+        "poolId": "91",
+        "community": "0xbd62f4bbf704d34b7de0247155157b4552aaa70f",
+        "communityName": "test 3"
+      },
+      {
+        "strategy": "0x3911cf457544cdbf949a58e592b0e4964e4a0c53",
+        "poolId": "92",
+        "community": "0xbd62f4bbf704d34b7de0247155157b4552aaa70f",
+        "communityName": "test 3"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0x50afcd6ce9e3ae15ae5731ff8c1d255289ca203b.json",
+    "safe": "0x50afcd6ce9e3ae15ae5731ff8c1d255289ca203b",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0x432952e34729f92b08443a573b8a9cd60557cea7",
+        "poolId": "61",
+        "community": "0x2ce7c24c2bfe110872381af57a1e3eb161f01650",
+        "communityName": "Kokonut Green Gardens"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0xd7d5aedb6faf61cd17e395d586a7c9b365e685cd.json",
+    "safe": "0xd7d5aedb6faf61cd17e395d586a7c9b365e685cd",
+    "strategyCount": 7,
+    "strategies": [
+      {
+        "strategy": "0x8fa3af336d9c22a403840c4014e594606af3c0c2",
+        "poolId": "82",
+        "community": "0xa76525f22ccf391b66b7bb2990a238de97785cfa",
+        "communityName": "Gossman on celo"
+      },
+      {
+        "strategy": "0x8c5f9fece33dea4958a9fd794a549129b2e88742",
+        "poolId": "83",
+        "community": "0xa76525f22ccf391b66b7bb2990a238de97785cfa",
+        "communityName": "Gossman on celo"
+      },
+      {
+        "strategy": "0xab40bcfcfe2d742a7e4eeb9c6d0a66bf322177de",
+        "poolId": "87",
+        "community": "0xa76525f22ccf391b66b7bb2990a238de97785cfa",
+        "communityName": "Gossman on celo"
+      },
+      {
+        "strategy": "0xd9720538780f5f8043667e57fb17cbd714b2aae7",
+        "poolId": "88",
+        "community": "0xa76525f22ccf391b66b7bb2990a238de97785cfa",
+        "communityName": "Gossman on celo"
+      },
+      {
+        "strategy": "0xa16b7532cce9fee3eff390682055b48c7a485af7",
+        "poolId": "89",
+        "community": "0xa76525f22ccf391b66b7bb2990a238de97785cfa",
+        "communityName": "Gossman on celo"
+      },
+      {
+        "strategy": "0x4c3925ea9996923025d951498c18691d785fbf21",
+        "poolId": "90",
+        "community": "0xa76525f22ccf391b66b7bb2990a238de97785cfa",
+        "communityName": "Gossman on celo"
+      },
+      {
+        "strategy": "0xc4b8e51858df30123b3c4f74f6e4a1daee946c99",
+        "poolId": "93",
+        "community": "0xa76525f22ccf391b66b7bb2990a238de97785cfa",
+        "communityName": "Gossman on celo"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0x2ab91dc857c07aefe33877b9ba0c2ce28e59a41d.json",
+    "safe": "0x2ab91dc857c07aefe33877b9ba0c2ce28e59a41d",
+    "strategyCount": 6,
+    "strategies": [
+      {
+        "strategy": "0xbcea5d6c19303e4f3eba367ca87aa4d0df063544",
+        "poolId": "76",
+        "community": "0x2eb49e06ba584079ef797ecf2118f73f6527adb4",
+        "communityName": "Greenpill Brasil"
+      },
+      {
+        "strategy": "0x523b362913b56e10e9dde785952e5e0efdab4aad",
+        "poolId": "105",
+        "community": "0x2eb49e06ba584079ef797ecf2118f73f6527adb4",
+        "communityName": "Greenpill Brasil"
+      },
+      {
+        "strategy": "0x4ce39a977961befa4d4bd546f8454ab798f1ec1d",
+        "poolId": "106",
+        "community": "0x2eb49e06ba584079ef797ecf2118f73f6527adb4",
+        "communityName": "Greenpill Brasil"
+      },
+      {
+        "strategy": "0xa8558a901d12a72492d8716b6e02c7c6ef324f5e",
+        "poolId": "107",
+        "community": "0x2eb49e06ba584079ef797ecf2118f73f6527adb4",
+        "communityName": "Greenpill Brasil"
+      },
+      {
+        "strategy": "0xdfd5ca1beef648999c5691e815ee5c27bbc1d8c6",
+        "poolId": "108",
+        "community": "0x2eb49e06ba584079ef797ecf2118f73f6527adb4",
+        "communityName": "Greenpill Brasil"
+      },
+      {
+        "strategy": "0x6f09f999fe1af06738a0b12678ef2df2fc0635e6",
+        "poolId": "109",
+        "community": "0x2eb49e06ba584079ef797ecf2118f73f6527adb4",
+        "communityName": "Greenpill Brasil"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0x9a17de1f0cad0c592f656410997e4b685d339029.json",
+    "safe": "0x9a17de1f0cad0c592f656410997e4b685d339029",
+    "strategyCount": 3,
+    "strategies": [
+      {
+        "strategy": "0xf26cb186de2a5637ff5873bf0f4b3fb67a7ce462",
+        "poolId": "36",
+        "community": "0x7f7a53514f9f9e83ffd15228579dc51e9ef8ae71",
+        "communityName": "Gardens on Celo"
+      },
+      {
+        "strategy": "0x78c316103297b2ccacd01e422804ded636709826",
+        "poolId": "43",
+        "community": "0x6f9074a0bc5b92e839da4fd52f84be9d50e065a9",
+        "communityName": "Gardens on Celo"
+      },
+      {
+        "strategy": "0x6a8c3a4da74b18e01594be66d43fdc32762456fd",
+        "poolId": "64",
+        "community": "0x6f9074a0bc5b92e839da4fd52f84be9d50e065a9",
+        "communityName": "Gardens on Celo"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0x614d630f3d2506f65e7562fe36818d0f1bfea4a2.json",
+    "safe": "0x614d630f3d2506f65e7562fe36818d0f1bfea4a2",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0x8a8e6ac00d93ac766a25b7d6bbf0ca2e873f7725",
+        "poolId": "56",
+        "community": "0xc42b34e33160fd5d5257d89e283436df2c71f1f0",
+        "communityName": "Greenpill NYC Garden"
+      },
+      {
+        "strategy": "0x6f98919fcff18a1fa82585090a61e6678ca38826",
+        "poolId": "110",
+        "community": "0xc42b34e33160fd5d5257d89e283436df2c71f1f0",
+        "communityName": "Greenpill NYC Garden"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0x03f053094ea292a9f94ae0f6f98ff26436344163.json",
+    "safe": "0x03f053094ea292a9f94ae0f6f98ff26436344163",
+    "strategyCount": 3,
+    "strategies": [
+      {
+        "strategy": "0x76ffd1d4317d351c3834a60818a9e5784b523154",
+        "poolId": "44",
+        "community": "0xa236d7443caefbdab26ebf261ce6f05660b51b95",
+        "communityName": "FarmBlock"
+      },
+      {
+        "strategy": "0x9c5ffaac33968b64f38fadccaed353be626e4042",
+        "poolId": "45",
+        "community": "0x60558c002f0d08451a5f5ea983b3ea44e35f6500",
+        "communityName": "0xFarmBlock"
+      },
+      {
+        "strategy": "0x9aa0c8e231f2bfd6e50f658c10fedfc9624131de",
+        "poolId": "46",
+        "community": "0x60558c002f0d08451a5f5ea983b3ea44e35f6500",
+        "communityName": "0xFarmBlock"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0x4a6b2a509b1b0262fd0d789548b290ca12aac992.json",
+    "safe": "0x4a6b2a509b1b0262fd0d789548b290ca12aac992",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0x7789ad82b8c0e8726325fba6363600de56eb60a0",
+        "poolId": "50",
+        "community": "0x910318a9203df4be96a19a60c34f0ffb32cd69ee",
+        "communityName": "Infinite Fountain"
+      },
+      {
+        "strategy": "0xc07652ad0f4c8ec5a613ff54afbbb3bcae59e46a",
+        "poolId": "51",
+        "community": "0x910318a9203df4be96a19a60c34f0ffb32cd69ee",
+        "communityName": "Infinite Fountain"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0xb805bc9511b9c398354a020447421ac516708a16.json",
+    "safe": "0xb805bc9511b9c398354a020447421ac516708a16",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0x93c3858432cd9cbf4b7e0c5e74cb8026bde472cf",
+        "poolId": "103",
+        "community": "0x7a3a5607e4109aa39fc0c86f94f490812722ea61",
+        "communityName": "Recy"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0xa1094be4563973caadcd893710600f352f7f735c.json",
+    "safe": "0xa1094be4563973caadcd893710600f352f7f735c",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0xa6a408914dc6e1ac9a8db8ce472923374b1b6beb",
+        "poolId": "84",
+        "community": "0xe0713cffc8fd5ecbe9c5cd0ca71b662d948c35bd",
+        "communityName": "Peer to Peer - The Commons Manifesto Chinese study group"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0xcc5437c25cad0b23dd88118d054da19dbec52cea.json",
+    "safe": "0xcc5437c25cad0b23dd88118d054da19dbec52cea",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0xabbdc98302a55dfad457843b2c0f2e9306854267",
+        "poolId": "78",
+        "community": "0x01f43aafd844bbbaf0e9277bcf25d155cc88d9eb",
+        "communityName": "DeSci Asia on Celo"
+      }
+    ]
+  },
+  {
+    "chain": "celo",
+    "chainId": "42220",
+    "file": "celo-set-voting-power-registry-0xfefd649407f63c301929b7bc6f93fdf02f1c9797.json",
+    "safe": "0xfefd649407f63c301929b7bc6f93fdf02f1c9797",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0xf3d67757c2a3b68c090572962113d7e5db530425",
+        "poolId": "52",
+        "community": "0x5045aa46eb1ebd6882d6981c25a2c091d966b4b1",
+        "communityName": "Web3 Institute (W3I)"
+      }
+    ]
+  },
+  {
+    "chain": "gnosis",
+    "chainId": "100",
+    "file": "gnosis-set-voting-power-registry-0xc1b0d081ba54e70a5ad2e321b7a78d0bec0edec1.json",
+    "safe": "0xc1b0d081ba54e70a5ad2e321b7a78d0bec0edec1",
+    "strategyCount": 14,
+    "strategies": [
+      {
+        "strategy": "0x1f6fd908db173f591aa6ea4a037d157ea4e31f68",
+        "poolId": "9",
+        "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+        "communityName": "Paul's Testing Garden"
+      },
+      {
+        "strategy": "0xb48fe96fcb6b3f7228247690f6a0f21d60002e52",
+        "poolId": "15",
+        "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+        "communityName": "Paul's Testing Garden"
+      },
+      {
+        "strategy": "0x0fd15b2142a257fa8713cad2c14ec52c00f71865",
+        "poolId": "16",
+        "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+        "communityName": "Paul's Testing Garden"
+      },
+      {
+        "strategy": "0x5f7e9967b940f47623ad7fce9d59c899a1a114e7",
+        "poolId": "17",
+        "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+        "communityName": "Paul's Testing Garden"
+      },
+      {
+        "strategy": "0x7de5cd9bccd6d15ca7ebfd9cd37aafbef6b8d1ad",
+        "poolId": "18",
+        "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+        "communityName": "Paul's Testing Garden"
+      },
+      {
+        "strategy": "0x0108617ca2e05546c49383d9392ed8db5d12304c",
+        "poolId": "28",
+        "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+        "communityName": "Paul's Testing Garden"
+      },
+      {
+        "strategy": "0x6d5accc797cc20414f1206ceb2e7665ef777480a",
+        "poolId": "32",
+        "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+        "communityName": "Paul's Testing Garden"
+      },
+      {
+        "strategy": "0x36f9176031e7de875659a3d1044cb62d1c2a9d2d",
+        "poolId": "33",
+        "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+        "communityName": "Paul's Testing Garden"
+      },
+      {
+        "strategy": "0x681d02f86578922d33a5e3b7954abdedf4e3064d",
+        "poolId": "42",
+        "community": "0x4d7a042b2fb2504dd98e4c871cc134a8ded712da",
+        "communityName": "No Cap, All dApps Hackathon"
+      },
+      {
+        "strategy": "0xe8320380d56c4319aab593e45de868b002b3e357",
+        "poolId": "43",
+        "community": "0x62ce2d154d34b5aefb9be02525cfffdbf934ff27",
+        "communityName": "First Community"
+      },
+      {
+        "strategy": "0x149e1d84858993b6ec3a41e11488c86c289620ef",
+        "poolId": "56",
+        "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+        "communityName": "Paul's Testing Garden"
+      },
+      {
+        "strategy": "0x7336ab83ec05ccb0d328390e50ac8b59b1229da1",
+        "poolId": "57",
+        "community": "0xaeb5c6c69cc5b9c10dd5c5176af83e632320fcea",
+        "communityName": "Paul"
+      },
+      {
+        "strategy": "0xd7cd912eed8e0d8b9f16f362b5239e9419ce9db9",
+        "poolId": "68",
+        "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+        "communityName": "Paul's Testing Garden"
+      },
+      {
+        "strategy": "0x0421da9346e4dcb1f9dacd64dd791d13e5ce2a8f",
+        "poolId": "69",
+        "community": "0x6221d5e286cce0d22fc6e0b2597d5d3ca98dacb1",
+        "communityName": "Paul's Testing Garden"
+      }
+    ]
+  },
+  {
+    "chain": "gnosis",
+    "chainId": "100",
+    "file": "gnosis-set-voting-power-registry-0x623c495c77bd089085675ceadc3fed750aca3518.json",
+    "safe": "0x623c495c77bd089085675ceadc3fed750aca3518",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0x051e8d96d4e9cde57d584b8d59a5116784f0d3c7",
+        "poolId": "46",
+        "community": "0xa8935addabca48a9fc63a009f9313fc59417b20c",
+        "communityName": "Zuzalu Software (zuzalu.city)"
+      }
+    ]
+  },
+  {
+    "chain": "gnosis",
+    "chainId": "100",
+    "file": "gnosis-set-voting-power-registry-0xd8a63b2f234b487ceaddc422c8246add2c814203.json",
+    "safe": "0xd8a63b2f234b487ceaddc422c8246add2c814203",
+    "strategyCount": 28,
+    "strategies": [
+      {
+        "strategy": "0x5ccb743c930271ebd7f254f3ccf909097532c7be",
+        "poolId": "19",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x6e7e8b56d16c577ee9c765a756deb5e6959088af",
+        "poolId": "20",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x105900650fff3cf4fe52bce72f26572fe4fa1faf",
+        "poolId": "21",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x5ab65facfc0ae022f65a5c64cb3bf38812bd042a",
+        "poolId": "22",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x67fea1ec7ed0adfb4026923b4779e4f830af8e1c",
+        "poolId": "24",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x107fbe971a1457a7a442a7fe3e2124d689a66e92",
+        "poolId": "25",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x6cc78e32004429b39c1fb8d7c6620e8511832cc4",
+        "poolId": "26",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x2b64e4838bb7e0f4794fe3e40ad5cb71c2beddb5",
+        "poolId": "29",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x0a2ecc1f687ec4e1c19d337a5ac926865e30e818",
+        "poolId": "30",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x7fe71a32d39954844d1954acae5191116ad116ac",
+        "poolId": "31",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0xa774b5c30fc203811d41dfc6edbc5d295f2aff86",
+        "poolId": "34",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x6d3e7d4271cdc083609fae18461ea1e1589e4e8d",
+        "poolId": "35",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0xfb075fad5f629124f27787fda26a774c727661c9",
+        "poolId": "36",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0xa840a7506b866ee71d487bf76a8f698249ea9836",
+        "poolId": "37",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x7c86c9a368324f51c6ef2fe88a1f5a332cac3c2d",
+        "poolId": "38",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x1c265d5392dbfc0f43c85384c925f8d147e4d6bc",
+        "poolId": "39",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x6e7ed4a6ac5665d55ed779595f2cdb689f205f0f",
+        "poolId": "40",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0xcdd52a838b602910d582ebebe91f24cf284fddd2",
+        "poolId": "41",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0xa8116d32a742e2323de416808a9768ebc2a8d179",
+        "poolId": "44",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x61cbd792c9310fc2d9fa03e99118bd163301cd0a",
+        "poolId": "45",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x69bcabc41dae5ddc5cb2370f7ba472612115e8ce",
+        "poolId": "47",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0xf1ec3cb9a862844aad68df495955832a242e39e7",
+        "poolId": "48",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x777ddf053fb46a48cccf5b91d3417d4daf3ec9e2",
+        "poolId": "49",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x48fdb39d6dc7064f6a3f5f48369fe26f2e434f5b",
+        "poolId": "50",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0xa7ff31bba33d421c2fb3aa3688cf64ea60ab4199",
+        "poolId": "51",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x2e3ab6f45e407283e719da6eeb7844a2f6bccd07",
+        "poolId": "52",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0x1e595cd639d9a835e3cf5dcef8e740e2bfe15494",
+        "poolId": "53",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      },
+      {
+        "strategy": "0xa65228c5661bba89532b2941ea86853eeba8a4b9",
+        "poolId": "54",
+        "community": "0xa9257a428dc6b192bd1ccc14c0a5a61476c767b9",
+        "communityName": "Blockscout"
+      }
+    ]
+  },
+  {
+    "chain": "gnosis",
+    "chainId": "100",
+    "file": "gnosis-set-voting-power-registry-0xa4ba214f690ae05f0748744af5455e0f9a86af20.json",
+    "safe": "0xa4ba214f690ae05f0748744af5455e0f9a86af20",
+    "strategyCount": 5,
+    "strategies": [
+      {
+        "strategy": "0x6fbb932dc0645ef63ca0a65340e390498a817d57",
+        "poolId": "60",
+        "community": "0xe33e18b5887cf16ad4e351e98980eb5f50727c31",
+        "communityName": "Bread Cooperative Network"
+      },
+      {
+        "strategy": "0xd59884c190277f56a3dbf4b094e5fe9327150c24",
+        "poolId": "61",
+        "community": "0xe33e18b5887cf16ad4e351e98980eb5f50727c31",
+        "communityName": "Bread Cooperative Network"
+      },
+      {
+        "strategy": "0x1bd2212c9aa332d22d61a0be6bcc55b2a1de6c63",
+        "poolId": "76",
+        "community": "0xe33e18b5887cf16ad4e351e98980eb5f50727c31",
+        "communityName": "Bread Cooperative Network"
+      },
+      {
+        "strategy": "0x7cc039c127d2e655974f9106567cdb86f7895c87",
+        "poolId": "78",
+        "community": "0xe33e18b5887cf16ad4e351e98980eb5f50727c31",
+        "communityName": "Bread Cooperative Network"
+      },
+      {
+        "strategy": "0x4082579717ebff10d8b7ffd2ee6582a9274dbeec",
+        "poolId": "79",
+        "community": "0xe33e18b5887cf16ad4e351e98980eb5f50727c31",
+        "communityName": "Bread Cooperative Network"
+      }
+    ]
+  },
+  {
+    "chain": "gnosis",
+    "chainId": "100",
+    "file": "gnosis-set-voting-power-registry-0x2d6eb2d15345abac63b7d7e5d632532d631d2a02.json",
+    "safe": "0x2d6eb2d15345abac63b7d7e5d632532d631d2a02",
+    "strategyCount": 5,
+    "strategies": [
+      {
+        "strategy": "0x873360fbebbd5b074bca9e49433cc2052037b2dd",
+        "poolId": "71",
+        "community": "0xd1762a765cd0abac9a004fb95194aa022da76abe",
+        "communityName": "LaborToken"
+      },
+      {
+        "strategy": "0x3d62928a1b27cd21fbc2633020c5b7c53d8c123d",
+        "poolId": "72",
+        "community": "0xd1762a765cd0abac9a004fb95194aa022da76abe",
+        "communityName": "LaborToken"
+      },
+      {
+        "strategy": "0x56e020883204ea163bd610272fc3ae66b3462c6f",
+        "poolId": "73",
+        "community": "0xd1762a765cd0abac9a004fb95194aa022da76abe",
+        "communityName": "LaborToken"
+      },
+      {
+        "strategy": "0xb26d40c2dc96f35010e9bd1b044e0bdb4224dfb1",
+        "poolId": "74",
+        "community": "0xd1762a765cd0abac9a004fb95194aa022da76abe",
+        "communityName": "LaborToken"
+      },
+      {
+        "strategy": "0x1f768f218f214339616d7f368114401d66ee2219",
+        "poolId": "75",
+        "community": "0xd1762a765cd0abac9a004fb95194aa022da76abe",
+        "communityName": "LaborToken"
+      }
+    ]
+  },
+  {
+    "chain": "gnosis",
+    "chainId": "100",
+    "file": "gnosis-set-voting-power-registry-0x03e10f36668edf848ac60e4bafd6097e14d6a8b3.json",
+    "safe": "0x03e10f36668edf848ac60e4bafd6097e14d6a8b3",
+    "strategyCount": 2,
+    "strategies": [
+      {
+        "strategy": "0x8a26d8290a65f952f945734fce1c5dab23c5ff29",
+        "poolId": "58",
+        "community": "0xb1c68994c857c76a0edd8e4fa2ba77fbcc8a8199",
+        "communityName": "dummy"
+      },
+      {
+        "strategy": "0x2833d75f02af58d3cd96e22685d2e4ae774e999d",
+        "poolId": "59",
+        "community": "0xb1c68994c857c76a0edd8e4fa2ba77fbcc8a8199",
+        "communityName": "dummy"
+      }
+    ]
+  },
+  {
+    "chain": "gnosis",
+    "chainId": "100",
+    "file": "gnosis-set-voting-power-registry-0x2cf187b2cf1517d04ff897b35773521d39152a91.json",
+    "safe": "0x2cf187b2cf1517d04ff897b35773521d39152a91",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0x2945dac39a380bcf6d82334c75bfb15e569dd38e",
+        "poolId": "70",
+        "community": "0xdc58b6a18e343cde31ea070def9f950141d71865",
+        "communityName": "MeansOfProduction"
+      }
+    ]
+  },
+  {
+    "chain": "gnosis",
+    "chainId": "100",
+    "file": "gnosis-set-voting-power-registry-0xc6c2e9efb898a42db4137b07b727b45e0c353d81.json",
+    "safe": "0xc6c2e9efb898a42db4137b07b727b45e0c353d81",
+    "strategyCount": 13,
+    "strategies": [
+      {
+        "strategy": "0xac948bca716b080df41afc70f37b7a9f6f3d9c9a",
+        "poolId": "5",
+        "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+        "communityName": "1hive"
+      },
+      {
+        "strategy": "0xbf1d2e31fa3d927673d2e95bfb2d940f5cc8890e",
+        "poolId": "6",
+        "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+        "communityName": "1hive"
+      },
+      {
+        "strategy": "0xd12f4faab3a770175f5d7e19bd32b1a7aadc0a31",
+        "poolId": "7",
+        "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+        "communityName": "1hive"
+      },
+      {
+        "strategy": "0xaa0195986ffe8f3371444fa77ee3ed04ac787eea",
+        "poolId": "8",
+        "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+        "communityName": "1hive"
+      },
+      {
+        "strategy": "0xb1a275419c817273f470ee1a102cad7507a25b6f",
+        "poolId": "11",
+        "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+        "communityName": "1hive"
+      },
+      {
+        "strategy": "0x74545010e013e5601009305288193cbd5c8702b4",
+        "poolId": "12",
+        "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+        "communityName": "1hive"
+      },
+      {
+        "strategy": "0xfbad687a935390ff59b36cd6c9462d0b1948e378",
+        "poolId": "13",
+        "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+        "communityName": "1hive"
+      },
+      {
+        "strategy": "0xba5c9429472e9e0aa1d4f0276c7fb45374e2af6c",
+        "poolId": "14",
+        "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+        "communityName": "1hive"
+      },
+      {
+        "strategy": "0x831fa1bbcdfe199d56213c40340544aeb7912349",
+        "poolId": "23",
+        "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+        "communityName": "1hive"
+      },
+      {
+        "strategy": "0x9fb2f1813228a97f559e29a6492ee27357faf8a2",
+        "poolId": "27",
+        "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+        "communityName": "1hive"
+      },
+      {
+        "strategy": "0x48ed3db635557079f8e1d0b83b37097abe78d6f1",
+        "poolId": "55",
+        "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+        "communityName": "1hive"
+      },
+      {
+        "strategy": "0x8ba5d67c25422d59db51f8ababb62c4623b80143",
+        "poolId": "66",
+        "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+        "communityName": "1hive"
+      },
+      {
+        "strategy": "0x96dee4849a6ab9e51ae36712794318001515dc91",
+        "poolId": "67",
+        "community": "0xe2396fe2169ca026962971d3b2e373ba925b6257",
+        "communityName": "1hive"
+      }
+    ]
+  },
+  {
+    "chain": "gnosis",
+    "chainId": "100",
+    "file": "gnosis-set-voting-power-registry-0x90ec40d4dd501b0a33b58d9574b7a60d2916f6a2.json",
+    "safe": "0x90ec40d4dd501b0a33b58d9574b7a60d2916f6a2",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0x561989f8f5f2bcae9c25bab1448efb8e2674ebe6",
+        "poolId": "77",
+        "community": "0xc071cf74624e3c810d73c60025f15d4891a7d8bf",
+        "communityName": "UrbitDAO"
+      }
+    ]
+  },
+  {
+    "chain": "gnosis",
+    "chainId": "100",
+    "file": "gnosis-set-voting-power-registry-0xceb9b600b72352ae7045afb3f83b7ee0671d727a.json",
+    "safe": "0xceb9b600b72352ae7045afb3f83b7ee0671d727a",
+    "strategyCount": 3,
+    "strategies": [
+      {
+        "strategy": "0x728333c30444294cbea2c2f1a19c84e6ee77d96b",
+        "poolId": "62",
+        "community": "0x99a454785c9859e5b61647d77a05be1fa53f4d04",
+        "communityName": "Safe Guardians of Gardens"
+      },
+      {
+        "strategy": "0xaee688d041859839ea3918a6dfc0165848ace6eb",
+        "poolId": "64",
+        "community": "0x99a454785c9859e5b61647d77a05be1fa53f4d04",
+        "communityName": "Safe Guardians of Gardens"
+      },
+      {
+        "strategy": "0x5ee0aaa1d51c4284dfcd2ead9d14ba7561b83000",
+        "poolId": "65",
+        "community": "0x99a454785c9859e5b61647d77a05be1fa53f4d04",
+        "communityName": "Safe Guardians of Gardens"
+      }
+    ]
+  },
+  {
+    "chain": "gnosis",
+    "chainId": "100",
+    "file": "gnosis-set-voting-power-registry-0x1b8c7f06f537711a7caf6770051a43b4f3e69a7e.json",
+    "safe": "0x1b8c7f06f537711a7caf6770051a43b4f3e69a7e",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0x94a2df1dd41580478ff7cd26b86c555aa0220469",
+        "poolId": "63",
+        "community": "0xb8ad4b6ba0fde413fdee6f84fc989858c2894092",
+        "communityName": "Gardens 🌱"
+      }
+    ]
+  },
+  {
+    "chain": "gnosis",
+    "chainId": "100",
+    "file": "gnosis-set-voting-power-registry-0xca040c158effbbb149232965ddd353ba9ce92384.json",
+    "safe": "0xca040c158effbbb149232965ddd353ba9ce92384",
+    "strategyCount": 1,
+    "strategies": [
+      {
+        "strategy": "0xe652081deb52afa56fb2958994427c662356007b",
+        "poolId": "10",
+        "community": "0x8f3112bcee3fb967a06dcb245f78f25e638ad56a",
+        "communityName": "Web3 Unilag"
+      }
+    ]
+  }
+]

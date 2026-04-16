@@ -29,6 +29,11 @@ NETWORK=""
 ALL_PROD=false
 PROXIES=()
 OUT_DIR=""
+VERIFIER_URL=""
+VERIFY_RPC_MAX_ATTEMPTS=${VERIFY_RPC_MAX_ATTEMPTS:-4}
+VERIFY_RPC_INITIAL_DELAY=${VERIFY_RPC_INITIAL_DELAY:-8}
+VERIFY_RPC_SUCCESS_DELAY=${VERIFY_RPC_SUCCESS_DELAY:-2}
+STRICT_FACET_MATCH=${STRICT_FACET_MATCH:-true}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -58,6 +63,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --proxy)
       PROXIES+=("$2")
+      shift 2
+      ;;
+    --verifier-url)
+      VERIFIER_URL="$2"
       shift 2
       ;;
     -h|--help)
@@ -90,7 +99,7 @@ load_rpc_from_env() {
     11155420) rpc_var="RPC_URL_OP_TESTNET";;
     42161) rpc_var="RPC_URL_ARB";;
     10) rpc_var="RPC_URL_OPT";;
-    1) rpc_var="RPC_URL_MAINNET";;
+    1) rpc_var="RPC_URL_ETHEREUM";;
     137) rpc_var="RPC_URL_POLYGON";;
     100) rpc_var="RPC_URL_GNOSIS";;
     8453) rpc_var="RPC_URL_BASE";;
@@ -116,6 +125,159 @@ if [[ -z "$ETHERSCAN_API_KEY" ]]; then
 fi
 
 declare -A HASH_TO_CONTRACT
+declare -A LINKED_HASH_TO_CONTRACT
+declare -A CONTRACT_TO_LINK_SPECS
+
+normalize_bytecode() {
+  local bytecode="$1"
+  local specs="$2"
+  local normalized="${bytecode#0x}"
+  local spec
+
+  if [[ -z "$specs" ]]; then
+    printf '0x%s\n' "$normalized"
+    return 0
+  fi
+
+  IFS=',' read -r -a spec_items <<< "$specs"
+  for spec in "${spec_items[@]}"; do
+    [[ -z "$spec" ]] && continue
+
+    IFS=':' read -r start length _lib_source _lib_name <<< "$spec"
+    local char_start=$((start * 2))
+    local char_length=$((length * 2))
+    local zero_fill
+    zero_fill=$(printf '%0*s' "$char_length" '' | tr ' ' '0')
+    normalized="${normalized:0:char_start}${zero_fill}${normalized:char_start + char_length}"
+  done
+
+  printf '0x%s\n' "$normalized"
+}
+
+extract_libraries_from_bytecode() {
+  local bytecode="$1"
+  local specs="$2"
+  local stripped="${bytecode#0x}"
+  local libraries=()
+  local spec
+
+  [[ -z "$specs" ]] && return 0
+
+  IFS=',' read -r -a spec_items <<< "$specs"
+  for spec in "${spec_items[@]}"; do
+    [[ -z "$spec" ]] && continue
+
+    IFS=':' read -r start length lib_source lib_name <<< "$spec"
+    local char_start=$((start * 2))
+    local char_length=$((length * 2))
+    local address="0x${stripped:char_start:char_length}"
+    libraries+=("${lib_source}:${lib_name}:${address}")
+  done
+
+  IFS=','
+  printf '%s\n' "${libraries[*]}"
+  unset IFS
+}
+
+resolve_contract_for_bytecode() {
+  local facet="$1"
+  local rpc_url="$2"
+  local codehash="$3"
+  local linked_hash
+  local bytecode
+
+  RESOLVED_CONTRACT="${HASH_TO_CONTRACT[$codehash]:-}"
+  RESOLVED_LIBRARIES=""
+  if [[ -n "$RESOLVED_CONTRACT" ]]; then
+    return 0
+  fi
+
+  if ! bytecode=$(verify_with_retry "bytecode for $facet" cast code --rpc-url "$rpc_url" "$facet"); then
+    return 1
+  fi
+
+  for linked_hash in "${!LINKED_HASH_TO_CONTRACT[@]}"; do
+    local contract="${LINKED_HASH_TO_CONTRACT[$linked_hash]}"
+    local specs="${CONTRACT_TO_LINK_SPECS[$contract]:-}"
+    local normalized
+
+    normalized=$(normalize_bytecode "$bytecode" "$specs")
+    if [[ "$(cast keccak "$normalized")" != "$linked_hash" ]]; then
+      continue
+    fi
+
+    RESOLVED_CONTRACT="$contract"
+    RESOLVED_LIBRARIES=$(extract_libraries_from_bytecode "$bytecode" "$specs")
+    return 0
+  done
+
+  return 1
+}
+
+verify_resolved_contract() {
+  local facet="$1"
+  local chain_id="$2"
+  local description="$3"
+  shift 3
+  local verifier_args=("$@")
+  local -a library_args=()
+  local verify_cmd=(
+    forge verify-contract
+    --chain-id "$chain_id"
+    "${verifier_args[@]}"
+    --etherscan-api-key "$ETHERSCAN_API_KEY"
+  )
+
+  if [[ -n "$RESOLVED_LIBRARIES" ]]; then
+    local library_spec
+    IFS=',' read -r -a resolved_library_items <<< "$RESOLVED_LIBRARIES"
+    for library_spec in "${resolved_library_items[@]}"; do
+      [[ -z "$library_spec" ]] && continue
+      library_args+=(--libraries "$library_spec")
+    done
+    verify_cmd+=("${library_args[@]}")
+  fi
+
+  verify_cmd+=("$facet" "$RESOLVED_CONTRACT")
+  verify_with_retry "$description" "${verify_cmd[@]}"
+}
+
+is_retryable_rpc_error() {
+  grep -Eqi 'rate limit|max calls per sec|expected value|SourcifyResponse|429|timeout|failed to get storage|HTTP error 429|Max retries exceeded' <<< "$1"
+}
+
+verify_with_retry() {
+  local description="$1"
+  shift
+
+  local attempt=1
+  local max_attempts="$VERIFY_RPC_MAX_ATTEMPTS"
+  local delay="$VERIFY_RPC_INITIAL_DELAY"
+  local output
+
+  while true; do
+    if output="$("$@" 2>&1)"; then
+      printf '%s\n' "$output"
+      sleep "$VERIFY_RPC_SUCCESS_DELAY"
+      return 0
+    fi
+
+    printf '%s\n' "$output" >&2
+    if [[ "$attempt" -ge "$max_attempts" ]]; then
+      return 1
+    fi
+
+    if is_retryable_rpc_error "$output"; then
+      echo "    - Retrying $description after ${delay}s (attempt $((attempt + 1))/${max_attempts})..." >&2
+      sleep "$delay"
+      attempt=$((attempt + 1))
+      delay=$((delay * 2))
+      continue
+    fi
+
+    return 1
+  done
+}
 
 build_contract_map() {
   echo "Scanning facet artifacts in $OUT_DIR ..."
@@ -123,12 +285,18 @@ build_contract_map() {
     source=$(jq -r '.metadata.settings.compilationTarget // {} | keys[0] // empty' "$artifact")
     name=$(jq -r '.metadata.settings.compilationTarget // {} | .[] // empty' "$artifact")
     bytecode=$(jq -r '.deployedBytecode.object // empty' "$artifact")
+    link_specs=$(jq -r '[
+      .deployedBytecode.linkReferences // {}
+      | to_entries[]?
+      | .key as $lib_source
+      | .value
+      | to_entries[]?
+      | .key as $lib_name
+      | .value[]?
+      | "\(.start):\(.length):\($lib_source):\($lib_name)"
+    ] | join(",")' "$artifact")
 
     if [[ -z "$source" || -z "$name" || -z "$bytecode" || "$bytecode" == "0x" || "$bytecode" == "null" ]]; then
-      continue
-    fi
-
-    if [[ ! "$bytecode" =~ ^0x[0-9a-fA-F]+$ ]]; then
       continue
     fi
 
@@ -136,20 +304,39 @@ build_contract_map() {
       continue
     fi
 
+    contract="$source:$name"
+    if [[ -n "$link_specs" ]]; then
+      normalized_bytecode=$(normalize_bytecode "$bytecode" "$link_specs")
+      hash=$(cast keccak "$normalized_bytecode")
+      if [[ -z "${LINKED_HASH_TO_CONTRACT[$hash]:-}" ]]; then
+        LINKED_HASH_TO_CONTRACT["$hash"]="$contract"
+        CONTRACT_TO_LINK_SPECS["$contract"]="$link_specs"
+      fi
+      continue
+    fi
+
+    if [[ ! "$bytecode" =~ ^0x[0-9a-fA-F]+$ ]]; then
+      continue
+    fi
+
     hash=$(cast keccak "$bytecode")
     if [[ -z "${HASH_TO_CONTRACT[$hash]:-}" ]]; then
-      HASH_TO_CONTRACT["$hash"]="$source:$name"
+      HASH_TO_CONTRACT["$hash"]="$contract"
     fi
-  done < <(find "$OUT_DIR" -type f -name "*.json" -print0)
+  done < <(find "$OUT_DIR" -type f -path "*/out/*Facet.sol/*.json" -print0)
   local hash_count
-  hash_count=$(printf '%s\n' "${!HASH_TO_CONTRACT[@]}" | wc -l | tr -d ' ')
-  echo "Loaded ${hash_count} facet bytecode hashes"
+  hash_count=$(printf '%s\n' "${!HASH_TO_CONTRACT[@]}" "${!LINKED_HASH_TO_CONTRACT[@]}" | sed '/^$/d' | wc -l | tr -d ' ')
+  echo "Loaded ${hash_count} facet bytecode hash template(s)"
 }
 
 get_facet_addresses() {
   local proxy="$1"
   local raw
-  raw=$(cast call --rpc-url "$RPC_URL" "$proxy" "facetAddresses()(address[])")
+  if ! raw=$(verify_with_retry "facetAddresses for $proxy" cast call --rpc-url "$RPC_URL" "$proxy" "facetAddresses()(address[])" 2>&1); then
+    echo "    - WARNING: failed to inspect $proxy via facetAddresses(); skipping live facet discovery" >&2
+    echo "      $raw" >&2
+    return 1
+  fi
   echo "    - Decoding facet addresses for $proxy" >&2
   if [[ "$raw" == "{"* ]]; then
     echo "$raw" | jq -r '.decoded | if type=="array" then (.[0] // .) | .[] else empty end'
@@ -182,9 +369,31 @@ load_proxies_for_network() {
     "$CONTRACTS_DIR/config/networks.json"
 }
 
+load_facets_for_network() {
+  local network="$1"
+  jq -r ".networks[] | select(.name==\"$network\") | .FACETS | to_entries[]? | .value" \
+    "$CONTRACTS_DIR/config/networks.json"
+}
+
 get_prod_networks() {
   jq -r '.networks[].name | select(test("sepolia|testnet") | not)' \
     "$CONTRACTS_DIR/config/networks.json"
+}
+
+lookup_broadcast_contract_name() {
+  local facet_lc
+  facet_lc=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+  local chain_id="$2"
+
+  [[ -d "$ROOT_DIR/broadcast" ]] || return 1
+
+  while IFS= read -r file; do
+    jq -r --arg addr "$facet_lc" '
+      .. | objects
+      | select((.contractAddress? // "" | ascii_downcase) == $addr)
+      | .contractName // empty
+    ' "$file"
+  done < <(rg -l --fixed-strings "\"contractAddress\": \"$facet_lc\"" "$ROOT_DIR/broadcast" -g "**/${chain_id}/*.json" 2>/dev/null) | awk 'NF { print; exit }'
 }
 
 verify_network() {
@@ -194,42 +403,160 @@ verify_network() {
   shift 3
   local proxies=("$@")
   local -A seen=()
+  local -A expected_facets=()
   local display_name="${network:-custom}"
+  local unknown_facet_count=0
+  local undeclared_resolved_count=0
+  local historical_undeclared_count=0
+  local unknown_codehash_count=0
+  local skipped_proxy_count=0
+  local -a unknown_codehash_messages=()
+  local -a undeclared_resolved_messages=()
+  local -a historical_undeclared_messages=()
+  local -a verifier_args=(--verifier etherscan)
+
+  if [[ -n "$VERIFIER_URL" ]]; then
+    verifier_args+=(--verifier-url "$VERIFIER_URL")
+  elif [[ "$chain_id" == "11155420" ]]; then
+    verifier_args+=(--verifier-url "https://api.etherscan.io/v2/api?chainid=11155420")
+  fi
+
+  if [[ -n "$network" ]]; then
+    while read -r facet_impl; do
+      [[ -z "$facet_impl" ]] && continue
+      expected_facets["$(echo "$facet_impl" | tr '[:upper:]' '[:lower:]')"]="$facet_impl"
+    done < <(load_facets_for_network "$network")
+  fi
 
   echo "Network: $display_name"
   echo "  - Using RPC: $rpc_url"
   echo "  - Using chain-id: $chain_id"
   echo "  - Inspecting ${#proxies[@]} proxy(s)"
+  if [[ ${#expected_facets[@]} -gt 0 ]]; then
+    echo "  - Checking against ${#expected_facets[@]} facet implementation(s) from config/networks.json"
+  fi
 
   for proxy in "${proxies[@]}"; do
     echo "  - Inspecting proxy: $proxy"
+    if ! facet_addresses=$(get_facet_addresses "$proxy"); then
+      skipped_proxy_count=$((skipped_proxy_count + 1))
+      continue
+    fi
     while read -r facet; do
       [[ -z "$facet" ]] && continue
-      if [[ -n "${seen[$facet]:-}" ]]; then
+      facet_lc=$(echo "$facet" | tr '[:upper:]' '[:lower:]')
+      if [[ -n "${seen[$facet_lc]:-}" ]]; then
         continue
       fi
-      seen["$facet"]=1
+      seen["$facet_lc"]="$facet"
 
       echo "    - Fetching codehash for $facet"
-      codehash=$(cast codehash --rpc-url "$rpc_url" "$facet")
-      contract=${HASH_TO_CONTRACT[$codehash]:-}
-      if [[ -z "$contract" ]]; then
-        echo "    - Unknown facet codehash for $facet (skipping)"
+      codehash=$(verify_with_retry "codehash for $facet on $display_name" cast codehash --rpc-url "$rpc_url" "$facet")
+      if ! resolve_contract_for_bytecode "$facet" "$rpc_url" "$codehash"; then
+        if [[ ${#expected_facets[@]} -gt 0 && -z "${expected_facets[$facet_lc]:-}" ]]; then
+          historical_contract_name=$(lookup_broadcast_contract_name "$facet" "$chain_id" || true)
+          if [[ -n "$historical_contract_name" ]]; then
+            echo "    - WARNING: facet $facet is live but not declared in config/networks.json FACETS for $network; broadcast history identifies it as $historical_contract_name"
+            historical_undeclared_count=$((historical_undeclared_count + 1))
+            historical_undeclared_messages+=("$facet -> $historical_contract_name")
+          else
+            echo "    - ERROR: facet $facet is not declared in config/networks.json FACETS for $network and has no matching local artifact or broadcast history"
+            unknown_facet_count=$((unknown_facet_count + 1))
+          fi
+        fi
+        unknown_codehash_count=$((unknown_codehash_count + 1))
+        unknown_codehash_messages+=("live facet $facet")
         continue
       fi
 
-      echo "    - Verifying $facet as $contract"
-      forge verify-contract \
-        --chain-id "$chain_id" \
-        --etherscan-api-key "$ETHERSCAN_API_KEY" \
-        "$facet" \
-        "$contract"
-    done < <(get_facet_addresses "$proxy" | sort -u)
+      if [[ ${#expected_facets[@]} -gt 0 && -z "${expected_facets[$facet_lc]:-}" ]]; then
+        echo "    - WARNING: facet $facet is live but not declared in config/networks.json FACETS for $network; resolved as $RESOLVED_CONTRACT"
+        undeclared_resolved_count=$((undeclared_resolved_count + 1))
+        undeclared_resolved_messages+=("$facet -> $RESOLVED_CONTRACT")
+      fi
+
+      echo "    - Verifying $facet as $RESOLVED_CONTRACT"
+      verify_resolved_contract "$facet" "$chain_id" "$facet on $display_name" "${verifier_args[@]}"
+    done < <(printf '%s\n' "$facet_addresses" | sort -u)
   done
+
+  if [[ ${#expected_facets[@]} -gt 0 ]]; then
+    echo "  - Verifying all ${#expected_facets[@]} facet implementation(s) declared in config/networks.json"
+    for facet_lc in "${!expected_facets[@]}"; do
+      facet="${expected_facets[$facet_lc]}"
+      if [[ -n "${seen[$facet_lc]:-}" ]]; then
+        continue
+      fi
+
+      echo "    - Fetching codehash for declared facet $facet"
+      codehash=$(verify_with_retry "declared facet codehash for $facet on $display_name" cast codehash --rpc-url "$rpc_url" "$facet")
+      if ! resolve_contract_for_bytecode "$facet" "$rpc_url" "$codehash"; then
+        unknown_codehash_count=$((unknown_codehash_count + 1))
+        unknown_codehash_messages+=("declared facet $facet")
+        continue
+      fi
+
+      echo "    - Verifying declared facet $facet as $RESOLVED_CONTRACT"
+      verify_resolved_contract "$facet" "$chain_id" "declared facet $facet on $display_name" "${verifier_args[@]}"
+      seen["$facet_lc"]="$facet"
+    done
+  fi
 
   local total
   total=$(printf '%s\n' "${!seen[@]}" | wc -l | tr -d ' ')
   echo "  - Done. Verified ${total} unique facet address(es)."
+  if [[ "$skipped_proxy_count" -gt 0 ]]; then
+    echo "  - WARNING: Skipped live facet discovery for ${skipped_proxy_count} proxy(s) that do not expose loupe selectors." >&2
+  fi
+  if [[ "$undeclared_resolved_count" -gt 0 ]]; then
+    echo "  - WARNING: Found ${undeclared_resolved_count} live facet address(es) missing from config/networks.json FACETS that still resolved to known local facet artifacts." >&2
+    local preview_count=${#undeclared_resolved_messages[@]}
+    if [[ "$preview_count" -gt 5 ]]; then
+      preview_count=5
+    fi
+    local i
+    for ((i=0; i<preview_count; i++)); do
+      echo "    - ${undeclared_resolved_messages[$i]}" >&2
+    done
+    if [[ ${#undeclared_resolved_messages[@]} -gt "$preview_count" ]]; then
+      echo "    - ... and $(( ${#undeclared_resolved_messages[@]} - preview_count )) more" >&2
+    fi
+  fi
+  if [[ "$historical_undeclared_count" -gt 0 ]]; then
+    echo "  - WARNING: Found ${historical_undeclared_count} undeclared live facet address(es) that were identified only from broadcast history." >&2
+    local preview_count=${#historical_undeclared_messages[@]}
+    if [[ "$preview_count" -gt 5 ]]; then
+      preview_count=5
+    fi
+    local i
+    for ((i=0; i<preview_count; i++)); do
+      echo "    - ${historical_undeclared_messages[$i]}" >&2
+    done
+    if [[ ${#historical_undeclared_messages[@]} -gt "$preview_count" ]]; then
+      echo "    - ... and $(( ${#historical_undeclared_messages[@]} - preview_count )) more" >&2
+    fi
+  fi
+  if [[ "$unknown_facet_count" -gt 0 ]]; then
+    if [[ "$STRICT_FACET_MATCH" == "true" ]]; then
+      echo "  - ERROR: Found ${unknown_facet_count} facet address(es) missing from config/networks.json FACETS." >&2
+      return 1
+    fi
+    echo "  - WARNING: Found ${unknown_facet_count} live facet address(es) missing from config/networks.json FACETS; continuing because STRICT_FACET_MATCH=false." >&2
+  fi
+  if [[ "$unknown_codehash_count" -gt 0 ]]; then
+    echo "  - INFO: Skipped source mapping for ${unknown_codehash_count} facet address(es) with unknown codehashes."
+    local preview_count=${#unknown_codehash_messages[@]}
+    if [[ "$preview_count" -gt 5 ]]; then
+      preview_count=5
+    fi
+    local i
+    for ((i=0; i<preview_count; i++)); do
+      echo "    - ${unknown_codehash_messages[$i]}"
+    done
+    if [[ ${#unknown_codehash_messages[@]} -gt "$preview_count" ]]; then
+      echo "    - ... and $(( ${#unknown_codehash_messages[@]} - preview_count )) more"
+    fi
+  fi
 }
 
 build_contract_map
@@ -288,9 +615,13 @@ else
   fi
 
   if [[ ${#PROXIES[@]} -eq 0 ]]; then
-    echo "No proxies provided. Use --network or --proxy." >&2
-    usage
-    exit 1
+    if [[ -n "$NETWORK" ]]; then
+      echo "No proxies configured for $NETWORK. Verifying declared FACETS only."
+    else
+      echo "No proxies provided. Use --network or --proxy." >&2
+      usage
+      exit 1
+    fi
   fi
 
   verify_network "$NETWORK" "$CHAIN_ID" "$RPC_URL" "${PROXIES[@]}"

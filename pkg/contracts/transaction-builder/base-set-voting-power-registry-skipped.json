@@ -1,0 +1,9 @@
+{
+  "reason": "Strategy lacks setVotingPowerRegistry(address) selector onchain",
+  "skipped": [
+    {
+      "address": "0x944c64f899f48dc5b84b5eab3cba93af32ad729a",
+      "error": "StrategyFunctionDoesNotExist(0x170aba0d)"
+    }
+  ]
+}

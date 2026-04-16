@@ -462,7 +462,7 @@ export function Proposals({
   const {
     write: writeAllocate,
     error: errorAllocate,
-    status: allocateStatus,
+    isLoading: isAllocateLoading,
   } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: alloABI,
@@ -699,6 +699,9 @@ export function Proposals({
       },
       {} as Record<string, number>,
     ),
+    active: sortedProposals.filter((p) =>
+      [1, 5].includes(Number(p.proposalStatus)),
+    ).length,
     // "closed" filter groups both cancelled (3) and rejected (6) proposals
     closed: sortedProposals.filter((p) =>
       (CLOSED_STATUSES as readonly number[]).includes(Number(p.proposalStatus)),
@@ -831,7 +834,7 @@ export function Proposals({
 
         {sortedProposals.length > 0 && <Divider className="sm:hidden" />}
 
-        {strategy.isEnabled && sortedProposals.length > 0 && (
+        {sortedProposals.length > 0 && (
           <ProposalFiltersUI
             filter={filter}
             setFilter={setFilter}
@@ -859,6 +862,7 @@ export function Proposals({
               <Fragment key={proposalData.proposalNumber}>
                 <ProposalCard
                   proposalData={proposalData}
+                  poolId={Number(strategy.poolId)}
                   strategyConfig={strategy.config}
                   inputData={inputs[proposalData.id]}
                   stakedFilter={stakedFilters[proposalData.id]}
@@ -937,7 +941,7 @@ export function Proposals({
                       <div className="flex justify-end gap-4">
                         <Button
                           onClick={submit}
-                          isLoading={allocateStatus === "loading"}
+                          isLoading={isAllocateLoading}
                           disabled={
                             inputs == null ||
                             !getProposalsInputsDifferences(
@@ -979,13 +983,7 @@ export function useProposalFilter<
   //
   // FILTER
   //
-  type FilterType =
-    | "all"
-    | "active"
-    | "closed"
-    | "executed"
-    | "disputed"
-    | null;
+  type FilterType = "all" | "active" | "closed" | "executed" | null;
 
   const [filter, setFilter] = useState<FilterType>("active");
 
@@ -993,10 +991,9 @@ export function useProposalFilter<
 
   const FILTER_STATUS: Record<Exclude<FilterType, null>, number | number[]> = {
     all: 0,
-    active: 1,
+    active: [1, 5],
     closed: [...CLOSED_STATUSES],
     executed: 4,
-    disputed: 5,
   };
 
   const filteredProposals = useMemo(() => {
@@ -1093,7 +1090,7 @@ function ProposalFiltersUI({
   disableSort: boolean;
 }) {
   const FILTERS = useMemo(() => {
-    const allFilters = ["all", "active", "disputed", "executed", "closed"];
+    const allFilters = ["all", "active", "executed", "closed"];
 
     // Remove "executed" filter when poolType is a signaling pool
     return +poolType === 0 ?
@@ -1128,8 +1125,6 @@ function ProposalFiltersUI({
   const FILTER_BADGE_STYLES: Record<string, string> = {
     all: "bg-tertiary-soft text-tertiary-content dark:bg-tertiary-dark",
     active: "bg-primary-soft text-primary-content dark:bg-primary-soft-dark",
-    disputed:
-      "bg-secondary-soft dark:bg-secondary-soft-dark text-secondary-content",
     executed: "bg-tertiary-soft dark:bg-tertiary-dark text-tertiary-content",
     closed: "bg-danger-soft text-danger-content dark:bg-danger-soft-dark",
   };

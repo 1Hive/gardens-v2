@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Address, formatUnits, parseAbi } from "viem";
 import { useAccount, useContractWrite } from "wagmi";
 import { TokenGarden } from "#/subgraph/.graphclient";
+import { isProd } from "@/configs/isProd";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 
 interface FaucetProps {
@@ -62,6 +63,10 @@ export function TokenGardenFaucet({ token }: FaucetProps) {
       );
     }
   };
+
+  if (isProd) {
+    return <></>;
+  }
 
   return connectedAccount ?
       <div className="fixed bottom-0 left-2 pb-3">

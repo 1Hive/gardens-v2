@@ -1,0 +1,78 @@
+name: Contract Audit (Code Scanning)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - pkg/contracts/src/**/*.sol
+      - .github/workflows/contract-audit.yml
+  pull_request:
+    paths:
+      - pkg/contracts/src/**/*.sol
+      - .github/workflows/contract-audit.yml
+
+jobs:
+  analyze:
+    name: Slither
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Initialize required submodules
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --force --depth=1 --recursive \
+            lib/__safe-smart-account \
+            lib/allo-v2 \
+            lib/forge-std \
+            lib/openzeppelin-contracts \
+            lib/openzeppelin-contracts-upgradeable \
+            lib/openzeppelin-foundry-upgrades \
+            lib/protocol-monorepo \
+            lib/safe-smart-account
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Slither
+        run: python -m pip install --upgrade pip slither-analyzer==0.10.3
+
+      - name: Run Slither
+        id: slither
+        continue-on-error: true
+        run: |
+          set +e
+          slither . \
+            --sarif results.sarif \
+            --foundry-out-directory=pkg/contracts/out \
+            --exclude-dependencies \
+            --exclude-low \
+            --exclude-informational \
+            --exclude-optimization
+          status=$?
+          if [ -f results.sarif ]; then
+            echo "sarif=results.sarif" >> "$GITHUB_OUTPUT"
+          fi
+          exit $status
+
+      - name: Upload SARIF file
+        if: always() && steps.slither.outputs.sarif != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.slither.outputs.sarif }}

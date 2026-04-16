@@ -1,0 +1,1951 @@
+🔍 Verifying diamond storage layouts...
+[0;34mAll storage layouts cached in cache/storage-layout; skipping build.[0m
+[0;34mStarting storage layout verification...[0m
+
+[0;34m=== Processing CVStrategy ===[0m
+  Main contract: [0;34mCVStrategy[0m
+  Checking CVAdminFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVAdminFacet-405082e64fda29edd19aa9d3d402217825ba39a4774b988361f9995e7f54100c.txt
+[0;32m✓ MATCH[0m
+  Checking CVAllocationFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVAllocationFacet-74516ece933c38ebfc8e91c9a384b254616a0c0a8f4fe611afbcf692f8d4b788.txt
+[0;32m✓ MATCH[0m
+  Checking CVDisputeFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVDisputeFacet-4cea66d303d30816e34fbb088b26f92caaa0e6b084298359efa1805fad46f396.txt
+[0;32m✓ MATCH[0m
+  Checking CVPauseFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVPauseFacet-c60f6fc43d99959369444d6e7bf4c1fe1c356ea2be13215b87ed8290aa6376df.txt
+[0;32m✓ MATCH[0m
+  Checking CVPowerFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVPowerFacet-645557d813a8663fa395d18686138542b301fe29ef67a4638eecfd7123de85ab.txt
+[0;32m✓ MATCH[0m
+  Checking CVProposalFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVProposalFacet-27398445f568b8161a5a26f694461a0a2b9a80958805be668e17f19304cb20c5.txt
+[0;32m✓ MATCH[0m
+  Checking CVStreamingFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVStreamingFacet-5691a93fe150536303b9108b9f844aa15b1b181f9bd2caeec73b7da317c581e6.txt
+[0;32m✓ MATCH[0m
+  Checking CVSyncPowerFacet... [0;34m  Cache hit:[0m cache/storage-layout/CVStrategy-5a803432eab57a00865de5d62ec4fdd5e1854cf221fbe76b91b7a6c75c101bde.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CVSyncPowerFacet-5dab80e5dabbddd595acffd99230f5075c505a899129ab674a77e246da2de788.txt
+[0;32m✓ MATCH[0m
+
+[1;33mSkipping src/diamonds (generic diamond utilities)[0m
+
+[0;34m=== Processing RegistryCommunity ===[0m
+  Main contract: [0;34mRegistryCommunity[0m
+  Checking CommunityAdminFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityAdminFacet-21328e4c5d04da2b927925acf69e59d1b80b1adc88cd9bc06e49aa07bbca662a.txt
+[0;32m✓ MATCH[0m
+  Checking CommunityMemberFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityMemberFacet-2df90697b14c68814cb3bef5d6f8cbcebe4d05007216e332162598cdb661e892.txt
+[0;32m✓ MATCH[0m
+  Checking CommunityPauseFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityPauseFacet-fccfdd45d13a69d9c7eeddbbadf3a8759034ac38a3e8bbb0189e5de5ef380685.txt
+[0;32m✓ MATCH[0m
+  Checking CommunityPoolFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityPoolFacet-b25bf00e5a3a093466fb37e8079605417b6f86e70629b0863de9a35694d9e25e.txt
+[0;32m✓ MATCH[0m
+  Checking CommunityPowerFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityPowerFacet-be6a53ab48ada11dd8e78b6d13370b1a11c63e48d9758f89cb0dec011e7778fe.txt
+[0;32m✓ MATCH[0m
+  Checking CommunityStrategyFacet... [0;34m  Cache hit:[0m cache/storage-layout/RegistryCommunity-e435dd2c176ceb8c0703484ef57ac4e4b54a26b4104c719accbc3380541a35b9.txt
+[0;34m  Cache hit:[0m cache/storage-layout/CommunityStrategyFacet-6ee42d273c3961872afa04f5b966f89923a0deb1961632bd7cc0fa8dd7c08bd3.txt
+[0;32m✓ MATCH[0m
+
+[0;34m=== Processing RegistryFactory ===[0m
+  Checking storage layout invariants... No files changed, compilation skipped
+[0;32m✓ MATCH[0m
+
+[0;34m=== Summary ===[0m
+[0;32m✓ All storage layouts match![0m
+[0;32m  Storage alignment verified (diamond facets + RegistryFactory).[0m
+✅ Storage verification passed
+Script ran successfully.
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 10
+
+Estimated gas price: 0.000001783 gwei
+
+Estimated total gas used for script: 17598550
+
+Estimated amount required: 0.00000003137821465 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/RefreshFacetSnapshots.s.sol/10/run-latest.json
+
+Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/cache/RefreshFacetSnapshots.s.sol/10/run-latest.json
+
+No files changed, compilation skipped
+Script ran successfully.
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 10
+
+Estimated gas price: 0.00100094 gwei
+
+Estimated total gas used for script: 52305258
+
+Estimated amount required: 0.00005235442494252 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+##
+Start verification for (129) contracts
+Start verifying contract `0x569fC4c1B71C16F1B85E9d7F1de644b3BC42ce5E` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/RegistryFactory/RegistryFactory.sol:RegistryFactory] 0x569fC4c1B71C16F1B85E9d7F1de644b3BC42ce5E.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `2n1emg4yhquh3chnajzeng9p5g5htbv2wbyzhes4da7jwgsxfa`
+	URL: https://optimistic.etherscan.io/address/0x569fc4c1b71c16f1b85e9d7f1de644b3bc42ce5e
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0xe2B1Ba82F78A9759680B1B633C7063782e0940e0` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/RegistryCommunity/RegistryCommunity.sol:RegistryCommunity] 0xe2B1Ba82F78A9759680B1B633C7063782e0940e0.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `s3jnxldc96bmfgutksd9gmhvsn9qspqz2ijsizedk65murvsp4`
+	URL: https://optimistic.etherscan.io/address/0xe2b1ba82f78a9759680b1b633c7063782e0940e0
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0x4e17eC42455491b4EcE1F0B83862e3a5395AC56F` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategy.sol:CVStrategy] 0x4e17eC42455491b4EcE1F0B83862e3a5395AC56F.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `w1u7uxkpwacpalg3lmx3bbeqnagwt1tibptqfuqd8jc4bxvjfr`
+	URL: https://optimistic.etherscan.io/address/0x4e17ec42455491b4ece1f0b83862e3a5395ac56f
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0x9e194CF9AbB7D63e4cBE11E61e429e97F5F1E822` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/RegistryCommunity/facets/CommunityAdminFacet.sol:CommunityAdminFacet] 0x9e194CF9AbB7D63e4cBE11E61e429e97F5F1E822.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `fzwmtkmwijfnwwhudmihprxjurzaphfxh2kjdpvi3bc5xjpgmg`
+	URL: https://optimistic.etherscan.io/address/0x9e194cf9abb7d63e4cbe11e61e429e97f5f1e822
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0x99d43c4cDcD1757C3787f8B8E84fE935b8141fC0` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/RegistryCommunity/facets/CommunityMemberFacet.sol:CommunityMemberFacet] 0x99d43c4cDcD1757C3787f8B8E84fE935b8141fC0.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `i91n2pbks2bmf2fhxubxhqgafdeslausn8yxwuzxiuwuxfvbrg`
+	URL: https://optimistic.etherscan.io/address/0x99d43c4cdcd1757c3787f8b8e84fe935b8141fc0
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0xD14076c09909bb6D5E3Afade2310b01F65F22157` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/RegistryCommunity/facets/CommunityPauseFacet.sol:CommunityPauseFacet] 0xD14076c09909bb6D5E3Afade2310b01F65F22157.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `nu6pzusr8pajyizizx38kcu4edun4zhet6lzmy95evmbxzweue`
+	URL: https://optimistic.etherscan.io/address/0xd14076c09909bb6d5e3afade2310b01f65f22157
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0x0F8C74dAd10bcE08399F54E46834ce4E8cac4174` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/RegistryCommunity/facets/CommunityPoolFacet.sol:CommunityPoolFacet] 0x0F8C74dAd10bcE08399F54E46834ce4E8cac4174.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `gyyhkcz2bls4n87vhsxzx2nxuppj7eiptpjj6akasknpeb9f42`
+	URL: https://optimistic.etherscan.io/address/0x0f8c74dad10bce08399f54e46834ce4e8cac4174
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0xB959F7fC3b873F1F9c514430EdA84cBA0090742E` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/RegistryCommunity/facets/CommunityPowerFacet.sol:CommunityPowerFacet] 0xB959F7fC3b873F1F9c514430EdA84cBA0090742E.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `id8kifbanxnpvm3cayppp78w8lezjtgag5v6hy7w8vmedcq2k3`
+	URL: https://optimistic.etherscan.io/address/0xb959f7fc3b873f1f9c514430eda84cba0090742e
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0x6868f678F385016139EeeC7c3AAb1c6792865D5c` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/RegistryCommunity/facets/CommunityStrategyFacet.sol:CommunityStrategyFacet] 0x6868f678F385016139EeeC7c3AAb1c6792865D5c.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `rbhfdcwbdwbbgvqc9rqwucstgiltjxwcfhu6t1subxkbtxfsq1`
+	URL: https://optimistic.etherscan.io/address/0x6868f678f385016139eeec7c3aab1c6792865d5c
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0x5A67bDa6c5d7e1582D2eaC3F7E2c6f776149a543` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x5A67bDa6c5d7e1582D2eaC3F7E2c6f776149a543.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `tybp8n9pquqctg1zwysjj9zvkphf1j4jwi4xrg9gwvcy5z4eau`
+	URL: https://optimistic.etherscan.io/address/0x5a67bda6c5d7e1582d2eac3f7e2c6f776149a543
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0x1AB29043DB59Cc70C59FfcaE2082582b1bfb99Bf` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x1AB29043DB59Cc70C59FfcaE2082582b1bfb99Bf.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `agzfgjzg4kxunfqv8kd3zgplnpx2rmkd56amkq2kyadqa38w8z`
+	URL: https://optimistic.etherscan.io/address/0x1ab29043db59cc70c59ffcae2082582b1bfb99bf
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x8A4B0E6DE1D966453aA2EaF2D6e76421B51413AE` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x8A4B0E6DE1D966453aA2EaF2D6e76421B51413AE.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `sj28musersmyqiqtphv4bhis5puqckgbtiu1cxkgk6yaxzlw1g`
+	URL: https://optimistic.etherscan.io/address/0x8a4b0e6de1d966453aa2eaf2d6e76421b51413ae
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x7D5839da7634E983c8D8FB82d231e3d80fed93E5` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x7D5839da7634E983c8D8FB82d231e3d80fed93E5.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `ers5nac93yr2d7bc57eqhrxei6jyv5cyqkxq9pvtqtumqiuszl`
+	URL: https://optimistic.etherscan.io/address/0x7d5839da7634e983c8d8fb82d231e3d80fed93e5
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x2DF278645e7327cacE17e2FEF4eeF33Ac28bB472` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x2DF278645e7327cacE17e2FEF4eeF33Ac28bB472.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `ufgcynjdmhg4eymsdhak4gbkzqxkpqctz9axinmavvtddmdwrp`
+	URL: https://optimistic.etherscan.io/address/0x2df278645e7327cace17e2fef4eef33ac28bb472
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xf396c91B4671aFa3849367049D823993d9f51765` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0xf396c91B4671aFa3849367049D823993d9f51765.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `gcheheuvc9qapwgpw5nqjpvrp8nyidc2jzjqavsxumcdkw7xxp`
+	URL: https://optimistic.etherscan.io/address/0xf396c91b4671afa3849367049d823993d9f51765
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xB283f0669c16d86a54437640db2D854cf438bcf7` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0xB283f0669c16d86a54437640db2D854cf438bcf7.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `r882fshsparvdzypfpdgeadgvwcift1hbtlutikr8h6sfyadfn`
+	URL: https://optimistic.etherscan.io/address/0xb283f0669c16d86a54437640db2d854cf438bcf7
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xB0DD0617509714375D897887Ea8A67656324fC41` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0xB0DD0617509714375D897887Ea8A67656324fC41.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `hiihahvr6ifadwzakjd4vxun8mulcnnq3iciyujwy2ccbz5ai6`
+	URL: https://optimistic.etherscan.io/address/0xb0dd0617509714375d897887ea8a67656324fc41
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x144999d85Ab3ADB42DE8904A91C9044C476948dB` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x144999d85Ab3ADB42DE8904A91C9044C476948dB.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `dgzbrkpvznnjfimqxukrbsai6wkslzhitva6rsssu3kvgelwgl`
+	URL: https://optimistic.etherscan.io/address/0x144999d85ab3adb42de8904a91c9044c476948db
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x7B3Ad3f587066Cb222Fe2a90293454Bc534d1C10` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x7B3Ad3f587066Cb222Fe2a90293454Bc534d1C10.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `3artwmghvnzxazxvhkzgr6uixz6f2rigc1x8t12nq8v4twtkqb`
+	URL: https://optimistic.etherscan.io/address/0x7b3ad3f587066cb222fe2a90293454bc534d1c10
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xe25e5598944237E394970bdcaE87dDBC6ca7db45` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0xe25e5598944237E394970bdcaE87dDBC6ca7db45.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `x2vzkwh8vwh2fefjk9uqdhibriaqq1fkgruhkcgbrkv5gpthqi`
+	URL: https://optimistic.etherscan.io/address/0xe25e5598944237e394970bdcae87ddbc6ca7db45
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x958292Ce5480214C5D1Ea7A055d98034E2f0Ee36` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x958292Ce5480214C5D1Ea7A055d98034E2f0Ee36.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `cjs1zgij93mihwgwkpkypjusyslevtqtz8qwtgiepcudp8t1nk`
+	URL: https://optimistic.etherscan.io/address/0x958292ce5480214c5d1ea7a055d98034e2f0ee36
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xbD10E21640be29cFA8c97eA57Ba979CD433b7F93` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0xbD10E21640be29cFA8c97eA57Ba979CD433b7F93.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `dwxsksfz3gufdgdtia6k4w6vamgr4qrlqlpvmynxhtddjipm1v`
+	URL: https://optimistic.etherscan.io/address/0xbd10e21640be29cfa8c97ea57ba979cd433b7f93
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x603bFFE20BE7d148196c63742978869e536968c9` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x603bFFE20BE7d148196c63742978869e536968c9.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `qivug9q2rycqvcg9qtrhxlnzdagtbrpur917rm5gxkgfvix2nb`
+	URL: https://optimistic.etherscan.io/address/0x603bffe20be7d148196c63742978869e536968c9
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x0b9118c13F6a67Bc1089720C46Bc4444dA912cBA` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x0b9118c13F6a67Bc1089720C46Bc4444dA912cBA.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `twvip5vmqxswq198ymc9hwnbbc58ekcf61ytyzkwbwvzpbvg6m`
+	URL: https://optimistic.etherscan.io/address/0x0b9118c13f6a67bc1089720c46bc4444da912cba
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x0433AE0c86FF74e7Cb28f5115fCf9722eDECAff7` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x0433AE0c86FF74e7Cb28f5115fCf9722eDECAff7.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `kbpetqzk7bznivjcqp2haz2gxnypnbhp2rb2ss7zunsawpm1fc`
+	URL: https://optimistic.etherscan.io/address/0x0433ae0c86ff74e7cb28f5115fcf9722edecaff7
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x32d9B8d67f9E818BfbEA824c6a64EeC7e5DFd309` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x32d9B8d67f9E818BfbEA824c6a64EeC7e5DFd309.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `kgfqdlayg6rkpxwclsuhbyitnmytka2yaaq1jddqstb299qv5j`
+	URL: https://optimistic.etherscan.io/address/0x32d9b8d67f9e818bfbea824c6a64eec7e5dfd309
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xfcd988D68e1fAa96E8ca9d32b82E53309749D881` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0xfcd988D68e1fAa96E8ca9d32b82E53309749D881.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `cu6x1mxcbrdhdh5tbdgut9e5rinhjendp1x7sca43x2dcafuwg`
+	URL: https://optimistic.etherscan.io/address/0xfcd988d68e1faa96e8ca9d32b82e53309749d881
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x8569095878D374B9c231CA144470B6E11245d0e2` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x8569095878D374B9c231CA144470B6E11245d0e2.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `ycfbsug2xhqgsx3bjcjxbz4crm72tgdukefbpmawsr6tfme5a2`
+	URL: https://optimistic.etherscan.io/address/0x8569095878d374b9c231ca144470b6e11245d0e2
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x7d1D6910A509B7eBa8001D849571655b37d0bAb0` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x7d1D6910A509B7eBa8001D849571655b37d0bAb0.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `qtay6r9da5nezg5wxehrdxdfxjtbxeh2rsrbilyf3kdw8miqpi`
+	URL: https://optimistic.etherscan.io/address/0x7d1d6910a509b7eba8001d849571655b37d0bab0
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xA786e79Ef1F90B7B2fA0Cf24423cd99Cd8b2B01c` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0xA786e79Ef1F90B7B2fA0Cf24423cd99Cd8b2B01c.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `gqnipipvtmxyfxnkn7rtdkh2ntu97ksddepheyd7mpjbiv677m`
+	URL: https://optimistic.etherscan.io/address/0xa786e79ef1f90b7b2fa0cf24423cd99cd8b2b01c
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x83F409F4D905D6Aee2260DBbc1f043f016A43150` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x83F409F4D905D6Aee2260DBbc1f043f016A43150.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `ybyw6vilwmqgnhvjkr857fwjyfsviinn2klffi9sat3gifacfz`
+	URL: https://optimistic.etherscan.io/address/0x83f409f4d905d6aee2260dbbc1f043f016a43150
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xA50Cf77506f38B9038C4A7c9c21Ef722434FE7E1` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0xA50Cf77506f38B9038C4A7c9c21Ef722434FE7E1.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `afy2gjhexq5d3czbfuvgfdhgvecd2tfpfi8iqze3zrlinmqrh7`
+	URL: https://optimistic.etherscan.io/address/0xa50cf77506f38b9038c4a7c9c21ef722434fe7e1
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xD9B8C29B27Cb8D3e2e02da8b99dE34e5870ea790` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0xD9B8C29B27Cb8D3e2e02da8b99dE34e5870ea790.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `z6hakynix3yud4bfxk4hlgqt7frztaekwvtz8gpak7ucw5ch8y`
+	URL: https://optimistic.etherscan.io/address/0xd9b8c29b27cb8d3e2e02da8b99de34e5870ea790
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x7efca6B6e6D493a1eAEAFe726363aA805cC857C7` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x7efca6B6e6D493a1eAEAFe726363aA805cC857C7.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `p5nzmjgnt6hpfnncyhbc8hwuweddp33arul9ywaaijdhtws6pi`
+	URL: https://optimistic.etherscan.io/address/0x7efca6b6e6d493a1eaeafe726363aa805cc857c7
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x9C7Cba4FEeA23B0d937a1dF668dfcD11e39f43ba` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x9C7Cba4FEeA23B0d937a1dF668dfcD11e39f43ba.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `yvxxq79j3h74qr4xxmbefbicip5ea1m7q6w8ekwf1dtsufunen`
+	URL: https://optimistic.etherscan.io/address/0x9c7cba4feea23b0d937a1df668dfcd11e39f43ba
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xb3D917a1722A2Bc2b4901017b76b605D09c9Dd6d` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0xb3D917a1722A2Bc2b4901017b76b605D09c9Dd6d.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `qxvadwcudb2wk3vzejvwtcrwdsir94uhqdbgcetywj7udvuqwu`
+	URL: https://optimistic.etherscan.io/address/0xb3d917a1722a2bc2b4901017b76b605d09c9dd6d
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xeE34d6fe7e54367E3d44aD396766C2984F57b2dc` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0xeE34d6fe7e54367E3d44aD396766C2984F57b2dc.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `bbsiudfzxbekl9hk5xtepqrpza5xi7ysugtjr7jnb3igibxxct`
+	URL: https://optimistic.etherscan.io/address/0xee34d6fe7e54367e3d44ad396766c2984f57b2dc
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x3cB13Dbeb781f2a2d216c9271E6B7Ba9Eb4e166C` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x3cB13Dbeb781f2a2d216c9271E6B7Ba9Eb4e166C.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `swnh5cjuij8ifqdnr6hnkyn64mha5qc7krg3wcbgawnqfsmi4w`
+	URL: https://optimistic.etherscan.io/address/0x3cb13dbeb781f2a2d216c9271e6b7ba9eb4e166c
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x487b1C969CC3Cb45dA11Ee8aa4563c6f52CdB944` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x487b1C969CC3Cb45dA11Ee8aa4563c6f52CdB944.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `argqyt9heiw9pu81yqjbsnwrnpbpqbzqx9ekqvsetcptlszthe`
+	URL: https://optimistic.etherscan.io/address/0x487b1c969cc3cb45da11ee8aa4563c6f52cdb944
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x522f71587a690B76923b0f06C2227dCB1C6B07C6` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x522f71587a690B76923b0f06C2227dCB1C6B07C6.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `txzs4mmr2aglt396cffma4xwhfrcemqi6chcqe5syztix8kkjg`
+	URL: https://optimistic.etherscan.io/address/0x522f71587a690b76923b0f06c2227dcb1c6b07c6
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x78577758340B57005D0F7E4ecc3536C4e3c9b63a` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x78577758340B57005D0F7E4ecc3536C4e3c9b63a.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `pjdv4q15bqwjcgkyfrlygyannbbfyau6tyyx5aytcl4gwemdpz`
+	URL: https://optimistic.etherscan.io/address/0x78577758340b57005d0f7e4ecc3536c4e3c9b63a
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xCB5Ee5A75B3345Bd12E9036F1C31f2B1ce335C7F` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0xCB5Ee5A75B3345Bd12E9036F1C31f2B1ce335C7F.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `tuabqr9ritelyswqre8nu6iiwvuurzqyryhzxizhnesenqddc7`
+	URL: https://optimistic.etherscan.io/address/0xcb5ee5a75b3345bd12e9036f1c31f2b1ce335c7f
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x4c710c055F04A3AB65Bb8360b9d801ef32905f26` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x4c710c055F04A3AB65Bb8360b9d801ef32905f26.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `py5a5nbgfuwga9wguzjwj9gssfdfw6hhhkarthukpftfkh5ia8`
+	URL: https://optimistic.etherscan.io/address/0x4c710c055f04a3ab65bb8360b9d801ef32905f26
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x0DDc35193a09ECaC8242662e3Aa3B944Abf5f0b3` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x0DDc35193a09ECaC8242662e3Aa3B944Abf5f0b3.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `weuhmfsd8q9wl9dfppyemcxq65g1hkawvna3paxvygaebtuj35`
+	URL: https://optimistic.etherscan.io/address/0x0ddc35193a09ecac8242662e3aa3b944abf5f0b3
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x343C38c27544408e54aF0fA77150bd75eE0c42cd` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x343C38c27544408e54aF0fA77150bd75eE0c42cd.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `igkvkkiwciarwpfespzahnr4fxtsdebmycsukz3qjtyfm7jmyx`
+	URL: https://optimistic.etherscan.io/address/0x343c38c27544408e54af0fa77150bd75ee0c42cd
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x86B1c2Ecf9e4728F911f05cF64466306f98F701d` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x86B1c2Ecf9e4728F911f05cF64466306f98F701d.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `15ktnwqgqnsqhx7dtkwkttm9fqqcizdgugdx1xnwv59exwb188`
+	URL: https://optimistic.etherscan.io/address/0x86b1c2ecf9e4728f911f05cf64466306f98f701d
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x1DaFe0E7445224fe5bA50B1df0b66795cFE78729` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/diamonds/upgradeInitializers/DiamondInit.sol:DiamondInit] 0x1DaFe0E7445224fe5bA50B1df0b66795cFE78729.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `eyqedzjbdqfmyhbcwbkbcmyzepi7clnpuajeqf34mqiqhj6rek`
+	URL: https://optimistic.etherscan.io/address/0x1dafe0e7445224fe5ba50b1df0b66795cfe78729
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xB964c7F7f8330B38d90185573860eC5C0956400F` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xB964c7F7f8330B38d90185573860eC5C0956400F.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `rgthpgtrjzpj8w5p9ydnjnkxznbitdxcjh63zc4xkid5durbaz`
+	URL: https://optimistic.etherscan.io/address/0xb964c7f7f8330b38d90185573860ec5c0956400f
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0x4E81Fe091a857593A1CB19CAC93dAce70EE5A71e` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x4E81Fe091a857593A1CB19CAC93dAce70EE5A71e.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `3ie1h3wni2f9x72dzrp2fxwgu2aft5vr9ubeyjb37cu3hbl741`
+	URL: https://optimistic.etherscan.io/address/0x4e81fe091a857593a1cb19cac93dace70ee5a71e
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xB249e472cdf1207eAdd93481BBFba98808c4386A` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xB249e472cdf1207eAdd93481BBFba98808c4386A.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `w1m8j6nnygtgudvf1uxn5ffmv4utzhf3ctawd1jwrbmu9rirx2`
+	URL: https://optimistic.etherscan.io/address/0xb249e472cdf1207eadd93481bbfba98808c4386a
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x6f0B2b8cdf28DcD15f1d51a2aa8Bd1Dfa7382B15` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x6f0B2b8cdf28DcD15f1d51a2aa8Bd1Dfa7382B15.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `bhbfvqksdgcmnfrqeb31dzj2ptsmc4kdvy7ytnxkjbm4t4pywi`
+	URL: https://optimistic.etherscan.io/address/0x6f0b2b8cdf28dcd15f1d51a2aa8bd1dfa7382b15
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xe5A572835552a09f187aa6aD8B41Ef2ad819C817` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xe5A572835552a09f187aa6aD8B41Ef2ad819C817.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `d8nvqbyzr2yqfakzrq9spgdihsdg9j5krtqdprzvrtvvljwdit`
+	URL: https://optimistic.etherscan.io/address/0xe5a572835552a09f187aa6ad8b41ef2ad819c817
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xf76388E7E600f88834Fb1De68ce1f8CCca8B1e20` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xf76388E7E600f88834Fb1De68ce1f8CCca8B1e20.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `dqp3vxwvexysryxezmj8b1qd1wkhxxvaxfhfwnxtiiccxztyy8`
+	URL: https://optimistic.etherscan.io/address/0xf76388e7e600f88834fb1de68ce1f8ccca8b1e20
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x4A03d9AAB7c820D929cb20f9CcA7FCF299FC8030` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x4A03d9AAB7c820D929cb20f9CcA7FCF299FC8030.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `lajbhdab2scnygtpvariikqrqspeft2ljqbwgmz46kmxhvjv9z`
+	URL: https://optimistic.etherscan.io/address/0x4a03d9aab7c820d929cb20f9cca7fcf299fc8030
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x0Fc66ad8c52c7495328f701C930cf81437FA8f76` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x0Fc66ad8c52c7495328f701C930cf81437FA8f76.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `ei8gr2btcpnkvarr4a6v8zcmcxytiwzu5gpje4yaknakfkqc6h`
+	URL: https://optimistic.etherscan.io/address/0x0fc66ad8c52c7495328f701c930cf81437fa8f76
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xdA04431FAA3f26dfC3c3973533444E0fa330CA3f` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xdA04431FAA3f26dfC3c3973533444E0fa330CA3f.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `rjqds5gmuu3ibigufelhm1bvllqsxt7lmsdp5sfj3hbv7tbtwm`
+	URL: https://optimistic.etherscan.io/address/0xda04431faa3f26dfc3c3973533444e0fa330ca3f
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xC2aF3933b1e7688fa0B2D2BDB2fFA85F5ea1E1B1` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xC2aF3933b1e7688fa0B2D2BDB2fFA85F5ea1E1B1.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `wbsqvr9usfgpq2mgvj5sqny2ewr5niaxpbxvkpwmgaab4etzaq`
+	URL: https://optimistic.etherscan.io/address/0xc2af3933b1e7688fa0b2d2bdb2ffa85f5ea1e1b1
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x6c44cfE04E18693dd1959280A334d8C83D1d2C85` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x6c44cfE04E18693dd1959280A334d8C83D1d2C85.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `xtn3vhdrk1r46a5isf4qw8nilfenyr2rvxk8bkfgtudvmc4zxk`
+	URL: https://optimistic.etherscan.io/address/0x6c44cfe04e18693dd1959280a334d8c83d1d2c85
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xeB1A646aFD3F6466F75B8E9aa68471019Ab8d058` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xeB1A646aFD3F6466F75B8E9aa68471019Ab8d058.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `mnvjuqf4grtfsjza89ex86znx2wsx9cfrdddmb4vux5pndtjwl`
+	URL: https://optimistic.etherscan.io/address/0xeb1a646afd3f6466f75b8e9aa68471019ab8d058
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x216fe03A0259c0aeA8387f304426c9c554189e9F` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x216fe03A0259c0aeA8387f304426c9c554189e9F.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `wvkachnhnskm77fdppgley5iuc1bzjabvbfgwhrwreecagrxab`
+	URL: https://optimistic.etherscan.io/address/0x216fe03a0259c0aea8387f304426c9c554189e9f
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x00ee822291BD7AA63f69E7823fdf24b079D1d426` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x00ee822291BD7AA63f69E7823fdf24b079D1d426.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `eedbyxq26bgch3iarvtzj7pkmaitynb4cq6vykdiqtcqfnwcu1`
+	URL: https://optimistic.etherscan.io/address/0x00ee822291bd7aa63f69e7823fdf24b079d1d426
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x2354c77F51BA0419edA4f5c5B857472075483E0e` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x2354c77F51BA0419edA4f5c5B857472075483E0e.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `pwv1s8ftpyexwiqdziwnd7hjihuzwzd6yyyhzcyxffwf5tytrd`
+	URL: https://optimistic.etherscan.io/address/0x2354c77f51ba0419eda4f5c5b857472075483e0e
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x4DbD18Cdff040cDB99E6f737164678B3625EEd83` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x4DbD18Cdff040cDB99E6f737164678B3625EEd83.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `nefxnidlibdhqgkyywki4pkzhybcfpi29rlyrtbfwmixjygfkx`
+	URL: https://optimistic.etherscan.io/address/0x4dbd18cdff040cdb99e6f737164678b3625eed83
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x7701D45d0BCdaB95B09052B1761a24d49ecD37F4` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x7701D45d0BCdaB95B09052B1761a24d49ecD37F4.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `u2zhzqugpqyb6uhcyyvmhxl5eh5mfjivh9ugtshm5bdlitgqgx`
+	URL: https://optimistic.etherscan.io/address/0x7701d45d0bcdab95b09052b1761a24d49ecd37f4
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xbA9c5B0B73B2F205B137C2AfE822f3561b81a0e4` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xbA9c5B0B73B2F205B137C2AfE822f3561b81a0e4.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `riayppgwuhj716h2ixz1k7f9h7tzmkbf7iizmjjx1xyz3yby4g`
+	URL: https://optimistic.etherscan.io/address/0xba9c5b0b73b2f205b137c2afe822f3561b81a0e4
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x5eAe3F3eb07AdD24E11d6ee6155B71eE79aF882f` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x5eAe3F3eb07AdD24E11d6ee6155B71eE79aF882f.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `bjhgmjt1giwh88h5zhmigyd31m9g7jxmvgjryswzxkec2jpqiy`
+	URL: https://optimistic.etherscan.io/address/0x5eae3f3eb07add24e11d6ee6155b71ee79af882f
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x7eC96Bc068217265AE0aE6CE06DeB7f3283b76C0` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x7eC96Bc068217265AE0aE6CE06DeB7f3283b76C0.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `yikmzd6egzacunc8mtpq6zmmbmk21gyiy8mdcag7ljkwpkrgqt`
+	URL: https://optimistic.etherscan.io/address/0x7ec96bc068217265ae0ae6ce06deb7f3283b76c0
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x3873d4333FE40721F75283926Cf06ed759147E93` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x3873d4333FE40721F75283926Cf06ed759147E93.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `nmstsqxybei4eq2sel2yxmmh5nnqxrv4d8tcsvgwgep2phvmvx`
+	URL: https://optimistic.etherscan.io/address/0x3873d4333fe40721f75283926cf06ed759147e93
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x6c30B1b68E5870E7ad696B0E0B3b72a082b9967a` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x6c30B1b68E5870E7ad696B0E0B3b72a082b9967a.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `6efsmbaapwcz1kies7vq1iv5itpkunssu1khnclh2i8lkhd4ia`
+	URL: https://optimistic.etherscan.io/address/0x6c30b1b68e5870e7ad696b0e0b3b72a082b9967a
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x432f57306a9Ca7B43036DfB2caB0ee2be25Ea99E` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x432f57306a9Ca7B43036DfB2caB0ee2be25Ea99E.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `gqrvxn9aitdpg2da5zasrfkdnhbjk1fjtt6uby3n9eui5d269b`
+	URL: https://optimistic.etherscan.io/address/0x432f57306a9ca7b43036dfb2cab0ee2be25ea99e
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x49e5FE3236685aaad575D29CF1C774A8EDB70cF5` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x49e5FE3236685aaad575D29CF1C774A8EDB70cF5.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `deus924d8flqqhdunnvaz7wdiml39agvbapcqak5ryqpbjel6a`
+	URL: https://optimistic.etherscan.io/address/0x49e5fe3236685aaad575d29cf1c774a8edb70cf5
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xbBf700Ab1a4bAe4103C9B38811115A213052494F` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xbBf700Ab1a4bAe4103C9B38811115A213052494F.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `rebzcxhgznf1wyqgpqjb4m3qkbgzdzy1xyj3jbxrva2pqquszj`
+	URL: https://optimistic.etherscan.io/address/0xbbf700ab1a4bae4103c9b38811115a213052494f
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x332C04ffa19387D356e1329506F5189b2Bf5e813` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x332C04ffa19387D356e1329506F5189b2Bf5e813.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `vqtw74bkf2f8d1pf4xenwdstgulf1k7paie9ytrfrzmvcmx1za`
+	URL: https://optimistic.etherscan.io/address/0x332c04ffa19387d356e1329506f5189b2bf5e813
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x952cFb326203401233663691293d1368B6306d2e` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x952cFb326203401233663691293d1368B6306d2e.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `kxdcnhxzpeivjuvrzjmfhcfpvxsxrtxk7r1abxwxdzddxmfs1k`
+	URL: https://optimistic.etherscan.io/address/0x952cfb326203401233663691293d1368b6306d2e
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x744B18E3f6B3563F001fe4a030FcC86faA204d40` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x744B18E3f6B3563F001fe4a030FcC86faA204d40.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `ddfutjhp7rpz9v7yqutkgbpp39yssairw7gu5dyhsmrx84ri7r`
+	URL: https://optimistic.etherscan.io/address/0x744b18e3f6b3563f001fe4a030fcc86faa204d40
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xf8869710B09aCaECBC1031Bd4d0C2271a97bD658` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xf8869710B09aCaECBC1031Bd4d0C2271a97bD658.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `wlyf4cehsjkrpw7pd2fdtcmctkksfyjgk2exth44gnmnx2xvqk`
+	URL: https://optimistic.etherscan.io/address/0xf8869710b09acaecbc1031bd4d0c2271a97bd658
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xD9865B741d89F0eE723aF94Df74A27887F7fa12c` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xD9865B741d89F0eE723aF94Df74A27887F7fa12c.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `spttxkqwmism2t1wvnibvvybyfrz5spquvyknt5u8wkmcjmtm3`
+	URL: https://optimistic.etherscan.io/address/0xd9865b741d89f0ee723af94df74a27887f7fa12c
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xFF2456aC31c26c3D7f50E62874a663CdfeFE3b07` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xFF2456aC31c26c3D7f50E62874a663CdfeFE3b07.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `vbcpevrhmhtrrwk3sxmfh4ietzbdzdtpl3mndfg2vx6mag6q19`
+	URL: https://optimistic.etherscan.io/address/0xff2456ac31c26c3d7f50e62874a663cdfefe3b07
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xcCf92D9d9F762921d34Dd888300457231ef2f283` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xcCf92D9d9F762921d34Dd888300457231ef2f283.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `tf78kthymfunh8qv6n8yrcfjkbxxebulcrldhdhuvejc87exn5`
+	URL: https://optimistic.etherscan.io/address/0xccf92d9d9f762921d34dd888300457231ef2f283
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x4D8Bf538797537fB3353d46409D38666C6B293A9` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x4D8Bf538797537fB3353d46409D38666C6B293A9.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `bhhujf1nnawljac9csnmet6e2ltebdwz9z1b487xcugyqjjaqy`
+	URL: https://optimistic.etherscan.io/address/0x4d8bf538797537fb3353d46409d38666c6b293a9
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x9720685351550dC720Cb0840Eb7DEBD21Dc75228` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x9720685351550dC720Cb0840Eb7DEBD21Dc75228.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `vnbarjcttxnncjewcka254jrbkbzqhsjedi9qzigzbga9fsxiu`
+	URL: https://optimistic.etherscan.io/address/0x9720685351550dc720cb0840eb7debd21dc75228
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xDE80C16462cb3EcE6dCc9781dE0E2f5343cE67B3` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xDE80C16462cb3EcE6dCc9781dE0E2f5343cE67B3.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `8azptrukq7yddavd8q26633u3wpahvsfgvasjrjrffabimyvex`
+	URL: https://optimistic.etherscan.io/address/0xde80c16462cb3ece6dcc9781de0e2f5343ce67b3
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x6459326c5C0Efea318e92FF7B68F5A02108644cB` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x6459326c5C0Efea318e92FF7B68F5A02108644cB.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `7uwdp5x6mqtj3uetnhzduh5arrtsbgvtvbpqa375mewuqkcgnq`
+	URL: https://optimistic.etherscan.io/address/0x6459326c5c0efea318e92ff7b68f5a02108644cb
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x2Ad9C99eA84f27bEE0607C770302AA6Ee4C9911d` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x2Ad9C99eA84f27bEE0607C770302AA6Ee4C9911d.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `zhv2dppjmpb5ufuansfqijbuhfmbl6nd5mhenwzz2qgiugjqzp`
+	URL: https://optimistic.etherscan.io/address/0x2ad9c99ea84f27bee0607c770302aa6ee4c9911d
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x5E6Cb434C2dB656d8F87a5C004e58D69C91647B9` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x5E6Cb434C2dB656d8F87a5C004e58D69C91647B9.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `xk1x7fgbjn3czhay1zygdjjfps4t11xxbwz4cyf2ylkcxphz8v`
+	URL: https://optimistic.etherscan.io/address/0x5e6cb434c2db656d8f87a5c004e58d69c91647b9
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x0E2DA600fDE2adF75dc3C8fAF61fb84721eD9251` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x0E2DA600fDE2adF75dc3C8fAF61fb84721eD9251.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `fbrjcdrmiebnaiq51c9xltix8sz8i1bwk6km6skkerq1rjb2ms`
+	URL: https://optimistic.etherscan.io/address/0x0e2da600fde2adf75dc3c8faf61fb84721ed9251
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xBf1f9cb1eC84182FF887D9Bc7933Bc1d77f65562` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xBf1f9cb1eC84182FF887D9Bc7933Bc1d77f65562.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `nfrc9nsucbfidhd73wywz9hntvchxpfxmqcv49wxucg9gkd8nj`
+	URL: https://optimistic.etherscan.io/address/0xbf1f9cb1ec84182ff887d9bc7933bc1d77f65562
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xDd8119a8b2989a9a22999f6A7f694Ee25253dc47` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xDd8119a8b2989a9a22999f6A7f694Ee25253dc47.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `hh4rtfpdjebapnv8xnvi3uz11mu87yhuuchztvxyysrhltpsey`
+	URL: https://optimistic.etherscan.io/address/0xdd8119a8b2989a9a22999f6a7f694ee25253dc47
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x1690d099740A855CB3Baaad7E8fCA3EEC901F828` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x1690d099740A855CB3Baaad7E8fCA3EEC901F828.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `prdfhm94r6bfvcxifb7mgcqxabwrf7ycuaihrfvurp4rnhveb4`
+	URL: https://optimistic.etherscan.io/address/0x1690d099740a855cb3baaad7e8fca3eec901f828
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x07806B4006e7b63Ea646ae14D7a9cF5A92A18959` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x07806B4006e7b63Ea646ae14D7a9cF5A92A18959.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `edlsrdafvgihpj8amwuesrgcwhyybsfgfbtkq2ivhbjec8akjm`
+	URL: https://optimistic.etherscan.io/address/0x07806b4006e7b63ea646ae14d7a9cf5a92a18959
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xD89FDB54637C400b56b4978A7c41c9afeD04964C` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xD89FDB54637C400b56b4978A7c41c9afeD04964C.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `wzkwcnnawagc5d23ddqmjjdyygg3aphcepwfvjz6yg68q677da`
+	URL: https://optimistic.etherscan.io/address/0xd89fdb54637c400b56b4978a7c41c9afed04964c
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x02f888bE00347fFde4E6B2d1dB793F2E01b7f4b8` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x02f888bE00347fFde4E6B2d1dB793F2E01b7f4b8.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `vxvw3cmmqv7kz8sunfhmxtekpte59saapzikhhljtjkuydhygm`
+	URL: https://optimistic.etherscan.io/address/0x02f888be00347ffde4e6b2d1db793f2e01b7f4b8
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x6149a5cC5A20CA655eA866DBfd7D2cB41D08CD81` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x6149a5cC5A20CA655eA866DBfd7D2cB41D08CD81.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `jrrr3cik8bphdxvyvzp7l5wntnzalcbfpmhj9ywgtxabwc6nzs`
+	URL: https://optimistic.etherscan.io/address/0x6149a5cc5a20ca655ea866dbfd7d2cb41d08cd81
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x4727877Ac42Bdf168269DdcC0C369a82eeE19a0A` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x4727877Ac42Bdf168269DdcC0C369a82eeE19a0A.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `8ha9bfm3pf49zwq8srgcpy38fpujsgibck5u6fc3p6ahdixeln`
+	URL: https://optimistic.etherscan.io/address/0x4727877ac42bdf168269ddcc0c369a82eee19a0a
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xd94394Ef62fBE6497295Ab28e7593548eAC090c6` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xd94394Ef62fBE6497295Ab28e7593548eAC090c6.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `jf7m3ae2ulk2c8ysyesw3dedpiymvnrgydxu5fiwf4brhmwsak`
+	URL: https://optimistic.etherscan.io/address/0xd94394ef62fbe6497295ab28e7593548eac090c6
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x1703b4F54e57D52a9a484861ae53492Da8E8BF77` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x1703b4F54e57D52a9a484861ae53492Da8E8BF77.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `kjngl7btykcsx7v5wyb5niknpy2ewtnxckcyjgsrsbhzsmy5vd`
+	URL: https://optimistic.etherscan.io/address/0x1703b4f54e57d52a9a484861ae53492da8e8bf77
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x72A70cD3067D5C02e5e3Fa4E352e106f173fE1B7` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x72A70cD3067D5C02e5e3Fa4E352e106f173fE1B7.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `svg5xtyzsn5mx6w6glvpld6kcccmv2rxiibif7n9zjp5lxecdm`
+	URL: https://optimistic.etherscan.io/address/0x72a70cd3067d5c02e5e3fa4e352e106f173fe1b7
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xE406E0F56D4777589fEC75d911E988C68Ed1E2c3` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xE406E0F56D4777589fEC75d911E988C68Ed1E2c3.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `7la8sfqwtmrcuqn8eewdqaympsp2zgpzajvenbhwtjetinrqhd`
+	URL: https://optimistic.etherscan.io/address/0xe406e0f56d4777589fec75d911e988c68ed1e2c3
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xE8b631Dc428C9333CcBa0b42475E3EC80CCD0CA8` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xE8b631Dc428C9333CcBa0b42475E3EC80CCD0CA8.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `tz7zwyndi1gpncxr2kwik3xzkxmx3tbykwnptanprahgfvw2ws`
+	URL: https://optimistic.etherscan.io/address/0xe8b631dc428c9333ccba0b42475e3ec80ccd0ca8
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x0EBbC80Ea695271Cd5C1B31F60Ac238d20A28bE1` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x0EBbC80Ea695271Cd5C1B31F60Ac238d20A28bE1.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `k6vysq3zeqcgarqi3sqayrx6sblgtfbj3c7v3m4ymkvpcbzrsn`
+	URL: https://optimistic.etherscan.io/address/0x0ebbc80ea695271cd5c1b31f60ac238d20a28be1
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xB100421cA8f1Afc3B867902EBF292f6830EC11ff` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xB100421cA8f1Afc3B867902EBF292f6830EC11ff.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `twcuuu8q7h4mfznsezkufhpsddvzuhckpxm7h88dndfmu1gwbk`
+	URL: https://optimistic.etherscan.io/address/0xb100421ca8f1afc3b867902ebf292f6830ec11ff
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x2dc1f89DA405b57E30c4963e12829cDE1715778d` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x2dc1f89DA405b57E30c4963e12829cDE1715778d.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `mrfx7l7bgryzvqgjy8cha7s7x3scydxzyzvbfrr21xsg5phr6b`
+	URL: https://optimistic.etherscan.io/address/0x2dc1f89da405b57e30c4963e12829cde1715778d
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0x143641253231A4B1fECF1BF41D48cFBeD612dd80` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0x143641253231A4B1fECF1BF41D48cFBeD612dd80.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `uyjuafzzr5jweutzbnuv4ghbgdga3ik2vmkqg5pgb7smhvsynx`
+	URL: https://optimistic.etherscan.io/address/0x143641253231a4b1fecf1bf41d48cfbed612dd80
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+Start verifying contract `0xef249Af85AeEB52939a8E46e06F6d2A9c3f3Aef9` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/CVStrategyDiamondInit.sol:CVStrategyDiamondInit] 0xef249Af85AeEB52939a8E46e06F6d2A9c3f3Aef9.
+Error: Encountered an error verifying this contract:
+Response: `NOTOK`
+Details:
+                        `Daily limit of 250 source code submissions reached`
+task: Failed to run task "upgrade-optimism": exit status 1

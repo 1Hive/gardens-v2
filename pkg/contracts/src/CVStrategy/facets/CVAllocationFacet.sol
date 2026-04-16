@@ -45,6 +45,8 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     error ProposalInvalidForAllocation(uint256 _proposalId, ProposalStatus _proposalStatus); // 0x9c3f44fe
     error NativeTransferFailed(address recipient, uint256 amount); // 0xa5b05eec
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
+    error TooManyAllocations(uint256 provided, uint256 maxAllowed);
+    error TooManyVoterStakedProposals(address voter, uint256 current, uint256 maxAllowed);
 
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
@@ -66,8 +68,13 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0xef2920fc
     function allocate(bytes memory _data, address _sender) external payable onlyAllo onlyInitialized {
+        registryCommunity.onlyStrategyEnabled(address(this));
         ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
+        if (pv.length > MAX_ALLOCATIONS_PER_TX) {
+            revert TooManyAllocations(pv.length, MAX_ALLOCATIONS_PER_TX);
+        }
         for (uint256 i = 0; i < pv.length; i++) {
             _checkProposalAllocationValidity(pv[i].proposalId, pv[i].deltaSupport);
         }
@@ -96,7 +103,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                 deltaSupportSum += pv[i].deltaSupport;
             }
             uint256 newTotalVotingSupport = _applyDelta(totalVoterStakePct[_sender], deltaSupportSum);
-            uint256 participantBalance = registryCommunity.getMemberPowerInStrategy(_sender, address(this));
+            uint256 participantBalance = votingPowerRegistry.getMemberPowerInStrategy(_sender, address(this));
             // Check that the sum of support is not greater than the participant balance
             if (newTotalVotingSupport > participantBalance) {
                 revert NotEnoughPointsToSupport(newTotalVotingSupport, participantBalance);
@@ -150,6 +157,10 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                 }
             }
             if (!hasProposal) {
+                uint256 currentCount = voterStakedProposals[_sender].length;
+                if (currentCount >= MAX_VOTER_STAKED_PROPOSALS) {
+                    revert TooManyVoterStakedProposals(_sender, currentCount, MAX_VOTER_STAKED_PROPOSALS);
+                }
                 voterStakedProposals[_sender].push(proposal.proposalId);
             }
             if (previousStakedPoints <= stakedPoints) {
@@ -168,6 +179,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         }
     }
 
+    // Sig: 0x0a6f0ee9
     function distribute(
         address[] memory,
         /*_recipientIds */
@@ -234,11 +246,10 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                 revert ConvictionUnderMinimumThreshold(convictionLast, threshold, proposals[proposalId].requestedAmount);
             }
 
+            proposals[proposalId].proposalStatus = ProposalStatus.Executed;
             _transferAmount(
                 allo.getPool(poolId).token, proposals[proposalId].beneficiary, proposals[proposalId].requestedAmount
             );
-
-            proposals[proposalId].proposalStatus = ProposalStatus.Executed;
             collateralVault.withdrawCollateral(
                 proposalId,
                 proposals[proposalId].submitter,
@@ -281,7 +292,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         return proposal.convictionLast;
     }
 
-    function getPoolAmount() internal view override returns (uint256) {
+    function getPoolAmount() public view override returns (uint256) {
         address token = allo.getPool(poolId).token;
 
         if (token == NATIVE_TOKEN) {
@@ -289,6 +300,10 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         }
 
         uint256 base = IERC20(token).balanceOf(address(this));
+        if (token == address(superfluidToken)) {
+            return base;
+        }
+
         uint256 sf = address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
 
         uint8 d = IERC20Metadata(token).decimals();

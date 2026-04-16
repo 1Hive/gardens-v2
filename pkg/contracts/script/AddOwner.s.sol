@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-import "forge-std/console2.sol";
 import "forge-std/Script.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
@@ -32,8 +31,6 @@ contract AddOwner is Native, CVStrategyHelpers, Script, SafeSetup {
     }
 
     function run(address payable _owner, address _safe) public {
-        console2.log("AddOwner.run(%s)", _owner);
-        console2.log("AddOwner.run(%s)", _safe);
         assertNotEq(_owner, address(0), "Owner not set");
 
         // get PK from env

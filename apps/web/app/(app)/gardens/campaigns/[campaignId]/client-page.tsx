@@ -25,6 +25,7 @@ import {
   WalletEntry,
 } from "@/types";
 import { CAMPAIGNS, CampaignId, isCampaignActive } from "@/utils/campaigns";
+import { logOnce } from "@/utils/log";
 import { shortenAddress } from "@/utils/text";
 import { formatNumber, timeAgo } from "@/utils/time";
 
@@ -93,7 +94,7 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
         <>
           Join the{" "}
           <Link
-            href="https://app.gardens.fund/gardens/8453/0xa69f80524381275a7ffdb3ae01c54150644c8792/0xec83d957f8aa4e9601bc74608ebcbc862eca52ab"
+            href="https://app.gardens.fund/gardens/8453/0xec83d957f8aa4e9601bc74608ebcbc862eca52ab"
             target="_blank"
             rel="noreferrer"
             className="underline"
@@ -158,7 +159,7 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
         <>
           Join the{" "}
           <Link
-            href="https://app.gardens.fund/gardens/42220/0x62b8b11039fcfe5ab0c56e502b1c372a3d2a9c7a/0xf42c9ca2b10010142e2bac34ebdddb0b82177684"
+            href="https://app.gardens.fund/gardens/42220/0xf42c9ca2b10010142e2bac34ebdddb0b82177684"
             target="_blank"
             rel="noreferrer"
             className="underline"
@@ -260,8 +261,16 @@ export default function GardensGrowthInitiativePage({
 
   const [openModal, setOpenModal] = useState(false);
 
+  useEffect(() => {
+    logOnce(
+      "debug",
+      "Loading page: (app)/gardens/campaigns/[campaignId]/page.tsx",
+    );
+  }, []);
+
   const campaigns = CAMPAIGNS[campaignId];
   const isEndedCampaign = !isCampaignActive(campaigns?.endDate ?? "");
+  const showSuperfluidClaimLink = campaignId === "1" || campaignId === "3";
 
   const howToParticipate = PARTICIPATION_BY_CAMPAIGN[campaignId] ?? [];
 
@@ -384,6 +393,18 @@ export default function GardensGrowthInitiativePage({
               <p className="text-lg  max-w-3xl mb-6">
                 {campaigns?.description}
               </p>
+              {showSuperfluidClaimLink && (
+                <p className="text-base max-w-3xl mb-6">
+                  <Link
+                    href="https://claim.superfluid.org/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline"
+                  >
+                    Superfluid page to claim your SUP streaming rewards
+                  </Link>
+                </p>
+              )}
 
               <div className="flex items-center gap-6 flex-wrap">
                 <div className="flex items-center gap-2 text-sm">

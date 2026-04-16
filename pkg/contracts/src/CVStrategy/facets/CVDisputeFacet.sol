@@ -2,8 +2,10 @@
 pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
+import {CVStreamingStorage} from "../CVStreamingStorage.sol";
+import {StreamingEscrow} from "../StreamingEscrow.sol";
 import {IArbitrator} from "../../interfaces/IArbitrator.sol";
-import {Proposal, ProposalStatus, ArbitrableConfig} from "../ICVStrategy.sol";
+import {Proposal, ProposalStatus, ProposalType, ArbitrableConfig} from "../ICVStrategy.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
 /**
@@ -23,6 +25,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
     error DisputeCooldownActive(uint256 proposalId, uint256 secondsRemaining); // 0xc84ca6af
     error OnlyArbitrator(address sender, address arbitrator); // 0x84844502
     error DefaultRulingNotConfigured(uint256 proposalId); // 0x1b330288
+    error UpdateMemberUnitsFailed(address member, uint128 units);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -36,11 +39,20 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
         uint256 timestamp
     );
     event Ruling(IArbitrator indexed _arbitrator, uint256 indexed _disputeID, uint256 _ruling);
+    event CollateralPayoutFailed(
+        uint256 indexed proposalId,
+        address indexed fromUser,
+        address indexed toUser,
+        uint256 amount,
+        bytes reason
+    );
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
     /*|--------------------------------------------|*/
 
+    // Sig: 0xb41596ec
+    // slither-disable-next-line reentrancy-eth
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
         external
         payable
@@ -69,15 +81,24 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
 
         uint256 arbitrationFee = msg.value - arbitrableConfig.challengerCollateralAmount;
 
+        // Effects before interactions to reduce reentrancy surface.
+        proposal.proposalStatus = ProposalStatus.Disputed;
+        proposal.disputeInfo.disputeTimestamp = block.timestamp;
+        proposal.disputeInfo.challenger = msg.sender;
+
         collateralVault.depositCollateral{value: arbitrableConfig.challengerCollateralAmount}(proposalId, msg.sender);
 
         disputeId = arbitrableConfig.arbitrator.createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
 
-        proposal.proposalStatus = ProposalStatus.Disputed;
         proposal.disputeInfo.disputeId = disputeId;
-        proposal.disputeInfo.disputeTimestamp = block.timestamp;
-        proposal.disputeInfo.challenger = msg.sender;
         disputeIdToProposalId[disputeId] = proposalId;
+
+        if (proposalType == ProposalType.Streaming) {
+            address escrow = CVStreamingStorage.layout().proposalEscrow[proposalId];
+            if (escrow != address(0)) {
+                StreamingEscrow(escrow).setDisputed(true);
+            }
+        }
 
         disputeCount++;
 
@@ -91,6 +112,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
         );
     }
 
+    // Sig: 0x311a6c56
     function rule(uint256 _disputeID, uint256 _ruling) external {
         uint256 proposalId = disputeIdToProposalId[_disputeID];
         Proposal storage proposal = proposals[proposalId];
@@ -112,19 +134,25 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
             }
             if (arbitrableConfig.defaultRuling == 1) {
                 proposal.proposalStatus = ProposalStatus.Active;
+                _handleStreamingResolution(proposalId, true);
             }
             if (arbitrableConfig.defaultRuling == 2) {
                 proposal.proposalStatus = ProposalStatus.Rejected;
-                collateralVault.withdrawCollateral(
-                    proposalId, proposal.submitter, arbitrableConfig.submitterCollateralAmount
+                _handleStreamingResolution(proposalId, false);
+                _tryWithdrawCollateral(
+                    proposalId, proposal.submitter, proposal.submitter, arbitrableConfig.submitterCollateralAmount
                 );
             }
-            collateralVault.withdrawCollateral(
-                proposalId, proposal.disputeInfo.challenger, arbitrableConfig.challengerCollateralAmount
+            _tryWithdrawCollateral(
+                proposalId,
+                proposal.disputeInfo.challenger,
+                proposal.disputeInfo.challenger,
+                arbitrableConfig.challengerCollateralAmount
             );
         } else if (_ruling == 1) {
             proposal.proposalStatus = ProposalStatus.Active;
-            collateralVault.withdrawCollateralFor(
+            _handleStreamingResolution(proposalId, true);
+            _tryWithdrawCollateralFor(
                 proposalId,
                 proposal.disputeInfo.challenger,
                 address(registryCommunity.councilSafe()),
@@ -132,25 +160,61 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
             );
         } else if (_ruling == 2) {
             proposal.proposalStatus = ProposalStatus.Rejected;
-            collateralVault.withdrawCollateral(
-                proposalId, proposal.disputeInfo.challenger, arbitrableConfig.challengerCollateralAmount
+            _handleStreamingResolution(proposalId, false);
+            _tryWithdrawCollateral(
+                proposalId,
+                proposal.disputeInfo.challenger,
+                proposal.disputeInfo.challenger,
+                arbitrableConfig.challengerCollateralAmount
             );
-            collateralVault.withdrawCollateralFor(
+            uint256 submitterCollateralHalf = arbitrableConfig.submitterCollateralAmount / 2;
+            _tryWithdrawCollateralFor(
                 proposalId,
                 proposal.submitter,
                 address(registryCommunity.councilSafe()),
-                arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount / 2
+                submitterCollateralHalf
             );
-            collateralVault.withdrawCollateralFor(
+            _tryWithdrawCollateralFor(
                 proposalId,
                 proposal.submitter,
                 proposal.disputeInfo.challenger,
-                arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount / 2
+                submitterCollateralHalf
             );
         }
 
         disputeCount--;
         proposal.lastDisputeCompletion = block.timestamp;
         emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
+    }
+
+    function _handleStreamingResolution(uint256 proposalId, bool active) internal {
+        if (proposalType != ProposalType.Streaming) {
+            return;
+        }
+        address escrow = CVStreamingStorage.layout().proposalEscrow[proposalId];
+        if (escrow == address(0)) {
+            return;
+        }
+        if (active) {
+            StreamingEscrow(escrow).setDisputed(false);
+            StreamingEscrow(escrow).drainToBeneficiary();
+        } else {
+            if (!superfluidGDA.updateMemberUnits(escrow, 0)) {
+                revert UpdateMemberUnitsFailed(escrow, 0);
+            }
+            StreamingEscrow(escrow).drainToStrategy();
+        }
+    }
+
+    function _tryWithdrawCollateral(uint256 proposalId, address fromUser, address toUser, uint256 amount) internal {
+        try collateralVault.withdrawCollateral(proposalId, fromUser, amount) {} catch (bytes memory reason) {
+            emit CollateralPayoutFailed(proposalId, fromUser, toUser, amount, reason);
+        }
+    }
+
+    function _tryWithdrawCollateralFor(uint256 proposalId, address fromUser, address toUser, uint256 amount) internal {
+        try collateralVault.withdrawCollateralFor(proposalId, fromUser, toUser, amount) {} catch (bytes memory reason) {
+            emit CollateralPayoutFailed(proposalId, fromUser, toUser, amount, reason);
+        }
     }
 }

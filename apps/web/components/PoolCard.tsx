@@ -18,7 +18,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { Skeleton } from "./Skeleton";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { blueLand, grass } from "@/assets";
+import { blueLand, grass, StreamingPoolCardGraphic } from "@/assets";
 import { Badge, Card, DisplayNumber, Statistic } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
@@ -44,7 +44,6 @@ export function PoolCard({ pool, token }: Props) {
   const searchParams = useCollectQueryParams();
 
   let {
-    poolId,
     proposals,
     isEnabled,
     config,
@@ -61,7 +60,7 @@ export function PoolCard({ pool, token }: Props) {
 
   const poolType = config?.proposalType as number | undefined;
 
-  const poolToken = usePoolToken({
+  const { poolToken } = usePoolToken({
     poolAddress: pool.id,
     poolTokenAddr: token,
     enabled: isEnabled && poolType != null && PoolTypes[poolType] === "funding",
@@ -78,7 +77,7 @@ export function PoolCard({ pool, token }: Props) {
   return (
     <>
       <Card
-        href={`${pathname}/${poolId}`}
+        href={`${pathname}/${pool.id}`}
         className={`w-full bg-primary ${isNewPool ? "shadow-2xl" : ""}`}
         testId={
           isEnabled ?
@@ -132,6 +131,16 @@ export function PoolCard({ pool, token }: Props) {
               <ArchiveBoxIcon className="h-8 w-8 text-secondary-content" />
             : <ClockIcon className="h-8 w-8 text-secondary-content" />}
             <h6>{pool.archived ? "Archived" : "Waiting for approval"}</h6>
+          </div>
+        : poolType != null && PoolTypes[poolType] === "streaming" ?
+          <div className="relative h-12 sm:h-14 w-full overflow-hidden rounded-lg">
+            <Image
+              src={StreamingPoolCardGraphic}
+              alt="Streaming pool"
+              fill
+              sizes="100vw"
+              className="object-fill"
+            />
           </div>
         : <Image
             src={

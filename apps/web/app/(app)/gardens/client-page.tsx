@@ -26,6 +26,7 @@ import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { useTheme } from "@/providers/ThemeProvider";
 import { getProtopiansOwners } from "@/services/alchemy";
 import { safeABI } from "@/src/customAbis";
+import { logOnce } from "@/utils/log";
 
 const Header = () => {
   const { tooltipMessage, isConnected } = useDisableButtons();
@@ -116,6 +117,10 @@ export default function ClientPage() {
   const showArchived = useFlag("showArchived");
 
   useEffect(() => {
+    logOnce("debug", "Loading page: (app)/gardens/page.tsx");
+  }, []);
+
+  useEffect(() => {
     getProtopiansOwners()
       .then((owners) => {
         setProtopianOwners(owners);
@@ -167,10 +172,9 @@ export default function ClientPage() {
                         ),
                     ),
                   };
-                } catch (error) {
-                  console.error(
-                    `Error reading council safe for community ${x.communityName}:`,
-                    error,
+                } catch {
+                  console.warn(
+                    `Council Safe owners could not be read for community ${x.communityName}.`,
                   );
                   return x;
                 }

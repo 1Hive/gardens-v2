@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { noop } from "lodash-es";
 import { formatUnits } from "viem";
 import { Address, useContractRead } from "wagmi";
-import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
+import { useResolvedChainId } from "./useResolvedChainId";
 import { TransactionProps } from "@/components/TransactionModal";
 import { erc20ABI } from "@/src/generated";
 import { delayAsync } from "@/utils/delayAsync";
@@ -25,7 +25,7 @@ export function useHandleAllowance(
   }) => Promise<void>;
   resetState: () => void;
 } {
-  const chainId = useChainIdFromPath();
+  const chainId = useResolvedChainId();
   const [allowanceTxProps, setAllowanceTxProps] = useState<TransactionProps>({
     contractName: transactionLabel ?? `${token?.symbol} expenditure approval`,
     message: "",

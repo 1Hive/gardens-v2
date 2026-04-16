@@ -13,14 +13,17 @@ export function useTotalVoterStakedPct(strategy: CVStrategy) {
   const [voterStake, setVoterStake] = useState<any>(null);
 
   useEffect(() => {
-    if (!address) {
+    if (!address || !client) {
       return;
     }
 
     fetchData();
-  }, [address]);
+  }, [address, client]);
 
   const fetchData = async () => {
+    if (!client) {
+      return;
+    }
     const voterStakeData = await client.readContract({
       address: strategy.id as Address,
       abi: cvStrategyABI as Abi,

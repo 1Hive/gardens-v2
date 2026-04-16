@@ -8,10 +8,14 @@ import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol"
 import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
+import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
+import {CVSyncPowerFacet} from "../src/CVStrategy/facets/CVSyncPowerFacet.sol";
+import {CVStreamingFacet} from "../src/CVStrategy/facets/CVStreamingFacet.sol";
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
 import {CommunityMemberFacet} from "../src/RegistryCommunity/facets/CommunityMemberFacet.sol";
+import {CommunityPauseFacet} from "../src/RegistryCommunity/facets/CommunityPauseFacet.sol";
 import {CommunityPoolFacet} from "../src/RegistryCommunity/facets/CommunityPoolFacet.sol";
 import {CommunityPowerFacet} from "../src/RegistryCommunity/facets/CommunityPowerFacet.sol";
 import {CommunityStrategyFacet} from "../src/RegistryCommunity/facets/CommunityStrategyFacet.sol";
@@ -25,7 +29,6 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
 import {StrategyDiamondConfiguratorBase} from "../test/helpers/StrategyDiamondConfigurator.sol";
 import {CommunityDiamondConfiguratorBase} from "../test/helpers/CommunityDiamondConfigurator.sol";
-import "forge-std/console2.sol";
 
 /**
  * @title UpgradeAllDiamonds
@@ -43,12 +46,16 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
     CVAdminFacet public cvAdminFacet;
     CVAllocationFacet public cvAllocationFacet;
     CVDisputeFacet public cvDisputeFacet;
+    CVPauseFacet public cvPauseFacet;
     CVPowerFacet public cvPowerFacet;
     CVProposalFacet public cvProposalFacet;
+    CVSyncPowerFacet public cvSyncPowerFacet;
+    CVStreamingFacet public cvStreamingFacet;
 
     // RegistryCommunity facets
     CommunityAdminFacet public communityAdminFacet;
     CommunityMemberFacet public communityMemberFacet;
+    CommunityPauseFacet public communityPauseFacet;
     CommunityPoolFacet public communityPoolFacet;
     CommunityPowerFacet public communityPowerFacet;
     CommunityStrategyFacet public communityStrategyFacet;
@@ -75,32 +82,16 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
     function runCurrentNetwork(string memory networkJson) public override {
         bool directBroadcast = directBroadcastOverride || networkJson.readBool(getKeyNetwork(".no-safe"));
 
-        console2.log(
-            directBroadcast
-                ? "=== Starting Atomic Diamond Upgrade (Direct Broadcast) ==="
-                : "=== Starting Atomic Diamond Upgrade (Safe Transaction Builder) ==="
-        );
-        console2.log("This will upgrade BOTH CVStrategy AND RegistryCommunity to diamond pattern");
 
-        console2.log(
-            directBroadcast
-                ? "\n[1/5] Deploying implementations and facets..."
-                : "\n[1/6] Deploying implementations and facets..."
-        );
 
         RunContext memory context = _buildRunContext(networkJson);
         _executeRun(networkJson, directBroadcast, context);
 
-        console2.log("\n=== Summary ===");
-        console2.log("Registry Factory: %s", context.registryFactoryProxy);
-        console2.log("Registry Communities: %s", context.registryCommunityProxies.length);
-        console2.log("CV Strategies: %s", context.cvStrategyProxies.length);
         if (!directBroadcast) {
             uint256 totalTxs = 3 // Factory templates (strategy + community + collateral vault)
                 + (context.registryCommunityProxies.length * 2) // Community setStrategyTemplate + setCollateralVaultTemplate
                 + (context.cvStrategyProxies.length * 3) // CV upgradeTo + diamondCut + setCollateralVaultTemplate
                 + (context.registryCommunityProxies.length * 2); // Community upgradeTo + diamondCut
-            console2.log("Total atomic transactions: %s", totalTxs);
         }
     }
 
@@ -142,39 +133,36 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
 
         // Deploy CVStrategy facets
         cvAdminFacet = new CVAdminFacet();
-        console2.log("  CVAdminFacet:", address(cvAdminFacet));
 
         cvAllocationFacet = new CVAllocationFacet();
-        console2.log("  CVAllocationFacet:", address(cvAllocationFacet));
 
         cvDisputeFacet = new CVDisputeFacet();
-        console2.log("  CVDisputeFacet:", address(cvDisputeFacet));
+
+        cvPauseFacet = new CVPauseFacet();
 
         cvPowerFacet = new CVPowerFacet();
-        console2.log("  CVPowerFacet:", address(cvPowerFacet));
 
         cvProposalFacet = new CVProposalFacet();
-        console2.log("  CVProposalFacet:", address(cvProposalFacet));
+
+        cvSyncPowerFacet = new CVSyncPowerFacet();
+
+        cvStreamingFacet = new CVStreamingFacet();
 
         // Deploy RegistryCommunity facets
         communityAdminFacet = new CommunityAdminFacet();
-        console2.log("  CommunityAdminFacet:", address(communityAdminFacet));
 
         communityMemberFacet = new CommunityMemberFacet();
-        console2.log("  CommunityMemberFacet:", address(communityMemberFacet));
+
+        communityPauseFacet = new CommunityPauseFacet();
 
         communityPoolFacet = new CommunityPoolFacet();
-        console2.log("  CommunityPoolFacet:", address(communityPoolFacet));
 
         communityPowerFacet = new CommunityPowerFacet();
-        console2.log("  CommunityPowerFacet:", address(communityPowerFacet));
 
         communityStrategyFacet = new CommunityStrategyFacet();
-        console2.log("  CommunityStrategyFacet:", address(communityStrategyFacet));
 
         // Deploy shared DiamondLoupe facet
         loupeFacet = new DiamondLoupeFacet();
-        console2.log("  DiamondLoupeFacet (shared):", address(loupeFacet));
 
         // Read network configuration
         context.registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
@@ -196,13 +184,11 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
         }
 
         if (cached.code.length == 0) {
-            console2.log("  Cached", label, "has no code; redeploying");
             result.cached = address(0);
             return result;
         }
 
         if (cached.codehash != expectedCodeHash) {
-            console2.log("  Cached", label, "bytecode mismatch; redeploying");
             result.cached = address(0);
             return result;
         }
@@ -212,83 +198,8 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
 
     function _logDeploymentResult(string memory label, bool reused, address deployed) internal {
         if (reused) {
-            console2.log("  Reusing", label, ":", deployed);
         } else {
-            console2.log("  Deployed", label, ":", deployed);
         }
-    }
-
-    function _readAddressOrZero(string memory key) internal returns (address) {
-        string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/pkg/contracts/config/networks.json");
-        string memory command = string.concat(
-            "jq -r '(.networks[] | select(.name==\"", CURRENT_NETWORK, "\") | ", key, " // empty)' ", path
-        );
-
-        string[] memory inputs = new string[](3);
-        inputs[0] = "bash";
-        inputs[1] = "-c";
-        inputs[2] = command;
-        bytes memory result = vm.ffi(inputs);
-        string memory value = _trim(string(result));
-        if (bytes(value).length == 0) {
-            return address(0);
-        }
-        if (keccak256(bytes(value)) == keccak256(bytes("null"))) {
-            return address(0);
-        }
-        return _parseAddress(value);
-    }
-
-    function _trim(string memory input) internal pure returns (string memory) {
-        bytes memory inputBytes = bytes(input);
-        uint256 start = 0;
-        uint256 end = inputBytes.length;
-        while (start < end && _isWhitespace(inputBytes[start])) {
-            start++;
-        }
-        while (end > start && _isWhitespace(inputBytes[end - 1])) {
-            end--;
-        }
-        bytes memory trimmed = new bytes(end - start);
-        for (uint256 i = 0; i < trimmed.length; i++) {
-            trimmed[i] = inputBytes[start + i];
-        }
-        return string(trimmed);
-    }
-
-    function _isWhitespace(bytes1 char) internal pure returns (bool) {
-        return char == 0x20 || char == 0x0a || char == 0x0d || char == 0x09;
-    }
-
-    function _parseAddress(string memory value) internal pure returns (address) {
-        bytes memory data = bytes(value);
-        if (data.length != 42 || data[0] != "0" || data[1] != "x") {
-            return address(0);
-        }
-        uint160 result = 0;
-        for (uint256 i = 2; i < 42; i++) {
-            uint8 nibble = _fromHexChar(data[i]);
-            if (nibble > 15) {
-                return address(0);
-            }
-            result = (result << 4) | uint160(nibble);
-        }
-        return address(result);
-    }
-
-    function _fromHexChar(bytes1 char) internal pure returns (uint8) {
-        uint8 value = uint8(char);
-        if (value >= 48 && value <= 57) {
-            return value - 48;
-        }
-        if (value >= 65 && value <= 70) {
-            return value - 55;
-        }
-        if (value >= 97 && value <= 102) {
-            return value - 87;
-        }
-        return 255;
     }
 
     function _runtimeCodeHash(string memory artifactId) internal returns (bytes32) {
@@ -297,35 +208,6 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
             revert("Missing deployed bytecode for artifact");
         }
         return keccak256(deployedCode);
-    }
-
-    function _writeNetworkAddress(string memory key, address value) internal {
-        string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/pkg/contracts/config/networks.json");
-        string memory tmpPath = string.concat(root, "/pkg/contracts/config/.networks.tmp.json");
-        string memory command = string.concat(
-            "jq '(.networks[] | select(.name==\"",
-            CURRENT_NETWORK,
-            "\") | ",
-            key,
-            ") = \"",
-            _addressToString(value),
-            "\"' ",
-            path,
-            " > ",
-            tmpPath,
-            " && mv ",
-            tmpPath,
-            " ",
-            path
-        );
-
-        string[] memory inputs = new string[](3);
-        inputs[0] = "bash";
-        inputs[1] = "-c";
-        inputs[2] = command;
-        vm.ffi(inputs);
-        console2.log("  Cached deployment in networks.json:", key);
     }
 
     function _executeRun(string memory networkJson, bool directBroadcast, RunContext memory context) internal {
@@ -380,40 +262,27 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
         IDiamond.FacetCut[] memory cvCuts,
         IDiamond.FacetCut[] memory communityCuts
     ) internal {
-        console2.log("\n[2/5] Updating RegistryFactory templates...");
         registryFactory.setStrategyTemplate(strategyImplementation);
-        console2.log("  Strategy template updated:", registryFactoryProxy);
 
         registryFactory.setRegistryCommunityTemplate(communityImplementation);
-        console2.log("  Community template updated:", registryFactoryProxy);
 
         registryFactory.setCollateralVaultTemplate(collateralVaultTemplate);
-        console2.log("  CollateralVault template updated:", registryFactoryProxy);
 
         registryFactory.setCommunityFacets(
             communityCuts, address(new RegistryCommunityDiamondInit()), abi.encodeCall(RegistryCommunityDiamondInit.init, ())
         );
-        console2.log("  Community facets updated:", registryFactoryProxy);
 
         registryFactory.setStrategyFacets(
             cvCuts, address(new CVStrategyDiamondInit()), abi.encodeCall(CVStrategyDiamondInit.init, ())
         );
-        console2.log("  Strategy facets updated:", registryFactoryProxy);
 
-        console2.log("\n[3/5] Updating RegistryCommunity strategy templates...");
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
             RegistryCommunity registryCommunity = RegistryCommunity(payable(address(registryCommunityProxies[i])));
             registryCommunity.setStrategyTemplate(strategyImplementation);
             registryCommunity.setCollateralVaultTemplate(collateralVaultTemplate);
-            registryCommunity.setStrategyFacets(
-                cvCuts, address(new CVStrategyDiamondInit()), abi.encodeCall(CVStrategyDiamondInit.init, ())
-            );
-            console2.log("  Community", i + 1, "templates updated:", registryCommunityProxies[i]);
         }
 
-        console2.log("\n[4/5] Upgrading CVStrategy proxies and applying diamond cuts...");
         CVStrategyDiamondInit cvInitContract = new CVStrategyDiamondInit();
-        console2.log("  CVStrategyDiamondInit deployed:", address(cvInitContract));
 
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
             CVStrategy cvStrategy = CVStrategy(payable(address(cvStrategyProxies[i])));
@@ -421,16 +290,12 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
             if (currentImplementation != strategyImplementation) {
                 cvStrategy.upgradeTo(strategyImplementation);
             } else {
-                console2.log("  Strategy", i + 1, "already at implementation; skipping upgradeTo");
             }
             cvStrategy.diamondCut(cvCuts, address(cvInitContract), abi.encodeCall(CVStrategyDiamondInit.init, ()));
             cvStrategy.setCollateralVaultTemplate(collateralVaultTemplate);
-            console2.log("  Strategy", i + 1, "upgraded with diamond facets:", cvStrategyProxies[i]);
         }
 
-        console2.log("\n[5/5] Upgrading RegistryCommunity proxies and applying diamond cuts...");
         RegistryCommunityDiamondInit communityInitContract = new RegistryCommunityDiamondInit();
-        console2.log("  RegistryCommunityDiamondInit deployed:", address(communityInitContract));
 
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
             RegistryCommunity community = RegistryCommunity(payable(address(registryCommunityProxies[i])));
@@ -438,12 +303,10 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
             if (currentImplementation != communityImplementation) {
                 community.upgradeTo(communityImplementation);
             } else {
-                console2.log("  Community", i + 1, "already at implementation; skipping upgradeTo");
             }
             community.diamondCut(
                 communityCuts, address(communityInitContract), abi.encodeCall(RegistryCommunityDiamondInit.init, ())
             );
-            console2.log("  Community", i + 1, "upgraded with diamond facets:", registryCommunityProxies[i]);
         }
     }
 
@@ -487,7 +350,6 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
         });
 
         JsonWriter memory writer = _initPayloadWriter(params.safeOwner, params.networkJson);
-        console2.log("\n[2/6] Building RegistryFactory template updates...");
         writer = _appendTransaction(
             writer,
             _createTransactionJson(
@@ -495,7 +357,6 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
                 abi.encodeWithSelector(RegistryFactory.setStrategyTemplate.selector, params.strategyImplementation)
             )
         );
-        console2.log("  Factory strategy template update added");
 
         writer = _appendTransaction(
             writer,
@@ -506,7 +367,6 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
                 )
             )
         );
-        console2.log("  Factory community template update added");
 
         writer = _appendTransaction(
             writer,
@@ -517,7 +377,6 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
                 )
             )
         );
-        console2.log("  Factory CollateralVault template update added");
 
         IDiamondCut.FacetCut[] memory cvCutsLocal = _buildCVFacetCuts();
         IDiamondCut.FacetCut[] memory communityCutsLocal = _buildCommunityFacetCuts();
@@ -533,7 +392,6 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
                 )
             )
         );
-        console2.log("  Factory community facets update added");
 
         writer = _appendTransaction(
             writer,
@@ -547,19 +405,11 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
                 )
             )
         );
-        console2.log("  Factory strategy facets update added");
 
-        console2.log("\n[3/6] Building RegistryCommunity strategy template updates...");
         bytes memory communitySetStrategyData =
             abi.encodeWithSelector(RegistryCommunity.setStrategyTemplate.selector, params.strategyImplementation);
         bytes memory communitySetCollateralVaultData = abi.encodeWithSelector(
             RegistryCommunity.setCollateralVaultTemplate.selector, params.collateralVaultTemplate
-        );
-        bytes memory communitySetStrategyFacetsData = abi.encodeWithSelector(
-            RegistryCommunity.setStrategyFacets.selector,
-            cvCuts,
-            address(new CVStrategyDiamondInit()),
-            abi.encodeCall(CVStrategyDiamondInit.init, ())
         );
         for (uint256 i = 0; i < params.registryCommunityProxies.length; i++) {
             writer = _appendTransaction(
@@ -568,10 +418,6 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
             writer = _appendTransaction(
                 writer, _createTransactionJson(params.registryCommunityProxies[i], communitySetCollateralVaultData)
             );
-            writer = _appendTransaction(
-                writer, _createTransactionJson(params.registryCommunityProxies[i], communitySetStrategyFacetsData)
-            );
-            console2.log("  Community", i + 1, "added to batch:", params.registryCommunityProxies[i]);
         }
 
         writer = _buildCVStrategyTransactions(
@@ -584,7 +430,6 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
 
         _finalizePayloadWriter(writer);
 
-        console2.log("\n[6/6] Atomic Safe Transaction Builder JSON generated!");
     }
 
     function _buildCVStrategyTransactions(
@@ -594,9 +439,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
         address collateralVaultTemplate,
         IDiamond.FacetCut[] memory cvCuts
     ) internal returns (JsonWriter memory) {
-        console2.log("\n[4/6] Building CVStrategy upgrade + diamond cut transactions...");
         CVStrategyDiamondInit cvInitContract = new CVStrategyDiamondInit();
-        console2.log("  CVStrategyDiamondInit deployed:", address(cvInitContract));
 
         bytes4 upgradeSelector = bytes4(keccak256("upgradeTo(address)"));
         bytes memory cvDiamondCutCalldata = abi.encodeWithSelector(
@@ -614,12 +457,10 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
             if (currentImplementation != strategyImplementation) {
                 writer = _appendTransaction(writer, _createTransactionJson(cvStrategyProxies[i], cvUpgradeCalldata));
             } else {
-                console2.log("  Strategy", i + 1, "already at implementation; skipping upgradeTo");
             }
             writer = _appendTransaction(writer, _createTransactionJson(cvStrategyProxies[i], cvDiamondCutCalldata));
             writer =
                 _appendTransaction(writer, _createTransactionJson(cvStrategyProxies[i], cvSetCollateralVaultCalldata));
-            console2.log("  Strategy", i + 1, "added to batch:", cvStrategyProxies[i]);
         }
 
         return writer;
@@ -631,9 +472,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
         address communityImplementation,
         IDiamond.FacetCut[] memory communityCuts
     ) internal returns (JsonWriter memory) {
-        console2.log("\n[5/6] Building RegistryCommunity upgrade + diamond cut transactions...");
         RegistryCommunityDiamondInit communityInitContract = new RegistryCommunityDiamondInit();
-        console2.log("  RegistryCommunityDiamondInit deployed:", address(communityInitContract));
 
         bytes4 upgradeSelector = bytes4(keccak256("upgradeTo(address)"));
         bytes memory communityDiamondCutCalldata = abi.encodeWithSelector(
@@ -651,12 +490,10 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
                     writer, _createTransactionJson(registryCommunityProxies[i], communityUpgradeCalldata)
                 );
             } else {
-                console2.log("  Community", i + 1, "already at implementation; skipping upgradeTo");
             }
             writer = _appendTransaction(
                 writer, _createTransactionJson(registryCommunityProxies[i], communityDiamondCutCalldata)
             );
-            console2.log("  Community", i + 1, "added to batch:", registryCommunityProxies[i]);
         }
 
         return writer;
@@ -664,21 +501,35 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
 
     function _buildCVFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts =
-            _buildFacetCuts(cvAdminFacet, cvAllocationFacet, cvDisputeFacet, cvPowerFacet, cvProposalFacet);
-        cuts = new IDiamond.FacetCut[](6);
+            _buildFacetCuts(
+                cvAdminFacet,
+                cvAllocationFacet,
+                cvDisputeFacet,
+                cvPauseFacet,
+                cvPowerFacet,
+                cvProposalFacet,
+                cvSyncPowerFacet,
+                cvStreamingFacet
+            );
+        cuts = new IDiamond.FacetCut[](9);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 8; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }
 
     function _buildCommunityFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts = CommunityDiamondConfiguratorBase._buildFacetCuts(
-            communityAdminFacet, communityMemberFacet, communityPoolFacet, communityPowerFacet, communityStrategyFacet
+            communityAdminFacet,
+            communityMemberFacet,
+            communityPauseFacet,
+            communityPoolFacet,
+            communityPowerFacet,
+            communityStrategyFacet
         );
-        cuts = new IDiamond.FacetCut[](6);
+        cuts = new IDiamond.FacetCut[](7);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 6; i++) {
             cuts[i + 1] = baseCuts[i];
         }
     }
@@ -751,7 +602,6 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
 
     function _finalizePayloadWriter(JsonWriter memory writer) internal {
         vm.writeLine(writer.path, "]}");
-        console2.log("  File: %s", writer.path);
     }
 
     function _createTransactionJson(address to, bytes memory data) internal pure returns (string memory) {
@@ -766,19 +616,6 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
         );
     }
 
-    function _addressToString(address _addr) internal pure returns (string memory) {
-        bytes32 value = bytes32(uint256(uint160(_addr)));
-        bytes memory alphabet = "0123456789abcdef";
-
-        bytes memory str = new bytes(42);
-        str[0] = "0";
-        str[1] = "x";
-        for (uint256 i = 0; i < 20; i++) {
-            str[2 + i * 2] = alphabet[uint8(value[i + 12] >> 4)];
-            str[3 + i * 2] = alphabet[uint8(value[i + 12] & 0x0f)];
-        }
-        return string(str);
-    }
 
     function _bytesToHexString(bytes memory _bytes) internal pure returns (string memory) {
         bytes memory alphabet = "0123456789abcdef";

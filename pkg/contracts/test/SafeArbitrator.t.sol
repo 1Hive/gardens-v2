@@ -30,6 +30,35 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
 
+contract MockArbitrableRefundOrder is IArbitrable {
+    bool public ruled;
+
+    function rule(uint256, uint256) external override {
+        ruled = true;
+    }
+}
+
+contract RefundOrderSafe {
+    SafeArbitrator public immutable arbitrator;
+    MockArbitrableRefundOrder public immutable arbitrable;
+    bool public sawRuleDuringReceive;
+    bool public refundReceived;
+
+    constructor(SafeArbitrator _arbitrator, MockArbitrableRefundOrder _arbitrable) {
+        arbitrator = _arbitrator;
+        arbitrable = _arbitrable;
+    }
+
+    function execute(uint256 disputeId, uint256 ruling) external {
+        arbitrator.executeRuling(disputeId, ruling, address(arbitrable));
+    }
+
+    receive() external payable {
+        refundReceived = true;
+        sawRuleDuringReceive = arbitrable.ruled();
+    }
+}
+
 contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHelpers, SafeSetup {
     SafeArbitrator safeArbitrator;
     CVStrategy cvStrategy;
@@ -120,14 +149,17 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
             )
         );
         vm.startPrank(factoryOwner);
-        factory.initializeV2(
+        factory.setCommunityFacets(
             communityDiamondConfigurator.getFacetCuts(),
             address(communityDiamondConfigurator.diamondInit()),
-            abi.encodeCall(RegistryCommunityDiamondInit.init, ()),
+            abi.encodeCall(RegistryCommunityDiamondInit.init, ())
+        );
+        factory.setStrategyFacets(
             diamondConfigurator.getFacetCuts(),
             address(diamondConfigurator.diamondInit()),
             abi.encodeCall(CVStrategyDiamondInit.init, ())
         );
+        factory.registerContract(address(safeArbitrator));
         vm.stopPrank();
         registryCommunity = RegistryCommunity(factory.createRegistry(params));
 
@@ -426,11 +458,50 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         vm.prank(address(_councilSafe()));
         safeArbitrator.executeRuling(disputeID, 2, address(cvStrategy));
 
-        (uint256 ruling, bool tied, bool overridden) = safeArbitrator.currentRuling(disputeID - 1);
+        (uint256 ruling, bool tied, bool overridden) = safeArbitrator.currentRuling(disputeID);
 
         assertEq(ruling, 2);
         assertFalse(tied);
         assertFalse(overridden);
+    }
+
+    function testCurrentRuling_revertsOnZeroDisputeId() public {
+        vm.expectRevert(abi.encodeWithSelector(SafeArbitrator.InvalidDisputeId.selector, 0));
+        safeArbitrator.currentRuling(0);
+    }
+
+    function testExecuteRuling_revertsOnInvalidDisputeId() public {
+        vm.expectRevert(abi.encodeWithSelector(SafeArbitrator.InvalidDisputeId.selector, 1));
+        vm.prank(address(_councilSafe()));
+        safeArbitrator.executeRuling(1, 1, address(cvStrategy));
+    }
+
+    function test_executeRuling_refundHappensAfterRuleCallback() public {
+        SafeArbitrator localArbitrator = SafeArbitrator(
+            payable(
+                address(
+                    new ERC1967Proxy(
+                        address(new SafeArbitrator()),
+                        abi.encodeWithSelector(SafeArbitrator.initialize.selector, ARBITRATION_FEE, address(this))
+                    )
+                )
+            )
+        );
+        MockArbitrableRefundOrder arbitrable = new MockArbitrableRefundOrder();
+        RefundOrderSafe refundSafe = new RefundOrderSafe(localArbitrator, arbitrable);
+
+        vm.deal(address(arbitrable), ARBITRATION_FEE);
+        vm.prank(address(arbitrable));
+        localArbitrator.registerSafe(address(refundSafe));
+
+        vm.prank(address(arbitrable));
+        uint256 disputeId = localArbitrator.createDispute{value: ARBITRATION_FEE}(2, "");
+
+        refundSafe.execute(disputeId, 1);
+
+        assertTrue(arbitrable.ruled(), "L-1: rule callback must execute");
+        assertTrue(refundSafe.refundReceived(), "L-1: refund should be delivered");
+        assertTrue(refundSafe.sawRuleDuringReceive(), "L-1: refund should happen after rule callback");
     }
 
     function test_createDispute_tokenVariant_revertsNotSupported() public {

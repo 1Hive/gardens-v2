@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import getpass
 import json
 import os
 import sys
@@ -23,6 +24,7 @@ MULTISEND_SELECTOR = keccak(text="multiSend(bytes)")[:4]
 
 
 SAFE_SERVICE_URLS = {
+    "mainnet": "https://safe-transaction-mainnet.safe.global",
     "arbitrum": "https://safe-transaction-arbitrum.safe.global",
     "optimism": "https://safe-transaction-optimism.safe.global",
     "polygon": "https://safe-transaction-polygon.safe.global",
@@ -32,6 +34,7 @@ SAFE_SERVICE_URLS = {
 }
 
 SAFE_APP_PREFIX = {
+    "mainnet": "eth",
     "arbitrum": "arb1",
     "optimism": "oeth",
     "polygon": "matic",
@@ -167,7 +170,9 @@ def _post_safe_tx(base_url, safe_address, payload):
 def _load_private_key(keystore_path, password_env):
     password = os.environ.get(password_env)
     if not password:
-        raise RuntimeError(f"Missing {password_env} env var for keystore password.")
+        if not sys.stdin.isatty():
+            raise RuntimeError(f"Missing {password_env} env var for keystore password.")
+        password = getpass.getpass(f"Enter password for {keystore_path}: ")
     key_data = json.loads(Path(keystore_path).read_text())
     priv_key = Account.decrypt(key_data, password)
     acct = Account.from_key(priv_key)
@@ -180,11 +185,87 @@ def _resolve_multisend_address(version, override):
     return MULTISEND_CALL_ONLY_BY_VERSION.get(version, MULTISEND_CALL_ONLY_BY_VERSION["1.3.0"])
 
 
+def _submit_multisig_batch(
+    *,
+    base_url,
+    chain,
+    safe_address,
+    context_safe,
+    acct,
+    multisend_call_only,
+    chain_id,
+    txs,
+    nonce,
+    origin,
+    is_test,
+):
+    multisend_data = _encode_multisend(txs)
+
+    safe_tx = {
+        "to": to_checksum_address(multisend_call_only),
+        "value": 0,
+        "data": multisend_data,
+        "operation": 1,
+        "safeTxGas": 0,
+        "baseGas": 0,
+        "gasPrice": 0,
+        "gasToken": "0x0000000000000000000000000000000000000000",
+        "refundReceiver": "0x0000000000000000000000000000000000000000",
+        "nonce": nonce,
+    }
+
+    safe_tx_hash = _safe_tx_hash(
+        chain_id,
+        safe_address,
+        safe_tx["to"],
+        safe_tx["value"],
+        safe_tx["data"],
+        safe_tx["operation"],
+        safe_tx["safeTxGas"],
+        safe_tx["baseGas"],
+        safe_tx["gasPrice"],
+        safe_tx["gasToken"],
+        safe_tx["refundReceiver"],
+        safe_tx["nonce"],
+    )
+
+    signature = acct.signHash(safe_tx_hash).signature.hex()
+    safe_tx_hash_hex = "0x" + safe_tx_hash.hex()
+
+    request_payload = {
+        "safe": safe_address,
+        "to": safe_tx["to"],
+        "value": str(safe_tx["value"]),
+        "data": safe_tx["data"],
+        "operation": safe_tx["operation"],
+        "safeTxGas": safe_tx["safeTxGas"],
+        "baseGas": safe_tx["baseGas"],
+        "gasPrice": safe_tx["gasPrice"],
+        "gasToken": safe_tx["gasToken"],
+        "refundReceiver": safe_tx["refundReceiver"],
+        "nonce": safe_tx["nonce"],
+        "contractTransactionHash": safe_tx_hash_hex,
+        "sender": acct.address,
+        "signature": signature,
+        "origin": origin,
+    }
+
+    _post_safe_tx(base_url, safe_address, request_payload)
+    prefix = SAFE_APP_PREFIX.get(chain, chain)
+    tx_id = f"multisig_{safe_address}_{safe_tx_hash_hex}"
+    link = f"https://app.safe.global/transactions/tx?safe={prefix}:{safe_address}&id={tx_id}"
+    if is_test:
+        print(f"{chain}: submitted (nonce {nonce}) [test safe]")
+    else:
+        print(f"{chain}: submitted (nonce {nonce})")
+    print(link)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Submit Safe Transaction Builder payloads.")
     parser.add_argument("--safe", required=True, help="Safe address")
     parser.add_argument("--keystore", required=True, help="Keystore file path")
-    parser.add_argument("--password-env", default="SAFE_KEYSTORE_PASSWORD", help="Env var for keystore password")
+    parser.add_argument("--password-env", default="PK_METAMASK_PW", help="Env var for keystore password")
     parser.add_argument(
         "--payload-dir",
         default=str(Path(__file__).resolve().parents[1] / "transaction-builder"),
@@ -192,8 +273,19 @@ def main():
     )
     parser.add_argument(
         "--chains",
-        default="arbitrum,optimism,polygon,gnosis,base,celo",
+        default="mainnet,arbitrum,optimism,polygon,gnosis,base,celo",
         help="Comma-separated list of chains to submit",
+    )
+    parser.add_argument(
+        "--payload-file",
+        action="append",
+        default=[],
+        help="Explicit payload file(s) to submit in order. May be passed multiple times.",
+    )
+    parser.add_argument(
+        "--service-chain",
+        default="",
+        help="Safe service chain key to use with --payload-file (e.g. optimism).",
     )
     parser.add_argument(
         "--chunk-size",
@@ -213,6 +305,11 @@ def main():
         help="Override MultiSendCallOnly address (optional)",
     )
     parser.add_argument("--origin", default="gardens-v2 batch upgrade", help="Origin label for Safe service")
+    parser.add_argument(
+        "--origin-prefix",
+        default="",
+        help="Optional origin prefix for --payload-file mode. File name is appended automatically.",
+    )
     parser.add_argument(
         "--force",
         action="store_true",
@@ -237,6 +334,82 @@ def main():
     acct = _load_private_key(args.keystore, args.password_env)
     chains = [c.strip() for c in args.chains.split(",") if c.strip()]
     payload_dir = Path(args.payload_dir)
+
+    if args.payload_file:
+        if not args.service_chain:
+            raise RuntimeError("--service-chain is required with --payload-file")
+
+        chain = args.service_chain.strip()
+        base_url = SAFE_SERVICE_URLS.get(chain)
+        if not base_url:
+            raise RuntimeError(f"{chain}: no Safe service URL configured")
+
+        safe_info = _get_safe_info(base_url, context_safe)
+        version = safe_info.get("version", "1.3.0")
+        multisend_call_only = _resolve_multisend_address(version, args.multisend_call_only)
+
+        current_nonce = int(safe_info["nonce"])
+        pending_count, max_pending = _get_pending_nonce_info(base_url, context_safe)
+        if args.start_nonce >= 0:
+            base_nonce = args.start_nonce
+            print(f"{chain}: using start nonce override {base_nonce}")
+        elif args.force:
+            base_nonce = current_nonce
+            if max_pending is not None and max_pending >= current_nonce:
+                print(
+                    f"{chain}: force enabled, pending txs detected ({pending_count}), "
+                    f"submitting replacements starting at executed nonce {base_nonce}"
+                )
+            else:
+                print(f"{chain}: force enabled, starting at executed nonce {base_nonce}")
+        elif args.skip_pending:
+            if max_pending is not None and max_pending >= current_nonce:
+                base_nonce = max_pending + 1
+                print(f"{chain}: pending txs detected, skipping to nonce {base_nonce}")
+            else:
+                base_nonce = current_nonce
+        else:
+            base_nonce = current_nonce
+            if max_pending is not None and max_pending >= current_nonce:
+                print(
+                    f"{chain}: pending txs detected ({pending_count}), "
+                    f"submitting replacements starting at executed nonce {base_nonce}"
+                )
+
+        for idx, payload_file in enumerate(args.payload_file, start=0):
+            payload_path = Path(payload_file).expanduser()
+            if not payload_path.exists():
+                raise RuntimeError(f"missing payload {payload_path}")
+
+            payload_json = json.loads(payload_path.read_text())
+            payload_safe = payload_json.get("meta", {}).get("createdFromSafeAddress", "")
+            if payload_safe and to_checksum_address(payload_safe) != context_safe:
+                raise RuntimeError(
+                    f"{payload_path.name}: payload safe {payload_safe} does not match --safe {context_safe}"
+                )
+
+            txs = payload_json.get("transactions", [])
+            if not txs:
+                raise RuntimeError(f"{payload_path.name}: payload has no transactions")
+
+            chain_id = int(payload_json["chainId"])
+            origin = args.origin_prefix or args.origin
+            origin = f"{origin} :: {payload_path.name}"
+
+            _submit_multisig_batch(
+                base_url=base_url,
+                chain=chain,
+                safe_address=safe_address,
+                context_safe=context_safe,
+                acct=acct,
+                multisend_call_only=multisend_call_only,
+                chain_id=chain_id,
+                txs=txs,
+                nonce=base_nonce + idx,
+                origin=origin,
+                is_test=args.test,
+            )
+        return
 
     for chain in chains:
         base_url = SAFE_SERVICE_URLS.get(chain)
@@ -295,69 +468,21 @@ def main():
 
         for idx, txs in enumerate(chunks, start=1):
             safe_nonce = base_nonce + (idx - 1)
-
-            multisend_data = _encode_multisend(txs)
             chain_id = int(payload_json["chainId"])
-
-            safe_tx = {
-                "to": to_checksum_address(multisend_call_only),
-                "value": 0,
-                "data": multisend_data,
-                "operation": 1,  # delegatecall
-                "safeTxGas": 0,
-                "baseGas": 0,
-                "gasPrice": 0,
-                "gasToken": "0x0000000000000000000000000000000000000000",
-                "refundReceiver": "0x0000000000000000000000000000000000000000",
-                "nonce": safe_nonce,
-            }
-
-            safe_tx_hash = _safe_tx_hash(
-                chain_id,
-                safe_address,
-                safe_tx["to"],
-                safe_tx["value"],
-                safe_tx["data"],
-                safe_tx["operation"],
-                safe_tx["safeTxGas"],
-                safe_tx["baseGas"],
-                safe_tx["gasPrice"],
-                safe_tx["gasToken"],
-                safe_tx["refundReceiver"],
-                safe_tx["nonce"],
-            )
-
-            signature = acct.signHash(safe_tx_hash).signature.hex()
-            safe_tx_hash_hex = "0x" + safe_tx_hash.hex()
-
-            request_payload = {
-                "safe": safe_address,
-                "to": safe_tx["to"],
-                "value": str(safe_tx["value"]),
-                "data": safe_tx["data"],
-                "operation": safe_tx["operation"],
-                "safeTxGas": safe_tx["safeTxGas"],
-                "baseGas": safe_tx["baseGas"],
-                "gasPrice": safe_tx["gasPrice"],
-                "gasToken": safe_tx["gasToken"],
-                "refundReceiver": safe_tx["refundReceiver"],
-                "nonce": safe_tx["nonce"],
-                "contractTransactionHash": safe_tx_hash_hex,
-                "sender": acct.address,
-                "signature": signature,
-                "origin": args.origin,
-            }
-
             try:
-                _post_safe_tx(base_url, safe_address, request_payload)
-                prefix = SAFE_APP_PREFIX.get(chain, chain)
-                tx_id = f"multisig_{safe_address}_{safe_tx_hash_hex}"
-                link = f"https://app.safe.global/transactions/tx?safe={prefix}:{safe_address}&id={tx_id}"
-                if args.test:
-                    print(f"{chain}: submitted part {idx}/{len(chunks)} (nonce {safe_nonce}) [test safe]")
-                else:
-                    print(f"{chain}: submitted part {idx}/{len(chunks)} (nonce {safe_nonce})")
-                print(link)
+                _submit_multisig_batch(
+                    base_url=base_url,
+                    chain=chain,
+                    safe_address=safe_address,
+                    context_safe=context_safe,
+                    acct=acct,
+                    multisend_call_only=multisend_call_only,
+                    chain_id=chain_id,
+                    txs=txs,
+                    nonce=safe_nonce,
+                    origin=args.origin,
+                    is_test=args.test,
+                )
             except Exception as exc:
                 print(f"{chain}: submit failed: {exc}", file=sys.stderr)
                 break

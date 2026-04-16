@@ -19,6 +19,7 @@ contract ProxyOwnerV2 is ProxyOwner {
 contract ProxyOwnerTest is Test {
     address deployerWallet = makeAddr("deployerWallet");
     address anotherWallet = makeAddr("anotherWallet");
+    address upgradeWallet = makeAddr("upgradeWallet");
     address protocolFeeReceiver = makeAddr("multisigReceiver");
     address newOwner = makeAddr("newOwner");
 
@@ -93,7 +94,7 @@ contract ProxyOwnerTest is Test {
         ProxyOwner proxyOwner = _deployProxyOwner();
 
         vm.prank(anotherWallet);
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(ProxyOwner.OwnableUnauthorizedAccount.selector, anotherWallet));
         proxyOwner.transferOwnership(newOwner);
     }
 
@@ -104,6 +105,112 @@ contract ProxyOwnerTest is Test {
 
         vm.prank(deployerWallet);
         factory.upgradeTo(address(newImpl));
+    }
+
+    function test_grantUpgradeAccess_exposesUpgradeWalletAsOwner() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+
+        vm.prank(deployerWallet);
+        proxyOwner.grantUpgradeAccess(upgradeWallet);
+
+        assertEq(proxyOwner.mainOwner(), deployerWallet);
+        assertEq(proxyOwner.proxyOwner(), deployerWallet);
+        assertEq(proxyOwner.owner(), upgradeWallet);
+        assertEq(proxyOwner.upgradeAccess(), upgradeWallet);
+    }
+
+    function test_grantedUpgradeWallet_canUpgradeProxyOwnedContract() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+        RegistryFactory factory = _deployRegistryFactory(address(proxyOwner));
+        RegistryFactory newImpl = new RegistryFactory();
+
+        vm.prank(deployerWallet);
+        proxyOwner.grantUpgradeAccess(upgradeWallet);
+
+        vm.prank(upgradeWallet);
+        factory.upgradeTo(address(newImpl));
+    }
+
+    function test_grantedUpgradeWallet_cannotManageProxyOwner() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+        ProxyOwnerV2 newImpl = new ProxyOwnerV2();
+
+        vm.prank(deployerWallet);
+        proxyOwner.grantUpgradeAccess(upgradeWallet);
+
+        vm.prank(upgradeWallet);
+        vm.expectRevert(abi.encodeWithSelector(ProxyOwner.OwnableUnauthorizedAccount.selector, upgradeWallet));
+        proxyOwner.transferOwnership(newOwner);
+
+        vm.prank(upgradeWallet);
+        vm.expectRevert(abi.encodeWithSelector(ProxyOwner.OwnableUnauthorizedAccount.selector, upgradeWallet));
+        proxyOwner.upgradeTo(address(newImpl));
+    }
+
+    function test_renounceUpgradeAccess_restoresOriginalOwner() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+        RegistryFactory factory = _deployRegistryFactory(address(proxyOwner));
+        RegistryFactory newImpl = new RegistryFactory();
+
+        vm.prank(deployerWallet);
+        proxyOwner.grantUpgradeAccess(upgradeWallet);
+        assertEq(proxyOwner.owner(), upgradeWallet);
+
+        vm.prank(upgradeWallet);
+        proxyOwner.renounceUpgradeAccess();
+
+        assertEq(proxyOwner.owner(), deployerWallet);
+        assertEq(proxyOwner.upgradeAccess(), address(0));
+
+        vm.prank(upgradeWallet);
+        vm.expectRevert(
+            abi.encodeWithSelector(ProxyOwnableUpgrader.CallerNotOwner.selector, upgradeWallet, deployerWallet)
+        );
+        factory.upgradeTo(address(newImpl));
+    }
+
+    function test_renounceUpgradeAccess_revertsForNonUpgradeWallet() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+
+        vm.prank(deployerWallet);
+        proxyOwner.grantUpgradeAccess(upgradeWallet);
+
+        vm.prank(anotherWallet);
+        vm.expectRevert(abi.encodeWithSelector(ProxyOwner.OwnableUnauthorizedAccount.selector, anotherWallet));
+        proxyOwner.renounceUpgradeAccess();
+    }
+
+    function test_reclaimUpgradeAccess_restoresOriginalOwner() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+        RegistryFactory factory = _deployRegistryFactory(address(proxyOwner));
+        RegistryFactory newImpl = new RegistryFactory();
+
+        vm.prank(deployerWallet);
+        proxyOwner.grantUpgradeAccess(upgradeWallet);
+        assertEq(proxyOwner.owner(), upgradeWallet);
+
+        vm.prank(deployerWallet);
+        proxyOwner.reclaimUpgradeAccess();
+
+        assertEq(proxyOwner.owner(), deployerWallet);
+        assertEq(proxyOwner.upgradeAccess(), address(0));
+
+        vm.prank(upgradeWallet);
+        vm.expectRevert(
+            abi.encodeWithSelector(ProxyOwnableUpgrader.CallerNotOwner.selector, upgradeWallet, deployerWallet)
+        );
+        factory.upgradeTo(address(newImpl));
+    }
+
+    function test_reclaimUpgradeAccess_revertsForNonOwner() public {
+        ProxyOwner proxyOwner = _deployProxyOwner();
+
+        vm.prank(deployerWallet);
+        proxyOwner.grantUpgradeAccess(upgradeWallet);
+
+        vm.prank(anotherWallet);
+        vm.expectRevert(abi.encodeWithSelector(ProxyOwner.OwnableUnauthorizedAccount.selector, anotherWallet));
+        proxyOwner.reclaimUpgradeAccess();
     }
 
     function test_upgradeWithEOAOwner() public {
@@ -152,7 +259,7 @@ contract ProxyOwnerTest is Test {
         ProxyOwnerV2 newImpl = new ProxyOwnerV2();
 
         vm.prank(anotherWallet);
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(ProxyOwner.OwnableUnauthorizedAccount.selector, anotherWallet));
         proxyOwner.upgradeTo(address(newImpl));
     }
 }

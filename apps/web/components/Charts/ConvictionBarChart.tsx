@@ -14,6 +14,7 @@ type ScenarioMapping = {
 };
 
 type ConvictionBarChartProps = {
+  hasInsufficientPoolFunds: boolean;
   currentConvictionPct: number;
   thresholdPct: number;
   proposalSupportPct: number;
@@ -23,8 +24,11 @@ type ConvictionBarChartProps = {
   timeToPass?: number;
   defaultChartMaxValue?: boolean;
   proposalStatus: string;
+  proposalType: "funding" | "streaming" | "signaling";
   onReadyToExecute?: () => void;
   refreshConviction?: () => Promise<any> | void;
+  isThresholdOutOfReach?: boolean;
+  isThresholdBelowDisplayPrecision?: boolean;
 };
 
 export function getChartColors(isDarkTheme?: boolean) {
@@ -43,7 +47,8 @@ export function getChartColors(isDarkTheme?: boolean) {
   };
 }
 
-export const ConvictionBarChart = ({
+const ConvictionBarChartBase = ({
+  hasInsufficientPoolFunds,
   currentConvictionPct,
   thresholdPct,
   proposalSupportPct,
@@ -54,6 +59,9 @@ export const ConvictionBarChart = ({
   onReadyToExecute,
   defaultChartMaxValue = false,
   proposalStatus,
+  proposalType,
+  isThresholdOutOfReach = false,
+  isThresholdBelowDisplayPrecision = false,
 }: ConvictionBarChartProps) => {
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
   const { resolvedTheme } = useTheme();
@@ -61,6 +69,16 @@ export const ConvictionBarChart = ({
   const chartColors = getChartColors(isDarkTheme);
   const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
   const scenarioMappings: Record<string, ScenarioMapping> = {
+    // First check if there are insufficient funds in the pool to pass the proposal.
+    hasInsufficientFundsInPool: {
+      condition: () => hasInsufficientPoolFunds,
+      details: [
+        {
+          message: "Not enough funds in the pool to execute this proposal.",
+          growing: null,
+        },
+      ],
+    },
     //1-SignalingType) Support > 0 && > Conviction
     isSignalingTypeAndCovictionEqSupport: {
       condition: () =>
@@ -130,8 +148,10 @@ export const ConvictionBarChart = ({
         thresholdPct < currentConvictionPct,
       details: [
         {
-          // TODO: add real date
-          message: "This proposal is Executable",
+          message:
+            proposalType === "streaming" ?
+              "This proposal is about to stream."
+            : "This proposal is executable.",
           growing: false,
         },
       ],
@@ -143,7 +163,10 @@ export const ConvictionBarChart = ({
         currentConvictionPct < proposalSupportPct,
       details: [
         {
-          message: "This proposal is ready to be executed!",
+          message:
+            proposalType === "streaming" ?
+              "This proposal is about to stream."
+            : "This proposal is ready to be executed!",
           growing: true,
         },
       ],
@@ -155,7 +178,10 @@ export const ConvictionBarChart = ({
         proposalSupportPct < currentConvictionPct,
       details: [
         {
-          message: "This proposal is ready to be executed!",
+          message:
+            proposalType === "streaming" ?
+              "This proposal is about to stream."
+            : "This proposal is ready to be executed!",
           growing: false,
         },
       ],
@@ -181,7 +207,10 @@ export const ConvictionBarChart = ({
         proposalSupportPct > thresholdPct,
       details: [
         {
-          message: "This proposal is ready to be executed!",
+          message:
+            proposalType === "streaming" ?
+              "This proposal is about to stream."
+            : "This proposal is ready to be executed!",
           growing: null,
         },
       ],
@@ -212,7 +241,12 @@ export const ConvictionBarChart = ({
         growing: null,
       }
     );
-  }, [timeToPass, currentConvictionPct, proposalSupportPct, thresholdPct]);
+  }, [
+    currentConvictionPct,
+    hasInsufficientPoolFunds,
+    proposalSupportPct,
+    thresholdPct,
+  ]);
 
   useEffect(() => {
     if (convictionRefreshing && currentConvictionPct != null) {
@@ -244,15 +278,18 @@ export const ConvictionBarChart = ({
       {}
     : {
         ...markLine,
-        data: [
-          {
-            xAxis: thresholdPct,
-            symbol:
-              "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
-            symbolSize: [16, 16],
-            symbolOffset: [-7, 50],
-          },
-        ],
+        data:
+          hasInsufficientPoolFunds ?
+            []
+          : [
+              {
+                xAxis: thresholdPct,
+                symbol:
+                  "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
+                symbolSize: [16, 16],
+                symbolOffset: [-7, 50],
+              },
+            ],
         lineStyle: {
           width: compact ? 0.75 : 1,
           color: chartColors.markLine,
@@ -417,6 +454,8 @@ export const ConvictionBarChart = ({
             support={proposalSupportPct}
             threshold={thresholdPct}
             conviction={currentConvictionPct}
+            isThresholdOutOfReach={isThresholdOutOfReach}
+            isThresholdBelowDisplayPrecision={isThresholdBelowDisplayPrecision}
           >
             {chart}
           </ChartWrapper>
@@ -424,7 +463,12 @@ export const ConvictionBarChart = ({
             proposalWillPass &&
             !readyToBeExecuted && (
               <div className="flex items-center gap-2">
-                <p>Estimated time to pass:</p>
+                <p>
+                  {proposalType === "funding" ?
+                    "Estimated time to pass"
+                  : "Before streaming starts"}
+                  :
+                </p>
                 <Countdown
                   endTimestamp={Number(timeToPass)}
                   display="inline"
@@ -438,3 +482,30 @@ export const ConvictionBarChart = ({
     </>
   );
 };
+
+function areConvictionBarChartPropsEqual(
+  prev: ConvictionBarChartProps,
+  next: ConvictionBarChartProps,
+) {
+  return (
+    prev.currentConvictionPct === next.currentConvictionPct &&
+    prev.thresholdPct === next.thresholdPct &&
+    prev.proposalSupportPct === next.proposalSupportPct &&
+    prev.isSignalingType === next.isSignalingType &&
+    prev.proposalNumber === next.proposalNumber &&
+    prev.compact === next.compact &&
+    prev.timeToPass === next.timeToPass &&
+    prev.defaultChartMaxValue === next.defaultChartMaxValue &&
+    prev.hasInsufficientPoolFunds === next.hasInsufficientPoolFunds &&
+    prev.proposalStatus === next.proposalStatus &&
+    prev.proposalType === next.proposalType &&
+    prev.isThresholdOutOfReach === next.isThresholdOutOfReach &&
+    prev.isThresholdBelowDisplayPrecision ===
+      next.isThresholdBelowDisplayPrecision
+  );
+}
+
+export const ConvictionBarChart = React.memo(
+  ConvictionBarChartBase,
+  areConvictionBarChartPropsEqual,
+);
