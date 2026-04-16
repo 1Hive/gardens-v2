@@ -576,7 +576,7 @@
       },
       "hash": "ffa05f8965b0b10a301fd4f794bb4693e009c63e",
       "IMPLEMENTATIONS": {
-        "CV_STRATEGY": "0x428d69afa04242d61109d67bf686141a26257bb0",
+        "CV_STRATEGY": "0xe92569A6DEBb520C8725944878A9F00Fa3689615",
         "REGISTRY_COMMUNITY": "0x5b39e9e7da9adda9569404ec72c54b638163286d",
         "COLLATERAL_VAULT": "0xcdc43a6b6ea7f8c4a8715be1278f366e1de0d749",
         "PAUSE_CONTROLLER": "0x53a16e58d76bf0ba738e777155bcd69f7ecc5ce0",
@@ -940,6 +940,7 @@
           "0x6b57c434de064306e7981662895868d700683dcc",
           "0x6cf124c57ddd95d17559e3caf07539bc63cc7728",
           "0x7b569e081796dd8fd72e386fb1671091c2604bd3",
+          "0x87b83c511b44a54635c0b7d79771882176fd73f1",
           "0x8ad5953a53b7a69203e87de928481e6066011e82",
           "0x8fe008e79f1f66453865e611224d66ad4cb536aa",
           "0x9127bf81bdd0526ca992579e9bc8f232d880d650",
@@ -953,7 +954,7 @@
           "0xf51f81d34fbfc56bb57dca0a3a4f1591065bf499"
         ]
       },
-      "hash": "e30e418651cc64d321fc17cf62ae4dabff31ce27",
+      "hash": "ba4b6c35757951cdd29daf43b7f0b54ec555801d",
       "IMPLEMENTATIONS": {
         "CV_STRATEGY": "0x35ba842887a21d666cddbcdb73817a2535f224a6",
         "REGISTRY_COMMUNITY": "0x5f1016d29ba3bb7cdc1b1a47366e6d0891439fa5",
