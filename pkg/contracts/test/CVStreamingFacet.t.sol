@@ -139,6 +139,10 @@ contract MockSuperToken {
         return balances[account];
     }
 
+    function decimals() external pure returns (uint8) {
+        return 18;
+    }
+
     function mint(address account, uint256 amount) external {
         balances[account] += amount;
     }
@@ -435,6 +439,10 @@ contract CVStreamingFacetHarness is CVStreamingFacet {
         proposals[proposalId].submitter = address(0x1);
     }
 
+    function setProposalRequestedAmount(uint256 proposalId, uint256 requestedAmount) external {
+        proposals[proposalId].requestedAmount = requestedAmount;
+    }
+
     function getProposalSnapshot(uint256 proposalId)
         external
         view
@@ -603,6 +611,16 @@ contract CVStreamingFacetTest is Test {
         assertEq(superToken.upgradeCallCount(), 0);
     }
 
+    function test_wrapIfNeeded_pureSuperTokenPool_returns_early() public {
+        allo.setPool(1, address(superToken));
+        superToken.mint(address(facet), 100 ether);
+
+        facet.setSkipWrap(false);
+        facet.exposedWrapIfNeeded();
+
+        assertEq(superToken.upgradeCallCount(), 0);
+    }
+
     function test_wrapIfNeeded_success_upgrades_underlying_balance() public {
         token.mint(address(facet), 25 ether);
 
@@ -710,6 +728,34 @@ contract CVStreamingFacetTest is Test {
 
         assertEq(gdaPool.updateCount(), 1);
         assertGt(gdaPool.memberUnits(escrow1), 0);
+    }
+
+    function test_rebalance_pureSuperTokenPool_does_not_double_count_pool_balance() public {
+        uint256 realPoolBalance = 100 ether;
+        uint256 requestedAmount = 100 ether;
+
+        allo.setPool(1, address(superToken));
+        superToken.mint(address(facet), realPoolBalance);
+
+        uint256 thresholdIfDoubleCounted = ConvictionsUtils.calculateThreshold(
+            requestedAmount,
+            realPoolBalance * 2,
+            1_000 * D,
+            DECAY,
+            1_000_000,
+            9_000_000,
+            0
+        );
+
+        facet.setupProposal(1, ProposalStatus.Active, 0, thresholdIfDoubleCounted + 1, block.number);
+        facet.setProposalRequestedAmount(1, requestedAmount);
+        facet.setStreamingEscrowExternal(1, escrow1);
+
+        assertEq(facet.getPoolAmount(), realPoolBalance);
+
+        facet.rebalance();
+
+        assertEq(gdaPool.memberUnits(escrow1), 0);
     }
 
     function test_rebalance_multiple_active_proposals() public {

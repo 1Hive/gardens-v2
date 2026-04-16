@@ -475,6 +475,10 @@ abstract contract CVStrategyBaseFacet {
         }
 
         uint256 base = ERC20(token).balanceOf(address(this));
+        if (token == address(superfluidToken)) {
+            return base;
+        }
+
         uint256 sf = address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
 
         uint8 d = ERC20(token).decimals();

@@ -300,6 +300,10 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         }
 
         uint256 base = IERC20(token).balanceOf(address(this));
+        if (token == address(superfluidToken)) {
+            return base;
+        }
+
         uint256 sf = address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
 
         uint8 d = IERC20Metadata(token).decimals();
