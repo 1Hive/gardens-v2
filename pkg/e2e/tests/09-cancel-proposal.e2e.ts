@@ -7,6 +7,7 @@ import {
   connectWallet,
   expectNoErrorToast
 } from "./support/metamaskUtils";
+import { getByTestId } from "./support/locators-utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
@@ -64,12 +65,12 @@ test("should cancel a proposal", async ({
   );
 
   // Click the Cancel button to open the confirmation modal
-  const cancelBtn = page.getByTestId("btn-cancel-proposal");
+  const cancelBtn = getByTestId(page, "btn-cancel-proposal");
   await expect(cancelBtn).toBeVisible({ timeout: 30000 });
   await cancelBtn.click();
 
   // Confirm cancellation in the modal
-  const confirmCancelBtn = page.getByTestId("btn-confirm-cancel-proposal");
+  const confirmCancelBtn = getByTestId(page, "btn-confirm-cancel-proposal");
   await expect(confirmCancelBtn).toBeVisible({ timeout: 10000 });
   await confirmCancelBtn.click();
 

@@ -57,29 +57,34 @@ export default defineConfig({
       dependencies: ["03-create-pool"]
     },
     {
-      name: "05-create-proposal",
-      testMatch: /05..*\.e2e\.ts$/,
+      name: "05-edit-pool",
+      testMatch: /05-.*\.e2e\.ts$/,
       dependencies: ["04-approve-pool"]
     },
     {
-      name: "06-activate-governance",
-      testMatch: /06..*\.e2e\.ts$/,
-      dependencies: ["05-create-proposal"]
+      name: "06-create-proposal",
+      testMatch: /06-.*\.e2e\.ts$/,
+      dependencies: ["05-edit-pool"]
     },
     {
-      name: "07-allocate-proposal",
-      testMatch: /07..*\.e2e\.ts$/,
-      dependencies: ["06-activate-governance"]
+      name: "07-activate-governance",
+      testMatch: /07-.*\.e2e\.ts$/,
+      dependencies: ["06-create-proposal"]
     },
     {
-      name: "08-cancel-proposal",
-      testMatch: /08..*\.e2e\.ts$/,
-      dependencies: ["07-allocate-proposal"]
+      name: "08-allocate-proposal",
+      testMatch: /08-.*\.e2e\.ts$/,
+      dependencies: ["07-activate-governance"]
+    },
+    {
+      name: "09-cancel-proposal",
+      testMatch: /09-.*\.e2e\.ts$/,
+      dependencies: ["08-allocate-proposal"]
     },
     {
       name: "99-leave",
       testMatch: /99..*\.e2e\.ts$/,
-      dependencies: ["08-cancel-proposal"]
+      dependencies: ["09-cancel-proposal"]
     }
   ]
   // Additional Synpress-specific configuration can be added here

@@ -663,18 +663,18 @@ export default function ClientPage({ params }: ClientPageProps) {
           )}
 
           {shouldShowSupportersTab && (
-              <section className="xl:max-h-10">
-                <ProposalSupportersTable
-                  supporters={filteredAndSortedProposalSupporters}
-                  beneficiary={beneficiary}
-                  submitter={submitter}
-                  totalActivePoints={totalEffectiveActivePoints ?? 0}
-                  totalStakedAmount={totalSupportPct ?? 0}
-                  openSupportersModal={openSupportersModal}
-                  setOpenSupportersModal={setOpenSupportersModal}
-                />
-              </section>
-            )}
+            <section className="xl:max-h-10">
+              <ProposalSupportersTable
+                supporters={filteredAndSortedProposalSupporters}
+                beneficiary={beneficiary}
+                submitter={submitter}
+                totalActivePoints={totalEffectiveActivePoints ?? 0}
+                totalStakedAmount={totalSupportPct ?? 0}
+                openSupportersModal={openSupportersModal}
+                setOpenSupportersModal={setOpenSupportersModal}
+              />
+            </section>
+          )}
         </div>
       </div>
 
@@ -1016,17 +1016,17 @@ export default function ClientPage({ params }: ClientPageProps) {
           )}
 
           {shouldShowSupportersTab && selectedTab === 3 && (
-              <ProposalSupportersTable
-                supporters={filteredAndSortedProposalSupporters}
-                beneficiary={beneficiary}
-                submitter={submitter}
-                totalActivePoints={totalEffectiveActivePoints ?? 0}
-                totalStakedAmount={totalSupportPct ?? 0}
-                openSupportersModal={openSupportersModal}
-                setOpenSupportersModal={setOpenSupportersModal}
-                withModal={false}
-              />
-            )}
+            <ProposalSupportersTable
+              supporters={filteredAndSortedProposalSupporters}
+              beneficiary={beneficiary}
+              submitter={submitter}
+              totalActivePoints={totalEffectiveActivePoints ?? 0}
+              totalStakedAmount={totalSupportPct ?? 0}
+              openSupportersModal={openSupportersModal}
+              setOpenSupportersModal={setOpenSupportersModal}
+              withModal={false}
+            />
+          )}
         </div>
       </div>
     </>

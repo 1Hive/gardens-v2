@@ -7,6 +7,7 @@ import {
   connectWallet,
   expectNoErrorToast
 } from "./support/metamaskUtils";
+import { getByTestId } from "./support/locators-utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
@@ -39,10 +40,9 @@ test("should leave community", async ({
   await connectWallet(page, metamask);
 
   // 4. Leave the community
-  const leaveBtn = page
-    .getByTestId("register-member-button")
-    .locator(":scope:visible")
-    .getByText("Leave");
+  const leaveBtn = getByTestId(page, "register-member-button").getByText(
+    "Leave"
+  );
   await expect(leaveBtn).toBeVisible({ timeout: 60000 });
   await expect(leaveBtn).toBeEnabled({ timeout: 60000 });
   await leaveBtn.click();

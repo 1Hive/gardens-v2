@@ -8,6 +8,7 @@ import {
   connectWallet,
   expectNoErrorToast
 } from "./support/metamaskUtils";
+import { getByTestId } from "./support/locators-utils";
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
 const { expect } = test;
@@ -45,19 +46,20 @@ test("should create a pool in the community", async ({
   await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
 
   // Stake Create Pool
-  await page.getByTestId("btn-create-pool").click();
+  await getByTestId(page, "btn-create-pool").click();
 
   //Find all inputs
-  const nameInput = page.getByTestId("input-pool-name");
+  const nameInput = getByTestId(page, "input-pool-name");
   await expect(nameInput).toBeVisible({ timeout: 30000 });
-  const descriptionInput = page
-    .getByTestId("input-pool-description")
-    .locator('[contenteditable="true"]');
-  const tokenAddressInput = page.getByTestId("input-token-address");
-  const proposalCollateralInput = page.getByTestId(
+  const descriptionInput = getByTestId(page, "input-pool-description").locator(
+    '[contenteditable="true"]'
+  );
+  const tokenAddressInput = getByTestId(page, "input-token-address");
+  const proposalCollateralInput = getByTestId(
+    page,
     "input-collateral-create-proposal"
   );
-  const disputeCollateralInput = page.getByTestId("input-dispute-proposal");
+  const disputeCollateralInput = getByTestId(page, "input-dispute-proposal");
 
   // Fill all inputs
   await nameInput.fill("Test Pool");
@@ -65,8 +67,8 @@ test("should create a pool in the community", async ({
   await tokenAddressInput.fill("0x8b2f706cd2bc0df6679218177c56e72c5241de9b");
   await proposalCollateralInput.fill("0.0000000001");
   await disputeCollateralInput.fill("0.0000000001");
-  await page.getByTestId("btn-preview-pool").click();
-  await page.getByTestId("btn-submit-pool").click();
+  await getByTestId(page, "btn-preview-pool").click();
+  await getByTestId(page, "btn-submit-pool").click();
 
   // Approve token allowance for staking
   await approveTokenAllowance({ page, metamask, extensionId });

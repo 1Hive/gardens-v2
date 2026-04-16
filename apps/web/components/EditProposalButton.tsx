@@ -49,6 +49,7 @@ function EditProposalButton({ proposalData, poolToken }: Props) {
     <>
       <Button
         btnStyle="outline"
+        // testId="btn-edit-pool"
         color="primary"
         onClick={() => setIsModalOpen(true)}
         disabled={isDisabled}
