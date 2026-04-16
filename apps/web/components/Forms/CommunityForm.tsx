@@ -106,29 +106,13 @@ export const CommunityForm = () => {
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const publicClient = useMemo(() => {
-    if (!selectedChainId) {
-      return undefined;
-    }
 
-    const selectedChain = getChain(selectedChainId);
-    if (!selectedChain) {
-      return undefined;
-    }
-
-    const rpcUrl = getConfigByChain(selectedChainId)?.rpcUrl?.trim();
-
-    return createPublicClient({
-      chain: selectedChain,
-      transport: rpcUrl ? http(rpcUrl) : http(),
-    });
-  }, [selectedChainId]);
-  const pathname = usePathname();
   const { isConnected, tooltipMessage } = useDisableButtons();
   const { switchNetwork, data: switchNetworkData } = useAppSwitchNetwork();
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
   const [tokenIsFetching, setTokenIsFetching] = useState<boolean>(false);
-  const normalizedChainId = Number.isFinite(Number(selectedChainId)) ?
+  const normalizedChainId =
+    Number.isFinite(Number(selectedChainId)) ?
       Number(selectedChainId)
     : undefined;
 
@@ -355,8 +339,7 @@ export const CommunityForm = () => {
       const hasCommunityFee = communityFeeAmount > 0n;
       const feeReceiverAddress = getValues("feeReceiver").trim();
       const communityFeeReceiver =
-        hasCommunityFee && isAddress(feeReceiverAddress) ?
-          feeReceiverAddress
+        hasCommunityFee && isAddress(feeReceiverAddress) ? feeReceiverAddress
         : zeroAddress;
       const councilSafeAddress = getValues("councilSafe").trim();
       const isKickMemberEnabled = previewData.isKickMemberEnabled;

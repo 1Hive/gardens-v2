@@ -44,10 +44,10 @@ test("should create a proposal in the pool", async ({
       })
     }
   ).then((r) => r.json());
-  const { poolId } = subgraphRes.data.cvstrategies[0];
+  const { id: strategyAddress } = subgraphRes.data.cvstrategies[0];
   console.log("subgraph RESP", subgraphRes);
   await page.goto(
-    `gardens/10/0x8b2f706cd2bc0df6679218177c56e72c5241de9b/0x9ee73d7afd1d75d9d3468ab7845150180936dec4/${poolId}/create-proposal`,
+    `gardens/10/0x9ee73d7afd1d75d9d3468ab7845150180936dec4/${strategyAddress}/create-proposal`,
     {
       timeout: 60000 // Increase timeout to handle slow loading
     }

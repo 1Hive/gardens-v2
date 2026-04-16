@@ -40,10 +40,10 @@ test("should activate governance in the pool", async ({
       })
     }
   ).then((r) => r.json());
-  const { id: strategyId, poolId } = subgraphRes.data.cvstrategies[0];
+  const { id: strategyAddress } = subgraphRes.data.cvstrategies[0];
 
   await page.goto(
-    `gardens/10/0x8b2f706cd2bc0df6679218177c56e72c5241de9b/0x9ee73d7afd1d75d9d3468ab7845150180936dec4/${poolId}`,
+    `gardens/10/0x9ee73d7afd1d75d9d3468ab7845150180936dec4/${strategyAddress}`,
     { timeout: 60000 }
   );
 

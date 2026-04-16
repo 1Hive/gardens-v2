@@ -32,12 +32,9 @@ test("should create a pool in the community", async ({
 
   await page.bringToFront();
   await connectWallet(page, metamask);
-  await page.goto(
-    "/gardens/10/0x8b2f706cd2bc0df6679218177c56e72c5241de9b/0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
-    {
-      timeout: 60000 // Increase timeout to handle slow loading
-    }
-  );
+  await page.goto("/gardens/10/0x9ee73d7afd1d75d9d3468ab7845150180936dec4", {
+    timeout: 60000 // Increase timeout to handle slow loading
+  });
 
   await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
 
