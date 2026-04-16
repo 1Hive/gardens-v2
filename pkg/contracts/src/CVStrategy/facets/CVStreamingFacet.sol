@@ -10,6 +10,7 @@ import {IRegistryFactory} from "../../IRegistryFactory.sol";
 import {ISafe} from "../../interfaces/ISafe.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 interface IStreamingEscrowSync {
     function syncOutflow() external;
@@ -75,8 +76,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         bool hadEscrowSyncError = false;
         bool syncedAnyEscrow = false;
 
-        // Rebalancing logic: Update units for each active streaming proposal
-        // Loop through all proposals and update their GDA units based on conviction
+        // First pass: identify eligible conviction and clear non-active proposal units.
         for (uint256 i = 1; i <= proposalCounter; i++) {
             Proposal storage proposal = proposals[i];
 
@@ -98,25 +98,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             // Calculate current conviction for the proposal
             uint256 convictionValue = calculateProposalConviction(i);
 
-            uint128 units = 0;
             if (_isProposalAboveThreshold(proposal, convictionValue, poolAmount)) {
                 totalEligibleConviction += convictionValue;
-
-                // Scale down conviction to fit uint128 by dividing by D (10^7)
-                // This maintains proportional relationships between proposals while reducing precision
-                uint256 scaledConviction = convictionValue / ConvictionsUtils.D;
-
-                // Cast to uint128 for Superfluid GDA (with overflow protection)
-                units = scaledConviction > type(uint128).max ? type(uint128).max : uint128(scaledConviction);
             }
-
-            // Update the member units in the GDA pool
-            // This determines the proportional share of the total streaming flow
-            if (!superfluidGDA.updateMemberUnits(escrow, units)) {
-                revert UpdateMemberUnitsFailed(escrow, units);
-            }
-
-            emit StreamMemberUnitUpdated(escrow, int96(int128(units)));
         }
 
         // Start/update/stop stream based on pool conviction share.
@@ -127,6 +111,38 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             uint256 clampedConviction =
                 totalEligibleConviction > maxConviction ? maxConviction : totalEligibleConviction;
             requestedFlowRate = (streamingRatePerSecond * clampedConviction) / maxConviction;
+        }
+
+        uint128 streamingUnitBudget = _streamingUnitBudget(requestedFlowRate);
+
+        // Second pass: update units after the requested flow is known. When a stream is requested,
+        // cap total units to the requested flow rate so GDA integer division cannot round it to zero.
+        for (uint256 i = 1; i <= proposalCounter; i++) {
+            Proposal storage proposal = proposals[i];
+
+            address escrow = streamingEscrow(i);
+            if (escrow == address(0)) {
+                continue;
+            }
+
+            if (proposal.proposalStatus != ProposalStatus.Active && proposal.proposalStatus != ProposalStatus.Disputed)
+            {
+                continue;
+            }
+
+            uint256 convictionValue = calculateProposalConviction(i);
+            uint128 units = 0;
+            if (_isProposalAboveThreshold(proposal, convictionValue, poolAmount)) {
+                units = shouldStartStream
+                    ? _scaledUnitsForStreaming(convictionValue, totalEligibleConviction, streamingUnitBudget)
+                    : _legacyScaledUnits(convictionValue);
+            }
+
+            if (!superfluidGDA.updateMemberUnits(escrow, units)) {
+                revert UpdateMemberUnitsFailed(escrow, units);
+            }
+
+            emit StreamMemberUnitUpdated(escrow, int96(int128(units)));
         }
 
         int96 currentFlowRate = superfluidToken.getGDAFlowRate(address(this), superfluidGDA);
@@ -291,6 +307,34 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             revert StreamingRateOverflow(flowRate);
         }
         return int96(uint96(flowRate));
+    }
+
+    function _streamingUnitBudget(uint256 requestedFlowRate) internal pure returns (uint128) {
+        if (requestedFlowRate > type(uint128).max) {
+            return type(uint128).max;
+        }
+        return uint128(requestedFlowRate);
+    }
+
+    function _scaledUnitsForStreaming(uint256 convictionValue, uint256 totalEligibleConviction, uint128 unitBudget)
+        internal
+        pure
+        returns (uint128)
+    {
+        if (unitBudget == 0 || convictionValue == 0 || totalEligibleConviction == 0) {
+            return 0;
+        }
+
+        uint256 units = Math.mulDiv(convictionValue, unitBudget, totalEligibleConviction);
+        if (units == 0) {
+            units = 1;
+        }
+        return units > type(uint128).max ? type(uint128).max : uint128(units);
+    }
+
+    function _legacyScaledUnits(uint256 convictionValue) internal pure returns (uint128) {
+        uint256 scaledConviction = convictionValue / ConvictionsUtils.D;
+        return scaledConviction > type(uint128).max ? type(uint128).max : uint128(scaledConviction);
     }
 
     function _topUpEscrowDepositIfNeeded(address escrow) internal returns (bool) {
