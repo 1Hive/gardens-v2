@@ -41,7 +41,12 @@ export type ProposalCardProps = {
     };
   strategyConfig: Pick<
     CVStrategyConfig,
-    "decay" | "proposalType" | "allowlist"
+    | "decay"
+    | "proposalType"
+    | "allowlist"
+    | "weight"
+    | "maxRatio"
+    | "minThresholdPoints"
   >;
   inputData?: ProposalInputItem;
   poolToken?: {

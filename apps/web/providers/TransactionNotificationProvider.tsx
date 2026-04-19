@@ -13,9 +13,14 @@ import { UserRejectedRequestError } from "viem";
 import { useWaitForTransaction } from "wagmi";
 
 import { TransactionStatusNotification } from "@/components/TransactionStatusNotification";
-import { chainConfigMap } from "@/configs/chains";
+import {
+  chainConfigMap,
+  ExplorerPreference,
+  getExplorerUrl,
+} from "@/configs/chains";
 import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 import { ComputedStatus } from "@/hooks/useContractWriteWithConfirmations";
+import { useExplorerPreference } from "@/hooks/useExplorerPreference";
 
 type TransactionToastPayload = {
   toastId: string;
@@ -174,6 +179,7 @@ const handledStatuses: ComputedStatus[] = [
 
 const TransactionToastManager = ({ entries, notify, remove }: ManagerProps) => {
   const values = useMemo(() => Object.values(entries), [entries]);
+  const { explorerPreference } = useExplorerPreference();
 
   useEffect(() => {
     values.forEach((entry) => {
@@ -182,7 +188,7 @@ const TransactionToastManager = ({ entries, notify, remove }: ManagerProps) => {
         return;
       }
 
-      const notifProps = mapStatusToNotification(entry);
+      const notifProps = mapStatusToNotification(entry, explorerPreference);
       const toastOptions: ToastOptions = {
         toastId: entry.toastId,
         icon: <></>,
@@ -212,7 +218,7 @@ const TransactionToastManager = ({ entries, notify, remove }: ManagerProps) => {
         toast(content, toastOptions);
       }
     });
-  }, [values, remove]);
+  }, [explorerPreference, values, remove]);
 
   return (
     <>
@@ -252,8 +258,9 @@ type SafeTransactionServiceResponse = {
 
 const mapStatusToNotification = (
   entry: TransactionToastPayload,
+  explorerPreference: ExplorerPreference,
 ): NotificationRenderConfig => {
-  const chainUrl = getExplorerUrl(entry.chainId);
+  const chainUrl = getExplorerUrl(entry.chainId, explorerPreference);
   const safeQueueUrl = getSafeQueueUrl(entry.chainId, entry.safeAddress);
   const explorerTransactionHash =
     isRpcTransactionHash(entry.transactionHash) ? entry.transactionHash : null;
@@ -608,13 +615,6 @@ const TransactionStatusWatcher = ({
 
   return null;
 };
-
-function getExplorerUrl(chainId?: number) {
-  if (chainId != null && chainConfigMap[chainId]?.explorer) {
-    return chainConfigMap[chainId].explorer;
-  }
-  return "https://etherscan.io";
-}
 
 function getSafeQueueUrl(
   chainId?: number,

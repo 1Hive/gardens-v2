@@ -71,37 +71,11 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         wrapIfNeeded();
 
         uint256 poolAmount = getPoolAmount();
-        uint256 totalEligibleConviction = 0;
         bool didMeaningfulWork = false;
         bool hadEscrowSyncError = false;
         bool syncedAnyEscrow = false;
 
-        // First pass: identify eligible conviction and clear non-active proposal units.
-        for (uint256 i = 1; i <= proposalCounter; i++) {
-            Proposal storage proposal = proposals[i];
-
-            address escrow = streamingEscrow(i);
-            if (escrow == address(0)) {
-                continue; // Skip if no escrow (shouldn't happen for streaming proposals)
-            }
-
-            // Ensure non-active proposals never keep receiving pool share.
-            if (proposal.proposalStatus != ProposalStatus.Active && proposal.proposalStatus != ProposalStatus.Disputed)
-            {
-                if (!superfluidGDA.updateMemberUnits(escrow, 0)) {
-                    revert UpdateMemberUnitsFailed(escrow, 0);
-                }
-                emit StreamMemberUnitUpdated(escrow, 0);
-                continue;
-            }
-
-            // Calculate current conviction for the proposal
-            uint256 convictionValue = calculateProposalConviction(i);
-
-            if (_isProposalAboveThreshold(proposal, convictionValue, poolAmount)) {
-                totalEligibleConviction += convictionValue;
-            }
-        }
+        uint256 totalEligibleConviction = _totalEligibleConviction(poolAmount);
 
         // Start/update/stop stream based on pool conviction share.
         uint256 maxConviction = ConvictionsUtils.getMaxConviction(totalPointsActivated, cvParams.decay);
@@ -114,36 +88,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         }
 
         uint128 streamingUnitBudget = _streamingUnitBudget(requestedFlowRate);
-
-        // Second pass: update units after the requested flow is known. When a stream is requested,
-        // cap total units to the requested flow rate so GDA integer division cannot round it to zero.
-        for (uint256 i = 1; i <= proposalCounter; i++) {
-            Proposal storage proposal = proposals[i];
-
-            address escrow = streamingEscrow(i);
-            if (escrow == address(0)) {
-                continue;
-            }
-
-            if (proposal.proposalStatus != ProposalStatus.Active && proposal.proposalStatus != ProposalStatus.Disputed)
-            {
-                continue;
-            }
-
-            uint256 convictionValue = calculateProposalConviction(i);
-            uint128 units = 0;
-            if (_isProposalAboveThreshold(proposal, convictionValue, poolAmount)) {
-                units = shouldStartStream
-                    ? _scaledUnitsForStreaming(convictionValue, totalEligibleConviction, streamingUnitBudget)
-                    : _legacyScaledUnits(convictionValue);
-            }
-
-            if (!superfluidGDA.updateMemberUnits(escrow, units)) {
-                revert UpdateMemberUnitsFailed(escrow, units);
-            }
-
-            emit StreamMemberUnitUpdated(escrow, int96(int128(units)));
-        }
+        _updateProposalUnits(poolAmount, shouldStartStream, totalEligibleConviction, streamingUnitBudget);
 
         int96 currentFlowRate = superfluidToken.getGDAFlowRate(address(this), superfluidGDA);
         int96 actualFlowRate = superfluidToken.distributeFlow(superfluidGDA, _toInt96StreamingRate(requestedFlowRate));
@@ -175,6 +120,70 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         }
         if (didMeaningfulWork && !hadEscrowSyncError) {
             setLastRebalanceAt(block.timestamp);
+        }
+    }
+
+    function _totalEligibleConviction(uint256 poolAmount) internal returns (uint256 totalEligibleConviction) {
+        // First pass: identify eligible conviction and clear non-active proposal units.
+        for (uint256 i = 1; i <= proposalCounter; i++) {
+            Proposal storage proposal = proposals[i];
+
+            address escrow = streamingEscrow(i);
+            if (escrow == address(0)) {
+                continue; // Skip if no escrow (shouldn't happen for streaming proposals)
+            }
+
+            // Ensure non-active proposals never keep receiving pool share.
+            if (proposal.proposalStatus != ProposalStatus.Active && proposal.proposalStatus != ProposalStatus.Disputed)
+            {
+                if (!superfluidGDA.updateMemberUnits(escrow, 0)) {
+                    revert UpdateMemberUnitsFailed(escrow, 0);
+                }
+                emit StreamMemberUnitUpdated(escrow, 0);
+                continue;
+            }
+
+            uint256 convictionValue = calculateProposalConviction(i);
+            if (_isProposalAboveThreshold(proposal, convictionValue, poolAmount)) {
+                totalEligibleConviction += convictionValue;
+            }
+        }
+    }
+
+    function _updateProposalUnits(
+        uint256 poolAmount,
+        bool shouldStartStream,
+        uint256 totalEligibleConviction,
+        uint128 streamingUnitBudget
+    ) internal {
+        // Second pass: update units after the requested flow is known. When a stream is requested,
+        // cap total units to the requested flow rate so GDA integer division cannot round it to zero.
+        for (uint256 i = 1; i <= proposalCounter; i++) {
+            Proposal storage proposal = proposals[i];
+
+            address escrow = streamingEscrow(i);
+            if (escrow == address(0)) {
+                continue;
+            }
+
+            if (proposal.proposalStatus != ProposalStatus.Active && proposal.proposalStatus != ProposalStatus.Disputed)
+            {
+                continue;
+            }
+
+            uint256 convictionValue = calculateProposalConviction(i);
+            uint128 units = 0;
+            if (_isProposalAboveThreshold(proposal, convictionValue, poolAmount)) {
+                units = shouldStartStream
+                    ? _scaledUnitsForStreaming(convictionValue, totalEligibleConviction, streamingUnitBudget)
+                    : _legacyScaledUnits(convictionValue);
+            }
+
+            if (!superfluidGDA.updateMemberUnits(escrow, units)) {
+                revert UpdateMemberUnitsFailed(escrow, units);
+            }
+
+            emit StreamMemberUnitUpdated(escrow, int96(int128(units)));
         }
     }
 
