@@ -72,7 +72,6 @@ interface PoolMetricsProps {
 
 export const PoolMetrics: FC<PoolMetricsProps> = ({
   strategy,
-  poolType,
   poolToken,
   chainId,
   superToken,
@@ -92,8 +91,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     currentUserOtherFlowRateBn,
     currentFlowRateBn,
     currentUserFlowRateBn,
-    totalAmountDistributedBn,
-    liveTotalStreamedBn,
     setCurrentUserFlowRateBn,
     setCurrentFlowRateBn,
   } = useSuperfluidStream({
@@ -144,18 +141,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       +formatUnits(configuredFlowPerSecondBn, superToken.decimals) *
       SEC_TO_MONTH
     : null;
-
-  const displayedTotalAmountDistributedBn =
-    totalAmountDistributedBn ?? liveTotalStreamedBn;
-
-  const totalAmountDistributed =
-    displayedTotalAmountDistributedBn != null ?
-      +formatUnits(
-        displayedTotalAmountDistributedBn,
-        superToken?.decimals ?? poolToken.decimals,
-      )
-    : null;
-
 
   const requestedStreamPerMonth =
     streamDuration != null ? amount / +streamDuration : 0;
@@ -824,7 +809,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               currentFlowPerMonth != null &&
               currentFlowRateBn > 0n && (
                 <div className="flex justify-between gap-3 items-center">
-                  <p className="subtitle2">Current Flow to GDA:</p>
+                  <p className="subtitle2">Incoming Stream:</p>
                   <div className="flex items-center gap-1">
                     <p className="flex items-center whitespace-nowrap tooltip">
                       <div
@@ -857,17 +842,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                   </div>
                 </div>
               )}
-            {poolType === "streaming" &&
-              totalAmountDistributed != null &&
-              totalAmountDistributed > 0 && (
-              <div className="flex justify-between items-center gap-3">
-                <p className="text-sm">Total:</p>
-                <p className="text-sm font-medium">
-                  {roundToSignificant(totalAmountDistributed, 4)}{" "}
-                  {superToken?.symbol ?? poolToken.symbol}
-                </p>
-              </div>
-            )}
             {accountAddress && (
               <div className="flex justify-between items-center">
                 <p className="text-sm">Wallet:</p>

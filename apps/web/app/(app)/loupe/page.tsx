@@ -685,9 +685,8 @@ export default function DiamondAdminPage() {
   const [loupeTransactionStatus, setLoupeTransactionStatus] = useState<
     "waiting" | "loading" | "success" | "error" | undefined
   >(undefined);
-  const [loupeTransactionError, setLoupeTransactionError] = useState<
-    Error | null
-  >(null);
+  const [loupeTransactionError, setLoupeTransactionError] =
+    useState<Error | null>(null);
   const [isExecutingRead, setIsExecutingRead] = useState(false);
   const [isExecutingWrite, setIsExecutingWrite] = useState(false);
   const [probedProxyAbiLabel, setProbedProxyAbiLabel] = useState<string | null>(
@@ -703,7 +702,8 @@ export default function DiamondAdminPage() {
   const [locationSearch, setLocationSearch] = useState("");
   const pushUrlWithoutScroll = (nextUrl: string) => {
     window.history.pushState(window.history.state, "", nextUrl);
-    const nextSearch = nextUrl.includes("?") ? nextUrl.slice(nextUrl.indexOf("?")) : "";
+    const nextSearch =
+      nextUrl.includes("?") ? nextUrl.slice(nextUrl.indexOf("?")) : "";
     setLocationSearch(nextSearch);
   };
 
@@ -1363,20 +1363,20 @@ export default function DiamondAdminPage() {
     }
 
     const nextArgFieldValues = inputs.map((input, index) => {
-        const current = parsedArgs[index];
-        if (current === undefined) {
-          return input.type === "bool" ? false : "";
-        }
-        if (input.type === "tuple" && !input.type.includes("[")) {
-          return current;
-        }
-        return stringifyFieldValue(current);
-      });
+      const current = parsedArgs[index];
+      if (current === undefined) {
+        return input.type === "bool" ? false : "";
+      }
+      if (input.type === "tuple" && !input.type.includes("[")) {
+        return current;
+      }
+      return stringifyFieldValue(current);
+    });
 
     setArgFieldValues((current) =>
-      areFieldValuesEqual(current, nextArgFieldValues) ?
-        current
-      : nextArgFieldValues,
+      areFieldValuesEqual(current, nextArgFieldValues) ? current : (
+        nextArgFieldValues
+      ),
     );
   }, [argsInput, selectedAbiFunction]);
 
@@ -1498,8 +1498,10 @@ export default function DiamondAdminPage() {
     const isSameAddress =
       diamondAddress?.toLowerCase() === normalizedAddress.toLowerCase();
     const currentParams = new URLSearchParams(locationSearch);
-    const currentChainId = currentParams.get("chainId") ?? currentParams.get("chain");
-    const currentAddress = currentParams.get("address") ?? currentParams.get("diamond");
+    const currentChainId =
+      currentParams.get("chainId") ?? currentParams.get("chain");
+    const currentAddress =
+      currentParams.get("address") ?? currentParams.get("diamond");
     const shouldPushUrl =
       currentChainId !== String(selectedChainId) ||
       currentAddress?.toLowerCase() !== normalizedAddress.toLowerCase();
@@ -1846,9 +1848,13 @@ export default function DiamondAdminPage() {
       setHighlightedAutocompleteIndex((current) => {
         if (!isAddressAutocompleteOpen) return 0;
         if (event.shiftKey) {
-          return current <= 0 ? autocompleteContractOptions.length - 1 : current - 1;
+          return current <= 0 ?
+              autocompleteContractOptions.length - 1
+            : current - 1;
         }
-        return current >= autocompleteContractOptions.length - 1 ? 0 : current + 1;
+        return current >= autocompleteContractOptions.length - 1 ?
+            0
+          : current + 1;
       });
       return;
     }
@@ -1858,7 +1864,9 @@ export default function DiamondAdminPage() {
       setIsAddressAutocompleteOpen(true);
       setHighlightedAutocompleteIndex((current) => {
         if (!isAddressAutocompleteOpen) return 0;
-        return current >= autocompleteContractOptions.length - 1 ? 0 : current + 1;
+        return current >= autocompleteContractOptions.length - 1 ?
+            0
+          : current + 1;
       });
       return;
     }
@@ -1870,7 +1878,9 @@ export default function DiamondAdminPage() {
         if (!isAddressAutocompleteOpen) {
           return autocompleteContractOptions.length - 1;
         }
-        return current <= 0 ? autocompleteContractOptions.length - 1 : current - 1;
+        return current <= 0 ?
+            autocompleteContractOptions.length - 1
+          : current - 1;
       });
       return;
     }
@@ -1880,7 +1890,7 @@ export default function DiamondAdminPage() {
       const contract =
         autocompleteContractOptions[activeAutocompleteIndex] ??
         autocompleteContractOptions[0];
-      if (contract) {
+      if (Boolean(contract)) {
         applyAutocompleteContract(contract);
       }
       return;
@@ -1930,9 +1940,13 @@ export default function DiamondAdminPage() {
       setHighlightedSignatureAutocompleteIndex((current) => {
         if (!isSignatureAutocompleteOpen) return 0;
         if (event.shiftKey) {
-          return current <= 0 ? signatureAutocompleteOptions.length - 1 : current - 1;
+          return current <= 0 ?
+              signatureAutocompleteOptions.length - 1
+            : current - 1;
         }
-        return current >= signatureAutocompleteOptions.length - 1 ? 0 : current + 1;
+        return current >= signatureAutocompleteOptions.length - 1 ?
+            0
+          : current + 1;
       });
       return;
     }
@@ -1942,7 +1956,9 @@ export default function DiamondAdminPage() {
       setIsSignatureAutocompleteOpen(true);
       setHighlightedSignatureAutocompleteIndex((current) => {
         if (!isSignatureAutocompleteOpen) return 0;
-        return current >= signatureAutocompleteOptions.length - 1 ? 0 : current + 1;
+        return current >= signatureAutocompleteOptions.length - 1 ?
+            0
+          : current + 1;
       });
       return;
     }
@@ -1954,7 +1970,9 @@ export default function DiamondAdminPage() {
         if (!isSignatureAutocompleteOpen) {
           return signatureAutocompleteOptions.length - 1;
         }
-        return current <= 0 ? signatureAutocompleteOptions.length - 1 : current - 1;
+        return current <= 0 ?
+            signatureAutocompleteOptions.length - 1
+          : current - 1;
       });
       return;
     }
@@ -1964,7 +1982,7 @@ export default function DiamondAdminPage() {
       const option =
         signatureAutocompleteOptions[activeSignatureAutocompleteIndex] ??
         signatureAutocompleteOptions[0];
-      if (option) {
+      if (Boolean(option)) {
         applySignatureAutocompleteOption(option);
       }
       return;
@@ -2192,9 +2210,8 @@ export default function DiamondAdminPage() {
                         type="button"
                         className={`flex w-full flex-col gap-1 border-b border-border-neutral px-3 py-3 text-left last:border-b-0 hover:bg-neutral/70 ${
                           (
-                            autocompleteContractOptions[
-                              activeAutocompleteIndex
-                            ]?.key === contract.key
+                            autocompleteContractOptions[activeAutocompleteIndex]
+                              ?.key === contract.key
                           ) ?
                             "bg-primary-content/10 ring-1 ring-primary-content/40"
                           : ""
@@ -2539,45 +2556,48 @@ export default function DiamondAdminPage() {
                               ref={signatureAutocompleteRef}
                               className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-y-auto rounded-xl border border-border-neutral bg-neutral shadow-2xl"
                             >
-                              {signatureAutocompleteOptions.map((option, index) => (
-                                <button
-                                  key={option.signature}
-                                  data-autocomplete-index={index}
-                                  type="button"
-                                  className={`flex w-full flex-col gap-1 border-b border-border-neutral px-3 py-3 text-left last:border-b-0 hover:bg-neutral/70 ${
-                                    (
-                                      signatureAutocompleteOptions[
-                                        activeSignatureAutocompleteIndex
-                                      ]?.signature === option.signature
-                                    ) ?
-                                      "bg-primary-content/10 ring-1 ring-primary-content/40"
-                                    : ""
-                                  }`}
-                                  onMouseEnter={() => {
-                                    const nextIndex =
-                                      signatureAutocompleteOptions.findIndex(
-                                        (entry) =>
-                                          entry.signature === option.signature,
-                                      );
-                                    if (nextIndex >= 0) {
-                                      setHighlightedSignatureAutocompleteIndex(
-                                        nextIndex,
-                                      );
-                                    }
-                                  }}
-                                  onMouseDown={(event) => {
-                                    event.preventDefault();
-                                    applySignatureAutocompleteOption(option);
-                                  }}
-                                >
-                                  <span className="text-sm font-medium text-neutral-content">
-                                    {option.signature}
-                                  </span>
-                                  <span className="font-mono text-xs text-neutral-muted">
-                                    {option.selector}
-                                  </span>
-                                </button>
-                              ))}
+                              {signatureAutocompleteOptions.map(
+                                (option, index) => (
+                                  <button
+                                    key={option.signature}
+                                    data-autocomplete-index={index}
+                                    type="button"
+                                    className={`flex w-full flex-col gap-1 border-b border-border-neutral px-3 py-3 text-left last:border-b-0 hover:bg-neutral/70 ${
+                                      (
+                                        signatureAutocompleteOptions[
+                                          activeSignatureAutocompleteIndex
+                                        ]?.signature === option.signature
+                                      ) ?
+                                        "bg-primary-content/10 ring-1 ring-primary-content/40"
+                                      : ""
+                                    }`}
+                                    onMouseEnter={() => {
+                                      const nextIndex =
+                                        signatureAutocompleteOptions.findIndex(
+                                          (entry) =>
+                                            entry.signature ===
+                                            option.signature,
+                                        );
+                                      if (nextIndex >= 0) {
+                                        setHighlightedSignatureAutocompleteIndex(
+                                          nextIndex,
+                                        );
+                                      }
+                                    }}
+                                    onMouseDown={(event) => {
+                                      event.preventDefault();
+                                      applySignatureAutocompleteOption(option);
+                                    }}
+                                  >
+                                    <span className="text-sm font-medium text-neutral-content">
+                                      {option.signature}
+                                    </span>
+                                    <span className="font-mono text-xs text-neutral-muted">
+                                      {option.selector}
+                                    </span>
+                                  </button>
+                                ),
+                              )}
                             </div>
                           )}
                       </div>
