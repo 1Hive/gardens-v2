@@ -78,6 +78,8 @@ Operational details for step 1:
 - Distinguish future-pool template updates from live pool upgrades. `RegistryFactory.setStrategyFacets(...)` only updates future pools; existing strategies may still require `upgradeTo(...)` and `diamondCut(...)`.
 - When base facet or shared storage logic changes, assume all strategy facets may need to be refreshed unless verified otherwise.
 - Use `test/helpers/StrategyDiamondConfigurator.sol` and the upgrade scripts under `script/` as the canonical selector and facet-cut source.
+- Treat linked Solidity libraries as chain-local runtime dependencies. `CVStrategy`, `CVAllocationFacet`, `CVProposalFacet`, and `CVStreamingFacet` can contain hardcoded `ConvictionsUtils` addresses in their deployed bytecode; before preparing or approving an implementation/facet payload, extract the artifact `deployedBytecode.linkReferences`, read the linked address from the deployed bytecode on the target chain, and confirm `cast code <linked-library>` is non-empty.
+- Do not assume a library address that is valid on one chain exists on another. For `ConvictionsUtils`, keep `IMPLEMENTATIONS.CV_UTIL_LIB` in `config/networks.json` aligned with the chain-local linked library and verify that every configured `CV_STRATEGY` implementation links to it.
 
 Operational details for step 2:
 
@@ -111,6 +113,7 @@ python scripts/submit_safe_payloads.py \
 - Logic changes: run the smallest relevant `forge test` or `pnpm test` subset.
 - Storage changes: run `./scripts/verify-storage-layout.sh`.
 - ABI changes consumed elsewhere: run `pnpm sync:abis`, then validate the dependent package.
+- For strategy upgrade verification, include linked-library checks. At minimum, run the `strategies` scope in `scripts/verify-all-deployments.sh` for the affected chain or manually verify that `CVStrategy`'s linked `ConvictionsUtils` address has bytecode and matches `IMPLEMENTATIONS.CV_UTIL_LIB`.
 
 ## Pitfalls
 
@@ -119,3 +122,4 @@ python scripts/submit_safe_payloads.py \
 - Many scripts are production-operational. Avoid running deployment or upgrade scripts unless the task explicitly requires it.
 - Safe service submissions can fail for superficial reasons like non-checksummed addresses or shell-escaped calldata. Using `scripts/submit_safe_payloads.py` avoids those failure modes and handles nonce selection, MultiSend wrapping, EIP-712 hashing, and Safe app links.
 - `ProxyOwner.owner()` can differ from the governance Safe while `upgradeAccess` is active. For governance routing, resolve the Safe with `mainOwner()` instead of assuming `owner()` or `ENVS.PROXY_OWNER` is the Safe.
+- An implementation can pass proxy and template checks while still reverting if it is linked to an address with no code on the target chain. This is especially easy to miss for `ConvictionsUtils` because the proxy stores only the implementation address; the library address is embedded in implementation/facet bytecode, not storage.

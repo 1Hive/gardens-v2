@@ -43,8 +43,9 @@ import streamingEscrowFactoryArtifact from "#/contracts/abis/StreamingEscrowFact
 import { Button } from "@/components/Button";
 import { InfoBox } from "@/components/InfoBox";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { CHAINS } from "@/configs/chains";
+import { CHAINS, getExplorerUrl } from "@/configs/chains";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
+import { useExplorerPreference } from "@/hooks/useExplorerPreference";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import {
   alloABI,
@@ -177,6 +178,110 @@ const stringifyResult = (value: unknown) => {
   } catch {
     return String(value);
   }
+};
+
+const getTupleComponentValue = (
+  value: unknown,
+  component: AbiParameter,
+  index: number,
+) => {
+  if (Array.isArray(value)) {
+    return value[index];
+  }
+
+  if (value != null && typeof value === "object") {
+    const source = value as Record<string, unknown>;
+    if (component.name && source[component.name] !== undefined) {
+      return source[component.name];
+    }
+
+    return source[String(index)];
+  }
+
+  return undefined;
+};
+
+const formatDecodedValueWithParameter = (
+  parameter: AbiParameter,
+  value: unknown,
+): unknown => {
+  const arrayDepth = getArrayDepth(parameter.type);
+  if (arrayDepth > 0) {
+    if (!Array.isArray(value)) {
+      return value;
+    }
+
+    const nestedParameter: AbiParameter = {
+      ...parameter,
+      type: getTypeWithoutArraySuffix(parameter.type),
+    };
+
+    return value.map((entry) =>
+      formatDecodedValueWithParameter(nestedParameter, entry),
+    );
+  }
+
+  if (parameter.type === "tuple" && isTupleParameter(parameter)) {
+    const formattedEntries = parameter.components.map((component, index) => {
+      const componentValue = getTupleComponentValue(value, component, index);
+      const formattedValue = formatDecodedValueWithParameter(
+        component,
+        componentValue,
+      );
+
+      return {
+        key: component.name?.trim() ? component.name : `[${index}]`,
+        value: formattedValue,
+      };
+    });
+
+    return Object.fromEntries(
+      formattedEntries.map((entry) => [entry.key, entry.value]),
+    );
+  }
+
+  return value;
+};
+
+const formatDecodedFunctionResult = (
+  abiFunction: AbiFunction,
+  decoded: unknown,
+) => {
+  const outputs = abiFunction.outputs ?? [];
+
+  if (outputs.length === 0) {
+    return stringifyResult(decoded);
+  }
+
+  if (outputs.length === 1) {
+    const [output] = outputs;
+    const formattedValue = formatDecodedValueWithParameter(output, decoded);
+
+    if (output.name?.trim()) {
+      return stringifyResult({ [output.name]: formattedValue });
+    }
+
+    return stringifyResult(formattedValue);
+  }
+
+  const decodedValues = Array.isArray(decoded) ? decoded : [decoded];
+  const formattedEntries = outputs.map((output, index) => {
+    const formattedValue = formatDecodedValueWithParameter(
+      output,
+      decodedValues[index],
+    );
+
+    return {
+      key: output.name?.trim() ? output.name : `[${index}]`,
+      value: formattedValue,
+    };
+  });
+
+  return stringifyResult(
+    Object.fromEntries(
+      formattedEntries.map((entry) => [entry.key, entry.value]),
+    ),
+  );
 };
 
 const extractRevertData = (error: unknown): `0x${string}` | null => {
@@ -664,6 +769,7 @@ export default function DiamondAdminPage() {
   const [contractOptionsError, setContractOptionsError] = useState<
     string | null
   >(null);
+  const { explorerPreference } = useExplorerPreference();
   const [signatureMap, setSignatureMap] = useState<SignatureMap>({});
   const [isResolvingSignatures, setIsResolvingSignatures] = useState(false);
   const [signatureResolveError, setSignatureResolveError] = useState<
@@ -685,9 +791,8 @@ export default function DiamondAdminPage() {
   const [loupeTransactionStatus, setLoupeTransactionStatus] = useState<
     "waiting" | "loading" | "success" | "error" | undefined
   >(undefined);
-  const [loupeTransactionError, setLoupeTransactionError] = useState<
-    Error | null
-  >(null);
+  const [loupeTransactionError, setLoupeTransactionError] =
+    useState<Error | null>(null);
   const [isExecutingRead, setIsExecutingRead] = useState(false);
   const [isExecutingWrite, setIsExecutingWrite] = useState(false);
   const [probedProxyAbiLabel, setProbedProxyAbiLabel] = useState<string | null>(
@@ -703,7 +808,8 @@ export default function DiamondAdminPage() {
   const [locationSearch, setLocationSearch] = useState("");
   const pushUrlWithoutScroll = (nextUrl: string) => {
     window.history.pushState(window.history.state, "", nextUrl);
-    const nextSearch = nextUrl.includes("?") ? nextUrl.slice(nextUrl.indexOf("?")) : "";
+    const nextSearch =
+      nextUrl.includes("?") ? nextUrl.slice(nextUrl.indexOf("?")) : "";
     setLocationSearch(nextSearch);
   };
 
@@ -1363,20 +1469,20 @@ export default function DiamondAdminPage() {
     }
 
     const nextArgFieldValues = inputs.map((input, index) => {
-        const current = parsedArgs[index];
-        if (current === undefined) {
-          return input.type === "bool" ? false : "";
-        }
-        if (input.type === "tuple" && !input.type.includes("[")) {
-          return current;
-        }
-        return stringifyFieldValue(current);
-      });
+      const current = parsedArgs[index];
+      if (current === undefined) {
+        return input.type === "bool" ? false : "";
+      }
+      if (input.type === "tuple" && !input.type.includes("[")) {
+        return current;
+      }
+      return stringifyFieldValue(current);
+    });
 
     setArgFieldValues((current) =>
-      areFieldValuesEqual(current, nextArgFieldValues) ?
-        current
-      : nextArgFieldValues,
+      areFieldValuesEqual(current, nextArgFieldValues) ? current : (
+        nextArgFieldValues
+      ),
     );
   }, [argsInput, selectedAbiFunction]);
 
@@ -1498,8 +1604,10 @@ export default function DiamondAdminPage() {
     const isSameAddress =
       diamondAddress?.toLowerCase() === normalizedAddress.toLowerCase();
     const currentParams = new URLSearchParams(locationSearch);
-    const currentChainId = currentParams.get("chainId") ?? currentParams.get("chain");
-    const currentAddress = currentParams.get("address") ?? currentParams.get("diamond");
+    const currentChainId =
+      currentParams.get("chainId") ?? currentParams.get("chain");
+    const currentAddress =
+      currentParams.get("address") ?? currentParams.get("diamond");
     const shouldPushUrl =
       currentChainId !== String(selectedChainId) ||
       currentAddress?.toLowerCase() !== normalizedAddress.toLowerCase();
@@ -1846,9 +1954,13 @@ export default function DiamondAdminPage() {
       setHighlightedAutocompleteIndex((current) => {
         if (!isAddressAutocompleteOpen) return 0;
         if (event.shiftKey) {
-          return current <= 0 ? autocompleteContractOptions.length - 1 : current - 1;
+          return current <= 0 ?
+              autocompleteContractOptions.length - 1
+            : current - 1;
         }
-        return current >= autocompleteContractOptions.length - 1 ? 0 : current + 1;
+        return current >= autocompleteContractOptions.length - 1 ?
+            0
+          : current + 1;
       });
       return;
     }
@@ -1858,7 +1970,9 @@ export default function DiamondAdminPage() {
       setIsAddressAutocompleteOpen(true);
       setHighlightedAutocompleteIndex((current) => {
         if (!isAddressAutocompleteOpen) return 0;
-        return current >= autocompleteContractOptions.length - 1 ? 0 : current + 1;
+        return current >= autocompleteContractOptions.length - 1 ?
+            0
+          : current + 1;
       });
       return;
     }
@@ -1870,7 +1984,9 @@ export default function DiamondAdminPage() {
         if (!isAddressAutocompleteOpen) {
           return autocompleteContractOptions.length - 1;
         }
-        return current <= 0 ? autocompleteContractOptions.length - 1 : current - 1;
+        return current <= 0 ?
+            autocompleteContractOptions.length - 1
+          : current - 1;
       });
       return;
     }
@@ -1880,7 +1996,7 @@ export default function DiamondAdminPage() {
       const contract =
         autocompleteContractOptions[activeAutocompleteIndex] ??
         autocompleteContractOptions[0];
-      if (contract) {
+      if (contract != null) {
         applyAutocompleteContract(contract);
       }
       return;
@@ -1930,9 +2046,13 @@ export default function DiamondAdminPage() {
       setHighlightedSignatureAutocompleteIndex((current) => {
         if (!isSignatureAutocompleteOpen) return 0;
         if (event.shiftKey) {
-          return current <= 0 ? signatureAutocompleteOptions.length - 1 : current - 1;
+          return current <= 0 ?
+              signatureAutocompleteOptions.length - 1
+            : current - 1;
         }
-        return current >= signatureAutocompleteOptions.length - 1 ? 0 : current + 1;
+        return current >= signatureAutocompleteOptions.length - 1 ?
+            0
+          : current + 1;
       });
       return;
     }
@@ -1942,7 +2062,9 @@ export default function DiamondAdminPage() {
       setIsSignatureAutocompleteOpen(true);
       setHighlightedSignatureAutocompleteIndex((current) => {
         if (!isSignatureAutocompleteOpen) return 0;
-        return current >= signatureAutocompleteOptions.length - 1 ? 0 : current + 1;
+        return current >= signatureAutocompleteOptions.length - 1 ?
+            0
+          : current + 1;
       });
       return;
     }
@@ -1954,7 +2076,9 @@ export default function DiamondAdminPage() {
         if (!isSignatureAutocompleteOpen) {
           return signatureAutocompleteOptions.length - 1;
         }
-        return current <= 0 ? signatureAutocompleteOptions.length - 1 : current - 1;
+        return current <= 0 ?
+            signatureAutocompleteOptions.length - 1
+          : current - 1;
       });
       return;
     }
@@ -1964,7 +2088,7 @@ export default function DiamondAdminPage() {
       const option =
         signatureAutocompleteOptions[activeSignatureAutocompleteIndex] ??
         signatureAutocompleteOptions[0];
-      if (option) {
+      if (option != null) {
         applySignatureAutocompleteOption(option);
       }
       return;
@@ -2035,7 +2159,7 @@ export default function DiamondAdminPage() {
           functionName: functionAbi.name,
           data: rawResult,
         });
-        setReadOutput(stringifyResult(decoded));
+        setReadOutput(formatDecodedFunctionResult(functionAbi, decoded));
         return;
       }
 
@@ -2116,7 +2240,7 @@ export default function DiamondAdminPage() {
     }
   };
 
-  const txExplorerBase = selectedChain?.blockExplorers?.default?.url;
+  const txExplorerBase = getExplorerUrl(selectedChainId, explorerPreference);
   const getExplorerAddressHref = (address?: Address) =>
     txExplorerBase && address ? `${txExplorerBase}/address/${address}` : null;
 
@@ -2192,9 +2316,8 @@ export default function DiamondAdminPage() {
                         type="button"
                         className={`flex w-full flex-col gap-1 border-b border-border-neutral px-3 py-3 text-left last:border-b-0 hover:bg-neutral/70 ${
                           (
-                            autocompleteContractOptions[
-                              activeAutocompleteIndex
-                            ]?.key === contract.key
+                            autocompleteContractOptions[activeAutocompleteIndex]
+                              ?.key === contract.key
                           ) ?
                             "bg-primary-content/10 ring-1 ring-primary-content/40"
                           : ""
@@ -2539,45 +2662,48 @@ export default function DiamondAdminPage() {
                               ref={signatureAutocompleteRef}
                               className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-y-auto rounded-xl border border-border-neutral bg-neutral shadow-2xl"
                             >
-                              {signatureAutocompleteOptions.map((option, index) => (
-                                <button
-                                  key={option.signature}
-                                  data-autocomplete-index={index}
-                                  type="button"
-                                  className={`flex w-full flex-col gap-1 border-b border-border-neutral px-3 py-3 text-left last:border-b-0 hover:bg-neutral/70 ${
-                                    (
-                                      signatureAutocompleteOptions[
-                                        activeSignatureAutocompleteIndex
-                                      ]?.signature === option.signature
-                                    ) ?
-                                      "bg-primary-content/10 ring-1 ring-primary-content/40"
-                                    : ""
-                                  }`}
-                                  onMouseEnter={() => {
-                                    const nextIndex =
-                                      signatureAutocompleteOptions.findIndex(
-                                        (entry) =>
-                                          entry.signature === option.signature,
-                                      );
-                                    if (nextIndex >= 0) {
-                                      setHighlightedSignatureAutocompleteIndex(
-                                        nextIndex,
-                                      );
-                                    }
-                                  }}
-                                  onMouseDown={(event) => {
-                                    event.preventDefault();
-                                    applySignatureAutocompleteOption(option);
-                                  }}
-                                >
-                                  <span className="text-sm font-medium text-neutral-content">
-                                    {option.signature}
-                                  </span>
-                                  <span className="font-mono text-xs text-neutral-muted">
-                                    {option.selector}
-                                  </span>
-                                </button>
-                              ))}
+                              {signatureAutocompleteOptions.map(
+                                (option, index) => (
+                                  <button
+                                    key={option.signature}
+                                    data-autocomplete-index={index}
+                                    type="button"
+                                    className={`flex w-full flex-col gap-1 border-b border-border-neutral px-3 py-3 text-left last:border-b-0 hover:bg-neutral/70 ${
+                                      (
+                                        signatureAutocompleteOptions[
+                                          activeSignatureAutocompleteIndex
+                                        ]?.signature === option.signature
+                                      ) ?
+                                        "bg-primary-content/10 ring-1 ring-primary-content/40"
+                                      : ""
+                                    }`}
+                                    onMouseEnter={() => {
+                                      const nextIndex =
+                                        signatureAutocompleteOptions.findIndex(
+                                          (entry) =>
+                                            entry.signature ===
+                                            option.signature,
+                                        );
+                                      if (nextIndex >= 0) {
+                                        setHighlightedSignatureAutocompleteIndex(
+                                          nextIndex,
+                                        );
+                                      }
+                                    }}
+                                    onMouseDown={(event) => {
+                                      event.preventDefault();
+                                      applySignatureAutocompleteOption(option);
+                                    }}
+                                  >
+                                    <span className="text-sm font-medium text-neutral-content">
+                                      {option.signature}
+                                    </span>
+                                    <span className="font-mono text-xs text-neutral-muted">
+                                      {option.selector}
+                                    </span>
+                                  </button>
+                                ),
+                              )}
                             </div>
                           )}
                       </div>

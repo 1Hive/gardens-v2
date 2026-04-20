@@ -39,6 +39,7 @@ import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chains";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useExplorerPreference } from "@/hooks/useExplorerPreference";
 import { useHasContractCode } from "@/hooks/useHasContractCode";
 import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
@@ -146,9 +147,9 @@ export function ConnectWallet() {
   const communitySegment =
     pathSegments[0] === "gardens" ? pathSegments[2] : undefined;
   const communityAddress =
-    communitySegment && isAddress(communitySegment) ?
-      communitySegment
-    : undefined;
+    communitySegment && isAddress(communitySegment) ? communitySegment : (
+      undefined
+    );
 
   const { data: communityData } = useSubgraphQuery({
     query: getCommunityNameDocument,
@@ -159,6 +160,7 @@ export function ConnectWallet() {
   const tokenUrlAddress = communityData?.registryCommunity?.garden?.id;
 
   const { switchNetwork } = useAppSwitchNetwork();
+  const { explorerPreference, setExplorerPreference } = useExplorerPreference();
   const { disconnectAsync } = useDisconnect();
   const { connectors } = useConnect();
   const { isOwner: isFirstHolder } = useOwnerOfNFT({
@@ -324,7 +326,9 @@ export function ConnectWallet() {
               //button to connect wallet
               if (!connected) {
                 return (
-                  <Button onClick={() => handleOpenConnectModal(openConnectModal)}>
+                  <Button
+                    onClick={() => handleOpenConnectModal(openConnectModal)}
+                  >
                     <Image
                       src={walletIcon}
                       alt="wallet"
@@ -472,7 +476,48 @@ export function ConnectWallet() {
                                   />
                                 : <span className="subtitle2 text-neutral-soft-content">
                                     Unavailable
-                                  </span>}
+                                  </span>
+                                }
+                              </div>
+                              <div className="flex items-center justify-between gap-3 py-1">
+                                <p className="subtitle2">Explorer</p>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <span
+                                    className={cn("text-xs", {
+                                      "font-semibold text-neutral-content":
+                                        explorerPreference === "etherscan",
+                                      "text-neutral-soft-content":
+                                        explorerPreference !== "etherscan",
+                                    })}
+                                  >
+                                    Etherscan
+                                  </span>
+                                  <input
+                                    type="checkbox"
+                                    className="toggle toggle-sm [--tglbg:theme(colors.primary)] checked:[--tglbg:theme(colors.primary)]"
+                                    aria-label="Toggle preferred block explorer"
+                                    checked={
+                                      explorerPreference === "blockscout"
+                                    }
+                                    onChange={(event) => {
+                                      setExplorerPreference(
+                                        event.target.checked ?
+                                          "blockscout"
+                                        : "etherscan",
+                                      );
+                                    }}
+                                  />
+                                  <span
+                                    className={cn("text-xs", {
+                                      "font-semibold text-neutral-content":
+                                        explorerPreference === "blockscout",
+                                      "text-neutral-soft-content":
+                                        explorerPreference !== "blockscout",
+                                    })}
+                                  >
+                                    Blockscout
+                                  </span>
+                                </label>
                               </div>
                             </Menu.Item>
 
