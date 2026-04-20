@@ -147,9 +147,9 @@ export function ConnectWallet() {
   const communitySegment =
     pathSegments[0] === "gardens" ? pathSegments[2] : undefined;
   const communityAddress =
-    communitySegment && isAddress(communitySegment) ?
-      communitySegment
-    : undefined;
+    communitySegment && isAddress(communitySegment) ? communitySegment : (
+      undefined
+    );
 
   const { data: communityData } = useSubgraphQuery({
     query: getCommunityNameDocument,
@@ -326,7 +326,9 @@ export function ConnectWallet() {
               //button to connect wallet
               if (!connected) {
                 return (
-                  <Button onClick={() => handleOpenConnectModal(openConnectModal)}>
+                  <Button
+                    onClick={() => handleOpenConnectModal(openConnectModal)}
+                  >
                     <Image
                       src={walletIcon}
                       alt="wallet"
@@ -474,7 +476,8 @@ export function ConnectWallet() {
                                   />
                                 : <span className="subtitle2 text-neutral-soft-content">
                                     Unavailable
-                                  </span>}
+                                  </span>
+                                }
                               </div>
                               <div className="flex items-center justify-between gap-3 py-1">
                                 <p className="subtitle2">Explorer</p>
@@ -493,7 +496,9 @@ export function ConnectWallet() {
                                     type="checkbox"
                                     className="toggle toggle-sm [--tglbg:theme(colors.primary)] checked:[--tglbg:theme(colors.primary)]"
                                     aria-label="Toggle preferred block explorer"
-                                    checked={explorerPreference === "blockscout"}
+                                    checked={
+                                      explorerPreference === "blockscout"
+                                    }
                                     onChange={(event) => {
                                       setExplorerPreference(
                                         event.target.checked ?

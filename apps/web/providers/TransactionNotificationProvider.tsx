@@ -504,10 +504,7 @@ const TransactionStatusWatcher = ({
           if (data.isExecuted === true) {
             notify({
               toastId: entry.toastId,
-              status:
-                data.isSuccessful === false ?
-                  "error"
-                : "success",
+              status: data.isSuccessful === false ? "error" : "success",
               safeTransactionHash: resolvedSafeTxHash,
               transactionError:
                 data.isSuccessful === false ?
@@ -575,9 +572,7 @@ const TransactionStatusWatcher = ({
           notify({
             toastId: entry.toastId,
             status:
-              matchingTransaction.isSuccessful === false ?
-                "error"
-              : "success",
+              matchingTransaction.isSuccessful === false ? "error" : "success",
             safeTransactionHash: matchedSafeTxHash,
             transactionError:
               matchingTransaction.isSuccessful === false ?
