@@ -71,7 +71,7 @@ For mainnet upgrade operations, default to this sequence unless the user explici
 
 1. Determine what must be upgraded.
 2. Generate per-chain Safe payloads.
-3. Submit those payloads with `pkMetamask` through the chain's ProxyOwner-resolved Safe using `scripts/submit_safe_payloads.py`.
+3. Submit those payloads with `PK_TESTNET_OWNER` through the chain's ProxyOwner-resolved Safe using `scripts/submit_safe_payloads.py`.
 
 Operational details for step 1:
 
@@ -86,7 +86,7 @@ Operational details for step 2:
 
 Operational details for step 3:
 
-- The submitter keystore is `~/.foundry/keystores/pkMetamask` unless the user says otherwise.
+- The submitter keystore is `~/.foundry/keystores/PK_TESTNET_OWNER` unless the user says otherwise.
 - Resolve the actual Safe owner from the chain's ProxyOwner contract. Do not assume `ENVS.PROXY_OWNER` itself implements the Safe interface; call `mainOwner()` when needed and submit to that Safe address.
 - Verify the signer is a Safe owner before submission.
 - Prefer `--payload-file` plus `--service-chain` when submitting explicit per-chain payloads.
@@ -98,10 +98,10 @@ Useful pre-submit checks:
 cast call <proxyOwner> 'mainOwner()(address)' --rpc-url <rpc>
 cast call <safe> 'getOwners()(address[])' --rpc-url <rpc>
 cast call <safe> 'nonce()(uint256)' --rpc-url <rpc>
-cast wallet address --account pkMetamask
+cast wallet address --account PK_TESTNET_OWNER
 python scripts/submit_safe_payloads.py \
 	--safe <resolved-safe> \
-	--keystore ~/.foundry/keystores/pkMetamask \
+	--keystore ~/.foundry/keystores/PK_TESTNET_OWNER \
 	--service-chain <chain> \
 	--payload-file transaction-builder/<payload>.json
 ```

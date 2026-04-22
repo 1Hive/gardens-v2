@@ -1,0 +1,176 @@
+{
+  "createdAt": 1776824409676,
+  "safe": "0x9a17De1f0caD0c592F656410997E4B685d339029",
+  "oldWallet": "0xA718ACA8Eb8f01EcfE929BF16c19e562B57b053b",
+  "newWallet": "0xb5f2B971878dD2Bc8A0c53635f33280F34C41F2A",
+  "payloads": [
+    {
+      "network": "arbitrum",
+      "serviceChain": "arbitrum",
+      "chainId": "42161",
+      "file": "transaction-builder/arbitrum-rotate-exposed-keeper-wallet-payload.json",
+      "calls": [
+        {
+          "to": "0x8cd4ba4ad10d85a550fe45d567a49e49e1d23ce1",
+          "action": "PassportScorer.changeListManager(newWallet)"
+        },
+        {
+          "to": "0x3015DC7D831D19786C726Ab1A49b30b31356f78D",
+          "action": "GoodDollarSybil.changeListManager(newWallet)"
+        },
+        {
+          "to": "0xc1c2e092b7dbc8413e1ac02e92c161b0bda783f6",
+          "action": "RegistryFactory.setStreamRebalanceCaller(oldWallet,false)"
+        },
+        {
+          "to": "0xc1c2e092b7dbc8413e1ac02e92c161b0bda783f6",
+          "action": "RegistryFactory.setStreamRebalanceCaller(newWallet,true)"
+        }
+      ]
+    },
+    {
+      "network": "optimism",
+      "serviceChain": "optimism",
+      "chainId": "10",
+      "file": "transaction-builder/optimism-rotate-exposed-keeper-wallet-payload.json",
+      "calls": [
+        {
+          "to": "0x084a5504dcfeac0ec3e10517247639e50c8dcffd",
+          "action": "PassportScorer.changeListManager(newWallet)"
+        },
+        {
+          "to": "0x5820D4e62A0EF69B1CCDAFB7729ACc8B0E93d845",
+          "action": "GoodDollarSybil.changeListManager(newWallet)"
+        },
+        {
+          "to": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
+          "action": "RegistryFactory.setStreamRebalanceCaller(oldWallet,false)"
+        },
+        {
+          "to": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
+          "action": "RegistryFactory.setStreamRebalanceCaller(newWallet,true)"
+        }
+      ]
+    },
+    {
+      "network": "polygon",
+      "serviceChain": "polygon",
+      "chainId": "137",
+      "file": "transaction-builder/polygon-rotate-exposed-keeper-wallet-payload.json",
+      "calls": [
+        {
+          "to": "0x190fa730e6ffc64ebd0031be59b3007cc9ee2bb3",
+          "action": "PassportScorer.changeListManager(newWallet)"
+        },
+        {
+          "to": "0x7D08db0138fc0f0Dcc9C7120b301Ff07D3A7b300",
+          "action": "GoodDollarSybil.changeListManager(newWallet)"
+        },
+        {
+          "to": "0x57a9835b204dbcc101dbf981625a3625e8043b9c",
+          "action": "RegistryFactory.setStreamRebalanceCaller(oldWallet,false)"
+        },
+        {
+          "to": "0x57a9835b204dbcc101dbf981625a3625e8043b9c",
+          "action": "RegistryFactory.setStreamRebalanceCaller(newWallet,true)"
+        }
+      ]
+    },
+    {
+      "network": "gnosis",
+      "serviceChain": "gnosis",
+      "chainId": "100",
+      "file": "transaction-builder/gnosis-rotate-exposed-keeper-wallet-payload.json",
+      "calls": [
+        {
+          "to": "0x20965c5c8a021ac6ffed5de7a402f7ceac3b0a82",
+          "action": "PassportScorer.changeListManager(newWallet)"
+        },
+        {
+          "to": "0x752dD2BE242c0A2944469331a463297ccAfC3A0E",
+          "action": "GoodDollarSybil.changeListManager(newWallet)"
+        },
+        {
+          "to": "0x08df82f74d1f56f650e98da2dd4240f1a31711bc",
+          "action": "RegistryFactory.setStreamRebalanceCaller(oldWallet,false)"
+        },
+        {
+          "to": "0x08df82f74d1f56f650e98da2dd4240f1a31711bc",
+          "action": "RegistryFactory.setStreamRebalanceCaller(newWallet,true)"
+        }
+      ]
+    },
+    {
+      "network": "base",
+      "serviceChain": "base",
+      "chainId": "8453",
+      "file": "transaction-builder/base-rotate-exposed-keeper-wallet-payload.json",
+      "calls": [
+        {
+          "to": "0xb39dFA15F96055664179e8EcaA890f3FA26c21e9",
+          "action": "PassportScorer.changeListManager(newWallet)"
+        },
+        {
+          "to": "0xe86a28Aa50AD5750532f73b77375Ed0D5e23a330",
+          "action": "GoodDollarSybil.changeListManager(newWallet)"
+        },
+        {
+          "to": "0xc93830dd463516ed5f28f6cd4f837173b87ff389",
+          "action": "RegistryFactory.setStreamRebalanceCaller(oldWallet,false)"
+        },
+        {
+          "to": "0xc93830dd463516ed5f28f6cd4f837173b87ff389",
+          "action": "RegistryFactory.setStreamRebalanceCaller(newWallet,true)"
+        }
+      ]
+    },
+    {
+      "network": "celo",
+      "serviceChain": "celo",
+      "chainId": "42220",
+      "file": "transaction-builder/celo-rotate-exposed-keeper-wallet-payload.json",
+      "calls": [
+        {
+          "to": "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9",
+          "action": "PassportScorer.changeListManager(newWallet)"
+        },
+        {
+          "to": "0xABfa0Ed0142642651EBe8dd3f22acdd709782a61",
+          "action": "GoodDollarSybil.changeListManager(newWallet)"
+        },
+        {
+          "to": "0xa71023bc64c9711c2037ab491de80fd74504bd55",
+          "action": "RegistryFactory.setStreamRebalanceCaller(oldWallet,false)"
+        },
+        {
+          "to": "0xa71023bc64c9711c2037ab491de80fd74504bd55",
+          "action": "RegistryFactory.setStreamRebalanceCaller(newWallet,true)"
+        }
+      ]
+    },
+    {
+      "network": "ethereum",
+      "serviceChain": "mainnet",
+      "chainId": "1",
+      "file": "transaction-builder/mainnet-rotate-exposed-keeper-wallet-payload.json",
+      "calls": [
+        {
+          "to": "0x4a9f8c35b55aabc45112dadf5b5adf689605b397",
+          "action": "PassportScorer.changeListManager(newWallet)"
+        },
+        {
+          "to": "0x8d6131910eb9a74fab60dfebdd414ee76e425c7f",
+          "action": "GoodDollarSybil.changeListManager(newWallet)"
+        },
+        {
+          "to": "0x7d26c5b083b85b848645fcbd18fe01168989333b",
+          "action": "RegistryFactory.setStreamRebalanceCaller(oldWallet,false)"
+        },
+        {
+          "to": "0x7d26c5b083b85b848645fcbd18fe01168989333b",
+          "action": "RegistryFactory.setStreamRebalanceCaller(newWallet,true)"
+        }
+      ]
+    }
+  ]
+}
