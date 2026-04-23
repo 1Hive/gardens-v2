@@ -8,6 +8,7 @@ import {
   connectWallet,
   expectNoErrorToast
 } from "./support/metamaskUtils";
+import { getByTestId } from "./support/locators-utils";
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
 const { expect } = test;
@@ -70,13 +71,14 @@ test("should create a proposal in the pool", async ({
   // await expect(addNewProposalBtn).toBeVisible({ timeout: 30000 });
   // await addNewProposalBtn.click();
 
-  const amountInput = page.getByTestId("input-requested-amount");
+  const amountInput = getByTestId(page, "input-requested-amount");
   await expect(amountInput).toBeVisible({ timeout: 60000 });
-  const descriptionInput = page
-    .getByTestId("input-proposal-description")
-    .locator('[contenteditable="true"]');
-  const tokenAddressInput = page.getByTestId("input-beneficiary-address");
-  const titleInput = page.getByTestId("input-proposal-title");
+  const descriptionInput = getByTestId(
+    page,
+    "input-proposal-description"
+  ).locator('[contenteditable="true"]');
+  const tokenAddressInput = getByTestId(page, "input-beneficiary-address");
+  const titleInput = getByTestId(page, "input-proposal-title");
 
   // Fill all inputs
   await amountInput.fill("0");
@@ -84,9 +86,9 @@ test("should create a proposal in the pool", async ({
   await tokenAddressInput.fill("0x327F6AA1870731235A57Bc785523dAF0054b7394");
   await titleInput.fill("Test Proposal Title");
 
-  await page.getByTestId("btn-preview-proposal").click();
-  // const submitBtn = page.getByTestId("")
-  await page.getByTestId("btn-submit-proposal").click();
+  await getByTestId(page, "btn-preview-proposal").click();
+  // const submitBtn = getByTestId(page, "")
+  await getByTestId(page, "btn-submit-proposal").click();
 
   await confirmTransaction({ metamask, extensionId });
   await expectNoErrorToast(page);

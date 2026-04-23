@@ -880,6 +880,7 @@ export default function PoolHeader({
                       disabled={!canOpenPoolEditModal}
                       tooltip={editPoolTooltip}
                       onClick={() => setIsOpenModal(true)}
+                      testId="btn-edit-pool"
                     >
                       Edit
                     </Button>

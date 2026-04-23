@@ -8,6 +8,7 @@ import {
   connectWallet,
   expectNoErrorToast
 } from "./support/metamaskUtils";
+import { getByTestId } from "./support/locators-utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
@@ -46,11 +47,11 @@ test("should increase stake in community", async ({
   await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
 
   // 5. Stake 0.2 tokens
-  const stakeInput = page.getByTestId("stake-input").locator(":scope:visible");
+  const stakeInput = getByTestId(page, "stake-input");
   await expect(stakeInput).toBeVisible({ timeout: 60000 });
   await stakeInput.fill("0.2");
 
-  await page.getByTestId("btn-stake").locator(":scope:visible").click();
+  await getByTestId(page, "btn-stake").click();
 
   // Approve token allowance for staking
   await approveTokenAllowance({ page, metamask, extensionId });

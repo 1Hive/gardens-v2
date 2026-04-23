@@ -7,6 +7,7 @@ import {
   connectWallet,
   expectNoErrorToast
 } from "./support/metamaskUtils";
+import { getByTestId } from "./support/locators-utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
@@ -77,7 +78,7 @@ test("should ensure wallet is not a member before running e2e flow", async ({
     throw new Error("E2E_COMMUNITY_ID environment variable is not set.");
   }
 
-  const communityCard = page.getByTestId(`community-card-${communityId}`);
+  const communityCard = getByTestId(page, `community-card-${communityId}`);
   await expect(communityCard).toBeVisible({ timeout: 60000 });
 
   const targetHref = await communityCard.evaluate((el) => {

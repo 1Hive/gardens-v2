@@ -7,6 +7,7 @@ import {
   confirmTransaction,
   expectNoErrorToast
 } from "./support/metamaskUtils";
+import { getByTestId } from "./support/locators-utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
@@ -40,27 +41,20 @@ test("should join community", async ({
     timeout: 60000 // Increase timeout to handle slow loading
   });
 
-  await page.getByTestId("connectButton").click();
-  await page.getByTestId("rk-wallet-option-injected").click();
+  await getByTestId(page, "connectButton").click();
+  await getByTestId(page, "rk-wallet-option-injected").click();
   await metamask.connectToDapp();
 
   // Verify the connected account address
-  await expect(page.locator("[data-testid='accounts']")).toHaveText(
-    "0x327F…7394"
-  );
+  await expect(getByTestId(page, "accounts")).toHaveText("0x327F…7394");
 
-  await page
-    .getByTestId(`community-card-${process.env.E2E_COMMUNITY_ID}`) // Opt - 🧪 End-to-End Test Playground
-    .click();
+  await getByTestId(page, `community-card-${process.env.E2E_COMMUNITY_ID}`).click(); // Opt - 🧪 End-to-End Test Playground
 
   // Wait for page loaded
   await page.waitForLoadState("networkidle");
 
   // Launch join flow
-  await page
-    .getByTestId("register-member-button")
-    .locator(":scope:visible")
-    .click();
+  await getByTestId(page, "register-member-button").click();
 
   // 1. Sign the community covenant
   await metamask.confirmSignature();

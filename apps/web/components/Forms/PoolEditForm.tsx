@@ -693,6 +693,7 @@ export default function PoolEditForm({
                       },
                     }}
                     suffix="Days"
+                    testId="conviction-input"
                   />
                 </div>
               )}
