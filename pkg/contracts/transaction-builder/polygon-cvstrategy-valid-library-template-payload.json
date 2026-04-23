@@ -1,0 +1,34 @@
+{
+  "version": "1.0",
+  "chainId": "137",
+  "createdAt": 1776462747920,
+  "meta": {
+    "name": "Polygon CVStrategy valid library template fix",
+    "description": "Sets the RegistryFactory CVStrategy template to a deployed implementation linked to a deployed ConvictionsUtils library.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "0x9a17De1f0caD0c592F656410997E4B685d339029",
+    "createdFromOwnerAddress": "0x07AD02e0C1FA0b09fC945ff197E18e9C256838c6"
+  },
+  "transactions": [
+    {
+      "to": "0x57a9835B204DbCc101Dbf981625A3625e8043B9c",
+      "value": "0",
+      "data": "0x1b71f0e40000000000000000000000007617d5c550884147a1afff0d01ba67518a8560a5",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "template",
+            "type": "address"
+          }
+        ],
+        "name": "setStrategyTemplate",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "template": "0x7617d5C550884147a1aFFf0d01ba67518A8560A5"
+      }
+    }
+  ]
+}

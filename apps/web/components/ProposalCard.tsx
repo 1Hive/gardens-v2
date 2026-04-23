@@ -77,7 +77,13 @@ export type ProposalCardProps = {
     };
   strategyConfig: Pick<
     CVStrategyConfig,
-    "decay" | "proposalType" | "allowlist" | "superfluidToken"
+    | "decay"
+    | "proposalType"
+    | "allowlist"
+    | "superfluidToken"
+    | "weight"
+    | "maxRatio"
+    | "minThresholdPoints"
   >;
   inputData?: ProposalInputItem;
   stakedFilter: ProposalInputItem;
