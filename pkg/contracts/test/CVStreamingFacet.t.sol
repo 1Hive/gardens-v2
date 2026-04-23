@@ -60,8 +60,14 @@ contract MockHost {
                 selector := calldataload(data.offset)
             }
             if (selector == bytes4(keccak256("distributeFlow(address,address,address,int96,bytes)"))) {
-                (,,, int96 requestedFlowRate,) = abi.decode(data[4:], (address, address, address, int96, bytes));
-                MockGDAAgreement(gda).setFlowRate(requestedFlowRate);
+                (, , address pool, int96 requestedFlowRate,) =
+                    abi.decode(data[4:], (address, address, address, int96, bytes));
+                uint128 totalUnits = MockSuperfluidPool(pool).getTotalUnits();
+                int96 actualFlowRate = requestedFlowRate;
+                if (requestedFlowRate > 0 && totalUnits != 0) {
+                    actualFlowRate = (requestedFlowRate / int96(uint96(totalUnits))) * int96(uint96(totalUnits));
+                }
+                MockGDAAgreement(gda).setFlowRate(actualFlowRate);
             }
         }
         return "";
@@ -109,6 +115,10 @@ contract MockERC20 is IERC20 {
 
     function mint(address to, uint256 amount) external {
         _balances[to] += amount;
+    }
+
+    function setBalance(address account, uint256 amount) external {
+        _balances[account] = amount;
     }
 }
 
@@ -179,15 +189,21 @@ contract MockSuperToken {
 contract MockSuperfluidPool {
     mapping(address => uint128) public memberUnits;
     uint256 public updateCount;
+    uint128 public totalUnits;
     bool public updateShouldSucceed = true;
 
     function updateMemberUnits(address member, uint128 units) external returns (bool) {
         if (!updateShouldSucceed) {
             return false;
         }
+        totalUnits = totalUnits - memberUnits[member] + units;
         memberUnits[member] = units;
         updateCount++;
         return true;
+    }
+
+    function getTotalUnits() external view returns (uint128) {
+        return totalUnits;
     }
 
     function setUpdateShouldSucceed(bool value) external {
@@ -889,6 +905,30 @@ contract CVStreamingFacetTest is Test {
         facet.rebalance();
         assertEq(facet.getLastRebalance(), block.timestamp);
         assertLe(int256(gdaAgreement.flowRate()), int256(1_000_000_000));
+    }
+
+    function test_rebalance_starts_stream_when_eligible_units_would_round_flow_to_zero() public {
+        token.setBalance(address(facet), 0);
+        superToken.mint(address(facet), 10 ether);
+        facet.useRealShouldStartStream();
+        facet.setupCVParams(9_999_959);
+        facet.setupThresholdParams(3_656_188, 133_677, 0);
+        facet.setupTotalPointsActivated(300 ether);
+        facet.setupStreamingRatePerSecond(38_051_750_380_518);
+
+        uint256 threshold = 7_317_067_318_619_244_106_093_032;
+        facet.setupProposal(1, ProposalStatus.Active, 0, threshold - 1, block.number);
+        facet.setupProposal(2, ProposalStatus.Active, 0, 8_816_629_952_176_084_917_693_002, block.number);
+        facet.setProposalRequestedAmount(1, 0);
+        facet.setProposalRequestedAmount(2, 0);
+        facet.setStreamingEscrowExternal(1, escrow1);
+        facet.setStreamingEscrowExternal(2, escrow2);
+
+        facet.rebalance();
+
+        assertEq(gdaPool.memberUnits(escrow1), 0);
+        assertGt(gdaPool.memberUnits(escrow2), 0);
+        assertGt(gdaAgreement.flowRate(), 0);
     }
 
     function test_rebalance_tops_up_escrow_deposit_before_sync() public {

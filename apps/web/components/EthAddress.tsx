@@ -6,7 +6,9 @@ import { Address, isAddress } from "viem";
 import { useEnsName, useEnsAvatar } from "wagmi";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { isSafeAvatarUrl } from "@/app/api/utils";
+import { getExplorerUrl } from "@/configs/chains";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useExplorerPreference } from "@/hooks/useExplorerPreference";
 import { useTheme } from "@/providers/ThemeProvider";
 import { shortenAddress as shortenAddressFn } from "@/utils/text";
 
@@ -37,7 +39,9 @@ export const EthAddress = ({
 }: EthAddressProps) => {
   const divParentRef = React.useRef<HTMLDivElement>(null);
   const chain = useChainFromPath();
+  const { explorerPreference } = useExplorerPreference();
   const { resolvedTheme } = useTheme();
+  const explorerUrl = getExplorerUrl(chain?.id, explorerPreference);
 
   const { data: ensName } = useEnsName({
     address: address as Address,
@@ -104,13 +108,9 @@ export const EthAddress = ({
           popupNode={showPopup ? undefined : document.createElement("div")}
           explorer={(addr: string) => ({
             name: explorer === "explorer" ? "Explorer" : "Louper",
-            url:
-              // explorer === "explorer" ?
-              `${chain.explorer}/address/${addr}`,
+            url: `${explorerUrl}/address/${addr}`,
             // : `https://louper.dev/diamond/${addr}?network=${encodeURIComponent(louperNetworkSlug ?? "")}`,
-            accountUrl:
-              // explorer === "explorer" ?
-              `${chain.explorer}/address/${addr}`,
+            accountUrl: `${explorerUrl}/address/${addr}`,
             // : `https://louper.dev/diamond/${addr}?network=${encodeURIComponent(louperNetworkSlug ?? "")}`,
           })}
         />
