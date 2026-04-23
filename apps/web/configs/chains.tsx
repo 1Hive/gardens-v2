@@ -83,7 +83,8 @@ const getGatewayKey = () => {
 };
 
 const getAlchemyRpcUrl = (network: string) => {
-  const apiKey = process.env.NEXT_PUBLIC_ALCHEMY_KEY;
+  const apiKey =
+    process.env.SERVER_ALCHEMY_KEY ?? process.env.NEXT_PUBLIC_ALCHEMY_KEY;
   return apiKey ? `https://${network}.g.alchemy.com/v2/${apiKey}` : undefined;
 };
 
