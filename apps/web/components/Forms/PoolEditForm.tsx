@@ -201,9 +201,11 @@ export default function PoolEditForm({
         maximumFractionDigits: 18,
       })
     : "0";
+
   const {
     register,
     handleSubmit,
+    reset,
     setValue,
     watch,
     formState: { errors },
@@ -244,6 +246,35 @@ export default function PoolEditForm({
         }
       : undefined,
   });
+
+  useEffect(() => {
+    if (!initValues) return;
+
+    reset({
+      sybilResistanceValue: initValues.sybilResistanceValue,
+      sybilResistanceType: initValues.sybilResistanceType,
+      monthlyBudget: initValues.monthlyBudget ?? monthlyBudgetDisplay,
+      spendingLimit: initValues.spendingLimit,
+      minimumConviction: initValues.minimumConviction,
+      convictionGrowth: parseTimeUnit(
+        +initValues.convictionGrowth,
+        "seconds",
+        "days",
+      ),
+      minThresholdPoints: initValues.minThresholdPoints,
+      defaultResolution: initValues.defaultResolution,
+      rulingTime: parseTimeUnit(initValues.rulingTime, "seconds", "days"),
+      proposalCollateral: formatUnits(
+        BigInt(initValues.proposalCollateral),
+        nativeDecimals,
+      ),
+      disputeCollateral: formatUnits(
+        BigInt(initValues.disputeCollateral),
+        nativeDecimals,
+      ),
+      tribunalAddress: initValues.tribunalAddress,
+    });
+  }, [initValues, monthlyBudgetDisplay, nativeDecimals, reset]);
 
   const sybilResistanceValue = watch("sybilResistanceValue");
 
@@ -524,9 +555,7 @@ export default function PoolEditForm({
     <>
       <form
         onSubmit={
-          readOnly ?
-            (e) => e.preventDefault()
-          : handleSubmit(handlePreview)
+          readOnly ? (e) => e.preventDefault() : handleSubmit(handlePreview)
         }
       >
         <input
