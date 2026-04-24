@@ -16,11 +16,13 @@ export const VOTING_POINT_SYSTEM_DESCRIPTION = {
     "Voting weight is the square root of staked tokens, reducing power of bigger holders.",
 } as const;
 
+const PROTOPIAN_TOKEN_IDS = new Set(["2000000001", "6000000002"]);
+
 export const NFTs = {
   FirstHolder: "0x0c04af0f06d5762151245d0b7ef48170c49a1441",
   Protopian: [
     "0xCCac0bc52BF35d8F72d8dBEb780EEB9A4C1C5433",
-    (tokenId: string) => tokenId.startsWith("2") || tokenId.startsWith("6"),
+    (tokenId: string) => PROTOPIAN_TOKEN_IDS.has(tokenId),
   ],
   Keeper: [
     "0xCCac0bc52BF35d8F72d8dBEb780EEB9A4C1C5433",

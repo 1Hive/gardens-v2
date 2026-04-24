@@ -198,7 +198,7 @@ export function ConnectWallet() {
           hasNFT: !!isFirstHolder,
         },
       ].filter((nft) => nft.hasNFT),
-    [isFirstHolder],
+    [isBeekperHolder, isFirstHolder, isProtopianHolder],
   );
 
   const [selectedNFTIndex, setSelectedNFTIndex] = useState(0);

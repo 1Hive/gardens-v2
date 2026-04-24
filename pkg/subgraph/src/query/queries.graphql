@@ -190,6 +190,18 @@ query getGlobalPauseState {
   }
 }
 
+query nftHoldersMembers($first: Int!, $skip: Int!) {
+  members(
+    first: $first
+    skip: $skip
+    where: { or: [{ isProtopian: true }, { isKeeper: true }] }
+  ) {
+    id
+    isProtopian
+    isKeeper
+  }
+}
+
 query getProposalSupporters($proposalId: String!) {
   members(first: 1000) {
     id
@@ -243,6 +255,7 @@ query getCommunities {
     councilSafe
     communityName
     archived
+    protopianDelegatedFrom
     garden {
       address
       chainId
@@ -273,6 +286,10 @@ query getCommunity($communityAddr: ID!) {
     communityName
     id
     archived
+    protopianDelegatedFrom
+    registryFactory {
+      id
+    }
     members(
       first: 1000
       where: { stakedTokens_gt: "0" }
@@ -333,6 +350,49 @@ query getRegistryFactoryData {
   registryFactories(first: 1000) {
     id
     chainId
+  }
+}
+
+query getNFTHoldersLists {
+  protopians(first: 1000) {
+    id
+    address
+  }
+  keepers(first: 1000) {
+    id
+    address
+  }
+}
+
+query getCommunitiesWithDelegation {
+  registryCommunities(first: 1000, where: { isValid: true }) {
+    id
+    communityName
+    archived
+    councilSafe
+    protopianDelegatedFrom
+    garden {
+      address
+      chainId
+      symbol
+      name
+      decimals
+    }
+    strategies(first: 1000, where: { isEnabled: true }) {
+      id
+      totalEffectiveActivePoints
+      poolId
+      proposals(first: 1000, where: { proposalStatus: 1 }) {
+        id
+        proposalStatus
+      }
+    }
+    members(first: 1000, where: { stakedTokens_gt: "0" }) {
+      id
+      memberAddress
+      stakedTokens
+    }
+    membersCount
   }
 }
 

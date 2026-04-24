@@ -841,9 +841,9 @@ contract ForkLifecycleHealthcheck is Test {
             assertGt(strategyCuts.length, 0, chain);
 
             (bool success, bytes memory data) = address(factory).staticcall(
-                abi.encodeWithSelector(RegistryFactory.isStreamRebalanceCallerAllowed.selector, address(0))
+                abi.encodeWithSelector(RegistryFactory.isAuthorizedWallet.selector, address(0))
             );
-            assertTrue(success, string.concat(chain, ": factory missing stream rebalance selector"));
+            assertTrue(success, string.concat(chain, ": factory missing authorized wallet selector"));
             assertFalse(abi.decode(data, (bool)), chain);
         }
     }

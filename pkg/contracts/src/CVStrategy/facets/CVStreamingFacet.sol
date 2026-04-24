@@ -420,7 +420,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         if (registryFactoryAddress == address(0)) {
             return false;
         }
-        return IRegistryFactory(registryFactoryAddress).isStreamRebalanceCallerAllowed(caller);
+        return IRegistryFactory(registryFactoryAddress).isAuthorizedWallet(caller);
     }
 
     function _isCouncilSafeOwner(address councilSafeAddress, address caller) internal view returns (bool) {

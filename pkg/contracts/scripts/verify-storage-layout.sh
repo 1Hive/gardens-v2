@@ -333,14 +333,17 @@ verify_registry_factory_storage() {
         ok=false
         [ "$VERBOSE" = true ] && echo -e "${RED}  Missing globalPauseController storage field${NC}"
     fi
-    if ! grep -Eq "\|[[:space:]]*streamRebalanceCallerAllowlist[[:space:]]*\|[[:space:]]*mapping\(address => bool\)[[:space:]]*\|" "$layout_tmp" \
-        && ! grep -Eq "\|[[:space:]]*rebalanceCallerAllowlist[[:space:]]*\|[[:space:]]*mapping\(address => bool\)[[:space:]]*\|" "$layout_tmp"; then
+    if ! grep -Eq "\|[[:space:]]*authorizedWallets[[:space:]]*\|[[:space:]]*mapping\(address => bool\)[[:space:]]*\|" "$layout_tmp"; then
         ok=false
-        [ "$VERBOSE" = true ] && echo -e "${RED}  Missing streamRebalanceCallerAllowlist storage field${NC}"
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Missing authorizedWallets storage field${NC}"
     fi
-    if ! grep -Eq "\|[[:space:]]*__gap[[:space:]]*\|[[:space:]]*uint256\[41\][[:space:]]*\|[[:space:]]*119([[:space:]]*\||$)" "$layout_tmp"; then
+    if ! grep -Eq "\|[[:space:]]*protopianDelegate[[:space:]]*\|[[:space:]]*mapping\(address => address\)[[:space:]]*\|" "$layout_tmp"; then
         ok=false
-        [ "$VERBOSE" = true ] && echo -e "${RED}  Expected __gap (uint256[41]) at slot 119${NC}"
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Missing protopianDelegate storage field${NC}"
+    fi
+    if ! grep -Eq "\|[[:space:]]*__gap[[:space:]]*\|[[:space:]]*uint256\[40\][[:space:]]*\|[[:space:]]*120([[:space:]]*\||$)" "$layout_tmp"; then
+        ok=false
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Expected __gap (uint256[40]) at slot 120${NC}"
     fi
 
     rm -f "$layout_tmp"
