@@ -36,16 +36,27 @@ test("should allocate support to a proposal", async ({
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        query:
-          "{ cvstrategies(first: 1, orderBy: poolId, orderDirection: desc, where: { isEnabled: true }) { id poolId } }"
+        query: `{
+  cvstrategies(
+    first: 1
+    orderBy: poolId
+    orderDirection: desc
+    where: {isEnabled: true, registryCommunity:"0x9ee73d7afd1d75d9d3468ab7845150180936dec4"}
+  ) {
+    id
+    poolId
+  }
+}`
       })
     }
   ).then((r) => r.json());
   const { poolId } = subgraphRes.data.cvstrategies[0];
 
   await page.goto(
-    `gardens/10/0x8b2f706cd2bc0df6679218177c56e72c5241de9b/0x9ee73d7afd1d75d9d3468ab7845150180936dec4/${poolId}`,
-    { timeout: 60000 }
+    `gardens/10/0x9ee73d7afd1d75d9d3468ab7845150180936dec4/${poolId}`,
+    {
+      timeout: 60000
+    }
   );
 
   // Open the allocation view

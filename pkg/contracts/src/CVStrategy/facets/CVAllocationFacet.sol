@@ -194,12 +194,12 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
             revert ProposalDataIsEmpty(_data.length);
         }
 
+        uint256 proposalId = abi.decode(_data, (uint256));
+
         uint256 poolAmount = getPoolAmount();
-        if (poolAmount == 0) {
+        if (poolAmount == 0 && proposal[proposalId].requestedAmount > 0) {
             revert PoolIsEmpty(poolAmount);
         }
-
-        uint256 proposalId = abi.decode(_data, (uint256));
 
         // Unwrap supertoken if needed
         if (address(superfluidToken) != address(0)) {
