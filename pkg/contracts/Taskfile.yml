@@ -7475,16 +7475,26 @@ tasks:
               exit 1
             fi
 
+            proxy_owner_from_config="$(jq -r --arg chain "${chain}" '.networks[] | select(.name == $chain) | .ENVS.PROXY_OWNER // empty' config/networks.json | head -n 1)"
+            if [ -z "${proxy_owner_from_config}" ] || [ "${proxy_owner_from_config}" = "null" ]; then
+              echo "${chain}: missing ENVS.PROXY_OWNER in config/networks.json" >&2
+              exit 1
+            fi
+
             payload="transaction-builder/${payload_chain}-proxy-owner-upgrade-and-grant-payload.json"
             if [ ! -f "${payload}" ]; then
               echo "missing payload: ${payload}" >&2
               exit 1
             fi
 
-            # Normalize grant target per run so payload stale addresses are never used.
+            # Normalize targets per run so payload stale addresses are never used.
             chain_payload="$(mktemp)"
-            jq --arg newWallet "${deployer_address}" --arg grantData "${grant_data}" '
+            jq --arg proxyOwner "${proxy_owner_from_config}" --arg newWallet "${deployer_address}" --arg grantData "${grant_data}" '
               .transactions = [.transactions[] |
+                if ((.contractMethod.name // "") == "upgradeTo") or ((.contractMethod.name // "") == "grantUpgradeAccess")
+                then (.to = $proxyOwner)
+                else .
+                end |
                 if ((.contractMethod.name // "") == "grantUpgradeAccess")
                 then ((.contractInputsValues.newUpgradeWallet = $newWallet) | (.data = $grantData))
                 else .
@@ -7492,7 +7502,7 @@ tasks:
               ]
             ' "${payload}" > "${chain_payload}"
 
-            proxy_owner="$(jq -r '.transactions[0].to' "${chain_payload}")"
+            proxy_owner="${proxy_owner_from_config}"
             target_upgrade_wallet="$(jq -r '.transactions[] | select((.contractMethod.name // "") == "grantUpgradeAccess") | .contractInputsValues.newUpgradeWallet' "${chain_payload}" | head -n 1)"
             if [ -z "${target_upgrade_wallet}" ] || [ "${target_upgrade_wallet}" = "null" ]; then
               echo "${chain}: missing grantUpgradeAccess target in payload" >&2
