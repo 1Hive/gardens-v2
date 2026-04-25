@@ -638,8 +638,13 @@ export default function ClientPage({
               <div className="flex-1 flex-col lg:items-start lg:justify-between sm:gap-4 ">
                 {/* Community name + Address */}
                 <div className=" flex-flex-col">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h2>{communityName}</h2>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div
+                      className="tooltip tooltip-bottom min-w-0 flex-1"
+                      data-tip={communityName ?? ""}
+                    >
+                      <h2 className="truncate">{communityName}</h2>
+                    </div>
                     {registryCommunity.archived && (
                       <Badge color="warning" label="Archived" />
                     )}
@@ -937,8 +942,13 @@ export default function ClientPage({
                   <div className="flex-1 w-full flex-col gap-4">
                     {/* Community name + Address */}
                     <div className="mb-3">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h2>{communityName}</h2>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div
+                          className="tooltip tooltip-bottom min-w-0 flex-1"
+                          data-tip={communityName ?? ""}
+                        >
+                          <h2 className="truncate">{communityName}</h2>
+                        </div>
                         {registryCommunity.archived && (
                           <Badge color="warning" label="Archived" />
                         )}

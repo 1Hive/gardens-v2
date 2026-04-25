@@ -43,7 +43,7 @@ import {
   iArbitratorABI,
   safeArbitratorABI,
 } from "@/src/generated";
-import { DisputeStatus, ProposalStatus } from "@/types";
+import { DisputeStatus, PoolTypes, ProposalStatus } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { convertSecondsToReadableTime } from "@/utils/numbers";
@@ -54,7 +54,11 @@ type Props = {
       CVProposal,
       "id" | "proposalNumber" | "blockLast" | "proposalStatus" | "createdAt"
     > & {
-      strategy: Pick<CVStrategy, "id" | "poolId">;
+      strategy: Pick<CVStrategy, "id" | "poolId"> & {
+        config?: {
+          proposalType?: string | number | null;
+        } | null;
+      };
       arbitrableConfig: Pick<
         ArbitrableConfig,
         | "defaultRulingTimeout"
@@ -140,6 +144,9 @@ export const DisputeModal: FC<Props> = ({
     arbitrationConfig != null &&
     +lastDispute.createdAt + +arbitrationConfig.defaultRulingTimeout <
       Date.now() / 1000;
+  const isStreamingType =
+    PoolTypes[String(proposalData.strategy?.config?.proposalType)] ===
+    "streaming";
   const disputes = disputesResult?.proposalDisputes ?? [];
   const isProposalEnded = proposalStatus !== "active" && !isDisputed;
 
@@ -324,7 +331,11 @@ export const DisputeModal: FC<Props> = ({
           <InfoBox
             title="Information"
             infoBoxType="info"
-            content={`Disputing this proposal stops it from being executed but not from growing in support. The Tribunal has ${rulingTimeout.value} ${rulingTimeout.unit} to settle any disputes before it can be closed and collateral is returned.`}
+            content={
+              isStreamingType ?
+                "While disputed, the stream keeps accumulating. If the dispute succeeds, the proposal is rejected and the accumulated funds are returned to the pool. If the ruling favors the proposal creator, the accumulated funds are sent to the beneficiary and the stream continues."
+              : `Disputing this proposal stops it from being executed but not from growing in support. The Tribunal has ${rulingTimeout.value} ${rulingTimeout.unit} to settle any disputes before it can be closed and collateral is returned.`
+            }
           />
         </div>
       }
