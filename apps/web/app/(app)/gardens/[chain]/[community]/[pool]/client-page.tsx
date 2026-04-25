@@ -50,6 +50,7 @@ import {
   dismissPendingSubgraphRefreshToast,
   useSubgraphQuery,
 } from "@/hooks/useSubgraphQuery";
+import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
@@ -80,6 +81,7 @@ const toBigInt = (value: unknown): bigint => {
 const LivePoolStreamedTotal = memo(function LivePoolStreamedTotal({
   proposals,
   poolToken,
+  freezeAtSnapshot = false,
 }: {
   proposals:
     | Array<{
@@ -91,15 +93,17 @@ const LivePoolStreamedTotal = memo(function LivePoolStreamedTotal({
       }>
     | undefined;
   poolToken?: { decimals: number; symbol: string } | null;
+  freezeAtSnapshot?: boolean;
 }) {
   const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
 
   const hasActiveFlow = useMemo(
     () =>
+      !freezeAtSnapshot &&
       (proposals ?? []).some(
         (proposal) => toBigInt(proposal.proposalStream?.currentFlowRate) > 0n,
       ),
-    [proposals],
+    [freezeAtSnapshot, proposals],
   );
 
   useEffect(() => {
@@ -116,7 +120,8 @@ const LivePoolStreamedTotal = memo(function LivePoolStreamedTotal({
       const proposalStream = proposal.proposalStream;
       if (!proposalStream) return acc;
 
-      const currentFlowRate = toBigInt(proposalStream.currentFlowRate);
+      const currentFlowRate =
+        freezeAtSnapshot ? 0n : toBigInt(proposalStream.currentFlowRate);
       const streamedUntilSnapshot = toBigInt(
         proposalStream.streamedUntilSnapshot,
       );
@@ -136,7 +141,7 @@ const LivePoolStreamedTotal = memo(function LivePoolStreamedTotal({
     }, 0n);
 
     return total > 0n ? total : null;
-  }, [nowMs, proposals]);
+  }, [freezeAtSnapshot, nowMs, proposals]);
 
   if (!poolToken || totalStreamedBn == null) {
     return <span className="font-mono tabular-nums">--</span>;
@@ -712,10 +717,26 @@ export default function ClientPage({
     | bigint
     | null
     | undefined;
-  const currentFlowRateForDisplay = streamInfo?.streamLastFlowRate as
+  const streamLastFlowRate = streamInfo?.streamLastFlowRate as
     | bigint
     | null
     | undefined;
+  const { currentFlowRateBn: liveCurrentFlowRateBn, hasFetched: hasFetchedLivePoolFlow } =
+    useSuperfluidStream({
+      receiver: (streamInfo?.superfluidGDA ?? "") as Address,
+      superToken: (effectiveSuperToken ?? "") as Address,
+      chainId,
+      containerId: streamInfo?.superfluidGDA ?? poolId ?? strategy?.id ?? "pool-stream",
+      sender: strategy?.id,
+      includePoolMembers: false,
+    });
+  const currentFlowRateForDisplay =
+    liveCurrentFlowRateBn ?? streamLastFlowRate ?? 0n;
+  const showStreamingPoolInsufficientFunds =
+    isStreamingPool &&
+    hasFetchedLivePoolFlow &&
+    currentFlowRateForDisplay === 0n &&
+    (poolToken?.balance ?? 0n) === 0n;
   const stillLoading =
     fetching ||
     isAwaitingNewPoolIndexing ||
@@ -805,6 +826,15 @@ export default function ClientPage({
       <section className="section-layout">
         <div className="flex flex-col gap-3">
           <h4>Stream Info</h4>
+          {showStreamingPoolInsufficientFunds && (
+            <InfoBox
+              infoBoxType="error"
+              className="w-full"
+              title="Pool is empty"
+            >
+              No funds available for streaming.
+            </InfoBox>
+          )}
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
               <p className="subtitle2">Budget</p>
@@ -825,6 +855,9 @@ export default function ClientPage({
                   <LivePoolStreamedTotal
                     proposals={strategy?.proposals as any}
                     poolToken={poolToken}
+                    freezeAtSnapshot={
+                      hasFetchedLivePoolFlow && currentFlowRateForDisplay === 0n
+                    }
                   />
                 </p>
                 {poolToken?.address && poolToken?.symbol && (
@@ -850,7 +883,7 @@ export default function ClientPage({
               <ArrowTopRightOnSquareIcon className="h-4 w-4" />
             </a>
           )}
-          {(currentFlowRateForDisplay ?? 0n) === 0n && (
+          {currentFlowRateForDisplay === 0n && !showStreamingPoolInsufficientFunds && (
             <InfoBox
               infoBoxType="info"
               className="w-full"
