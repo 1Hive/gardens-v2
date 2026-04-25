@@ -194,12 +194,12 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
             revert ProposalDataIsEmpty(_data.length);
         }
 
+        uint256 proposalId = abi.decode(_data, (uint256));
+
         uint256 poolAmount = getPoolAmount();
-        if (poolAmount == 0) {
+        if (poolAmount == 0 && proposals[proposalId].requestedAmount > 0) {
             revert PoolIsEmpty(poolAmount);
         }
-
-        uint256 proposalId = abi.decode(_data, (uint256));
 
         // Unwrap supertoken if needed
         if (address(superfluidToken) != address(0)) {
@@ -224,22 +224,25 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                 revert PoolAmountNotEnough(proposalId, proposals[proposalId].requestedAmount, poolAmount);
             }
 
-            if (_isOverMaxRatio(proposals[proposalId].requestedAmount)) {
+            if (proposals[proposalId].requestedAmount > 0 && _isOverMaxRatio(proposals[proposalId].requestedAmount)) {
                 uint256 maxAllowed = (cvParams.maxRatio * poolAmount) / ConvictionsUtils.D;
                 revert AmountOverMaxRatio(proposals[proposalId].requestedAmount, maxAllowed, poolAmount);
             }
 
             uint256 convictionLast = updateProposalConviction(proposalId);
 
-            uint256 threshold = ConvictionsUtils.calculateThreshold(
-                proposals[proposalId].requestedAmount,
-                poolAmount,
-                totalPointsActivated,
-                cvParams.decay,
-                cvParams.weight,
-                cvParams.maxRatio,
-                cvParams.minThresholdPoints
-            );
+            uint256 threshold;
+            if (proposals[proposalId].requestedAmount > 0) {
+                threshold = ConvictionsUtils.calculateThreshold(
+                    proposals[proposalId].requestedAmount,
+                    poolAmount,
+                    totalPointsActivated,
+                    cvParams.decay,
+                    cvParams.weight,
+                    cvParams.maxRatio,
+                    cvParams.minThresholdPoints
+                );
+            }
 
             // <= for when threshold being zero
             if (convictionLast <= threshold && proposals[proposalId].requestedAmount > 0) {

@@ -368,9 +368,7 @@ contract CVStrategyTest is Test {
 
         vm.deal(address(strategy), 100);
         assertTrue(strategy.exposedIsOverMaxRatio(200));
-
-        vm.expectRevert();
-        strategy.calculateThreshold(200);
+        assertEq(strategy.calculateThreshold(200), 0);
     }
 
     function test_getProposal_thresholdBranches() public {
@@ -410,6 +408,20 @@ contract CVStrategyTest is Test {
         uint256 expected = strategy.calculateThreshold(requestedAmount);
         uint256 threshold = strategy.getProposalThreshold(3);
         assertEq(threshold, expected);
+    }
+
+    function test_threshold_reads_use_override_when_pool_empty() public {
+        CVParams memory params = CVParams(8_000_000, 1_000_000, 5_000_000, 2_000_000_000);
+        strategy.setCvParams(params);
+        strategy.setTotalPointsActivated(1_000_000_000_000);
+        strategy.setProposal(5, member, 1, ProposalStatus.Active, block.number - 1, 0);
+
+        uint256 expectedOverride = ConvictionsUtils.calculateThresholdOverride(
+            1_000_000_000_000, params.decay, params.minThresholdPoints
+        );
+
+        assertEq(strategy.calculateThreshold(1), expectedOverride);
+        assertEq(strategy.getProposalThreshold(5), expectedOverride);
     }
 
     function test_updateProposalConviction_and_setSybilScorer() public {

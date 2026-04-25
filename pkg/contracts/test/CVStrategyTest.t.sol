@@ -1038,19 +1038,16 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().allocate(poolId, data);
     }
 
-    function testRevert_calculateThreshold_requestOverMax() public {
+    function test_calculateThreshold_requestOverMax_returnsZero() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         /**
          * ASSERTS
          *
          */
-        //Revert on create already tested, here checking the revert in calculateThreshold
+        // Revert on create already tested, here checking the read helper behavior.
         uint256 requestedAmount = REQUESTED_AMOUNT * 100000;
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
-        // vm.expectRevert(abi.encodeWithSelector(CVStrategy.AmountOverMaxRatio.selector));
-        vm.expectRevert();
-
-        cv.calculateThreshold(requestedAmount);
+        assertEq(cv.calculateThreshold(requestedAmount), 0);
     }
 
     //@todo should fix that tests using old percentage scale

@@ -367,6 +367,9 @@ contract CVAllocationFacetTest is Test {
 
     function test_distribute_reverts_pool_empty() public {
         allo.setPoolToken(1, facet.nativeToken());
+        facet.setProposalType(ProposalType.Funding);
+        facet.setProposal(1, ProposalStatus.Active, 1, facet.nativeToken(), beneficiary, member, 0, 0, 0);
+
         vm.prank(address(allo));
         vm.expectRevert(abi.encodeWithSelector(CVAllocationFacet.PoolIsEmpty.selector, 0));
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
@@ -442,6 +445,26 @@ contract CVAllocationFacetTest is Test {
     function test_distribute_success_executes() public {
         allo.setPoolToken(1, facet.nativeToken());
         vm.deal(address(facet), 1 ether);
+        facet.setProposalType(ProposalType.Funding);
+        facet.setCvParams(CVParams({maxRatio: 10_000_000, weight: 0, decay: 0, minThresholdPoints: 0}));
+        facet.setArbitrableConfig(1, ArbitrableConfig({
+            arbitrator: IArbitrator(address(0)),
+            tribunalSafe: address(0),
+            submitterCollateralAmount: 1,
+            challengerCollateralAmount: 1,
+            defaultRuling: 0,
+            defaultRulingTimeout: 0
+        }));
+        facet.setProposal(1, ProposalStatus.Active, 0, facet.nativeToken(), beneficiary, member, 0, 0, 1);
+
+        vm.prank(address(allo));
+        facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
+
+        assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Executed));
+    }
+
+    function test_distribute_zero_requested_executes_with_empty_pool() public {
+        allo.setPoolToken(1, facet.nativeToken());
         facet.setProposalType(ProposalType.Funding);
         facet.setCvParams(CVParams({maxRatio: 10_000_000, weight: 0, decay: 0, minThresholdPoints: 0}));
         facet.setArbitrableConfig(1, ArbitrableConfig({
