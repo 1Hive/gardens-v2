@@ -732,11 +732,27 @@ export default function ClientPage({
     });
   const currentFlowRateForDisplay =
     liveCurrentFlowRateBn ?? streamLastFlowRate ?? 0n;
+  const hasEligibleStreamingProposal = useMemo(
+    () =>
+      (strategy?.proposals ?? []).some((proposal) => {
+        const proposalStream = proposal.proposalStream;
+        if (!proposalStream || proposalStream.isStopped) {
+          return false;
+        }
+
+        return (
+          toBigInt(proposalStream.currentUnits) > 0n ||
+          toBigInt(proposalStream.currentFlowRate) > 0n
+        );
+      }),
+    [strategy?.proposals],
+  );
   const showStreamingPoolInsufficientFunds =
     isStreamingPool &&
     hasFetchedLivePoolFlow &&
     currentFlowRateForDisplay === 0n &&
-    (poolToken?.balance ?? 0n) === 0n;
+    (poolToken?.balance ?? 0n) === 0n &&
+    hasEligibleStreamingProposal;
   const stillLoading =
     fetching ||
     isAwaitingNewPoolIndexing ||
