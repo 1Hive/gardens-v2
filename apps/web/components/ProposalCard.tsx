@@ -377,7 +377,16 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       !alreadyExecuted &&
       hasFetchedLiveProposalFlow &&
       currentFlowRateBn === 0n &&
-      subgraphCurrentFlowRateBn > 0n;
+      subgraphCurrentFlowRateBn > 0n &&
+      (poolToken?.balance ?? 0n) === 0n;
+    const showStreamingAboutToStart =
+      isStreamingType &&
+      !isFrozenStreamingProposal &&
+      !alreadyExecuted &&
+      hasFetchedLiveProposalFlow &&
+      currentFlowRateBn === 0n &&
+      subgraphCurrentFlowRateBn > 0n &&
+      (poolToken?.balance ?? 0n) > 0n;
     const { data: escrowSuperTokenBalance } = useBalance({
       address: proposalData.streamingEscrow as Address,
       token: strategyConfig.superfluidToken as Address,
@@ -619,6 +628,8 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           <span className="text-sm font-mono tabular-nums dark:text-neutral-soft-content">
                             {showStreamingInsufficientFunds ?
                               "Pool empty"
+                            : showStreamingAboutToStart ?
+                              "About to stream"
                             : proposalFlowPerMonth != null ?
                               `${roundToSignificant(proposalFlowPerMonth, 4)} ${poolToken.symbol}/mo`
                             : "No active stream"}

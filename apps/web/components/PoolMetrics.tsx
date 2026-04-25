@@ -781,6 +781,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               isLoading={isSendFundsLoading}
               disabled={isButtonDisabled}
               tooltip={tooltipMessage}
+              forceShowTooltip={Boolean(tooltipMessage)}
               className="w-full"
             >
               Transfer {amount} {poolToken.symbol}
