@@ -1466,15 +1466,6 @@ export default function ClientPage({ params }: ClientPageProps) {
                     />
                   </a>
                 )}
-              {(currentFlowRateForDisplay ?? 0n) === 0n && (
-                <InfoBox
-                  infoBoxType="info"
-                  className="w-full"
-                  title="No active stream"
-                >
-                  This pool currently has no active outflow.
-                </InfoBox>
-              )}
               {showSyncStreamButton && (
                 <Button
                   btnStyle="outline"
@@ -1645,7 +1636,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                   infoBoxType="warning"
                   content={
                     isStreamingType ?
-                      "Stream funds are accumulated while this proposal is disputed. When the dispute is ruled, accumulated funds are sent to the beneficiary if approved, or returned to the pool if rejected."
+                      "While disputed, the stream keeps accumulating. If the dispute succeeds, the proposal is rejected and the accumulated funds are returned to the pool. If the ruling favors the proposal creator, the accumulated funds are sent to the beneficiary and the stream continues."
                     : "This proposal is currently disputed. It cannot proceed until the dispute is ruled."
                   }
                 />
@@ -2081,15 +2072,6 @@ export default function ClientPage({ params }: ClientPageProps) {
                         />
                       </a>
                     )}
-                  {(currentFlowRateForDisplay ?? 0n) === 0n && (
-                    <InfoBox
-                      infoBoxType="info"
-                      className="w-full"
-                      title="No active stream"
-                    >
-                      This pool currently has no active outflow.
-                    </InfoBox>
-                  )}
                   {showSyncStreamButton && (
                     <Button
                       btnStyle="outline"
@@ -2167,7 +2149,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                       infoBoxType="warning"
                       content={
                         isStreamingType ?
-                          "Stream funds are accumulated while this proposal is disputed. When the dispute is ruled, accumulated funds are sent to the beneficiary if approved, or returned to the pool if rejected."
+                          "While disputed, the stream keeps accumulating. If the dispute succeeds, the proposal is rejected and the accumulated funds are returned to the pool. If the ruling favors the proposal creator, the accumulated funds are sent to the beneficiary and the stream continues."
                         : "This proposal is currently disputed. It cannot proceed until the dispute is ruled."
                       }
                     />

@@ -300,17 +300,31 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       return 0n;
     };
 
-    const currentFlowRateBn = toBigInt(proposalStream?.currentFlowRate);
+    const subgraphCurrentFlowRateBn = toBigInt(proposalStream?.currentFlowRate);
     const streamedUntilSnapshotBn = toBigInt(
       proposalStream?.streamedUntilSnapshot,
     );
     const lastSnapshotAtBn = toBigInt(proposalStream?.lastSnapshotAt);
     const resolvedProposalStatus =
       optimisticProposalStatus ?? ProposalStatus[proposalStatus];
+    const alreadyExecuted = resolvedProposalStatus === "executed";
     const isFrozenStreamingProposal =
       isStreamingType &&
       (resolvedProposalStatus === "disputed" ||
         resolvedProposalStatus === "cancelled");
+
+    const {
+      currentFlowRateBn: liveCurrentFlowRateBn,
+      liveTotalStreamedBn: explorerTotalStreamedBn,
+      hasFetched: hasFetchedLiveProposalFlow,
+    } = useSuperfluidStream({
+      receiver: proposalData.streamingEscrow as Address,
+      superToken: strategyConfig.superfluidToken as Address,
+      chainId,
+      containerId: poolId,
+    });
+    const currentFlowRateBn =
+      liveCurrentFlowRateBn ?? subgraphCurrentFlowRateBn;
 
     const lastSnapshotAtMs = lastSnapshotAtBn * 1000n;
     const elapsedMs =
@@ -324,14 +338,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       : 0n;
     const totalReceivedByEscrowBn =
       streamedUntilSnapshotBn + (currentFlowRateBn * elapsedMs) / 1000n;
-
-    const { liveTotalStreamedBn: explorerTotalStreamedBn } =
-      useSuperfluidStream({
-        receiver: proposalData.streamingEscrow as Address,
-        superToken: strategyConfig.superfluidToken as Address,
-        chainId,
-        containerId: poolId,
-      });
     const shouldTickFallback = useMemo(
       () =>
         isStreamingType &&
@@ -371,6 +377,22 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       ) ?
         +formatUnits(currentFlowRateBn, poolToken.decimals) * SEC_TO_MONTH
       : null;
+    const showStreamingInsufficientFunds =
+      isStreamingType &&
+      !isFrozenStreamingProposal &&
+      !alreadyExecuted &&
+      hasFetchedLiveProposalFlow &&
+      currentFlowRateBn === 0n &&
+      subgraphCurrentFlowRateBn > 0n &&
+      (poolToken?.balance ?? 0n) === 0n;
+    const showStreamingAboutToStart =
+      isStreamingType &&
+      !isFrozenStreamingProposal &&
+      !alreadyExecuted &&
+      hasFetchedLiveProposalFlow &&
+      currentFlowRateBn === 0n &&
+      subgraphCurrentFlowRateBn > 0n &&
+      (poolToken?.balance ?? 0n) > 0n;
     const { data: escrowSuperTokenBalance } = useBalance({
       address: proposalData.streamingEscrow as Address,
       token: strategyConfig.superfluidToken as Address,
@@ -425,8 +447,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       poolToken ?
         `${(proposalTotalStreamed ?? 0).toFixed(5)} ${poolToken.symbol}`
       : null;
-
-    const alreadyExecuted = resolvedProposalStatus === "executed";
 
     const hasThreshold = thresholdPct != null;
     const thresholdValue = thresholdPct ?? 0;
@@ -612,7 +632,11 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                             Stream:{" "}
                           </p>
                           <span className="text-sm font-mono tabular-nums dark:text-neutral-soft-content">
-                            {proposalFlowPerMonth != null ?
+                            {showStreamingInsufficientFunds ?
+                              "Pool empty"
+                            : showStreamingAboutToStart ?
+                              "About to stream"
+                            : proposalFlowPerMonth != null ?
                               `${roundToSignificant(proposalFlowPerMonth, 4)} ${poolToken.symbol}/mo`
                             : "No active stream"}
                           </span>
