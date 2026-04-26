@@ -530,6 +530,28 @@ contract RegistryFactoryTest is Test {
         factory.delegateProtopian(address(0x123), address(0x456));
     }
 
+    function test_delegateProtopian_reverts_for_unauthorized_caller() public {
+        address from = address(0x123);
+        address to = address(0x456);
+        address caller = address(0x789);
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(from), true);
+
+        vm.prank(caller);
+        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.UnauthorizedProtopianDelegation.selector, caller, from));
+        factory.delegateProtopian(from, to);
+
+        assertTrue(factory.protopiansAddresses(from));
+        assertFalse(factory.protopiansAddresses(to));
+        assertEq(factory.protopianDelegate(from), address(0));
+    }
+
+    function test_delegateProtopian_reverts_for_zero_from() public {
+        vm.expectRevert(RegistryFactory.AddressCannotBeZero.selector);
+        factory.delegateProtopian(address(0), address(0x456));
+    }
+
     function test_clear_and_upsert_facet_cuts_and_init_getters() public {
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         bytes4[] memory selectors = new bytes4[](1);

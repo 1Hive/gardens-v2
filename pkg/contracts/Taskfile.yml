@@ -7444,6 +7444,7 @@ tasks:
           deployer_address_no0x="${deployer_address_lc#0x}"
           grant_selector="0x00c53432"
           grant_data="${grant_selector}000000000000000000000000${deployer_address_no0x}"
+          upgrade_selector="0x3659cfe6"
           ERC1967_IMPLEMENTATION_SLOT="0x360894A13BA1A3210667C828492DB98DCA3E2076CC3735A920A3CA505D382BBC"
 
           for chain in ethereum arbitrum optimism polygon gnosis base celo; do
@@ -7481,6 +7482,15 @@ tasks:
               exit 1
             fi
 
+            proxy_owner_impl_from_config="$(jq -r --arg chain "${chain}" '.networks[] | select(.name == $chain) | .IMPLEMENTATIONS.PROXY_OWNER // empty' config/networks.json | head -n 1)"
+            if [ -z "${proxy_owner_impl_from_config}" ] || [ "${proxy_owner_impl_from_config}" = "null" ]; then
+              echo "${chain}: missing IMPLEMENTATIONS.PROXY_OWNER in config/networks.json" >&2
+              exit 1
+            fi
+            proxy_owner_impl_lc="$(echo "${proxy_owner_impl_from_config}" | tr '[:upper:]' '[:lower:]')"
+            proxy_owner_impl_no0x="${proxy_owner_impl_lc#0x}"
+            upgrade_data="${upgrade_selector}000000000000000000000000${proxy_owner_impl_no0x}"
+
             payload="transaction-builder/${payload_chain}-proxy-owner-upgrade-and-grant-payload.json"
             if [ ! -f "${payload}" ]; then
               echo "missing payload: ${payload}" >&2
@@ -7489,14 +7499,16 @@ tasks:
 
             # Normalize targets per run so payload stale addresses are never used.
             chain_payload="$(mktemp)"
-            jq --arg proxyOwner "${proxy_owner_from_config}" --arg newWallet "${deployer_address}" --arg grantData "${grant_data}" '
+            jq --arg proxyOwner "${proxy_owner_from_config}" --arg proxyOwnerImplementation "${proxy_owner_impl_from_config}" --arg newWallet "${deployer_address}" --arg grantData "${grant_data}" --arg upgradeData "${upgrade_data}" '
               .transactions = [.transactions[] |
-                if ((.contractMethod.name // "") == "upgradeTo") or ((.contractMethod.name // "") == "grantUpgradeAccess")
-                then (.to = $proxyOwner)
-                else .
-                end |
                 if ((.contractMethod.name // "") == "grantUpgradeAccess")
                 then ((.contractInputsValues.newUpgradeWallet = $newWallet) | (.data = $grantData))
+                elif ((.contractMethod.name // "") == "upgradeTo")
+                then ((.contractInputsValues.newImplementation = $proxyOwnerImplementation) | (.data = $upgradeData))
+                else .
+                end |
+                if ((.contractMethod.name // "") == "upgradeTo") or ((.contractMethod.name // "") == "grantUpgradeAccess")
+                then (.to = $proxyOwner)
                 else .
                 end
               ]
@@ -7521,7 +7533,7 @@ tasks:
             impl_slot_value="$(cast storage "${proxy_owner}" "${ERC1967_IMPLEMENTATION_SLOT}" --rpc-url "${RPC_URL}")"
             implementation="0x${impl_slot_value: -40}"
             implementation_lc="$(echo "${implementation}" | tr '[:upper:]' '[:lower:]')"
-            payload_upgrade_implementation="$(jq -r '.transactions[] | select((.contractMethod.name // "") == "upgradeTo") | .contractInputsValues.newImplementation' "${payload}" | head -n 1)"
+            payload_upgrade_implementation="$(jq -r '.transactions[] | select((.contractMethod.name // "") == "upgradeTo") | .contractInputsValues.newImplementation' "${chain_payload}" | head -n 1)"
             payload_upgrade_implementation_lc="$(echo "${payload_upgrade_implementation}" | tr '[:upper:]' '[:lower:]')"
 
             submit_payload="${chain_payload}"
