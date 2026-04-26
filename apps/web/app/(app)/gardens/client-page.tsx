@@ -137,14 +137,12 @@ export default function ClientPage() {
         },
       ],
     });
+  const communities = communitiesSections as LightCommunity[] | undefined;
 
   return (
     <div className="page-layout max-w-7xl mx-auto">
       <Header />
-      <Communities
-        communities={communitiesSections ?? []}
-        isFetching={isFetching}
-      />
+      <Communities communities={communities ?? []} isFetching={isFetching} />
       <Footer />
     </div>
   );
