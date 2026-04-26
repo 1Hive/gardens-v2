@@ -278,6 +278,10 @@ contract MockRegistryFactoryStreaming {
     function isStreamRebalanceCallerAllowed(address caller) external view returns (bool) {
         return rebalanceCallerAllowlist[caller];
     }
+
+    function isAuthorizedWallet(address caller) external view returns (bool) {
+        return rebalanceCallerAllowlist[caller];
+    }
 }
 
 contract MockStreamingEscrowSync {
@@ -912,15 +916,24 @@ contract CVStreamingFacetTest is Test {
         superToken.mint(address(facet), 10 ether);
         facet.useRealShouldStartStream();
         facet.setupCVParams(9_999_959);
-        facet.setupThresholdParams(3_656_188, 133_677, 0);
+        facet.setupThresholdParams(3_656_188, 133_677, 30 ether);
         facet.setupTotalPointsActivated(300 ether);
         facet.setupStreamingRatePerSecond(38_051_750_380_518);
 
-        uint256 threshold = 7_317_067_318_619_244_106_093_032;
+        uint256 requestedAmount = 1;
+        uint256 threshold = ConvictionsUtils.calculateThreshold(
+            requestedAmount,
+            10 ether,
+            300 ether,
+            9_999_959,
+            133_677,
+            3_656_188,
+            30 ether
+        );
         facet.setupProposal(1, ProposalStatus.Active, 0, threshold - 1, block.number);
-        facet.setupProposal(2, ProposalStatus.Active, 0, 8_816_629_952_176_084_917_693_002, block.number);
-        facet.setProposalRequestedAmount(1, 0);
-        facet.setProposalRequestedAmount(2, 0);
+        facet.setupProposal(2, ProposalStatus.Active, 0, threshold + 1, block.number);
+        facet.setProposalRequestedAmount(1, requestedAmount);
+        facet.setProposalRequestedAmount(2, requestedAmount);
         facet.setStreamingEscrowExternal(1, escrow1);
         facet.setStreamingEscrowExternal(2, escrow2);
 
