@@ -503,9 +503,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
             uint256 maxAllowed = Math.mulDiv(poolAmount, cvParams.maxRatio, ConvictionsUtils.D);
 
             if (poolAmount == 0) {
-                threshold = ConvictionsUtils.calculateThresholdOverride(
-                    totalPointsActivated, cvParams.decay, cvParams.minThresholdPoints
-                );
+                threshold = _emptyPoolThreshold();
             } else if (proposal.requestedAmount > maxAllowed) {
                 threshold = 0;
             } else {
@@ -627,9 +625,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
 
         uint256 poolAmount = getPoolAmount();
         if (poolAmount == 0) {
-            return ConvictionsUtils.calculateThresholdOverride(
-                totalPointsActivated, cvParams.decay, cvParams.minThresholdPoints
-            );
+            return _emptyPoolThreshold();
         }
 
         uint256 maxAllowed = (cvParams.maxRatio * poolAmount) / ConvictionsUtils.D;
@@ -651,6 +647,16 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
             cvParams.weight,
             cvParams.maxRatio,
             cvParams.minThresholdPoints
+        );
+    }
+
+    function _emptyPoolThreshold() internal view returns (uint256) {
+        if (proposalType != ProposalType.Streaming) {
+            return 0;
+        }
+
+        return ConvictionsUtils.calculateThresholdOverride(
+            totalPointsActivated, cvParams.decay, cvParams.minThresholdPoints
         );
     }
 
