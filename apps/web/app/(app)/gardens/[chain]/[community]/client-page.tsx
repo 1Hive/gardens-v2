@@ -610,7 +610,7 @@ export default function ClientPage({
     registryCommunity.archived ?
       "!border-warning-content"
     : "border-gray-200";
-  const archivedBadgeClassName = "mt-3 w-fit";
+  const archivedBadgeClasses = "mt-3 w-fit";
 
   return (
     <>
@@ -677,7 +677,7 @@ export default function ClientPage({
                       <Badge
                         color="warning"
                         label="Archived"
-                        className={archivedBadgeClassName}
+                        className={archivedBadgeClasses}
                       />
                     )}
                   </div>
@@ -985,7 +985,7 @@ export default function ClientPage({
                         <Badge
                           color="warning"
                           label="Archived"
-                          className={archivedBadgeClassName}
+                          className={archivedBadgeClasses}
                         />
                       )}
                     </div>
