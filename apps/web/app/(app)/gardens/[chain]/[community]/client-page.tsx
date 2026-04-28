@@ -610,6 +610,7 @@ export default function ClientPage({
     registryCommunity.archived ?
       "!border-warning-content"
     : "border-gray-200";
+  const archivedBadgeClassName = "mt-3 w-fit";
 
   return (
     <>
@@ -636,7 +637,10 @@ export default function ClientPage({
               </div>
 
               <div className="flex-1 flex-col lg:items-start lg:justify-between sm:gap-4 ">
-                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div
+                  className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
+                  data-section="community-header-summary"
+                >
                   {/* Community name + Address */}
                   <div className="min-w-0 flex-1">
                     <div className="flex min-w-0 items-center gap-3">
@@ -673,7 +677,7 @@ export default function ClientPage({
                       <Badge
                         color="warning"
                         label="Archived"
-                        className="mt-3 w-fit"
+                        className={archivedBadgeClassName}
                       />
                     )}
                   </div>
@@ -981,7 +985,7 @@ export default function ClientPage({
                         <Badge
                           color="warning"
                           label="Archived"
-                          className="mt-3 w-fit"
+                          className={archivedBadgeClassName}
                         />
                       )}
                     </div>
