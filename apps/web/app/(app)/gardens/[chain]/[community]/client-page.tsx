@@ -636,73 +636,49 @@ export default function ClientPage({
               </div>
 
               <div className="flex-1 flex-col lg:items-start lg:justify-between sm:gap-4 ">
-                {/* Community name + Address */}
-                <div className=" flex-flex-col">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div
-                      className="tooltip tooltip-bottom min-w-0 flex-1"
-                      data-tip={communityName ?? ""}
-                    >
-                      <h2 className="truncate">{communityName}</h2>
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  {/* Community name + Address */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div
+                        className="tooltip tooltip-bottom min-w-0 flex-1"
+                        data-tip={communityName ?? ""}
+                      >
+                        <h2 className="truncate">{communityName}</h2>
+                      </div>
                     </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <EthAddress
+                        icon={false}
+                        address={communityAddr as Address}
+                        label="Community address"
+                        textColor="var(--color-grey-900)"
+                        explorer="louper"
+                      />
+                      <LoupeButton
+                        diamond={communityAddr}
+                        chainId={chain?.id}
+                        className="px-2 py-1"
+                      />
+                    </div>
+                    {effectiveCouncilSafe && (
+                      <EthAddress
+                        icon={false}
+                        address={effectiveCouncilSafe}
+                        label="Council safe"
+                        textColor="var(--color-grey-900)"
+                      />
+                    )}
                     {registryCommunity.archived && (
-                      <Badge color="warning" label="Archived" />
+                      <Badge
+                        color="warning"
+                        label="Archived"
+                        className="mt-3 w-fit"
+                      />
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <EthAddress
-                      icon={false}
-                      address={communityAddr as Address}
-                      label="Community address"
-                      textColor="var(--color-grey-900)"
-                      explorer="louper"
-                    />
-                    <LoupeButton
-                      diamond={communityAddr}
-                      chainId={chain?.id}
-                      className="px-2 py-1"
-                    />
-                  </div>
-                  {effectiveCouncilSafe && (
-                    <EthAddress
-                      icon={false}
-                      address={effectiveCouncilSafe}
-                      label="Council safe"
-                      textColor="var(--color-grey-900)"
-                    />
-                  )}
-                </div>
 
-                {/* Statistic + Join/Leave community Button */}
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-                  <div className="w-full flex flex-col gap-2 sm:flex-row sm:flex-wrap md:gap-6">
-                    <Statistic
-                      label="members"
-                      count={membersCount ?? 0}
-                      icon={<UserGroupIcon />}
-                    />
-
-                    <Statistic
-                      label="pools"
-                      icon={<CircleStackIcon />}
-                      count={activePools.length ?? 0}
-                    />
-
-                    <Statistic
-                      label="staked tokens"
-                      icon={<CurrencyDollarIcon />}
-                    >
-                      <DisplayNumber
-                        number={[
-                          BigInt(communityStakedTokens),
-                          resolvedTokenGarden.decimals,
-                        ]}
-                        compact={true}
-                        tokenSymbol={resolvedTokenGarden.symbol}
-                      />
-                    </Statistic>
-                  </div>
-                  <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto xl:justify-end">
+                  <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:flex-shrink-0 md:justify-end">
                     {(isCouncilMember || isCouncilSafe) &&
                       effectiveCouncilSafe && (
                         <EditCommunityModal
@@ -774,6 +750,35 @@ export default function ClientPage({
                       registryCommunity={registryCommunity}
                     />
                   </div>
+                </div>
+
+                {/* Statistics */}
+                <div className="w-full flex flex-col gap-2 sm:flex-row sm:flex-wrap md:gap-6">
+                  <Statistic
+                    label="members"
+                    count={membersCount ?? 0}
+                    icon={<UserGroupIcon />}
+                  />
+
+                  <Statistic
+                    label="pools"
+                    icon={<CircleStackIcon />}
+                    count={activePools.length ?? 0}
+                  />
+
+                  <Statistic
+                    label="staked tokens"
+                    icon={<CurrencyDollarIcon />}
+                  >
+                    <DisplayNumber
+                      number={[
+                        BigInt(communityStakedTokens),
+                        resolvedTokenGarden.decimals,
+                      ]}
+                      compact={true}
+                      tokenSymbol={resolvedTokenGarden.symbol}
+                    />
+                  </Statistic>
                 </div>
 
                 {/* Registration Stake Value + Community staking leaderboard Button*/}
@@ -949,9 +954,6 @@ export default function ClientPage({
                         >
                           <h2 className="truncate">{communityName}</h2>
                         </div>
-                        {registryCommunity.archived && (
-                          <Badge color="warning" label="Archived" />
-                        )}
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <EthAddress
@@ -973,6 +975,13 @@ export default function ClientPage({
                           address={registryCommunity.councilSafe as Address}
                           label="Council safe"
                           textColor="var(--color-grey-900)"
+                        />
+                      )}
+                      {registryCommunity.archived && (
+                        <Badge
+                          color="warning"
+                          label="Archived"
+                          className="mt-3 w-fit"
                         />
                       )}
                     </div>
