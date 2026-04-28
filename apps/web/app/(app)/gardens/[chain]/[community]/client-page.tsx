@@ -610,7 +610,9 @@ export default function ClientPage({
     registryCommunity.archived ?
       "!border-warning-content"
     : "border-gray-200";
-  const archivedBadgeClasses = "mt-3 w-fit";
+  const renderArchivedBadge = () => (
+    <Badge color="warning" label="Archived" className="mt-3 w-fit" />
+  );
 
   return (
     <>
@@ -673,13 +675,7 @@ export default function ClientPage({
                         textColor="var(--color-grey-900)"
                       />
                     )}
-                    {registryCommunity.archived && (
-                      <Badge
-                        color="warning"
-                        label="Archived"
-                        className={archivedBadgeClasses}
-                      />
-                    )}
+                    {registryCommunity.archived && renderArchivedBadge()}
                   </div>
 
                   <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:flex-shrink-0 md:justify-end">
@@ -981,13 +977,7 @@ export default function ClientPage({
                           textColor="var(--color-grey-900)"
                         />
                       )}
-                      {registryCommunity.archived && (
-                        <Badge
-                          color="warning"
-                          label="Archived"
-                          className={archivedBadgeClasses}
-                        />
-                      )}
+                      {registryCommunity.archived && renderArchivedBadge()}
                     </div>
 
                     {/* Statistics */}
