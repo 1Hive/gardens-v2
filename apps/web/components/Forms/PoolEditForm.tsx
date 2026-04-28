@@ -201,7 +201,7 @@ export default function PoolEditForm({
         maximumFractionDigits: 18,
       })
     : "0";
-  const initialSybilResistanceValue =
+  const initialSybilResistanceValueKey =
     Array.isArray(initValues?.sybilResistanceValue) ?
       initValues?.sybilResistanceValue.join(",")
     : initValues?.sybilResistanceValue;
@@ -243,7 +243,7 @@ export default function PoolEditForm({
       initValues?.proposalCollateral,
       initValues?.rulingTime,
       initValues?.spendingLimit,
-      initialSybilResistanceValue,
+      initialSybilResistanceValueKey,
       initValues?.sybilResistanceType,
       initValues?.tribunalAddress,
       monthlyBudgetDisplay,
