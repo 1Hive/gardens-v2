@@ -977,6 +977,12 @@ export function useProposalFilter<
     convictionLast?: string | number;
   },
 >(proposals: T[]) {
+  const toSortableBigInt = (value?: string | number) => {
+    if (typeof value === "number") return BigInt(value);
+    if (typeof value === "string") return BigInt(value);
+    return 0n;
+  };
+
   //
   // FILTER
   //
@@ -1039,7 +1045,16 @@ export function useProposalFilter<
         );
 
       case "mostConviction":
-        return list;
+        return list.sort((a, b) => {
+          const aConviction = toSortableBigInt(a.convictionLast);
+          const bConviction = toSortableBigInt(b.convictionLast);
+
+          return (
+            aConviction < bConviction ? 1
+            : aConviction > bConviction ? -1
+            : 0
+          );
+        });
 
       default:
         return list;
