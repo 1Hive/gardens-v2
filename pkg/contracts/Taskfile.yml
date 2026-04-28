@@ -7358,14 +7358,14 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask
+          --keystore ~/.foundry/keystores/pkGarden
   submit-safe-payloads-test:
     desc: Submit Safe Transaction Builder payloads to the Safe Transaction Service
     cmds:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --test
   submit-safe-payloads-force:
     desc: Submit Safe Transaction Builder payloads to the Safe Transaction Service
@@ -7373,7 +7373,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --force
   submit-safe-payloads-test-force:
     desc: Submit Safe Transaction Builder payloads to the Safe Transaction Service
@@ -7381,7 +7381,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --test \
           --force
   submit-safe-payloads-arbitrum:
@@ -7390,7 +7390,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --chains arbitrum
   submit-safe-payloads-optimism:
     desc: Submit Safe payload for optimism
@@ -7398,7 +7398,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --chains optimism
   submit-safe-payloads-polygon:
     desc: Submit Safe payload for polygon
@@ -7406,7 +7406,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --chains polygon
   submit-safe-payloads-gnosis:
     desc: Submit Safe payload for gnosis
@@ -7414,7 +7414,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --chains gnosis
   submit-safe-payloads-base:
     desc: Submit Safe payload for base
@@ -7422,7 +7422,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --chains base
   submit-safe-payloads-celo:
     desc: Submit Safe payload for celo
@@ -7430,7 +7430,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --chains celo
   submit-safe-payloads-grant-upgrade-access-all-chains:
     desc: Submit ProxyOwner grantUpgradeAccess Safe payloads on ethereum, arbitrum, optimism, polygon, gnosis, base, celo (set DRY_RUN=true to only log planned actions)
@@ -7569,7 +7569,7 @@ tasks:
 
             python scripts/submit_safe_payloads.py \
               --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-              --keystore ~/.foundry/keystores/pkMetamask \
+              --keystore ~/.foundry/keystores/pkGarden \
               --service-chain "${safe_chain}" \
               --payload-file "${submit_payload}" \
               --origin-prefix "${origin_prefix}"
@@ -7594,14 +7594,14 @@ tasks:
       - cmd: |
           python scripts/clear_safe_queue.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask
+          --keystore ~/.foundry/keystores/pkGarden
   clear-safe-queue-test:
     desc: Clear queued Safe transactions in sandbox Safe
     cmds:
       - cmd: |
           python scripts/clear_safe_queue.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --test
   list-safe-queue:
     desc: List queued Safe transactions and proposers
@@ -7609,7 +7609,7 @@ tasks:
       - cmd: |
           python scripts/clear_safe_queue.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --list
   change-passport-manager-celo:
     desc: Change passport manager celo

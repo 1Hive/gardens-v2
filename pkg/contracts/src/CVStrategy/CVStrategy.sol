@@ -503,7 +503,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
             uint256 maxAllowed = Math.mulDiv(poolAmount, cvParams.maxRatio, ConvictionsUtils.D);
 
             if (poolAmount == 0) {
-                threshold = _emptyPoolThreshold();
+                threshold = ConvictionsUtils.calculateThresholdOverride(
+                    totalPointsActivated, cvParams.decay, cvParams.minThresholdPoints
+                );
             } else if (proposal.requestedAmount > maxAllowed) {
                 threshold = 0;
             } else {
@@ -625,7 +627,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
 
         uint256 poolAmount = getPoolAmount();
         if (poolAmount == 0) {
-            return _emptyPoolThreshold();
+            return ConvictionsUtils.calculateThresholdOverride(
+                totalPointsActivated, cvParams.decay, cvParams.minThresholdPoints
+            );
         }
 
         uint256 maxAllowed = (cvParams.maxRatio * poolAmount) / ConvictionsUtils.D;
@@ -635,7 +639,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         //     revert AmountOverMaxRatio(_requestedAmount, maxAllowed, poolAmount);
         // }
 
-        if (_requestedAmount > maxAllowed) {
+        if (maxAllowed == 0 || _requestedAmount > maxAllowed) {
             return 0;
         }
 
@@ -647,16 +651,6 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
             cvParams.weight,
             cvParams.maxRatio,
             cvParams.minThresholdPoints
-        );
-    }
-
-    function _emptyPoolThreshold() internal view returns (uint256) {
-        if (proposalType != ProposalType.Streaming) {
-            return 0;
-        }
-
-        return ConvictionsUtils.calculateThresholdOverride(
-            totalPointsActivated, cvParams.decay, cvParams.minThresholdPoints
         );
     }
 
@@ -699,8 +693,8 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         if (address(registryCommunity) == address(0)) {
             return true;
         }
-        (bool ok, bytes memory data) =
-            address(registryCommunity).staticcall(abi.encodeWithSelector(registryCommunity.enabledStrategies.selector, address(this)));
+        (bool ok, bytes memory data) = address(registryCommunity)
+            .staticcall(abi.encodeWithSelector(registryCommunity.enabledStrategies.selector, address(this)));
         if (!ok || data.length < 32) {
             return true;
         }

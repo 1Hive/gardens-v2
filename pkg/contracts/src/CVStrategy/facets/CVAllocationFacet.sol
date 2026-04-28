@@ -39,6 +39,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     error PoolIsEmpty(uint256 poolAmount); // 0xf458e27c
     error PoolAmountNotEnough(uint256 proposalId, uint256 requestedAmount, uint256 poolAmount); // 0x5863b0b6
     error ConvictionUnderMinimumThreshold(uint256 conviction, uint256 threshold, uint256 requestedAmount); // 0x7ac83e3d
+    error NoActiveGovernancePoints(uint256 proposalId); // 0x38913cd0
     error AmountOverMaxRatio(uint256 requestedAmount, uint256 maxAllowed, uint256 poolAmount); // 0x3e4bb863
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
@@ -230,6 +231,10 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
             }
 
             uint256 convictionLast = updateProposalConviction(proposalId);
+
+            if (proposals[proposalId].requestedAmount > 0 && totalPointsActivated == 0) {
+                revert NoActiveGovernancePoints(proposalId);
+            }
 
             uint256 threshold;
             if (proposals[proposalId].requestedAmount > 0) {

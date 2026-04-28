@@ -410,20 +410,9 @@ contract CVStrategyTest is Test {
         assertEq(threshold, expected);
     }
 
-    function test_threshold_empty_pool_returns_zero_for_non_streaming() public {
+    function test_threshold_reads_use_override_when_pool_empty() public {
         CVParams memory params = CVParams(8_000_000, 1_000_000, 5_000_000, 2_000_000_000);
         strategy.setCvParams(params);
-        strategy.setTotalPointsActivated(1_000_000_000_000);
-        strategy.setProposal(5, member, 1, ProposalStatus.Active, block.number - 1, 0);
-
-        assertEq(strategy.calculateThreshold(1), 0);
-        assertEq(strategy.getProposalThreshold(5), 0);
-    }
-
-    function test_threshold_empty_pool_uses_override_for_streaming() public {
-        CVParams memory params = CVParams(8_000_000, 1_000_000, 5_000_000, 2_000_000_000);
-        strategy.setCvParams(params);
-        strategy.setProposalType(ProposalType.Streaming);
         strategy.setTotalPointsActivated(1_000_000_000_000);
         strategy.setProposal(5, member, 1, ProposalStatus.Active, block.number - 1, 0);
 

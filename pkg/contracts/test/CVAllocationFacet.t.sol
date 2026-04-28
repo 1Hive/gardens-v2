@@ -483,6 +483,20 @@ contract CVAllocationFacetTest is Test {
         assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Executed));
     }
 
+    function test_distribute_reverts_when_no_active_governance_points() public {
+        allo.setPoolToken(1, facet.nativeToken());
+        vm.deal(address(facet), 10 ether);
+        facet.setProposalType(ProposalType.Funding);
+        facet.setCvParams(CVParams({maxRatio: 10_000_000, weight: 0, decay: 5_000_000, minThresholdPoints: 0}));
+        facet.setTotalPointsActivated(0);
+        facet.setProposal(1, ProposalStatus.Active, 1 ether, facet.nativeToken(), beneficiary, member, block.number - 1, 1, 0);
+        facet.setProposalStakedAmount(1, 0);
+
+        vm.prank(address(allo));
+        vm.expectRevert(abi.encodeWithSelector(CVAllocationFacet.NoActiveGovernancePoints.selector, 1));
+        facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
+    }
+
     function test_transferAmount_erc20_success() public {
         TERC20 erc = new TERC20("Token", "TOK", 18);
         erc.mint(address(facet), 10);
