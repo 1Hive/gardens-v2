@@ -3,7 +3,7 @@ coverage:
     project:
       default:
         target: auto        # compare against base branch
-        threshold: 0.2      # allow up to 0.2 percentage point drop
+        threshold: 0.1      # allow up to 0.1 percentage point drop
         informational: false
     patch:
       default:

@@ -410,6 +410,15 @@ contract CVStrategyTest is Test {
         assertEq(threshold, expected);
     }
 
+    function test_calculateThreshold_returns_zero_for_zero_amount() public {
+        CVParams memory params = CVParams(8_000_000, 1_000_000, 5_000_000, 2_000_000_000);
+        strategy.setCvParams(params);
+        strategy.setTotalPointsActivated(1_000_000_000_000);
+        vm.deal(address(strategy), 1 ether);
+
+        assertEq(strategy.calculateThreshold(0), 0);
+    }
+
     function test_threshold_empty_pool_returns_zero_for_non_streaming() public {
         CVParams memory params = CVParams(8_000_000, 1_000_000, 5_000_000, 2_000_000_000);
         strategy.setCvParams(params);
