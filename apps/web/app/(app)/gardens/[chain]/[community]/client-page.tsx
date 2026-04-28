@@ -622,21 +622,22 @@ export default function ClientPage({
           <header
             className={`border shadow-sm section-layout ${headerCardBorderClass}`}
           >
-            <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
-              {/* Image */}
-              <div className="flex-shrink-0">
-                <div className="w-20 h-20 lg:w-24 lg:h-24 bg-primary-soft rounded-xl flex items-center justify-center shadow-sm p-1">
-                  <Image
-                    src={
+              <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
+                {/* Image */}
+                <div className="flex-shrink-0 flex flex-col items-start">
+                  <div className="w-20 h-20 lg:w-24 lg:h-24 bg-primary-soft rounded-xl flex items-center justify-center shadow-sm p-1">
+                    <Image
+                      src={
                       is1hive ? OneHiveLogo
                       : isProtopianCommunity ?
                         ProtopianLogo
                       : CommunityLogo
                     }
-                    alt={`${communityName} community`}
-                  />
+                      alt={`${communityName} community`}
+                    />
+                  </div>
+                  {registryCommunity.archived && renderArchivedBadge()}
                 </div>
-              </div>
 
               <div className="flex-1 flex-col lg:items-start lg:justify-between sm:gap-4 ">
                 <div
@@ -675,7 +676,6 @@ export default function ClientPage({
                         textColor="var(--color-grey-900)"
                       />
                     )}
-                    {registryCommunity.archived && renderArchivedBadge()}
                   </div>
 
                   <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:flex-shrink-0 md:justify-end">
@@ -930,7 +930,7 @@ export default function ClientPage({
               >
                 <div className="flex flex-col items-start space-y-4">
                   {/* Image */}
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 flex flex-col items-start">
                     <div className="w-20 h-20 bg-primary-soft rounded-xl flex items-center justify-center shadow-sm p-1">
                       <Image
                         src={
@@ -942,6 +942,7 @@ export default function ClientPage({
                         alt={`${communityName} community`}
                       />
                     </div>
+                    {registryCommunity.archived && renderArchivedBadge()}
                   </div>
 
                   <div className="flex-1 w-full flex-col gap-4">
@@ -977,7 +978,6 @@ export default function ClientPage({
                           textColor="var(--color-grey-900)"
                         />
                       )}
-                      {registryCommunity.archived && renderArchivedBadge()}
                     </div>
 
                     {/* Statistics */}
