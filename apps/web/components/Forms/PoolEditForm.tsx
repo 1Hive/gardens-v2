@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits, zeroAddress } from "viem";
 import { getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
@@ -201,23 +201,16 @@ export default function PoolEditForm({
         maximumFractionDigits: 18,
       })
     : "0";
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<FormInputs>({
-    mode: "onBlur",
-    defaultValues:
+  const initialSybilResistanceValue =
+    Array.isArray(initValues?.sybilResistanceValue) ?
+      initValues?.sybilResistanceValue.join(",")
+    : initValues?.sybilResistanceValue;
+  const initialFormValues = useMemo(
+    () =>
       initValues ?
         {
-          // sybil resistance
           sybilResistanceValue: initValues.sybilResistanceValue,
           sybilResistanceType: initValues.sybilResistanceType,
-          //pool settings
           monthlyBudget: initValues.monthlyBudget ?? monthlyBudgetDisplay,
           spendingLimit: initValues.spendingLimit,
           minimumConviction: initValues.minimumConviction,
@@ -225,15 +218,10 @@ export default function PoolEditForm({
             +initValues.convictionGrowth,
             "seconds",
             "days",
-          ), // convert seconds to days
-          minThresholdPoints: initValues.minThresholdPoints,
-          // arb settings
-          defaultResolution: initValues.defaultResolution,
-          rulingTime: parseTimeUnit(
-            initValues.rulingTime, // ?? 7 days
-            "seconds",
-            "days",
           ),
+          minThresholdPoints: initValues.minThresholdPoints,
+          defaultResolution: initValues.defaultResolution,
+          rulingTime: parseTimeUnit(initValues.rulingTime, "seconds", "days"),
           proposalCollateral: formatUnits(
             BigInt(initValues.proposalCollateral),
             nativeDecimals,
@@ -245,36 +233,41 @@ export default function PoolEditForm({
           tribunalAddress: initValues.tribunalAddress,
         }
       : undefined,
+    [
+      initValues?.convictionGrowth,
+      initValues?.defaultResolution,
+      initValues?.disputeCollateral,
+      initValues?.minThresholdPoints,
+      initValues?.minimumConviction,
+      initValues?.monthlyBudget,
+      initValues?.proposalCollateral,
+      initValues?.rulingTime,
+      initValues?.spendingLimit,
+      initialSybilResistanceValue,
+      initValues?.sybilResistanceType,
+      initValues?.tribunalAddress,
+      monthlyBudgetDisplay,
+      nativeDecimals,
+    ],
+  );
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<FormInputs>({
+    mode: "onBlur",
+    defaultValues: initialFormValues,
   });
 
   useEffect(() => {
-    if (!initValues) return;
+    if (!initialFormValues) return;
 
-    reset({
-      sybilResistanceValue: initValues.sybilResistanceValue,
-      sybilResistanceType: initValues.sybilResistanceType,
-      monthlyBudget: initValues.monthlyBudget ?? monthlyBudgetDisplay,
-      spendingLimit: initValues.spendingLimit,
-      minimumConviction: initValues.minimumConviction,
-      convictionGrowth: parseTimeUnit(
-        +initValues.convictionGrowth,
-        "seconds",
-        "days",
-      ),
-      minThresholdPoints: initValues.minThresholdPoints,
-      defaultResolution: initValues.defaultResolution,
-      rulingTime: parseTimeUnit(initValues.rulingTime, "seconds", "days"),
-      proposalCollateral: formatUnits(
-        BigInt(initValues.proposalCollateral),
-        nativeDecimals,
-      ),
-      disputeCollateral: formatUnits(
-        BigInt(initValues.disputeCollateral),
-        nativeDecimals,
-      ),
-      tribunalAddress: initValues.tribunalAddress,
-    });
-  }, [initValues, monthlyBudgetDisplay, nativeDecimals, reset]);
+    reset(initialFormValues);
+  }, [initialFormValues, reset]);
 
   const sybilResistanceValue = watch("sybilResistanceValue");
 
@@ -287,14 +280,6 @@ export default function PoolEditForm({
     watch("sybilResistanceType") ??
     initValues?.sybilResistanceType ??
     derivedType;
-
-  useEffect(() => {
-    if (initValues?.sybilResistanceValue != null) {
-      setValue("sybilResistanceValue", initValues.sybilResistanceValue as any, {
-        shouldDirty: false,
-      });
-    }
-  }, [initValues?.sybilResistanceValue, setValue]);
 
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (token?.decimals ?? 18);
   const INPUT_MIN_THRESHOLD_VALUE = 0;
