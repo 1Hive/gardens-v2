@@ -979,7 +979,13 @@ export function useProposalFilter<
 >(proposals: T[]) {
   const toSortableBigInt = (value?: string | number) => {
     if (typeof value === "number") return BigInt(value);
-    if (typeof value === "string") return BigInt(value);
+    if (typeof value === "string") {
+      try {
+        return BigInt(value);
+      } catch {
+        return 0n;
+      }
+    }
     return 0n;
   };
 
