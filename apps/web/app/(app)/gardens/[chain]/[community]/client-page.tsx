@@ -674,8 +674,8 @@ export default function ClientPage({
                 </div>
 
                 {/* Statistic + Join/Leave community Button */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between ">
-                  <div className="w-full flex flex-col sm:flex-row gap-2 md:gap-6 sm:flex-wrap">
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                  <div className="w-full flex flex-col gap-2 sm:flex-row sm:flex-wrap md:gap-6">
                     <Statistic
                       label="members"
                       count={membersCount ?? 0}
@@ -702,7 +702,7 @@ export default function ClientPage({
                       />
                     </Statistic>
                   </div>
-                  <div className="absolute top-12 md:top-7 right-5 flex items-center gap-2 z-50">
+                  <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto xl:justify-end">
                     {(isCouncilMember || isCouncilSafe) &&
                       effectiveCouncilSafe && (
                         <EditCommunityModal
