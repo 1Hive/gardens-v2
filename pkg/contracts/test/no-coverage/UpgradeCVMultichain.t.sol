@@ -77,6 +77,7 @@ contract UpgradeCVMultichainHarness is UpgradeCVMultichainRunner {
 
     function setFlagForTest(string memory key, bool value) external {
         flagOverrides[keccak256(bytes(key))] = value ? 2 : 1;
+        vm.setEnv(key, value ? "true" : "false");
     }
 
     function setFactoryStrategyFacetsForTest(
