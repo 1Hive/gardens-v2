@@ -28,6 +28,10 @@
     {
       "path": "/api/rebalance-keeper/all",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/nft-holders-sync",
+      "schedule": "0 * * * *"
     }
   ]
 }

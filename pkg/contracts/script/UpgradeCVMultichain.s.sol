@@ -116,7 +116,9 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
 
         if (_shouldDoFactory()) {
             _executeRegistryFactoryUpgrades(context);
-            _syncRegistryFactoryImplementationFromLive(context.registryFactoryProxy);
+            if (!_flagEnabled("REUSE_CONFIGURED_IMPLEMENTATIONS")) {
+                _syncRegistryFactoryImplementationFromLive(context.registryFactoryProxy);
+            }
         }
         if (_shouldDoCommunities()) {
             _executeCommunityUpgrades(context, networkJson);
@@ -389,26 +391,23 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         return ok;
     }
 
-    function _shouldReuseConfiguredImplementation(address configured, bytes memory expectedRuntimeCode)
+    function _shouldReuseConfiguredImplementation(address configured, string memory artifactId)
         internal
-        view
         returns (bool)
     {
         return configured != address(0) && configured.code.length != 0
-            && keccak256(configured.code) == keccak256(expectedRuntimeCode);
-    }
-
-    function _artifactRuntimeCode(string memory artifactPath) internal view returns (bytes memory) {
-        return vm.getDeployedCode(artifactPath);
+            && _addressCodeHash(configured, artifactId) == _deployedCodeHash(artifactId);
     }
 
     function _resolveRegistryFactoryImplementation() internal returns (address) {
         address configured = _readAddressOrZero(".IMPLEMENTATIONS.REGISTRY_FACTORY");
         if (
-            _shouldReuseConfiguredImplementation(
-                configured, _artifactRuntimeCode("RegistryFactory.sol:RegistryFactory")
-            )
+            _flagEnabled("REUSE_CONFIGURED_IMPLEMENTATIONS")
+                && _shouldReuseConfiguredImplementation(
+                    configured, "src/RegistryFactory/RegistryFactory.sol:RegistryFactory"
+                )
         ) {
+            _writeNetworkAddress(".IMPLEMENTATIONS.REGISTRY_FACTORY", configured);
             return configured;
         }
 
@@ -420,10 +419,12 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     function _resolveRegistryImplementation() internal returns (address) {
         address configured = _readAddressOrZero(".IMPLEMENTATIONS.REGISTRY_COMMUNITY");
         if (
-            _shouldReuseConfiguredImplementation(
-                configured, _artifactRuntimeCode("RegistryCommunity.sol:RegistryCommunity")
-            )
+            _flagEnabled("REUSE_CONFIGURED_IMPLEMENTATIONS")
+                && _shouldReuseConfiguredImplementation(
+                    configured, "src/RegistryCommunity/RegistryCommunity.sol:RegistryCommunity"
+                )
         ) {
+            _writeNetworkAddress(".IMPLEMENTATIONS.REGISTRY_COMMUNITY", configured);
             return configured;
         }
 
@@ -435,16 +436,40 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     function _resolveStrategyImplementation() internal returns (address) {
         address configured = _readAddressOrZero(".IMPLEMENTATIONS.CV_STRATEGY");
         if (
-            _shouldReuseConfiguredImplementation(
-                configured, _artifactRuntimeCode("CVStrategy.sol:CVStrategy")
-            )
+            _flagEnabled("REUSE_CONFIGURED_IMPLEMENTATIONS")
+                && _shouldReuseConfiguredImplementation(configured, "src/CVStrategy/CVStrategy.sol:CVStrategy")
         ) {
+            _writeNetworkAddress(".IMPLEMENTATIONS.CV_STRATEGY", configured);
+            _syncCVUtilLibFromStrategyImplementation(configured);
             return configured;
         }
 
         address deployed = address(new CVStrategy());
         _writeNetworkAddress(".IMPLEMENTATIONS.CV_STRATEGY", deployed);
+        _syncCVUtilLibFromStrategyImplementation(deployed);
         return deployed;
+    }
+
+    function _syncCVUtilLibFromStrategyImplementation(address implementation) internal {
+        require(implementation != address(0), "strategy implementation missing");
+        bytes memory runtimeCode = implementation.code;
+        require(runtimeCode.length > 13444, "strategy implementation code too short");
+
+        address linkedLibrary = _readLinkedAddress(runtimeCode, 6429);
+        require(linkedLibrary != address(0), "CV_UTIL_LIB link missing");
+        require(_readLinkedAddress(runtimeCode, 6586) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 8402) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 13424) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(linkedLibrary.code.length != 0, "CV_UTIL_LIB has no code");
+
+        _writeNetworkAddress(".IMPLEMENTATIONS.CV_UTIL_LIB", linkedLibrary);
+    }
+
+    function _readLinkedAddress(bytes memory runtimeCode, uint256 offset) internal pure returns (address linked) {
+        require(runtimeCode.length >= offset + 20, "link offset out of bounds");
+        assembly {
+            linked := shr(96, mload(add(add(runtimeCode, 0x20), offset)))
+        }
     }
 
     function _executeRegistryFactoryUpgrades(UpgradeContext memory context) internal {
@@ -753,6 +778,12 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     }
 
     function _syncRegistryFactoryImplementationFromLive(address proxy) internal {
+        if (
+            _flagEnabled("REUSE_CONFIGURED_IMPLEMENTATIONS")
+                && bytes(_readPendingNetworkValue(".IMPLEMENTATIONS.REGISTRY_FACTORY")).length != 0
+        ) {
+            return;
+        }
         require(proxy != address(0), "registry factory proxy missing");
         address implementation = _proxyImplementationAddress(proxy);
         require(implementation != address(0), "registry factory implementation missing");
@@ -760,6 +791,12 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     }
 
     function _syncCommunityImplementationFromLive(string memory networkJson) internal {
+        if (
+            _flagEnabled("REUSE_CONFIGURED_IMPLEMENTATIONS")
+                && bytes(_readPendingNetworkValue(".IMPLEMENTATIONS.REGISTRY_COMMUNITY")).length != 0
+        ) {
+            return;
+        }
         address[] memory proxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
         if (proxies.length == 0) return;
 
@@ -811,6 +848,12 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     }
 
     function _syncStrategyImplementationFromLive(string memory networkJson) internal {
+        if (
+            _flagEnabled("REUSE_CONFIGURED_IMPLEMENTATIONS")
+                && bytes(_readPendingNetworkValue(".IMPLEMENTATIONS.CV_STRATEGY")).length != 0
+        ) {
+            return;
+        }
         address[] memory proxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         if (proxies.length == 0) return;
 

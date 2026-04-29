@@ -40,8 +40,10 @@ const ethereumSubgraph =
   "https://api.studio.thegraph.com/query/102093/gardens-v-2-ethereum/" +
   subgraphConfig.VERSION_ETHEREUM;
 
-// @ts-ignore
-const chainArg = process.argv[process.argv.length - 1];
+const chainArg = process.argv
+  .slice(2)
+  .filter((arg) => arg !== "--")
+  .at(-1);
 
 const jsons = {
   // @ts-ignore
@@ -166,6 +168,12 @@ const networksPath = path.resolve(
 console.log(networksPath);
 
 async function main() {
+  if (!chainArg) {
+    console.error("Usage: list-proxies.cjs <network>");
+    process.exitCode = 1;
+    return;
+  }
+
   if (fs.existsSync(networksPath)) {
     const networkJson = JSON.parse(fs.readFileSync(networksPath).toString());
 
@@ -174,6 +182,7 @@ async function main() {
     const netFound = netArray.find((net) => net.name == chainArg);
     if (!netFound) {
       console.error(`Network ${chainArg} not found in networks.json`);
+      process.exitCode = 1;
       return;
     }
     const proxies = await extractProxies(netFound.chainId);
