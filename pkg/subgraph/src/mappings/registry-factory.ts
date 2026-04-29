@@ -3,7 +3,10 @@ import {
   RegistryFactory,
   RegistryCommunity,
   Member,
-  StreamInfo
+  StreamInfo,
+  Protopian,
+  Keeper,
+  ProtopianDelegationIndex
 } from "../../generated/schema";
 
 import {
@@ -11,7 +14,8 @@ import {
   BigInt,
   DataSourceContext,
   dataSource,
-  log
+  log,
+  store
 } from "@graphprotocol/graph-ts";
 import {
   CommunityCreated,
@@ -20,8 +24,9 @@ import {
   Initialized,
   KeepersChanged,
   ProtopiansChanged,
-  StreamRebalanceCallerAllowlistSet,
-  StreamingEscrowFactorySet
+  AuthorizedWalletSet,
+  StreamingEscrowFactorySet,
+  ProtopianDelegated
 } from "../../generated/RegistryFactory/RegistryFactory";
 // import {RegistryCommunity}from "../../generated/RegistryCommunity/RegistryCommunity";
 
@@ -39,7 +44,7 @@ export function handleRegistryInitialized(event: Initialized): void {
   }
   const chainId = dataSource.context().getI32(CTX_CHAIN_ID);
   factory.chainId = BigInt.fromI32(chainId);
-  factory.rebalanceCallerAllowlist = [];
+  factory.authorizedWallets = [];
   factory.save();
 }
 
@@ -51,10 +56,10 @@ function getOrCreateFactory(eventAddress: Address): RegistryFactory {
     factory = new RegistryFactory(addrId);
     const chainId = dataSource.context().getI32(CTX_CHAIN_ID);
     factory.chainId = BigInt.fromI32(chainId);
-    factory.rebalanceCallerAllowlist = [];
-  } else if (factory.rebalanceCallerAllowlist == null) {
+    factory.authorizedWallets = [];
+  } else if (factory.authorizedWallets == null) {
     // Backward compatibility for entities indexed before this field existed.
-    factory.rebalanceCallerAllowlist = [];
+    factory.authorizedWallets = [];
   }
 
   return factory as RegistryFactory;
@@ -115,6 +120,13 @@ export function handleKeepersChanged(event: KeepersChanged): void {
 
     member.isKeeper = true;
     member.save();
+
+    let keeper = Keeper.load(memberAddress);
+    if (keeper == null) {
+      keeper = new Keeper(memberAddress);
+    }
+    keeper.address = memberAddress;
+    keeper.save();
   }
 
   // Old keepers
@@ -127,6 +139,8 @@ export function handleKeepersChanged(event: KeepersChanged): void {
 
     member.isKeeper = false;
     member.save();
+
+    store.remove("Keeper", memberAddress);
   }
 }
 
@@ -145,6 +159,13 @@ export function handleProtopiansChanged(event: ProtopiansChanged): void {
 
     member.isProtopian = true;
     member.save();
+
+    let protopian = Protopian.load(memberAddress);
+    if (protopian == null) {
+      protopian = new Protopian(memberAddress);
+    }
+    protopian.address = memberAddress;
+    protopian.save();
   }
 
   // Old keepers
@@ -157,6 +178,8 @@ export function handleProtopiansChanged(event: ProtopiansChanged): void {
 
     member.isProtopian = false;
     member.save();
+
+    store.remove("Protopian", memberAddress);
   }
 }
 
@@ -185,36 +208,73 @@ export function handleStreamingEscrowFactorySet(
   streamInfo.save();
 }
 
-export function handleStreamRebalanceCallerAllowlistSet(
-  event: StreamRebalanceCallerAllowlistSet
+export function handleAuthorizedWalletSet(
+  event: AuthorizedWalletSet
 ): void {
   const factory = getOrCreateFactory(event.address);
 
-  let allowlist = factory.rebalanceCallerAllowlist;
-  const caller = event.params.caller.toHexString();
+  let allowlist = factory.authorizedWallets;
+  const wallet = event.params.wallet.toHexString();
 
   let index = -1;
   for (let i = 0; i < allowlist.length; i++) {
-    if (allowlist[i] == caller) {
+    if (allowlist[i] == wallet) {
       index = i;
       break;
     }
   }
 
-  if (event.params.allowed) {
+  if (event.params.authorized) {
     if (index == -1) {
-      allowlist.push(caller);
+      allowlist.push(wallet);
     }
   } else if (index >= 0) {
     const nextAllowlist = new Array<string>();
     for (let i = 0; i < allowlist.length; i++) {
-      if (allowlist[i] != caller) {
+      if (allowlist[i] != wallet) {
         nextAllowlist.push(allowlist[i]);
       }
     }
     allowlist = nextAllowlist;
   }
 
-  factory.rebalanceCallerAllowlist = allowlist;
+  factory.authorizedWallets = allowlist;
   factory.save();
+}
+
+export function handleProtopianDelegated(event: ProtopianDelegated): void {
+  const from = event.params.from.toHexString();
+  const to = event.params.to.toHexString();
+
+  let delegationIndex = ProtopianDelegationIndex.load(from);
+  if (delegationIndex == null) {
+    delegationIndex = new ProtopianDelegationIndex(from);
+  }
+
+  const previousCommunityId = delegationIndex.community;
+  if (previousCommunityId != null) {
+    let previousCommunity = RegistryCommunity.load(previousCommunityId as string);
+    if (previousCommunity != null) {
+      previousCommunity.protopianDelegatedFrom = null;
+      previousCommunity.save();
+    }
+  }
+
+  if (to == Address.zero().toHexString()) {
+    delegationIndex.community = null;
+    delegationIndex.save();
+    return;
+  }
+
+  let nextCommunity = RegistryCommunity.load(to);
+  if (nextCommunity != null) {
+    nextCommunity.protopianDelegatedFrom = from;
+    nextCommunity.save();
+    delegationIndex.community = to;
+    delegationIndex.save();
+    return;
+  }
+
+  delegationIndex.community = null;
+  delegationIndex.save();
 }

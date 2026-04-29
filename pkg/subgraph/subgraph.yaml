@@ -39,8 +39,10 @@ dataSources:
           handler: handleProtopiansChanged  
         - event: KeepersChanged(address[],address[])
           handler: handleKeepersChanged
-        - event: StreamRebalanceCallerAllowlistSet(indexed address,bool)
-          handler: handleStreamRebalanceCallerAllowlistSet
+        - event: AuthorizedWalletSet(indexed address,bool)
+          handler: handleAuthorizedWalletSet
+        - event: ProtopianDelegated(indexed address,indexed address)
+          handler: handleProtopianDelegated
         - event: StreamingEscrowFactorySet(address)
           handler: handleStreamingEscrowFactorySet
         - event: Initialized(uint8)

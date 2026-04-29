@@ -136,6 +136,7 @@ export function handleInitialized(event: RegistryInitialized): void {
     newRC.garden = tg.id;
     newRC.archived = false;
     newRC.membersCount = BigInt.fromI32(0);
+    newRC.protopianDelegatedFrom = null;
 
     newRC.save();
 

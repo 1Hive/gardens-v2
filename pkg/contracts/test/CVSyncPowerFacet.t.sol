@@ -354,6 +354,32 @@ contract CVSyncPowerFacetTest is Test {
         assertEq(facet.totalPointsActivated(), 59);
     }
 
+    function test_syncPower_decreaseSkipsZeroStakeAndBreaksAfterReductionComplete() public {
+        _authorizeSyncCaller();
+        community.setCachedPower(member, 50);
+        registry.setLivePower(member, 0); // decrease by 50
+        facet.setTotalPointsActivated(50);
+        facet.setTotalStaked(50);
+        facet.setVoterStake(member, 50);
+
+        facet.setProposal(1, member, 0, 0);
+        facet.pushVoterProposal(member, 1);
+        facet.setProposal(2, member, 50, 50);
+        facet.pushVoterProposal(member, 2);
+        facet.setProposal(3, member, 10, 10);
+        facet.pushVoterProposal(member, 3);
+
+        vm.prank(syncCaller);
+        facet.syncPower(member);
+
+        assertEq(facet.getVoterStakedPoints(1, member), 0);
+        assertEq(facet.getVoterStakedPoints(2, member), 0);
+        assertEq(facet.getVoterStakedPoints(3, member), 10);
+        assertEq(facet.totalVoterStakePct(member), 0);
+        assertEq(facet.totalStaked(), 0);
+        assertEq(facet.totalPointsActivated(), 0);
+    }
+
     // ─── Batch Sync ─────────────────────────────────────────────────────
 
     function test_batchSyncPower_syncsMultipleMembers() public {
@@ -377,6 +403,18 @@ contract CVSyncPowerFacetTest is Test {
 
         // 150 + 20 (member increase) + 20 (member2 increase) = 190
         assertEq(facet.totalPointsActivated(), 190);
+    }
+
+    function test_batchSyncPower_revertsWhenBatchTooLarge() public {
+        _authorizeSyncCaller();
+        uint256 maxBatchMembers = facet.MAX_SYNC_BATCH_MEMBERS();
+        address[] memory members = new address[](maxBatchMembers + 1);
+
+        vm.prank(syncCaller);
+        vm.expectRevert(
+            abi.encodeWithSelector(CVSyncPowerFacet.SyncBatchTooLarge.selector, members.length, maxBatchMembers)
+        );
+        facet.batchSyncPower(members);
     }
 
     function test_batchSyncPower_revertsIfNotAuthorized() public {

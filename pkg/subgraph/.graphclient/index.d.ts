@@ -929,7 +929,7 @@ export type CVStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
-export type CVStrategy_orderBy = 'id' | 'poolId' | 'metadata' | 'metadata__id' | 'metadata__title' | 'metadata__description' | 'metadataHash' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'registryCommunity__archived' | 'registryCommunity__membersCount' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'config__superfluidToken' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token' | 'sybil' | 'sybil__id' | 'sybil__type' | 'archived' | 'stream' | 'stream__id' | 'stream__contractAddress' | 'stream__contractType' | 'stream__superfluidToken' | 'stream__maxFlowRate' | 'stream__superfluidGDA' | 'stream__streamLastFlowRate' | 'stream__totalMemberUnits' | 'stream__createdAt' | 'stream__updatedAt';
+export type CVStrategy_orderBy = 'id' | 'poolId' | 'metadata' | 'metadata__id' | 'metadata__title' | 'metadata__description' | 'metadataHash' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'registryCommunity__archived' | 'registryCommunity__membersCount' | 'registryCommunity__protopianDelegatedFrom' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'config__superfluidToken' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token' | 'sybil' | 'sybil__id' | 'sybil__type' | 'archived' | 'stream' | 'stream__id' | 'stream__contractAddress' | 'stream__contractType' | 'stream__superfluidToken' | 'stream__maxFlowRate' | 'stream__superfluidGDA' | 'stream__streamLastFlowRate' | 'stream__totalMemberUnits' | 'stream__createdAt' | 'stream__updatedAt';
 export type CollateralVault = {
     id: Scalars['ID']['output'];
     strategy: CVStrategy;
@@ -1331,6 +1331,45 @@ export type GoodDollarUser_filter = {
     or?: InputMaybe<Array<InputMaybe<GoodDollarUser_filter>>>;
 };
 export type GoodDollarUser_orderBy = 'id' | 'sybilProtection' | 'sybilProtection__id' | 'sybilProtection__type' | 'verified' | 'userAddress' | 'lastUpdated';
+export type Keeper = {
+    id: Scalars['ID']['output'];
+    address: Scalars['String']['output'];
+};
+export type Keeper_filter = {
+    id?: InputMaybe<Scalars['ID']['input']>;
+    id_not?: InputMaybe<Scalars['ID']['input']>;
+    id_gt?: InputMaybe<Scalars['ID']['input']>;
+    id_lt?: InputMaybe<Scalars['ID']['input']>;
+    id_gte?: InputMaybe<Scalars['ID']['input']>;
+    id_lte?: InputMaybe<Scalars['ID']['input']>;
+    id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    address?: InputMaybe<Scalars['String']['input']>;
+    address_not?: InputMaybe<Scalars['String']['input']>;
+    address_gt?: InputMaybe<Scalars['String']['input']>;
+    address_lt?: InputMaybe<Scalars['String']['input']>;
+    address_gte?: InputMaybe<Scalars['String']['input']>;
+    address_lte?: InputMaybe<Scalars['String']['input']>;
+    address_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    address_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    address_contains?: InputMaybe<Scalars['String']['input']>;
+    address_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    address_not_contains?: InputMaybe<Scalars['String']['input']>;
+    address_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    address_starts_with?: InputMaybe<Scalars['String']['input']>;
+    address_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    address_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    address_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    address_ends_with?: InputMaybe<Scalars['String']['input']>;
+    address_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    address_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    address_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    /** Filter for the block changed event. */
+    _change_block?: InputMaybe<BlockChangedFilter>;
+    and?: InputMaybe<Array<InputMaybe<Keeper_filter>>>;
+    or?: InputMaybe<Array<InputMaybe<Keeper_filter>>>;
+};
+export type Keeper_orderBy = 'id' | 'address';
 export type Member = {
     id: Scalars['ID']['output'];
     memberCommunity?: Maybe<Array<MemberCommunity>>;
@@ -1469,7 +1508,7 @@ export type MemberCommunity_filter = {
     and?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
     or?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
 };
-export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedTokens' | 'isRegistered' | 'member' | 'member__id' | 'member__isProtopian' | 'member__isKeeper' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'registryCommunity__archived' | 'registryCommunity__membersCount' | 'covenantSignature';
+export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedTokens' | 'isRegistered' | 'member' | 'member__id' | 'member__isProtopian' | 'member__isKeeper' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__protocolFeeReceiver' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__pendingNewCouncilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'registryCommunity__archived' | 'registryCommunity__membersCount' | 'registryCommunity__protopianDelegatedFrom' | 'covenantSignature';
 export type MemberStrategy = {
     id: Scalars['ID']['output'];
     member: Member;
@@ -2308,6 +2347,85 @@ export type ProposalStream_filter = {
     or?: InputMaybe<Array<InputMaybe<ProposalStream_filter>>>;
 };
 export type ProposalStream_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__metadataHash' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'strategy__archived' | 'proposal' | 'proposal__id' | 'proposal__proposalNumber' | 'proposal__metadataHash' | 'proposal__version' | 'proposal__beneficiary' | 'proposal__requestedAmount' | 'proposal__requestedToken' | 'proposal__proposalStatus' | 'proposal__streamingEscrow' | 'proposal__blockLast' | 'proposal__convictionLast' | 'proposal__maxCVStaked' | 'proposal__stakedAmount' | 'proposal__submitter' | 'proposal__createdAt' | 'proposal__updatedAt' | 'proposal__executedAt' | 'escrow' | 'currentUnits' | 'currentFlowRate' | 'streamedUntilSnapshot' | 'lastSnapshotAt' | 'isStopped' | 'createdAt' | 'updatedAt';
+export type Protopian = {
+    id: Scalars['ID']['output'];
+    address: Scalars['String']['output'];
+};
+export type ProtopianDelegationIndex = {
+    id: Scalars['ID']['output'];
+    community?: Maybe<RegistryCommunity>;
+};
+export type ProtopianDelegationIndex_filter = {
+    id?: InputMaybe<Scalars['ID']['input']>;
+    id_not?: InputMaybe<Scalars['ID']['input']>;
+    id_gt?: InputMaybe<Scalars['ID']['input']>;
+    id_lt?: InputMaybe<Scalars['ID']['input']>;
+    id_gte?: InputMaybe<Scalars['ID']['input']>;
+    id_lte?: InputMaybe<Scalars['ID']['input']>;
+    id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    community?: InputMaybe<Scalars['String']['input']>;
+    community_not?: InputMaybe<Scalars['String']['input']>;
+    community_gt?: InputMaybe<Scalars['String']['input']>;
+    community_lt?: InputMaybe<Scalars['String']['input']>;
+    community_gte?: InputMaybe<Scalars['String']['input']>;
+    community_lte?: InputMaybe<Scalars['String']['input']>;
+    community_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    community_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    community_contains?: InputMaybe<Scalars['String']['input']>;
+    community_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    community_not_contains?: InputMaybe<Scalars['String']['input']>;
+    community_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    community_starts_with?: InputMaybe<Scalars['String']['input']>;
+    community_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    community_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    community_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    community_ends_with?: InputMaybe<Scalars['String']['input']>;
+    community_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    community_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    community_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    community_?: InputMaybe<RegistryCommunity_filter>;
+    /** Filter for the block changed event. */
+    _change_block?: InputMaybe<BlockChangedFilter>;
+    and?: InputMaybe<Array<InputMaybe<ProtopianDelegationIndex_filter>>>;
+    or?: InputMaybe<Array<InputMaybe<ProtopianDelegationIndex_filter>>>;
+};
+export type ProtopianDelegationIndex_orderBy = 'id' | 'community' | 'community__id' | 'community__chainId' | 'community__strategyTemplate' | 'community__profileId' | 'community__communityFee' | 'community__protocolFee' | 'community__protocolFeeReceiver' | 'community__communityName' | 'community__covenantIpfsHash' | 'community__councilSafe' | 'community__pendingNewCouncilSafe' | 'community__isKickEnabled' | 'community__registerStakeAmount' | 'community__registerToken' | 'community__alloAddress' | 'community__isValid' | 'community__archived' | 'community__membersCount' | 'community__protopianDelegatedFrom';
+export type Protopian_filter = {
+    id?: InputMaybe<Scalars['ID']['input']>;
+    id_not?: InputMaybe<Scalars['ID']['input']>;
+    id_gt?: InputMaybe<Scalars['ID']['input']>;
+    id_lt?: InputMaybe<Scalars['ID']['input']>;
+    id_gte?: InputMaybe<Scalars['ID']['input']>;
+    id_lte?: InputMaybe<Scalars['ID']['input']>;
+    id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    address?: InputMaybe<Scalars['String']['input']>;
+    address_not?: InputMaybe<Scalars['String']['input']>;
+    address_gt?: InputMaybe<Scalars['String']['input']>;
+    address_lt?: InputMaybe<Scalars['String']['input']>;
+    address_gte?: InputMaybe<Scalars['String']['input']>;
+    address_lte?: InputMaybe<Scalars['String']['input']>;
+    address_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    address_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    address_contains?: InputMaybe<Scalars['String']['input']>;
+    address_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    address_not_contains?: InputMaybe<Scalars['String']['input']>;
+    address_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    address_starts_with?: InputMaybe<Scalars['String']['input']>;
+    address_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    address_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    address_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    address_ends_with?: InputMaybe<Scalars['String']['input']>;
+    address_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    address_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    address_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    /** Filter for the block changed event. */
+    _change_block?: InputMaybe<BlockChangedFilter>;
+    and?: InputMaybe<Array<InputMaybe<Protopian_filter>>>;
+    or?: InputMaybe<Array<InputMaybe<Protopian_filter>>>;
+};
+export type Protopian_orderBy = 'id' | 'address';
 export type Query = {
     cvstrategy?: Maybe<CVStrategy>;
     cvstrategies: Array<CVStrategy>;
@@ -2329,6 +2447,12 @@ export type Query = {
     registryCommunities: Array<RegistryCommunity>;
     member?: Maybe<Member>;
     members: Array<Member>;
+    protopian?: Maybe<Protopian>;
+    protopians: Array<Protopian>;
+    keeper?: Maybe<Keeper>;
+    keepers: Array<Keeper>;
+    protopianDelegationIndex?: Maybe<ProtopianDelegationIndex>;
+    protopianDelegationIndexes: Array<ProtopianDelegationIndex>;
     stake?: Maybe<Stake>;
     stakes: Array<Stake>;
     memberCommunity?: Maybe<MemberCommunity>;
@@ -2505,6 +2629,48 @@ export type QuerymembersArgs = {
     orderBy?: InputMaybe<Member_orderBy>;
     orderDirection?: InputMaybe<OrderDirection>;
     where?: InputMaybe<Member_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QueryprotopianArgs = {
+    id: Scalars['ID']['input'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QueryprotopiansArgs = {
+    skip?: InputMaybe<Scalars['Int']['input']>;
+    first?: InputMaybe<Scalars['Int']['input']>;
+    orderBy?: InputMaybe<Protopian_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<Protopian_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QuerykeeperArgs = {
+    id: Scalars['ID']['input'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QuerykeepersArgs = {
+    skip?: InputMaybe<Scalars['Int']['input']>;
+    first?: InputMaybe<Scalars['Int']['input']>;
+    orderBy?: InputMaybe<Keeper_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<Keeper_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QueryprotopianDelegationIndexArgs = {
+    id: Scalars['ID']['input'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QueryprotopianDelegationIndexesArgs = {
+    skip?: InputMaybe<Scalars['Int']['input']>;
+    first?: InputMaybe<Scalars['Int']['input']>;
+    orderBy?: InputMaybe<ProtopianDelegationIndex_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<ProtopianDelegationIndex_filter>;
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -2787,6 +2953,7 @@ export type RegistryCommunity = {
     isValid: Scalars['Boolean']['output'];
     archived: Scalars['Boolean']['output'];
     membersCount: Scalars['BigInt']['output'];
+    protopianDelegatedFrom?: Maybe<Scalars['String']['output']>;
 };
 export type RegistryCommunitystrategiesArgs = {
     skip?: InputMaybe<Scalars['Int']['input']>;
@@ -3108,15 +3275,36 @@ export type RegistryCommunity_filter = {
     membersCount_lte?: InputMaybe<Scalars['BigInt']['input']>;
     membersCount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     membersCount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    protopianDelegatedFrom?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_not?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_gt?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_lt?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_gte?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_lte?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    protopianDelegatedFrom_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    protopianDelegatedFrom_contains?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_not_contains?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_starts_with?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_ends_with?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    protopianDelegatedFrom_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
     or?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
 };
-export type RegistryCommunity_orderBy = 'id' | 'chainId' | 'strategyTemplate' | 'profileId' | 'communityFee' | 'protocolFee' | 'protocolFeeReceiver' | 'communityName' | 'covenantIpfsHash' | 'covenant' | 'covenant__id' | 'covenant__text' | 'registryFactory' | 'registryFactory__id' | 'registryFactory__chainId' | 'strategies' | 'councilSafe' | 'pendingNewCouncilSafe' | 'isKickEnabled' | 'registerStakeAmount' | 'registerToken' | 'alloAddress' | 'members' | 'garden' | 'garden__id' | 'garden__name' | 'garden__description' | 'garden__chainId' | 'garden__totalBalance' | 'garden__ipfsCovenant' | 'garden__symbol' | 'garden__decimals' | 'garden__address' | 'isValid' | 'archived' | 'membersCount';
+export type RegistryCommunity_orderBy = 'id' | 'chainId' | 'strategyTemplate' | 'profileId' | 'communityFee' | 'protocolFee' | 'protocolFeeReceiver' | 'communityName' | 'covenantIpfsHash' | 'covenant' | 'covenant__id' | 'covenant__text' | 'registryFactory' | 'registryFactory__id' | 'registryFactory__chainId' | 'strategies' | 'councilSafe' | 'pendingNewCouncilSafe' | 'isKickEnabled' | 'registerStakeAmount' | 'registerToken' | 'alloAddress' | 'members' | 'garden' | 'garden__id' | 'garden__name' | 'garden__description' | 'garden__chainId' | 'garden__totalBalance' | 'garden__ipfsCovenant' | 'garden__symbol' | 'garden__decimals' | 'garden__address' | 'isValid' | 'archived' | 'membersCount' | 'protopianDelegatedFrom';
 export type RegistryFactory = {
     id: Scalars['ID']['output'];
     chainId: Scalars['BigInt']['output'];
+    authorizedWallets: Array<Scalars['String']['output']>;
     registryCommunities?: Maybe<Array<RegistryCommunity>>;
 };
 export type RegistryFactoryregistryCommunitiesArgs = {
@@ -3143,13 +3331,19 @@ export type RegistryFactory_filter = {
     chainId_lte?: InputMaybe<Scalars['BigInt']['input']>;
     chainId_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     chainId_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    authorizedWallets?: InputMaybe<Array<Scalars['String']['input']>>;
+    authorizedWallets_not?: InputMaybe<Array<Scalars['String']['input']>>;
+    authorizedWallets_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+    authorizedWallets_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+    authorizedWallets_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+    authorizedWallets_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
     registryCommunities_?: InputMaybe<RegistryCommunity_filter>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<RegistryFactory_filter>>>;
     or?: InputMaybe<Array<InputMaybe<RegistryFactory_filter>>>;
 };
-export type RegistryFactory_orderBy = 'id' | 'chainId' | 'registryCommunities';
+export type RegistryFactory_orderBy = 'id' | 'chainId' | 'authorizedWallets' | 'registryCommunities';
 export type Stake = {
     id: Scalars['ID']['output'];
     member: Member;
@@ -3729,6 +3923,9 @@ export type ResolversTypes = ResolversObject<{
     ID: ResolverTypeWrapper<Scalars['ID']['output']>;
     Int: ResolverTypeWrapper<Scalars['Int']['output']>;
     Int8: ResolverTypeWrapper<Scalars['Int8']['output']>;
+    Keeper: ResolverTypeWrapper<Keeper>;
+    Keeper_filter: Keeper_filter;
+    Keeper_orderBy: Keeper_orderBy;
     Member: ResolverTypeWrapper<Member>;
     MemberCommunity: ResolverTypeWrapper<MemberCommunity>;
     MemberCommunity_filter: MemberCommunity_filter;
@@ -3763,6 +3960,12 @@ export type ResolversTypes = ResolversObject<{
     ProposalStream: ResolverTypeWrapper<ProposalStream>;
     ProposalStream_filter: ProposalStream_filter;
     ProposalStream_orderBy: ProposalStream_orderBy;
+    Protopian: ResolverTypeWrapper<Protopian>;
+    ProtopianDelegationIndex: ResolverTypeWrapper<ProtopianDelegationIndex>;
+    ProtopianDelegationIndex_filter: ProtopianDelegationIndex_filter;
+    ProtopianDelegationIndex_orderBy: ProtopianDelegationIndex_orderBy;
+    Protopian_filter: Protopian_filter;
+    Protopian_orderBy: Protopian_orderBy;
     Query: ResolverTypeWrapper<{}>;
     RegistryCommunity: ResolverTypeWrapper<RegistryCommunity>;
     RegistryCommunity_filter: RegistryCommunity_filter;
@@ -3823,6 +4026,8 @@ export type ResolversParentTypes = ResolversObject<{
     ID: Scalars['ID']['output'];
     Int: Scalars['Int']['output'];
     Int8: Scalars['Int8']['output'];
+    Keeper: Keeper;
+    Keeper_filter: Keeper_filter;
     Member: Member;
     MemberCommunity: MemberCommunity;
     MemberCommunity_filter: MemberCommunity_filter;
@@ -3845,6 +4050,10 @@ export type ResolversParentTypes = ResolversObject<{
     ProposalMetadata_filter: ProposalMetadata_filter;
     ProposalStream: ProposalStream;
     ProposalStream_filter: ProposalStream_filter;
+    Protopian: Protopian;
+    ProtopianDelegationIndex: ProtopianDelegationIndex;
+    ProtopianDelegationIndex_filter: ProtopianDelegationIndex_filter;
+    Protopian_filter: Protopian_filter;
     Query: {};
     RegistryCommunity: RegistryCommunity;
     RegistryCommunity_filter: RegistryCommunity_filter;
@@ -4007,6 +4216,11 @@ export type GoodDollarUserResolvers<ContextType = MeshContext, ParentType extend
 export interface Int8ScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Int8'], any> {
     name: 'Int8';
 }
+export type KeeperResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['Keeper'] = ResolversParentTypes['Keeper']> = ResolversObject<{
+    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    address?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+    __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
 export type MemberResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['Member'] = ResolversParentTypes['Member']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
     memberCommunity?: Resolver<Maybe<Array<ResolversTypes['MemberCommunity']>>, ParentType, ContextType, RequireFields<MembermemberCommunityArgs, 'skip' | 'first'>>;
@@ -4102,6 +4316,16 @@ export type ProposalStreamResolvers<ContextType = MeshContext, ParentType extend
     updatedAt?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
+export type ProtopianResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['Protopian'] = ResolversParentTypes['Protopian']> = ResolversObject<{
+    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    address?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+    __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+export type ProtopianDelegationIndexResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['ProtopianDelegationIndex'] = ResolversParentTypes['ProtopianDelegationIndex']> = ResolversObject<{
+    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    community?: Resolver<Maybe<ResolversTypes['RegistryCommunity']>, ParentType, ContextType>;
+    __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
 export type QueryResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
     cvstrategy?: Resolver<Maybe<ResolversTypes['CVStrategy']>, ParentType, ContextType, RequireFields<QuerycvstrategyArgs, 'id' | 'subgraphError'>>;
     cvstrategies?: Resolver<Array<ResolversTypes['CVStrategy']>, ParentType, ContextType, RequireFields<QuerycvstrategiesArgs, 'skip' | 'first' | 'subgraphError'>>;
@@ -4123,6 +4347,12 @@ export type QueryResolvers<ContextType = MeshContext, ParentType extends Resolve
     registryCommunities?: Resolver<Array<ResolversTypes['RegistryCommunity']>, ParentType, ContextType, RequireFields<QueryregistryCommunitiesArgs, 'skip' | 'first' | 'subgraphError'>>;
     member?: Resolver<Maybe<ResolversTypes['Member']>, ParentType, ContextType, RequireFields<QuerymemberArgs, 'id' | 'subgraphError'>>;
     members?: Resolver<Array<ResolversTypes['Member']>, ParentType, ContextType, RequireFields<QuerymembersArgs, 'skip' | 'first' | 'subgraphError'>>;
+    protopian?: Resolver<Maybe<ResolversTypes['Protopian']>, ParentType, ContextType, RequireFields<QueryprotopianArgs, 'id' | 'subgraphError'>>;
+    protopians?: Resolver<Array<ResolversTypes['Protopian']>, ParentType, ContextType, RequireFields<QueryprotopiansArgs, 'skip' | 'first' | 'subgraphError'>>;
+    keeper?: Resolver<Maybe<ResolversTypes['Keeper']>, ParentType, ContextType, RequireFields<QuerykeeperArgs, 'id' | 'subgraphError'>>;
+    keepers?: Resolver<Array<ResolversTypes['Keeper']>, ParentType, ContextType, RequireFields<QuerykeepersArgs, 'skip' | 'first' | 'subgraphError'>>;
+    protopianDelegationIndex?: Resolver<Maybe<ResolversTypes['ProtopianDelegationIndex']>, ParentType, ContextType, RequireFields<QueryprotopianDelegationIndexArgs, 'id' | 'subgraphError'>>;
+    protopianDelegationIndexes?: Resolver<Array<ResolversTypes['ProtopianDelegationIndex']>, ParentType, ContextType, RequireFields<QueryprotopianDelegationIndexesArgs, 'skip' | 'first' | 'subgraphError'>>;
     stake?: Resolver<Maybe<ResolversTypes['Stake']>, ParentType, ContextType, RequireFields<QuerystakeArgs, 'id' | 'subgraphError'>>;
     stakes?: Resolver<Array<ResolversTypes['Stake']>, ParentType, ContextType, RequireFields<QuerystakesArgs, 'skip' | 'first' | 'subgraphError'>>;
     memberCommunity?: Resolver<Maybe<ResolversTypes['MemberCommunity']>, ParentType, ContextType, RequireFields<QuerymemberCommunityArgs, 'id' | 'subgraphError'>>;
@@ -4185,11 +4415,13 @@ export type RegistryCommunityResolvers<ContextType = MeshContext, ParentType ext
     isValid?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
     archived?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
     membersCount?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    protopianDelegatedFrom?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type RegistryFactoryResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['RegistryFactory'] = ResolversParentTypes['RegistryFactory']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
     chainId?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    authorizedWallets?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
     registryCommunities?: Resolver<Maybe<Array<ResolversTypes['RegistryCommunity']>>, ParentType, ContextType, RequireFields<RegistryFactoryregistryCommunitiesArgs, 'skip' | 'first'>>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
@@ -4269,6 +4501,7 @@ export type Resolvers<ContextType = MeshContext> = ResolversObject<{
     GoodDollarStrategy?: GoodDollarStrategyResolvers<ContextType>;
     GoodDollarUser?: GoodDollarUserResolvers<ContextType>;
     Int8?: GraphQLScalarType;
+    Keeper?: KeeperResolvers<ContextType>;
     Member?: MemberResolvers<ContextType>;
     MemberCommunity?: MemberCommunityResolvers<ContextType>;
     MemberStrategy?: MemberStrategyResolvers<ContextType>;
@@ -4280,6 +4513,8 @@ export type Resolvers<ContextType = MeshContext> = ResolversObject<{
     ProposalEscrowIndex?: ProposalEscrowIndexResolvers<ContextType>;
     ProposalMetadata?: ProposalMetadataResolvers<ContextType>;
     ProposalStream?: ProposalStreamResolvers<ContextType>;
+    Protopian?: ProtopianResolvers<ContextType>;
+    ProtopianDelegationIndex?: ProtopianDelegationIndexResolvers<ContextType>;
     Query?: QueryResolvers<ContextType>;
     RegistryCommunity?: RegistryCommunityResolvers<ContextType>;
     RegistryFactory?: RegistryFactoryResolvers<ContextType>;
@@ -4330,6 +4565,10 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getGlobalPauseState(variables?: Exact<{
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getGlobalPauseStateQuery>;
+    nftHoldersMembers(variables: Exact<{
+        first: Scalars["Int"]["input"];
+        skip: Scalars["Int"]["input"];
+    }>, options?: TOperationContext): Promise<nftHoldersMembersQuery>;
     getProposalSupporters(variables: Exact<{
         proposalId: Scalars["String"]["input"];
     }>, options?: TOperationContext): Promise<getProposalSupportersQuery>;
@@ -4349,6 +4588,12 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getRegistryFactoryData(variables?: Exact<{
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getRegistryFactoryDataQuery>;
+    getNFTHoldersLists(variables?: Exact<{
+        [key: string]: never;
+    }>, options?: TOperationContext): Promise<getNFTHoldersListsQuery>;
+    getCommunitiesWithDelegation(variables?: Exact<{
+        [key: string]: never;
+    }>, options?: TOperationContext): Promise<getCommunitiesWithDelegationQuery>;
     getPoolData(variables: Exact<{
         strategyId: Scalars["ID"]["input"];
     }>, options?: TOperationContext): Promise<getPoolDataQuery>;
@@ -4501,6 +4746,13 @@ export type getGlobalPauseStateQueryVariables = Exact<{
 export type getGlobalPauseStateQuery = {
     globalPauseControllers: Array<Pick<GlobalPauseController, 'id' | 'pausedUntil' | 'pausedSelectors' | 'createdAt' | 'updatedAt'>>;
 };
+export type nftHoldersMembersQueryVariables = Exact<{
+    first: Scalars['Int']['input'];
+    skip: Scalars['Int']['input'];
+}>;
+export type nftHoldersMembersQuery = {
+    members: Array<Pick<Member, 'id' | 'isProtopian' | 'isKeeper'>>;
+};
 export type getProposalSupportersQueryVariables = Exact<{
     proposalId: Scalars['String']['input'];
 }>;
@@ -4527,7 +4779,7 @@ export type getCommunitiesQueryVariables = Exact<{
     [key: string]: never;
 }>;
 export type getCommunitiesQuery = {
-    registryCommunities: Array<(Pick<RegistryCommunity, 'id' | 'councilSafe' | 'communityName' | 'archived' | 'membersCount'> & {
+    registryCommunities: Array<(Pick<RegistryCommunity, 'id' | 'councilSafe' | 'communityName' | 'archived' | 'protopianDelegatedFrom' | 'membersCount'> & {
         garden: Pick<TokenGarden, 'address' | 'chainId' | 'symbol' | 'name' | 'decimals'>;
         strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId'> & {
             proposals: Array<Pick<CVProposal, 'id' | 'proposalStatus'>>;
@@ -4539,7 +4791,8 @@ export type getCommunityQueryVariables = Exact<{
     communityAddr: Scalars['ID']['input'];
 }>;
 export type getCommunityQuery = {
-    registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName' | 'id' | 'archived' | 'covenantIpfsHash' | 'communityFee' | 'protocolFee' | 'registerStakeAmount' | 'registerToken' | 'councilSafe' | 'pendingNewCouncilSafe' | 'membersCount'> & {
+    registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName' | 'id' | 'archived' | 'protopianDelegatedFrom' | 'covenantIpfsHash' | 'communityFee' | 'protocolFee' | 'registerStakeAmount' | 'registerToken' | 'councilSafe' | 'pendingNewCouncilSafe' | 'membersCount'> & {
+        registryFactory?: Maybe<Pick<RegistryFactory, 'id'>>;
         members?: Maybe<Array<Pick<MemberCommunity, 'memberAddress' | 'stakedTokens'>>>;
         strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'archived' | 'isEnabled' | 'poolId' | 'token' | 'metadataHash'> & {
             proposals: Array<Pick<CVProposal, 'id' | 'proposalStatus'>>;
@@ -4561,6 +4814,25 @@ export type getRegistryFactoryDataQueryVariables = Exact<{
 }>;
 export type getRegistryFactoryDataQuery = {
     registryFactories: Array<Pick<RegistryFactory, 'id' | 'chainId'>>;
+};
+export type getNFTHoldersListsQueryVariables = Exact<{
+    [key: string]: never;
+}>;
+export type getNFTHoldersListsQuery = {
+    protopians: Array<Pick<Protopian, 'id' | 'address'>>;
+    keepers: Array<Pick<Keeper, 'id' | 'address'>>;
+};
+export type getCommunitiesWithDelegationQueryVariables = Exact<{
+    [key: string]: never;
+}>;
+export type getCommunitiesWithDelegationQuery = {
+    registryCommunities: Array<(Pick<RegistryCommunity, 'id' | 'communityName' | 'archived' | 'councilSafe' | 'protopianDelegatedFrom' | 'membersCount'> & {
+        garden: Pick<TokenGarden, 'address' | 'chainId' | 'symbol' | 'name' | 'decimals'>;
+        strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId'> & {
+            proposals: Array<Pick<CVProposal, 'id' | 'proposalStatus'>>;
+        })>>;
+        members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress' | 'stakedTokens'>>>;
+    })>;
 };
 export type getPoolDataQueryVariables = Exact<{
     strategyId: Scalars['ID']['input'];
@@ -4760,12 +5032,15 @@ export declare const isMemberDocument: DocumentNode<isMemberQuery, isMemberQuery
 export declare const getMemberDocument: DocumentNode<getMemberQuery, getMemberQueryVariables>;
 export declare const getPoolCreationDataDocument: DocumentNode<getPoolCreationDataQuery, getPoolCreationDataQueryVariables>;
 export declare const getGlobalPauseStateDocument: DocumentNode<getGlobalPauseStateQuery, getGlobalPauseStateQueryVariables>;
+export declare const nftHoldersMembersDocument: DocumentNode<nftHoldersMembersQuery, nftHoldersMembersQueryVariables>;
 export declare const getProposalSupportersDocument: DocumentNode<getProposalSupportersQuery, getProposalSupportersQueryVariables>;
 export declare const getGardenCommunitiesDocument: DocumentNode<getGardenCommunitiesQuery, getGardenCommunitiesQueryVariables>;
 export declare const getCommunitiesDocument: DocumentNode<getCommunitiesQuery, getCommunitiesQueryVariables>;
 export declare const getCommunityDocument: DocumentNode<getCommunityQuery, getCommunityQueryVariables>;
 export declare const getCommunityCreationDataDocument: DocumentNode<getCommunityCreationDataQuery, getCommunityCreationDataQueryVariables>;
 export declare const getRegistryFactoryDataDocument: DocumentNode<getRegistryFactoryDataQuery, getRegistryFactoryDataQueryVariables>;
+export declare const getNFTHoldersListsDocument: DocumentNode<getNFTHoldersListsQuery, getNFTHoldersListsQueryVariables>;
+export declare const getCommunitiesWithDelegationDocument: DocumentNode<getCommunitiesWithDelegationQuery, getCommunitiesWithDelegationQueryVariables>;
 export declare const getPoolDataDocument: DocumentNode<getPoolDataQuery, getPoolDataQueryVariables>;
 export declare const getProposalDataDocument: DocumentNode<getProposalDataQuery, getProposalDataQueryVariables>;
 export declare const getAlloDocument: DocumentNode<getAlloQuery, getAlloQueryVariables>;
@@ -4794,12 +5069,15 @@ export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getMember(variables: getMemberQueryVariables, options?: C): Promise<getMemberQuery>;
     getPoolCreationData(variables: getPoolCreationDataQueryVariables, options?: C): Promise<getPoolCreationDataQuery>;
     getGlobalPauseState(variables?: getGlobalPauseStateQueryVariables, options?: C): Promise<getGlobalPauseStateQuery>;
+    nftHoldersMembers(variables: nftHoldersMembersQueryVariables, options?: C): Promise<nftHoldersMembersQuery>;
     getProposalSupporters(variables: getProposalSupportersQueryVariables, options?: C): Promise<getProposalSupportersQuery>;
     getGardenCommunities(variables: getGardenCommunitiesQueryVariables, options?: C): Promise<getGardenCommunitiesQuery>;
     getCommunities(variables?: getCommunitiesQueryVariables, options?: C): Promise<getCommunitiesQuery>;
     getCommunity(variables: getCommunityQueryVariables, options?: C): Promise<getCommunityQuery>;
     getCommunityCreationData(variables?: getCommunityCreationDataQueryVariables, options?: C): Promise<getCommunityCreationDataQuery>;
     getRegistryFactoryData(variables?: getRegistryFactoryDataQueryVariables, options?: C): Promise<getRegistryFactoryDataQuery>;
+    getNFTHoldersLists(variables?: getNFTHoldersListsQueryVariables, options?: C): Promise<getNFTHoldersListsQuery>;
+    getCommunitiesWithDelegation(variables?: getCommunitiesWithDelegationQueryVariables, options?: C): Promise<getCommunitiesWithDelegationQuery>;
     getPoolData(variables: getPoolDataQueryVariables, options?: C): Promise<getPoolDataQuery>;
     getProposalData(variables: getProposalDataQueryVariables, options?: C): Promise<getProposalDataQuery>;
     getAllo(variables?: getAlloQueryVariables, options?: C): Promise<getAlloQuery>;

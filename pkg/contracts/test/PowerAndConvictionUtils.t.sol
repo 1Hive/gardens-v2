@@ -143,27 +143,49 @@ contract PowerAndConvictionUtilsTest is Test {
 
     function test_convictionsUtils_threshold_override_paths() public {
         uint256 thresholdNoActive = ConvictionsUtils.calculateThreshold(1, 100, 0, 5_000_000, 1_000_000, 9_000_000, 1);
-        assertEq(thresholdNoActive, 0);
+        assertEq(thresholdNoActive, ConvictionsUtils.calculateThresholdOverride(5_000_000, 1));
+
+        uint256 thresholdOverride = ConvictionsUtils.calculateThresholdOverride(5_000_000, 2_000_000_000);
+        uint256 thresholdWithEmptyPool = ConvictionsUtils.calculateThreshold(
+            1, 0, 1_000_000_000_000, 5_000_000, 1_000_000, 9_000_000, 2_000_000_000
+        );
+        assertEq(thresholdWithEmptyPool, 246913580246);
+        assertGt(thresholdWithEmptyPool, thresholdOverride);
+
+        uint256 zeroRequestedThreshold = ConvictionsUtils.calculateThreshold(
+            0, 0, 1_000_000_000_000, 5_000_000, 1_000_000, 9_000_000, 2_000_000_000
+        );
+        assertEq(zeroRequestedThreshold, thresholdWithEmptyPool);
 
         uint256 thresholdWithMinOverride = ConvictionsUtils.calculateThreshold(
-            1,
-            1_000_000_000_000,
-            1_000_000_000_000,
-            5_000_000,
-            1_000_000,
-            9_000_000,
-            2_000_000_000
+            1, 1_000_000_000_000, 1_000_000_000_000, 5_000_000, 1_000_000, 9_000_000, 2_000_000_000
         );
         uint256 thresholdWithoutMinOverride = ConvictionsUtils.calculateThreshold(
-            1,
-            1_000_000_000_000,
-            1_000_000_000_000,
-            5_000_000,
-            1_000_000,
-            9_000_000,
-            1
+            1, 1_000_000_000_000, 1_000_000_000_000, 5_000_000, 1_000_000, 9_000_000, 1
         );
 
         assertGe(thresholdWithMinOverride, thresholdWithoutMinOverride);
+    }
+
+    function test_convictionsUtils_calculateThreshold_zeroPool_ignores_requested_amount_ratio() public pure {
+        uint256 requestedThreshold = ConvictionsUtils.calculateThreshold(
+            1 ether, 0, 1_000_000_000_000, 5_000_000, 1_000_000, 9_000_000, 2_000_000_000
+        );
+        uint256 zeroRequestedThreshold = ConvictionsUtils.calculateThreshold(
+            0, 0, 1_000_000_000_000, 5_000_000, 1_000_000, 9_000_000, 2_000_000_000
+        );
+
+        assertEq(requestedThreshold, zeroRequestedThreshold);
+    }
+
+    function test_convictionsUtils_calculateThreshold_nonZeroPool_uses_requested_amount_ratio() public pure {
+        uint256 zeroRequestedThreshold = ConvictionsUtils.calculateThreshold(
+            0, 100 ether, 1_000_000_000_000, 5_000_000, 1_000_000, 9_000_000, 2_000_000_000
+        );
+        uint256 requestedThreshold = ConvictionsUtils.calculateThreshold(
+            1 ether, 100 ether, 1_000_000_000_000, 5_000_000, 1_000_000, 9_000_000, 2_000_000_000
+        );
+
+        assertGt(requestedThreshold, zeroRequestedThreshold);
     }
 }

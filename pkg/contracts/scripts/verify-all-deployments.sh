@@ -324,6 +324,94 @@ configured_sender_address() {
   jq -r --arg n "$1" '.networks[] | select(.name == $n) | .ENVS.SENDER // empty' "$CONTRACTS_ROOT/config/networks.json"
 }
 
+configured_cv_strategy_address() {
+  jq -r --arg n "$1" '.networks[] | select(.name == $n) | .IMPLEMENTATIONS.CV_STRATEGY // empty' "$CONTRACTS_ROOT/config/networks.json"
+}
+
+configured_cv_util_lib_address() {
+  jq -r --arg n "$1" '.networks[] | select(.name == $n) | .IMPLEMENTATIONS.CV_UTIL_LIB // empty' "$CONTRACTS_ROOT/config/networks.json"
+}
+
+verify_cv_util_lib() {
+  local network="$1"
+  local rpc_url="$2"
+  local strategy_impl
+  local cv_util_lib
+  local lib_code
+  local strategy_code
+  local normalized_lib
+
+  strategy_impl="$(configured_cv_strategy_address "$network")"
+  cv_util_lib="$(configured_cv_util_lib_address "$network")"
+
+  if [[ -z "$strategy_impl" || "$strategy_impl" == "null" ]]; then
+    echo "   missing IMPLEMENTATIONS.CV_STRATEGY"
+    return 1
+  fi
+
+  if [[ -z "$cv_util_lib" || "$cv_util_lib" == "null" ]]; then
+    echo "   missing IMPLEMENTATIONS.CV_UTIL_LIB"
+    return 1
+  fi
+
+  if [[ "$cv_util_lib" == "0x0000000000000000000000000000000000000000" ]]; then
+    echo "   IMPLEMENTATIONS.CV_UTIL_LIB is zero"
+    return 1
+  fi
+
+  lib_code="$(cast code --rpc-url "$rpc_url" "$cv_util_lib")"
+  if [[ -z "$lib_code" || "$lib_code" == "0x" ]]; then
+    echo "   IMPLEMENTATIONS.CV_UTIL_LIB has no bytecode: $cv_util_lib"
+    return 1
+  fi
+
+  strategy_code="$(cast code --rpc-url "$rpc_url" "$strategy_impl")"
+  if [[ -z "$strategy_code" || "$strategy_code" == "0x" ]]; then
+    echo "   IMPLEMENTATIONS.CV_STRATEGY has no bytecode: $strategy_impl"
+    return 1
+  fi
+
+  normalized_lib="$(echo "${cv_util_lib#0x}" | tr '[:upper:]' '[:lower:]')"
+  if ! grep -qi "$normalized_lib" <<< "$strategy_code"; then
+    echo "   IMPLEMENTATIONS.CV_STRATEGY does not link IMPLEMENTATIONS.CV_UTIL_LIB"
+    echo "   strategy: $strategy_impl"
+    echo "   cv util:  $cv_util_lib"
+    return 1
+  fi
+
+  echo "   CV_UTIL_LIB linked and deployed: $cv_util_lib"
+}
+
+verify_cv_util_lib_source() {
+  local network="$1"
+  local rpc_url="$2"
+  local network_chain_id="$3"
+  local cv_util_lib
+  local cmd
+
+  cv_util_lib="$(configured_cv_util_lib_address "$network")"
+  if [[ -z "$cv_util_lib" || "$cv_util_lib" == "null" ]]; then
+    echo "   missing IMPLEMENTATIONS.CV_UTIL_LIB"
+    return 1
+  fi
+
+  cmd=(forge verify-contract
+    --root "$CONTRACTS_ROOT/../.."
+    --rpc-url "$rpc_url"
+    --chain "$network_chain_id"
+    --verifier etherscan
+    --etherscan-api-key "$ETHERSCAN_API_KEY"
+    --watch
+    "$cv_util_lib"
+    "pkg/contracts/src/CVStrategy/ConvictionsUtils.sol:ConvictionsUtils")
+
+  if [[ "$network" == "opsepolia" ]]; then
+    cmd+=(--verifier-url "https://api.etherscan.io/v2/api?chainid=11155420")
+  fi
+
+  "${cmd[@]}"
+}
+
 resolve_deployer_address() {
   local network="$1"
 
@@ -413,6 +501,32 @@ run_upgrade_scope() {
       echo "   missing deployer address (set DEPLOYER_ADDRESS, DEPLOYER_PRIVATE_KEY, PK_DEPLOYER_PW, or ENVS.SENDER)"
       failed=1
       continue
+    fi
+
+    if [[ "$scope" == "strategies" ]]; then
+      if ! run_with_rpc_retry "$network CV_UTIL_LIB" verify_cv_util_lib "$network" "$rpc_url"; then
+        local alternate_rpc_url=""
+        alternate_rpc_url="$(alternate_rpc_url_for_network "$network")" || true
+        if [[ -n "$alternate_rpc_url" ]]; then
+          if run_with_rpc_retry "$network CV_UTIL_LIB (alternate RPC)" verify_cv_util_lib "$network" "$alternate_rpc_url"; then
+            rpc_url="$alternate_rpc_url"
+          else
+            echo "❌ $network CV_UTIL_LIB"
+            failed=1
+            continue
+          fi
+        else
+          echo "❌ $network CV_UTIL_LIB"
+          failed=1
+          continue
+        fi
+      fi
+
+      if ! run_with_rpc_retry "$network CV_UTIL_LIB source" verify_cv_util_lib_source "$network" "$rpc_url" "$network_chain_id"; then
+        echo "❌ $network CV_UTIL_LIB source"
+        failed=1
+        continue
+      fi
     fi
 
     local current_upgrade_access=""

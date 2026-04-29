@@ -43,8 +43,9 @@ import streamingEscrowFactoryArtifact from "#/contracts/abis/StreamingEscrowFact
 import { Button } from "@/components/Button";
 import { InfoBox } from "@/components/InfoBox";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { CHAINS } from "@/configs/chains";
+import { CHAINS, getExplorerUrl } from "@/configs/chains";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
+import { useExplorerPreference } from "@/hooks/useExplorerPreference";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import {
   alloABI,
@@ -177,6 +178,110 @@ const stringifyResult = (value: unknown) => {
   } catch {
     return String(value);
   }
+};
+
+const getTupleComponentValue = (
+  value: unknown,
+  component: AbiParameter,
+  index: number,
+) => {
+  if (Array.isArray(value)) {
+    return value[index];
+  }
+
+  if (value != null && typeof value === "object") {
+    const source = value as Record<string, unknown>;
+    if (component.name && source[component.name] !== undefined) {
+      return source[component.name];
+    }
+
+    return source[String(index)];
+  }
+
+  return undefined;
+};
+
+const formatDecodedValueWithParameter = (
+  parameter: AbiParameter,
+  value: unknown,
+): unknown => {
+  const arrayDepth = getArrayDepth(parameter.type);
+  if (arrayDepth > 0) {
+    if (!Array.isArray(value)) {
+      return value;
+    }
+
+    const nestedParameter: AbiParameter = {
+      ...parameter,
+      type: getTypeWithoutArraySuffix(parameter.type),
+    };
+
+    return value.map((entry) =>
+      formatDecodedValueWithParameter(nestedParameter, entry),
+    );
+  }
+
+  if (parameter.type === "tuple" && isTupleParameter(parameter)) {
+    const formattedEntries = parameter.components.map((component, index) => {
+      const componentValue = getTupleComponentValue(value, component, index);
+      const formattedValue = formatDecodedValueWithParameter(
+        component,
+        componentValue,
+      );
+
+      return {
+        key: component.name?.trim() ? component.name : `[${index}]`,
+        value: formattedValue,
+      };
+    });
+
+    return Object.fromEntries(
+      formattedEntries.map((entry) => [entry.key, entry.value]),
+    );
+  }
+
+  return value;
+};
+
+const formatDecodedFunctionResult = (
+  abiFunction: AbiFunction,
+  decoded: unknown,
+) => {
+  const outputs = abiFunction.outputs ?? [];
+
+  if (outputs.length === 0) {
+    return stringifyResult(decoded);
+  }
+
+  if (outputs.length === 1) {
+    const [output] = outputs;
+    const formattedValue = formatDecodedValueWithParameter(output, decoded);
+
+    if (output.name?.trim()) {
+      return stringifyResult({ [output.name]: formattedValue });
+    }
+
+    return stringifyResult(formattedValue);
+  }
+
+  const decodedValues = Array.isArray(decoded) ? decoded : [decoded];
+  const formattedEntries = outputs.map((output, index) => {
+    const formattedValue = formatDecodedValueWithParameter(
+      output,
+      decodedValues[index],
+    );
+
+    return {
+      key: output.name?.trim() ? output.name : `[${index}]`,
+      value: formattedValue,
+    };
+  });
+
+  return stringifyResult(
+    Object.fromEntries(
+      formattedEntries.map((entry) => [entry.key, entry.value]),
+    ),
+  );
 };
 
 const extractRevertData = (error: unknown): `0x${string}` | null => {
@@ -664,6 +769,7 @@ export default function DiamondAdminPage() {
   const [contractOptionsError, setContractOptionsError] = useState<
     string | null
   >(null);
+  const { explorerPreference } = useExplorerPreference();
   const [signatureMap, setSignatureMap] = useState<SignatureMap>({});
   const [isResolvingSignatures, setIsResolvingSignatures] = useState(false);
   const [signatureResolveError, setSignatureResolveError] = useState<
@@ -1890,7 +1996,7 @@ export default function DiamondAdminPage() {
       const contract =
         autocompleteContractOptions[activeAutocompleteIndex] ??
         autocompleteContractOptions[0];
-      if (Boolean(contract)) {
+      if (contract != null) {
         applyAutocompleteContract(contract);
       }
       return;
@@ -1982,7 +2088,7 @@ export default function DiamondAdminPage() {
       const option =
         signatureAutocompleteOptions[activeSignatureAutocompleteIndex] ??
         signatureAutocompleteOptions[0];
-      if (Boolean(option)) {
+      if (option != null) {
         applySignatureAutocompleteOption(option);
       }
       return;
@@ -2053,7 +2159,7 @@ export default function DiamondAdminPage() {
           functionName: functionAbi.name,
           data: rawResult,
         });
-        setReadOutput(stringifyResult(decoded));
+        setReadOutput(formatDecodedFunctionResult(functionAbi, decoded));
         return;
       }
 
@@ -2134,7 +2240,7 @@ export default function DiamondAdminPage() {
     }
   };
 
-  const txExplorerBase = selectedChain?.blockExplorers?.default?.url;
+  const txExplorerBase = getExplorerUrl(selectedChainId, explorerPreference);
   const getExplorerAddressHref = (address?: Address) =>
     txExplorerBase && address ? `${txExplorerBase}/address/${address}` : null;
 

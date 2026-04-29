@@ -1117,6 +1117,9 @@ export default function ClientPage({
                   poolId={poolId}
                   poolToken={poolToken}
                   chainId={Number(chain)}
+                  streamingRatePerSecond={effectiveStrategy.stream?.maxFlowRate}
+                  streamReceiver={effectiveStrategy.stream?.superfluidGDA as Address | undefined}
+                  streamSender={effectiveStrategy.id as Address}
                   superToken={
                     superTokenInfo && {
                       ...superTokenInfo,
@@ -1200,6 +1203,9 @@ export default function ClientPage({
                     poolId={poolId}
                     poolToken={poolToken}
                     chainId={Number(chain)}
+                    streamingRatePerSecond={effectiveStrategy.stream?.maxFlowRate}
+                    streamReceiver={effectiveStrategy.stream?.superfluidGDA as Address | undefined}
+                    streamSender={effectiveStrategy.id as Address}
                     superToken={
                       superTokenInfo && {
                         ...superTokenInfo,
