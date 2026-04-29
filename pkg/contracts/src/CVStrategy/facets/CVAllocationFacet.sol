@@ -10,6 +10,7 @@ import {ConvictionsUtils} from "../ConvictionsUtils.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
+
 /**
  * @title CVAllocationFacet
  * @notice Facet containing allocation and distribution functions for CVStrategy
@@ -232,9 +233,9 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
 
             uint256 convictionLast = updateProposalConviction(proposalId);
 
-            if (proposals[proposalId].requestedAmount > 0 && totalPointsActivated == 0) {
-                revert NoActiveGovernancePoints(proposalId);
-            }
+            // if (proposals[proposalId].requestedAmount > 0 && totalPointsActivated == 0) {
+            //     revert NoActiveGovernancePoints(proposalId);
+            // }
 
             uint256 threshold;
             if (proposals[proposalId].requestedAmount > 0) {

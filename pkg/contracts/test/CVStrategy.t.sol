@@ -417,7 +417,7 @@ contract CVStrategyTest is Test {
         strategy.setProposal(5, member, 1, ProposalStatus.Active, block.number - 1, 0);
 
         uint256 expectedOverride = ConvictionsUtils.calculateThresholdOverride(
-            1_000_000_000_000, params.decay, params.minThresholdPoints
+             params.decay, params.minThresholdPoints
         );
 
         assertEq(strategy.calculateThreshold(1), expectedOverride);

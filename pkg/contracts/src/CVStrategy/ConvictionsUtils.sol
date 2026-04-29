@@ -58,7 +58,7 @@ library ConvictionsUtils {
         }
 
         if (_poolAmount == 0) {
-            return calculateThresholdOverride(_totalPointsActivated, _decay, _minThresholdPoints);
+            return calculateThresholdOverride(_decay, _minThresholdPoints);
         }
 
         uint256 denom = (_maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / _poolAmount;
@@ -67,21 +67,13 @@ library ConvictionsUtils {
         uint256 decayAdjusted = ratioTerm / (D - _decay);
         _threshold = Math.mulDiv(decayAdjusted, _totalPointsActivated, 2 ** 64);
 
-        uint256 thresholdOverride = calculateThresholdOverride(_totalPointsActivated, _decay, _minThresholdPoints);
+        uint256 thresholdOverride = calculateThresholdOverride(_decay, _minThresholdPoints);
         if (_threshold < thresholdOverride) {
             _threshold = thresholdOverride;
         }
     }
 
-    function calculateThresholdOverride(uint256 _totalPointsActivated, uint256 _decay, uint256 _minThresholdPoints)
-        public
-        pure
-        returns (uint256)
-    {
-        if (_totalPointsActivated == 0) {
-            return 0;
-        }
-
+    function calculateThresholdOverride(uint256 _decay, uint256 _minThresholdPoints) public pure returns (uint256) {
         return Math.mulDiv(_minThresholdPoints, D, D - _decay);
     }
 

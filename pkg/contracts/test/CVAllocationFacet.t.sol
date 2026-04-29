@@ -485,15 +485,26 @@ contract CVAllocationFacetTest is Test {
 
     function test_distribute_reverts_when_no_active_governance_points() public {
         allo.setPoolToken(1, facet.nativeToken());
-        vm.deal(address(facet), 10 ether);
+        uint256 poolAmount = 10 ether;
+        vm.deal(address(facet), poolAmount);
         facet.setProposalType(ProposalType.Funding);
-        facet.setCvParams(CVParams({maxRatio: 10_000_000, weight: 0, decay: 5_000_000, minThresholdPoints: 0}));
-        facet.setTotalPointsActivated(0);
-        facet.setProposal(1, ProposalStatus.Active, 1 ether, facet.nativeToken(), beneficiary, member, block.number - 1, 1, 0);
+        uint256 maxRatio = 10_000_000;
+        uint256 minThresholdPoints = 1;
+        uint256 decay = 5_000_000;
+        uint256 weight = 1;
+        uint256 totalPointsActivated = 0;
+        uint256 requestedAmount = 1 ether;
+        uint256 threshold = ConvictionsUtils.calculateThreshold(
+            requestedAmount, poolAmount, totalPointsActivated, decay, weight, maxRatio, minThresholdPoints
+        );
+        facet.setCvParams(CVParams({maxRatio: maxRatio, weight: weight, decay: decay, minThresholdPoints: minThresholdPoints}));
+        facet.setTotalPointsActivated(totalPointsActivated);
+        facet.setProposal(1, ProposalStatus.Active, requestedAmount, facet.nativeToken(), beneficiary, member, block.number - 1, 1, 0);
         facet.setProposalStakedAmount(1, 0);
 
-        vm.prank(address(allo));
-        vm.expectRevert(abi.encodeWithSelector(CVAllocationFacet.NoActiveGovernancePoints.selector, 1));
+        vm.prank(address(allo)); vm.expectRevert(
+            abi.encodeWithSelector(CVAllocationFacet.ConvictionUnderMinimumThreshold.selector, minThresholdPoints, threshold, 1 ether)
+        );
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
     }
 
