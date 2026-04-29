@@ -1202,10 +1202,12 @@
       "PROXIES": {
         "REGISTRY_FACTORY": "0x7d26c5b083b85b848645fcbd18fe01168989333b",
         "REGISTRY_COMMUNITIES": [
+          "0x7c4bbd0e690090531bb05b37c6debc677cfe1703",
           "0xee637307e9ca4efe5bea26ad2a395d0736e0f904",
           "0xf3bfc1f278ad4e62e64fe52a49459c72d71789d9"
         ],
         "CV_STRATEGIES": [
+          "0xab21dbef27ebf5a58dcd16c555b478bf7cd2307c",
           "0xdd2de4862bf9a435aff95636d19297a21f10958f",
           "0xf128a85c4eed583527d91cd7fa8eb453e0d49397"
         ]
@@ -1247,7 +1249,7 @@
         "REGISTRY_COMMUNITY_DIAMOND_INIT": "0x13370c93abe347e588f684d57fffc19b5a105e86",
         "CV_STRATEGY_DIAMOND_INIT": "0x311ece7fc8111897c8e72738159adc0bda6f3a7e"
       },
-      "hash": "6efb129e7e3b4a769738703e0fffd62e284b14fa",
+      "hash": "193515b44cac08ad3f2ac6b9719059a3dd9103e6",
       "FACTORY_STATE": {
         "COMMUNITY_CUTS_DIGEST": "0xea022412b0f5eae0c3a762424bc525e239b941ac616fac666136a5baf22892b2",
         "STRATEGY_CUTS_DIGEST": "0x7e05187acd5515642e6a00b8842bf3eac49449ecec5cd578c28def647377a5eb"
