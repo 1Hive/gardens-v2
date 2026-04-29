@@ -396,6 +396,26 @@ contract CVStreamingFacetHarness is CVStreamingFacet {
         super.wrapIfNeeded();
     }
 
+    function exposedStreamingUnitBudget(uint256 requestedFlowRate) external pure returns (uint128) {
+        return _streamingUnitBudget(requestedFlowRate);
+    }
+
+    function exposedScaledUnitsForStreaming(
+        uint256 convictionValue,
+        uint256 totalEligibleConviction,
+        uint128 unitBudget
+    ) external pure returns (uint128) {
+        return _scaledUnitsForStreaming(convictionValue, totalEligibleConviction, unitBudget);
+    }
+
+    function exposedLegacyScaledUnits(uint256 convictionValue) external pure returns (uint128) {
+        return _legacyScaledUnits(convictionValue);
+    }
+
+    function exposedToInt96StreamingRate(uint256 flowRate) external pure returns (int96) {
+        return _toInt96StreamingRate(flowRate);
+    }
+
     function setStreamingEscrowExternal(uint256 proposalId, address escrow) external {
         setStreamingEscrow(proposalId, escrow);
     }
@@ -641,6 +661,15 @@ contract CVStreamingFacetTest is Test {
         assertEq(superToken.upgradeCallCount(), 0);
     }
 
+    function test_wrapIfNeeded_zero_underlying_balance_returns_early() public {
+        token.setBalance(address(facet), 0);
+
+        facet.setSkipWrap(false);
+        facet.exposedWrapIfNeeded();
+
+        assertEq(superToken.upgradeCallCount(), 0);
+    }
+
     function test_wrapIfNeeded_success_upgrades_underlying_balance() public {
         token.mint(address(facet), 25 ether);
 
@@ -682,6 +711,24 @@ contract CVStreamingFacetTest is Test {
         facet.setupStreamingRatePerSecond(1);
         assertFalse(facet.exposedShouldStartStream(0, 1));
         assertFalse(facet.exposedShouldStartStream(1, 0));
+    }
+
+    function test_streaming_helper_bounds() public {
+        assertEq(facet.exposedStreamingUnitBudget(123), 123);
+        assertEq(facet.exposedStreamingUnitBudget(uint256(type(uint128).max) + 1), type(uint128).max);
+
+        assertEq(facet.exposedScaledUnitsForStreaming(0, 1, 1), 0);
+        assertEq(facet.exposedScaledUnitsForStreaming(1, 2, 1), 1);
+        assertEq(
+            facet.exposedScaledUnitsForStreaming(type(uint128).max, 1, type(uint128).max), type(uint128).max
+        );
+
+        assertEq(facet.exposedLegacyScaledUnits(type(uint256).max), type(uint128).max);
+        assertEq(facet.exposedToInt96StreamingRate(uint256(uint96(type(int96).max))), type(int96).max);
+
+        uint256 overflowingFlowRate = uint256(uint96(type(int96).max)) + 1;
+        vm.expectRevert(abi.encodeWithSelector(CVStreamingFacet.StreamingRateOverflow.selector, overflowingFlowRate));
+        facet.exposedToInt96StreamingRate(overflowingFlowRate);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -1120,6 +1167,13 @@ contract CVStreamingFacetTest is Test {
     function test_stopEscrowStream_reverts_for_zero_address() public {
         vm.expectRevert(abi.encodeWithSelector(CVStreamingFacet.StreamingEscrowNotFound.selector, address(0)));
         facet.stopEscrowStream(address(0));
+    }
+
+    function test_stopEscrowStream_reverts_when_member_units_update_fails() public {
+        gdaPool.setUpdateShouldSucceed(false);
+
+        vm.expectRevert(abi.encodeWithSelector(CVStreamingFacet.UpdateMemberUnitsFailed.selector, escrow1, 0));
+        facet.stopEscrowStream(escrow1);
     }
 
     function test_stopEscrowStream_tolerates_sync_failure() public {
