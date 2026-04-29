@@ -440,12 +440,36 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
                 && _shouldReuseConfiguredImplementation(configured, "src/CVStrategy/CVStrategy.sol:CVStrategy")
         ) {
             _writeNetworkAddress(".IMPLEMENTATIONS.CV_STRATEGY", configured);
+            _syncCVUtilLibFromStrategyImplementation(configured);
             return configured;
         }
 
         address deployed = address(new CVStrategy());
         _writeNetworkAddress(".IMPLEMENTATIONS.CV_STRATEGY", deployed);
+        _syncCVUtilLibFromStrategyImplementation(deployed);
         return deployed;
+    }
+
+    function _syncCVUtilLibFromStrategyImplementation(address implementation) internal {
+        require(implementation != address(0), "strategy implementation missing");
+        bytes memory runtimeCode = implementation.code;
+        require(runtimeCode.length > 13444, "strategy implementation code too short");
+
+        address linkedLibrary = _readLinkedAddress(runtimeCode, 6429);
+        require(linkedLibrary != address(0), "CV_UTIL_LIB link missing");
+        require(_readLinkedAddress(runtimeCode, 6586) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 8402) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 13424) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(linkedLibrary.code.length != 0, "CV_UTIL_LIB has no code");
+
+        _writeNetworkAddress(".IMPLEMENTATIONS.CV_UTIL_LIB", linkedLibrary);
+    }
+
+    function _readLinkedAddress(bytes memory runtimeCode, uint256 offset) internal pure returns (address linked) {
+        require(runtimeCode.length >= offset + 20, "link offset out of bounds");
+        assembly {
+            linked := shr(96, mload(add(add(runtimeCode, 0x20), offset)))
+        }
     }
 
     function _executeRegistryFactoryUpgrades(UpgradeContext memory context) internal {
