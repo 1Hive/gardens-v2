@@ -166,4 +166,26 @@ contract PowerAndConvictionUtilsTest is Test {
 
         assertGe(thresholdWithMinOverride, thresholdWithoutMinOverride);
     }
+
+    function test_convictionsUtils_calculateThreshold_zeroPool_ignores_requested_amount_ratio() public pure {
+        uint256 requestedThreshold = ConvictionsUtils.calculateThreshold(
+            1 ether, 0, 1_000_000_000_000, 5_000_000, 1_000_000, 9_000_000, 2_000_000_000
+        );
+        uint256 zeroRequestedThreshold = ConvictionsUtils.calculateThreshold(
+            0, 0, 1_000_000_000_000, 5_000_000, 1_000_000, 9_000_000, 2_000_000_000
+        );
+
+        assertEq(requestedThreshold, zeroRequestedThreshold);
+    }
+
+    function test_convictionsUtils_calculateThreshold_nonZeroPool_uses_requested_amount_ratio() public pure {
+        uint256 zeroRequestedThreshold = ConvictionsUtils.calculateThreshold(
+            0, 100 ether, 1_000_000_000_000, 5_000_000, 1_000_000, 9_000_000, 2_000_000_000
+        );
+        uint256 requestedThreshold = ConvictionsUtils.calculateThreshold(
+            1 ether, 100 ether, 1_000_000_000_000, 5_000_000, 1_000_000, 9_000_000, 2_000_000_000
+        );
+
+        assertGt(requestedThreshold, zeroRequestedThreshold);
+    }
 }
