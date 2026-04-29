@@ -81,7 +81,7 @@ test("should create a proposal in the pool", async ({
   const titleInput = getByTestId(page, "input-proposal-title");
 
   // Fill all inputs
-  await amountInput.fill("0");
+  await amountInput.fill("0.2");
   await descriptionInput.fill("Test Proposal Description");
   await tokenAddressInput.fill("0x327F6AA1870731235A57Bc785523dAF0054b7394");
   await titleInput.fill("Test Proposal Title");

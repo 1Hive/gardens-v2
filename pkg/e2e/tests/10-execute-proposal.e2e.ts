@@ -8,6 +8,15 @@ import {
   expectNoErrorToast
 } from "./support/metamaskUtils";
 import { getByTestId } from "./support/locators-utils";
+import {
+  createPublicClient,
+  createWalletClient,
+  erc20Abi,
+  http,
+  parseUnits
+} from "viem";
+import { mnemonicToAccount } from "viem/accounts";
+import { optimism } from "viem/chains";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
@@ -45,13 +54,42 @@ test("should execute a proposal", async ({
   ) {
     id
     poolId
+    token
   }
 }`
       })
     }
   ).then((r) => r.json());
-  const { poolId } = subgraphRes.data.cvstrategies[0];
+  const {
+    id: strategyAddress,
+    poolId,
+    token: tokenAddress
+  } = subgraphRes.data.cvstrategies[0];
 
+  // Fund the pool directly via viem before navigating so the pool has funds
+  // const account = mnemonicToAccount(process.env.E2E_WALLET_SEED_PHRASE!);
+  // const transport = http("https://mainnet.optimism.io");
+
+  // const publicClient = createPublicClient({ chain: optimism, transport });
+  // const walletClient = createWalletClient({
+  //   account,
+  //   chain: optimism,
+  //   transport
+  // });
+
+  // const decimals = await publicClient.readContract({
+  //   address: tokenAddress,
+  //   abi: erc20Abi,
+  //   functionName: "decimals"
+  // });
+
+  // const txHash = await walletClient.writeContract({
+  //   address: tokenAddress,
+  //   abi: erc20Abi,
+  //   functionName: "transfer",
+  //   args: [strategyAddress, parseUnits("0.2", decimals)]
+  // });
+  // await publicClient.waitForTransactionReceipt({ hash: txHash });
   await page.goto(
     `gardens/10/0x9ee73d7afd1d75d9d3468ab7845150180936dec4/${poolId}`,
     { timeout: 60000 }
