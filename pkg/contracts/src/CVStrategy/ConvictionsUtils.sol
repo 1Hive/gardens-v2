@@ -53,15 +53,12 @@ library ConvictionsUtils {
         uint256 _maxRatio,
         uint256 _minThresholdPoints
     ) public pure returns (uint256 _threshold) {
-        if (_requestedAmount == 0) {
-            return 0;
+        if (_poolAmount > 0 && _maxRatio * _poolAmount <= _requestedAmount * D) {
+            return type(uint256).max;
         }
-
-        if (_poolAmount == 0) {
-            return calculateThresholdOverride(_decay, _minThresholdPoints);
-        }
-
-        uint256 denom = (_maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / _poolAmount;
+        
+        uint256 requestedAmountRationTerm = _poolAmount == 0 ? 0 : (_requestedAmount * 2 ** 64) / _poolAmount;
+        uint256 denom = (_maxRatio * 2 ** 64) / D - requestedAmountRationTerm;
         uint256 weightScaled = (_weight << 128) / D;
         uint256 ratioTerm = Math.mulDiv(weightScaled, D, (denom * denom) >> 64);
         uint256 decayAdjusted = ratioTerm / (D - _decay);

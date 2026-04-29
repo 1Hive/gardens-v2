@@ -368,16 +368,19 @@ contract CVStrategyTest is Test {
 
         vm.deal(address(strategy), 100);
         assertTrue(strategy.exposedIsOverMaxRatio(200));
-        assertEq(strategy.calculateThreshold(200), 0);
+        assertEq(strategy.calculateThreshold(200), type(uint256).max);
     }
 
     function test_getProposal_thresholdBranches() public {
-        strategy.setCvParams(CVParams(1, 0, 0, 0));
+        strategy.setCvParams(CVParams(1, 1_000_000, 5_000_000, 0));
+        strategy.setTotalPointsActivated(1_000_000_000_000);
+        vm.deal(address(strategy), 1 ether);
+
         strategy.setProposal(1, member, 0, ProposalStatus.Active, block.number - 1, 0);
-        assertEq(strategy.getProposalThreshold(1), 0);
+        assertEq(strategy.getProposalThreshold(1), strategy.calculateThreshold(0));
 
         strategy.setProposal(2, member, 10, ProposalStatus.Active, block.number - 1, 0);
-        assertEq(strategy.getProposalThreshold(2), 0);
+        assertEq(strategy.getProposalThreshold(2), strategy.calculateThreshold(10));
     }
 
     function test_getProposal_threshold_over_max_ratio() public {
@@ -389,7 +392,7 @@ contract CVStrategyTest is Test {
         uint256 maxAllowed = (poolAmount * (ConvictionsUtils.D / 2)) / ConvictionsUtils.D;
         strategy.setProposal(4, member, maxAllowed + 1, ProposalStatus.Active, block.number - 1, 0);
 
-        assertEq(strategy.getProposalThreshold(4), 0);
+        assertEq(strategy.getProposalThreshold(4), type(uint256).max);
     }
 
     function test_getProposal_threshold_calculation() public {
@@ -410,7 +413,7 @@ contract CVStrategyTest is Test {
         assertEq(threshold, expected);
     }
 
-    function test_threshold_reads_use_override_when_pool_empty() public {
+    function test_threshold_reads_follow_math_when_pool_empty() public {
         CVParams memory params = CVParams(8_000_000, 1_000_000, 5_000_000, 2_000_000_000);
         strategy.setCvParams(params);
         strategy.setTotalPointsActivated(1_000_000_000_000);
@@ -419,9 +422,10 @@ contract CVStrategyTest is Test {
         uint256 expectedOverride = ConvictionsUtils.calculateThresholdOverride(
              params.decay, params.minThresholdPoints
         );
+        uint256 threshold = strategy.calculateThreshold(1);
 
-        assertEq(strategy.calculateThreshold(1), expectedOverride);
-        assertEq(strategy.getProposalThreshold(5), expectedOverride);
+        assertGt(threshold, expectedOverride);
+        assertEq(strategy.getProposalThreshold(5), threshold);
     }
 
     function test_updateProposalConviction_and_setSybilScorer() public {

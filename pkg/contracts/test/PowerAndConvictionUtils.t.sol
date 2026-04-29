@@ -143,18 +143,19 @@ contract PowerAndConvictionUtilsTest is Test {
 
     function test_convictionsUtils_threshold_override_paths() public {
         uint256 thresholdNoActive = ConvictionsUtils.calculateThreshold(1, 100, 0, 5_000_000, 1_000_000, 9_000_000, 1);
-        assertEq(thresholdNoActive, 0);
+        assertEq(thresholdNoActive, ConvictionsUtils.calculateThresholdOverride(5_000_000, 1));
 
         uint256 thresholdOverride = ConvictionsUtils.calculateThresholdOverride(5_000_000, 2_000_000_000);
         uint256 thresholdWithEmptyPool = ConvictionsUtils.calculateThreshold(
             1, 0, 1_000_000_000_000, 5_000_000, 1_000_000, 9_000_000, 2_000_000_000
         );
-        assertEq(thresholdWithEmptyPool, thresholdOverride);
+        assertEq(thresholdWithEmptyPool, 246913580246);
+        assertGt(thresholdWithEmptyPool, thresholdOverride);
 
         uint256 zeroRequestedThreshold = ConvictionsUtils.calculateThreshold(
             0, 0, 1_000_000_000_000, 5_000_000, 1_000_000, 9_000_000, 2_000_000_000
         );
-        assertEq(zeroRequestedThreshold, 0);
+        assertEq(zeroRequestedThreshold, thresholdWithEmptyPool);
 
         uint256 thresholdWithMinOverride = ConvictionsUtils.calculateThreshold(
             1, 1_000_000_000_000, 1_000_000_000_000, 5_000_000, 1_000_000, 9_000_000, 2_000_000_000

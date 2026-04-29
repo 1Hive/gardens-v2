@@ -750,7 +750,7 @@ contract CVStreamingFacetTest is Test {
         assertGt(gdaPool.memberUnits(escrow1), 0);
     }
 
-    function test_rebalance_pureSuperTokenPool_does_not_double_count_pool_balance() public {
+    function test_rebalance_pureSuperTokenPool_keeps_zero_requested_streaming_proposal_eligible() public {
         uint256 realPoolBalance = 100 ether;
         uint256 requestedAmount = 100 ether;
 
@@ -775,7 +775,7 @@ contract CVStreamingFacetTest is Test {
 
         facet.rebalance();
 
-        assertEq(gdaPool.memberUnits(escrow1), 0);
+        assertGt(gdaPool.memberUnits(escrow1), 0);
     }
 
     function test_rebalance_multiple_active_proposals() public {

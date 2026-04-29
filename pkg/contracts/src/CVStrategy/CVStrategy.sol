@@ -495,31 +495,17 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         )
     {
         Proposal storage proposal = proposals[_proposalId];
+        uint256 currentPoolAmount = getPoolAmount();
 
-        if (proposal.requestedAmount == 0) {
-            threshold = 0;
-        } else {
-            uint256 poolAmount = getPoolAmount();
-            uint256 maxAllowed = Math.mulDiv(poolAmount, cvParams.maxRatio, ConvictionsUtils.D);
-
-            if (poolAmount == 0) {
-                threshold = ConvictionsUtils.calculateThresholdOverride(
-                    cvParams.decay, cvParams.minThresholdPoints
-                );
-            } else if (proposal.requestedAmount > maxAllowed) {
-                threshold = 0;
-            } else {
-                threshold = ConvictionsUtils.calculateThreshold(
-                    proposal.requestedAmount,
-                    poolAmount,
-                    totalPointsActivated,
-                    cvParams.decay,
-                    cvParams.weight,
-                    cvParams.maxRatio,
-                    cvParams.minThresholdPoints
-                );
-            }
-        }
+        threshold = ConvictionsUtils.calculateThreshold(
+            proposal.requestedAmount,
+            currentPoolAmount,
+            totalPointsActivated,
+            cvParams.decay,
+            cvParams.weight,
+            cvParams.maxRatio,
+            cvParams.minThresholdPoints
+        );
         return (
             proposal.submitter,
             proposal.beneficiary,
@@ -621,9 +607,11 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
 
     // Sig: 0x59a5db8b
     function calculateThreshold(uint256 _requestedAmount) external view returns (uint256) {
+        uint256 currentPoolAmount = getPoolAmount();
+
         return ConvictionsUtils.calculateThreshold(
             _requestedAmount,
-            poolAmount,
+            currentPoolAmount,
             totalPointsActivated,
             cvParams.decay,
             cvParams.weight,

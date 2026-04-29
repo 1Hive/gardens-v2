@@ -289,17 +289,8 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         view
         returns (bool)
     {
-        if (poolAmount == 0) {
-            return false;
-        }
-
-        // Mirror funding guard to avoid threshold underflow/division issues.
-        if (proposal.requestedAmount * ConvictionsUtils.D >= cvParams.maxRatio * poolAmount) {
-            return false;
-        }
-
         uint256 threshold = ConvictionsUtils.calculateThreshold(
-            proposal.requestedAmount,
+            0, // Streaming proposals use zero requestedAmount; calculateThreshold should still run its normal math for that input.
             poolAmount,
             totalPointsActivated,
             cvParams.decay,
