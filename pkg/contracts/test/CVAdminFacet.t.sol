@@ -537,7 +537,7 @@ contract CVAdminFacetTest is Test {
         assertEq(address(facet.superfluidToken()), address(pureToken));
     }
 
-    function test_setPoolParams_streaming_rate_change_updates_flow_only() public {
+    function test_setPoolParams_streaming_rate_change_does_not_update_gda_flow() public {
         factoryAllowlist.setAllowed(address(arbitrator), true);
         MockGDAAgreement gdaAgreement = new MockGDAAgreement();
         MockSuperfluidHost host = new MockSuperfluidHost(address(gdaAgreement));
@@ -561,8 +561,10 @@ contract CVAdminFacetTest is Test {
         vm.prank(councilSafe);
         facet.setPoolParams(arb, params, 0, new address[](0), new address[](0), address(token), 123);
 
-        assertEq(gdaAgreement.lastPool(), gda);
-        assertEq(int256(gdaAgreement.flowRate()), int256(123));
+        assertEq(address(facet.superfluidToken()), address(token));
+        assertEq(facet.streamingRatePerSecond(), 123);
+        assertEq(gdaAgreement.lastPool(), address(0));
+        assertEq(int256(gdaAgreement.flowRate()), int256(0));
     }
 
     function test_setPoolParams_streaming_rate_change_without_gda_is_noop() public {
@@ -587,6 +589,8 @@ contract CVAdminFacetTest is Test {
         vm.prank(councilSafe);
         facet.setPoolParams(arb, params, 0, new address[](0), new address[](0), address(token), 123);
 
+        assertEq(address(facet.superfluidToken()), address(token));
+        assertEq(facet.streamingRatePerSecond(), 123);
         assertEq(gdaAgreement.lastPool(), address(0));
         assertEq(int256(gdaAgreement.flowRate()), int256(0));
     }
