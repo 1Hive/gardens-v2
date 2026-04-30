@@ -1026,7 +1026,7 @@ export function useProposalFilter<
     | "mostConviction"
     | null;
 
-  const [sortBy, setSortBy] = useState<SortType>("mostConviction");
+  const [sortBy, setSortBy] = useState<SortType>("newest");
 
   const filteredAndSorted = useMemo(() => {
     if (!sortBy) return filteredProposals;
@@ -1110,8 +1110,8 @@ function ProposalFiltersUI({
   const FILTERS = useMemo(() => {
     const allFilters = ["all", "active", "executed", "closed"];
 
-    // Remove "executed" filter when poolType is a signaling pool
-    return +poolType === 0 ?
+    // Only funding pools have a separate executed proposal state in filters.
+    return PoolTypes[poolType] !== "funding" ?
         allFilters.filter((f) => f !== "executed")
       : allFilters;
   }, [poolType]);
