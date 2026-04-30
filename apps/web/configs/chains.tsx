@@ -87,7 +87,6 @@ const explorerConfig = (etherscan: string, blockscout: string) => ({
 const SUBGRAPH_ARBSEP_VERSION = Subgraph.VERSION_ARBSEP;
 const SUBGRAPH_OPSEP_VERSION = Subgraph.VERSION_OPSEP;
 const SUBGRAPH_ETHSEP_VERSION = Subgraph.VERSION_ETHSEP;
-const SUBGRAPH_VERSION_ETHEREUM = Subgraph.VERSION_ETHEREUM;
 const SUBGRAPH_PRODNET_VERSION = Subgraph.VERSION_PROD;
 
 const getGatewayKey = () => {
@@ -457,7 +456,7 @@ export const chainConfigMap: {
     ...getSubgraphUrls(
       "39E6r8bqUTeyrSb4JWMkqcVBKqeKAwJVp6mPhoDCtgbB",
       "gardens-v-2-ethereum",
-      SUBGRAPH_VERSION_ETHEREUM,
+      SUBGRAPH_PRODNET_VERSION,
     ),
     ...getSuperfluidSubgraphUrls(
       "3ALqHuNpxGPi1ecKSzxBQrTiKznoVk9cQYemY2RR5pgd",
