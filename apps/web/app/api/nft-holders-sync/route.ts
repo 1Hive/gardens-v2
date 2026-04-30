@@ -67,15 +67,18 @@ function getChainIdParam(request: Request): string | null {
   );
 }
 
-function getTargetChainIds(request: Request, dryRun: boolean): ChainId[] | string {
+function getTargetChainIds(request: Request): ChainId[] | string {
   const chainIdParam = getChainIdParam(request);
   const configuredChainIds = getConfiguredChainIds();
 
   if (chainIdParam == null) {
-    if (!dryRun) {
-      return "chainId is required for non-dry NFT holders sync";
-    }
+    return configuredChainIds;
+  }
 
+  if (
+    chainIdParam.toLowerCase() === "all" ||
+    chainIdParam.toLowerCase() === "all-chains"
+  ) {
     return configuredChainIds;
   }
 
@@ -457,7 +460,7 @@ export async function GET(request: Request) {
     if (!dryRun) {
       privateKeyToAccount(privateKey as `0x${string}`);
     }
-    const targetChainIds = getTargetChainIds(request, dryRun);
+    const targetChainIds = getTargetChainIds(request);
     if (typeof targetChainIds === "string") {
       return NextResponse.json({ message: targetChainIds }, { status: 400 });
     }
