@@ -54,7 +54,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     event StreamingEscrowFactorySet(address _newFactory);
     event GlobalPauseControllerSet(address _newController);
     event AuthorizedWalletSet(address indexed wallet, bool authorized);
-    event ProtopianDelegated(address indexed from, address indexed to);
+    event ProtopianDelegated(address indexed holder, address indexed to);
     event ContractRegistered(address indexed target);
     event ContractUnregistered(address indexed target);
 
@@ -64,8 +64,8 @@ contract RegistryFactory is ProxyOwnableUpgrader {
 
     error CommunityInvalid(address _community);
     error AddressCannotBeZero();
-    error UnauthorizedProtopianDelegation(address caller, address from);
-    error ProtopianHolderRequired(address from);
+    error UnauthorizedProtopianDelegation(address caller, address holder);
+    error ProtopianHolderRequired(address holder);
 
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
@@ -375,16 +375,16 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         }
     }
 
-    function delegateProtopian(address from, address to) external virtual {
-        _revertZeroAddress(from);
+    function delegateProtopian(address holder, address to) external virtual {
+        _revertZeroAddress(holder);
 
-        if (msg.sender != owner() && !authorizedWallets[msg.sender] && msg.sender != from) {
-            revert UnauthorizedProtopianDelegation(msg.sender, from);
+        if (msg.sender != owner() && !authorizedWallets[msg.sender] && msg.sender != holder) {
+            revert UnauthorizedProtopianDelegation(msg.sender, holder);
         }
 
-        address currentDelegate = protopianDelegate[from];
-        if (!protopiansAddresses[from]) {
-            revert ProtopianHolderRequired(from);
+        address currentDelegate = protopianDelegate[holder];
+        if (!protopiansAddresses[holder] && currentDelegate == address(0)) {
+            revert ProtopianHolderRequired(holder);
         }
 
         if (currentDelegate != address(0) && currentDelegate != to) {
@@ -392,17 +392,17 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         }
 
         if (to == address(0)) {
-            protopianDelegate[from] = address(0);
-            protopiansAddresses[from] = true;
-            emit ProtopianDelegated(from, address(0));
+            protopianDelegate[holder] = address(0);
+            protopiansAddresses[holder] = true;
+            emit ProtopianDelegated(holder, address(0));
             return;
         }
 
-        protopianDelegate[from] = to;
-        protopiansAddresses[from] = false;
+        protopianDelegate[holder] = to;
+        protopiansAddresses[holder] = false;
         protopiansAddresses[to] = true;
 
-        emit ProtopianDelegated(from, to);
+        emit ProtopianDelegated(holder, to);
     }
 
     function getProtocolFee(address _community) external view virtual returns (uint256) {
@@ -415,27 +415,9 @@ contract RegistryFactory is ProxyOwnableUpgrader {
             return 0;
         }
 
-        // Check for protopians (free if they are owners of the community)
-
-        ISafe councilSafe = ISafe(RegistryCommunity(_community).councilSafe());
-        bool isProtopianSafe = protopiansAddresses[address(councilSafe)];
-        if (isProtopianSafe) {
+        bool isProtopianCommunity = protopiansAddresses[_community];
+        if (isProtopianCommunity) {
             return 0;
-        }
-
-        // Only Safe-compatible council contracts expose getOwners().
-        // Other contract wallets should not break fee calculation.
-        if (address(councilSafe).code.length != 0) {
-            (bool ok, bytes memory data) =
-                address(councilSafe).staticcall(abi.encodeWithSelector(ISafe.getOwners.selector));
-            if (ok && data.length > 0) {
-                address[] memory communityOwners = abi.decode(data, (address[]));
-                for (uint256 i = 0; i < communityOwners.length; i++) {
-                    if (protopiansAddresses[communityOwners[i]]) {
-                        return 0;
-                    }
-                }
-            }
         }
 
         return communityToInfo[_community].fee;
