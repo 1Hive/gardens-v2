@@ -38,6 +38,12 @@ type ChainSyncResult = {
   dryRun: boolean;
 };
 
+type ChainSyncFailure = {
+  chainId: number;
+  error: string;
+  dryRun: boolean;
+};
+
 type IndexedNftHolderMap = Record<Address, NftHolderFlags>;
 type RoleConflictMap = Record<Address, NftHolderFlags>;
 
@@ -482,35 +488,45 @@ export async function GET(request: Request) {
       universeAddresses,
     );
     const results: ChainSyncResult[] = [];
+    const failures: ChainSyncFailure[] = [];
 
     for (const chainId of targetChainIds) {
       const indexedByAddress = indexedByChain[chainId] ?? {};
-      const protopianResult = await syncNftHolderTypeForChain({
-        chainId,
-        privateKey,
-        dryRun,
-        nftHolderType: "protopian",
-        desiredByAddress,
-        indexedByAddress,
-        conflictingByAddress,
-        universeAddresses,
-      });
-      if (protopianResult) {
-        results.push(protopianResult);
-      }
+      try {
+        const protopianResult = await syncNftHolderTypeForChain({
+          chainId,
+          privateKey,
+          dryRun,
+          nftHolderType: "protopian",
+          desiredByAddress,
+          indexedByAddress,
+          conflictingByAddress,
+          universeAddresses,
+        });
+        if (protopianResult) {
+          results.push(protopianResult);
+        }
 
-      const keeperResult = await syncNftHolderTypeForChain({
-        chainId,
-        privateKey,
-        dryRun,
-        nftHolderType: "keeper",
-        desiredByAddress,
-        indexedByAddress,
-        conflictingByAddress,
-        universeAddresses,
-      });
-      if (keeperResult) {
-        results.push(keeperResult);
+        const keeperResult = await syncNftHolderTypeForChain({
+          chainId,
+          privateKey,
+          dryRun,
+          nftHolderType: "keeper",
+          desiredByAddress,
+          indexedByAddress,
+          conflictingByAddress,
+          universeAddresses,
+        });
+        if (keeperResult) {
+          results.push(keeperResult);
+        }
+      } catch (error) {
+        console.error(`NFT holders sync failed for chain ${String(chainId)}`, error);
+        failures.push({
+          chainId: Number(chainId),
+          error: error instanceof Error ? error.message : "Unknown error",
+          dryRun,
+        });
       }
     }
 
@@ -528,6 +544,7 @@ export async function GET(request: Request) {
           .length,
       },
       results,
+      failures,
     });
   } catch (error) {
     console.error("NFT holders sync failed", error);
