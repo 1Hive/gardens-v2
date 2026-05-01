@@ -14,6 +14,10 @@ export function useWatchLocalStorage<TValue = string>({
   serializer = (v) => (v as unknown as string).toString(),
 }: Props<TValue>) {
   const [value, setValue] = useState<TValue | undefined>(() => {
+    if (typeof window === "undefined") {
+      return initialValue;
+    }
+
     try {
       const item = window.localStorage.getItem(key);
       return item ? deserializer(item) : initialValue;
@@ -33,6 +37,10 @@ export function useWatchLocalStorage<TValue = string>({
   };
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
     const interval = setInterval(() => {
       const item = window.localStorage.getItem(key);
       if (item !== null) {

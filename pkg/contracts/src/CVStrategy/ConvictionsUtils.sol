@@ -53,18 +53,25 @@ library ConvictionsUtils {
         uint256 _maxRatio,
         uint256 _minThresholdPoints
     ) public pure returns (uint256 _threshold) {
-        uint256 denom = (_maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / _poolAmount;
+        if (_poolAmount > 0 && _maxRatio * _poolAmount <= _requestedAmount * D) {
+            return type(uint256).max;
+        }
+        
+        uint256 requestedAmountRationTerm = _poolAmount == 0 ? 0 : (_requestedAmount * 2 ** 64) / _poolAmount;
+        uint256 denom = (_maxRatio * 2 ** 64) / D - requestedAmountRationTerm;
         uint256 weightScaled = (_weight << 128) / D;
         uint256 ratioTerm = Math.mulDiv(weightScaled, D, (denom * denom) >> 64);
         uint256 decayAdjusted = ratioTerm / (D - _decay);
         _threshold = Math.mulDiv(decayAdjusted, _totalPointsActivated, 2 ** 64);
 
-        if (_totalPointsActivated != 0) {
-            uint256 thresholdOverride = (
-                (_minThresholdPoints * D * getMaxConviction(_totalPointsActivated, _decay)) / (_totalPointsActivated)
-            ) / 10 ** 7;
-            _threshold = _threshold > thresholdOverride ? _threshold : thresholdOverride;
+        uint256 thresholdOverride = calculateThresholdOverride(_decay, _minThresholdPoints);
+        if (_threshold < thresholdOverride) {
+            _threshold = thresholdOverride;
         }
+    }
+
+    function calculateThresholdOverride(uint256 _decay, uint256 _minThresholdPoints) public pure returns (uint256) {
+        return Math.mulDiv(_minThresholdPoints, D, D - _decay);
     }
 
     function getMaxConviction(uint256 amount, uint256 _decay) public pure returns (uint256) {

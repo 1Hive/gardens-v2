@@ -51,6 +51,10 @@ export type ChainData = {
   name: string;
   icon: FC;
   explorer: string;
+  explorers: {
+    etherscan: string;
+    blockscout: string;
+  };
   blockTime: number;
   confirmations: number;
   rpcUrl?: string;
@@ -68,6 +72,17 @@ export type ChainData = {
   safePrefix?: string;
   alchemyApiBaseUrl?: string; // Optional, used for fetching NFTs
 };
+
+export const EXPLORER_PREFERENCE_STORAGE_KEY = "blockExplorerPreference";
+
+export type ExplorerPreference = keyof ChainData["explorers"];
+
+export const DEFAULT_EXPLORER_PREFERENCE: ExplorerPreference = "etherscan";
+
+const explorerConfig = (etherscan: string, blockscout: string) => ({
+  etherscan,
+  blockscout,
+});
 
 const SUBGRAPH_ARBSEP_VERSION = Subgraph.VERSION_ARBSEP;
 const SUBGRAPH_OPSEP_VERSION = Subgraph.VERSION_OPSEP;
@@ -144,6 +159,10 @@ export const chainConfigMap: {
     name: arbitrumSepolia.name,
     icon: Arbitrum,
     explorer: "https://sepolia.arbiscan.io/",
+    explorers: explorerConfig(
+      "https://sepolia.arbiscan.io/",
+      "https://arbitrum-sepolia.blockscout.com/",
+    ),
     blockTime: 12,
     confirmations: 2,
     rpcUrl: getRpcUrl(
@@ -169,6 +188,10 @@ export const chainConfigMap: {
     name: optimismSepolia.name,
     icon: Optimism,
     explorer: "https://sepolia-optimism.etherscan.io/",
+    explorers: explorerConfig(
+      "https://sepolia-optimism.etherscan.io/",
+      "https://optimism-sepolia.blockscout.com/",
+    ),
     blockTime: 2,
     confirmations: 1,
     rpcUrl: getRpcUrl(
@@ -196,6 +219,10 @@ export const chainConfigMap: {
     name: sepolia.name,
     icon: Ethereum,
     explorer: "https://sepolia.etherscan.io/",
+    explorers: explorerConfig(
+      "https://sepolia.etherscan.io/",
+      "https://eth-sepolia.blockscout.com/",
+    ),
     blockTime: 12,
     confirmations: 1, // 3
     rpcUrl: getRpcUrl(
@@ -225,6 +252,10 @@ export const chainConfigMap: {
     name: "Arbitrum",
     icon: Arbitrum,
     explorer: "https://arbiscan.io",
+    explorers: explorerConfig(
+      "https://arbiscan.io",
+      "https://arbitrum.blockscout.com/",
+    ),
     blockTime: 12,
     confirmations: 2, // 7
     rpcUrl: getRpcUrl(
@@ -253,6 +284,10 @@ export const chainConfigMap: {
     name: "Optimism",
     icon: Optimism,
     explorer: "http://optimistic.etherscan.io",
+    explorers: explorerConfig(
+      "http://optimistic.etherscan.io",
+      "https://optimism.blockscout.com/",
+    ),
     blockTime: 2,
     confirmations: 2, // 2
     rpcUrl: getRpcUrl(
@@ -281,6 +316,10 @@ export const chainConfigMap: {
     name: polygon.name,
     icon: Polygon,
     explorer: "https://polygonscan.com",
+    explorers: explorerConfig(
+      "https://polygonscan.com",
+      "https://polygon.blockscout.com/",
+    ),
     blockTime: 2.1,
     confirmations: 2, // 4
     rpcUrl: getRpcUrl(
@@ -309,6 +348,10 @@ export const chainConfigMap: {
     name: gnosis.name,
     icon: GnosisLogo,
     explorer: "https://gnosisscan.io",
+    explorers: explorerConfig(
+      "https://gnosisscan.io",
+      "https://gnosis.blockscout.com/",
+    ),
     blockTime: 5.2,
     confirmations: 2, // 4
     rpcUrl: getRpcUrl(
@@ -337,6 +380,10 @@ export const chainConfigMap: {
     name: base.name,
     icon: BaseLogo,
     explorer: "https://basescan.org",
+    explorers: explorerConfig(
+      "https://basescan.org",
+      "https://base.blockscout.com/",
+    ),
     blockTime: 2,
     confirmations: 2, // 4
     rpcUrl: getRpcUrl(
@@ -365,6 +412,10 @@ export const chainConfigMap: {
     name: celo.name,
     icon: CeloLogo,
     explorer: "https://celoscan.io/",
+    explorers: explorerConfig(
+      "https://celoscan.io/",
+      "https://celo.blockscout.com/",
+    ),
     blockTime: 1,
     confirmations: 4, // 4
     rpcUrl: getRpcUrl(
@@ -393,6 +444,10 @@ export const chainConfigMap: {
     name: mainnet.name,
     icon: Ethereum,
     explorer: "https://etherscan.io",
+    explorers: explorerConfig(
+      "https://etherscan.io",
+      "https://eth.blockscout.com/",
+    ),
     blockTime: 12,
     confirmations: 3,
     rpcUrl: getRpcUrl(
@@ -428,6 +483,33 @@ export function getConfigByChain(chainId: ChainId): ChainData | undefined {
 
 export function getChain(chainId: ChainId): Chain | undefined {
   return CHAINS.find((chain) => chain.id == chainId);
+}
+
+export function getExplorerUrl(
+  chainId?: number,
+  preference: ExplorerPreference = DEFAULT_EXPLORER_PREFERENCE,
+) {
+  if (chainId == null) {
+    return chainConfigMap[1].explorers[DEFAULT_EXPLORER_PREFERENCE];
+  }
+
+  if (!(chainId in chainConfigMap)) {
+    return chainConfigMap[1].explorers[DEFAULT_EXPLORER_PREFERENCE];
+  }
+
+  const chainConfig = chainConfigMap[chainId];
+
+  return (
+    chainConfig.explorers[preference] ??
+    chainConfig.explorer ??
+    chainConfigMap[1].explorers[DEFAULT_EXPLORER_PREFERENCE]
+  );
+}
+
+export function isExplorerPreference(
+  value: string | undefined,
+): value is ExplorerPreference {
+  return value === "etherscan" || value === "blockscout";
 }
 
 export const ChainIcon: FC<ChainIconProps> = ({ chain, ...props }) => {

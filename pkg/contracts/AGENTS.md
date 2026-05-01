@@ -78,6 +78,8 @@ Operational details for step 1:
 - Distinguish future-pool template updates from live pool upgrades. `RegistryFactory.setStrategyFacets(...)` only updates future pools; existing strategies may still require `upgradeTo(...)` and `diamondCut(...)`.
 - When base facet or shared storage logic changes, assume all strategy facets may need to be refreshed unless verified otherwise.
 - Use `test/helpers/StrategyDiamondConfigurator.sol` and the upgrade scripts under `script/` as the canonical selector and facet-cut source.
+- Treat linked Solidity libraries as chain-local runtime dependencies. `CVStrategy`, `CVAllocationFacet`, `CVProposalFacet`, and `CVStreamingFacet` can contain hardcoded `ConvictionsUtils` addresses in their deployed bytecode; before preparing or approving an implementation/facet payload, extract the artifact `deployedBytecode.linkReferences`, read the linked address from the deployed bytecode on the target chain, and confirm `cast code <linked-library>` is non-empty.
+- Do not assume a library address that is valid on one chain exists on another. For `ConvictionsUtils`, keep `IMPLEMENTATIONS.CV_UTIL_LIB` in `config/networks.json` aligned with the chain-local linked library and verify that every configured `CV_STRATEGY` implementation links to it.
 
 Operational details for step 2:
 
@@ -106,11 +108,33 @@ python scripts/submit_safe_payloads.py \
 	--payload-file transaction-builder/<payload>.json
 ```
 
+## Wallet Rotation And ProxyOwner Grant Flow
+
+When rotating the deployer wallet that will receive `ProxyOwner.grantUpgradeAccess(...)`, use this order unless the user explicitly asks for a different sequence:
+
+1. Generate or rotate the wallet with `task change-wallet` when `ENVS.SENDER` should move to the new address, or `task generate-wallet` when only the keypair is needed.
+2. Back up the current `~/.foundry/keystores/PK_DEPLOYER` before importing the new key into the same keystore name.
+3. Import the new wallet into `PK_DEPLOYER` and verify it with `cast wallet address --account PK_DEPLOYER --password "$PK_DEPLOYER_PW"`.
+4. Fund the new wallet with `task transfer-gas-all` or a narrower `transfer-gas-*` task. Treat skipped chains as real blockers for later renounce calls; the granted wallet needs native gas on each chain where it must send transactions.
+5. Grant testnet upgrade access on-chain with `task grant-upgrade-access-testnets`.
+6. Dry-run mainnet Safe submissions with `task submit-safe-payloads-grant-upgrade-access-all-chains-dry`.
+7. Submit mainnet Safe proposals with `task submit-safe-payloads-grant-upgrade-access-all-chains`.
+8. Verify current state with `task verify-upgrade-access`.
+
+Operational notes:
+
+- `task verify-upgrade-access` checks live `upgradeAccess()` on-chain. After step 7 it should pass on testnets, but it will continue to fail on mainnets until the queued Safe transactions are executed.
+- `task submit-safe-payloads-grant-upgrade-access-all-chains` must normalize both the `grantUpgradeAccess` recipient and the ProxyOwner `to` address from `config/networks.json`; do not trust stale `transaction-builder/*-proxy-owner-upgrade-and-grant-payload.json` targets.
+- The current Taskfile only has renounce wrappers for testnets: `task renounce-proxy-owner-upgrade-access-testnets` and the per-chain `ethsep`, `arbsep`, `opsep` tasks.
+- There are no mainnet renounce Taskfile wrappers at the moment. Use `script/RenounceProxyOwnerUpgradeAccess.s.sol:RenounceProxyOwnerUpgradeAccess` directly only after the Safe grant has executed and the new wallet has enough native gas on the target chain.
+- Keep the old `PK_DEPLOYER` keystore backup until funding, grant verification, and any required renounce calls are complete.
+
 ## Verification
 
 - Logic changes: run the smallest relevant `forge test` or `pnpm test` subset.
 - Storage changes: run `./scripts/verify-storage-layout.sh`.
 - ABI changes consumed elsewhere: run `pnpm sync:abis`, then validate the dependent package.
+- For strategy upgrade verification, include linked-library checks. At minimum, run the `strategies` scope in `scripts/verify-all-deployments.sh` for the affected chain or manually verify that `CVStrategy`'s linked `ConvictionsUtils` address has bytecode and matches `IMPLEMENTATIONS.CV_UTIL_LIB`.
 
 ## Pitfalls
 
@@ -119,3 +143,4 @@ python scripts/submit_safe_payloads.py \
 - Many scripts are production-operational. Avoid running deployment or upgrade scripts unless the task explicitly requires it.
 - Safe service submissions can fail for superficial reasons like non-checksummed addresses or shell-escaped calldata. Using `scripts/submit_safe_payloads.py` avoids those failure modes and handles nonce selection, MultiSend wrapping, EIP-712 hashing, and Safe app links.
 - `ProxyOwner.owner()` can differ from the governance Safe while `upgradeAccess` is active. For governance routing, resolve the Safe with `mainOwner()` instead of assuming `owner()` or `ENVS.PROXY_OWNER` is the Safe.
+- An implementation can pass proxy and template checks while still reverting if it is linked to an address with no code on the target chain. This is especially easy to miss for `ConvictionsUtils` because the proxy stores only the implementation address; the library address is embedded in implementation/facet bytecode, not storage.

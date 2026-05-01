@@ -15,6 +15,10 @@
     "test:security": "forge test --match-path 'pkg/contracts/test/no-coverage/SecurityPoC.t.sol' -vvv",
     "format": "forge fmt",
     "coverage": "forge coverage --ir-minimum --no-match-path 'pkg/contracts/test/{fork,no-coverage}/**' --match-path 'pkg/contracts/test/**' --skip 'pkg/contracts/script/**' --exclude-tests --report lcov && sed -i 's|^SF:pkg/contracts/|SF:|g' lcov.info",
-    "sync:abis": "bash scripts/sync-abis.sh"
+    "sync:abis": "bash scripts/sync-abis.sh",
+    "sync:proxy": "node ../subgraph/src/scripts/run-proxies.mjs",
+    "sync:proxies:test": "node ../subgraph/src/scripts/run-proxies.mjs arbsepolia opsepolia ethsepolia",
+    "sync:proxies:prod": "node ../subgraph/src/scripts/run-proxies.mjs arbitrum optimism ethereum polygon gnosis base celo",
+    "sync:proxies": "node ../subgraph/src/scripts/run-proxies.mjs arbsepolia opsepolia ethsepolia arbitrum optimism ethereum polygon gnosis base celo"
   }
 }

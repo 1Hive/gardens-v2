@@ -15,7 +15,7 @@ interface IRegistryFactory {
 
     function globalPauseController() external view returns (address);
 
-    function isStreamRebalanceCallerAllowed(address caller) external view returns (bool);
+    function isAuthorizedWallet(address wallet) external view returns (bool);
 
     function isContractRegistered(address target) external view returns (bool);
 

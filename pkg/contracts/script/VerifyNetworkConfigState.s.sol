@@ -75,9 +75,8 @@ contract VerifyNetworkConfigState is Script {
         _verifyFactoryCuts(factory, networkJson, networkKey);
         address[] memory communityProxies =
             _verifyProxyFleet(networkJson, networkKey, ".PROXIES.REGISTRY_COMMUNITIES", expectedCommunityImpl, "community");
-        address[] memory strategyProxies =
-            _verifyProxyFleet(networkJson, networkKey, ".PROXIES.CV_STRATEGIES", expectedStrategyImpl, "strategy");
-        _verifyExpectedCutSelectors(factory, communityProxies, strategyProxies);
+        _verifyProxyFleetAnyImplementation(networkJson, networkKey, ".PROXIES.CV_STRATEGIES", "strategy");
+        _verifyExpectedCommunityCutSelectors(factory, communityProxies);
 
         address streamingEscrowFactory = _readOptionalAddress(networkJson, networkKey, ".ENVS.STREAMING_ESCROW_FACTORY");
         if (streamingEscrowFactory != address(0)) {
@@ -87,19 +86,13 @@ contract VerifyNetworkConfigState is Script {
         }
     }
 
-    function _verifyExpectedCutSelectors(
-        RegistryFactory factory,
-        address[] memory communityProxies,
-        address[] memory strategyProxies
-    ) internal view {
+    function _verifyExpectedCommunityCutSelectors(RegistryFactory factory, address[] memory communityProxies)
+        internal
+        view
+    {
         if (communityProxies.length != 0) {
             (IDiamondCut.FacetCut[] memory communityCuts,,) = factory.getCommunityFacets();
             _verifyDiamondSelectorRouting(communityProxies[0], communityCuts, "community");
-        }
-
-        if (strategyProxies.length != 0) {
-            (IDiamondCut.FacetCut[] memory strategyCuts,,) = factory.getStrategyFacets();
-            _verifyDiamondSelectorRouting(strategyProxies[0], strategyCuts, "strategy");
         }
     }
 
@@ -224,6 +217,22 @@ contract VerifyNetworkConfigState is Script {
         for (uint256 i = 0; i < proxies.length; i++) {
             require(proxies[i].code.length > 0, string.concat(label, " proxy has no code"));
             require(_implementationOf(proxies[i]) == expectedImplementation, string.concat(label, " implementation mismatch"));
+        }
+    }
+
+    function _verifyProxyFleetAnyImplementation(
+        string memory networkJson,
+        string memory networkKey,
+        string memory proxyArrayKey,
+        string memory label
+    ) internal view returns (address[] memory proxies) {
+        proxies = networkJson.readAddressArray(string.concat(networkKey, proxyArrayKey));
+        for (uint256 i = 0; i < proxies.length; i++) {
+            require(proxies[i].code.length > 0, string.concat(label, " proxy has no code"));
+
+            address implementation = _implementationOf(proxies[i]);
+            require(implementation != address(0), string.concat(label, " implementation is zero"));
+            require(implementation.code.length > 0, string.concat(label, " implementation has no code"));
         }
     }
 

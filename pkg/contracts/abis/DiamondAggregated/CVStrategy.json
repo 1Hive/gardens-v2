@@ -4196,6 +4196,17 @@
     },
     {
       "type": "error",
+      "name": "NoActiveGovernancePoints",
+      "inputs": [
+        {
+          "name": "proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
       "name": "TooManyAllocations",
       "inputs": [
         {

@@ -14,7 +14,7 @@ import path from "path";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const script = path.join(__dirname, "list-proxies.cjs");
 
-const networks = process.argv.slice(2);
+const networks = process.argv.slice(2).filter((arg) => arg !== "--");
 
 if (networks.length === 0) {
   console.error("Usage: run-proxies.mjs <network1> [network2] ...");

@@ -1,0 +1,54 @@
+{
+  "version": "1.0",
+  "chainId": "10",
+  "createdAt": 1776455780086,
+  "meta": {
+    "name": "Optimism CVStrategy implementation library fix",
+    "description": "Sets the RegistryFactory CVStrategy template to a newly deployed implementation linked to deployed ConvictionsUtils, and upgrades the affected Optimism strategy.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "0x9a17De1f0caD0c592F656410997E4B685d339029",
+    "createdFromOwnerAddress": "0x07AD02e0C1FA0b09fC945ff197E18e9C256838c6"
+  },
+  "transactions": [
+    {
+      "to": "0x1FAC47Cf25f1ca9F20ba366099D26b28401F5715",
+      "value": "0",
+      "data": "0x1b71f0e40000000000000000000000004578ea2fdd777f145bf12991808f2351f0eca714",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "template",
+            "type": "address"
+          }
+        ],
+        "name": "setStrategyTemplate",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "template": "0x4578EA2fDd777f145BF12991808F2351f0ECA714"
+      }
+    },
+    {
+      "to": "0x2B1915a2e0293B3a434df58b921d8f7e320da077",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000004578ea2fdd777f145bf12991808f2351f0eca714",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newImplementation",
+            "type": "address"
+          }
+        ],
+        "name": "upgradeTo",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "newImplementation": "0x4578EA2fDd777f145BF12991808F2351f0ECA714"
+      }
+    }
+  ]
+}

@@ -68,6 +68,8 @@ interface PoolMetricsProps {
       }
     | undefined;
   streamingRatePerSecond?: bigint | string | number | null;
+  streamReceiver?: Address;
+  streamSender?: Address;
 }
 
 export const PoolMetrics: FC<PoolMetricsProps> = ({
@@ -76,6 +78,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   chainId,
   superToken,
   streamingRatePerSecond,
+  streamReceiver,
+  streamSender,
 }) => {
   const { id: poolAddress, poolId } = strategy;
   const [amountInput, setAmount] = useState<string>("");
@@ -99,6 +103,14 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     chainId,
     containerId: poolId,
   });
+  const { currentFlowRateBn: directPoolFlowRateBn } = useSuperfluidStream({
+    receiver: (streamReceiver ?? "") as Address,
+    superToken: superToken?.address as Address,
+    chainId,
+    containerId: streamReceiver ?? poolId,
+    sender: streamSender,
+    includePoolMembers: false,
+  });
 
   const amount = +(amountInput || 0);
 
@@ -115,9 +127,13 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       args: [poolAddress as Address, requestedAmountBn],
     });
 
+  const displayedIncomingFlowRateBn =
+    directPoolFlowRateBn ?? currentFlowRateBn;
+
   const currentFlowPerMonth =
-    superToken && currentFlowRateBn != null ?
-      +formatUnits(currentFlowRateBn, superToken.decimals) * SEC_TO_MONTH
+    superToken && displayedIncomingFlowRateBn != null ?
+      +formatUnits(displayedIncomingFlowRateBn, superToken.decimals) *
+      SEC_TO_MONTH
     : null;
 
   const currentUserFlowPerMonth =
@@ -806,9 +822,9 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 />
               </div>
             </div>
-            {currentFlowRateBn != null &&
+            {displayedIncomingFlowRateBn != null &&
               currentFlowPerMonth != null &&
-              currentFlowRateBn > 0n && (
+              displayedIncomingFlowRateBn > 0n && (
                 <div className="flex justify-between gap-3 items-center">
                   <p className="subtitle2">Incoming Stream:</p>
                   <div className="flex items-center gap-1">
