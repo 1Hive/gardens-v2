@@ -102,6 +102,14 @@ const getRpcUrl = (network: string) => {
   return apiKey ? `https://${network}.g.alchemy.com/v2/${apiKey}` : undefined;
 };
 
+const getAlchemyNftApiBaseUrl = (network: string) => {
+  const apiKey =
+    process.env.SERVER_ALCHEMY_KEY ?? process.env.NEXT_PUBLIC_ALCHEMY_KEY;
+  return apiKey ?
+      `https://${network}.g.alchemy.com/nft/v3/${apiKey}`
+    : undefined;
+};
+
 const getSuperfluidSubgraphUrls = (publishedId: string) => {
   const gatewayKey = getGatewayKey();
   return {
@@ -162,6 +170,7 @@ export const chainConfigMap: {
     blockTime: 12,
     confirmations: 2,
     rpcUrl: getRpcUrl("arb-sepolia"),
+    alchemyApiBaseUrl: getAlchemyNftApiBaseUrl("arb-sepolia"),
     ...getSubgraphUrls(
       "BfZYwhZ1rTb22Nah1u6YyXtUtAdgGNtZhW1EBb4mFzAU",
       "gardens-v2---arbitrum-sepolia",
@@ -188,6 +197,7 @@ export const chainConfigMap: {
     blockTime: 2,
     confirmations: 1,
     rpcUrl: getRpcUrl("opt-sepolia"),
+    alchemyApiBaseUrl: getAlchemyNftApiBaseUrl("opt-sepolia"),
     ...getSubgraphUrls(
       "5B7swx86RJEpywgvS63kMLVx9U6RKfERfU5tWYnUuGXe",
       "gardens-v-2-optimism-sepolia",
@@ -216,6 +226,7 @@ export const chainConfigMap: {
     blockTime: 12,
     confirmations: 1, // 3
     rpcUrl: getRpcUrl("eth-sepolia"),
+    alchemyApiBaseUrl: getAlchemyNftApiBaseUrl("eth-sepolia"),
     ...getSubgraphUrls(
       "5xWqmgdaKXziaJg4EuV5pzWFCNmX2eRLsHKBissnbDNx",
       "gardens-v-2-sepolia",
@@ -246,6 +257,7 @@ export const chainConfigMap: {
     blockTime: 12,
     confirmations: 2, // 7
     rpcUrl: getRpcUrl("arb-mainnet"),
+    alchemyApiBaseUrl: getAlchemyNftApiBaseUrl("arb-mainnet"),
     ...getSubgraphUrls(
       "9ejruFicuLT6hfuXNTnS8UCwxTWrHz4uinesdZu1dKmk",
       "gardens-v2---arbitrum",
@@ -275,6 +287,7 @@ export const chainConfigMap: {
     blockTime: 2,
     confirmations: 2, // 2
     rpcUrl: getRpcUrl("opt-mainnet"),
+    alchemyApiBaseUrl: getAlchemyNftApiBaseUrl("opt-mainnet"),
     ...getSubgraphUrls(
       "FmcVWeR9xdJyjM53DPuCvEdH24fSXARdq4K5K8EZRZVp",
       "gardens-v2---optimism",
@@ -304,6 +317,7 @@ export const chainConfigMap: {
     blockTime: 2.1,
     confirmations: 2, // 4
     rpcUrl: getRpcUrl("polygon-mainnet"),
+    alchemyApiBaseUrl: getAlchemyNftApiBaseUrl("polygon-mainnet"),
     ...getSubgraphUrls(
       "4vsznmRkUGm9DZFBwvC6PDvGPVfVLQcUUr5ExdTNZiUc",
       "gardens-v2---polygon",
@@ -362,6 +376,7 @@ export const chainConfigMap: {
     blockTime: 2,
     confirmations: 2, // 4
     rpcUrl: getRpcUrl("base-mainnet"),
+    alchemyApiBaseUrl: getAlchemyNftApiBaseUrl("base-mainnet"),
     ...getSubgraphUrls(
       "HAjsxiYJEkV8oDZgVTaJE9NQ2XzgqekFbY99tMGu53eJ",
       "gardens-v2---base",
@@ -420,6 +435,7 @@ export const chainConfigMap: {
     blockTime: 12,
     confirmations: 3,
     rpcUrl: getRpcUrl("eth-mainnet"),
+    alchemyApiBaseUrl: getAlchemyNftApiBaseUrl("eth-mainnet"),
     ...getSubgraphUrls(
       "39E6r8bqUTeyrSb4JWMkqcVBKqeKAwJVp6mPhoDCtgbB",
       "gardens-v-2-ethereum",
