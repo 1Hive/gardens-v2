@@ -97,14 +97,11 @@ const getGatewayKey = () => {
   return serverKey || process.env.NEXT_PUBLIC_SUBGRAPH_KEY || "";
 };
 
-const getAlchemyRpcUrl = (network: string) => {
+const getRpcUrl = (network: string) => {
   const apiKey =
     process.env.SERVER_ALCHEMY_KEY ?? process.env.NEXT_PUBLIC_ALCHEMY_KEY;
   return apiKey ? `https://${network}.g.alchemy.com/v2/${apiKey}` : undefined;
 };
-
-const getRpcUrl = (serverUrl: string | undefined, alchemyUrl?: string) =>
-  serverUrl?.trim() ?? alchemyUrl?.trim() ?? undefined;
 
 const getSuperfluidSubgraphUrls = (publishedId: string) => {
   const gatewayKey = getGatewayKey();
@@ -165,10 +162,7 @@ export const chainConfigMap: {
     ),
     blockTime: 12,
     confirmations: 2,
-    rpcUrl: getRpcUrl(
-      process.env.RPC_URL_ARB_TESTNET,
-      getAlchemyRpcUrl("arb-sepolia"),
-    ),
+    rpcUrl: getRpcUrl("arb-sepolia"),
     ...getSubgraphUrls(
       "BfZYwhZ1rTb22Nah1u6YyXtUtAdgGNtZhW1EBb4mFzAU",
       "gardens-v2---arbitrum-sepolia",
@@ -194,10 +188,7 @@ export const chainConfigMap: {
     ),
     blockTime: 2,
     confirmations: 1,
-    rpcUrl: getRpcUrl(
-      process.env.RPC_URL_OP_TESTNET,
-      getAlchemyRpcUrl("opt-sepolia"),
-    ),
+    rpcUrl: getRpcUrl("opt-sepolia"),
     ...getSubgraphUrls(
       "5B7swx86RJEpywgvS63kMLVx9U6RKfERfU5tWYnUuGXe",
       "gardens-v-2-optimism-sepolia",
@@ -225,10 +216,7 @@ export const chainConfigMap: {
     ),
     blockTime: 12,
     confirmations: 1, // 3
-    rpcUrl: getRpcUrl(
-      process.env.RPC_URL_ETH_TESTNET,
-      getAlchemyRpcUrl("eth-sepolia"),
-    ),
+    rpcUrl: getRpcUrl("eth-sepolia"),
     ...getSubgraphUrls(
       "5xWqmgdaKXziaJg4EuV5pzWFCNmX2eRLsHKBissnbDNx",
       "gardens-v-2-sepolia",
@@ -258,10 +246,7 @@ export const chainConfigMap: {
     ),
     blockTime: 12,
     confirmations: 2, // 7
-    rpcUrl: getRpcUrl(
-      process.env.RPC_URL_ARBITRUM,
-      getAlchemyRpcUrl("arb-mainnet"),
-    ),
+    rpcUrl: getRpcUrl("arb-mainnet"),
     ...getSubgraphUrls(
       "9ejruFicuLT6hfuXNTnS8UCwxTWrHz4uinesdZu1dKmk",
       "gardens-v2---arbitrum",
@@ -290,10 +275,7 @@ export const chainConfigMap: {
     ),
     blockTime: 2,
     confirmations: 2, // 2
-    rpcUrl: getRpcUrl(
-      process.env.RPC_URL_OPTIMISM,
-      getAlchemyRpcUrl("opt-mainnet"),
-    ),
+    rpcUrl: getRpcUrl("opt-mainnet"),
     ...getSubgraphUrls(
       "FmcVWeR9xdJyjM53DPuCvEdH24fSXARdq4K5K8EZRZVp",
       "gardens-v2---optimism",
@@ -322,10 +304,7 @@ export const chainConfigMap: {
     ),
     blockTime: 2.1,
     confirmations: 2, // 4
-    rpcUrl: getRpcUrl(
-      process.env.RPC_URL_MATIC,
-      getAlchemyRpcUrl("polygon-mainnet"),
-    ),
+    rpcUrl: getRpcUrl("polygon-mainnet"),
     ...getSubgraphUrls(
       "4vsznmRkUGm9DZFBwvC6PDvGPVfVLQcUUr5ExdTNZiUc",
       "gardens-v2---polygon",
@@ -354,10 +333,7 @@ export const chainConfigMap: {
     ),
     blockTime: 5.2,
     confirmations: 2, // 4
-    rpcUrl: getRpcUrl(
-      process.env.RPC_URL_GNOSIS,
-      getAlchemyRpcUrl("gnosis-mainnet"),
-    ),
+    rpcUrl: getRpcUrl("gnosis-mainnet"),
     ...getSubgraphUrls(
       "ELGHrYhvJJQrYkVsYWS5iDuFpQ1p834Q2k2kBmUAVZAi",
       "gardens-v2---gnosis",
@@ -386,10 +362,7 @@ export const chainConfigMap: {
     ),
     blockTime: 2,
     confirmations: 2, // 4
-    rpcUrl: getRpcUrl(
-      process.env.RPC_URL_BASE,
-      getAlchemyRpcUrl("base-mainnet"),
-    ),
+    rpcUrl: getRpcUrl("base-mainnet"),
     ...getSubgraphUrls(
       "HAjsxiYJEkV8oDZgVTaJE9NQ2XzgqekFbY99tMGu53eJ",
       "gardens-v2---base",
@@ -418,10 +391,7 @@ export const chainConfigMap: {
     ),
     blockTime: 1,
     confirmations: 4, // 4
-    rpcUrl: getRpcUrl(
-      process.env.RPC_URL_CELO,
-      getAlchemyRpcUrl("celo-mainnet"),
-    ),
+    rpcUrl: getRpcUrl("celo-mainnet"),
     ...getSubgraphUrls(
       "BsXEnGaXdj3CkGRn95bswGcv2mQX7m8kNq7M7WBxxPx8",
       "gardens-v2---celo",
@@ -450,10 +420,7 @@ export const chainConfigMap: {
     ),
     blockTime: 12,
     confirmations: 3,
-    rpcUrl: getRpcUrl(
-      process.env.RPC_URL_ETHEREUM,
-      getAlchemyRpcUrl("eth-mainnet"),
-    ),
+    rpcUrl: getRpcUrl("eth-mainnet"),
     ...getSubgraphUrls(
       "39E6r8bqUTeyrSb4JWMkqcVBKqeKAwJVp6mPhoDCtgbB",
       "gardens-v-2-ethereum",
