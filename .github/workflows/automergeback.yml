@@ -1,0 +1,54 @@
+name: Mergeback main → dev
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Try merge main into dev
+        id: merge
+        run: |
+          git checkout dev
+          git merge origin/main --no-edit || echo "conflict=true" >> $GITHUB_OUTPUT
+
+      - name: Push if merge succeeded
+        if: steps.merge.outputs.conflict != 'true'
+        run: |
+          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }} dev
+
+      - name: Create PR branch (on conflict)
+        if: steps.merge.outputs.conflict == 'true'
+        id: pr_branch
+        run: |
+          BRANCH="sync/main-to-dev-${{ github.run_id }}"
+          git checkout -b $BRANCH origin/main
+          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }} $BRANCH
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        if: steps.merge.outputs.conflict == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GH_PAT }}
+          branch: ${{ steps.pr_branch.outputs.branch }}
+          base: dev
+          title: "⚠️ Merge main → dev (conflicts detected)"
+          body: |
+            Automatic sync failed due to merge conflicts.
+            Please resolve manually.
