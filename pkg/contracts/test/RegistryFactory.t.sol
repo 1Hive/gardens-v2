@@ -482,7 +482,7 @@ contract RegistryFactoryTest is Test {
         assertEq(factory.protopianDelegate(from), second);
     }
 
-    function test_delegateProtopian_cannot_update_when_holder_not_currently_synced() public {
+    function test_delegateProtopian_can_update_when_holder_currently_delegated() public {
         address from = address(0x111);
         address first = address(0x222);
         address second = address(0x333);
@@ -494,16 +494,15 @@ contract RegistryFactoryTest is Test {
         factory.delegateProtopian(from, first);
 
         vm.prank(owner);
-        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.ProtopianHolderRequired.selector, from));
         factory.delegateProtopian(from, second);
 
         vm.prank(owner);
-        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.ProtopianHolderRequired.selector, from));
         factory.delegateProtopian(from, address(0));
 
-        assertTrue(factory.protopiansAddresses(first));
+        assertTrue(factory.protopiansAddresses(from));
+        assertFalse(factory.protopiansAddresses(first));
         assertFalse(factory.protopiansAddresses(second));
-        assertEq(factory.protopianDelegate(from), first);
+        assertEq(factory.protopianDelegate(from), address(0));
     }
 
     function test_setProtopianAddress_removes_old_holder_delegate() public {
