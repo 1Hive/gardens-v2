@@ -14,6 +14,7 @@ import {
 import { erc20ABI } from "@/src/generated";
 import { ChainId } from "@/types";
 import { getViemChain } from "@/utils/web3";
+import { isValidCid } from "@/utils/ipfs";
 
 type Strategy = {
   id: Address;
@@ -714,15 +715,12 @@ const pinataClient =
 const CAN_WRITE_PINATA = Boolean(pinataClient);
 
 const getIpfsGatewayUrl = (cid: string) => {
-  const gateway = IPFS_GATEWAY?.replace(/\/$/, "");
-  if (!gateway) {
-    return `https://gateway.pinata.cloud/ipfs/${cid}`;
+  const gateway = IPFS_GATEWAY ?? "https://gateway.pinata.cloud";
+  const url = new URL(`/ipfs/${encodeURIComponent(cid)}`, gateway);
+  if (PINATA_KEY) {
+    url.searchParams.set("pinataGatewayToken", PINATA_KEY);
   }
-
-  const gatewayToken =
-    PINATA_KEY ? `?pinataGatewayToken=${PINATA_KEY}` : "";
-
-  return `${gateway}/ipfs/${cid}${gatewayToken}`;
+  return url.toString();
 };
 const SKIP_IDENTITY_RESOLUTION =
   (process.env.SUPERFLUID_SKIP_IDENTITY_RESOLUTION ?? "").toLowerCase() ===
@@ -1187,7 +1185,7 @@ const ensureLatestTransferCacheCid = async (): Promise<string | null> => {
 const fetchIpfsJson = async (
   cid: string,
 ): Promise<{ entries?: Record<string, string | null> } | null> => {
-  if (!cid) return null;
+  if (!cid || !isValidCid(cid)) return null;
   try {
     const url = getIpfsGatewayUrl(cid);
     const res = await fetch(url, { method: "GET" });
