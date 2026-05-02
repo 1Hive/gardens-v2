@@ -2,6 +2,7 @@ import pinataSDK from "@pinata/sdk";
 import { NextResponse } from "next/server";
 import { createClient, fetchExchange, gql } from "urql";
 import { chainConfigMap } from "@/configs/chains";
+import { isValidCid, buildIpfsUrl } from "@/utils/ipfs";
 
 const PINATA_POINTS_SNAPSHOT_NAME = "superfluid-activity-points-gd";
 const PINATA_POINTS_SNAPSHOT_CID =
@@ -18,11 +19,6 @@ const normalizeGateway = (gw?: string | null) => {
   return `https://${trimmed}`;
 };
 
-const isValidCid = (value: string): boolean => {
-  const cid = value.trim();
-  // Allow common CIDv0/CIDv1 textual forms only (base58btc/base32 lowercase chars).
-  return /^[A-Za-z0-9]{46,120}$/.test(cid);
-};
 const IPFS_GATEWAY = normalizeGateway(process.env.IPFS_GATEWAY);
 const SUPERFLUID_CHAIN_ID = 8453;
 const PINATA_JWT = process.env.PINATA_JWT;
@@ -102,7 +98,7 @@ const fetchSuperfluidTotals = async (): Promise<number | null> => {
 const fetchIpfsJson = async <T = any>(cid: string): Promise<T | null> => {
   if (!cid || !isValidCid(cid)) return null;
   try {
-    const ipfsUrl = new URL(`/ipfs/${encodeURIComponent(cid)}`, IPFS_GATEWAY).toString();
+    const ipfsUrl = buildIpfsUrl(IPFS_GATEWAY, cid);
     const res = await fetch(ipfsUrl);
     if (!res.ok) {
       console.warn("[leaderboard-gd] ipfs fetch failed", {
