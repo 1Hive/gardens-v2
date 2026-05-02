@@ -8,8 +8,7 @@ export type NftHolderFlags = {
 
 export async function getNFTsForWallet(
   ownerAddress: Address,
-  alchemyApiBaseUrl =
-    "https://eth-mainnet.g.alchemy.com/nft/v3/" +
+  alchemyApiBaseUrl = "https://eth-mainnet.g.alchemy.com/nft/v3/" +
     process.env.NEXT_PUBLIC_ALCHEMY_KEY,
 ) {
   const response = await fetch(
@@ -37,8 +36,7 @@ type AlchemyNftOwner = {
 
 async function getOwnersForContract(
   contractAddress: Address | string,
-  alchemyApiBaseUrl =
-    "https://eth-mainnet.g.alchemy.com/nft/v3/" +
+  alchemyApiBaseUrl = "https://eth-mainnet.g.alchemy.com/nft/v3/" +
     process.env.NEXT_PUBLIC_ALCHEMY_KEY,
 ): Promise<AlchemyNftOwner[]> {
   const owners: AlchemyNftOwner[] = [];
@@ -76,8 +74,7 @@ async function getOwnersForContract(
 
 export async function getNftHolderFlagsForWallet(
   ownerAddress: Address,
-  alchemyApiBaseUrl =
-    "https://eth-mainnet.g.alchemy.com/nft/v3/" +
+  alchemyApiBaseUrl = "https://eth-mainnet.g.alchemy.com/nft/v3/" +
     process.env.NEXT_PUBLIC_ALCHEMY_KEY,
 ): Promise<NftHolderFlags> {
   const [protopianCollectionAddress, protopianSelector] = NFTs.Protopian;
@@ -132,7 +129,9 @@ export async function getNftHoldersByAddress(): Promise<
   return owners.reduce<Record<Address, NftHolderFlags>>((acc, owner) => {
     const ownerAddress = owner.ownerAddress.toLowerCase() as Address;
     const next = {
-      isProtopian: owner.tokenBalances.some((tb) => protopianSelector(tb.tokenId)),
+      isProtopian: owner.tokenBalances.some((tb) =>
+        protopianSelector(tb.tokenId),
+      ),
       isKeeper: owner.tokenBalances.some((tb) => keeperSelector(tb.tokenId)),
     };
 
