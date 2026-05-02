@@ -17,6 +17,12 @@ const normalizeGateway = (gw?: string | null) => {
   }
   return `https://${trimmed}`;
 };
+
+const isValidCid = (value: string): boolean => {
+  const cid = value.trim();
+  // Allow common CIDv0/CIDv1 textual forms only (base58btc/base32 lowercase chars).
+  return /^[A-Za-z0-9]{46,120}$/.test(cid);
+};
 const IPFS_GATEWAY = normalizeGateway(process.env.IPFS_GATEWAY);
 const SUPERFLUID_CHAIN_ID = 8453;
 const PINATA_JWT = process.env.PINATA_JWT;
@@ -94,9 +100,10 @@ const fetchSuperfluidTotals = async (): Promise<number | null> => {
 };
 
 const fetchIpfsJson = async <T = any>(cid: string): Promise<T | null> => {
-  if (!cid) return null;
+  if (!cid || !isValidCid(cid)) return null;
   try {
-    const res = await fetch(`${IPFS_GATEWAY}/ipfs/${cid}`);
+    const ipfsUrl = new URL(`/ipfs/${encodeURIComponent(cid)}`, IPFS_GATEWAY).toString();
+    const res = await fetch(ipfsUrl);
     if (!res.ok) {
       console.warn("[leaderboard-gd] ipfs fetch failed", {
         cid,
@@ -205,6 +212,13 @@ export async function GET(request: Request) {
       campaignIdFromQuery ?
         `${PINATA_POINTS_SNAPSHOT_NAME}-${campaignIdFromQuery}`
       : PINATA_POINTS_SNAPSHOT_NAME;
+    if (cidFromQuery && !isValidCid(cidFromQuery)) {
+      return NextResponse.json(
+        { error: "Invalid cid parameter" },
+        { status: 400 },
+      );
+    }
+
     const cid =
       cidFromQuery ??
       (campaignIdFromQuery ? null : PINATA_POINTS_SNAPSHOT_CID) ??
