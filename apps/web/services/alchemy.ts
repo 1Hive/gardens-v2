@@ -7,9 +7,9 @@ export type NftHolderFlags = {
 };
 
 function resolveAlchemyKey(): string {
-  const key = process.env.ALCHEMY_API_KEY || process.env.NEXT_PUBLIC_ALCHEMY_KEY;
+  const key = process.env.SERVER_ALCHEMY_KEY || process.env.NEXT_PUBLIC_ALCHEMY_KEY;
   if (!key) {
-    throw new Error("Missing Alchemy API key (set ALCHEMY_API_KEY)");
+    throw new Error("Missing Alchemy API key (set SERVER_ALCHEMY_KEY)");
   }
   return key;
 }
