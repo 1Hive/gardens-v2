@@ -57,6 +57,10 @@ async function getOwnersForContract(
     );
 
     if (!response.ok) {
+      console.error(
+        `Alchemy API error: ${response.status} ${response.statusText}`,
+      );
+      response.text().then((text) => console.error(`Response body: ${text}`));
       throw new Error("Failed to fetch NFT owners from Alchemy");
     }
 
