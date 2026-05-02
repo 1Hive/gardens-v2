@@ -25,6 +25,7 @@
     "deploy:opsep": "pnpm auth:dev && pnpm manifest:opsep && graph deploy gardens-v-2-optimism-sepolia",
     "deploy:arbsep": "pnpm auth:dev && pnpm manifest:arbsep && graph deploy gardens-v2---arbitrum-sepolia",
     "deploy:ethsep": "pnpm auth:dev && pnpm manifest:ethsep && graph deploy gardens-v-2-sepolia",
+    "deploy:test": "pnpm auth:prod && export SUB_PROD_VERSION=0.7.0 && pnpm deploy:ethsep -l $SUB_PROD_VERSION && pnpm deploy:opsep -l $SUB_PROD_VERSION && pnpm deploy:arbsep -l $SUB_PROD_VERSION",
     "deploy:arbitrum": "pnpm manifest:arbitrum && pnpm codegen && graph deploy gardens-v2---arbitrum",
     "deploy:optimism": "pnpm manifest:optimism && pnpm codegen && graph deploy gardens-v2---optimism",
     "deploy:ethereum": "pnpm manifest:ethereum && pnpm codegen && graph deploy gardens-v-2-ethereum",
