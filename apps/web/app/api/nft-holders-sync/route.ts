@@ -19,6 +19,11 @@ import { registryFactoryABI } from "@/src/generated";
 import { ChainId } from "@/types";
 import { getViemChain } from "@/utils/web3";
 
+// Ensure serverful runtime and allow longer execution for pagination across owners
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 300; // up to 5 minutes on Vercel Pro
+
 const PAGE_SIZE = 1000;
 
 type NftHolderMember = {

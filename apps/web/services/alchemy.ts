@@ -6,16 +6,67 @@ export type NftHolderFlags = {
   isKeeper: boolean;
 };
 
+function resolveAlchemyKey(): string {
+  const key = process.env.ALCHEMY_API_KEY || process.env.NEXT_PUBLIC_ALCHEMY_KEY;
+  if (!key) {
+    throw new Error("Missing Alchemy API key (set ALCHEMY_API_KEY)");
+  }
+  return key;
+}
+
+function getAlchemyNftApiBase(): string {
+  // Allow full override for testing or non-mainnet networks
+  const explicitBase = process.env.ALCHEMY_NFT_API_BASE;
+  if (explicitBase) return explicitBase.replace(/\/$/, "");
+  const key = resolveAlchemyKey();
+  return `https://eth-mainnet.g.alchemy.com/nft/v3/${key}`;
+}
+
+async function fetchWithRetry(
+  url: string,
+  init?: RequestInit,
+  opts: { attempts?: number; backoffMs?: number } = {},
+): Promise<Response> {
+  const attempts = opts.attempts ?? 4;
+  const baseBackoff = opts.backoffMs ?? 500;
+  let lastError: unknown;
+
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, init);
+      if (res.status === 429 || (res.status >= 500 && res.status < 600)) {
+        const retryAfter = Number(res.headers.get("retry-after") ?? "0");
+        const delayMs = retryAfter > 0 ? retryAfter * 1000 : baseBackoff * (i + 1) ** 2;
+        await new Promise((r) => setTimeout(r, delayMs));
+        continue;
+      }
+      return res;
+    } catch (err) {
+      lastError = err;
+      // Exponential backoff on network failures
+      if (i < attempts - 1) {
+        await new Promise((r) => setTimeout(r, baseBackoff * (i + 1) ** 2));
+      }
+    }
+  }
+
+  if (lastError instanceof Error) throw lastError;
+  throw new Error("Alchemy fetch failed after retries");
+}
+
 export async function getNFTsForWallet(
   ownerAddress: Address,
-  alchemyApiBaseUrl = "https://eth-mainnet.g.alchemy.com/nft/v3/" +
-    process.env.NEXT_PUBLIC_ALCHEMY_KEY,
+  alchemyApiBaseUrl?: string,
 ) {
-  const response = await fetch(
-    `${alchemyApiBaseUrl}/getNFTsForOwner?owner=${ownerAddress}`,
+  const base = (alchemyApiBaseUrl ?? getAlchemyNftApiBase()).replace(/\/$/, "");
+  const response = await fetchWithRetry(
+    `${base}/getNFTsForOwner?owner=${ownerAddress}`,
   );
 
   if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    console.error(`Alchemy API error: ${response.status} ${response.statusText}`);
+    if (body) console.error(`Response body: ${body}`);
     throw new Error("Failed to fetch NFTs from Alchemy");
   }
 
@@ -36,11 +87,11 @@ type AlchemyNftOwner = {
 
 async function getOwnersForContract(
   contractAddress: Address | string,
-  alchemyApiBaseUrl = "https://eth-mainnet.g.alchemy.com/nft/v3/" +
-    process.env.NEXT_PUBLIC_ALCHEMY_KEY,
+  alchemyApiBaseUrl?: string,
 ): Promise<AlchemyNftOwner[]> {
   const owners: AlchemyNftOwner[] = [];
   let pageKey: string | undefined;
+  const base = (alchemyApiBaseUrl ?? getAlchemyNftApiBase()).replace(/\/$/, "");
 
   do {
     const params = new URLSearchParams({
@@ -52,8 +103,8 @@ async function getOwnersForContract(
       params.set("pageKey", pageKey);
     }
 
-    const response = await fetch(
-      `${alchemyApiBaseUrl}/getOwnersForContract?${params.toString()}`,
+    const response = await fetchWithRetry(
+      `${base}/getOwnersForContract?${params.toString()}`,
     );
 
     if (!response.ok) {
@@ -78,8 +129,7 @@ async function getOwnersForContract(
 
 export async function getNftHolderFlagsForWallet(
   ownerAddress: Address,
-  alchemyApiBaseUrl = "https://eth-mainnet.g.alchemy.com/nft/v3/" +
-    process.env.NEXT_PUBLIC_ALCHEMY_KEY,
+  alchemyApiBaseUrl?: string,
 ): Promise<NftHolderFlags> {
   const [protopianCollectionAddress, protopianSelector] = NFTs.Protopian;
   const [keeperCollectionAddress, keeperSelector] = NFTs.Keeper;
@@ -111,9 +161,7 @@ export async function getNftHolderFlagsForWallet(
 export async function getNftHoldersByAddress(): Promise<
   Record<Address, NftHolderFlags>
 > {
-  const alchemyApiBase =
-    "https://eth-mainnet.g.alchemy.com/nft/v3/" +
-    process.env.NEXT_PUBLIC_ALCHEMY_KEY;
+  const alchemyApiBase = getAlchemyNftApiBase();
 
   const [protopianCollectionAddress, protopianSelector] = NFTs.Protopian;
   const [keeperCollectionAddress, keeperSelector] = NFTs.Keeper;
