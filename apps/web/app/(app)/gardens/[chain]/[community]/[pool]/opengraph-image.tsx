@@ -559,13 +559,22 @@ export default async function Image({ params }: { params: ImageParams }) {
     }
 
     const poolData = poolResult?.data?.cvstrategies?.[0];
+
+    if (!poolData) {
+      console.error("Missing pool data for OG image.", {
+        chainId: params.chain,
+        strategyAddress,
+      });
+      return await renderImage({ title: "Pool", chainId });
+    }
+
     const poolTitle = poolData?.metadata?.title?.trim() ?? "Pool";
     const poolTypeKey =
       poolData?.config?.proposalType != null ?
         poolData.config.proposalType.toString()
       : undefined;
     const poolType = poolTypeKey ? PoolTypes[poolTypeKey] : undefined;
-    const communityName = poolData.registryCommunity?.communityName?.trim();
+    const communityName = poolData?.registryCommunity?.communityName?.trim();
 
     return await renderImage({
       title: poolTitle,
