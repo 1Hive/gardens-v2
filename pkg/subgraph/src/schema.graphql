@@ -119,7 +119,7 @@ type CVProposal @entity(immutable: false) {
 type RegistryFactory @entity(immutable: false) {
   id: ID!
   chainId: BigInt!
-  rebalanceCallerAllowlist: [String!]!
+  authorizedWallets: [String!]!
   registryCommunities: [RegistryCommunity!]
     @derivedFrom(field: "registryFactory")
 }
@@ -149,6 +149,7 @@ type RegistryCommunity @entity(immutable: false) {
   isValid: Boolean!
   archived: Boolean!
   membersCount: BigInt!
+  protopianDelegatedFrom: String
 }
 
 type Member @entity(immutable: false) {
@@ -159,6 +160,21 @@ type Member @entity(immutable: false) {
   isProtopian: Boolean
   isKeeper: Boolean
   # isRegistered: Boolean
+}
+
+type Protopian @entity(immutable: false) {
+  id: ID!
+  address: String!
+}
+
+type Keeper @entity(immutable: false) {
+  id: ID!
+  address: String!
+}
+
+type ProtopianDelegationIndex @entity(immutable: false) {
+  id: ID!
+  community: RegistryCommunity
 }
 
 type Stake @entity(immutable: false) {

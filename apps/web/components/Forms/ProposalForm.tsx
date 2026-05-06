@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
@@ -117,11 +117,6 @@ export const ProposalForm = ({
   const chainId = alloInfo.chainId;
   const beneficiary = watch("beneficiary");
 
-  useEffect(() => {
-    if (!connectedWallet) return;
-    if (getValues("beneficiary")) return;
-    setValue("beneficiary", connectedWallet);
-  }, [connectedWallet, getValues, setValue]);
 
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {

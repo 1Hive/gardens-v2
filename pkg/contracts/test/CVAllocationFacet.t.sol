@@ -367,6 +367,9 @@ contract CVAllocationFacetTest is Test {
 
     function test_distribute_reverts_pool_empty() public {
         allo.setPoolToken(1, facet.nativeToken());
+        facet.setProposalType(ProposalType.Funding);
+        facet.setProposal(1, ProposalStatus.Active, 1, facet.nativeToken(), beneficiary, member, 0, 0, 0);
+
         vm.prank(address(allo));
         vm.expectRevert(abi.encodeWithSelector(CVAllocationFacet.PoolIsEmpty.selector, 0));
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
@@ -458,6 +461,51 @@ contract CVAllocationFacetTest is Test {
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
 
         assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Executed));
+    }
+
+    function test_distribute_zero_requested_executes_with_empty_pool() public {
+        allo.setPoolToken(1, facet.nativeToken());
+        facet.setProposalType(ProposalType.Funding);
+        facet.setCvParams(CVParams({maxRatio: 10_000_000, weight: 0, decay: 0, minThresholdPoints: 0}));
+        facet.setArbitrableConfig(1, ArbitrableConfig({
+            arbitrator: IArbitrator(address(0)),
+            tribunalSafe: address(0),
+            submitterCollateralAmount: 1,
+            challengerCollateralAmount: 1,
+            defaultRuling: 0,
+            defaultRulingTimeout: 0
+        }));
+        facet.setProposal(1, ProposalStatus.Active, 0, facet.nativeToken(), beneficiary, member, 0, 0, 1);
+
+        vm.prank(address(allo));
+        facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
+
+        assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Executed));
+    }
+
+    function test_distribute_reverts_when_no_active_governance_points() public {
+        allo.setPoolToken(1, facet.nativeToken());
+        uint256 poolAmount = 10 ether;
+        vm.deal(address(facet), poolAmount);
+        facet.setProposalType(ProposalType.Funding);
+        uint256 maxRatio = 10_000_000;
+        uint256 minThresholdPoints = 1;
+        uint256 decay = 5_000_000;
+        uint256 weight = 1;
+        uint256 totalPointsActivated = 0;
+        uint256 requestedAmount = 1 ether;
+        uint256 threshold = ConvictionsUtils.calculateThreshold(
+            requestedAmount, poolAmount, totalPointsActivated, decay, weight, maxRatio, minThresholdPoints
+        );
+        facet.setCvParams(CVParams({maxRatio: maxRatio, weight: weight, decay: decay, minThresholdPoints: minThresholdPoints}));
+        facet.setTotalPointsActivated(totalPointsActivated);
+        facet.setProposal(1, ProposalStatus.Active, requestedAmount, facet.nativeToken(), beneficiary, member, block.number - 1, 1, 0);
+        facet.setProposalStakedAmount(1, 0);
+
+        vm.prank(address(allo)); vm.expectRevert(
+            abi.encodeWithSelector(CVAllocationFacet.ConvictionUnderMinimumThreshold.selector, minThresholdPoints, threshold, 1 ether)
+        );
+        facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
     }
 
     function test_transferAmount_erc20_success() public {

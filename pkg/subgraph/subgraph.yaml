@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: optimism-sepolia
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 11155420
+        data: 421614
     source:
-      address: "0xEC8824e9a9498520891ec678e98c5bd3e65229c2"
+      address: "0xf42f88c13804147b2fdda13c093ce14219aea395"
       abi: RegistryFactory
-      startBlock: 29036730
+      startBlock: 112011139
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -39,8 +39,10 @@ dataSources:
           handler: handleProtopiansChanged  
         - event: KeepersChanged(address[],address[])
           handler: handleKeepersChanged
-        - event: StreamRebalanceCallerAllowlistSet(indexed address,bool)
-          handler: handleStreamRebalanceCallerAllowlistSet
+        - event: AuthorizedWalletSet(indexed address,bool)
+          handler: handleAuthorizedWalletSet
+        - event: ProtopianDelegated(indexed address,indexed address)
+          handler: handleProtopianDelegated
         - event: StreamingEscrowFactorySet(address)
           handler: handleStreamingEscrowFactorySet
         - event: Initialized(uint8)
@@ -49,15 +51,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: optimism-sepolia
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 11155420
+        data: 421614
     source:
-      address: "0xe3DC6e82B599cD80904aCf0a3cd9f7401d92CC37"
+      address: "0x6ad70508F44aa0e86E7Af80Ccc4fc1f160C2df46"
       abi: PassportScorer
-      startBlock: 29036730
+      startBlock: 112011139
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -86,15 +88,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: GoodDollarSybil
-    network: optimism-sepolia
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 11155420
+        data: 421614
     source:
-      address: "0xb01AC9015E04ecC424E646eBAb32dfa7670Ae8a6"
+      address: "0x9DdE3cE47cC11ee04Ea1e2C440116B3De6f11Ed8"
       abi: GoodDollarSybil
-      startBlock: 29036730
+      startBlock: 181411130
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -117,15 +119,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: GlobalPauseController
-    network: optimism-sepolia
+    network: arbitrum-sepolia
     context:
       chainId:
         type: Int
-        data: 11155420
+        data: 421614
     source:
-      address: "0x10452f6fbdbf46a01a46f815c41a9a39eaadf7b1"
+      address: "0x0000000000000000000000000000000000000000"
       abi: GlobalPauseController
-      startBlock: 29036730
+      startBlock: 181411130
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -149,7 +151,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: optimism-sepolia
+    network: arbitrum-sepolia
     source:
       abi: RegistryCommunity
     mapping:
@@ -223,7 +225,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategy
-    network: optimism-sepolia
+    network: arbitrum-sepolia
     source:
       abi: CVStrategy
     mapping:
@@ -309,7 +311,7 @@ templates:
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: optimism-sepolia
+    network: arbitrum-sepolia
     source:
       abi: CollateralVault
     mapping:

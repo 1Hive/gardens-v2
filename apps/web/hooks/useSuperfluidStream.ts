@@ -51,6 +51,7 @@ export const STREAM_TO_TARGET_QUERY = gql`
 `;
 
 type ReceiverStreamSnapshot = {
+  senderId: string;
   currentFlowRate: bigint;
   streamedUntilUpdatedAt: bigint;
   updatedAtTimestamp: bigint;
@@ -67,11 +68,15 @@ export function useSuperfluidStream({
   superToken,
   chainId,
   containerId,
+  sender,
+  includePoolMembers = true,
 }: {
   receiver: string;
   superToken: string;
   chainId?: ChainId;
   containerId: string | number;
+  sender?: string;
+  includePoolMembers?: boolean;
 }) {
   const { subscribe, unsubscribe } = usePubSubContext();
   const latestResultSignatureRef = useRef<string>("");
@@ -177,30 +182,34 @@ export function useSuperfluidStream({
     const receiverStreamsSnapshotData: ReceiverStreamSnapshot[] =
       result.data.receiverStreams.map(
         (flow: {
+          sender: { id: string };
           currentFlowRate: bigint;
           streamedUntilUpdatedAt: bigint;
           updatedAtTimestamp: bigint;
         }) => ({
+          senderId: flow.sender.id,
           currentFlowRate: BigInt(flow.currentFlowRate),
           streamedUntilUpdatedAt: BigInt(flow.streamedUntilUpdatedAt ?? "0"),
           updatedAtTimestamp: BigInt(flow.updatedAtTimestamp ?? "0"),
         }),
       );
 
-    let toPoolFlowRate: bigint = result.data.receiverStreams.reduce(
-      (
-        acc: bigint,
-        flow: {
-          currentFlowRate: bigint;
-          sender: { id: string };
-          receiver: { id: string };
-        },
-      ) => acc + BigInt(flow.currentFlowRate),
+    const normalizedSender = sender?.toLowerCase();
+    const filteredReceiverStreamsSnapshotData =
+      normalizedSender == null ?
+        receiverStreamsSnapshotData
+      : receiverStreamsSnapshotData.filter(
+          (flow) => flow.senderId.toLowerCase() === normalizedSender,
+        );
+
+    let toPoolFlowRate: bigint = filteredReceiverStreamsSnapshotData.reduce(
+      (acc: bigint, flow: ReceiverStreamSnapshot) =>
+        acc + flow.currentFlowRate,
       0n,
     );
 
     let poolMemberSnapshotsData: PoolMemberSnapshot[] = [];
-    if (result.data.poolMembers.length > 0) {
+    if (includePoolMembers && result.data.poolMembers.length > 0) {
       let memberFlows: Array<{ result?: unknown; error?: unknown }> = [];
       try {
         const multicallResults = await readClient.multicall({
@@ -271,11 +280,11 @@ export function useSuperfluidStream({
       : null;
 
     setCurrentFlowRateBn(toPoolFlowRate);
-    setReceiverStreamsSnapshot(receiverStreamsSnapshotData);
+    setReceiverStreamsSnapshot(filteredReceiverStreamsSnapshotData);
     setPoolMembersSnapshot(poolMemberSnapshotsData);
     setLiveTotalStreamedBn(
       computeLiveTotalStreamed(
-        receiverStreamsSnapshotData,
+        filteredReceiverStreamsSnapshotData,
         poolMemberSnapshotsData,
       ),
     );
@@ -284,7 +293,7 @@ export function useSuperfluidStream({
     const signature = buildResultSignature(
       toPoolFlowRate,
       totalAmountDistributed,
-      receiverStreamsSnapshotData,
+      filteredReceiverStreamsSnapshotData,
       poolMemberSnapshotsData,
     );
     latestResultSignatureRef.current = signature;
@@ -376,7 +385,7 @@ export function useSuperfluidStream({
     if (!client) return;
     setHasFetched(false);
     fetch();
-  }, [client, superToken, receiver, connectedWalletAddress]);
+  }, [client, superToken, receiver, connectedWalletAddress, sender, includePoolMembers]);
 
   useEffect(() => {
     if (!receiverStreamsSnapshot.length && !poolMembersSnapshot.length) {

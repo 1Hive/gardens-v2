@@ -36,9 +36,10 @@ contract RegistryFactory is ProxyOwnableUpgrader {
 
     address public streamingEscrowFactory;
     address public globalPauseController;
-    mapping(address => bool) public streamRebalanceCallerAllowlist;
+    mapping(address => bool) public authorizedWallets;
+    mapping(address => address) public protopianDelegate;
 
-    uint256[41] private __gap;
+    uint256[40] private __gap;
 
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
@@ -52,7 +53,8 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     event KeepersChanged(address[] _new, address[] _removed);
     event StreamingEscrowFactorySet(address _newFactory);
     event GlobalPauseControllerSet(address _newController);
-    event StreamRebalanceCallerAllowlistSet(address indexed caller, bool allowed);
+    event AuthorizedWalletSet(address indexed wallet, bool authorized);
+    event ProtopianDelegated(address indexed holder, address indexed to);
     event ContractRegistered(address indexed target);
     event ContractUnregistered(address indexed target);
 
@@ -62,6 +64,8 @@ contract RegistryFactory is ProxyOwnableUpgrader {
 
     error CommunityInvalid(address _community);
     error AddressCannotBeZero();
+    error UnauthorizedProtopianDelegation(address caller, address holder);
+    error ProtopianHolderRequired(address holder);
 
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
@@ -69,6 +73,11 @@ contract RegistryFactory is ProxyOwnableUpgrader {
 
     function _revertZeroAddress(address _address) internal pure virtual {
         if (_address == address(0)) revert AddressCannotBeZero();
+    }
+
+    modifier onlyOwnerOrAuthorizedWallet() {
+        if (msg.sender != owner() && !authorizedWallets[msg.sender]) revert CallerNotOwner(msg.sender, owner());
+        _;
     }
 
     function setRegistryCommunityTemplate(address template) external virtual onlyOwner {
@@ -95,14 +104,14 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         emit GlobalPauseControllerSet(controller);
     }
 
-    function setStreamRebalanceCaller(address caller, bool allowed) external virtual onlyOwner {
-        _revertZeroAddress(caller);
-        streamRebalanceCallerAllowlist[caller] = allowed;
-        emit StreamRebalanceCallerAllowlistSet(caller, allowed);
+    function setAuthorizedWallet(address wallet, bool authorized) external virtual onlyOwner {
+        _revertZeroAddress(wallet);
+        authorizedWallets[wallet] = authorized;
+        emit AuthorizedWalletSet(wallet, authorized);
     }
 
-    function isStreamRebalanceCallerAllowed(address caller) external view virtual returns (bool) {
-        return streamRebalanceCallerAllowlist[caller];
+    function isAuthorizedWallet(address wallet) external view virtual returns (bool) {
+        return authorizedWallets[wallet];
     }
 
     function registerContract(address target) external virtual onlyOwner {
@@ -330,8 +339,20 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         return communityToInfo[_community].valid;
     }
 
-    function setProtopianAddress(address[] memory _protopians, bool _isProtopian) public virtual onlyOwner {
+    function setProtopianAddress(address[] memory _protopians, bool _isProtopian)
+        public
+        virtual
+        onlyOwnerOrAuthorizedWallet
+    {
         for (uint256 i = 0; i < _protopians.length; i++) {
+            if (!_isProtopian) {
+                address delegated = protopianDelegate[_protopians[i]];
+                if (delegated != address(0)) {
+                    protopiansAddresses[delegated] = false;
+                    protopianDelegate[_protopians[i]] = address(0);
+                    emit ProtopianDelegated(_protopians[i], address(0));
+                }
+            }
             protopiansAddresses[_protopians[i]] = _isProtopian;
         }
 
@@ -342,7 +363,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         }
     }
 
-    function setKeeperAddress(address[] memory _keepers, bool _isKeeper) public virtual onlyOwner {
+    function setKeeperAddress(address[] memory _keepers, bool _isKeeper) public virtual onlyOwnerOrAuthorizedWallet {
         for (uint256 i = 0; i < _keepers.length; i++) {
             keepersAddresses[_keepers[i]] = _isKeeper;
         }
@@ -352,6 +373,36 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         } else {
             emit KeepersChanged(new address[](0), _keepers);
         }
+    }
+
+    function delegateProtopian(address holder, address to) external virtual {
+        _revertZeroAddress(holder);
+
+        if (msg.sender != owner() && !authorizedWallets[msg.sender] && msg.sender != holder) {
+            revert UnauthorizedProtopianDelegation(msg.sender, holder);
+        }
+
+        address currentDelegate = protopianDelegate[holder];
+        if (!protopiansAddresses[holder] && currentDelegate == address(0)) {
+            revert ProtopianHolderRequired(holder);
+        }
+
+        if (currentDelegate != address(0) && currentDelegate != to) {
+            protopiansAddresses[currentDelegate] = false;
+        }
+
+        if (to == address(0)) {
+            protopianDelegate[holder] = address(0);
+            protopiansAddresses[holder] = true;
+            emit ProtopianDelegated(holder, address(0));
+            return;
+        }
+
+        protopianDelegate[holder] = to;
+        protopiansAddresses[holder] = false;
+        protopiansAddresses[to] = true;
+
+        emit ProtopianDelegated(holder, to);
     }
 
     function getProtocolFee(address _community) external view virtual returns (uint256) {
@@ -364,27 +415,9 @@ contract RegistryFactory is ProxyOwnableUpgrader {
             return 0;
         }
 
-        // Check for protopians (free if they are owners of the community)
-
-        ISafe councilSafe = ISafe(RegistryCommunity(_community).councilSafe());
-        bool isProtopianSafe = protopiansAddresses[address(councilSafe)];
-        if (isProtopianSafe) {
+        bool isProtopianCommunity = protopiansAddresses[_community];
+        if (isProtopianCommunity) {
             return 0;
-        }
-
-        // Only Safe-compatible council contracts expose getOwners().
-        // Other contract wallets should not break fee calculation.
-        if (address(councilSafe).code.length != 0) {
-            (bool ok, bytes memory data) =
-                address(councilSafe).staticcall(abi.encodeWithSelector(ISafe.getOwners.selector));
-            if (ok && data.length > 0) {
-                address[] memory communityOwners = abi.decode(data, (address[]));
-                for (uint256 i = 0; i < communityOwners.length; i++) {
-                    if (protopiansAddresses[communityOwners[i]]) {
-                        return 0;
-                    }
-                }
-            }
         }
 
         return communityToInfo[_community].fee;

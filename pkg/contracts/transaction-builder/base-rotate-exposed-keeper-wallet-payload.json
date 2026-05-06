@@ -1,0 +1,106 @@
+{
+  "version": "1.0",
+  "chainId": "8453",
+  "createdAt": 1776824409676,
+  "meta": {
+    "name": "Rotate exposed keeper wallet - base",
+    "description": "Set PassportScorer and GoodDollar listManager to 0xb5f2B971878dD2Bc8A0c53635f33280F34C41F2A; revoke 0xA718ACA8Eb8f01EcfE929BF16c19e562B57b053b and allow 0xb5f2B971878dD2Bc8A0c53635f33280F34C41F2A for stream rebalance.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "0x9a17De1f0caD0c592F656410997E4B685d339029",
+    "createdFromOwnerAddress": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD"
+  },
+  "transactions": [
+    {
+      "to": "0xb39dFA15F96055664179e8EcaA890f3FA26c21e9",
+      "value": "0",
+      "data": "0x3d476830000000000000000000000000b5f2b971878dd2bc8a0c53635f33280f34c41f2a",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_newManager",
+            "type": "address"
+          }
+        ],
+        "name": "changeListManager",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_newManager": "0xb5f2B971878dD2Bc8A0c53635f33280F34C41F2A"
+      }
+    },
+    {
+      "to": "0xe86a28Aa50AD5750532f73b77375Ed0D5e23a330",
+      "value": "0",
+      "data": "0x3d476830000000000000000000000000b5f2b971878dd2bc8a0c53635f33280f34c41f2a",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_newManager",
+            "type": "address"
+          }
+        ],
+        "name": "changeListManager",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "_newManager": "0xb5f2B971878dD2Bc8A0c53635f33280F34C41F2A"
+      }
+    },
+    {
+      "to": "0xc93830dd463516ED5f28f6cd4F837173B87FF389",
+      "value": "0",
+      "data": "0x96cfd090000000000000000000000000a718aca8eb8f01ecfe929bf16c19e562b57b053b0000000000000000000000000000000000000000000000000000000000000000",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "caller",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "allowed",
+            "type": "bool"
+          }
+        ],
+        "name": "setStreamRebalanceCaller",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "caller": "0xA718ACA8Eb8f01EcfE929BF16c19e562B57b053b",
+        "allowed": "false"
+      }
+    },
+    {
+      "to": "0xc93830dd463516ED5f28f6cd4F837173B87FF389",
+      "value": "0",
+      "data": "0x96cfd090000000000000000000000000b5f2b971878dd2bc8a0c53635f33280f34c41f2a0000000000000000000000000000000000000000000000000000000000000001",
+      "operation": 0,
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "caller",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "allowed",
+            "type": "bool"
+          }
+        ],
+        "name": "setStreamRebalanceCaller",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "caller": "0xb5f2B971878dD2Bc8A0c53635f33280F34C41F2A",
+        "allowed": "true"
+      }
+    }
+  ]
+}

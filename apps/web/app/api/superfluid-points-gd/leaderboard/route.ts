@@ -2,6 +2,7 @@ import pinataSDK from "@pinata/sdk";
 import { NextResponse } from "next/server";
 import { createClient, fetchExchange, gql } from "urql";
 import { chainConfigMap } from "@/configs/chains";
+import { isValidCid, buildIpfsUrl } from "@/utils/ipfs";
 
 const PINATA_POINTS_SNAPSHOT_NAME = "superfluid-activity-points-gd";
 const PINATA_POINTS_SNAPSHOT_CID =
@@ -17,6 +18,7 @@ const normalizeGateway = (gw?: string | null) => {
   }
   return `https://${trimmed}`;
 };
+
 const IPFS_GATEWAY = normalizeGateway(process.env.IPFS_GATEWAY);
 const SUPERFLUID_CHAIN_ID = 8453;
 const PINATA_JWT = process.env.PINATA_JWT;
@@ -94,9 +96,10 @@ const fetchSuperfluidTotals = async (): Promise<number | null> => {
 };
 
 const fetchIpfsJson = async <T = any>(cid: string): Promise<T | null> => {
-  if (!cid) return null;
+  if (!cid || !isValidCid(cid)) return null;
   try {
-    const res = await fetch(`${IPFS_GATEWAY}/ipfs/${cid}`);
+    const ipfsUrl = buildIpfsUrl(IPFS_GATEWAY, cid);
+    const res = await fetch(ipfsUrl);
     if (!res.ok) {
       console.warn("[leaderboard-gd] ipfs fetch failed", {
         cid,
@@ -205,6 +208,13 @@ export async function GET(request: Request) {
       campaignIdFromQuery ?
         `${PINATA_POINTS_SNAPSHOT_NAME}-${campaignIdFromQuery}`
       : PINATA_POINTS_SNAPSHOT_NAME;
+    if (cidFromQuery && !isValidCid(cidFromQuery)) {
+      return NextResponse.json(
+        { error: "Invalid cid parameter" },
+        { status: 400 },
+      );
+    }
+
     const cid =
       cidFromQuery ??
       (campaignIdFromQuery ? null : PINATA_POINTS_SNAPSHOT_CID) ??

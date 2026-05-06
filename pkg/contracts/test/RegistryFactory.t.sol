@@ -44,6 +44,7 @@ contract MockRegistryCommunity {
 contract RegistryFactoryTest is Test {
     RegistryFactory factory;
     address owner = address(0xA11CE);
+    address authorized = address(0xBEEF1);
     address gardensFeeReceiver = address(0xFEE);
     address registryTemplate;
     address strategyTemplate;
@@ -268,6 +269,17 @@ contract RegistryFactoryTest is Test {
         assertFalse(factory.protopiansAddresses(address(0x2)));
     }
 
+    function test_setProtopianAddress_authorized_wallet() public {
+        address[] memory addrs = _toSingleton(address(0x3));
+        vm.prank(owner);
+        factory.setAuthorizedWallet(authorized, true);
+
+        vm.prank(authorized);
+        factory.setProtopianAddress(addrs, true);
+
+        assertTrue(factory.protopiansAddresses(address(0x3)));
+    }
+
     function test_setKeeperAddress_removalBranch() public {
         address[] memory keepers = _toSingleton(address(0xB));
         vm.startPrank(owner);
@@ -275,6 +287,17 @@ contract RegistryFactoryTest is Test {
         factory.setKeeperAddress(keepers, false);
         vm.stopPrank();
         assertFalse(factory.keepersAddresses(address(0xB)));
+    }
+
+    function test_setKeeperAddress_authorized_wallet() public {
+        address[] memory keepers = _toSingleton(address(0xC));
+        vm.prank(owner);
+        factory.setAuthorizedWallet(authorized, true);
+
+        vm.prank(authorized);
+        factory.setKeeperAddress(keepers, true);
+
+        assertTrue(factory.keepersAddresses(address(0xC)));
     }
 
     function test_setCommunityValidity_and_getCommunityValidity() public {
@@ -363,25 +386,169 @@ contract RegistryFactoryTest is Test {
         factory.setGlobalPauseController(address(0xBEEF));
     }
 
-    function test_setStreamRebalanceCaller_onlyOwner() public {
+    function test_setAuthorizedWallet_onlyOwner() public {
         address caller = address(0xCA11);
 
         vm.prank(owner);
-        factory.setStreamRebalanceCaller(caller, true);
-        assertTrue(factory.isStreamRebalanceCallerAllowed(caller));
+        factory.setAuthorizedWallet(caller, true);
+        assertTrue(factory.isAuthorizedWallet(caller));
 
         vm.prank(owner);
-        factory.setStreamRebalanceCaller(caller, false);
-        assertFalse(factory.isStreamRebalanceCallerAllowed(caller));
+        factory.setAuthorizedWallet(caller, false);
+        assertFalse(factory.isAuthorizedWallet(caller));
 
         vm.expectRevert();
-        factory.setStreamRebalanceCaller(caller, true);
+        factory.setAuthorizedWallet(caller, true);
     }
 
-    function test_setStreamRebalanceCaller_zeroAddressReverts() public {
+    function test_setAuthorizedWallet_zeroAddressReverts() public {
         vm.prank(owner);
         vm.expectRevert(RegistryFactory.AddressCannotBeZero.selector);
-        factory.setStreamRebalanceCaller(address(0), true);
+        factory.setAuthorizedWallet(address(0), true);
+    }
+
+    function test_delegateProtopian_by_holder() public {
+        address from = address(0x123);
+        address to = address(0x456);
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(from), true);
+
+        vm.prank(from);
+        factory.delegateProtopian(from, to);
+
+        assertFalse(factory.protopiansAddresses(from));
+        assertTrue(factory.protopiansAddresses(to));
+        assertEq(factory.protopianDelegate(from), to);
+    }
+
+    function test_delegateProtopian_by_authorized_wallet() public {
+        address from = address(0x111);
+        address to = address(0x222);
+
+        vm.startPrank(owner);
+        factory.setAuthorizedWallet(authorized, true);
+        factory.setProtopianAddress(_toSingleton(from), true);
+        vm.stopPrank();
+
+        vm.prank(authorized);
+        factory.delegateProtopian(from, to);
+
+        assertFalse(factory.protopiansAddresses(from));
+        assertTrue(factory.protopiansAddresses(to));
+        assertEq(factory.protopianDelegate(from), to);
+    }
+
+    function test_delegateProtopian_undelegate() public {
+        address from = address(0x111);
+        address to = address(0x222);
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(from), true);
+
+        vm.prank(from);
+        factory.delegateProtopian(from, to);
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(from), true);
+
+        vm.prank(owner);
+        factory.delegateProtopian(from, address(0));
+
+        assertTrue(factory.protopiansAddresses(from));
+        assertFalse(factory.protopiansAddresses(to));
+        assertEq(factory.protopianDelegate(from), address(0));
+    }
+
+    function test_delegateProtopian_switch_delegate_after_sync_clears_previous() public {
+        address from = address(0x111);
+        address first = address(0x222);
+        address second = address(0x333);
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(from), true);
+
+        vm.prank(from);
+        factory.delegateProtopian(from, first);
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(from), true);
+
+        vm.prank(owner);
+        factory.delegateProtopian(from, second);
+
+        assertFalse(factory.protopiansAddresses(first));
+        assertTrue(factory.protopiansAddresses(second));
+        assertEq(factory.protopianDelegate(from), second);
+    }
+
+    function test_delegateProtopian_can_update_when_holder_currently_delegated() public {
+        address from = address(0x111);
+        address first = address(0x222);
+        address second = address(0x333);
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(from), true);
+
+        vm.prank(from);
+        factory.delegateProtopian(from, first);
+
+        vm.prank(owner);
+        factory.delegateProtopian(from, second);
+
+        vm.prank(owner);
+        factory.delegateProtopian(from, address(0));
+
+        assertTrue(factory.protopiansAddresses(from));
+        assertFalse(factory.protopiansAddresses(first));
+        assertFalse(factory.protopiansAddresses(second));
+        assertEq(factory.protopianDelegate(from), address(0));
+    }
+
+    function test_setProtopianAddress_removes_old_holder_delegate() public {
+        address from = address(0x111);
+        address to = address(0x222);
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(from), true);
+
+        vm.prank(from);
+        factory.delegateProtopian(from, to);
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(from), false);
+
+        assertFalse(factory.protopiansAddresses(from));
+        assertFalse(factory.protopiansAddresses(to));
+        assertEq(factory.protopianDelegate(from), address(0));
+    }
+
+    function test_delegateProtopian_requires_protopian_holder() public {
+        vm.prank(address(0x123));
+        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.ProtopianHolderRequired.selector, address(0x123)));
+        factory.delegateProtopian(address(0x123), address(0x456));
+    }
+
+    function test_delegateProtopian_reverts_for_unauthorized_caller() public {
+        address from = address(0x123);
+        address to = address(0x456);
+        address caller = address(0x789);
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(from), true);
+
+        vm.prank(caller);
+        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.UnauthorizedProtopianDelegation.selector, caller, from));
+        factory.delegateProtopian(from, to);
+
+        assertTrue(factory.protopiansAddresses(from));
+        assertFalse(factory.protopiansAddresses(to));
+        assertEq(factory.protopianDelegate(from), address(0));
+    }
+
+    function test_delegateProtopian_reverts_for_zero_from() public {
+        vm.expectRevert(RegistryFactory.AddressCannotBeZero.selector);
+        factory.delegateProtopian(address(0), address(0x456));
     }
 
     function test_clear_and_upsert_facet_cuts_and_init_getters() public {

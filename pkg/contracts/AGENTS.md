@@ -71,7 +71,7 @@ For mainnet upgrade operations, default to this sequence unless the user explici
 
 1. Determine what must be upgraded.
 2. Generate per-chain Safe payloads.
-3. Submit those payloads with `pkMetamask` through the chain's ProxyOwner-resolved Safe using `scripts/submit_safe_payloads.py`.
+3. Submit those payloads with `PK_TESTNET_OWNER` through the chain's ProxyOwner-resolved Safe using `scripts/submit_safe_payloads.py`.
 
 Operational details for step 1:
 
@@ -88,7 +88,7 @@ Operational details for step 2:
 
 Operational details for step 3:
 
-- The submitter keystore is `~/.foundry/keystores/pkMetamask` unless the user says otherwise.
+- The submitter keystore is `~/.foundry/keystores/PK_TESTNET_OWNER` unless the user says otherwise.
 - Resolve the actual Safe owner from the chain's ProxyOwner contract. Do not assume `ENVS.PROXY_OWNER` itself implements the Safe interface; call `mainOwner()` when needed and submit to that Safe address.
 - Verify the signer is a Safe owner before submission.
 - Prefer `--payload-file` plus `--service-chain` when submitting explicit per-chain payloads.
@@ -100,13 +100,34 @@ Useful pre-submit checks:
 cast call <proxyOwner> 'mainOwner()(address)' --rpc-url <rpc>
 cast call <safe> 'getOwners()(address[])' --rpc-url <rpc>
 cast call <safe> 'nonce()(uint256)' --rpc-url <rpc>
-cast wallet address --account pkMetamask
+cast wallet address --account PK_TESTNET_OWNER
 python scripts/submit_safe_payloads.py \
 	--safe <resolved-safe> \
-	--keystore ~/.foundry/keystores/pkMetamask \
+	--keystore ~/.foundry/keystores/PK_TESTNET_OWNER \
 	--service-chain <chain> \
 	--payload-file transaction-builder/<payload>.json
 ```
+
+## Wallet Rotation And ProxyOwner Grant Flow
+
+When rotating the deployer wallet that will receive `ProxyOwner.grantUpgradeAccess(...)`, use this order unless the user explicitly asks for a different sequence:
+
+1. Generate or rotate the wallet with `task change-wallet` when `ENVS.SENDER` should move to the new address, or `task generate-wallet` when only the keypair is needed.
+2. Back up the current `~/.foundry/keystores/PK_DEPLOYER` before importing the new key into the same keystore name.
+3. Import the new wallet into `PK_DEPLOYER` and verify it with `cast wallet address --account PK_DEPLOYER --password "$PK_DEPLOYER_PW"`.
+4. Fund the new wallet with `task transfer-gas-all` or a narrower `transfer-gas-*` task. Treat skipped chains as real blockers for later renounce calls; the granted wallet needs native gas on each chain where it must send transactions.
+5. Grant testnet upgrade access on-chain with `task grant-upgrade-access-testnets`.
+6. Dry-run mainnet Safe submissions with `task submit-safe-payloads-grant-upgrade-access-all-chains-dry`.
+7. Submit mainnet Safe proposals with `task submit-safe-payloads-grant-upgrade-access-all-chains`.
+8. Verify current state with `task verify-upgrade-access`.
+
+Operational notes:
+
+- `task verify-upgrade-access` checks live `upgradeAccess()` on-chain. After step 7 it should pass on testnets, but it will continue to fail on mainnets until the queued Safe transactions are executed.
+- `task submit-safe-payloads-grant-upgrade-access-all-chains` must normalize both the `grantUpgradeAccess` recipient and the ProxyOwner `to` address from `config/networks.json`; do not trust stale `transaction-builder/*-proxy-owner-upgrade-and-grant-payload.json` targets.
+- The current Taskfile only has renounce wrappers for testnets: `task renounce-proxy-owner-upgrade-access-testnets` and the per-chain `ethsep`, `arbsep`, `opsep` tasks.
+- There are no mainnet renounce Taskfile wrappers at the moment. Use `script/RenounceProxyOwnerUpgradeAccess.s.sol:RenounceProxyOwnerUpgradeAccess` directly only after the Safe grant has executed and the new wallet has enough native gas on the target chain.
+- Keep the old `PK_DEPLOYER` keystore backup until funding, grant verification, and any required renounce calls are complete.
 
 ## Verification
 

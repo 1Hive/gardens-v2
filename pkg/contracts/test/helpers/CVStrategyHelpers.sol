@@ -415,6 +415,10 @@ contract CVStrategyHarness is CVStrategy {
         pointSystem = system;
     }
 
+    function setProposalType(ProposalType proposalType_) external {
+        proposalType = proposalType_;
+    }
+
     function setCvParams(CVParams memory params) external {
         cvParams = params;
     }

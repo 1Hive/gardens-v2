@@ -93,6 +93,58 @@ tasks:
     desc: Sync ABIs from out
     cmds:
       - ./scripts/sync-abis.sh
+  sync-proxies:
+    desc: Sync PROXIES in config/networks.json from the subgraph for NETWORK=<network>
+    cmds:
+      - cmd: |
+          NETWORK="{{.NETWORK}}"
+          if [ -z "${NETWORK}" ] || [ "${NETWORK}" = "<no value>" ]; then
+            echo "missing NETWORK, e.g. task sync-proxies NETWORK=opsepolia" >&2
+            exit 1
+          fi
+          mkdir -p .tmp
+          flock .tmp/networks-json.lock sh -c 'node ../subgraph/src/scripts/list-proxies.cjs "$1"' _ "${NETWORK}"
+  sync-proxies-testnets:
+    desc: Sync PROXIES in config/networks.json for all testnets
+    cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: ethsepolia
+      - task: sync-proxies
+        vars:
+          NETWORK: arbsepolia
+      - task: sync-proxies
+        vars:
+          NETWORK: opsepolia
+  sync-proxies-mainnets:
+    desc: Sync PROXIES in config/networks.json for all mainnets
+    cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: ethereum
+      - task: sync-proxies
+        vars:
+          NETWORK: arbitrum
+      - task: sync-proxies
+        vars:
+          NETWORK: optimism
+      - task: sync-proxies
+        vars:
+          NETWORK: polygon
+      - task: sync-proxies
+        vars:
+          NETWORK: gnosis
+      - task: sync-proxies
+        vars:
+          NETWORK: base
+      - task: sync-proxies
+        vars:
+          NETWORK: celo
+  sync-proxies-all:
+    desc: Sync PROXIES in config/networks.json for all supported networks
+    cmds:
+      - task: sync-proxies-testnets
+      - task: sync-proxies-mainnets
   verify-storage:
     desc: Verify storage
     cmds:
@@ -489,6 +541,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: ethsepolia
       - task: refresh-facets-ethsep
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -533,6 +588,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: ethsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -557,6 +615,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: ethsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -581,6 +642,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: ethsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -605,6 +669,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: ethsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -629,6 +696,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: ethsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -653,6 +723,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: ethsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -677,6 +750,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: ethsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -702,6 +778,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: ethsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -1759,6 +1838,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: opsepolia
       - task: refresh-facets-opsep
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -1803,6 +1885,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: opsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -1838,6 +1923,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: opsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -1862,6 +1950,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: opsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -1886,6 +1977,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: opsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -1910,6 +2004,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: opsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -1934,6 +2031,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: opsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -1958,6 +2058,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: opsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -1982,6 +2085,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: opsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -2005,6 +2111,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: opsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -2028,6 +2137,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: opsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -2053,6 +2165,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: opsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -2128,6 +2243,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: opsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -2533,6 +2651,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: arbsepolia
       - task: refresh-facets-arbsep
       - cmd: |
           case "${PHASE:-all}" in
@@ -2564,6 +2685,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: arbsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -2599,6 +2723,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: arbsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -2623,6 +2750,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: arbsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -2647,6 +2777,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: arbsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -2671,6 +2804,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: arbsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -2695,6 +2831,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: arbsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -2719,6 +2858,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: arbsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -2743,6 +2885,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: arbsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -2766,6 +2911,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: arbsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -2789,6 +2937,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: arbsepolia
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -3278,6 +3429,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: arbitrum
       - task: refresh-facets-arbitrum
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -3323,6 +3477,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: arbitrum
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -3654,6 +3811,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: optimism
       - task: refresh-facets-optimism
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -3699,6 +3859,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: optimism
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -3956,6 +4119,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: polygon
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -3980,6 +4146,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: polygon
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -4005,6 +4174,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: polygon
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -4101,6 +4273,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: polygon
       - task: refresh-facets-polygon
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -4147,6 +4322,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: polygon
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -4490,6 +4668,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: gnosis
       - task: refresh-facets-gnosis
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -4536,6 +4717,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: gnosis
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -4857,6 +5041,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: base
       - task: refresh-facets-base
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -4903,6 +5090,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: base
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -4938,6 +5128,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: base
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -5940,6 +6133,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: celo
       - task: refresh-facets-celo
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -5986,6 +6182,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: celo
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -6021,6 +6220,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: celo
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -6255,6 +6457,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: ethereum
       - task: refresh-facets-mainnet
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -6315,6 +6520,9 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies
+        vars:
+          NETWORK: ethereum
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -6511,6 +6719,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies-mainnets
       - task: refresh-facets-all-mainnets
       - cmd: |
           bash ./scripts/upgrade-all-mainnets.sh
@@ -6822,6 +7031,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - task: sync-proxies-mainnets
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
           DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
@@ -7358,14 +7568,14 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask
+          --keystore ~/.foundry/keystores/pkGarden
   submit-safe-payloads-test:
     desc: Submit Safe Transaction Builder payloads to the Safe Transaction Service
     cmds:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --test
   submit-safe-payloads-force:
     desc: Submit Safe Transaction Builder payloads to the Safe Transaction Service
@@ -7373,7 +7583,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --force
   submit-safe-payloads-test-force:
     desc: Submit Safe Transaction Builder payloads to the Safe Transaction Service
@@ -7381,7 +7591,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --test \
           --force
   submit-safe-payloads-arbitrum:
@@ -7390,7 +7600,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --chains arbitrum
   submit-safe-payloads-optimism:
     desc: Submit Safe payload for optimism
@@ -7398,7 +7608,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --chains optimism
   submit-safe-payloads-polygon:
     desc: Submit Safe payload for polygon
@@ -7406,7 +7616,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --chains polygon
   submit-safe-payloads-gnosis:
     desc: Submit Safe payload for gnosis
@@ -7414,7 +7624,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --chains gnosis
   submit-safe-payloads-base:
     desc: Submit Safe payload for base
@@ -7422,7 +7632,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --chains base
   submit-safe-payloads-celo:
     desc: Submit Safe payload for celo
@@ -7430,7 +7640,7 @@ tasks:
       - cmd: |
           python scripts/submit_safe_payloads.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --chains celo
   submit-safe-payloads-grant-upgrade-access-all-chains:
     desc: Submit ProxyOwner grantUpgradeAccess Safe payloads on ethereum, arbitrum, optimism, polygon, gnosis, base, celo (set DRY_RUN=true to only log planned actions)
@@ -7444,6 +7654,7 @@ tasks:
           deployer_address_no0x="${deployer_address_lc#0x}"
           grant_selector="0x00c53432"
           grant_data="${grant_selector}000000000000000000000000${deployer_address_no0x}"
+          upgrade_selector="0x3659cfe6"
           ERC1967_IMPLEMENTATION_SLOT="0x360894A13BA1A3210667C828492DB98DCA3E2076CC3735A920A3CA505D382BBC"
 
           for chain in ethereum arbitrum optimism polygon gnosis base celo; do
@@ -7475,24 +7686,45 @@ tasks:
               exit 1
             fi
 
+            proxy_owner_from_config="$(jq -r --arg chain "${chain}" '.networks[] | select(.name == $chain) | .ENVS.PROXY_OWNER // empty' config/networks.json | head -n 1)"
+            if [ -z "${proxy_owner_from_config}" ] || [ "${proxy_owner_from_config}" = "null" ]; then
+              echo "${chain}: missing ENVS.PROXY_OWNER in config/networks.json" >&2
+              exit 1
+            fi
+
+            proxy_owner_impl_from_config="$(jq -r --arg chain "${chain}" '.networks[] | select(.name == $chain) | .IMPLEMENTATIONS.PROXY_OWNER // empty' config/networks.json | head -n 1)"
+            if [ -z "${proxy_owner_impl_from_config}" ] || [ "${proxy_owner_impl_from_config}" = "null" ]; then
+              echo "${chain}: missing IMPLEMENTATIONS.PROXY_OWNER in config/networks.json" >&2
+              exit 1
+            fi
+            proxy_owner_impl_lc="$(echo "${proxy_owner_impl_from_config}" | tr '[:upper:]' '[:lower:]')"
+            proxy_owner_impl_no0x="${proxy_owner_impl_lc#0x}"
+            upgrade_data="${upgrade_selector}000000000000000000000000${proxy_owner_impl_no0x}"
+
             payload="transaction-builder/${payload_chain}-proxy-owner-upgrade-and-grant-payload.json"
             if [ ! -f "${payload}" ]; then
               echo "missing payload: ${payload}" >&2
               exit 1
             fi
 
-            # Normalize grant target per run so payload stale addresses are never used.
+            # Normalize targets per run so payload stale addresses are never used.
             chain_payload="$(mktemp)"
-            jq --arg newWallet "${deployer_address}" --arg grantData "${grant_data}" '
+            jq --arg proxyOwner "${proxy_owner_from_config}" --arg proxyOwnerImplementation "${proxy_owner_impl_from_config}" --arg newWallet "${deployer_address}" --arg grantData "${grant_data}" --arg upgradeData "${upgrade_data}" '
               .transactions = [.transactions[] |
                 if ((.contractMethod.name // "") == "grantUpgradeAccess")
                 then ((.contractInputsValues.newUpgradeWallet = $newWallet) | (.data = $grantData))
+                elif ((.contractMethod.name // "") == "upgradeTo")
+                then ((.contractInputsValues.newImplementation = $proxyOwnerImplementation) | (.data = $upgradeData))
+                else .
+                end |
+                if ((.contractMethod.name // "") == "upgradeTo") or ((.contractMethod.name // "") == "grantUpgradeAccess")
+                then (.to = $proxyOwner)
                 else .
                 end
               ]
             ' "${payload}" > "${chain_payload}"
 
-            proxy_owner="$(jq -r '.transactions[0].to' "${chain_payload}")"
+            proxy_owner="${proxy_owner_from_config}"
             target_upgrade_wallet="$(jq -r '.transactions[] | select((.contractMethod.name // "") == "grantUpgradeAccess") | .contractInputsValues.newUpgradeWallet' "${chain_payload}" | head -n 1)"
             if [ -z "${target_upgrade_wallet}" ] || [ "${target_upgrade_wallet}" = "null" ]; then
               echo "${chain}: missing grantUpgradeAccess target in payload" >&2
@@ -7511,7 +7743,7 @@ tasks:
             impl_slot_value="$(cast storage "${proxy_owner}" "${ERC1967_IMPLEMENTATION_SLOT}" --rpc-url "${RPC_URL}")"
             implementation="0x${impl_slot_value: -40}"
             implementation_lc="$(echo "${implementation}" | tr '[:upper:]' '[:lower:]')"
-            payload_upgrade_implementation="$(jq -r '.transactions[] | select((.contractMethod.name // "") == "upgradeTo") | .contractInputsValues.newImplementation' "${payload}" | head -n 1)"
+            payload_upgrade_implementation="$(jq -r '.transactions[] | select((.contractMethod.name // "") == "upgradeTo") | .contractInputsValues.newImplementation' "${chain_payload}" | head -n 1)"
             payload_upgrade_implementation_lc="$(echo "${payload_upgrade_implementation}" | tr '[:upper:]' '[:lower:]')"
 
             submit_payload="${chain_payload}"
@@ -7547,7 +7779,7 @@ tasks:
 
             python scripts/submit_safe_payloads.py \
               --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-              --keystore ~/.foundry/keystores/pkMetamask \
+              --keystore ~/.foundry/keystores/pkGarden \
               --service-chain "${safe_chain}" \
               --payload-file "${submit_payload}" \
               --origin-prefix "${origin_prefix}"
@@ -7572,14 +7804,14 @@ tasks:
       - cmd: |
           python scripts/clear_safe_queue.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask
+          --keystore ~/.foundry/keystores/pkGarden
   clear-safe-queue-test:
     desc: Clear queued Safe transactions in sandbox Safe
     cmds:
       - cmd: |
           python scripts/clear_safe_queue.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --test
   list-safe-queue:
     desc: List queued Safe transactions and proposers
@@ -7587,7 +7819,7 @@ tasks:
       - cmd: |
           python scripts/clear_safe_queue.py \
           --safe 0x9a17De1f0caD0c592F656410997E4B685d339029 \
-          --keystore ~/.foundry/keystores/pkMetamask \
+          --keystore ~/.foundry/keystores/pkGarden \
           --list
   change-passport-manager-celo:
     desc: Change passport manager celo

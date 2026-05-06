@@ -11,6 +11,7 @@ import { getSuperfluidPointsClientByEnv } from "@/services/superfluid-points";
 import { erc20ABI } from "@/src/generated";
 import { ChainId } from "@/types";
 import { getViemChain } from "@/utils/web3";
+import { isValidCid } from "@/utils/ipfs";
 
 type Strategy = {
   id: Address;
@@ -1024,11 +1025,11 @@ const ensureLatestTransferCacheCid = async (): Promise<string | null> => {
 const fetchIpfsJson = async (
   cid: string,
 ): Promise<{ entries?: Record<string, string | null> } | null> => {
-  if (!CAN_READ_IPFS || !cid) return null;
+  if (!CAN_READ_IPFS || !cid || !isValidCid(cid)) return null;
   try {
     const gateway =
       IPFS_GATEWAY?.replace(/\/$/, "") ?? "https://gateway.pinata.cloud";
-    const url = `${gateway}/ipfs/${cid}`;
+    const url = new URL(`/ipfs/${encodeURIComponent(cid)}`, gateway).toString();
     const res = await fetch(url, { method: "GET" });
     if (!res.ok) {
       console.warn("[superfluid-points] IPFS fetch failed", {

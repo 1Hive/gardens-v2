@@ -14,11 +14,15 @@ import { FetchTokenResult } from "@wagmi/core";
 import { Dnum, multiply } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
+import { toast } from "react-toastify";
 import { Address } from "viem";
+import { mainnet } from "viem/chains";
 import { useAccount, useToken } from "wagmi";
 import {
   getCommunityDocument,
   getCommunityQuery,
+  getCommunitiesDocument,
+  getCommunitiesQuery,
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
@@ -48,6 +52,7 @@ import { LoupeButton } from "@/components/LoupeButton";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { Skeleton } from "@/components/Skeleton";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
+import { chainConfigMap } from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
@@ -60,13 +65,14 @@ import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
 import { useHasContractCode } from "@/hooks/useHasContractCode";
 import { useIpfsFetch } from "@/hooks/useIpfsFetch";
+import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 import { useStreamingPoolsAccess } from "@/hooks/useStreamingPoolsAccess";
 import {
   dismissPendingSubgraphRefreshToast,
   useSubgraphQuery,
 } from "@/hooks/useSubgraphQuery";
-import { getProtopiansOwners } from "@/services/alchemy";
-import { registryCommunityABI } from "@/src/generated";
+import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
+import { registryCommunityABI, registryFactoryABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { logOnce } from "@/utils/log";
 import {
@@ -80,6 +86,16 @@ type MembersStaked = {
   id: string;
   memberAddress: string;
   stakedTokens: string;
+};
+
+type DelegatedProtopianCommunity = {
+  id: string;
+  communityName?: string | null;
+  protopianDelegatedFrom?: string | null;
+  chain: {
+    id: number;
+    name: string;
+  };
 };
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -102,7 +118,6 @@ export default function ClientPage({
   const { address: accountAddress } = useAccount();
   const showArchived = useFlag("showArchived");
   const canAccessStreamingPools = useStreamingPoolsAccess(communityAddr);
-  const isFetchingNFT = useRef<boolean>(false);
   const pendingNewCommunityRefetch = useRef<string | null>(null);
   const { publish } = usePubSubContext();
   const chain = useChainFromPath();
@@ -127,8 +142,7 @@ export default function ClientPage({
   });
 
   const registryCommunity = result?.registryCommunity;
-  const isAwaitingNewCommunityIndexing =
-    isNewCommunity && !registryCommunity;
+  const isAwaitingNewCommunityIndexing = isNewCommunity && !registryCommunity;
   const tokenAddress = registryCommunity?.garden?.id;
   const { hasContractCode: hasGardenTokenCode } = useHasContractCode({
     address: tokenAddress,
@@ -141,8 +155,9 @@ export default function ClientPage({
     chainId: chain?.id,
     enabled: !!tokenAddress && hasGardenTokenCode,
   });
-  const resolvedTokenGarden = (tokenGarden ??
-    registryCommunity?.garden) as FetchTokenResult | undefined;
+  const resolvedTokenGarden = (tokenGarden ?? registryCommunity?.garden) as
+    | FetchTokenResult
+    | undefined;
 
   useEffect(() => {
     if (!registryCommunity || resolvedTokenGarden) {
@@ -184,10 +199,69 @@ export default function ClientPage({
     | Address
     | undefined;
 
-  const { isCouncilSafe, isCouncilMember, councilMembers } = useCouncil({
+  const { isCouncilSafe, isCouncilMember } = useCouncil({
     strategyOrCommunity: registryCommunity,
     detectCouncilMember: true,
   });
+
+  const { isOwner: isProtopianHolder } = useOwnerOfNFT({
+    nft: "Protopian",
+    chains: [mainnet],
+    enabled: accountAddress != null,
+  });
+
+  const allDelegationChainIds = useMemo(
+    () =>
+      Object.values(chainConfigMap)
+        .filter(
+          (config, index, items) =>
+            config.subgraphUrl != null &&
+            items.findIndex((entry) => entry.id === config.id) === index,
+        )
+        .map((config) => config.id),
+    [],
+  );
+
+  const {
+    data: delegatedProtopianCommunitiesResult,
+    fetching: isFetchingProtopianDelegations,
+  } = useSubgraphQueryMultiChain<getCommunitiesQuery>({
+    query: getCommunitiesDocument,
+    chainIds: allDelegationChainIds,
+    modifier: (data) => {
+      const normalizedAccountAddress = accountAddress?.toLowerCase();
+      if (normalizedAccountAddress == null) {
+        return [];
+      }
+
+      return data.flatMap((section) =>
+        section.registryCommunities
+          .filter(
+            (community) =>
+              (
+                community as { protopianDelegatedFrom?: string | null }
+              ).protopianDelegatedFrom?.toLowerCase() ===
+              normalizedAccountAddress,
+          )
+          .map((community) => ({
+            id: community.id,
+            communityName: community.communityName,
+            protopianDelegatedFrom: (
+              community as { protopianDelegatedFrom?: string | null }
+            ).protopianDelegatedFrom,
+            chain: {
+              id: section.chain.id,
+              name: section.chain.name,
+            },
+          })),
+      );
+    },
+    changeScope: [{ topic: "community" }],
+    enabled: accountAddress != null && isProtopianHolder === true,
+  });
+  const delegatedProtopianCommunities = delegatedProtopianCommunitiesResult as
+    | DelegatedProtopianCommunity[]
+    | undefined;
 
   let {
     communityName,
@@ -201,43 +275,42 @@ export default function ClientPage({
 
   const is1hive =
     registryCommunity?.id.toLowerCase() === ONE_HIVE_COMMUNITY_ADDRESS;
-
-  const [isProtopianCommunity, setIsProtopianCommunity] = useState<
-    boolean | undefined
-  >(undefined);
-
-  useEffect(() => {
-    if (
-      !councilMembers ||
-      isProtopianCommunity != undefined ||
-      isFetchingNFT.current ||
-      !result?.registryCommunity?.councilSafe
-    )
-      return;
-
-    isFetchingNFT.current = true;
-
-    // Fetch alchemy data to determine if the community is Protopian
-
-    getProtopiansOwners()
-      .then((protopianOwners) => {
-        setIsProtopianCommunity(
-          // Consider Protopian can be transferred to councilSafe
-          !!protopianOwners.find((x) =>
-            [...councilMembers, result!.registryCommunity!.councilSafe!]?.find(
-              (cm) => cm.toLowerCase() === x.toLowerCase(),
-            ),
-          ),
-        );
-      })
-      .catch((err) => {
-        console.error("Error fetching Protopian community data:", err);
-        setIsProtopianCommunity(false);
-      })
-      .finally(() => {
-        isFetchingNFT.current = false;
-      });
-  }, [councilMembers, result?.registryCommunity?.councilSafe]);
+  const delegatedFrom = (
+    registryCommunity as
+      | {
+          protopianDelegatedFrom?: string | null;
+          registryFactory?: { id?: string | null } | null;
+        }
+      | undefined
+  )?.protopianDelegatedFrom?.toLowerCase();
+  const isProtopianCommunity = is1hive || delegatedFrom != null;
+  const isDelegatedByMe =
+    accountAddress != null &&
+    delegatedFrom != null &&
+    delegatedFrom === accountAddress.toLowerCase();
+  const hasCommunityProtopianDelegation = delegatedFrom != null;
+  const existingProtopianDelegation = delegatedProtopianCommunities?.find(
+    (community) =>
+      !(
+        community.id.toLowerCase() === communityAddr.toLowerCase() &&
+        community.chain.id === chain?.id
+      ),
+  );
+  const hasOtherProtopianDelegation =
+    existingProtopianDelegation != null && !isDelegatedByMe;
+  const isCheckingOtherProtopianDelegations =
+    accountAddress != null &&
+    isProtopianHolder === true &&
+    isFetchingProtopianDelegations &&
+    !isDelegatedByMe;
+  const registryFactoryAddress = (
+    registryCommunity as
+      | {
+          protopianDelegatedFrom?: string | null;
+          registryFactory?: { id?: string | null } | null;
+        }
+      | undefined
+  )?.registryFactory?.id as Address | undefined;
 
   const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
@@ -288,6 +361,31 @@ export default function ClientPage({
     },
   });
 
+  const {
+    write: writeDelegateProtopian,
+    isLoading: isDelegateProtopianLoading,
+  } = useContractWriteWithConfirmations({
+    address: registryFactoryAddress,
+    abi: registryFactoryABI,
+    contractName: "Registry Factory",
+    functionName: "delegateProtopian",
+    onConfirmations: () => {
+      toast.success(
+        isDelegatedByMe ?
+          "Protopian delegation cleared"
+        : "Protopian delegated to community",
+      );
+      publish({
+        topic: "community",
+        type: "update",
+        id: communityAddr,
+        function: "delegateProtopian",
+        containerId: communityAddr,
+      });
+      void refetch({ showToast: false });
+    },
+  });
+
   const { tooltipMessage, isConnected, missmatchUrl, isButtonDisabled } =
     useDisableButtons();
   const createPoolHref = `/gardens/${chain?.id}/${communityAddr}/create-pool`;
@@ -311,6 +409,14 @@ export default function ClientPage({
   const acceptCouncilTooltip =
     !isPendingCouncilSafeWallet && effectivePendingCouncilSafe != null ?
       `Connect with pending council safe ${shortenAddress(effectivePendingCouncilSafe)}`
+    : tooltipMessage;
+  const delegateProtopianTooltip =
+    isCheckingOtherProtopianDelegations ?
+      "Checking existing Protopian delegation"
+    : hasOtherProtopianDelegation ?
+      `Undelegate from ${existingProtopianDelegation.communityName ?? shortenAddress(existingProtopianDelegation.id as Address)} on ${existingProtopianDelegation.chain.name} first`
+    : hasCommunityProtopianDelegation && !isDelegatedByMe ?
+      `Already delegated by ${shortenAddress(delegatedFrom as Address)}`
     : tooltipMessage;
 
   useEffect(() => {
@@ -610,6 +716,9 @@ export default function ClientPage({
     registryCommunity.archived ?
       "!border-warning-content"
     : "border-gray-200";
+  const renderArchivedBadge = () => (
+    <Badge color="warning" label="Archived" className="mt-3 w-fit" />
+  );
 
   return (
     <>
@@ -619,85 +728,63 @@ export default function ClientPage({
           <header
             className={`border shadow-sm section-layout ${headerCardBorderClass}`}
           >
-            <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
-              {/* Image */}
-              <div className="flex-shrink-0">
-                <div className="w-20 h-20 lg:w-24 lg:h-24 bg-primary-soft rounded-xl flex items-center justify-center shadow-sm p-1">
-                  <Image
-                    src={
+              <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
+                {/* Image */}
+                <div className="flex-shrink-0 flex flex-col items-start">
+                  <div className="w-20 h-20 lg:w-24 lg:h-24 bg-primary-soft rounded-xl flex items-center justify-center shadow-sm p-1">
+                    <Image
+                      src={
                       is1hive ? OneHiveLogo
                       : isProtopianCommunity ?
                         ProtopianLogo
                       : CommunityLogo
                     }
-                    alt={`${communityName} community`}
-                  />
+                      alt={`${communityName} community`}
+                    />
+                  </div>
+                  {registryCommunity.archived && renderArchivedBadge()}
                 </div>
-              </div>
 
               <div className="flex-1 flex-col lg:items-start lg:justify-between sm:gap-4 ">
-                {/* Community name + Address */}
-                <div className=" flex-flex-col">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h2>{communityName}</h2>
-                    {registryCommunity.archived && (
-                      <Badge color="warning" label="Archived" />
+                <div
+                  className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
+                  data-section="community-header-summary"
+                >
+                  {/* Community name + Address */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div
+                        className="tooltip tooltip-bottom min-w-0 flex-1"
+                        data-tip={communityName ?? ""}
+                      >
+                        <h2 className="truncate">{communityName}</h2>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <EthAddress
+                        icon={false}
+                        address={communityAddr as Address}
+                        label="Community address"
+                        textColor="var(--color-grey-900)"
+                        explorer="louper"
+                      />
+                      <LoupeButton
+                        diamond={communityAddr}
+                        chainId={chain?.id}
+                        className="px-2 py-1"
+                      />
+                    </div>
+                    {effectiveCouncilSafe && (
+                      <EthAddress
+                        icon={false}
+                        address={effectiveCouncilSafe}
+                        label="Council safe"
+                        textColor="var(--color-grey-900)"
+                      />
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <EthAddress
-                      icon={false}
-                      address={communityAddr as Address}
-                      label="Community address"
-                      textColor="var(--color-grey-900)"
-                      explorer="louper"
-                    />
-                    <LoupeButton
-                      diamond={communityAddr}
-                      chainId={chain?.id}
-                      className="px-2 py-1"
-                    />
-                  </div>
-                  {effectiveCouncilSafe && (
-                    <EthAddress
-                      icon={false}
-                      address={effectiveCouncilSafe}
-                      label="Council safe"
-                      textColor="var(--color-grey-900)"
-                    />
-                  )}
-                </div>
 
-                {/* Statistic + Join/Leave community Button */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between ">
-                  <div className="w-full flex flex-col sm:flex-row gap-2 md:gap-6 sm:flex-wrap">
-                    <Statistic
-                      label="members"
-                      count={membersCount ?? 0}
-                      icon={<UserGroupIcon />}
-                    />
-
-                    <Statistic
-                      label="pools"
-                      icon={<CircleStackIcon />}
-                      count={activePools.length ?? 0}
-                    />
-
-                    <Statistic
-                      label="staked tokens"
-                      icon={<CurrencyDollarIcon />}
-                    >
-                      <DisplayNumber
-                        number={[
-                          BigInt(communityStakedTokens),
-                          resolvedTokenGarden.decimals,
-                        ]}
-                        compact={true}
-                        tokenSymbol={resolvedTokenGarden.symbol}
-                      />
-                    </Statistic>
-                  </div>
-                  <div className="absolute top-12 md:top-7 right-5 flex items-center gap-2 z-50">
+                  <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:flex-shrink-0 md:justify-end">
                     {(isCouncilMember || isCouncilSafe) &&
                       effectiveCouncilSafe && (
                         <EditCommunityModal
@@ -762,6 +849,35 @@ export default function ClientPage({
                         Accept Council
                       </Button>
                     )}
+                    {isProtopianHolder && registryFactoryAddress && (
+                      <Button
+                        btnStyle="outline"
+                        color="tertiary"
+                        disabled={
+                          isButtonDisabled ||
+                          missmatchUrl ||
+                          isCheckingOtherProtopianDelegations ||
+                          hasOtherProtopianDelegation ||
+                          (hasCommunityProtopianDelegation && !isDelegatedByMe)
+                        }
+                        tooltip={delegateProtopianTooltip}
+                        onClick={() =>
+                          writeDelegateProtopian({
+                            args: [
+                              accountAddress as Address,
+                              isDelegatedByMe ?
+                                (ZERO_ADDRESS as Address)
+                              : (communityAddr as Address),
+                            ],
+                          })
+                        }
+                        isLoading={isDelegateProtopianLoading}
+                      >
+                        {isDelegatedByMe ?
+                          "Undelegate Protopian"
+                        : "Delegate protopian"}
+                      </Button>
+                    )}
                     <RegisterMember
                       memberData={accountAddress ? isMemberResult : undefined}
                       registrationCost={totalRegistrationCost}
@@ -769,6 +885,35 @@ export default function ClientPage({
                       registryCommunity={registryCommunity}
                     />
                   </div>
+                </div>
+
+                {/* Statistics */}
+                <div className="w-full flex flex-col gap-2 sm:flex-row sm:flex-wrap md:gap-6">
+                  <Statistic
+                    label="members"
+                    count={membersCount ?? 0}
+                    icon={<UserGroupIcon />}
+                  />
+
+                  <Statistic
+                    label="pools"
+                    icon={<CircleStackIcon />}
+                    count={activePools.length ?? 0}
+                  />
+
+                  <Statistic
+                    label="staked tokens"
+                    icon={<CurrencyDollarIcon />}
+                  >
+                    <DisplayNumber
+                      number={[
+                        BigInt(communityStakedTokens),
+                        resolvedTokenGarden.decimals,
+                      ]}
+                      compact={true}
+                      tokenSymbol={resolvedTokenGarden.symbol}
+                    />
+                  </Statistic>
                 </div>
 
                 {/* Registration Stake Value + Community staking leaderboard Button*/}
@@ -921,7 +1066,7 @@ export default function ClientPage({
               >
                 <div className="flex flex-col items-start space-y-4">
                   {/* Image */}
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 flex flex-col items-start">
                     <div className="w-20 h-20 bg-primary-soft rounded-xl flex items-center justify-center shadow-sm p-1">
                       <Image
                         src={
@@ -933,16 +1078,19 @@ export default function ClientPage({
                         alt={`${communityName} community`}
                       />
                     </div>
+                    {registryCommunity.archived && renderArchivedBadge()}
                   </div>
 
                   <div className="flex-1 w-full flex-col gap-4">
                     {/* Community name + Address */}
                     <div className="mb-3">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h2>{communityName}</h2>
-                        {registryCommunity.archived && (
-                          <Badge color="warning" label="Archived" />
-                        )}
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div
+                          className="tooltip tooltip-bottom min-w-0 flex-1"
+                          data-tip={communityName ?? ""}
+                        >
+                          <h2 className="truncate">{communityName}</h2>
+                        </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <EthAddress
@@ -1066,6 +1214,37 @@ export default function ClientPage({
                           className="w-full"
                         >
                           Accept Council
+                        </Button>
+                      )}
+                      {isProtopianHolder && registryFactoryAddress && (
+                        <Button
+                          btnStyle="filled"
+                          color="primary"
+                          disabled={
+                            isButtonDisabled ||
+                            missmatchUrl ||
+                            isCheckingOtherProtopianDelegations ||
+                            hasOtherProtopianDelegation ||
+                            (hasCommunityProtopianDelegation &&
+                              !isDelegatedByMe)
+                          }
+                          tooltip={delegateProtopianTooltip}
+                          onClick={() =>
+                            writeDelegateProtopian({
+                              args: [
+                                accountAddress as Address,
+                                isDelegatedByMe ?
+                                  (ZERO_ADDRESS as Address)
+                                : (communityAddr as Address),
+                              ],
+                            })
+                          }
+                          isLoading={isDelegateProtopianLoading}
+                          className="w-full"
+                        >
+                          {isDelegatedByMe ?
+                            "Undelegate Protopian"
+                          : "Delegate protopian"}
                         </Button>
                       )}
                       <RegisterMember

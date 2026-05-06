@@ -1023,6 +1023,7 @@ export type CVStrategy_orderBy =
   | 'registryCommunity__isValid'
   | 'registryCommunity__archived'
   | 'registryCommunity__membersCount'
+  | 'registryCommunity__protopianDelegatedFrom'
   | 'config'
   | 'config__id'
   | 'config__D'
@@ -1526,6 +1527,50 @@ export type GoodDollarUser_orderBy =
   | 'userAddress'
   | 'lastUpdated';
 
+export type Keeper = {
+  id: Scalars['ID']['output'];
+  address: Scalars['String']['output'];
+};
+
+export type Keeper_filter = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  id_not?: InputMaybe<Scalars['ID']['input']>;
+  id_gt?: InputMaybe<Scalars['ID']['input']>;
+  id_lt?: InputMaybe<Scalars['ID']['input']>;
+  id_gte?: InputMaybe<Scalars['ID']['input']>;
+  id_lte?: InputMaybe<Scalars['ID']['input']>;
+  id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  address?: InputMaybe<Scalars['String']['input']>;
+  address_not?: InputMaybe<Scalars['String']['input']>;
+  address_gt?: InputMaybe<Scalars['String']['input']>;
+  address_lt?: InputMaybe<Scalars['String']['input']>;
+  address_gte?: InputMaybe<Scalars['String']['input']>;
+  address_lte?: InputMaybe<Scalars['String']['input']>;
+  address_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  address_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  address_contains?: InputMaybe<Scalars['String']['input']>;
+  address_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  address_not_contains?: InputMaybe<Scalars['String']['input']>;
+  address_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  address_starts_with?: InputMaybe<Scalars['String']['input']>;
+  address_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  address_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  address_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  address_ends_with?: InputMaybe<Scalars['String']['input']>;
+  address_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  address_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  address_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<Keeper_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<Keeper_filter>>>;
+};
+
+export type Keeper_orderBy =
+  | 'id'
+  | 'address';
+
 export type Member = {
   id: Scalars['ID']['output'];
   memberCommunity?: Maybe<Array<MemberCommunity>>;
@@ -1699,6 +1744,7 @@ export type MemberCommunity_orderBy =
   | 'registryCommunity__isValid'
   | 'registryCommunity__archived'
   | 'registryCommunity__membersCount'
+  | 'registryCommunity__protopianDelegatedFrom'
   | 'covenantSignature';
 
 export type MemberStrategy = {
@@ -2727,6 +2773,114 @@ export type ProposalStream_orderBy =
   | 'createdAt'
   | 'updatedAt';
 
+export type Protopian = {
+  id: Scalars['ID']['output'];
+  address: Scalars['String']['output'];
+};
+
+export type ProtopianDelegationIndex = {
+  id: Scalars['ID']['output'];
+  community?: Maybe<RegistryCommunity>;
+};
+
+export type ProtopianDelegationIndex_filter = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  id_not?: InputMaybe<Scalars['ID']['input']>;
+  id_gt?: InputMaybe<Scalars['ID']['input']>;
+  id_lt?: InputMaybe<Scalars['ID']['input']>;
+  id_gte?: InputMaybe<Scalars['ID']['input']>;
+  id_lte?: InputMaybe<Scalars['ID']['input']>;
+  id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  community?: InputMaybe<Scalars['String']['input']>;
+  community_not?: InputMaybe<Scalars['String']['input']>;
+  community_gt?: InputMaybe<Scalars['String']['input']>;
+  community_lt?: InputMaybe<Scalars['String']['input']>;
+  community_gte?: InputMaybe<Scalars['String']['input']>;
+  community_lte?: InputMaybe<Scalars['String']['input']>;
+  community_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  community_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  community_contains?: InputMaybe<Scalars['String']['input']>;
+  community_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  community_not_contains?: InputMaybe<Scalars['String']['input']>;
+  community_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  community_starts_with?: InputMaybe<Scalars['String']['input']>;
+  community_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  community_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  community_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  community_ends_with?: InputMaybe<Scalars['String']['input']>;
+  community_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  community_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  community_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  community_?: InputMaybe<RegistryCommunity_filter>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<ProtopianDelegationIndex_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<ProtopianDelegationIndex_filter>>>;
+};
+
+export type ProtopianDelegationIndex_orderBy =
+  | 'id'
+  | 'community'
+  | 'community__id'
+  | 'community__chainId'
+  | 'community__strategyTemplate'
+  | 'community__profileId'
+  | 'community__communityFee'
+  | 'community__protocolFee'
+  | 'community__protocolFeeReceiver'
+  | 'community__communityName'
+  | 'community__covenantIpfsHash'
+  | 'community__councilSafe'
+  | 'community__pendingNewCouncilSafe'
+  | 'community__isKickEnabled'
+  | 'community__registerStakeAmount'
+  | 'community__registerToken'
+  | 'community__alloAddress'
+  | 'community__isValid'
+  | 'community__archived'
+  | 'community__membersCount'
+  | 'community__protopianDelegatedFrom';
+
+export type Protopian_filter = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  id_not?: InputMaybe<Scalars['ID']['input']>;
+  id_gt?: InputMaybe<Scalars['ID']['input']>;
+  id_lt?: InputMaybe<Scalars['ID']['input']>;
+  id_gte?: InputMaybe<Scalars['ID']['input']>;
+  id_lte?: InputMaybe<Scalars['ID']['input']>;
+  id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  address?: InputMaybe<Scalars['String']['input']>;
+  address_not?: InputMaybe<Scalars['String']['input']>;
+  address_gt?: InputMaybe<Scalars['String']['input']>;
+  address_lt?: InputMaybe<Scalars['String']['input']>;
+  address_gte?: InputMaybe<Scalars['String']['input']>;
+  address_lte?: InputMaybe<Scalars['String']['input']>;
+  address_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  address_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  address_contains?: InputMaybe<Scalars['String']['input']>;
+  address_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  address_not_contains?: InputMaybe<Scalars['String']['input']>;
+  address_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  address_starts_with?: InputMaybe<Scalars['String']['input']>;
+  address_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  address_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  address_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  address_ends_with?: InputMaybe<Scalars['String']['input']>;
+  address_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  address_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  address_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<Protopian_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<Protopian_filter>>>;
+};
+
+export type Protopian_orderBy =
+  | 'id'
+  | 'address';
+
 export type Query = {
   cvstrategy?: Maybe<CVStrategy>;
   cvstrategies: Array<CVStrategy>;
@@ -2748,6 +2902,12 @@ export type Query = {
   registryCommunities: Array<RegistryCommunity>;
   member?: Maybe<Member>;
   members: Array<Member>;
+  protopian?: Maybe<Protopian>;
+  protopians: Array<Protopian>;
+  keeper?: Maybe<Keeper>;
+  keepers: Array<Keeper>;
+  protopianDelegationIndex?: Maybe<ProtopianDelegationIndex>;
+  protopianDelegationIndexes: Array<ProtopianDelegationIndex>;
   stake?: Maybe<Stake>;
   stakes: Array<Stake>;
   memberCommunity?: Maybe<MemberCommunity>;
@@ -2964,6 +3124,60 @@ export type QuerymembersArgs = {
   orderBy?: InputMaybe<Member_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<Member_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryprotopianArgs = {
+  id: Scalars['ID']['input'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryprotopiansArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<Protopian_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<Protopian_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerykeeperArgs = {
+  id: Scalars['ID']['input'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerykeepersArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<Keeper_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<Keeper_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryprotopianDelegationIndexArgs = {
+  id: Scalars['ID']['input'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryprotopianDelegationIndexesArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<ProtopianDelegationIndex_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<ProtopianDelegationIndex_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -3321,6 +3535,7 @@ export type RegistryCommunity = {
   isValid: Scalars['Boolean']['output'];
   archived: Scalars['Boolean']['output'];
   membersCount: Scalars['BigInt']['output'];
+  protopianDelegatedFrom?: Maybe<Scalars['String']['output']>;
 };
 
 
@@ -3647,6 +3862,26 @@ export type RegistryCommunity_filter = {
   membersCount_lte?: InputMaybe<Scalars['BigInt']['input']>;
   membersCount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   membersCount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  protopianDelegatedFrom?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_not?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_gt?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_lt?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_gte?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_lte?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  protopianDelegatedFrom_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  protopianDelegatedFrom_contains?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_not_contains?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_starts_with?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_ends_with?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  protopianDelegatedFrom_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
@@ -3689,11 +3924,13 @@ export type RegistryCommunity_orderBy =
   | 'garden__address'
   | 'isValid'
   | 'archived'
-  | 'membersCount';
+  | 'membersCount'
+  | 'protopianDelegatedFrom';
 
 export type RegistryFactory = {
   id: Scalars['ID']['output'];
   chainId: Scalars['BigInt']['output'];
+  authorizedWallets: Array<Scalars['String']['output']>;
   registryCommunities?: Maybe<Array<RegistryCommunity>>;
 };
 
@@ -3723,6 +3960,12 @@ export type RegistryFactory_filter = {
   chainId_lte?: InputMaybe<Scalars['BigInt']['input']>;
   chainId_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   chainId_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  authorizedWallets?: InputMaybe<Array<Scalars['String']['input']>>;
+  authorizedWallets_not?: InputMaybe<Array<Scalars['String']['input']>>;
+  authorizedWallets_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  authorizedWallets_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+  authorizedWallets_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  authorizedWallets_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
   registryCommunities_?: InputMaybe<RegistryCommunity_filter>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
@@ -3733,6 +3976,7 @@ export type RegistryFactory_filter = {
 export type RegistryFactory_orderBy =
   | 'id'
   | 'chainId'
+  | 'authorizedWallets'
   | 'registryCommunities';
 
 export type Stake = {
@@ -4355,6 +4599,18 @@ export type _SubgraphErrorPolicy_ =
   member: InContextSdkMethod<Query['member'], QuerymemberArgs, MeshContext>,
   /** null **/
   members: InContextSdkMethod<Query['members'], QuerymembersArgs, MeshContext>,
+  /** null **/
+  protopian: InContextSdkMethod<Query['protopian'], QueryprotopianArgs, MeshContext>,
+  /** null **/
+  protopians: InContextSdkMethod<Query['protopians'], QueryprotopiansArgs, MeshContext>,
+  /** null **/
+  keeper: InContextSdkMethod<Query['keeper'], QuerykeeperArgs, MeshContext>,
+  /** null **/
+  keepers: InContextSdkMethod<Query['keepers'], QuerykeepersArgs, MeshContext>,
+  /** null **/
+  protopianDelegationIndex: InContextSdkMethod<Query['protopianDelegationIndex'], QueryprotopianDelegationIndexArgs, MeshContext>,
+  /** null **/
+  protopianDelegationIndexes: InContextSdkMethod<Query['protopianDelegationIndexes'], QueryprotopianDelegationIndexesArgs, MeshContext>,
   /** null **/
   stake: InContextSdkMethod<Query['stake'], QuerystakeArgs, MeshContext>,
   /** null **/

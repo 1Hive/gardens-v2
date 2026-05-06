@@ -10,6 +10,7 @@ import {ConvictionsUtils} from "../ConvictionsUtils.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
+
 /**
  * @title CVAllocationFacet
  * @notice Facet containing allocation and distribution functions for CVStrategy
@@ -39,6 +40,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     error PoolIsEmpty(uint256 poolAmount); // 0xf458e27c
     error PoolAmountNotEnough(uint256 proposalId, uint256 requestedAmount, uint256 poolAmount); // 0x5863b0b6
     error ConvictionUnderMinimumThreshold(uint256 conviction, uint256 threshold, uint256 requestedAmount); // 0x7ac83e3d
+    error NoActiveGovernancePoints(uint256 proposalId); // 0x38913cd0
     error AmountOverMaxRatio(uint256 requestedAmount, uint256 maxAllowed, uint256 poolAmount); // 0x3e4bb863
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
@@ -224,22 +226,29 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                 revert PoolAmountNotEnough(proposalId, proposals[proposalId].requestedAmount, poolAmount);
             }
 
-            if (_isOverMaxRatio(proposals[proposalId].requestedAmount)) {
+            if (proposals[proposalId].requestedAmount > 0 && _isOverMaxRatio(proposals[proposalId].requestedAmount)) {
                 uint256 maxAllowed = (cvParams.maxRatio * poolAmount) / ConvictionsUtils.D;
                 revert AmountOverMaxRatio(proposals[proposalId].requestedAmount, maxAllowed, poolAmount);
             }
 
             uint256 convictionLast = updateProposalConviction(proposalId);
 
-            uint256 threshold = ConvictionsUtils.calculateThreshold(
-                proposals[proposalId].requestedAmount,
-                poolAmount,
-                totalPointsActivated,
-                cvParams.decay,
-                cvParams.weight,
-                cvParams.maxRatio,
-                cvParams.minThresholdPoints
-            );
+            // if (proposals[proposalId].requestedAmount > 0 && totalPointsActivated == 0) {
+            //     revert NoActiveGovernancePoints(proposalId);
+            // }
+
+            uint256 threshold;
+            if (proposals[proposalId].requestedAmount > 0) {
+                threshold = ConvictionsUtils.calculateThreshold(
+                    proposals[proposalId].requestedAmount,
+                    poolAmount,
+                    totalPointsActivated,
+                    cvParams.decay,
+                    cvParams.weight,
+                    cvParams.maxRatio,
+                    cvParams.minThresholdPoints
+                );
+            }
 
             // <= for when threshold being zero
             if (convictionLast <= threshold && proposals[proposalId].requestedAmount > 0) {

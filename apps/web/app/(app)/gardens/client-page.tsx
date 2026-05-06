@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { Address, readContract } from "@wagmi/core";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -20,12 +19,11 @@ import {
 import { Button, Communities } from "@/components";
 import { LightCommunity } from "@/components/Communities";
 import MarkeeSign from "@/components/MarkeeSign";
+import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { useTheme } from "@/providers/ThemeProvider";
-import { getProtopiansOwners } from "@/services/alchemy";
-import { safeABI } from "@/src/customAbis";
 import { logOnce } from "@/utils/log";
 
 const Header = () => {
@@ -110,79 +108,28 @@ const Footer = () => {
 };
 
 export default function ClientPage() {
-  const [protopianOwners, setProtopianOwners] = useState<Address[] | undefined>(
-    undefined,
-  );
-
   const showArchived = useFlag("showArchived");
 
   useEffect(() => {
     logOnce("debug", "Loading page: (app)/gardens/page.tsx");
   }, []);
 
-  useEffect(() => {
-    getProtopiansOwners()
-      .then((owners) => {
-        setProtopianOwners(owners);
-      })
-      .catch((err) => {
-        console.error("Error fetching Protopian community data:", err);
-        setProtopianOwners([]);
-      });
-  }, []);
-
   const { data: communitiesSections, fetching: isFetching } =
     useSubgraphQueryMultiChain<getCommunitiesQuery>({
       query: getCommunitiesDocument,
-      enabled: !!protopianOwners,
-      modifier: async (data) => {
-        return Promise.all(
-          data
-            .flatMap((section) =>
-              section.registryCommunities.map((x) => ({
-                ...x,
-                chain: section.chain,
-              })),
-            )
-            .filter((x) => !x.archived || showArchived)
-            .map(async (x) => {
-              if (
-                protopianOwners &&
-                protopianOwners.length > 0 &&
-                x.chain.safePrefix
-              ) {
-                const councilSafeAddress = x.councilSafe as Address;
-                try {
-                  const communityCouncil = await readContract({
-                    address: councilSafeAddress,
-                    abi: safeABI,
-                    functionName: "getOwners",
-                    chainId: x.chain.id,
-                  });
-
-                  return {
-                    ...x,
-                    isProtopian: !![
-                      ...communityCouncil,
-                      councilSafeAddress,
-                    ].find(
-                      (owner) =>
-                        !!protopianOwners!.find(
-                          (p) => owner.toLowerCase() === p.toLowerCase(),
-                        ),
-                    ),
-                  };
-                } catch {
-                  console.warn(
-                    `Council Safe owners could not be read for community ${x.communityName}.`,
-                  );
-                  return x;
-                }
-              }
-
-              return x;
-            }),
-        );
+      modifier: (data) => {
+        return data
+          .flatMap((section) =>
+            section.registryCommunities.map((x) => ({
+              ...x,
+              chain: section.chain,
+              isProtopian:
+                x.id.toLowerCase() === ONE_HIVE_COMMUNITY_ADDRESS ||
+                (x as { protopianDelegatedFrom?: string | null })
+                  .protopianDelegatedFrom != null,
+            })),
+          )
+          .filter((x) => !x.archived || showArchived);
       },
       changeScope: [
         {
@@ -190,14 +137,12 @@ export default function ClientPage() {
         },
       ],
     });
+  const communities = communitiesSections as LightCommunity[] | undefined;
 
   return (
     <div className="page-layout max-w-7xl mx-auto">
       <Header />
-      <Communities
-        communities={(communitiesSections as unknown as LightCommunity[]) ?? []}
-        isFetching={isFetching}
-      />
+      <Communities communities={communities ?? []} isFetching={isFetching} />
       <Footer />
     </div>
   );

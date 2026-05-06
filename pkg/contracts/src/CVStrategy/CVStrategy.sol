@@ -495,27 +495,17 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         )
     {
         Proposal storage proposal = proposals[_proposalId];
+        uint256 currentPoolAmount = getPoolAmount();
 
-        if (proposal.requestedAmount == 0) {
-            threshold = 0;
-        } else {
-            uint256 poolAmount = getPoolAmount();
-            uint256 maxAllowed = Math.mulDiv(poolAmount, cvParams.maxRatio, ConvictionsUtils.D);
-
-            if (maxAllowed == 0 || proposal.requestedAmount > maxAllowed) {
-                threshold = 0;
-            } else {
-                threshold = ConvictionsUtils.calculateThreshold(
-                    proposal.requestedAmount,
-                    poolAmount,
-                    totalPointsActivated,
-                    cvParams.decay,
-                    cvParams.weight,
-                    cvParams.maxRatio,
-                    cvParams.minThresholdPoints
-                );
-            }
-        }
+        threshold = ConvictionsUtils.calculateThreshold(
+            proposal.requestedAmount,
+            currentPoolAmount,
+            totalPointsActivated,
+            cvParams.decay,
+            cvParams.weight,
+            cvParams.maxRatio,
+            cvParams.minThresholdPoints
+        );
         return (
             proposal.submitter,
             proposal.beneficiary,
@@ -617,17 +607,11 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
 
     // Sig: 0x59a5db8b
     function calculateThreshold(uint256 _requestedAmount) external view returns (uint256) {
-        uint256 poolAmount = getPoolAmount();
-        uint256 maxAllowed = (cvParams.maxRatio * poolAmount) / ConvictionsUtils.D;
-
-        // Goss: Removed to allow threshold calculation even if over max ratio
-        // if (_requestedAmount * ConvictionsUtils.D > cvParams.maxRatio * poolAmount) {
-        //     revert AmountOverMaxRatio(_requestedAmount, maxAllowed, poolAmount);
-        // }
+        uint256 currentPoolAmount = getPoolAmount();
 
         return ConvictionsUtils.calculateThreshold(
             _requestedAmount,
-            poolAmount,
+            currentPoolAmount,
             totalPointsActivated,
             cvParams.decay,
             cvParams.weight,
@@ -675,8 +659,8 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         if (address(registryCommunity) == address(0)) {
             return true;
         }
-        (bool ok, bytes memory data) =
-            address(registryCommunity).staticcall(abi.encodeWithSelector(registryCommunity.enabledStrategies.selector, address(this)));
+        (bool ok, bytes memory data) = address(registryCommunity)
+            .staticcall(abi.encodeWithSelector(registryCommunity.enabledStrategies.selector, address(this)));
         if (!ok || data.length < 32) {
             return true;
         }

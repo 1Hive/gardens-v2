@@ -111,7 +111,6 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
     ) internal {
         onlyCouncilSafe();
 
-        uint256 previousStreamingRatePerSecond = streamingRatePerSecond;
         ISuperToken previousSuperfluidToken = superfluidToken;
 
         if (proposalType == ProposalType.Streaming && address(previousSuperfluidToken) != _superfluidToken) {
@@ -128,10 +127,6 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
 
         if (address(sybilScorer) != address(0) && _sybilScoreThreshold > 0) {
             sybilScorer.modifyThreshold(address(this), _sybilScoreThreshold);
-        }
-
-        if (proposalType == ProposalType.Streaming && previousStreamingRatePerSecond != _streamingRatePerSecond) {
-            _updateStreamingFlowRateOnly();
         }
     }
 
@@ -294,23 +289,6 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
         }
 
         nextToken.upgrade(unwrappedBalance);
-    }
-
-    function _updateStreamingFlowRateOnly() internal {
-        if (address(superfluidToken) == address(0) || address(superfluidGDA) == address(0)) {
-            return;
-        }
-
-        uint256 requestedFlowRate = streamingRatePerSecond;
-        if (requestedFlowRate > uint256(uint96(type(int96).max))) {
-            revert StreamingRateOverflow(requestedFlowRate);
-        }
-
-        int96 currentFlowRate = superfluidToken.getGDAFlowRate(address(this), superfluidGDA);
-        int96 actualFlowRate = superfluidToken.distributeFlow(superfluidGDA, int96(uint96(requestedFlowRate)));
-        if (currentFlowRate != actualFlowRate) {
-            emit StreamRateUpdated(address(superfluidGDA), actualFlowRate > 0 ? uint256(uint96(actualFlowRate)) : 0);
-        }
     }
 
     function _addToAllowList(address[] memory members) internal {
