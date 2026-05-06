@@ -62,7 +62,11 @@ test("should increase stake in community", async ({
     await metamask.confirmSignature();
     await approveTokenAllowance({ page, metamask, extensionId });
     const { governanceToken, communityId } = getConfig();
-    await waitForAllowancePositive({ page, token: governanceToken, spender: communityId });
+    await waitForAllowancePositive({
+      page,
+      token: governanceToken,
+      spender: communityId
+    });
     await page.waitForTimeout(800);
     await confirmTransaction({ metamask, extensionId });
     await expectNoErrorToast(page);
@@ -154,7 +158,12 @@ test("should increase stake in community", async ({
   // If a token approval appears before staking, ensure allowance is live
   try {
     const { governanceToken, communityId } = getConfig();
-    await waitForAllowancePositive({ page, token: governanceToken, spender: communityId, timeoutMs: 60000 });
+    await waitForAllowancePositive({
+      page,
+      token: governanceToken,
+      spender: communityId,
+      timeoutMs: 60000
+    });
   } catch {}
 
   // Approve token allowance for staking

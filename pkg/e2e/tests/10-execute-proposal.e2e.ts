@@ -64,10 +64,7 @@ async function fetchLatestStrategy(graphUrl: string, communityId: string) {
   }).then((r) => r.json());
 }
 
-async function getTokenDecimals(
-  publicClient: any,
-  token: Address
-) {
+async function getTokenDecimals(publicClient: any, token: Address) {
   const decimals = await publicClient.readContract({
     address: token,
     abi: erc20Abi,
@@ -91,17 +88,20 @@ async function waitForTokenBalanceAtLeast({
   timeoutMs?: number;
 }) {
   await expect
-    .poll(async () => {
-      return publicClient.readContract({
-        address: token,
-        abi: erc20Abi,
-        functionName: "balanceOf",
-        args: [owner]
-      });
-    }, {
-      timeout: timeoutMs,
-      intervals: [1000, 2000, 3000]
-    })
+    .poll(
+      async () => {
+        return publicClient.readContract({
+          address: token,
+          abi: erc20Abi,
+          functionName: "balanceOf",
+          args: [owner]
+        });
+      },
+      {
+        timeout: timeoutMs,
+        intervals: [1000, 2000, 3000]
+      }
+    )
     .toBeGreaterThanOrEqual(minimumBalance);
 }
 
@@ -236,27 +236,30 @@ async function waitForProposalToBeExecutable({
   timeoutMs?: number;
 }) {
   await expect
-    .poll(async () => {
-      const [conviction, threshold] = await Promise.all([
-        publicClient.readContract({
-          address: strategyAddress,
-          abi: cvStrategyAbi,
-          functionName: "calculateProposalConviction",
-          args: [proposalNumber]
-        }),
-        publicClient.readContract({
-          address: strategyAddress,
-          abi: cvStrategyAbi,
-          functionName: "calculateThreshold",
-          args: [requestedAmount]
-        })
-      ]);
+    .poll(
+      async () => {
+        const [conviction, threshold] = await Promise.all([
+          publicClient.readContract({
+            address: strategyAddress,
+            abi: cvStrategyAbi,
+            functionName: "calculateProposalConviction",
+            args: [proposalNumber]
+          }),
+          publicClient.readContract({
+            address: strategyAddress,
+            abi: cvStrategyAbi,
+            functionName: "calculateThreshold",
+            args: [requestedAmount]
+          })
+        ]);
 
-      return conviction >= threshold;
-    }, {
-      timeout: timeoutMs,
-      intervals: [1000, 2000, 3000]
-    })
+        return conviction >= threshold;
+      },
+      {
+        timeout: timeoutMs,
+        intervals: [1000, 2000, 3000]
+      }
+    )
     .toBe(true);
 }
 
@@ -299,26 +302,29 @@ async function waitForProposalExecution({
   timeoutMs?: number;
 }) {
   await expect
-    .poll(async () => {
-      const response = await fetch(graphUrl, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          query: `{
+    .poll(
+      async () => {
+        const response = await fetch(graphUrl, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            query: `{
             cvproposal(id: "${proposalId}") {
               proposalStatus
               executedAt
             }
           }`
-        })
-      }).then((r) => r.json());
+          })
+        }).then((r) => r.json());
 
-      const proposal = response.data?.cvproposal;
-      return proposal?.proposalStatus === "4" || proposal?.executedAt != null;
-    }, {
-      timeout: timeoutMs,
-      intervals: [1000, 2000, 3000, 5000]
-    })
+        const proposal = response.data?.cvproposal;
+        return proposal?.proposalStatus === "4" || proposal?.executedAt != null;
+      },
+      {
+        timeout: timeoutMs,
+        intervals: [1000, 2000, 3000, 5000]
+      }
+    )
     .toBe(true);
 }
 
@@ -454,20 +460,24 @@ test("should execute a proposal", async ({
     await expectNoErrorToast(page);
 
     await expect
-      .poll(async () => {
-        subgraphRes = await fetchLatestStrategy(graphUrl, communityId);
-        const newestProposal = subgraphRes.data.cvstrategies[0].proposals[0];
-        const newestProposalNumber =
-          newestProposal ? Number(newestProposal.proposalNumber) : 0;
-        createdProposalNumber =
-          newestProposalNumber > highestKnownProposalNumber ?
-            newestProposalNumber
-          : null;
-        return createdProposalNumber;
-      }, {
-        timeout: 180000,
-        intervals: [1000, 2000, 3000, 5000]
-      })
+      .poll(
+        async () => {
+          subgraphRes = await fetchLatestStrategy(graphUrl, communityId);
+          const newestProposal = subgraphRes.data.cvstrategies[0].proposals[0];
+          const newestProposalNumber = newestProposal
+            ? Number(newestProposal.proposalNumber)
+            : 0;
+          createdProposalNumber =
+            newestProposalNumber > highestKnownProposalNumber
+              ? newestProposalNumber
+              : null;
+          return createdProposalNumber;
+        },
+        {
+          timeout: 180000,
+          intervals: [1000, 2000, 3000, 5000]
+        }
+      )
       .not.toBeNull();
   }
 
@@ -479,8 +489,8 @@ test("should execute a proposal", async ({
     poolId: BigInt(poolId),
     voter: account.address,
     targetProposalNumber: BigInt(createdProposalNumber),
-    proposalNumbers: proposals.map(
-      (proposal: { proposalNumber: string }) => BigInt(proposal.proposalNumber)
+    proposalNumbers: proposals.map((proposal: { proposalNumber: string }) =>
+      BigInt(proposal.proposalNumber)
     ),
     targetSupport: parseUnits("0.2", 18)
   });

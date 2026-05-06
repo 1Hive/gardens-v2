@@ -22,11 +22,18 @@ jobs:
     timeout-minutes: 45
     env:
       CI: "true"
+      E2E_CI: "true"
       HEADLESS: "false"
-      E2E_WALLET_SEED_PHRASE: ${{ secrets.E2E_WALLET_SEED_PHRASE }}
+      E2E_RPC_URL_CI: ${{ secrets.E2E_RPC_URL_CI || vars.E2E_RPC_URL_CI }}
+      E2E_COMMUNITY_ID_CI: ${{ vars.E2E_COMMUNITY_ID_CI || secrets.E2E_COMMUNITY_ID_CI }}
+      E2E_CHAIN_ID_CI: ${{ vars.E2E_CHAIN_ID_CI || secrets.E2E_CHAIN_ID_CI }}
+      E2E_POOL_TOKEN_ADDRESS_CI: ${{ vars.E2E_POOL_TOKEN_ADDRESS_CI || secrets.E2E_POOL_TOKEN_ADDRESS_CI }}
+      E2E_GOVERNANCE_TOKEN_ADDRESS_CI: ${{ vars.E2E_GOVERNANCE_TOKEN_ADDRESS_CI || secrets.E2E_GOVERNANCE_TOKEN_ADDRESS_CI }}
+      E2E_SUBGRAPH_URL_CI: ${{ vars.E2E_SUBGRAPH_URL_CI || secrets.E2E_SUBGRAPH_URL_CI }}
+      E2E_WALLET_SEED_PHRASE_CI: ${{ secrets.E2E_WALLET_SEED_PHRASE_CI }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID || secrets.VERCEL_TEAM_ID }}
       PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
 
     steps:
@@ -34,10 +41,21 @@ jobs:
         id: preflight
         shell: bash
         run: |
+          set -euo pipefail
+
           missing=0
-          for key in E2E_WALLET_SEED_PHRASE VERCEL_TOKEN VERCEL_PROJECT_ID; do
+          for key in \
+            E2E_RPC_URL_CI \
+            E2E_COMMUNITY_ID_CI \
+            E2E_CHAIN_ID_CI \
+            E2E_POOL_TOKEN_ADDRESS_CI \
+            E2E_GOVERNANCE_TOKEN_ADDRESS_CI \
+            E2E_SUBGRAPH_URL_CI \
+            E2E_WALLET_SEED_PHRASE_CI \
+            VERCEL_TOKEN \
+            VERCEL_PROJECT_ID; do
             if [ -z "${!key:-}" ]; then
-              echo "::warning::Missing required secret: ${key}"
+              echo "::warning::Missing required CI configuration: ${key}"
               missing=1
             fi
           done
@@ -169,7 +187,7 @@ jobs:
         if: steps.preflight.outputs.run_e2e == 'true'
         env:
           PLAYWRIGHT_BASE_URL: ${{ steps.vercel.outputs.preview_url }}
-        run: xvfb-run -a pnpm --filter e2e test:ci
+        run: xvfb-run -a pnpm --filter e2e run test:ci
 
       - name: Upload Playwright report
         if: ${{ !cancelled() && steps.preflight.outputs.run_e2e == 'true' }}
@@ -181,4 +199,4 @@ jobs:
 
       - name: Skip E2E (missing secrets)
         if: steps.preflight.outputs.run_e2e != 'true'
-        run: echo "Skipping E2E because required secrets are missing."
+        run: echo "Skipping E2E because required CI env vars/secrets are missing."

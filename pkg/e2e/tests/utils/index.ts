@@ -40,7 +40,9 @@ export async function waitForAllowancePositive({
   if (!acct) {
     acct = (await page.evaluate(async () => {
       const provider = (window as any).ethereum;
-      const accounts = (await provider.request({ method: "eth_accounts" })) as string[];
+      const accounts = (await provider.request({
+        method: "eth_accounts"
+      })) as string[];
       return accounts[0] ?? null;
     })) as `0x${string}` | null;
   }
@@ -71,5 +73,7 @@ export async function waitForAllowancePositive({
     } catch {}
     await page.waitForTimeout(pollMs);
   }
-  throw new Error("waitForAllowancePositive: allowance not observed > 0 within timeout");
+  throw new Error(
+    "waitForAllowancePositive: allowance not observed > 0 within timeout"
+  );
 }

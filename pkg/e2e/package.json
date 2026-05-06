@@ -12,7 +12,7 @@
     "test:headed": "pnpm run build-cache && playwright test --headed --retries=1",
     "test:ui": "playwright test --ui",
     "test:debug": "playwright test --debug",
-    "test:ci": "env -u HEADLESS -u E2E_CI pnpm test"
+    "test:ci": "env -u HEADLESS pnpm test"
   },
   "keywords": [],
   "author": "",

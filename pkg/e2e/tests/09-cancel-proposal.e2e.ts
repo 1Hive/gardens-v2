@@ -13,7 +13,10 @@ test.setTimeout(240000);
 
 const cancellableStatuses = [0, 1, 2, 5];
 
-async function fetchLatestStrategyWithProposals(subgraphUrl: string, communityId: string) {
+async function fetchLatestStrategyWithProposals(
+  subgraphUrl: string,
+  communityId: string
+) {
   return fetch(subgraphUrl, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -55,7 +58,10 @@ test("should cancel a proposal", async ({
 
   const { chainId, communityId, subgraphUrl } = getConfig();
   const graphUrl = subgraphUrl;
-  let subgraphRes = await fetchLatestStrategyWithProposals(graphUrl, communityId);
+  let subgraphRes = await fetchLatestStrategyWithProposals(
+    graphUrl,
+    communityId
+  );
   let strategy = subgraphRes.data.cvstrategies[0];
   const highestKnownProposalNumber = strategy.proposals.reduce(
     (max: number, item: { proposalNumber: string }) =>
@@ -101,20 +107,28 @@ test("should cancel a proposal", async ({
 
     let createdProposalNumber: number | null = null;
     await expect
-      .poll(async () => {
-        subgraphRes = await fetchLatestStrategyWithProposals(graphUrl, communityId);
-        strategy = subgraphRes.data.cvstrategies[0];
-        const newestProposal = strategy.proposals[0];
-        const newestProposalNumber = newestProposal ? Number(newestProposal.proposalNumber) : 0;
-        createdProposalNumber =
-          newestProposalNumber > highestKnownProposalNumber ?
-            newestProposalNumber
-          : null;
-        return createdProposalNumber;
-      }, {
-        timeout: 180000,
-        intervals: [1000, 2000, 3000, 5000]
-      })
+      .poll(
+        async () => {
+          subgraphRes = await fetchLatestStrategyWithProposals(
+            graphUrl,
+            communityId
+          );
+          strategy = subgraphRes.data.cvstrategies[0];
+          const newestProposal = strategy.proposals[0];
+          const newestProposalNumber = newestProposal
+            ? Number(newestProposal.proposalNumber)
+            : 0;
+          createdProposalNumber =
+            newestProposalNumber > highestKnownProposalNumber
+              ? newestProposalNumber
+              : null;
+          return createdProposalNumber;
+        },
+        {
+          timeout: 180000,
+          intervals: [1000, 2000, 3000, 5000]
+        }
+      )
       .not.toBeNull();
 
     proposal = strategy.proposals.find(
