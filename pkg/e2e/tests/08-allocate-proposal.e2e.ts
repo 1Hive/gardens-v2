@@ -54,7 +54,20 @@ test("should allocate support to a proposal", async ({
 
   // Open the allocation view
   const voteBtn = getByTestId(page, "btn-vote-on-proposals");
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const voteVisible = await voteBtn.isVisible().catch(() => false);
+    const voteEnabled = await voteBtn.isEnabled().catch(() => false);
+
+    if (voteVisible && voteEnabled) {
+      break;
+    }
+
+    await page.reload({ waitUntil: "networkidle" }).catch(() => {});
+    await page.waitForTimeout(5000);
+  }
+
   await expect(voteBtn).toBeVisible({ timeout: 60000 });
+  await expect(voteBtn).toBeEnabled({ timeout: 60000 });
   await voteBtn.click();
 
   // Fill the slider for the first proposal
