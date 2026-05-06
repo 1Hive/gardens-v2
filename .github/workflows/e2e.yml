@@ -134,8 +134,8 @@ jobs:
               exit 0
             fi
 
-            if [ "${state}" = "CANCELED" ] && [ -n "${branch_alias}" ] && echo "${error_message}" | grep -qi 'Ignored Build Step'; then
-              echo "Deployment was skipped by Vercel's Ignored Build Step. Falling back to branch alias: https://${branch_alias}"
+            if [ "${state}" = "CANCELED" ] && [ -n "${branch_alias}" ] && echo "${error_message}" | grep -Eqi 'Ignored Build Step|not affected'; then
+              echo "Deployment was skipped by Vercel. Falling back to branch alias: https://${branch_alias}"
               echo "::notice::Using Vercel branch alias https://${branch_alias}"
               echo "preview_url=https://${branch_alias}" >> "$GITHUB_OUTPUT"
               exit 0
