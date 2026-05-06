@@ -172,24 +172,27 @@ async function reallocateSupportToProposal({
   proposalNumbers: bigint[];
   targetSupport: bigint;
 }) {
-  const currentStakes = await Promise.all(
+  const currentStakes: { proposalNumber: bigint; currentStake: bigint }[] =
+    await Promise.all(
     proposalNumbers.map(async (proposalNumber) => ({
       proposalNumber,
-      currentStake: await getProposalVoterStake({
-        publicClient,
-        strategyAddress,
-        proposalNumber,
-        voter
-      })
+      currentStake: BigInt(
+        await getProposalVoterStake({
+          publicClient,
+          strategyAddress,
+          proposalNumber,
+          voter
+        })
+      )
     }))
-  );
+    );
 
   const currentTargetStake =
     currentStakes.find(
       ({ proposalNumber }) => proposalNumber === targetProposalNumber
     )?.currentStake ?? 0n;
 
-  const deltas = currentStakes
+  const deltas: { proposalId: bigint; deltaSupport: bigint }[] = currentStakes
     .filter(
       ({ proposalNumber, currentStake }) =>
         currentStake > 0n && proposalNumber !== targetProposalNumber
@@ -481,6 +484,12 @@ test("should execute a proposal", async ({
       .not.toBeNull();
   }
 
+  if (createdProposalNumber == null) {
+    throw new Error("Unable to resolve proposal number for execution test");
+  }
+
+  const resolvedProposalNumber = BigInt(createdProposalNumber);
+
   await reallocateSupportToProposal({
     publicClient,
     walletClient,
@@ -488,7 +497,7 @@ test("should execute a proposal", async ({
     strategyAddress,
     poolId: BigInt(poolId),
     voter: account.address,
-    targetProposalNumber: BigInt(createdProposalNumber),
+    targetProposalNumber: resolvedProposalNumber,
     proposalNumbers: proposals.map((proposal: { proposalNumber: string }) =>
       BigInt(proposal.proposalNumber)
     ),
@@ -512,7 +521,7 @@ test("should execute a proposal", async ({
   await waitForProposalToBeExecutable({
     publicClient,
     strategyAddress,
-    proposalNumber: BigInt(createdProposalNumber),
+    proposalNumber: resolvedProposalNumber,
     requestedAmount: parseUnits(requestedAmount, 18)
   });
 
@@ -522,7 +531,7 @@ test("should execute a proposal", async ({
     alloAddress,
     poolId: BigInt(poolId),
     strategyAddress,
-    proposalNumber: BigInt(createdProposalNumber)
+    proposalNumber: resolvedProposalNumber
   });
 
   const proposalRouteId = `${strategyAddress}-${createdProposalNumber}`;

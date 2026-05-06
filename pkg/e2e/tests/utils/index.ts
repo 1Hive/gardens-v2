@@ -36,15 +36,18 @@ export async function waitForAllowancePositive({
   timeoutMs?: number;
   pollMs?: number;
 }) {
-  let acct = owner;
+  let acct: `0x${string}` | undefined = owner;
   if (!acct) {
-    acct = (await page.evaluate(async () => {
+    const evaluatedAcct = (await page.evaluate(async () => {
       const provider = (window as any).ethereum;
       const accounts = (await provider.request({
         method: "eth_accounts"
       })) as string[];
       return accounts[0] ?? null;
     })) as `0x${string}` | null;
+    if (evaluatedAcct) {
+      acct = evaluatedAcct;
+    }
   }
   if (!acct) throw new Error("waitForAllowancePositive: missing owner account");
 
