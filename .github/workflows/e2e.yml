@@ -122,6 +122,8 @@ jobs:
 
             state="$(echo "${deployment}" | jq -r '.readyState // .state // ""')"
             url="$(echo "${deployment}" | jq -r '.url // ""')"
+            branch_alias="$(echo "${deployment}" | jq -r '.meta.branchAlias // ""')"
+            error_message="$(echo "${deployment}" | jq -r '.errorMessage // ""')"
 
             echo "Found deployment state: ${state}"
 
@@ -129,6 +131,13 @@ jobs:
               echo "Resolved preview URL: https://${url}"
               echo "::notice::Using Vercel preview URL https://${url}"
               echo "preview_url=https://${url}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            if [ "${state}" = "CANCELED" ] && [ -n "${branch_alias}" ] && echo "${error_message}" | grep -qi 'Ignored Build Step'; then
+              echo "Deployment was skipped by Vercel's Ignored Build Step. Falling back to branch alias: https://${branch_alias}"
+              echo "::notice::Using Vercel branch alias https://${branch_alias}"
+              echo "preview_url=https://${branch_alias}" >> "$GITHUB_OUTPUT"
               exit 0
             fi
 
