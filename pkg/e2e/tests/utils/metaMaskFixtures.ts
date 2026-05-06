@@ -92,7 +92,10 @@ let cachedExtensionId: string;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function getExtensionIdFromProfile(contextPath: string, extensionPath: string) {
+async function getExtensionIdFromProfile(
+  contextPath: string,
+  extensionPath: string
+) {
   const preferencesPath = path.join(contextPath, "Default", "Preferences");
 
   try {
@@ -114,18 +117,25 @@ async function getExtensionIdFromProfile(contextPath: string, extensionPath: str
   return null;
 }
 
-async function getExtensionIdFromExtensionsPage(context: { newPage: () => Promise<Page> }) {
+async function getExtensionIdFromExtensionsPage(context: {
+  newPage: () => Promise<Page>;
+}) {
   const page = await context.newPage();
   try {
     await page.goto("chrome://extensions/");
     await page.waitForTimeout(1000);
 
     const extensionId = await page.evaluate(() => {
-      const manager = document.querySelector("extensions-manager") as HTMLElement | null;
-      const items = manager?.shadowRoot?.querySelectorAll("extensions-item") ?? [];
+      const manager = document.querySelector(
+        "extensions-manager"
+      ) as HTMLElement | null;
+      const items =
+        manager?.shadowRoot?.querySelectorAll("extensions-item") ?? [];
 
       for (const item of Array.from(items)) {
-        const nameEl = item.shadowRoot?.querySelector("#name") as HTMLElement | null;
+        const nameEl = item.shadowRoot?.querySelector(
+          "#name"
+        ) as HTMLElement | null;
         const name = nameEl?.textContent?.trim().toLowerCase();
         if (name === "metamask") {
           return item.getAttribute("id") || item.id || null;
@@ -161,7 +171,9 @@ async function resolveExtensionId(context: {
       ...context.serviceWorkers().map((worker) => worker.url())
     ];
 
-    const extensionUrl = urls.find((url) => url.startsWith("chrome-extension://"));
+    const extensionUrl = urls.find((url) =>
+      url.startsWith("chrome-extension://")
+    );
     if (extensionUrl) {
       cachedExtensionId = new URL(extensionUrl).host;
       return cachedExtensionId;
@@ -176,7 +188,9 @@ async function resolveExtensionId(context: {
     return cachedExtensionId;
   }
 
-  throw new Error("[resolveExtensionId] MetaMask extension did not load in time.");
+  throw new Error(
+    "[resolveExtensionId] MetaMask extension did not load in time."
+  );
 }
 
 export const metaMaskFixtures = (walletSetup: WalletSetup, slowMo = 0) => {
@@ -207,7 +221,8 @@ export const metaMaskFixtures = (walletSetup: WalletSetup, slowMo = 0) => {
       await fs.cp(cacheDirPath, _contextPath, { recursive: true });
 
       const metamaskPath = await prepareExtension();
-      cachedExtensionId = (await getExtensionIdFromProfile(_contextPath, metamaskPath)) ?? "";
+      cachedExtensionId =
+        (await getExtensionIdFromProfile(_contextPath, metamaskPath)) ?? "";
 
       const browserArgs = [
         `--disable-extensions-except=${metamaskPath}`,
@@ -218,7 +233,9 @@ export const metaMaskFixtures = (walletSetup: WalletSetup, slowMo = 0) => {
         browserArgs.push("--headless=new");
 
         if (slowMo > 0) {
-          console.warn("[WARNING] Slow motion makes no sense in headless mode. It will be ignored!");
+          console.warn(
+            "[WARNING] Slow motion makes no sense in headless mode. It will be ignored!"
+          );
         }
       }
 
@@ -245,14 +262,56 @@ export const metaMaskFixtures = (walletSetup: WalletSetup, slowMo = 0) => {
         await persistLocalStorage(origins, context);
       }
 
-      const extensionId = cachedExtensionId || (await resolveExtensionId(context));
+      const extensionId =
+        cachedExtensionId || (await resolveExtensionId(context));
 
       cachedMetaMaskPage = context.pages()[0] as Page;
 
-      await cachedMetaMaskPage.goto(`chrome-extension://${extensionId}/home.html`);
-      await cachedMetaMaskPage.waitForLoadState("domcontentloaded", { timeout: 10000 });
-      await cachedMetaMaskPage.waitForLoadState("networkidle", { timeout: 10000 });
-      await unlockForFixture(cachedMetaMaskPage, walletPassword);
+      await cachedMetaMaskPage.goto(
+        `chrome-extension://${extensionId}/home.html`
+      );
+      await cachedMetaMaskPage.waitForLoadState("domcontentloaded", {
+        timeout: 10000
+      });
+      await cachedMetaMaskPage.waitForLoadState("networkidle", {
+        timeout: 10000
+      });
+      // More resilient unlock with retries to avoid flaky popover blocking
+      const dismissPopovers = async (p: Page) => {
+        const selectors = [
+          '.popover-container [data-testid="popover-close"]',
+          'button[aria-label="Close"]',
+          '[data-testid="popover-close"]'
+        ];
+        for (const sel of selectors) {
+          const btn = p.locator(sel).first();
+          const visible = await btn.isVisible().catch(() => false);
+          if (visible) {
+            await btn.click().catch(() => {});
+          }
+        }
+      };
+      let lastErr: unknown;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          await unlockForFixture(cachedMetaMaskPage, walletPassword);
+          lastErr = undefined;
+          break;
+        } catch (err) {
+          lastErr = err;
+          await dismissPopovers(cachedMetaMaskPage);
+          await cachedMetaMaskPage.reload().catch(() => {});
+          await cachedMetaMaskPage
+            .waitForLoadState("domcontentloaded", { timeout: 10000 })
+            .catch(() => {});
+          await cachedMetaMaskPage
+            .waitForLoadState("networkidle", { timeout: 10000 })
+            .catch(() => {});
+        }
+      }
+      if (lastErr) {
+        throw lastErr;
+      }
 
       await use(context);
 
@@ -269,7 +328,12 @@ export const metaMaskFixtures = (walletSetup: WalletSetup, slowMo = 0) => {
     metamask: async ({ context, extensionId }, use) => {
       const { walletPassword } = walletSetup;
 
-      const metamask = new MetaMask(context, cachedMetaMaskPage, walletPassword, extensionId);
+      const metamask = new MetaMask(
+        context,
+        cachedMetaMaskPage,
+        walletPassword,
+        extensionId
+      );
 
       await use(metamask);
     },

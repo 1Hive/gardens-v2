@@ -1,13 +1,10 @@
 import { testWithSynpress } from "@synthetixio/synpress";
 import { MetaMask } from "@synthetixio/synpress/playwright";
-import { metaMaskFixtures } from "./support/metaMaskFixtures";
+import { metaMaskFixtures } from "./utils";
 import basicSetup from "../wallet-setup/basic.setup";
-import {
-  confirmTransaction,
-  connectWallet,
-  expectNoErrorToast
-} from "./support/metamaskUtils";
-import { getByTestId } from "./support/locators-utils";
+import { confirmTransaction, connectWallet, expectNoErrorToast } from "./utils";
+import { getByTestId } from "./utils";
+import { gotoE2ECommunity } from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
@@ -31,12 +28,7 @@ test("should edit a pool", async ({
 
   await page.bringToFront();
   await connectWallet(page, metamask);
-  await page.goto(
-    "/gardens/10/0x8b2f706cd2bc0df6679218177c56e72c5241de9b/0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
-    {
-      timeout: 60000
-    }
-  );
+  await gotoE2ECommunity(page);
 
   await page.waitForTimeout(2000);
   await page.bringToFront();

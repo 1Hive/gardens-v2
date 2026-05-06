@@ -1,14 +1,16 @@
 import { testWithSynpress } from "@synthetixio/synpress";
 import { MetaMask } from "@synthetixio/synpress/playwright";
-import { metaMaskFixtures } from "./support/metaMaskFixtures";
 import basicSetup from "../wallet-setup/basic.setup";
 import {
   approveTokenAllowance,
   confirmTransaction,
   connectWallet,
-  expectNoErrorToast
-} from "./support/metamaskUtils";
-import { getByTestId } from "./support/locators-utils";
+  expectNoErrorToast,
+  getByTestId,
+  gotoE2ECommunity,
+  metaMaskFixtures,
+  getConfig
+} from "./utils";
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
 const { expect } = test;
@@ -33,17 +35,15 @@ test("should create a pool in the community", async ({
 
   await page.bringToFront();
   await connectWallet(page, metamask);
-  await page.goto("/gardens/10/0x9ee73d7afd1d75d9d3468ab7845150180936dec4", {
-    timeout: 60000 // Increase timeout to handle slow loading
-  });
+  await gotoE2ECommunity(page);
 
-  await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
-
-  await page.bringToFront();
   await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
 
   // Stake Create Pool
   await getByTestId(page, "btn-create-pool").click();
+
+  // Select funding pool type
+  await getByTestId(page, "pool-type-option-1").click();
 
   //Find all inputs
   const nameInput = getByTestId(page, "input-pool-name");
@@ -61,7 +61,8 @@ test("should create a pool in the community", async ({
   // Fill all inputs
   await nameInput.fill("Test Pool");
   await descriptionInput.fill("Test Description");
-  await tokenAddressInput.fill("0x8b2f706cd2bc0df6679218177c56e72c5241de9b");
+  const { governanceToken } = getConfig();
+  await tokenAddressInput.fill(governanceToken);
   await proposalCollateralInput.fill("0.0000000001");
   await disputeCollateralInput.fill("0.0000000001");
   await getByTestId(page, "btn-preview-pool").click();

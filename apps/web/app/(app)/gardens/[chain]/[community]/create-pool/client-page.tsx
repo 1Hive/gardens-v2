@@ -20,9 +20,7 @@ type ClientPageProps = {
   params: { chain: string; community: string };
 };
 
-export default function ClientPage({
-  params: { community },
-}: ClientPageProps) {
+export default function ClientPage({ params: { community } }: ClientPageProps) {
   const canAccessStreamingPools = useStreamingPoolsAccess(community);
 
   useEffect(() => {
@@ -101,6 +99,7 @@ export default function ClientPage({
                   type="button"
                   className="border1 rounded-2xl bg-primary p-5 text-left transition-all duration-200 hover:border-secondary-content hover:bg-secondary-soft dark:hover:bg-secondary-soft-dark"
                   onClick={() => setSelectedPoolType(option.type)}
+                  data-testid={`pool-type-option-${option.type}`}
                 >
                   <div className="mb-3 flex items-start justify-between gap-3">
                     <h4>{option.title}</h4>

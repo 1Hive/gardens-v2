@@ -1,13 +1,10 @@
 import { testWithSynpress } from "@synthetixio/synpress";
 import { MetaMask } from "@synthetixio/synpress/playwright";
-import { metaMaskFixtures } from "./support/metaMaskFixtures";
+import { metaMaskFixtures } from "./utils";
 import basicSetup from "../wallet-setup/basic.setup";
-import {
-  confirmTransaction,
-  connectWallet,
-  expectNoErrorToast
-} from "./support/metamaskUtils";
-import { getByTestId } from "./support/locators-utils";
+import { confirmTransaction, connectWallet, expectNoErrorToast } from "./utils";
+import { getByTestId } from "./utils";
+import { getConfig } from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
@@ -30,34 +27,30 @@ test("should allocate support to a proposal", async ({
   await page.bringToFront();
   await connectWallet(page, metamask);
 
-  const subgraphRes = await fetch(
-    "https://api.studio.thegraph.com/query/102093/gardens-v2---optimism/version/latest",
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        query: `{
+  const { chainId, communityId, subgraphUrl } = getConfig();
+  const graphUrl = subgraphUrl;
+  const subgraphRes = await fetch(graphUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      query: `{
   cvstrategies(
     first: 1
     orderBy: poolId
     orderDirection: desc
-    where: {isEnabled: true, registryCommunity:"0x9ee73d7afd1d75d9d3468ab7845150180936dec4"}
+    where: {isEnabled: true, registryCommunity:"${communityId.toLowerCase()}"}
   ) {
     id
     poolId
   }
 }`
-      })
-    }
-  ).then((r) => r.json());
+    })
+  }).then((r) => r.json());
   const { poolId } = subgraphRes.data.cvstrategies[0];
 
-  await page.goto(
-    `gardens/10/0x9ee73d7afd1d75d9d3468ab7845150180936dec4/${poolId}`,
-    {
-      timeout: 60000
-    }
-  );
+  await page.goto(`/gardens/${chainId}/${communityId}/${poolId}`, {
+    timeout: 60000
+  });
 
   // Open the allocation view
   const voteBtn = getByTestId(page, "btn-vote-on-proposals");

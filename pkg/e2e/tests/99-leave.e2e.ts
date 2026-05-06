@@ -1,13 +1,10 @@
 import { testWithSynpress } from "@synthetixio/synpress";
 import { MetaMask } from "@synthetixio/synpress/playwright";
-import { metaMaskFixtures } from "./support/metaMaskFixtures";
+import { metaMaskFixtures } from "./utils";
 import basicSetup from "../wallet-setup/basic.setup";
-import {
-  confirmTransaction,
-  connectWallet,
-  expectNoErrorToast
-} from "./support/metamaskUtils";
-import { getByTestId } from "./support/locators-utils";
+import { confirmTransaction, connectWallet, expectNoErrorToast } from "./utils";
+import { getByTestId } from "./utils";
+import { gotoE2ECommunity } from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
@@ -31,12 +28,7 @@ test("should leave community", async ({
     extensionId
   );
 
-  await page.goto(
-    "/gardens/10/0x8b2f706cd2bc0df6679218177c56e72c5241de9b/0x9ee73d7afd1d75d9d3468ab7845150180936dec4",
-    {
-      timeout: 60000 // Increase timeout to handle slow loading
-    }
-  );
+  await gotoE2ECommunity(page);
   await connectWallet(page, metamask);
 
   // 4. Leave the community

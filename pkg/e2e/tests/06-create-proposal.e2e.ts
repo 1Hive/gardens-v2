@@ -1,14 +1,15 @@
 import { testWithSynpress } from "@synthetixio/synpress";
 import { MetaMask } from "@synthetixio/synpress/playwright";
-import { metaMaskFixtures } from "./support/metaMaskFixtures";
+import { metaMaskFixtures } from "./utils";
 import basicSetup from "../wallet-setup/basic.setup";
 import {
   approveTokenAllowance,
   confirmTransaction,
   connectWallet,
   expectNoErrorToast
-} from "./support/metamaskUtils";
-import { getByTestId } from "./support/locators-utils";
+} from "./utils";
+import { getByTestId } from "./utils";
+import { getConfig } from "./utils";
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
 const { expect } = test;
@@ -34,24 +35,20 @@ test("should create a proposal in the pool", async ({
   await page.bringToFront();
   await await connectWallet(page, metamask);
 
-  const subgraphRes = await fetch(
-    "https://api.studio.thegraph.com/query/102093/gardens-v2---optimism/version/latest",
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        query:
-          "{ cvstrategies(first: 1, orderBy: poolId, orderDirection: desc, where: { isEnabled: true }) { id poolId } }"
-      })
-    }
-  ).then((r) => r.json());
+  const { chainId, communityId, subgraphUrl } = getConfig();
+  const graphUrl = subgraphUrl;
+  const subgraphRes = await fetch(graphUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      query: `{ cvstrategies(first: 1, orderBy: poolId, orderDirection: desc, where: { isEnabled: true, registryCommunity: "${communityId.toLowerCase()}" }) { id poolId } }`
+    })
+  }).then((r) => r.json());
   const { id: strategyAddress } = subgraphRes.data.cvstrategies[0];
   console.log("subgraph RESP", subgraphRes);
   await page.goto(
-    `gardens/10/0x9ee73d7afd1d75d9d3468ab7845150180936dec4/${strategyAddress}/create-proposal`,
-    {
-      timeout: 60000 // Increase timeout to handle slow loading
-    }
+    `/gardens/${chainId}/${communityId}/${strategyAddress}/create-proposal`,
+    { timeout: 60000 }
   );
 
   await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
@@ -83,7 +80,14 @@ test("should create a proposal in the pool", async ({
   // Fill all inputs
   await amountInput.fill("0.2");
   await descriptionInput.fill("Test Proposal Description");
-  await tokenAddressInput.fill("0x327F6AA1870731235A57Bc785523dAF0054b7394");
+  const beneficiary = await page.evaluate(async () => {
+    const provider = (window as any).ethereum;
+    const accounts = (await provider.request({
+      method: "eth_accounts"
+    })) as string[];
+    return accounts[0] ?? "";
+  });
+  await tokenAddressInput.fill(beneficiary);
   await titleInput.fill("Test Proposal Title");
 
   await getByTestId(page, "btn-preview-proposal").click();

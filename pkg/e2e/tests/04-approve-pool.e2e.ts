@@ -1,14 +1,15 @@
 import { testWithSynpress } from "@synthetixio/synpress";
 import { MetaMask } from "@synthetixio/synpress/playwright";
-import { metaMaskFixtures } from "./support/metaMaskFixtures";
 import basicSetup from "../wallet-setup/basic.setup";
 import {
   approveTokenAllowance,
   confirmTransaction,
   connectWallet,
-  expectNoErrorToast
-} from "./support/metamaskUtils";
-import { getByTestId } from "./support/locators-utils";
+  expectNoErrorToast,
+  getByTestId,
+  metaMaskFixtures,
+  gotoE2ECommunity
+} from "./utils";
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
 const { expect } = test;
@@ -33,9 +34,7 @@ test("should approve a pool as council safe", async ({
 
   await page.bringToFront();
   await connectWallet(page, metamask);
-  await page.goto("/gardens/10/0x9ee73d7afd1d75d9d3468ab7845150180936dec4", {
-    timeout: 60000 // Increase timeout to handle slow loading
-  });
+  await gotoE2ECommunity(page);
 
   await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
 

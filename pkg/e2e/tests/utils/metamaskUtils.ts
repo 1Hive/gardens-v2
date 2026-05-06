@@ -1,17 +1,24 @@
 import { MetaMask } from "@synthetixio/synpress/playwright";
 import { expect, Page } from "@playwright/test";
+import { getConfig } from "./config";
 
-const OPTIMISM_RPC_URL = process.env.RPC_URL_OPTIMISM?.trim() || "https://mainnet.optimism.io";
+const { rpcUrl, chainId } = getConfig();
 
-const OP_MAINNET = {
-  name: "OP Mainnet",
-  rpcUrl: OPTIMISM_RPC_URL,
-  chainId: 10,
-  symbol: "ETH",
-  blockExplorerUrl: "https://optimistic.etherscan.io"
-};
-
-const OP_MAINNET_CHAIN_ID_HEX = "0xa";
+const chain = (() => {
+  const idNum = Number(chainId);
+  if (!Number.isFinite(idNum)) {
+    throw new Error(`Invalid numeric chainId in config: ${chainId}`);
+  }
+  const chainIdHex = `0x${idNum.toString(16)}`;
+  return {
+    name: "E2E Network",
+    rpcUrl: rpcUrl.trim(),
+    chainId: idNum,
+    symbol: "ETH",
+    blockExplorerUrl: "",
+    chainIdHex
+  } as const;
+})();
 
 async function dismissWalletPopovers(walletPage: Page) {
   const closeSelectors = [
@@ -75,7 +82,7 @@ async function fillFirstVisibleInput(
   return false;
 }
 
-async function fallbackAddAndSwitchOptimismNetwork(
+async function fallbackAddAndSwitchNetwork(
   walletPage: Page,
   metamask: MetaMask
 ) {
@@ -85,7 +92,9 @@ async function fallbackAddAndSwitchOptimismNetwork(
   }
 
   const extensionOrigin = new URL(currentUrl).origin;
-  await walletPage.goto(`${extensionOrigin}/home.html#settings/networks/add-network`);
+  await walletPage.goto(
+    `${extensionOrigin}/home.html#settings/networks/add-network`
+  );
   await walletPage.waitForLoadState("domcontentloaded");
   await dismissWalletPopovers(walletPage);
 
@@ -96,7 +105,7 @@ async function fallbackAddAndSwitchOptimismNetwork(
       'input[name="networkName"]',
       '[data-testid="network-form-network-name"] input'
     ],
-    OP_MAINNET.name
+    chain.name
   );
   const rpcFilled = await fillFirstVisibleInput(
     walletPage,
@@ -105,7 +114,7 @@ async function fallbackAddAndSwitchOptimismNetwork(
       'input[name="rpcUrl"]',
       '[data-testid="network-form-rpc-url"] input'
     ],
-    OP_MAINNET.rpcUrl
+    chain.rpcUrl
   );
   const chainIdFilled = await fillFirstVisibleInput(
     walletPage,
@@ -114,7 +123,7 @@ async function fallbackAddAndSwitchOptimismNetwork(
       'input[name="chainId"]',
       '[data-testid="network-form-chain-id"] input'
     ],
-    String(OP_MAINNET.chainId)
+    String(chain.chainId)
   );
   const symbolFilled = await fillFirstVisibleInput(
     walletPage,
@@ -124,11 +133,13 @@ async function fallbackAddAndSwitchOptimismNetwork(
       'input[name="ticker"]',
       '[data-testid="network-form-symbol"] input'
     ],
-    OP_MAINNET.symbol
+    chain.symbol
   );
 
   if (!networkNameFilled || !rpcFilled || !chainIdFilled || !symbolFilled) {
-    throw new Error("Could not locate one or more network form inputs in MetaMask");
+    throw new Error(
+      "Could not locate one or more network form inputs in MetaMask"
+    );
   }
 
   await fillFirstVisibleInput(
@@ -138,7 +149,7 @@ async function fallbackAddAndSwitchOptimismNetwork(
       'input[name="blockExplorerUrl"]',
       '[data-testid="network-form-block-explorer-url"] input'
     ],
-    OP_MAINNET.blockExplorerUrl
+    chain.blockExplorerUrl
   );
 
   const saveClicked = await clickFirstVisible(walletPage, [
@@ -155,12 +166,16 @@ async function fallbackAddAndSwitchOptimismNetwork(
   await walletPage.goto(`${extensionOrigin}/home.html`);
   await walletPage.waitForLoadState("domcontentloaded");
   await dismissWalletPopovers(walletPage);
-  await clickFirstVisible(walletPage, [".home__new-network-added__switch-to-button"], 1200);
+  await clickFirstVisible(
+    walletPage,
+    [".home__new-network-added__switch-to-button"],
+    1200
+  );
 
-  await metamask.switchNetwork(OP_MAINNET.name);
+  await metamask.switchNetwork(chain.name);
 }
 
-async function ensureOptimismNetwork(page: Page, metamask: MetaMask) {
+async function ensureTargetNetwork(page: Page, metamask: MetaMask) {
   const chainId = await page.evaluate(async () => {
     const provider = (window as any).ethereum;
     if (!provider) {
@@ -170,7 +185,7 @@ async function ensureOptimismNetwork(page: Page, metamask: MetaMask) {
     return (await provider.request({ method: "eth_chainId" })) as string;
   });
 
-  if (chainId.toLowerCase() === OP_MAINNET_CHAIN_ID_HEX) {
+  if (chainId.toLowerCase() === chain.chainIdHex) {
     return;
   }
 
@@ -182,15 +197,15 @@ async function ensureOptimismNetwork(page: Page, metamask: MetaMask) {
       await dismissWalletPopovers(metamask.page);
 
       try {
-        await metamask.switchNetwork(OP_MAINNET.name);
+        await metamask.switchNetwork(chain.name);
       } catch {
         try {
           await dismissWalletPopovers(metamask.page);
-          await metamask.addNetwork(OP_MAINNET);
+          await metamask.addNetwork(chain);
           await dismissWalletPopovers(metamask.page);
-          await metamask.switchNetwork(OP_MAINNET.name);
+          await metamask.switchNetwork(chain.name);
         } catch {
-          await fallbackAddAndSwitchOptimismNetwork(metamask.page, metamask);
+          await fallbackAddAndSwitchNetwork(metamask.page, metamask);
         }
       }
 
@@ -199,7 +214,7 @@ async function ensureOptimismNetwork(page: Page, metamask: MetaMask) {
         return (await provider.request({ method: "eth_chainId" })) as string;
       });
 
-      if (switchedChainId.toLowerCase() !== OP_MAINNET_CHAIN_ID_HEX) {
+      if (switchedChainId.toLowerCase() !== chain.chainIdHex) {
         throw new Error(
           `Switch reported success but chainId is ${switchedChainId}`
         );
@@ -469,8 +484,7 @@ export async function confirmTransaction({
           await button.click({ timeout: 5000, force: true });
           clicked = true;
           break;
-        } catch {
-        }
+        } catch {}
       }
     }
 
@@ -518,9 +532,9 @@ export async function connectWallet(page: Page, metamask: MetaMask) {
 
   // Verify the connected account address
   await expect(page.locator("[data-testid='accounts']")).toHaveText(
-    "0x327F…7394"
+    /0x[0-9a-fA-F]{4}…[0-9a-fA-F]{4}/
   );
 
-  // E2E flows run on Optimism; switch MetaMask network if needed.
-  await ensureOptimismNetwork(page, metamask);
+  // Ensure MetaMask is on the target E2E network configured via env.
+  await ensureTargetNetwork(page, metamask);
 }

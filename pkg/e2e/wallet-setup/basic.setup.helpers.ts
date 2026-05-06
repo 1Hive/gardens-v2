@@ -1,23 +1,34 @@
 import { MetaMask } from "@synthetixio/synpress/playwright";
+import { getConfig } from "../tests/utils/config";
 
-const SEED_PHRASE = process.env.E2E_WALLET_SEED_PHRASE;
+const { walletSeedPhrase: SEED_PHRASE, rpcUrl, chainId } = getConfig();
 const RETRIES = 3;
-// Enabled by default so the cached wallet profile already has OP Mainnet selected.
-// Set E2E_PRECONFIGURE_OP_MAINNET=false to skip during troubleshooting.
-const SHOULD_PRECONFIGURE_OP_MAINNET = process.env.E2E_PRECONFIGURE_OP_MAINNET !== "false";
-const OPTIMISM_RPC_URL = process.env.RPC_URL_OPTIMISM?.trim() || "https://mainnet.optimism.io";
 
 const OP_MAINNET = {
   name: "OP Mainnet",
-  rpcUrl: OPTIMISM_RPC_URL,
+  rpcUrl: rpcUrl?.trim() || "https://mainnet.optimism.io",
   chainId: 10,
   symbol: "ETH",
   blockExplorerUrl: "https://optimistic.etherscan.io"
 };
 
+const SEPOLIA = {
+  name: "Sepolia",
+  rpcUrl: rpcUrl?.trim() || "https://rpc.sepolia.org",
+  chainId: 11155111,
+  symbol: "ETH",
+  blockExplorerUrl: "https://sepolia.etherscan.io"
+};
+
+const chain = chainId.toString() === "11155111" ? SEPOLIA : OP_MAINNET;
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function clickFirstVisible(walletPage: any, selectors: string[], timeout = 1500) {
+async function clickFirstVisible(
+  walletPage: any,
+  selectors: string[],
+  timeout = 1500
+) {
   for (const selector of selectors) {
     const locator = walletPage.locator(selector).first();
     const isVisible = await locator.isVisible().catch(() => false);
@@ -38,7 +49,11 @@ async function waitAndClickFirstVisible(
 ) {
   const startTime = Date.now();
   while (Date.now() - startTime < waitMs) {
-    const clicked = await clickFirstVisible(walletPage, selectors, clickTimeout);
+    const clicked = await clickFirstVisible(
+      walletPage,
+      selectors,
+      clickTimeout
+    );
     if (clicked) {
       return true;
     }
@@ -48,7 +63,11 @@ async function waitAndClickFirstVisible(
   return false;
 }
 
-async function fillFirstVisibleInput(walletPage: any, selectors: string[], value: string) {
+async function fillFirstVisibleInput(
+  walletPage: any,
+  selectors: string[],
+  value: string
+) {
   for (const selector of selectors) {
     const locator = walletPage.locator(selector).first();
     const isVisible = await locator.isVisible().catch(() => false);
@@ -87,10 +106,26 @@ async function dismissTransientPopovers(walletPage: any) {
   }
 }
 
-async function importWalletLegacyOnboarding(walletPage: any, seedPhrase: string, password: string) {
-  await clickFirstVisible(walletPage, ['[data-testid="onboarding-terms-checkbox"]'], 2000);
-  await clickFirstVisible(walletPage, ['[data-testid="onboarding-import-wallet"]'], 3000);
-  await clickFirstVisible(walletPage, ['[data-testid="metametrics-no-thanks"]'], 2000);
+async function importWalletLegacyOnboarding(
+  walletPage: any,
+  seedPhrase: string,
+  password: string
+) {
+  await clickFirstVisible(
+    walletPage,
+    ['[data-testid="onboarding-terms-checkbox"]'],
+    2000
+  );
+  await clickFirstVisible(
+    walletPage,
+    ['[data-testid="onboarding-import-wallet"]'],
+    3000
+  );
+  await clickFirstVisible(
+    walletPage,
+    ['[data-testid="metametrics-no-thanks"]'],
+    2000
+  );
 
   const words = seedPhrase.trim().split(/\s+/);
   const wordsDropdown = walletPage
@@ -115,12 +150,20 @@ async function importWalletLegacyOnboarding(walletPage: any, seedPhrase: string,
     }
   }
 
-  const confirmSeedClicked = await clickFirstVisible(walletPage, ['[data-testid="import-srp-confirm"]'], 3000);
+  const confirmSeedClicked = await clickFirstVisible(
+    walletPage,
+    ['[data-testid="import-srp-confirm"]'],
+    3000
+  );
   if (!confirmSeedClicked) {
     throw new Error("Could not confirm seed phrase in legacy onboarding");
   }
 
-  const passwordFilled = await fillFirstVisibleInput(walletPage, ['[data-testid="create-password-new"]'], password);
+  const passwordFilled = await fillFirstVisibleInput(
+    walletPage,
+    ['[data-testid="create-password-new"]'],
+    password
+  );
   const confirmPasswordFilled = await fillFirstVisibleInput(
     walletPage,
     ['[data-testid="create-password-confirm"]'],
@@ -130,8 +173,16 @@ async function importWalletLegacyOnboarding(walletPage: any, seedPhrase: string,
     throw new Error("Could not fill password fields in legacy onboarding");
   }
 
-  await clickFirstVisible(walletPage, ['[data-testid="create-password-terms"]'], 2000);
-  const importClicked = await clickFirstVisible(walletPage, ['[data-testid="create-password-import"]'], 3000);
+  await clickFirstVisible(
+    walletPage,
+    ['[data-testid="create-password-terms"]'],
+    2000
+  );
+  const importClicked = await clickFirstVisible(
+    walletPage,
+    ['[data-testid="create-password-import"]'],
+    3000
+  );
   if (!importClicked) {
     throw new Error("Could not submit password form in legacy onboarding");
   }
@@ -181,7 +232,10 @@ async function importWalletWithCompatibility(
     await importWalletLegacyOnboarding(walletPage, seedPhrase, password);
     return;
   } catch (legacyError) {
-    console.warn("[wallet-setup] Legacy onboarding flow failed, trying Synpress import flow.", legacyError);
+    console.warn(
+      "[wallet-setup] Legacy onboarding flow failed, trying Synpress import flow.",
+      legacyError
+    );
   }
 
   await metamask.importWallet(seedPhrase);
@@ -235,7 +289,9 @@ async function fallbackAddAndSwitchNetwork(walletPage: any, metamask: any) {
   }
 
   const extensionOrigin = new URL(currentUrl).origin;
-  await walletPage.goto(`${extensionOrigin}/home.html#settings/networks/add-network`);
+  await walletPage.goto(
+    `${extensionOrigin}/home.html#settings/networks/add-network`
+  );
   await walletPage.waitForLoadState("domcontentloaded");
   await dismissTransientPopovers(walletPage);
 
@@ -246,7 +302,7 @@ async function fallbackAddAndSwitchNetwork(walletPage: any, metamask: any) {
       'input[name="networkName"]',
       '[data-testid="network-form-network-name"] input'
     ],
-    OP_MAINNET.name
+    chain.name
   );
   const rpcFilled = await fillFirstVisibleInput(
     walletPage,
@@ -255,7 +311,7 @@ async function fallbackAddAndSwitchNetwork(walletPage: any, metamask: any) {
       'input[name="rpcUrl"]',
       '[data-testid="network-form-rpc-url"] input'
     ],
-    OP_MAINNET.rpcUrl
+    chain.rpcUrl
   );
   const chainIdFilled = await fillFirstVisibleInput(
     walletPage,
@@ -264,7 +320,7 @@ async function fallbackAddAndSwitchNetwork(walletPage: any, metamask: any) {
       'input[name="chainId"]',
       '[data-testid="network-form-chain-id"] input'
     ],
-    String(OP_MAINNET.chainId)
+    String(chain.chainId)
   );
   const symbolFilled = await fillFirstVisibleInput(
     walletPage,
@@ -273,11 +329,13 @@ async function fallbackAddAndSwitchNetwork(walletPage: any, metamask: any) {
       'input[name="ticker"]',
       '[data-testid="network-form-symbol"] input'
     ],
-    OP_MAINNET.symbol
+    chain.symbol
   );
 
   if (!networkNameFilled || !rpcFilled || !chainIdFilled || !symbolFilled) {
-    throw new Error("Could not locate one or more network form inputs in MetaMask");
+    throw new Error(
+      "Could not locate one or more network form inputs in MetaMask"
+    );
   }
 
   await fillFirstVisibleInput(
@@ -287,7 +345,7 @@ async function fallbackAddAndSwitchNetwork(walletPage: any, metamask: any) {
       'input[name="blockExplorerUrl"]',
       '[data-testid="network-form-block-explorer-url"] input'
     ],
-    OP_MAINNET.blockExplorerUrl
+    chain.blockExplorerUrl
   );
 
   const saveClicked = await clickFirstVisible(walletPage, [
@@ -305,12 +363,20 @@ async function fallbackAddAndSwitchNetwork(walletPage: any, metamask: any) {
   await walletPage.goto(`${extensionOrigin}/home.html`);
   await walletPage.waitForLoadState("domcontentloaded");
   await dismissTransientPopovers(walletPage);
-  await clickFirstVisible(walletPage, [".home__new-network-added__switch-to-button"], 1000);
+  await clickFirstVisible(
+    walletPage,
+    [".home__new-network-added__switch-to-button"],
+    1000
+  );
 
-  await metamask.switchNetwork(OP_MAINNET.name);
+  await metamask.switchNetwork(chain.name);
 }
 
-export async function runBasicWalletSetup(context: any, walletPage: any, password: string) {
+export async function runBasicWalletSetup(
+  context: any,
+  walletPage: any,
+  password: string
+) {
   if (!SEED_PHRASE) {
     throw new Error("E2E_WALLET_SEED_PHRASE environment variable is not set");
   }
@@ -318,7 +384,12 @@ export async function runBasicWalletSetup(context: any, walletPage: any, passwor
   const metamask = new MetaMask(context, walletPage, password);
 
   await withRetry("importWallet", async () => {
-    await importWalletWithCompatibility(walletPage, metamask, SEED_PHRASE, password);
+    await importWalletWithCompatibility(
+      walletPage,
+      metamask,
+      SEED_PHRASE,
+      password
+    );
   });
 
   // Newer MetaMask onboarding can stop on "Your wallet is ready!" and block
@@ -329,34 +400,27 @@ export async function runBasicWalletSetup(context: any, walletPage: any, passwor
 
   await dismissTransientPopovers(walletPage);
 
-  // Network preconfiguration is optional because Synpress network selectors can
-  // drift with newer MetaMask UI versions and introduce long flaky retries.
-  if (!SHOULD_PRECONFIGURE_OP_MAINNET) {
-    return;
-  }
-
   try {
-    await withRetry("switchNetwork(OP Mainnet)", async () => {
+    await withRetry(`switchNetwork(${chain.name})`, async () => {
       await dismissTransientPopovers(walletPage);
       try {
-        await metamask.switchNetwork(OP_MAINNET.name);
+        await metamask.switchNetwork(chain.name);
         return;
-      } catch {
-      }
+      } catch {}
 
       await dismissTransientPopovers(walletPage);
       try {
-        await metamask.addNetwork(OP_MAINNET);
+        await metamask.addNetwork(chain);
       } catch {
         await fallbackAddAndSwitchNetwork(walletPage, metamask);
         return;
       }
       await dismissTransientPopovers(walletPage);
-      await metamask.switchNetwork(OP_MAINNET.name);
+      await metamask.switchNetwork(chain.name);
     });
   } catch (error) {
     console.warn(
-      `[wallet-setup] Unable to pre-switch to ${OP_MAINNET.name}; continuing without preconfiguration.`,
+      `[wallet-setup] Unable to pre-switch to ${chain.name}; continuing without preconfiguration.`,
       error
     );
   }

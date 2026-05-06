@@ -1,32 +1,23 @@
 import { testWithSynpress } from "@synthetixio/synpress";
 import { MetaMask } from "@synthetixio/synpress/playwright";
-import { metaMaskFixtures } from "./support/metaMaskFixtures";
 import basicSetup from "../wallet-setup/basic.setup";
 import {
   confirmTransaction,
   connectWallet,
-  expectNoErrorToast
-} from "./support/metamaskUtils";
-import { getByTestId } from "./support/locators-utils";
+  expectNoErrorToast,
+  metaMaskFixtures,
+  getByTestId,
+  gotoE2ECommunity,
+  getConfig
+} from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
 
 test.setTimeout(240000);
 
-const IS_MEMBER_SELECTOR = "a230c524";
-const UNREGISTER_MEMBER_SELECTOR = "b99b4370";
-
 const isAddress = (value: string | undefined): value is `0x${string}` =>
   typeof value === "string" && /^0x[a-fA-F0-9]{40}$/.test(value);
-
-const parseBoolResult = (value: string) => {
-  const normalized = value.toLowerCase();
-  return normalized === "0x1" || normalized.endsWith("1".padStart(64, "0"));
-};
-
-const encodeIsMember = (account: `0x${string}`) =>
-  `0x${IS_MEMBER_SELECTOR}${account.slice(2).toLowerCase().padStart(64, "0")}`;
 
 test("should ensure wallet is not a member before running e2e flow", async ({
   context,
@@ -57,10 +48,6 @@ test("should ensure wallet is not a member before running e2e flow", async ({
     return (await provider.request({ method: "eth_chainId" })) as string;
   });
 
-  if (chainId.toLowerCase() !== "0xa") {
-    throw new Error(`Expected Optimism chainId 0xa, got ${chainId}`);
-  }
-
   const account = await page.evaluate(async () => {
     const provider = (window as any).ethereum;
     const accounts = (await provider.request({
@@ -73,81 +60,22 @@ test("should ensure wallet is not a member before running e2e flow", async ({
     throw new Error("Connected wallet account is missing or invalid.");
   }
 
-  const communityId = process.env.E2E_COMMUNITY_ID;
-  if (!communityId) {
-    throw new Error("E2E_COMMUNITY_ID environment variable is not set.");
-  }
-
-  const communityCard = getByTestId(page, `community-card-${communityId}`);
-  await expect(communityCard).toBeVisible({ timeout: 60000 });
-
-  const targetHref = await communityCard.evaluate((el) => {
-    const href = el.closest("a")?.getAttribute("href");
-    return href ?? "";
-  });
-  if (!targetHref.startsWith("/gardens/")) {
-    throw new Error(
-      `Community card link is missing or invalid for ${communityId}: ${targetHref}`
-    );
-  }
-
-  await communityCard.click();
+  const { communityId } = getConfig();
+  await gotoE2ECommunity(page);
   await page.waitForLoadState("networkidle");
 
-  // Some runs don't navigate on click even though the card has a valid link.
-  // Force navigation to the card href so contract extraction is deterministic.
-  if (new URL(page.url()).pathname === "/gardens") {
-    await page.goto(targetHref, { timeout: 60000 });
-    await page.waitForLoadState("networkidle");
+  // If already a member, leave via UI to reset state
+  const regBtn = getByTestId(page, "register-member-button");
+  const isLeaveVisible = await regBtn
+    .getByText("Leave")
+    .isVisible()
+    .catch(() => false);
+  if (isLeaveVisible) {
+    await regBtn.getByText("Leave").click();
+    await page.waitForTimeout(800);
+    await confirmTransaction({ metamask, extensionId });
+    await expectNoErrorToast(page);
+    // Wait for UI to reflect non-member (button should switch to Join)
+    await expect(regBtn.getByText("Join")).toBeVisible({ timeout: 60000 });
   }
-
-  if (!isAddress(communityId)) {
-    throw new Error(
-      `E2E_COMMUNITY_ID is not a valid address: ${communityId}`
-    );
-  }
-  const communityAddress = communityId;
-
-  const readMembership = async () => {
-    const result = await page.evaluate(
-      async ({ to, data }) => {
-        const provider = (window as any).ethereum;
-        return (await provider.request({
-          method: "eth_call",
-          params: [{ to, data }, "latest"]
-        })) as string;
-      },
-      { to: communityAddress, data: encodeIsMember(account) }
-    );
-    return parseBoolResult(result);
-  };
-
-  if (!(await readMembership())) {
-    return;
-  }
-
-  await page.evaluate(
-    async ({ from, to, data }) => {
-      const provider = (window as any).ethereum;
-      await provider.request({
-        method: "eth_sendTransaction",
-        params: [{ from, to, data }]
-      });
-    },
-    {
-      from: account,
-      to: communityAddress,
-      data: `0x${UNREGISTER_MEMBER_SELECTOR}`
-    }
-  );
-
-  await confirmTransaction({ metamask, extensionId });
-  await expectNoErrorToast(page);
-
-  await expect
-    .poll(async () => !(await readMembership()), {
-      timeout: 60000,
-      intervals: [1000, 2000, 3000]
-    })
-    .toBe(true);
 });

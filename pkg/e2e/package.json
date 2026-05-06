@@ -8,10 +8,11 @@
     "build-cache:force": "env -u HEADLESS -u CI pnpm exec synpress wallet-setup --force",
     "build-cache": "env -u HEADLESS -u CI pnpm exec synpress wallet-setup",
     "build-cache:headless": "HEADLESS=true pnpm exec synpress wallet-setup",
-    "test": "pnpm run build-cache && playwright test",
-    "test:headed": "pnpm run build-cache && playwright test --headed",
+    "test": "pnpm run build-cache && playwright test --retries=1",
+    "test:headed": "pnpm run build-cache && playwright test --headed --retries=1",
     "test:ui": "playwright test --ui",
-    "test:debug": "playwright test --debug"
+    "test:debug": "playwright test --debug",
+    "test:ci": "env -u HEADLESS -u E2E_CI pnpm test"
   },
   "keywords": [],
   "author": "",

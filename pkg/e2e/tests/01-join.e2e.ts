@@ -1,13 +1,15 @@
 import { testWithSynpress } from "@synthetixio/synpress";
 import { MetaMask } from "@synthetixio/synpress/playwright";
-import { metaMaskFixtures } from "./support/metaMaskFixtures";
 import basicSetup from "../wallet-setup/basic.setup";
 import {
   approveTokenAllowance,
   confirmTransaction,
-  expectNoErrorToast
-} from "./support/metamaskUtils";
-import { getByTestId } from "./support/locators-utils";
+  expectNoErrorToast,
+  metaMaskFixtures,
+  getByTestId,
+  getConfig,
+  waitForAllowancePositive
+} from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
@@ -45,10 +47,13 @@ test("should join community", async ({
   await getByTestId(page, "rk-wallet-option-injected").click();
   await metamask.connectToDapp();
 
-  // Verify the connected account address
-  await expect(getByTestId(page, "accounts")).toHaveText("0x327F…7394");
+  // Verify connected account renders in shortened form without asserting a specific address
+  await expect(getByTestId(page, "accounts")).toHaveText(
+    /0x[0-9a-fA-F]{2,4}…[0-9a-fA-F]{2,4}/
+  );
 
-  await getByTestId(page, `community-card-${process.env.E2E_COMMUNITY_ID}`).click(); // Opt - 🧪 End-to-End Test Playground
+  const { communityId } = getConfig();
+  await getByTestId(page, `community-card-${communityId}`).click(); // Opt - 🧪 End-to-End Test Playground
 
   // Wait for page loaded
   await page.waitForLoadState("networkidle");
@@ -59,10 +64,10 @@ test("should join community", async ({
   // 1. Sign the community covenant
   await metamask.confirmSignature();
 
-  // 2. Token allowance approval
+  // 2. Token allowance approval, then wait until allowance is on-chain
   await approveTokenAllowance({ page, metamask, extensionId });
-  // Wait for next tx to launch
-  await page.waitForTimeout(1000);
+  const { governanceToken } = getConfig();
+  await waitForAllowancePositive({ page, token: governanceToken, spender: communityId });
 
   // Wait for join tx waiting for signature
   await page.getByText("Waiting for signature").isVisible({
