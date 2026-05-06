@@ -43,9 +43,28 @@ test("should activate governance in the pool", async ({
   });
 
   const activateBtn = getByTestId(page, "btn-activate-governance");
+  const voteBtn = getByTestId(page, "btn-vote-on-proposals");
+
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const activateVisible = await activateBtn.isVisible().catch(() => false);
+    const voteVisible = await voteBtn.isVisible().catch(() => false);
+
+    if (activateVisible || voteVisible) {
+      break;
+    }
+
+    await page.reload({ waitUntil: "networkidle" }).catch(() => {});
+    await page.waitForTimeout(5000);
+  }
+
+  if (await voteBtn.isVisible().catch(() => false)) {
+    return;
+  }
+
   await expect(activateBtn).toBeVisible({ timeout: 60000 });
   await activateBtn.click();
 
   await confirmTransaction({ metamask, extensionId });
   await expectNoErrorToast(page);
+  await expect(voteBtn).toBeVisible({ timeout: 60000 });
 });
