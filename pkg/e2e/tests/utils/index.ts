@@ -1,4 +1,5 @@
 import { Page } from "@playwright/test";
+import { createPublicClient, defineChain, http, parseAbi } from "viem";
 import { getConfig } from "./config";
 
 export * from "./metaMaskFixtures";
@@ -13,13 +14,9 @@ export async function gotoE2ECommunity(page: Page) {
   await page.bringToFront();
 }
 
-// ERC20 allowance(address owner, address spender) -> 0xdd62ed3e
-const ALLOWANCE_SELECTOR = "dd62ed3e";
-
-function encodeAddress(addr: string) {
-  const v = addr.replace(/^0x/i, "").toLowerCase();
-  return v.padStart(64, "0");
-}
+const allowanceAbi = parseAbi([
+  "function allowance(address owner, address spender) view returns (uint256)"
+]);
 
 export async function waitForAllowancePositive({
   page,
@@ -51,32 +48,49 @@ export async function waitForAllowancePositive({
   }
   if (!acct) throw new Error("waitForAllowancePositive: missing owner account");
 
-  const data = `0x${ALLOWANCE_SELECTOR}${encodeAddress(acct)}${encodeAddress(spender)}`;
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    try {
-      const res = (await page.evaluate(
-        async ({ to, data }) => {
-          const provider = (window as any).ethereum;
-          return (await provider.request({
-            method: "eth_call",
-            params: [{ to, data }, "latest"]
-          })) as string;
-        },
-        { to: token, data }
-      )) as string;
-      if (res && res !== "0x" && res !== "0x0") {
-        try {
-          if (BigInt(res) > 0n) return true;
-        } catch {
-          // non-numeric, fallback to truthy
-          return true;
+  const { chainId, rpcUrl } = getConfig();
+  const numericChainId = Number(chainId);
+  if (!Number.isFinite(numericChainId)) {
+    throw new Error(`waitForAllowancePositive: invalid chain id ${chainId}`);
+  }
+
+  const publicClient = createPublicClient({
+    chain: defineChain({
+      id: numericChainId,
+      name: "E2E Chain",
+      nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+      rpcUrls: {
+        default: {
+          http: [rpcUrl]
         }
       }
-    } catch {}
+    }),
+    transport: http(rpcUrl)
+  });
+
+  const deadline = Date.now() + timeoutMs;
+  let lastError: unknown;
+  while (Date.now() < deadline) {
+    try {
+      const allowance = await publicClient.readContract({
+        address: token,
+        abi: allowanceAbi,
+        functionName: "allowance",
+        args: [acct, spender]
+      });
+
+      if (allowance > 0n) {
+        return true;
+      }
+      lastError = undefined;
+    } catch (error) {
+      lastError = error;
+    }
     await page.waitForTimeout(pollMs);
   }
   throw new Error(
-    "waitForAllowancePositive: allowance not observed > 0 within timeout"
+    lastError instanceof Error ?
+      `waitForAllowancePositive: allowance not observed > 0 within timeout (${lastError.message})`
+    : "waitForAllowancePositive: allowance not observed > 0 within timeout"
   );
 }

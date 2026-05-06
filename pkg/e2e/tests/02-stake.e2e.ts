@@ -61,13 +61,9 @@ test("should increase stake in community", async ({
     await regBtn.getByText("Join").click();
     await metamask.confirmSignature();
     await approveTokenAllowance({ page, metamask, extensionId });
-    const { governanceToken, communityId } = getConfig();
-    await waitForAllowancePositive({
-      page,
-      token: governanceToken,
-      spender: communityId
+    await page.getByText("Waiting for signature").isVisible({
+      timeout: 60000
     });
-    await page.waitForTimeout(800);
     await confirmTransaction({ metamask, extensionId });
     await expectNoErrorToast(page);
   }

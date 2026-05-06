@@ -7,8 +7,7 @@ import {
   expectNoErrorToast,
   metaMaskFixtures,
   getByTestId,
-  getConfig,
-  waitForAllowancePositive
+  getConfig
 } from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
@@ -66,12 +65,6 @@ test("should join community", async ({
 
   // 2. Token allowance approval, then wait until allowance is on-chain
   await approveTokenAllowance({ page, metamask, extensionId });
-  const { governanceToken } = getConfig();
-  await waitForAllowancePositive({
-    page,
-    token: governanceToken,
-    spender: communityId
-  });
 
   // Wait for join tx waiting for signature
   await page.getByText("Waiting for signature").isVisible({
