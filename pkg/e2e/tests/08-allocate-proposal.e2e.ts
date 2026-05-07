@@ -46,20 +46,32 @@ test("should allocate support to a proposal", async ({
 }`
     })
   }).then((r) => r.json());
-  const { poolId } = subgraphRes.data.cvstrategies[0];
+  const { id: strategyAddress } = subgraphRes.data.cvstrategies[0];
 
-  await page.goto(`/gardens/${chainId}/${communityId}/${poolId}`, {
+  await page.goto(`/gardens/${chainId}/${communityId}/${strategyAddress}`, {
     timeout: 60000
   });
 
-  // Open the allocation view
+  const activateBtn = getByTestId(page, "btn-activate-governance");
   const voteBtn = getByTestId(page, "btn-vote-on-proposals");
+
   for (let attempt = 0; attempt < 12; attempt++) {
     const voteVisible = await voteBtn.isVisible().catch(() => false);
     const voteEnabled = await voteBtn.isEnabled().catch(() => false);
 
     if (voteVisible && voteEnabled) {
       break;
+    }
+
+    const activateVisible = await activateBtn.isVisible().catch(() => false);
+    const activateEnabled = await activateBtn.isEnabled().catch(() => false);
+
+    if (activateVisible && activateEnabled) {
+      await activateBtn.click();
+      await confirmTransaction({ metamask, extensionId });
+      await expectNoErrorToast(page);
+      await page.waitForTimeout(5000);
+      continue;
     }
 
     await page.reload({ waitUntil: "networkidle" }).catch(() => {});

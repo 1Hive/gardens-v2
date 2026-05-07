@@ -44,12 +44,16 @@ test("should activate governance in the pool", async ({
 
   const activateBtn = getByTestId(page, "btn-activate-governance");
   const voteBtn = getByTestId(page, "btn-vote-on-proposals");
+  const deactivateBtn = page.getByRole("button", {
+    name: "Deactivate governance"
+  });
 
   for (let attempt = 0; attempt < 12; attempt++) {
     const activateVisible = await activateBtn.isVisible().catch(() => false);
     const voteVisible = await voteBtn.isVisible().catch(() => false);
+    const deactivateVisible = await deactivateBtn.isVisible().catch(() => false);
 
-    if (activateVisible || voteVisible) {
+    if (activateVisible || voteVisible || deactivateVisible) {
       break;
     }
 
@@ -57,7 +61,10 @@ test("should activate governance in the pool", async ({
     await page.waitForTimeout(5000);
   }
 
-  if (await voteBtn.isVisible().catch(() => false)) {
+  if (
+    (await voteBtn.isVisible().catch(() => false)) ||
+    (await deactivateBtn.isVisible().catch(() => false))
+  ) {
     return;
   }
 
@@ -66,5 +73,18 @@ test("should activate governance in the pool", async ({
 
   await confirmTransaction({ metamask, extensionId });
   await expectNoErrorToast(page);
-  await expect(voteBtn).toBeVisible({ timeout: 60000 });
+
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const voteVisible = await voteBtn.isVisible().catch(() => false);
+    const deactivateVisible = await deactivateBtn.isVisible().catch(() => false);
+
+    if (voteVisible || deactivateVisible) {
+      return;
+    }
+
+    await page.reload({ waitUntil: "networkidle" }).catch(() => {});
+    await page.waitForTimeout(5000);
+  }
+
+  await expect(deactivateBtn.or(voteBtn)).toBeVisible({ timeout: 60000 });
 });
