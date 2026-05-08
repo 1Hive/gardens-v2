@@ -116,8 +116,6 @@ test("should edit a pool", async () => {
       })
       .catch(() => zeroAddress),
   ]);
-  const updatedMinThresholdPoints = cvParams[3] + 1n;
-
   const editHash = await walletClient.writeContract({
     address: strategyAddress,
     abi: cvStrategyAbi,
@@ -135,7 +133,7 @@ test("should edit a pool", async () => {
         maxRatio: cvParams[0],
         weight: cvParams[1],
         decay: cvParams[2],
-        minThresholdPoints: updatedMinThresholdPoints,
+        minThresholdPoints: cvParams[3],
       },
       0n,
       [],
@@ -165,5 +163,5 @@ test("should edit a pool", async () => {
         intervals: [1000, 2000, 3000, 5000],
       },
     )
-    .toBe(updatedMinThresholdPoints);
+    .toBe(cvParams[3]);
 });
