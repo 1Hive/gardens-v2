@@ -23,12 +23,7 @@ import { FormPreview, FormRow } from "./FormPreview";
 import { FormSelect } from "./FormSelect";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { Button } from "@/components";
-import {
-  chainConfigMap,
-  ChainIcon,
-  getChain,
-  getConfigByChain,
-} from "@/configs/chains";
+import { chainConfigMap, ChainIcon } from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";

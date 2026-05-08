@@ -10,8 +10,8 @@ import { chainConfigMap } from "@/configs/chains";
 import { getSuperfluidPointsClientByEnv } from "@/services/superfluid-points";
 import { erc20ABI } from "@/src/generated";
 import { ChainId } from "@/types";
-import { getViemChain } from "@/utils/web3";
 import { isValidCid } from "@/utils/ipfs";
+import { getViemChain } from "@/utils/web3";
 
 type Strategy = {
   id: Address;

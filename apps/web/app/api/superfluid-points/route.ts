@@ -13,8 +13,8 @@ import {
 } from "@/services/superfluid-points";
 import { erc20ABI } from "@/src/generated";
 import { ChainId } from "@/types";
-import { getViemChain } from "@/utils/web3";
 import { isValidCid } from "@/utils/ipfs";
+import { getViemChain } from "@/utils/web3";
 
 type Strategy = {
   id: Address;
@@ -689,11 +689,9 @@ const PINATA_GROUP_ID =
 const normalizeIpfsGateway = (gateway?: string | null) => {
   if (!gateway || gateway.trim() === "") return null;
   const trimmed = gateway.trim().replace(/\/$/, "");
-  return (
-    trimmed.startsWith("http://") || trimmed.startsWith("https://") ?
+  return trimmed.startsWith("http://") || trimmed.startsWith("https://") ?
       trimmed
-    : `https://${trimmed}`
-  );
+    : `https://${trimmed}`;
 };
 const IPFS_GATEWAY = normalizeIpfsGateway(process.env.IPFS_GATEWAY);
 const PINATA_JWT = process.env.PINATA_JWT;
@@ -803,10 +801,7 @@ let lastEnsCachePrune = 0;
 const ENS_CACHE_PRUNE_INTERVAL_MS = 60 * 60 * 1000;
 const isEnsNegativeCacheEntry = (entry: EnsCacheEntry) =>
   !entry.name && !entry.avatar;
-const setEnsIdentityCacheEntry = (
-  address: string,
-  entry: EnsCacheEntry,
-) => {
+const setEnsIdentityCacheEntry = (address: string, entry: EnsCacheEntry) => {
   ensIdentityCache.set(address.toLowerCase(), entry);
   ensIdentityCacheDirty = true;
 };
@@ -1342,12 +1337,12 @@ const hydrateEnsIdentityCacheFromIpfs = async () => {
   const now = Date.now();
   let hydrated = 0;
   const cacheEntries =
-    Array.isArray(entries) ?
-      entries
-    : Object.entries(entries).map(([address, entry]) => ({
+    Array.isArray(entries) ? entries : (
+      Object.entries(entries).map(([address, entry]) => ({
         address,
         ...(entry && typeof entry === "object" ? entry : {}),
-      }));
+      }))
+    );
 
   for (const entry of cacheEntries) {
     const address =
@@ -4017,14 +4012,7 @@ export async function GET(req: Request) {
         nativeSuperToken: nativeSuperTokenByWallet.get(targetWallet) ?? null,
         nativeToken: nativeTokenByWallet.get(targetWallet) ?? null,
         activities: walletActivitiesByWallet.get(targetWallet) ?? [],
-        checksum: [
-          targetWallet,
-          0,
-          0,
-          0,
-          0,
-          0,
-        ].join("|"),
+        checksum: [targetWallet, 0, 0, 0, 0, 0].join("|"),
       };
 
       return NextResponse.json(
@@ -4058,7 +4046,8 @@ export async function GET(req: Request) {
               ensAvatar: wallet.ensAvatar,
             },
             activities: wallet.activities,
-            communitiesJoined: walletCommunitiesByWallet.get(targetWallet) ?? [],
+            communitiesJoined:
+              walletCommunitiesByWallet.get(targetWallet) ?? [],
           },
           dryRun: STACK_DRY_RUN || traceOnly,
           traceOnly,
