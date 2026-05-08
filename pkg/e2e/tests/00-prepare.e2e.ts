@@ -8,28 +8,27 @@ import {
   metaMaskFixtures,
   getByTestId,
   gotoE2ECommunity,
-  getConfig
+  archivePools,
 } from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
 
-test.setTimeout(240000);
-
-const isAddress = (value: string | undefined): value is `0x${string}` =>
-  typeof value === "string" && /^0x[a-fA-F0-9]{40}$/.test(value);
+test.setTimeout(600000);
 
 test("should ensure wallet is not a member before running e2e flow", async ({
   context,
   page,
   metamaskPage,
-  extensionId
+  extensionId,
 }) => {
+  await archivePools();
+
   const metamask = new MetaMask(
     context,
     metamaskPage,
     basicSetup.walletPassword,
-    extensionId
+    extensionId,
   );
 
   await page.addInitScript(() => {
@@ -40,27 +39,14 @@ test("should ensure wallet is not a member before running e2e flow", async ({
   await page.goto("/", { timeout: 60000 });
   await connectWallet(page, metamask);
 
-  const chainId = await page.evaluate(async () => {
+  await page.evaluate(async () => {
     const provider = (window as any).ethereum;
     if (!provider) {
       throw new Error("Missing injected ethereum provider");
     }
-    return (await provider.request({ method: "eth_chainId" })) as string;
+    await provider.request({ method: "eth_chainId" });
   });
 
-  const account = await page.evaluate(async () => {
-    const provider = (window as any).ethereum;
-    const accounts = (await provider.request({
-      method: "eth_accounts"
-    })) as string[];
-    return accounts[0] ?? null;
-  });
-
-  if (!isAddress(account)) {
-    throw new Error("Connected wallet account is missing or invalid.");
-  }
-
-  const { communityId } = getConfig();
   await gotoE2ECommunity(page);
   await page.waitForLoadState("networkidle");
 

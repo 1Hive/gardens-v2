@@ -7,7 +7,9 @@ import {
   expectNoErrorToast,
   metaMaskFixtures,
   getByTestId,
-  getConfig
+  getConfig,
+  getConnectedAccount,
+  waitForMembershipActive,
 } from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
@@ -22,14 +24,14 @@ test("should join community", async ({
   context,
   page,
   metamaskPage,
-  extensionId
+  extensionId,
 }) => {
   // Create a new MetaMask instance
   const metamask = new MetaMask(
     context,
     metamaskPage,
     basicSetup.walletPassword,
-    extensionId
+    extensionId,
   );
 
   // Navigate to the homepage
@@ -39,7 +41,7 @@ test("should join community", async ({
     localStorage.setItem("flag_queryAllChains", "true");
   });
   await page.goto("/", {
-    timeout: 60000 // Increase timeout to handle slow loading
+    timeout: 60000, // Increase timeout to handle slow loading
   });
 
   await getByTestId(page, "connectButton").click();
@@ -48,7 +50,7 @@ test("should join community", async ({
 
   // Verify connected account renders in shortened form without asserting a specific address
   await expect(getByTestId(page, "accounts")).toHaveText(
-    /0x[0-9a-fA-F]{2,4}…[0-9a-fA-F]{2,4}/
+    /0x[0-9a-fA-F]{2,4}…[0-9a-fA-F]{2,4}/,
   );
 
   const { communityId } = getConfig();
@@ -68,11 +70,17 @@ test("should join community", async ({
 
   // Wait for join tx waiting for signature
   await page.getByText("Waiting for signature").isVisible({
-    timeout: 60000
+    timeout: 60000,
   });
 
   // 3. Join the community
   await page.waitForTimeout(1000); // Wait for the tx to open
   await confirmTransaction({ metamask, extensionId });
   await expectNoErrorToast(page);
+
+  await waitForMembershipActive({
+    page,
+    community: communityId,
+    account: await getConnectedAccount(page),
+  });
 });

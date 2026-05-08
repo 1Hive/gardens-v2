@@ -8,7 +8,7 @@ import {
   expectNoErrorToast,
   getByTestId,
   metaMaskFixtures,
-  gotoE2ECommunity
+  gotoE2ECommunity,
 } from "./utils";
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
@@ -22,14 +22,14 @@ test("should approve a pool as council safe", async ({
   context,
   page,
   metamaskPage,
-  extensionId
+  extensionId,
 }) => {
   // Create a new MetaMask instance
   const metamask = new MetaMask(
     context,
     metamaskPage,
     basicSetup.walletPassword,
-    extensionId
+    extensionId,
   );
 
   await page.bringToFront();
@@ -56,4 +56,28 @@ test("should approve a pool as council safe", async ({
 
   await confirmTransaction({ metamask, extensionId });
   await expectNoErrorToast(page);
+
+  await gotoE2ECommunity(page);
+  await page.waitForLoadState("networkidle").catch(() => {});
+  await getByTestId(page, "btn-select-all").click();
+
+  const approvedPoolCard = page
+    .locator('[data-testid^="pool-card-approved-"]')
+    .first();
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const approvedVisible = await approvedPoolCard
+      .isVisible({ timeout: 1000 })
+      .catch(() => false);
+    if (approvedVisible) {
+      return;
+    }
+
+    await page.reload({ waitUntil: "networkidle" }).catch(() => {});
+    await getByTestId(page, "btn-select-all")
+      .click()
+      .catch(() => {});
+    await page.waitForTimeout(5000);
+  }
+
+  await expect(approvedPoolCard).toBeVisible({ timeout: 30000 });
 });

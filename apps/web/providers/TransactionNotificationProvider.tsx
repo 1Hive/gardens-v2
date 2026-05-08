@@ -123,7 +123,9 @@ export const TransactionNotificationProvider = ({
 
   const remove = useCallback((toastId: string) => {
     if (!toastId) return;
-    toast.dismiss(toastId);
+    if (toast.isActive(toastId)) {
+      toast.dismiss(toastId);
+    }
     dispatch({ type: "REMOVE", toastId });
   }, []);
 
@@ -405,16 +407,16 @@ const TransactionStatusWatcher = ({
 }) => {
   const shouldWatchSafeTransaction = Boolean(
     entry.watchTransaction !== false &&
-      entry.transactionHash == null &&
-      entry.safeTransactionHash != null &&
-      entry.chainId != null &&
-      (entry.status === "waiting" || entry.status === "loading"),
+    entry.transactionHash == null &&
+    entry.safeTransactionHash != null &&
+    entry.chainId != null &&
+    (entry.status === "waiting" || entry.status === "loading"),
   );
   const shouldWatch = Boolean(
     entry.watchTransaction !== false &&
-      isRpcTransactionHash(entry.transactionHash) &&
-      entry.chainId != null &&
-      (entry.status === "waiting" || entry.status === "loading"),
+    isRpcTransactionHash(entry.transactionHash) &&
+    entry.chainId != null &&
+    (entry.status === "waiting" || entry.status === "loading"),
   );
 
   const { status, error } = useWaitForTransaction({
@@ -508,7 +510,8 @@ const TransactionStatusWatcher = ({
               safeTransactionHash: resolvedSafeTxHash,
               transactionError:
                 data.isSuccessful === false ?
-                  entry.transactionError ?? new Error("Safe transaction failed")
+                  (entry.transactionError ??
+                  new Error("Safe transaction failed"))
                 : null,
             });
             return;
@@ -576,7 +579,7 @@ const TransactionStatusWatcher = ({
             safeTransactionHash: matchedSafeTxHash,
             transactionError:
               matchingTransaction.isSuccessful === false ?
-                entry.transactionError ?? new Error("Safe transaction failed")
+                (entry.transactionError ?? new Error("Safe transaction failed"))
               : null,
           });
         }

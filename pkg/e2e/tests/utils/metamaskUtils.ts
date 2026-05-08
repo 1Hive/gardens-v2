@@ -16,14 +16,14 @@ const chain = (() => {
     chainId: idNum,
     symbol: "ETH",
     blockExplorerUrl: "",
-    chainIdHex
+    chainIdHex,
   } as const;
 })();
 
 async function dismissWalletPopovers(walletPage: Page) {
   const closeSelectors = [
     '[data-testid="popover-close"]',
-    'button[aria-label="Close"]'
+    'button[aria-label="Close"]',
   ];
 
   for (let i = 0; i < 6; i++) {
@@ -49,7 +49,7 @@ async function dismissWalletPopovers(walletPage: Page) {
 async function clickFirstVisible(
   walletPage: Page,
   selectors: string[],
-  timeout = 1500
+  timeout = 1500,
 ) {
   for (const selector of selectors) {
     const locator = walletPage.locator(selector).first();
@@ -67,7 +67,7 @@ async function clickFirstVisible(
 async function fillFirstVisibleInput(
   walletPage: Page,
   selectors: string[],
-  value: string
+  value: string,
 ) {
   for (const selector of selectors) {
     const locator = walletPage.locator(selector).first();
@@ -84,7 +84,7 @@ async function fillFirstVisibleInput(
 
 async function fallbackAddAndSwitchNetwork(
   walletPage: Page,
-  metamask: MetaMask
+  metamask: MetaMask,
 ) {
   const currentUrl = walletPage.url();
   if (!currentUrl.startsWith("chrome-extension://")) {
@@ -93,7 +93,7 @@ async function fallbackAddAndSwitchNetwork(
 
   const extensionOrigin = new URL(currentUrl).origin;
   await walletPage.goto(
-    `${extensionOrigin}/home.html#settings/networks/add-network`
+    `${extensionOrigin}/home.html#settings/networks/add-network`,
   );
   await walletPage.waitForLoadState("domcontentloaded");
   await dismissWalletPopovers(walletPage);
@@ -103,27 +103,27 @@ async function fallbackAddAndSwitchNetwork(
     [
       ".networks-tab__add-network-form .form-field:nth-child(1) input",
       'input[name="networkName"]',
-      '[data-testid="network-form-network-name"] input'
+      '[data-testid="network-form-network-name"] input',
     ],
-    chain.name
+    chain.name,
   );
   const rpcFilled = await fillFirstVisibleInput(
     walletPage,
     [
       ".networks-tab__add-network-form .form-field:nth-child(2) input",
       'input[name="rpcUrl"]',
-      '[data-testid="network-form-rpc-url"] input'
+      '[data-testid="network-form-rpc-url"] input',
     ],
-    chain.rpcUrl
+    chain.rpcUrl,
   );
   const chainIdFilled = await fillFirstVisibleInput(
     walletPage,
     [
       ".networks-tab__add-network-form .form-field:nth-child(3) input",
       'input[name="chainId"]',
-      '[data-testid="network-form-chain-id"] input'
+      '[data-testid="network-form-chain-id"] input',
     ],
-    String(chain.chainId)
+    String(chain.chainId),
   );
   const symbolFilled = await fillFirstVisibleInput(
     walletPage,
@@ -131,14 +131,14 @@ async function fallbackAddAndSwitchNetwork(
       '[data-testid="network-form-ticker"] input',
       ".networks-tab__add-network-form .form-field:nth-child(4) input",
       'input[name="ticker"]',
-      '[data-testid="network-form-symbol"] input'
+      '[data-testid="network-form-symbol"] input',
     ],
-    chain.symbol
+    chain.symbol,
   );
 
   if (!networkNameFilled || !rpcFilled || !chainIdFilled || !symbolFilled) {
     throw new Error(
-      "Could not locate one or more network form inputs in MetaMask"
+      "Could not locate one or more network form inputs in MetaMask",
     );
   }
 
@@ -147,15 +147,15 @@ async function fallbackAddAndSwitchNetwork(
     [
       ".networks-tab__add-network-form .form-field:last-child input",
       'input[name="blockExplorerUrl"]',
-      '[data-testid="network-form-block-explorer-url"] input'
+      '[data-testid="network-form-block-explorer-url"] input',
     ],
-    chain.blockExplorerUrl
+    chain.blockExplorerUrl,
   );
 
   const saveClicked = await clickFirstVisible(walletPage, [
     ".networks-tab__add-network-form-footer button.btn-primary",
     '[data-testid="network-form-save"]',
-    'button[type="submit"]'
+    'button[type="submit"]',
   ]);
   if (!saveClicked) {
     throw new Error("Could not find network save button in MetaMask");
@@ -169,7 +169,7 @@ async function fallbackAddAndSwitchNetwork(
   await clickFirstVisible(
     walletPage,
     [".home__new-network-added__switch-to-button"],
-    1200
+    1200,
   );
 
   await metamask.switchNetwork(chain.name);
@@ -216,7 +216,7 @@ async function ensureTargetNetwork(page: Page, metamask: MetaMask) {
 
       if (switchedChainId.toLowerCase() !== chain.chainIdHex) {
         throw new Error(
-          `Switch reported success but chainId is ${switchedChainId}`
+          `Switch reported success but chainId is ${switchedChainId}`,
         );
       }
 
@@ -229,7 +229,7 @@ async function ensureTargetNetwork(page: Page, metamask: MetaMask) {
       }
 
       console.warn(
-        `[connectWallet] Network switch failed on attempt ${attempt}/${maxSwitchAttempts}, retrying...`
+        `[connectWallet] Network switch failed on attempt ${attempt}/${maxSwitchAttempts}, retrying...`,
       );
       await page.waitForTimeout(1500);
     }
@@ -243,7 +243,7 @@ async function ensureTargetNetwork(page: Page, metamask: MetaMask) {
 export async function approveTokenAllowance({
   page,
   metamask,
-  extensionId
+  extensionId,
 }: {
   page: Page;
   metamask: MetaMask;
@@ -274,7 +274,7 @@ export async function approveTokenAllowance({
 
   const clickWhenVisible = async (
     label: string,
-    locatorFactory: (target: Page) => ReturnType<Page["locator"]>
+    locatorFactory: (target: Page) => ReturnType<Page["locator"]>,
   ) => {
     for (let i = 0; i < 60; i++) {
       const targetPage = findNotificationPage();
@@ -307,7 +307,7 @@ export async function approveTokenAllowance({
   }
   const waitForLoadState = async (
     targetPage: Page,
-    state: Parameters<Page["waitForLoadState"]>[0]
+    state: Parameters<Page["waitForLoadState"]>[0],
   ) => {
     if (targetPage.isClosed()) {
       return false;
@@ -327,7 +327,7 @@ export async function approveTokenAllowance({
 
   const domReady = await waitForLoadState(
     hydratedNotificationPage,
-    "domcontentloaded"
+    "domcontentloaded",
   );
   if (!domReady) {
     return;
@@ -335,7 +335,7 @@ export async function approveTokenAllowance({
 
   const networkReady = await waitForLoadState(
     hydratedNotificationPage,
-    "networkidle"
+    "networkidle",
   );
   if (!networkReady) {
     return;
@@ -351,10 +351,10 @@ export async function approveTokenAllowance({
 
       try {
         const allowanceInput = targetPage.getByTestId(
-          "custom-spending-cap-input"
+          "custom-spending-cap-input",
         );
         const maxButton = targetPage.getByTestId(
-          "custom-spending-cap-max-button"
+          "custom-spending-cap-max-button",
         );
         if (
           (await allowanceInput.isVisible().catch(() => false)) ||
@@ -375,65 +375,100 @@ export async function approveTokenAllowance({
 
   if (!hasAllowanceField) {
     console.warn(
-      "MetaMask allowance already approved; skipping allowance step."
+      "MetaMask allowance already approved; skipping allowance step.",
     );
     return;
   }
 
   await clickWhenVisible("Next", (targetPage) =>
     targetPage.locator(
-      '[data-testid="page-container-footer-next"], button:has-text("Next")'
-    )
+      '[data-testid="page-container-footer-next"], button:has-text("Next")',
+    ),
   );
 
   await clickWhenVisible("Approve", (targetPage) =>
-    targetPage.locator('button:has-text("Approve"), button:has-text("Confirm")')
+    targetPage.locator(
+      'button:has-text("Approve"), button:has-text("Confirm")',
+    ),
   );
 }
 
 export async function expectNoErrorToast(page: Page) {
   // Ensure no visible error toast is present (react-toastify default error class)
   await expect(page.locator(".Toastify__toast--error")).toHaveCount(0, {
-    timeout: 5000
+    timeout: 5000,
   });
 }
 
 export async function confirmTransaction({
   metamask,
-  extensionId
+  extensionId,
 }: {
   metamask: MetaMask;
   extensionId: string;
 }) {
+  const extensionOrigin = `chrome-extension://${extensionId}`;
   const notificationPageUrl = `chrome-extension://${extensionId}/notification.html`;
   let notificationPage: Page | undefined;
   const sleep = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
-  const findNotificationPages = () =>
+  const confirmSelectors = [
+    '[data-testid="confirm-footer-button"]',
+    'button:has-text("Confirm")',
+  ];
+  const nextSelectors = [
+    '[data-testid="page-container-footer-next"]',
+    'button:has-text("Next")',
+  ];
+  const transactionButtonSelectors = [...confirmSelectors, ...nextSelectors];
+  const findExtensionPages = () =>
     metamask.page
       .context()
       .pages()
-      .filter((p) => !p.isClosed() && p.url().includes(notificationPageUrl));
+      .filter((p) => !p.isClosed() && p.url().startsWith(extensionOrigin));
+
+  const findTransactionPage = async () => {
+    const pages = findExtensionPages().reverse();
+    const notificationPage = pages.find((p) =>
+      p.url().includes(notificationPageUrl),
+    );
+    if (notificationPage) {
+      return notificationPage;
+    }
+
+    for (const page of pages) {
+      for (const selector of transactionButtonSelectors) {
+        const visible = await page
+          .locator(selector)
+          .first()
+          .isVisible({ timeout: 100 })
+          .catch(() => false);
+        if (visible) {
+          return page;
+        }
+      }
+    }
+
+    return undefined;
+  };
 
   // Wait for the transaction confirmation popup
-  for (let i = 0; i < 40; i++) {
-    const notificationPages = findNotificationPages();
-    notificationPage = notificationPages[notificationPages.length - 1];
+  for (let i = 0; i < 80; i++) {
+    notificationPage = await findTransactionPage();
     if (notificationPage) break;
     await sleep(250);
   }
 
   if (!notificationPage) {
-    console.warn("MetaMask transaction notification not found; continuing");
-    return;
+    throw new Error("MetaMask transaction notification not found");
   }
 
   await notificationPage.waitForLoadState("domcontentloaded", {
-    timeout: 15000
+    timeout: 15000,
   });
-  await notificationPage.waitForLoadState("networkidle", {
-    timeout: 15000
-  });
+  await notificationPage
+    .waitForLoadState("networkidle", { timeout: 5000 })
+    .catch(() => {});
   await notificationPage.bringToFront().catch(() => {});
 
   const scrollConfirmView = async () => {
@@ -444,17 +479,9 @@ export async function confirmTransaction({
     await notificationPage?.keyboard.press("End").catch(() => {});
   };
 
-  const confirmSelectors = [
-    '[data-testid="confirm-footer-button"]',
-    'button:has-text("Confirm")',
-    '[data-testid="page-container-footer-next"]'
-  ];
-
   let clicked = false;
-  for (let i = 0; i < 20; i++) {
-    const notificationPages = findNotificationPages();
-    const latestNotificationPage =
-      notificationPages[notificationPages.length - 1];
+  for (let i = 0; i < 40; i++) {
+    const latestNotificationPage = await findTransactionPage();
     if (latestNotificationPage) {
       notificationPage = latestNotificationPage;
       await notificationPage.bringToFront().catch(() => {});
@@ -492,6 +519,32 @@ export async function confirmTransaction({
       break;
     }
 
+    for (const selector of nextSelectors) {
+      const button = notificationPage.locator(selector).first();
+      const visible = await button.isVisible().catch(() => false);
+      if (!visible) {
+        continue;
+      }
+
+      const enabled = await button.isEnabled().catch(() => false);
+      if (!enabled) {
+        continue;
+      }
+
+      await button.scrollIntoViewIfNeeded().catch(() => {});
+      try {
+        await button.click({ timeout: 5000 });
+        await sleep(1000);
+        break;
+      } catch {
+        try {
+          await button.click({ timeout: 5000, force: true });
+          await sleep(1000);
+          break;
+        } catch {}
+      }
+    }
+
     await sleep(250);
   }
 
@@ -520,7 +573,7 @@ export async function connectWallet(page: Page, metamask: MetaMask) {
       }
 
       console.warn(
-        `[connectWallet] MetaMask connectToDapp failed on attempt ${attempt}/${maxConnectAttempts}, retrying...`
+        `[connectWallet] MetaMask connectToDapp failed on attempt ${attempt}/${maxConnectAttempts}, retrying...`,
       );
       await page.waitForTimeout(1500);
     }
@@ -532,7 +585,7 @@ export async function connectWallet(page: Page, metamask: MetaMask) {
 
   // Verify the connected account address
   await expect(page.locator("[data-testid='accounts']")).toHaveText(
-    /0x[0-9a-fA-F]{4}…[0-9a-fA-F]{4}/
+    /0x[0-9a-fA-F]{4}…[0-9a-fA-F]{4}/,
   );
 
   // Ensure MetaMask is on the target E2E network configured via env.

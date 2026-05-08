@@ -389,7 +389,7 @@ export default function ClientPage({
     isMemberCommunityResult?.isRegistered ? isMemberCommunityResult
     : memberCommunityFromPoolResult?.isRegistered ?
       memberCommunityFromPoolResult
-    : isMemberCommunityResult ?? memberCommunityFromPoolResult;
+    : (isMemberCommunityResult ?? memberCommunityFromPoolResult);
 
   const memberTokensInCommunity = BigInt(
     memberCommunityData?.stakedTokens ?? 0,
@@ -419,10 +419,12 @@ export default function ClientPage({
 
   const isMemberCommunity = !!memberCommunityData?.isRegistered;
 
-  const memberActivatedOnChain = memberPower != null && memberPower > 0n;
+  const hasResolvedMemberPower = memberPower != null;
+  const memberActivatedOnChain = hasResolvedMemberPower && memberPower > 0n;
   const memberActivatedStrategy =
-    memberActivatedOnChain ||
-    memberStrategyData?.memberStrategy?.activatedPoints > 0n;
+    hasResolvedMemberPower ?
+      memberActivatedOnChain
+    : memberStrategyData?.memberStrategy?.activatedPoints > 0n;
   const hasResolvedMembershipState =
     !wallet ||
     (hasStartedMembershipLookup && !isMemberFetching && !memberDataFetching);
@@ -721,15 +723,18 @@ export default function ClientPage({
     | bigint
     | null
     | undefined;
-  const { currentFlowRateBn: liveCurrentFlowRateBn, hasFetched: hasFetchedLivePoolFlow } =
-    useSuperfluidStream({
-      receiver: (streamInfo?.superfluidGDA ?? "") as Address,
-      superToken: (effectiveSuperToken ?? "") as Address,
-      chainId,
-      containerId: streamInfo?.superfluidGDA ?? poolId ?? strategy?.id ?? "pool-stream",
-      sender: strategy?.id,
-      includePoolMembers: false,
-    });
+  const {
+    currentFlowRateBn: liveCurrentFlowRateBn,
+    hasFetched: hasFetchedLivePoolFlow,
+  } = useSuperfluidStream({
+    receiver: (streamInfo?.superfluidGDA ?? "") as Address,
+    superToken: (effectiveSuperToken ?? "") as Address,
+    chainId,
+    containerId:
+      streamInfo?.superfluidGDA ?? poolId ?? strategy?.id ?? "pool-stream",
+    sender: strategy?.id,
+    includePoolMembers: false,
+  });
   const currentFlowRateForDisplay =
     liveCurrentFlowRateBn ?? streamLastFlowRate ?? 0n;
   const hasEligibleStreamingProposal = useMemo(
@@ -899,15 +904,16 @@ export default function ClientPage({
               <ArrowTopRightOnSquareIcon className="h-4 w-4" />
             </a>
           )}
-          {currentFlowRateForDisplay === 0n && !showStreamingPoolInsufficientFunds && (
-            <InfoBox
-              infoBoxType="info"
-              className="w-full"
-              title="No active stream"
-            >
-              This pool currently has no active outflow.
-            </InfoBox>
-          )}
+          {currentFlowRateForDisplay === 0n &&
+            !showStreamingPoolInsufficientFunds && (
+              <InfoBox
+                infoBoxType="info"
+                className="w-full"
+                title="No active stream"
+              >
+                This pool currently has no active outflow.
+              </InfoBox>
+            )}
           {showSyncStreamButton && (
             <Button
               btnStyle="outline"
@@ -1118,7 +1124,11 @@ export default function ClientPage({
                   poolToken={poolToken}
                   chainId={Number(chain)}
                   streamingRatePerSecond={effectiveStrategy.stream?.maxFlowRate}
-                  streamReceiver={effectiveStrategy.stream?.superfluidGDA as Address | undefined}
+                  streamReceiver={
+                    effectiveStrategy.stream?.superfluidGDA as
+                      | Address
+                      | undefined
+                  }
                   streamSender={effectiveStrategy.id as Address}
                   superToken={
                     superTokenInfo && {
@@ -1203,8 +1213,14 @@ export default function ClientPage({
                     poolId={poolId}
                     poolToken={poolToken}
                     chainId={Number(chain)}
-                    streamingRatePerSecond={effectiveStrategy.stream?.maxFlowRate}
-                    streamReceiver={effectiveStrategy.stream?.superfluidGDA as Address | undefined}
+                    streamingRatePerSecond={
+                      effectiveStrategy.stream?.maxFlowRate
+                    }
+                    streamReceiver={
+                      effectiveStrategy.stream?.superfluidGDA as
+                        | Address
+                        | undefined
+                    }
                     streamSender={effectiveStrategy.id as Address}
                     superToken={
                       superTokenInfo && {

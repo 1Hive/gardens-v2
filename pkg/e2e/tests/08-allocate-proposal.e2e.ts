@@ -2,7 +2,13 @@ import { testWithSynpress } from "@synthetixio/synpress";
 import { MetaMask } from "@synthetixio/synpress/playwright";
 import { metaMaskFixtures } from "./utils";
 import basicSetup from "../wallet-setup/basic.setup";
-import { confirmTransaction, connectWallet, expectNoErrorToast } from "./utils";
+import {
+  confirmTransaction,
+  connectWallet,
+  expectNoErrorToast,
+  getConnectedAccount,
+  waitForMemberPowerActive,
+} from "./utils";
 import { getByTestId } from "./utils";
 import { getConfig } from "./utils";
 
@@ -15,17 +21,18 @@ test("should allocate support to a proposal", async ({
   context,
   page,
   metamaskPage,
-  extensionId
+  extensionId,
 }) => {
   const metamask = new MetaMask(
     context,
     metamaskPage,
     basicSetup.walletPassword,
-    extensionId
+    extensionId,
   );
 
   await page.bringToFront();
   await connectWallet(page, metamask);
+  await page.bringToFront();
 
   const { chainId, communityId, subgraphUrl } = getConfig();
   const graphUrl = subgraphUrl;
@@ -43,38 +50,67 @@ test("should allocate support to a proposal", async ({
     id
     poolId
   }
-}`
-    })
+}`,
+    }),
   }).then((r) => r.json());
   const { id: strategyAddress } = subgraphRes.data.cvstrategies[0];
+  const account = await getConnectedAccount(page);
+
+  await waitForMemberPowerActive({
+    page,
+    community: communityId,
+    strategy: strategyAddress,
+    account,
+  });
 
   await page.goto(`/gardens/${chainId}/${communityId}/${strategyAddress}`, {
-    timeout: 60000
+    timeout: 60000,
+    waitUntil: "domcontentloaded",
   });
 
   const activateBtn = getByTestId(page, "btn-activate-governance");
   const voteBtn = getByTestId(page, "btn-vote-on-proposals");
+  const connectBtn = getByTestId(page, "connectButton");
 
-  for (let attempt = 0; attempt < 12; attempt++) {
-    const voteVisible = await voteBtn.isVisible().catch(() => false);
-    const voteEnabled = await voteBtn.isEnabled().catch(() => false);
+  for (let attempt = 0; attempt < 24; attempt++) {
+    const voteVisible = await voteBtn
+      .isVisible({ timeout: 1000 })
+      .catch(() => false);
+    const voteEnabled = await voteBtn
+      .isEnabled({ timeout: 1000 })
+      .catch(() => false);
 
     if (voteVisible && voteEnabled) {
       break;
     }
 
-    const activateVisible = await activateBtn.isVisible().catch(() => false);
-    const activateEnabled = await activateBtn.isEnabled().catch(() => false);
+    const activateVisible = await activateBtn
+      .isVisible({ timeout: 1000 })
+      .catch(() => false);
+    const activateEnabled = await activateBtn
+      .isEnabled({ timeout: 1000 })
+      .catch(() => false);
 
     if (activateVisible && activateEnabled) {
       await activateBtn.click();
       await confirmTransaction({ metamask, extensionId });
+      await page.bringToFront();
       await expectNoErrorToast(page);
-      await page.waitForTimeout(5000);
+      await waitForMemberPowerActive({
+        page,
+        community: communityId,
+        strategy: strategyAddress,
+        account,
+      });
       continue;
     }
 
-    await page.reload({ waitUntil: "networkidle" }).catch(() => {});
+    const connectVisible = await connectBtn
+      .isVisible({ timeout: 1000 })
+      .catch(() => false);
+    if (connectVisible) {
+      await page.waitForLoadState("networkidle").catch(() => {});
+    }
     await page.waitForTimeout(5000);
   }
 

@@ -203,7 +203,7 @@ export function Proposals({
     },
   );
 
-  const memberActivatedPoints: bigint = BigInt(
+  const memberActivatedPointsFromSubgraph: bigint = BigInt(
     memberStrategyData?.memberStrategy?.activatedPoints ?? 0,
   );
 
@@ -220,8 +220,14 @@ export function Proposals({
   // Derived state
   const isMemberCommunity =
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
+  const hasResolvedMemberPower = memberPower != null;
+  const memberActivatedOnChain = hasResolvedMemberPower && memberPower > 0n;
   const memberActivatedStrategy =
-    memberStrategyData?.memberStrategy?.activatedPoints > 0n;
+    hasResolvedMemberPower ?
+      memberActivatedOnChain
+    : memberActivatedPointsFromSubgraph > 0n;
+  const memberActivatedPoints =
+    hasResolvedMemberPower ? memberPower : memberActivatedPointsFromSubgraph;
 
   const [sortedProposals, setSortedProposals] = useState(strategy.proposals);
 

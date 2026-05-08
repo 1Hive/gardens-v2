@@ -10,7 +10,9 @@ import {
   gotoE2ECommunity,
   getByTestId,
   getConfig,
-  waitForAllowancePositive
+  getConnectedAccount,
+  waitForAllowancePositive,
+  waitForMembershipActive,
 } from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
@@ -20,29 +22,19 @@ const { expect } = test;
 // Give the flow extra breathing room; MetaMask + subgraph responses can be slow
 test.setTimeout(240000);
 
-const IS_MEMBER_SELECTOR = "a230c524";
-const isAddress = (value: string | null | undefined): value is `0x${string}` =>
-  typeof value === "string" && /^0x[a-fA-F0-9]{40}$/.test(value);
-const parseBoolResult = (value: string) => {
-  const normalized = value.toLowerCase();
-  return normalized === "0x1" || normalized.endsWith("1".padStart(64, "0"));
-};
-const encodeIsMember = (account: `0x${string}`) =>
-  `0x${IS_MEMBER_SELECTOR}${account.slice(2).toLowerCase().padStart(64, "0")}`;
-
 // Define a basic test case
 test("should increase stake in community", async ({
   context,
   page,
   metamaskPage,
-  extensionId
+  extensionId,
 }) => {
   // Create a new MetaMask instance
   const metamask = new MetaMask(
     context,
     metamaskPage,
     basicSetup.walletPassword,
-    extensionId
+    extensionId,
   );
 
   await page.bringToFront();
@@ -62,7 +54,7 @@ test("should increase stake in community", async ({
     await metamask.confirmSignature();
     await approveTokenAllowance({ page, metamask, extensionId });
     await page.getByText("Waiting for signature").isVisible({
-      timeout: 60000
+      timeout: 60000,
     });
     await confirmTransaction({ metamask, extensionId });
     await expectNoErrorToast(page);
@@ -70,42 +62,13 @@ test("should increase stake in community", async ({
 
   // Ensure on-chain membership is active (avoid subgraph lag)
   const { communityId } = getConfig();
-  const account = (await page.evaluate(async () => {
-    const provider = (window as any).ethereum;
-    const accounts = (await provider.request({
-      method: "eth_accounts"
-    })) as string[];
-    return accounts[0] ?? null;
-  })) as string | null;
-  if (!isAddress(account)) {
-    throw new Error("Missing connected account for membership check");
-  }
+  const account = await getConnectedAccount(page);
 
-  const waitForOnchainMembership = async () => {
-    const deadline = Date.now() + 180000; // up to 3 minutes
-    while (Date.now() < deadline) {
-      try {
-        const result = await page.evaluate(
-          async ({ to, data }) => {
-            const provider = (window as any).ethereum;
-            return (await provider.request({
-              method: "eth_call",
-              params: [{ to, data }, "latest"]
-            })) as string;
-          },
-          { to: communityId, data: encodeIsMember(account) }
-        );
-        if (parseBoolResult(result)) return true;
-      } catch {}
-      await page.waitForTimeout(4000);
-    }
-    return false;
-  };
-
-  const onchainReady = await waitForOnchainMembership();
-  if (!onchainReady) {
-    throw new Error("On-chain membership not active within 3 minutes");
-  }
+  await waitForMembershipActive({
+    page,
+    community: communityId,
+    account,
+  });
 
   // Reload to let UI reflect indexed membership
   await page.reload({ waitUntil: "networkidle" });
@@ -135,7 +98,7 @@ test("should increase stake in community", async ({
   await expect(stakeInput).toBeVisible({ timeout: 30000 });
   const { min: minAttr, max: maxAttr } = await stakeInput.evaluate((el) => ({
     min: (el as HTMLInputElement).min,
-    max: (el as HTMLInputElement).max
+    max: (el as HTMLInputElement).max,
   }));
   const minVal = parseFloat(minAttr || "0");
   const maxVal = parseFloat(maxAttr || "0");
@@ -158,7 +121,7 @@ test("should increase stake in community", async ({
       page,
       token: governanceToken,
       spender: communityId,
-      timeoutMs: 60000
+      timeoutMs: 60000,
     });
   } catch {}
 
