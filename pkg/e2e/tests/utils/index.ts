@@ -230,43 +230,68 @@ export async function leaveCommunityIfMember() {
   const { communityId, rpcUrl, walletSeedPhrase } = getConfig();
   const account = mnemonicToAccount(walletSeedPhrase);
   const publicClient = createE2EPublicClient();
-  const isMember = await publicClient.readContract({
-    address: communityId,
-    abi: membershipAbi,
-    functionName: "isMember",
-    args: [account.address],
-  });
-
-  if (!isMember) {
-    return false;
-  }
-
   const walletClient = createWalletClient({
     account,
     chain: createE2EChain(),
     transport: http(rpcUrl),
   });
-  const hash = await walletClient.writeContract({
-    address: communityId,
-    abi: registryCommunityAbi,
-    functionName: "unregisterMember",
-  });
-  const receipt = await publicClient.waitForTransactionReceipt({
-    hash,
-    confirmations: 1,
-    timeout: 180000,
-  });
-  if (receipt.status !== "success") {
-    throw new Error(
-      `leaveCommunityIfMember: unregister transaction ${hash} ${receipt.status}`,
-    );
+
+  const deadline = Date.now() + 180000;
+  let lastError: unknown;
+  while (Date.now() < deadline) {
+    try {
+      const isMember = await publicClient.readContract({
+        address: communityId,
+        abi: membershipAbi,
+        functionName: "isMember",
+        args: [account.address],
+      });
+
+      if (!isMember) {
+        return false;
+      }
+
+      await publicClient.simulateContract({
+        account,
+        address: communityId,
+        abi: registryCommunityAbi,
+        functionName: "unregisterMember",
+      });
+
+      const hash = await walletClient.writeContract({
+        address: communityId,
+        abi: registryCommunityAbi,
+        functionName: "unregisterMember",
+      });
+      const receipt = await publicClient.waitForTransactionReceipt({
+        hash,
+        confirmations: 1,
+        timeout: 180000,
+      });
+
+      if (receipt.status === "success") {
+        await waitForMembershipInactive({
+          community: communityId,
+          account: account.address,
+        });
+        return true;
+      }
+
+      lastError = new Error(
+        `unregister transaction ${hash} ${receipt.status}`,
+      );
+    } catch (error) {
+      lastError = error;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 5000));
   }
 
-  await waitForMembershipInactive({
-    community: communityId,
-    account: account.address,
-  });
-  return true;
+  throw new Error(
+    lastError instanceof Error
+      ? `leaveCommunityIfMember: ${lastError.message}`
+      : "leaveCommunityIfMember: unregister transaction did not succeed",
+  );
 }
 
 export async function waitForMemberPowerActive({
