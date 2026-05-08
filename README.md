@@ -12,7 +12,7 @@
 
 Gardens v2 is a modular governance framework that enables communities to create and manage multiple governance pools with customizable parameters and voting mechanisms. Our smart contracts are built to optimize for secure, flexible, intuitive, multi-network governance solutions.
 
-<!-- MARKEE:START:0xd264b6fea167eaf901d26edab476ac2a8b0e7312 -->
+<!-- MARKEE:START:0x2335bfa938b60c73f0a1d62c6ecc747e8c516d2c -->
 ```
   ╔══════════════════════════════════════════════════════╗
   ║                  ⡷⢾ ⣎⣱ ⣏⡱ ⣇⠜ ⣏⡉ ⣏⡉                 ║
@@ -27,8 +27,8 @@ Gardens v2 is a modular governance framework that enables communities to create 
                  ││                      ││
    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
-*Show the world you support this repo! [Change this message at markee.xyz](https://markee.xyz/ecosystem/platforms/github/0xd264b6fea167eaf901d26edab476ac2a8b0e7312) ^*
-<!-- MARKEE:END:0xd264b6fea167eaf901d26edab476ac2a8b0e7312 -->
+*Show the world you support this repo! [Change this message at markee.xyz](https://markee.xyz/ecosystem/platforms/github/0x2335bfa938b60c73f0a1d62c6ecc747e8c516d2c) ^*
+<!-- MARKEE:END:0x2335bfa938b60c73f0a1d62c6ecc747e8c516d2c -->
 
 🌱 **[Launch Gardens v2 App](https://app.gardens.fund/)**
 
