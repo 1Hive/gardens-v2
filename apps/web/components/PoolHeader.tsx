@@ -281,13 +281,15 @@ export default function PoolHeader({
   };
 
   const poolConfig = [
-    ...(PoolTypes[proposalType] === "funding" ? [
-      {
-        label: "Spending limit",
-        value: `${roundToSignificant(spendingLimit, 2, { showPrecisionMissIndicator: false })} %`,
-        info: "Max percentage of the pool funds that can be spent in a single proposal.",
-      },
-    ] : []),
+    ...(PoolTypes[proposalType] === "funding" ?
+      [
+        {
+          label: "Spending limit",
+          value: `${roundToSignificant(spendingLimit, 2, { showPrecisionMissIndicator: false })} %`,
+          info: "Max percentage of the pool funds that can be spent in a single proposal.",
+        },
+      ]
+    : []),
     {
       label: "Min conviction",
       value: `${roundToSignificant(minimumConviction, 2, { showPrecisionMissIndicator: false })} %`,
@@ -827,7 +829,7 @@ export default function PoolHeader({
                           }
                           tooltip={
                             tooltipMessage ??
-                            "Archive pool will remove it from the list of pools. Need to contact the Gardens team to restore it."
+                            "Archive pool will remove it from the list of pools members can see."
                           }
                           forceShowTooltip={true}
                           onClick={() => rejectPoolWrite()}
@@ -863,7 +865,7 @@ export default function PoolHeader({
                           }
                           tooltip={
                             tooltipMessage ??
-                            "Reject pool will remove it from the list. \nNeed to contact the Gardens team to\n restore it."
+                            "Reject pool will remove it from the list of pools members can see."
                           }
                           forceShowTooltip={true}
                           onClick={() => rejectPoolWrite()}
