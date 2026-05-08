@@ -6,10 +6,11 @@ import {
   approveTokenAllowance,
   confirmTransaction,
   connectWallet,
-  expectNoErrorToast
+  expectNoErrorToast,
 } from "./utils";
 import { getByTestId } from "./utils";
 import { getConfig } from "./utils";
+import { proposalTestConfig } from "./proposal-test-config";
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
 const { expect } = test;
@@ -22,14 +23,14 @@ test("should create a proposal in the pool", async ({
   context,
   page,
   metamaskPage,
-  extensionId
+  extensionId,
 }) => {
   // Create a new MetaMask instance
   const metamask = new MetaMask(
     context,
     metamaskPage,
     basicSetup.walletPassword,
-    extensionId
+    extensionId,
   );
 
   await page.bringToFront();
@@ -41,14 +42,14 @@ test("should create a proposal in the pool", async ({
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
-      query: `{ cvstrategies(first: 1, orderBy: poolId, orderDirection: desc, where: { isEnabled: true, registryCommunity: "${communityId.toLowerCase()}" }) { id poolId } }`
-    })
+      query: `{ cvstrategies(first: 1, orderBy: poolId, orderDirection: desc, where: { isEnabled: true, registryCommunity: "${communityId.toLowerCase()}" }) { id poolId } }`,
+    }),
   }).then((r) => r.json());
   const { id: strategyAddress } = subgraphRes.data.cvstrategies[0];
   console.log("subgraph RESP", subgraphRes);
   await page.goto(
     `/gardens/${chainId}/${communityId}/${strategyAddress}/create-proposal`,
-    { timeout: 60000 }
+    { timeout: 60000 },
   );
 
   await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
@@ -72,23 +73,23 @@ test("should create a proposal in the pool", async ({
   await expect(amountInput).toBeVisible({ timeout: 60000 });
   const descriptionInput = getByTestId(
     page,
-    "input-proposal-description"
+    "input-proposal-description",
   ).locator('[contenteditable="true"]');
   const tokenAddressInput = getByTestId(page, "input-beneficiary-address");
   const titleInput = getByTestId(page, "input-proposal-title");
 
   // Fill all inputs
-  await amountInput.fill("0.2");
-  await descriptionInput.fill("Test Proposal Description");
+  await amountInput.fill(proposalTestConfig.requestedAmount);
+  await descriptionInput.fill(proposalTestConfig.description);
   const beneficiary = await page.evaluate(async () => {
     const provider = (window as any).ethereum;
     const accounts = (await provider.request({
-      method: "eth_accounts"
+      method: "eth_accounts",
     })) as string[];
     return accounts[0] ?? "";
   });
   await tokenAddressInput.fill(beneficiary);
-  await titleInput.fill("Test Proposal Title");
+  await titleInput.fill(proposalTestConfig.title);
 
   await getByTestId(page, "btn-preview-proposal").click();
   // const submitBtn = getByTestId(page, "")

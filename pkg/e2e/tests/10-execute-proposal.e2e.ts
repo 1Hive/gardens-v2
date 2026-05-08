@@ -10,31 +10,32 @@ import {
   http,
   parseAbi,
   parseAbiParameters,
-  parseUnits
+  parseUnits,
 } from "viem";
 import { metaMaskFixtures } from "./utils";
 import basicSetup from "../wallet-setup/basic.setup";
 import { confirmTransaction, connectWallet, expectNoErrorToast } from "./utils";
 import { getByTestId } from "./utils";
 import { getConfig } from "./utils";
+import { proposalTestConfig } from "./proposal-test-config";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
-const requestedAmount = "0.1";
+const requestedAmount = proposalTestConfig.requestedAmount;
 
 const erc20Abi = parseAbi([
   "function transfer(address to, uint256 amount) returns (bool)",
   "function decimals() view returns (uint8)",
-  "function balanceOf(address owner) view returns (uint256)"
+  "function balanceOf(address owner) view returns (uint256)",
 ]);
 const alloAbi = parseAbi([
   "function allocate(uint256 _poolId, bytes _data) payable",
-  "function distribute(uint256 _poolId, address[] _recipientIds, bytes _data)"
+  "function distribute(uint256 _poolId, address[] _recipientIds, bytes _data)",
 ]);
 const cvStrategyAbi = parseAbi([
   "function getProposalVoterStake(uint256,address) view returns (uint256)",
   "function calculateProposalConviction(uint256) view returns (uint256)",
-  "function calculateThreshold(uint256) view returns (uint256)"
+  "function calculateThreshold(uint256) view returns (uint256)",
 ]);
 
 test.setTimeout(240000);
@@ -59,8 +60,8 @@ async function fetchLatestStrategy(graphUrl: string, communityId: string) {
             proposalStatus
           }
         }
-      }`
-    })
+      }`,
+    }),
   }).then((r) => r.json());
 }
 
@@ -68,7 +69,7 @@ async function getTokenDecimals(publicClient: any, token: Address) {
   const decimals = await publicClient.readContract({
     address: token,
     abi: erc20Abi,
-    functionName: "decimals"
+    functionName: "decimals",
   });
 
   return Number(decimals);
@@ -79,7 +80,7 @@ async function waitForTokenBalanceAtLeast({
   token,
   owner,
   minimumBalance,
-  timeoutMs = 60000
+  timeoutMs = 60000,
 }: {
   publicClient: any;
   token: Address;
@@ -94,13 +95,13 @@ async function waitForTokenBalanceAtLeast({
           address: token,
           abi: erc20Abi,
           functionName: "balanceOf",
-          args: [owner]
+          args: [owner],
         });
       },
       {
         timeout: timeoutMs,
-        intervals: [1000, 2000, 3000]
-      }
+        intervals: [1000, 2000, 3000],
+      },
     )
     .toBeGreaterThanOrEqual(minimumBalance);
 }
@@ -110,7 +111,7 @@ async function transferPoolTokensToStrategy({
   walletClient,
   token,
   strategyAddress,
-  amount
+  amount,
 }: {
   publicClient: any;
   walletClient: any;
@@ -125,7 +126,7 @@ async function transferPoolTokensToStrategy({
     address: token,
     abi: erc20Abi,
     functionName: "transfer",
-    args: [strategyAddress, transferAmount]
+    args: [strategyAddress, transferAmount],
   });
 
   await publicClient.waitForTransactionReceipt({ hash: txHash });
@@ -136,7 +137,7 @@ async function getProposalVoterStake({
   publicClient,
   strategyAddress,
   proposalNumber,
-  voter
+  voter,
 }: {
   publicClient: any;
   strategyAddress: Address;
@@ -147,7 +148,7 @@ async function getProposalVoterStake({
     address: strategyAddress,
     abi: cvStrategyAbi,
     functionName: "getProposalVoterStake",
-    args: [proposalNumber, voter]
+    args: [proposalNumber, voter],
   });
 }
 
@@ -160,7 +161,7 @@ async function reallocateSupportToProposal({
   voter,
   targetProposalNumber,
   proposalNumbers,
-  targetSupport
+  targetSupport,
 }: {
   publicClient: any;
   walletClient: any;
@@ -174,52 +175,52 @@ async function reallocateSupportToProposal({
 }) {
   const currentStakes: { proposalNumber: bigint; currentStake: bigint }[] =
     await Promise.all(
-    proposalNumbers.map(async (proposalNumber) => ({
-      proposalNumber,
-      currentStake: BigInt(
-        await getProposalVoterStake({
-          publicClient,
-          strategyAddress,
-          proposalNumber,
-          voter
-        })
-      )
-    }))
+      proposalNumbers.map(async (proposalNumber) => ({
+        proposalNumber,
+        currentStake: BigInt(
+          await getProposalVoterStake({
+            publicClient,
+            strategyAddress,
+            proposalNumber,
+            voter,
+          }),
+        ),
+      })),
     );
 
   const currentTargetStake =
     currentStakes.find(
-      ({ proposalNumber }) => proposalNumber === targetProposalNumber
+      ({ proposalNumber }) => proposalNumber === targetProposalNumber,
     )?.currentStake ?? 0n;
 
   const deltas: { proposalId: bigint; deltaSupport: bigint }[] = currentStakes
     .filter(
       ({ proposalNumber, currentStake }) =>
-        currentStake > 0n && proposalNumber !== targetProposalNumber
+        currentStake > 0n && proposalNumber !== targetProposalNumber,
     )
     .map(({ proposalNumber, currentStake }) => ({
       proposalId: proposalNumber,
-      deltaSupport: -currentStake
+      deltaSupport: -currentStake,
     }));
 
   const targetDelta = targetSupport - currentTargetStake;
   if (targetDelta !== 0n) {
     deltas.push({
       proposalId: targetProposalNumber,
-      deltaSupport: targetDelta
+      deltaSupport: targetDelta,
     });
   }
 
   const encodedData = encodeAbiParameters(
     parseAbiParameters("(uint256 proposalId, int256 deltaSupport)[]"),
-    [deltas]
+    [deltas],
   );
 
   const txHash = await walletClient.writeContract({
     address: alloAddress,
     abi: alloAbi,
     functionName: "allocate",
-    args: [poolId, encodedData]
+    args: [poolId, encodedData],
   });
 
   await publicClient.waitForTransactionReceipt({ hash: txHash });
@@ -230,7 +231,7 @@ async function waitForProposalToBeExecutable({
   strategyAddress,
   proposalNumber,
   requestedAmount,
-  timeoutMs = 60000
+  timeoutMs = 60000,
 }: {
   publicClient: any;
   strategyAddress: Address;
@@ -246,22 +247,22 @@ async function waitForProposalToBeExecutable({
             address: strategyAddress,
             abi: cvStrategyAbi,
             functionName: "calculateProposalConviction",
-            args: [proposalNumber]
+            args: [proposalNumber],
           }),
           publicClient.readContract({
             address: strategyAddress,
             abi: cvStrategyAbi,
             functionName: "calculateThreshold",
-            args: [requestedAmount]
-          })
+            args: [requestedAmount],
+          }),
         ]);
 
         return conviction >= threshold;
       },
       {
         timeout: timeoutMs,
-        intervals: [1000, 2000, 3000]
-      }
+        intervals: [1000, 2000, 3000],
+      },
     )
     .toBe(true);
 }
@@ -272,7 +273,7 @@ async function executeProposalDirectly({
   alloAddress,
   poolId,
   strategyAddress,
-  proposalNumber
+  proposalNumber,
 }: {
   publicClient: any;
   walletClient: any;
@@ -283,13 +284,13 @@ async function executeProposalDirectly({
 }) {
   const encodedData = encodeAbiParameters(
     parseAbiParameters("uint256 proposalId"),
-    [proposalNumber]
+    [proposalNumber],
   );
   const txHash = await walletClient.writeContract({
     address: alloAddress,
     abi: alloAbi,
     functionName: "distribute",
-    args: [poolId, [strategyAddress], encodedData]
+    args: [poolId, [strategyAddress], encodedData],
   });
 
   await publicClient.waitForTransactionReceipt({ hash: txHash });
@@ -298,7 +299,7 @@ async function executeProposalDirectly({
 async function waitForProposalExecution({
   graphUrl,
   proposalId,
-  timeoutMs = 120000
+  timeoutMs = 120000,
 }: {
   graphUrl: string;
   proposalId: string;
@@ -316,8 +317,8 @@ async function waitForProposalExecution({
               proposalStatus
               executedAt
             }
-          }`
-          })
+          }`,
+          }),
         }).then((r) => r.json());
 
         const proposal = response.data?.cvproposal;
@@ -325,8 +326,8 @@ async function waitForProposalExecution({
       },
       {
         timeout: timeoutMs,
-        intervals: [1000, 2000, 3000, 5000]
-      }
+        intervals: [1000, 2000, 3000, 5000],
+      },
     )
     .toBe(true);
 }
@@ -343,8 +344,8 @@ function createChain(chainId: string, rpcUrl: string) {
     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
     rpcUrls: {
       default: { http: [rpcUrl] },
-      public: { http: [rpcUrl] }
-    }
+      public: { http: [rpcUrl] },
+    },
   });
 }
 
@@ -352,13 +353,13 @@ test("should execute a proposal", async ({
   context,
   page,
   metamaskPage,
-  extensionId
+  extensionId,
 }) => {
   const metamask = new MetaMask(
     context,
     metamaskPage,
     basicSetup.walletPassword,
-    extensionId
+    extensionId,
   );
 
   await page.bringToFront();
@@ -370,12 +371,12 @@ test("should execute a proposal", async ({
   const account = mnemonicToAccount(walletSeedPhrase);
   const publicClient = createPublicClient({
     chain,
-    transport: http(rpcUrl)
+    transport: http(rpcUrl),
   });
   const walletClient = createWalletClient({
     account,
     chain,
-    transport: http(rpcUrl)
+    transport: http(rpcUrl),
   });
   const graphUrl = subgraphUrl;
   let subgraphRes = await fetchLatestStrategy(graphUrl, communityId);
@@ -383,7 +384,7 @@ test("should execute a proposal", async ({
     id: strategyAddress,
     poolId,
     token,
-    proposals
+    proposals,
   } = subgraphRes.data.cvstrategies[0];
   const allosRes = await fetch(graphUrl, {
     method: "POST",
@@ -394,11 +395,11 @@ test("should execute a proposal", async ({
           id
           chainId
         }
-      }`
-    })
+      }`,
+    }),
   }).then((r) => r.json());
   const alloAddress = allosRes.data.allos.find(
-    (allo: { chainId: string }) => allo.chainId === chainId
+    (allo: { chainId: string }) => allo.chainId === chainId,
   )?.id as Address | undefined;
   if (!alloAddress) {
     throw new Error(`Unable to resolve Allo address for chain ${chainId}`);
@@ -407,12 +408,12 @@ test("should execute a proposal", async ({
   const highestKnownProposalNumber = proposals.reduce(
     (max: number, item: { proposalNumber: string }) =>
       Math.max(max, Number(item.proposalNumber)),
-    0
+    0,
   );
   const latestActiveProposalNumber = proposals.reduce(
     (
       max: number | null,
-      item: { proposalNumber: string; proposalStatus: string }
+      item: { proposalNumber: string; proposalStatus: string },
     ) => {
       if (item.proposalStatus !== "1") {
         return max;
@@ -421,21 +422,21 @@ test("should execute a proposal", async ({
       const proposalNumber = Number(item.proposalNumber);
       return max == null || proposalNumber > max ? proposalNumber : max;
     },
-    null
+    null,
   );
   let createdProposalNumber: number | null = latestActiveProposalNumber;
 
   if (createdProposalNumber == null) {
     await page.goto(
       `/gardens/${chainId}/${communityId}/${strategyAddress}/create-proposal`,
-      { timeout: 60000, waitUntil: "domcontentloaded" }
+      { timeout: 60000, waitUntil: "domcontentloaded" },
     );
 
     const amountInput = getByTestId(page, "input-requested-amount");
     await expect(amountInput).toBeVisible({ timeout: 60000 });
     const descriptionInput = getByTestId(
       page,
-      "input-proposal-description"
+      "input-proposal-description",
     ).locator('[contenteditable="true"]');
     const beneficiaryInput = getByTestId(page, "input-beneficiary-address");
     const titleInput = getByTestId(page, "input-proposal-title");
@@ -443,15 +444,15 @@ test("should execute a proposal", async ({
     const beneficiary = await page.evaluate(async () => {
       const provider = (window as any).ethereum;
       const accounts = (await provider.request({
-        method: "eth_accounts"
+        method: "eth_accounts",
       })) as string[];
       return accounts[0] ?? "";
     });
 
-    await amountInput.fill(requestedAmount);
-    await descriptionInput.fill("Execution test proposal");
+    await amountInput.fill(proposalTestConfig.requestedAmount);
+    await descriptionInput.fill(proposalTestConfig.executionDescription);
     await beneficiaryInput.fill(beneficiary);
-    await titleInput.fill("Execution test proposal");
+    await titleInput.fill(proposalTestConfig.executionTitle);
     const previewBtn = getByTestId(page, "btn-preview-proposal");
     await expect(previewBtn).toBeEnabled({ timeout: 30000 });
     await previewBtn.click();
@@ -478,8 +479,8 @@ test("should execute a proposal", async ({
         },
         {
           timeout: 180000,
-          intervals: [1000, 2000, 3000, 5000]
-        }
+          intervals: [1000, 2000, 3000, 5000],
+        },
       )
       .not.toBeNull();
   }
@@ -499,9 +500,9 @@ test("should execute a proposal", async ({
     voter: account.address,
     targetProposalNumber: resolvedProposalNumber,
     proposalNumbers: proposals.map((proposal: { proposalNumber: string }) =>
-      BigInt(proposal.proposalNumber)
+      BigInt(proposal.proposalNumber),
     ),
-    targetSupport: parseUnits("0.2", 18)
+    targetSupport: parseUnits(proposalTestConfig.supportAmount, 18),
   });
 
   const fundedAmount = await transferPoolTokensToStrategy({
@@ -509,20 +510,20 @@ test("should execute a proposal", async ({
     walletClient,
     token,
     strategyAddress,
-    amount: requestedAmount
+    amount: requestedAmount,
   });
   await waitForTokenBalanceAtLeast({
     publicClient,
     token,
     owner: strategyAddress,
-    minimumBalance: fundedAmount
+    minimumBalance: fundedAmount,
   });
 
   await waitForProposalToBeExecutable({
     publicClient,
     strategyAddress,
     proposalNumber: resolvedProposalNumber,
-    requestedAmount: parseUnits(requestedAmount, 18)
+    requestedAmount: parseUnits(requestedAmount, 18),
   });
 
   await executeProposalDirectly({
@@ -531,18 +532,18 @@ test("should execute a proposal", async ({
     alloAddress,
     poolId: BigInt(poolId),
     strategyAddress,
-    proposalNumber: resolvedProposalNumber
+    proposalNumber: resolvedProposalNumber,
   });
 
   const proposalRouteId = `${strategyAddress}-${createdProposalNumber}`;
   await waitForProposalExecution({
     graphUrl,
-    proposalId: proposalRouteId
+    proposalId: proposalRouteId,
   });
 
   await page.goto(
     `/gardens/${chainId}/${communityId}/${poolId}/${proposalRouteId}`,
-    { timeout: 60000, waitUntil: "domcontentloaded" }
+    { timeout: 60000, waitUntil: "domcontentloaded" },
   );
   await expectNoErrorToast(page);
 });
