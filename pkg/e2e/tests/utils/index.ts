@@ -31,6 +31,7 @@ const membershipAbi = parseAbi([
 const registryCommunityAbi = parseAbi([
   "function memberPowerInStrategy(address member, address strategy) view returns (uint256)",
   "function rejectPool(address strategy)",
+  "function unregisterMember()",
 ]);
 
 const isAddress = (value: string | null | undefined): value is Address =>
@@ -182,6 +183,90 @@ export async function waitForMembershipActive({
       ? `waitForMembershipActive: membership not observed within timeout (${lastError.message})`
       : "waitForMembershipActive: membership not observed within timeout",
   );
+}
+
+export async function waitForMembershipInactive({
+  community,
+  account,
+  timeoutMs = 180000,
+  pollMs = 4000,
+}: {
+  community: `0x${string}`;
+  account: `0x${string}`;
+  timeoutMs?: number;
+  pollMs?: number;
+}) {
+  const publicClient = createE2EPublicClient();
+
+  const deadline = Date.now() + timeoutMs;
+  let lastError: unknown;
+  while (Date.now() < deadline) {
+    try {
+      const isMember = await publicClient.readContract({
+        address: community,
+        abi: membershipAbi,
+        functionName: "isMember",
+        args: [account],
+      });
+
+      if (!isMember) {
+        return true;
+      }
+      lastError = undefined;
+    } catch (error) {
+      lastError = error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, pollMs));
+  }
+
+  throw new Error(
+    lastError instanceof Error
+      ? `waitForMembershipInactive: membership still active within timeout (${lastError.message})`
+      : "waitForMembershipInactive: membership still active within timeout",
+  );
+}
+
+export async function leaveCommunityIfMember() {
+  const { communityId, rpcUrl, walletSeedPhrase } = getConfig();
+  const account = mnemonicToAccount(walletSeedPhrase);
+  const publicClient = createE2EPublicClient();
+  const isMember = await publicClient.readContract({
+    address: communityId,
+    abi: membershipAbi,
+    functionName: "isMember",
+    args: [account.address],
+  });
+
+  if (!isMember) {
+    return false;
+  }
+
+  const walletClient = createWalletClient({
+    account,
+    chain: createE2EChain(),
+    transport: http(rpcUrl),
+  });
+  const hash = await walletClient.writeContract({
+    address: communityId,
+    abi: registryCommunityAbi,
+    functionName: "unregisterMember",
+  });
+  const receipt = await publicClient.waitForTransactionReceipt({
+    hash,
+    confirmations: 1,
+    timeout: 180000,
+  });
+  if (receipt.status !== "success") {
+    throw new Error(
+      `leaveCommunityIfMember: unregister transaction ${hash} ${receipt.status}`,
+    );
+  }
+
+  await waitForMembershipInactive({
+    community: communityId,
+    account: account.address,
+  });
+  return true;
 }
 
 export async function waitForMemberPowerActive({

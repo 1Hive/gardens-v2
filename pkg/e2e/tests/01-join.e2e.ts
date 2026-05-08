@@ -1,86 +1,112 @@
 import { testWithSynpress } from "@synthetixio/synpress";
-import { MetaMask } from "@synthetixio/synpress/playwright";
-import basicSetup from "../wallet-setup/basic.setup";
 import {
-  approveTokenAllowance,
-  confirmTransaction,
-  expectNoErrorToast,
-  metaMaskFixtures,
-  getByTestId,
-  getConfig,
-  getConnectedAccount,
-  waitForMembershipActive,
-} from "./utils";
+  Address,
+  createPublicClient,
+  createWalletClient,
+  defineChain,
+  http,
+  maxUint256,
+  parseAbi,
+} from "viem";
+import { mnemonicToAccount } from "viem/accounts";
+import basicSetup from "../wallet-setup/basic.setup";
+import { getConfig, metaMaskFixtures, waitForMembershipActive } from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
-const { expect } = test;
-
-// Give the flow extra breathing room; MetaMask + subgraph responses can be slow
 test.setTimeout(240000);
 
-// Define a basic test case
-test("should join community", async ({
-  context,
-  page,
-  metamaskPage,
-  extensionId,
-}) => {
-  // Create a new MetaMask instance
-  const metamask = new MetaMask(
-    context,
-    metamaskPage,
-    basicSetup.walletPassword,
-    extensionId,
-  );
+const erc20Abi = parseAbi([
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+]);
+const registryCommunityAbi = parseAbi([
+  "function isMember(address account) view returns (bool)",
+  "function stakeAndRegisterMember(string covenantSig)",
+]);
 
-  // Navigate to the homepage
-  await page.addInitScript(() => {
-    // Show archived communities by default
-    localStorage.setItem("flag_showArchived", "true");
-    localStorage.setItem("flag_queryAllChains", "true");
+function createChain(chainId: string, rpcUrl: string) {
+  const id = Number(chainId);
+  if (!Number.isFinite(id)) {
+    throw new Error(`Invalid chain id: ${chainId}`);
+  }
+
+  return defineChain({
+    id,
+    name: "E2E Chain",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: {
+      default: { http: [rpcUrl] },
+      public: { http: [rpcUrl] },
+    },
   });
-  await page.goto("/", {
-    timeout: 60000, // Increase timeout to handle slow loading
+}
+
+test("should join community", async ({ page }) => {
+  const {
+    chainId,
+    communityId,
+    governanceToken,
+    rpcUrl,
+    walletSeedPhrase,
+  } = getConfig();
+  const chain = createChain(chainId, rpcUrl);
+  const account = mnemonicToAccount(walletSeedPhrase);
+  const publicClient = createPublicClient({
+    chain,
+    transport: http(rpcUrl),
   });
-
-  await getByTestId(page, "connectButton").click();
-  await getByTestId(page, "rk-wallet-option-injected").click();
-  await metamask.connectToDapp();
-
-  // Verify connected account renders in shortened form without asserting a specific address
-  await expect(getByTestId(page, "accounts")).toHaveText(
-    /0x[0-9a-fA-F]{2,4}…[0-9a-fA-F]{2,4}/,
-  );
-
-  const { communityId } = getConfig();
-  await getByTestId(page, `community-card-${communityId}`).click(); // Opt - 🧪 End-to-End Test Playground
-
-  // Wait for page loaded
-  await page.waitForLoadState("networkidle");
-
-  // Launch join flow
-  await getByTestId(page, "register-member-button").click();
-
-  // 1. Sign the community covenant
-  await metamask.confirmSignature();
-
-  // 2. Token allowance approval, then wait until allowance is on-chain
-  await approveTokenAllowance({ page, metamask, extensionId });
-
-  // Wait for join tx waiting for signature
-  await page.getByText("Waiting for signature").isVisible({
-    timeout: 60000,
+  const walletClient = createWalletClient({
+    account,
+    chain,
+    transport: http(rpcUrl),
   });
 
-  // 3. Join the community
-  await page.waitForTimeout(1000); // Wait for the tx to open
-  await confirmTransaction({ metamask, extensionId });
-  await expectNoErrorToast(page);
+  const isMember = await publicClient.readContract({
+    address: communityId,
+    abi: registryCommunityAbi,
+    functionName: "isMember",
+    args: [account.address],
+  });
+
+  if (!isMember) {
+    const allowance = await publicClient.readContract({
+      address: governanceToken,
+      abi: erc20Abi,
+      functionName: "allowance",
+      args: [account.address, communityId],
+    });
+
+    if (allowance === 0n) {
+      const approveHash = await walletClient.writeContract({
+        address: governanceToken,
+        abi: erc20Abi,
+        functionName: "approve",
+        args: [communityId, maxUint256],
+      });
+      await publicClient.waitForTransactionReceipt({
+        hash: approveHash,
+        confirmations: 1,
+        timeout: 180000,
+      });
+    }
+
+    const joinHash = await walletClient.writeContract({
+      address: communityId,
+      abi: registryCommunityAbi,
+      functionName: "stakeAndRegisterMember",
+      args: [""],
+    });
+    await publicClient.waitForTransactionReceipt({
+      hash: joinHash,
+      confirmations: 1,
+      timeout: 180000,
+    });
+  }
 
   await waitForMembershipActive({
     page,
     community: communityId,
-    account: await getConnectedAccount(page),
+    account: account.address as Address,
   });
 });

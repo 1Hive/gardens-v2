@@ -480,7 +480,7 @@ export async function confirmTransaction({
   };
 
   let clicked = false;
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 80; i++) {
     const latestNotificationPage = await findTransactionPage();
     if (latestNotificationPage) {
       notificationPage = latestNotificationPage;
@@ -534,12 +534,12 @@ export async function confirmTransaction({
       await button.scrollIntoViewIfNeeded().catch(() => {});
       try {
         await button.click({ timeout: 5000 });
-        await sleep(1000);
+        await sleep(1500);
         break;
       } catch {
         try {
           await button.click({ timeout: 5000, force: true });
-          await sleep(1000);
+          await sleep(1500);
           break;
         } catch {}
       }

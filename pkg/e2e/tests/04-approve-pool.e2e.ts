@@ -1,83 +1,184 @@
 import { testWithSynpress } from "@synthetixio/synpress";
-import { MetaMask } from "@synthetixio/synpress/playwright";
-import basicSetup from "../wallet-setup/basic.setup";
 import {
-  approveTokenAllowance,
-  confirmTransaction,
-  connectWallet,
-  expectNoErrorToast,
-  getByTestId,
-  metaMaskFixtures,
-  gotoE2ECommunity,
-} from "./utils";
-const test = testWithSynpress(metaMaskFixtures(basicSetup));
+  Address,
+  createPublicClient,
+  createWalletClient,
+  defineChain,
+  http,
+  parseAbi,
+} from "viem";
+import { mnemonicToAccount } from "viem/accounts";
+import basicSetup from "../wallet-setup/basic.setup";
+import { getConfig, metaMaskFixtures } from "./utils";
 
+const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
 
-// Give the flow extra breathing room; MetaMask + subgraph responses can be slow
 test.setTimeout(240000);
 
-// Define a basic test case
-test("should approve a pool as council safe", async ({
-  context,
-  page,
-  metamaskPage,
-  extensionId,
-}) => {
-  // Create a new MetaMask instance
-  const metamask = new MetaMask(
-    context,
-    metamaskPage,
-    basicSetup.walletPassword,
-    extensionId,
-  );
+const registryCommunityAbi = parseAbi([
+  "function addStrategyByPoolId(uint256 poolId)",
+  "function enabledStrategies(address strategy) view returns (bool)",
+]);
 
-  await page.bringToFront();
-  await connectWallet(page, metamask);
-  await gotoE2ECommunity(page);
+type Strategy = {
+  id: Address;
+  poolId: string;
+  isEnabled: boolean;
+  archived: boolean;
+};
 
-  await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
-
-  await page.bringToFront();
-  await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
-  const selectAllBtn = getByTestId(page, "btn-select-all");
-  await selectAllBtn.click();
-  // Find the first pending pool card and navigate to it
-  const poolCard = page
-    .locator('[data-testid^="pool-card-unapproved-"]')
-    .first();
-  await expect(poolCard).toBeVisible({ timeout: 30000 });
-  await poolCard.click();
-
-  // Approve the pool
-  const approveBtn = getByTestId(page, "btn-approve");
-  await expect(approveBtn).toBeVisible({ timeout: 30000 });
-  await approveBtn.click();
-
-  await confirmTransaction({ metamask, extensionId });
-  await expectNoErrorToast(page);
-
-  await gotoE2ECommunity(page);
-  await page.waitForLoadState("networkidle").catch(() => {});
-  await getByTestId(page, "btn-select-all").click();
-
-  const approvedPoolCard = page
-    .locator('[data-testid^="pool-card-approved-"]')
-    .first();
-  for (let attempt = 0; attempt < 12; attempt++) {
-    const approvedVisible = await approvedPoolCard
-      .isVisible({ timeout: 1000 })
-      .catch(() => false);
-    if (approvedVisible) {
-      return;
-    }
-
-    await page.reload({ waitUntil: "networkidle" }).catch(() => {});
-    await getByTestId(page, "btn-select-all")
-      .click()
-      .catch(() => {});
-    await page.waitForTimeout(5000);
+function createChain(chainId: string, rpcUrl: string) {
+  const id = Number(chainId);
+  if (!Number.isFinite(id)) {
+    throw new Error(`Invalid chain id: ${chainId}`);
   }
 
-  await expect(approvedPoolCard).toBeVisible({ timeout: 30000 });
+  return defineChain({
+    id,
+    name: "E2E Chain",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: {
+      default: { http: [rpcUrl] },
+      public: { http: [rpcUrl] },
+    },
+  });
+}
+
+async function fetchLatestUnarchivedStrategy({
+  graphUrl,
+  communityId,
+}: {
+  graphUrl: string;
+  communityId: string;
+}) {
+  const response = await fetch(graphUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      query: `{
+        cvstrategies(
+          first: 1
+          orderBy: poolId
+          orderDirection: desc
+          where: {archived: false, registryCommunity: "${communityId.toLowerCase()}"}
+        ) {
+          id
+          poolId
+          isEnabled
+          archived
+        }
+      }`,
+    }),
+  }).then((r) => r.json());
+
+  return response.data?.cvstrategies?.[0] as Strategy | undefined;
+}
+
+async function waitForStrategyEnabledOnChain({
+  publicClient,
+  communityId,
+  strategyAddress,
+}: {
+  publicClient: ReturnType<typeof createPublicClient>;
+  communityId: Address;
+  strategyAddress: Address;
+}) {
+  await expect
+    .poll(
+      async () => {
+        return publicClient.readContract({
+          address: communityId,
+          abi: registryCommunityAbi,
+          functionName: "enabledStrategies",
+          args: [strategyAddress],
+        });
+      },
+      {
+        timeout: 180000,
+        intervals: [1000, 2000, 3000, 5000],
+      },
+    )
+    .toBe(true);
+}
+
+async function waitForStrategyEnabledInSubgraph({
+  graphUrl,
+  communityId,
+  strategyAddress,
+}: {
+  graphUrl: string;
+  communityId: string;
+  strategyAddress: Address;
+}) {
+  await expect
+    .poll(
+      async () => {
+        const latestStrategy = await fetchLatestUnarchivedStrategy({
+          graphUrl,
+          communityId,
+        });
+
+        return (
+          latestStrategy?.id.toLowerCase() === strategyAddress.toLowerCase() &&
+          latestStrategy.isEnabled === true &&
+          latestStrategy.archived === false
+        );
+      },
+      {
+        timeout: 240000,
+        intervals: [1000, 2000, 3000, 5000],
+      },
+    )
+    .toBe(true);
+}
+
+test("should approve a pool as council safe", async () => {
+  const { chainId, communityId, rpcUrl, subgraphUrl, walletSeedPhrase } =
+    getConfig();
+  const chain = createChain(chainId, rpcUrl);
+  const publicClient = createPublicClient({
+    chain,
+    transport: http(rpcUrl),
+  });
+  const walletClient = createWalletClient({
+    account: mnemonicToAccount(walletSeedPhrase),
+    chain,
+    transport: http(rpcUrl),
+  });
+
+  const latestStrategy = await fetchLatestUnarchivedStrategy({
+    graphUrl: subgraphUrl,
+    communityId,
+  });
+
+  if (!latestStrategy) {
+    throw new Error("No unarchived pool found to approve");
+  }
+
+  if (!latestStrategy.isEnabled) {
+    const hash = await walletClient.writeContract({
+      address: communityId,
+      abi: registryCommunityAbi,
+      functionName: "addStrategyByPoolId",
+      args: [BigInt(latestStrategy.poolId)],
+    });
+
+    await publicClient.waitForTransactionReceipt({
+      hash,
+      confirmations: 1,
+      timeout: 180000,
+    });
+  }
+
+  await waitForStrategyEnabledOnChain({
+    publicClient,
+    communityId,
+    strategyAddress: latestStrategy.id,
+  });
+  await waitForStrategyEnabledInSubgraph({
+    graphUrl: subgraphUrl,
+    communityId,
+    strategyAddress: latestStrategy.id,
+  });
 });

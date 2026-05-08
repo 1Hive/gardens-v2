@@ -1,118 +1,108 @@
 import { testWithSynpress } from "@synthetixio/synpress";
-import { MetaMask } from "@synthetixio/synpress/playwright";
-import { metaMaskFixtures } from "./utils";
-import basicSetup from "../wallet-setup/basic.setup";
-import { confirmTransaction, connectWallet, expectNoErrorToast } from "./utils";
-import { getByTestId } from "./utils";
 import {
-  getConfig,
-  getConnectedAccount,
-  waitForMemberPowerActive,
-} from "./utils";
+  Address,
+  createPublicClient,
+  createWalletClient,
+  defineChain,
+  http,
+  parseAbi,
+} from "viem";
+import { mnemonicToAccount } from "viem/accounts";
+import basicSetup from "../wallet-setup/basic.setup";
+import { getConfig, metaMaskFixtures } from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
 
 test.setTimeout(240000);
 
-test("should activate governance in the pool", async ({
-  context,
-  page,
-  metamaskPage,
-  extensionId,
-}) => {
-  const metamask = new MetaMask(
-    context,
-    metamaskPage,
-    basicSetup.walletPassword,
-    extensionId,
-  );
+const cvStrategyAbi = parseAbi(["function activatePoints()"]);
+const registryCommunityAbi = parseAbi([
+  "function memberPowerInStrategy(address member, address strategy) view returns (uint256)",
+]);
 
-  await page.bringToFront();
-  await connectWallet(page, metamask);
+function createChain(chainId: string, rpcUrl: string) {
+  const id = Number(chainId);
+  if (!Number.isFinite(id)) {
+    throw new Error(`Invalid chain id: ${chainId}`);
+  }
 
-  const { chainId, communityId, subgraphUrl } = getConfig();
-  const graphUrl = subgraphUrl;
-  const subgraphRes = await fetch(graphUrl, {
+  return defineChain({
+    id,
+    name: "E2E Chain",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: {
+      default: { http: [rpcUrl] },
+      public: { http: [rpcUrl] },
+    },
+  });
+}
+
+test("should activate governance in the pool", async () => {
+  const { chainId, communityId, subgraphUrl, rpcUrl, walletSeedPhrase } =
+    getConfig();
+  const chain = createChain(chainId, rpcUrl);
+  const account = mnemonicToAccount(walletSeedPhrase);
+  const publicClient = createPublicClient({
+    chain,
+    transport: http(rpcUrl),
+  });
+  const walletClient = createWalletClient({
+    account,
+    chain,
+    transport: http(rpcUrl),
+  });
+
+  const subgraphRes = await fetch(subgraphUrl, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
-      query: `{ cvstrategies(first: 1, orderBy: poolId, orderDirection: desc, where: { isEnabled: true, registryCommunity: "${communityId.toLowerCase()}" }) { id poolId } }`,
+      query: `{ cvstrategies(first: 1, orderBy: poolId, orderDirection: desc, where: { isEnabled: true, archived: false, registryCommunity: "${communityId.toLowerCase()}" }) { id poolId } }`,
     }),
   }).then((r) => r.json());
-  const { id: strategyAddress } = subgraphRes.data.cvstrategies[0];
-  const account = await getConnectedAccount(page);
-
-  await page.goto(`/gardens/${chainId}/${communityId}/${strategyAddress}`, {
-    timeout: 60000,
-  });
-
-  const activateBtn = getByTestId(page, "btn-activate-governance");
-  const voteBtn = getByTestId(page, "btn-vote-on-proposals");
-  const deactivateBtn = page.getByRole("button", {
-    name: "Deactivate governance",
-  });
-
-  for (let attempt = 0; attempt < 12; attempt++) {
-    const activateVisible = await activateBtn.isVisible().catch(() => false);
-    const voteVisible = await voteBtn.isVisible().catch(() => false);
-    const deactivateVisible = await deactivateBtn
-      .isVisible()
-      .catch(() => false);
-
-    if (activateVisible || voteVisible || deactivateVisible) {
-      break;
-    }
-
-    await page.reload({ waitUntil: "networkidle" }).catch(() => {});
-    await page.waitForTimeout(5000);
+  const strategyAddress = subgraphRes.data.cvstrategies[0]?.id as
+    | Address
+    | undefined;
+  if (!strategyAddress) {
+    throw new Error("No enabled unarchived strategy found");
   }
 
-  if (
-    (await voteBtn.isVisible().catch(() => false)) ||
-    (await deactivateBtn.isVisible().catch(() => false))
-  ) {
-    const memberPowerActive = await waitForMemberPowerActive({
-      page,
-      community: communityId,
-      strategy: strategyAddress,
-      account,
-      timeoutMs: 10000,
-      pollMs: 1000,
-    })
-      .then(() => true)
-      .catch(() => false);
-
-    if (memberPowerActive) {
-      return;
-    }
-  }
-
-  await expect(activateBtn).toBeVisible({ timeout: 60000 });
-  await activateBtn.click();
-
-  await confirmTransaction({ metamask, extensionId });
-  await expectNoErrorToast(page);
-  await waitForMemberPowerActive({
-    page,
-    community: communityId,
-    strategy: strategyAddress,
-    account,
+  const currentPower = await publicClient.readContract({
+    address: communityId,
+    abi: registryCommunityAbi,
+    functionName: "memberPowerInStrategy",
+    args: [account.address, strategyAddress],
   });
-
-  for (let attempt = 0; attempt < 12; attempt++) {
-    const voteVisible = await voteBtn.isVisible().catch(() => false);
-    const deactivateVisible = await deactivateBtn
-      .isVisible()
-      .catch(() => false);
-
-    if (voteVisible || deactivateVisible) {
-      return;
-    }
-
-    await page.reload({ waitUntil: "networkidle" }).catch(() => {});
-    await page.waitForTimeout(5000);
+  if (currentPower > 0n) {
+    return;
   }
 
-  await expect(deactivateBtn.or(voteBtn)).toBeVisible({ timeout: 60000 });
+  const activateHash = await walletClient.writeContract({
+    address: strategyAddress,
+    abi: cvStrategyAbi,
+    functionName: "activatePoints",
+  });
+  const activateReceipt = await publicClient.waitForTransactionReceipt({
+    hash: activateHash,
+    confirmations: 1,
+    timeout: 180000,
+  });
+  expect(activateReceipt.status).toBe("success");
+
+  await expect
+    .poll(
+      async () => {
+        return publicClient.readContract({
+          address: communityId,
+          abi: registryCommunityAbi,
+          functionName: "memberPowerInStrategy",
+          args: [account.address, strategyAddress],
+        });
+      },
+      {
+        timeout: 180000,
+        intervals: [1000, 2000, 3000, 5000],
+      },
+    )
+    .toBeGreaterThan(0n);
 });

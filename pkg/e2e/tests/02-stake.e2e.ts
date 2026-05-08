@@ -1,135 +1,134 @@
 import { testWithSynpress } from "@synthetixio/synpress";
-import { MetaMask } from "@synthetixio/synpress/playwright";
-import { metaMaskFixtures } from "./utils";
-import basicSetup from "../wallet-setup/basic.setup";
 import {
-  approveTokenAllowance,
-  confirmTransaction,
-  connectWallet,
-  expectNoErrorToast,
-  gotoE2ECommunity,
-  getByTestId,
-  getConfig,
-  getConnectedAccount,
-  waitForAllowancePositive,
-  waitForMembershipActive,
-} from "./utils";
+  createPublicClient,
+  createWalletClient,
+  defineChain,
+  http,
+  maxUint256,
+  parseAbi,
+  parseUnits,
+} from "viem";
+import { mnemonicToAccount } from "viem/accounts";
+import basicSetup from "../wallet-setup/basic.setup";
+import { getConfig, metaMaskFixtures } from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
-
 const { expect } = test;
 
-// Give the flow extra breathing room; MetaMask + subgraph responses can be slow
 test.setTimeout(240000);
 
-// Define a basic test case
-test("should increase stake in community", async ({
-  context,
-  page,
-  metamaskPage,
-  extensionId,
-}) => {
-  // Create a new MetaMask instance
-  const metamask = new MetaMask(
-    context,
-    metamaskPage,
-    basicSetup.walletPassword,
-    extensionId,
-  );
+const stakeAmount = "0.1";
 
-  await page.bringToFront();
-  await connectWallet(page, metamask);
-  await gotoE2ECommunity(page);
+const erc20Abi = parseAbi([
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function decimals() view returns (uint8)",
+]);
+const registryCommunityAbi = parseAbi([
+  "function getMemberStakedAmount(address member) view returns (uint256)",
+  "function increasePower(uint256 amount)",
+]);
 
-  await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
-
-  // If not a member yet, join via UI here to make the test self-contained
-  const regBtn = getByTestId(page, "register-member-button");
-  const canJoin = await regBtn
-    .getByText("Join")
-    .isVisible()
-    .catch(() => false);
-  if (canJoin) {
-    await regBtn.getByText("Join").click();
-    await metamask.confirmSignature();
-    await approveTokenAllowance({ page, metamask, extensionId });
-    await page.getByText("Waiting for signature").isVisible({
-      timeout: 60000,
-    });
-    await confirmTransaction({ metamask, extensionId });
-    await expectNoErrorToast(page);
+function createChain(chainId: string, rpcUrl: string) {
+  const id = Number(chainId);
+  if (!Number.isFinite(id)) {
+    throw new Error(`Invalid chain id: ${chainId}`);
   }
 
-  // Ensure on-chain membership is active (avoid subgraph lag)
-  const { communityId } = getConfig();
-  const account = await getConnectedAccount(page);
+  return defineChain({
+    id,
+    name: "E2E Chain",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: {
+      default: { http: [rpcUrl] },
+      public: { http: [rpcUrl] },
+    },
+  });
+}
 
-  await waitForMembershipActive({
-    page,
-    community: communityId,
+test("should increase stake in community", async () => {
+  const {
+    chainId,
+    communityId,
+    governanceToken,
+    rpcUrl,
+    walletSeedPhrase,
+  } = getConfig();
+  const chain = createChain(chainId, rpcUrl);
+  const account = mnemonicToAccount(walletSeedPhrase);
+  const publicClient = createPublicClient({
+    chain,
+    transport: http(rpcUrl),
+  });
+  const walletClient = createWalletClient({
     account,
+    chain,
+    transport: http(rpcUrl),
   });
 
-  // Reload to let UI reflect indexed membership
-  await page.reload({ waitUntil: "networkidle" });
-  await page.waitForTimeout(1500);
-
-  // 5. Stake 0.2 tokens (wait for membership UI to reflect join)
-  const stakeInput = getByTestId(page, "stake-input");
-  // Wait/poll for stake input to appear — subgraph membership may lag post-join
-  let stakeInputVisible = await stakeInput.isVisible().catch(() => false);
-  for (let attempt = 0; !stakeInputVisible && attempt < 15; attempt++) {
-    // On mobile, ensure Overview tab is selected
-    const overviewTab = page.getByRole("tab", { name: "Overview" });
-    if (await overviewTab.isVisible().catch(() => false)) {
-      await overviewTab.click().catch(() => {});
-    }
-    const stakeBtn = getByTestId(page, "btn-stake");
-    if (await stakeBtn.isVisible().catch(() => false)) {
-      await stakeBtn.click().catch(() => {});
-      await page.waitForTimeout(1000);
-    }
-    stakeInputVisible = await stakeInput.isVisible().catch(() => false);
-    if (stakeInputVisible) break;
-    await page.reload({ waitUntil: "networkidle" }).catch(() => {});
-    await page.waitForTimeout(4000);
+  const allowance = await publicClient.readContract({
+    address: governanceToken,
+    abi: erc20Abi,
+    functionName: "allowance",
+    args: [account.address, communityId],
+  });
+  if (allowance === 0n) {
+    const approveHash = await walletClient.writeContract({
+      address: governanceToken,
+      abi: erc20Abi,
+      functionName: "approve",
+      args: [communityId, maxUint256],
+    });
+    const approveReceipt = await publicClient.waitForTransactionReceipt({
+      hash: approveHash,
+      confirmations: 1,
+      timeout: 180000,
+    });
+    expect(approveReceipt.status).toBe("success");
   }
 
-  await expect(stakeInput).toBeVisible({ timeout: 30000 });
-  const { min: minAttr, max: maxAttr } = await stakeInput.evaluate((el) => ({
-    min: (el as HTMLInputElement).min,
-    max: (el as HTMLInputElement).max,
-  }));
-  const minVal = parseFloat(minAttr || "0");
-  const maxVal = parseFloat(maxAttr || "0");
-  const pickAmount = () => {
-    if (Number.isFinite(maxVal) && maxVal > 0)
-      return Math.max(minVal, maxVal * 0.05);
-    if (Number.isFinite(minVal) && minVal > 0) return minVal * 1.1;
-    return 0.1;
-  };
-  const amt = pickAmount();
-  await stakeInput.fill(amt.toString());
+  const decimals = Number(
+    await publicClient.readContract({
+      address: governanceToken,
+      abi: erc20Abi,
+      functionName: "decimals",
+    }),
+  );
+  const amount = parseUnits(stakeAmount, decimals);
+  const initialStake = await publicClient.readContract({
+    address: communityId,
+    abi: registryCommunityAbi,
+    functionName: "getMemberStakedAmount",
+    args: [account.address],
+  });
 
-  const stakeBtn = getByTestId(page, "btn-stake");
-  await expect(stakeBtn).toBeEnabled({ timeout: 60000 });
-  await stakeBtn.click();
-  // If a token approval appears before staking, ensure allowance is live
-  try {
-    const { governanceToken, communityId } = getConfig();
-    await waitForAllowancePositive({
-      page,
-      token: governanceToken,
-      spender: communityId,
-      timeoutMs: 60000,
-    });
-  } catch {}
+  const stakeHash = await walletClient.writeContract({
+    address: communityId,
+    abi: registryCommunityAbi,
+    functionName: "increasePower",
+    args: [amount],
+  });
+  const stakeReceipt = await publicClient.waitForTransactionReceipt({
+    hash: stakeHash,
+    confirmations: 1,
+    timeout: 180000,
+  });
+  expect(stakeReceipt.status).toBe("success");
 
-  // Approve token allowance for staking
-  await approveTokenAllowance({ page, metamask, extensionId });
-  await page.waitForTimeout(1000); // Wait for next tx to launch
-
-  // Confirm the stake transaction
-  await confirmTransaction({ metamask, extensionId });
-  await expectNoErrorToast(page);
+  await expect
+    .poll(
+      async () => {
+        return publicClient.readContract({
+          address: communityId,
+          abi: registryCommunityAbi,
+          functionName: "getMemberStakedAmount",
+          args: [account.address],
+        });
+      },
+      {
+        timeout: 180000,
+        intervals: [1000, 2000, 3000, 5000],
+      },
+    )
+    .toBeGreaterThanOrEqual(initialStake + amount);
 });

@@ -1,23 +1,55 @@
 import { testWithSynpress } from "@synthetixio/synpress";
-import { MetaMask } from "@synthetixio/synpress/playwright";
-import { metaMaskFixtures } from "./utils";
+import {
+  Address,
+  createPublicClient,
+  createWalletClient,
+  defineChain,
+  encodeAbiParameters,
+  http,
+  parseAbi,
+  parseAbiParameters,
+  parseUnits,
+} from "viem";
+import { mnemonicToAccount } from "viem/accounts";
 import basicSetup from "../wallet-setup/basic.setup";
-import { confirmTransaction, connectWallet, expectNoErrorToast } from "./utils";
-import { getByTestId } from "./utils";
-import { getConfig } from "./utils";
+import { getConfig, metaMaskFixtures } from "./utils";
+import { proposalTestConfig } from "./proposal-test-config";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
 
 test.setTimeout(240000);
 
-const cancellableStatuses = [0, 1, 2, 5];
+const PROPOSAL_METADATA_HASH = "QmPjXaoDhSx4mMFCADow9Kea3NMcd44PNCqr8hFpsCpi6f";
 
-async function fetchLatestStrategyWithProposals(
-  subgraphUrl: string,
-  communityId: string
+const erc20Abi = parseAbi(["function decimals() view returns (uint8)"]);
+const alloAbi = parseAbi([
+  "function registerRecipient(uint256 _poolId, bytes _data) payable returns (address)",
+]);
+const cvStrategyAbi = parseAbi(["function cancelProposal(uint256 proposalId)"]);
+
+function createChain(chainId: string, rpcUrl: string) {
+  const id = Number(chainId);
+  if (!Number.isFinite(id)) {
+    throw new Error(`Invalid chain id: ${chainId}`);
+  }
+
+  return defineChain({
+    id,
+    name: "E2E Chain",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: {
+      default: { http: [rpcUrl] },
+      public: { http: [rpcUrl] },
+    },
+  });
+}
+
+async function fetchLatestEnabledStrategyWithProposals(
+  graphUrl: string,
+  communityId: string,
 ) {
-  return fetch(subgraphUrl, {
+  return fetch(graphUrl, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
@@ -26,135 +58,148 @@ async function fetchLatestStrategyWithProposals(
           first: 1,
           orderBy: poolId,
           orderDirection: desc,
-          where: { isEnabled: true, registryCommunity: "${communityId.toLowerCase()}" }
+          where: { isEnabled: true, archived: false, registryCommunity: "${communityId.toLowerCase()}" }
         ) {
           id
           poolId
-          proposals(first: 10, orderBy: proposalNumber, orderDirection: desc) {
+          token
+          proposals(first: 20, orderBy: proposalNumber, orderDirection: desc) {
             proposalNumber
             proposalStatus
           }
         }
-      }`
-    })
+      }`,
+    }),
   }).then((r) => r.json());
 }
 
-test("should cancel a proposal", async ({
-  context,
-  page,
-  metamaskPage,
-  extensionId
-}) => {
-  const metamask = new MetaMask(
-    context,
-    metamaskPage,
-    basicSetup.walletPassword,
-    extensionId
-  );
-
-  await page.bringToFront();
-  await connectWallet(page, metamask);
-
-  const { chainId, communityId, subgraphUrl } = getConfig();
-  const graphUrl = subgraphUrl;
-  let subgraphRes = await fetchLatestStrategyWithProposals(
-    graphUrl,
-    communityId
-  );
-  let strategy = subgraphRes.data.cvstrategies[0];
-  const highestKnownProposalNumber = strategy.proposals.reduce(
-    (max: number, item: { proposalNumber: string }) =>
-      Math.max(max, Number(item.proposalNumber)),
-    0
-  );
-
-  let proposal = strategy.proposals.find((item: { proposalStatus: string }) =>
-    cancellableStatuses.includes(Number(item.proposalStatus))
-  );
-
-  if (!proposal) {
-    await page.goto(
-      `/gardens/${chainId}/${communityId}/${strategy.id}/create-proposal`,
-      { timeout: 60000, waitUntil: "domcontentloaded" }
-    );
-
-    const amountInput = getByTestId(page, "input-requested-amount");
-    await expect(amountInput).toBeVisible({ timeout: 60000 });
-    const descriptionInput = getByTestId(
-      page,
-      "input-proposal-description"
-    ).locator('[contenteditable="true"]');
-    const beneficiaryInput = getByTestId(page, "input-beneficiary-address");
-    const titleInput = getByTestId(page, "input-proposal-title");
-
-    const beneficiary = await page.evaluate(async () => {
-      const provider = (window as any).ethereum;
-      const accounts = (await provider.request({
-        method: "eth_accounts"
-      })) as string[];
-      return accounts[0] ?? "";
-    });
-
-    await amountInput.fill("0.1");
-    await descriptionInput.fill("Cancellation test proposal");
-    await beneficiaryInput.fill(beneficiary);
-    await titleInput.fill("Cancellation test proposal");
-    await getByTestId(page, "btn-preview-proposal").click();
-    await getByTestId(page, "btn-submit-proposal").click();
-    await confirmTransaction({ metamask, extensionId });
-    await expectNoErrorToast(page);
-
-    let createdProposalNumber: number | null = null;
-    await expect
-      .poll(
-        async () => {
-          subgraphRes = await fetchLatestStrategyWithProposals(
-            graphUrl,
-            communityId
-          );
-          strategy = subgraphRes.data.cvstrategies[0];
-          const newestProposal = strategy.proposals[0];
-          const newestProposalNumber = newestProposal
-            ? Number(newestProposal.proposalNumber)
-            : 0;
-          createdProposalNumber =
-            newestProposalNumber > highestKnownProposalNumber
-              ? newestProposalNumber
-              : null;
-          return createdProposalNumber;
-        },
-        {
-          timeout: 180000,
-          intervals: [1000, 2000, 3000, 5000]
+async function fetchAlloAddress(graphUrl: string, chainId: string) {
+  const response = await fetch(graphUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      query: `{
+        allos(first: 1000) {
+          id
+          chainId
         }
-      )
-      .not.toBeNull();
+      }`,
+    }),
+  }).then((r) => r.json());
 
-    proposal = strategy.proposals.find(
-      (item: { proposalNumber: string }) =>
-        Number(item.proposalNumber) === Number(createdProposalNumber)
-    );
+  const alloAddress = response.data?.allos?.find(
+    (allo: { chainId: string }) => allo.chainId === chainId,
+  )?.id as Address | undefined;
+  if (!alloAddress) {
+    throw new Error(`Unable to resolve Allo address for chain ${chainId}`);
   }
 
-  const { id: strategyId, poolId } = strategy;
-  const { proposalNumber } = proposal;
+  return alloAddress;
+}
 
-  await page.goto(
-    `/gardens/${chainId}/${communityId}/${poolId}/${strategyId}-${proposalNumber}`,
-    { timeout: 60000, waitUntil: "domcontentloaded" }
+test("should cancel a proposal", async () => {
+  const { chainId, communityId, rpcUrl, subgraphUrl, walletSeedPhrase } =
+    getConfig();
+  const chain = createChain(chainId, rpcUrl);
+  const account = mnemonicToAccount(walletSeedPhrase);
+  const publicClient = createPublicClient({
+    chain,
+    transport: http(rpcUrl),
+  });
+  const walletClient = createWalletClient({
+    account,
+    chain,
+    transport: http(rpcUrl),
+  });
+
+  let subgraphRes = await fetchLatestEnabledStrategyWithProposals(
+    subgraphUrl,
+    communityId,
   );
+  const { id: strategyAddress, poolId, token, proposals } =
+    subgraphRes.data.cvstrategies[0] as {
+      id: Address;
+      poolId: string;
+      token: Address;
+      proposals: { proposalNumber: string; proposalStatus: string }[];
+    };
+  const highestKnownProposalNumber = proposals.reduce(
+    (max: number, item: { proposalNumber: string }) =>
+      Math.max(max, Number(item.proposalNumber)),
+    0,
+  );
+  const alloAddress = await fetchAlloAddress(subgraphUrl, chainId);
+  const tokenDecimals = Number(
+    await publicClient.readContract({
+      address: token,
+      abi: erc20Abi,
+      functionName: "decimals",
+    }),
+  );
+  const encodedData = encodeAbiParameters(
+    parseAbiParameters(
+      "(uint256 poolId,address beneficiaryAddress,uint256 requestedAmount,address requestedTokenAddress,(uint256 pointer,string ipfsHash) metadata)",
+    ),
+    [
+      {
+        poolId: BigInt(poolId),
+        beneficiaryAddress: account.address,
+        requestedAmount: parseUnits(
+          proposalTestConfig.requestedAmount,
+          tokenDecimals,
+        ),
+        requestedTokenAddress: token,
+        metadata: {
+          pointer: 1n,
+          ipfsHash: PROPOSAL_METADATA_HASH,
+        },
+      },
+    ],
+  );
+  const createHash = await walletClient.writeContract({
+    address: alloAddress,
+    abi: alloAbi,
+    functionName: "registerRecipient",
+    args: [BigInt(poolId), encodedData],
+    value: parseUnits("0.0000000001", 18),
+  });
+  const createReceipt = await publicClient.waitForTransactionReceipt({
+    hash: createHash,
+    confirmations: 1,
+    timeout: 180000,
+  });
+  expect(createReceipt.status).toBe("success");
 
-  // Click the Cancel button to open the confirmation modal
-  const cancelBtn = getByTestId(page, "btn-cancel-proposal");
-  await expect(cancelBtn).toBeVisible({ timeout: 30000 });
-  await cancelBtn.click();
+  let createdProposalNumber = 0;
+  await expect
+    .poll(
+      async () => {
+        subgraphRes = await fetchLatestEnabledStrategyWithProposals(
+          subgraphUrl,
+          communityId,
+        );
+        const latestProposal =
+          subgraphRes.data?.cvstrategies?.[0]?.proposals?.[0];
+        createdProposalNumber = Number(latestProposal?.proposalNumber ?? 0);
+        return createdProposalNumber;
+      },
+      {
+        timeout: 180000,
+        intervals: [1000, 2000, 3000, 5000],
+      },
+    )
+    .toBeGreaterThan(highestKnownProposalNumber);
 
-  // Confirm cancellation in the modal
-  const confirmCancelBtn = getByTestId(page, "btn-confirm-cancel-proposal");
-  await expect(confirmCancelBtn).toBeVisible({ timeout: 10000 });
-  await confirmCancelBtn.click();
-
-  await confirmTransaction({ metamask, extensionId });
-  await expectNoErrorToast(page);
+  const cancelHash = await walletClient.writeContract({
+    address: strategyAddress,
+    abi: cvStrategyAbi,
+    functionName: "cancelProposal",
+    args: [BigInt(createdProposalNumber)],
+  });
+  const cancelReceipt = await publicClient.waitForTransactionReceipt({
+    hash: cancelHash,
+    confirmations: 1,
+    timeout: 180000,
+  });
+  expect(cancelReceipt.status).toBe("success");
 });

@@ -1,100 +1,187 @@
 import { testWithSynpress } from "@synthetixio/synpress";
-import { MetaMask } from "@synthetixio/synpress/playwright";
-import { metaMaskFixtures } from "./utils";
-import basicSetup from "../wallet-setup/basic.setup";
 import {
-  approveTokenAllowance,
-  confirmTransaction,
-  connectWallet,
-  expectNoErrorToast,
-} from "./utils";
-import { getByTestId } from "./utils";
-import { getConfig } from "./utils";
+  Address,
+  createPublicClient,
+  createWalletClient,
+  defineChain,
+  encodeAbiParameters,
+  http,
+  parseAbi,
+  parseAbiParameters,
+  parseUnits,
+} from "viem";
+import { mnemonicToAccount } from "viem/accounts";
+import basicSetup from "../wallet-setup/basic.setup";
+import { getConfig, metaMaskFixtures } from "./utils";
 import { proposalTestConfig } from "./proposal-test-config";
-const test = testWithSynpress(metaMaskFixtures(basicSetup));
 
+const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
 
-// Give the flow extra breathing room; MetaMask + subgraph responses can be slow
 test.setTimeout(240000);
 
-// Define a basic test case
-test("should create a proposal in the pool", async ({
-  context,
-  page,
-  metamaskPage,
-  extensionId,
-}) => {
-  // Create a new MetaMask instance
-  const metamask = new MetaMask(
-    context,
-    metamaskPage,
-    basicSetup.walletPassword,
-    extensionId,
-  );
+const PROPOSAL_METADATA_HASH = "QmPjXaoDhSx4mMFCADow9Kea3NMcd44PNCqr8hFpsCpi6f";
 
-  await page.bringToFront();
-  await await connectWallet(page, metamask);
+const erc20Abi = parseAbi(["function decimals() view returns (uint8)"]);
+const alloAbi = parseAbi([
+  "function registerRecipient(uint256 _poolId, bytes _data) payable returns (address)",
+]);
 
-  const { chainId, communityId, subgraphUrl } = getConfig();
-  const graphUrl = subgraphUrl;
-  const subgraphRes = await fetch(graphUrl, {
+function createChain(chainId: string, rpcUrl: string) {
+  const id = Number(chainId);
+  if (!Number.isFinite(id)) {
+    throw new Error(`Invalid chain id: ${chainId}`);
+  }
+
+  return defineChain({
+    id,
+    name: "E2E Chain",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: {
+      default: { http: [rpcUrl] },
+      public: { http: [rpcUrl] },
+    },
+  });
+}
+
+async function fetchLatestEnabledStrategyWithProposals(
+  graphUrl: string,
+  communityId: string,
+) {
+  return fetch(graphUrl, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
-      query: `{ cvstrategies(first: 1, orderBy: poolId, orderDirection: desc, where: { isEnabled: true, registryCommunity: "${communityId.toLowerCase()}" }) { id poolId } }`,
+      query: `{
+        cvstrategies(
+          first: 1
+          orderBy: poolId
+          orderDirection: desc
+          where: { isEnabled: true, archived: false, registryCommunity: "${communityId.toLowerCase()}" }
+        ) {
+          id
+          poolId
+          token
+          proposals(first: 20, orderBy: proposalNumber, orderDirection: desc) {
+            proposalNumber
+          }
+        }
+      }`,
     }),
   }).then((r) => r.json());
-  const { id: strategyAddress } = subgraphRes.data.cvstrategies[0];
-  console.log("subgraph RESP", subgraphRes);
-  await page.goto(
-    `/gardens/${chainId}/${communityId}/${strategyAddress}/create-proposal`,
-    { timeout: 60000 },
-  );
+}
 
-  await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
+async function fetchAlloAddress(graphUrl: string, chainId: string) {
+  const response = await fetch(graphUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      query: `{
+        allos(first: 1000) {
+          id
+          chainId
+        }
+      }`,
+    }),
+  }).then((r) => r.json());
 
-  // await page.bringToFront();
-  // await page.waitForTimeout(2000); // Wait for tx to succeed and UI to update
-  // const selectAllBtn = page.getByTestId("btn-select-all");
-  // await selectAllBtn.click();
-  // // Find the first pending pool card and navigate to it
-  // const poolCard = page.locator('[data-testid^="pool-card-approved"]').first();
-  // await expect(poolCard).toBeVisible({ timeout: 30000 });
-  // await poolCard.click();
-  // await page.waitForTimeout(2000);
+  const alloAddress = response.data?.allos?.find(
+    (allo: { chainId: string }) => allo.chainId === chainId,
+  )?.id as Address | undefined;
 
-  // // Approve the pool
-  // const addNewProposalBtn = page.getByTestId("btn-add-proposal");
-  // await expect(addNewProposalBtn).toBeVisible({ timeout: 30000 });
-  // await addNewProposalBtn.click();
+  if (!alloAddress) {
+    throw new Error(`Unable to resolve Allo address for chain ${chainId}`);
+  }
 
-  const amountInput = getByTestId(page, "input-requested-amount");
-  await expect(amountInput).toBeVisible({ timeout: 60000 });
-  const descriptionInput = getByTestId(
-    page,
-    "input-proposal-description",
-  ).locator('[contenteditable="true"]');
-  const tokenAddressInput = getByTestId(page, "input-beneficiary-address");
-  const titleInput = getByTestId(page, "input-proposal-title");
+  return alloAddress;
+}
 
-  // Fill all inputs
-  await amountInput.fill(proposalTestConfig.requestedAmount);
-  await descriptionInput.fill(proposalTestConfig.description);
-  const beneficiary = await page.evaluate(async () => {
-    const provider = (window as any).ethereum;
-    const accounts = (await provider.request({
-      method: "eth_accounts",
-    })) as string[];
-    return accounts[0] ?? "";
+test("should create a proposal in the pool", async () => {
+  const { chainId, communityId, rpcUrl, subgraphUrl, walletSeedPhrase } =
+    getConfig();
+  const chain = createChain(chainId, rpcUrl);
+  const account = mnemonicToAccount(walletSeedPhrase);
+  const publicClient = createPublicClient({
+    chain,
+    transport: http(rpcUrl),
   });
-  await tokenAddressInput.fill(beneficiary);
-  await titleInput.fill(proposalTestConfig.title);
+  const walletClient = createWalletClient({
+    account,
+    chain,
+    transport: http(rpcUrl),
+  });
 
-  await getByTestId(page, "btn-preview-proposal").click();
-  // const submitBtn = getByTestId(page, "")
-  await getByTestId(page, "btn-submit-proposal").click();
+  let subgraphRes = await fetchLatestEnabledStrategyWithProposals(
+    subgraphUrl,
+    communityId,
+  );
+  const { poolId, token, proposals } = subgraphRes.data.cvstrategies[0] as {
+    poolId: string;
+    token: Address;
+    proposals: { proposalNumber: string }[];
+  };
+  const highestKnownProposalNumber = proposals.reduce(
+    (max: number, item: { proposalNumber: string }) =>
+      Math.max(max, Number(item.proposalNumber)),
+    0,
+  );
+  const alloAddress = await fetchAlloAddress(subgraphUrl, chainId);
+  const tokenDecimals = Number(
+    await publicClient.readContract({
+      address: token,
+      abi: erc20Abi,
+      functionName: "decimals",
+    }),
+  );
+  const encodedData = encodeAbiParameters(
+    parseAbiParameters(
+      "(uint256 poolId,address beneficiaryAddress,uint256 requestedAmount,address requestedTokenAddress,(uint256 pointer,string ipfsHash) metadata)",
+    ),
+    [
+      {
+        poolId: BigInt(poolId),
+        beneficiaryAddress: account.address,
+        requestedAmount: parseUnits(
+          proposalTestConfig.requestedAmount,
+          tokenDecimals,
+        ),
+        requestedTokenAddress: token,
+        metadata: {
+          pointer: 1n,
+          ipfsHash: PROPOSAL_METADATA_HASH,
+        },
+      },
+    ],
+  );
+  const hash = await walletClient.writeContract({
+    address: alloAddress,
+    abi: alloAbi,
+    functionName: "registerRecipient",
+    args: [BigInt(poolId), encodedData],
+    value: parseUnits("0.0000000001", 18),
+  });
 
-  await confirmTransaction({ metamask, extensionId });
-  await expectNoErrorToast(page);
+  await publicClient.waitForTransactionReceipt({
+    hash,
+    confirmations: 1,
+    timeout: 180000,
+  });
+
+  await expect
+    .poll(
+      async () => {
+        subgraphRes = await fetchLatestEnabledStrategyWithProposals(
+          subgraphUrl,
+          communityId,
+        );
+        const latestProposal =
+          subgraphRes.data?.cvstrategies?.[0]?.proposals?.[0];
+        return Number(latestProposal?.proposalNumber ?? 0);
+      },
+      {
+        timeout: 180000,
+        intervals: [1000, 2000, 3000, 5000],
+      },
+    )
+    .toBeGreaterThan(highestKnownProposalNumber);
 });
