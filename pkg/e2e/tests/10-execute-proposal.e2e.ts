@@ -701,7 +701,10 @@ test("should execute a proposal", async ({
     publicClient,
     strategyAddress,
     proposalNumber: resolvedProposalNumber,
-    requestedAmount: parseUnits(requestedAmount, 18),
+    requestedAmount: parseUnits(
+      requestedAmount,
+      await getTokenDecimals(publicClient, token),
+    ),
   });
 
   await executeProposalDirectly({
