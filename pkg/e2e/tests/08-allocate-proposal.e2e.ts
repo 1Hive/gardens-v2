@@ -1,22 +1,49 @@
 import { testWithSynpress } from "@synthetixio/synpress";
-import { MetaMask } from "@synthetixio/synpress/playwright";
-import type { Page } from "@playwright/test";
-import { metaMaskFixtures } from "./utils";
-import basicSetup from "../wallet-setup/basic.setup";
 import {
-  confirmTransaction,
-  connectWallet,
-  expectNoErrorToast,
-  getConnectedAccount,
-  waitForMemberPowerActive,
-} from "./utils";
-import { getByTestId } from "./utils";
-import { getConfig } from "./utils";
+  Address,
+  createPublicClient,
+  createWalletClient,
+  defineChain,
+  encodeAbiParameters,
+  http,
+  parseAbi,
+  parseAbiParameters,
+  parseUnits,
+} from "viem";
+import { mnemonicToAccount } from "viem/accounts";
+import basicSetup from "../wallet-setup/basic.setup";
+import { getConfig, metaMaskFixtures } from "./utils";
+import { proposalTestConfig } from "./proposal-test-config";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
 
 test.setTimeout(300000);
+
+const alloAbi = parseAbi(["function allocate(uint256 _poolId, bytes _data)"]);
+const cvStrategyAbi = parseAbi([
+  "function getProposalVoterStake(uint256,address) view returns (uint256)",
+]);
+const registryCommunityAbi = parseAbi([
+  "function memberPowerInStrategy(address member, address strategy) view returns (uint256)",
+]);
+
+function createChain(chainId: string, rpcUrl: string) {
+  const id = Number(chainId);
+  if (!Number.isFinite(id)) {
+    throw new Error(`Invalid chain id: ${chainId}`);
+  }
+
+  return defineChain({
+    id,
+    name: "E2E Chain",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: {
+      default: { http: [rpcUrl] },
+      public: { http: [rpcUrl] },
+    },
+  });
+}
 
 async function fetchLatestEnabledStrategyWithProposal({
   graphUrl,
@@ -30,131 +57,217 @@ async function fetchLatestEnabledStrategyWithProposal({
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       query: `{
-  cvstrategies(
-    first: 5
-    orderBy: poolId
-    orderDirection: desc
-    where: {isEnabled: true, archived: false, registryCommunity:"${communityId.toLowerCase()}"}
-  ) {
-    id
-    poolId
-    proposals(first: 1, orderBy: proposalNumber, orderDirection: desc) {
-      id
-    }
-  }
-}`,
+        cvstrategies(
+          first: 5
+          orderBy: poolId
+          orderDirection: desc
+          where: {isEnabled: true, archived: false, registryCommunity:"${communityId.toLowerCase()}"}
+        ) {
+          id
+          poolId
+          proposals(first: 20, orderBy: proposalNumber, orderDirection: desc) {
+            proposalNumber
+            proposalStatus
+          }
+        }
+      }`,
     }),
   }).then((r) => r.json());
 }
 
-async function waitForPoolVotingReady({
-  page,
-  metamask,
-  extensionId,
-  communityId,
+async function fetchAlloAddress(graphUrl: string, chainId: string) {
+  const response = await fetch(graphUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      query: `{
+        allos(first: 1000) {
+          id
+          chainId
+        }
+      }`,
+    }),
+  }).then((r) => r.json());
+
+  const alloAddress = response.data?.allos?.find(
+    (allo: { chainId: string }) => allo.chainId === chainId,
+  )?.id as Address | undefined;
+  if (!alloAddress) {
+    throw new Error(`Unable to resolve Allo address for chain ${chainId}`);
+  }
+
+  return alloAddress;
+}
+
+async function getProposalVoterStake({
+  publicClient,
   strategyAddress,
-  account,
+  proposalNumber,
+  voter,
 }: {
-  page: Page;
-  metamask: MetaMask;
-  extensionId: string;
-  communityId: `0x${string}`;
-  strategyAddress: `0x${string}`;
-  account: `0x${string}`;
+  publicClient: any;
+  strategyAddress: Address;
+  proposalNumber: bigint;
+  voter: Address;
 }) {
-  const activateBtn = getByTestId(page, "btn-activate-governance");
-  const voteBtn = getByTestId(page, "btn-vote-on-proposals");
-  const connectBtn = getByTestId(page, "connectButton");
-  const deactivateBtn = page.getByRole("button", {
-    name: "Deactivate governance",
+  return publicClient.readContract({
+    address: strategyAddress,
+    abi: cvStrategyAbi,
+    functionName: "getProposalVoterStake",
+    args: [proposalNumber, voter],
   });
+}
 
-  for (let attempt = 0; attempt < 30; attempt++) {
-    const voteVisible = await voteBtn
-      .isVisible({ timeout: 1000 })
-      .catch(() => false);
-    const voteEnabled =
-      voteVisible &&
-      (await voteBtn.isEnabled({ timeout: 1000 }).catch(() => false));
+async function allocateSupportToProposal({
+  publicClient,
+  walletClient,
+  alloAddress,
+  strategyAddress,
+  poolId,
+  voter,
+  targetProposalNumber,
+  proposalNumbers,
+  targetSupport,
+}: {
+  publicClient: any;
+  walletClient: any;
+  alloAddress: Address;
+  strategyAddress: Address;
+  poolId: bigint;
+  voter: Address;
+  targetProposalNumber: bigint;
+  proposalNumbers: bigint[];
+  targetSupport: bigint;
+}) {
+  const currentStakes: { proposalNumber: bigint; currentStake: bigint }[] =
+    await Promise.all(
+      proposalNumbers.map(async (proposalNumber) => ({
+        proposalNumber,
+        currentStake: BigInt(
+          await getProposalVoterStake({
+            publicClient,
+            strategyAddress,
+            proposalNumber,
+            voter,
+          }),
+        ),
+      })),
+    );
 
-    if (voteEnabled) {
+  const currentTargetStake =
+    currentStakes.find(
+      ({ proposalNumber }) => proposalNumber === targetProposalNumber,
+    )?.currentStake ?? 0n;
+  const deltas = currentStakes
+    .filter(
+      ({ proposalNumber, currentStake }) =>
+        currentStake > 0n && proposalNumber !== targetProposalNumber,
+    )
+    .map(({ proposalNumber, currentStake }) => ({
+      proposalId: proposalNumber,
+      deltaSupport: -currentStake,
+    }));
+
+  const targetDelta = targetSupport - currentTargetStake;
+  if (targetDelta !== 0n) {
+    deltas.push({
+      proposalId: targetProposalNumber,
+      deltaSupport: targetDelta,
+    });
+  }
+
+  const encodedData = encodeAbiParameters(
+    parseAbiParameters("(uint256 proposalId, int256 deltaSupport)[]"),
+    [deltas],
+  );
+
+  let lastReceiptStatus: string | undefined;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    await expect
+      .poll(
+        async () => {
+          try {
+            await publicClient.simulateContract({
+              account: walletClient.account,
+              address: alloAddress,
+              abi: alloAbi,
+              functionName: "allocate",
+              args: [poolId, encodedData],
+            });
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        {
+          timeout: 180000,
+          intervals: [1000, 2000, 3000, 5000],
+          message: `proposal ${targetProposalNumber.toString()} allocation simulation succeeds`,
+        },
+      )
+      .toBe(true);
+
+    const txHash = await walletClient.writeContract({
+      address: alloAddress,
+      abi: alloAbi,
+      functionName: "allocate",
+      args: [poolId, encodedData],
+    });
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash: txHash,
+      confirmations: 1,
+      timeout: 180000,
+    });
+    lastReceiptStatus = receipt.status;
+    if (receipt.status === "success") {
       return;
     }
 
-    const activateVisible = await activateBtn
-      .isVisible({ timeout: 1000 })
-      .catch(() => false);
-    const activateEnabled =
-      activateVisible &&
-      (await activateBtn.isEnabled({ timeout: 1000 }).catch(() => false));
-
-    if (activateEnabled) {
-      await activateBtn.click();
-      await confirmTransaction({ metamask, extensionId });
-      await page.bringToFront();
-      await expectNoErrorToast(page);
-      await waitForMemberPowerActive({
-        page,
-        community: communityId,
-        strategy: strategyAddress,
-        account,
-      });
-      continue;
-    }
-
-    const hasKnownPoolAction =
-      voteVisible ||
-      activateVisible ||
-      (await deactivateBtn.isVisible({ timeout: 1000 }).catch(() => false)) ||
-      (await connectBtn.isVisible({ timeout: 1000 }).catch(() => false));
-
-    if (!hasKnownPoolAction && attempt > 0 && attempt % 6 === 0) {
-      await page.reload({ waitUntil: "domcontentloaded" }).catch(() => {});
-    } else {
-      await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(
-        () => {},
-      );
-    }
-
-    await page.waitForTimeout(3000);
+    await new Promise((resolve) => setTimeout(resolve, attempt * 5000));
   }
 
-  await expect(voteBtn).toBeVisible({ timeout: 60000 });
-  await expect(voteBtn).toBeEnabled({ timeout: 60000 });
+  throw new Error(
+    `proposal ${targetProposalNumber.toString()} allocation transaction did not succeed; last receipt status was ${lastReceiptStatus}`,
+  );
 }
 
-test("should allocate support to a proposal", async ({
-  context,
-  page,
-  metamaskPage,
-  extensionId,
-}) => {
-  const metamask = new MetaMask(
-    context,
-    metamaskPage,
-    basicSetup.walletPassword,
-    extensionId,
-  );
+test("should allocate support to a proposal", async () => {
+  const { chainId, communityId, rpcUrl, subgraphUrl, walletSeedPhrase } =
+    getConfig();
+  const chain = createChain(chainId, rpcUrl);
+  const account = mnemonicToAccount(walletSeedPhrase);
+  const publicClient = createPublicClient({
+    chain,
+    transport: http(rpcUrl),
+  });
+  const walletClient = createWalletClient({
+    account,
+    chain,
+    transport: http(rpcUrl),
+  });
 
-  await page.bringToFront();
-  await connectWallet(page, metamask);
-  await page.bringToFront();
-
-  const { chainId, communityId, subgraphUrl } = getConfig();
-  const graphUrl = subgraphUrl;
   let strategyWithProposal:
-    | { id: `0x${string}`; proposals?: { id: string }[] }
+    | {
+        id: Address;
+        poolId: string;
+        proposals?: { proposalNumber: string; proposalStatus: string }[];
+      }
     | undefined;
   await expect
     .poll(
       async () => {
         const response = await fetchLatestEnabledStrategyWithProposal({
-          graphUrl,
+          graphUrl: subgraphUrl,
           communityId,
         });
         strategyWithProposal = response.data?.cvstrategies?.find(
-          (strategy: { proposals?: { id: string }[] }) =>
-            strategy.proposals?.length,
+          (strategy: {
+            proposals?: { proposalNumber: string; proposalStatus: string }[];
+          }) =>
+            strategy.proposals?.some(
+              (proposal: { proposalStatus: string }) =>
+                proposal.proposalStatus === "1",
+            ),
         );
         return strategyWithProposal;
       },
@@ -164,44 +277,56 @@ test("should allocate support to a proposal", async ({
       },
     )
     .not.toBeUndefined();
-  const { id: strategyAddress } = strategyWithProposal!;
-  const account = await getConnectedAccount(page);
 
-  await waitForMemberPowerActive({
-    page,
-    community: communityId,
-    strategy: strategyAddress,
-    account,
+  const strategyAddress = strategyWithProposal!.id;
+  const activeProposals = strategyWithProposal!.proposals!.filter(
+    (proposal) => proposal.proposalStatus === "1",
+  );
+  const targetProposalNumber = BigInt(activeProposals[0].proposalNumber);
+  const proposalNumbers = activeProposals.map((proposal) =>
+    BigInt(proposal.proposalNumber),
+  );
+  const alloAddress = await fetchAlloAddress(subgraphUrl, chainId);
+  const memberPower = await publicClient.readContract({
+    address: communityId,
+    abi: registryCommunityAbi,
+    functionName: "memberPowerInStrategy",
+    args: [account.address, strategyAddress],
   });
+  if (memberPower === 0n) {
+    throw new Error("No member power available for allocation");
+  }
 
-  await page.goto(`/gardens/${chainId}/${communityId}/${strategyAddress}`, {
-    timeout: 60000,
-    waitUntil: "domcontentloaded",
-  });
+  const configuredSupport = parseUnits(proposalTestConfig.supportAmount, 18);
+  const targetSupport =
+    memberPower < configuredSupport ? memberPower : configuredSupport;
 
-  const voteBtn = getByTestId(page, "btn-vote-on-proposals");
-  await waitForPoolVotingReady({
-    page,
-    metamask,
-    extensionId,
-    communityId,
+  await allocateSupportToProposal({
+    publicClient,
+    walletClient,
+    alloAddress,
     strategyAddress,
-    account,
+    poolId: BigInt(strategyWithProposal!.poolId),
+    voter: account.address,
+    targetProposalNumber,
+    proposalNumbers,
+    targetSupport,
   });
-  await voteBtn.click();
 
-  // Fill the slider for the first proposal
-  const slider = getByTestId(page, "input-slider-vote");
-  await expect(slider).toBeVisible({ timeout: 30000 });
-  const box = await slider.boundingBox();
-  await page.mouse.click(box!.x + box!.width * 0.1, box!.y + box!.height / 2);
-  await page.waitForTimeout(1000);
-
-  // Submit the vote
-  const submitBtn = page.getByText("Submit your vote");
-  await expect(submitBtn).toBeVisible({ timeout: 30000 });
-  await submitBtn.click();
-
-  await confirmTransaction({ metamask, extensionId });
-  await expectNoErrorToast(page);
+  await expect
+    .poll(
+      async () => {
+        return getProposalVoterStake({
+          publicClient,
+          strategyAddress,
+          proposalNumber: targetProposalNumber,
+          voter: account.address,
+        });
+      },
+      {
+        timeout: 180000,
+        intervals: [1000, 2000, 3000, 5000],
+      },
+    )
+    .toBeGreaterThanOrEqual(targetSupport);
 });
