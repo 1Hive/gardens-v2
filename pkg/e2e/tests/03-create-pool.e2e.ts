@@ -193,7 +193,7 @@ test("should create a pool in the community", async () => {
     }),
   );
   const spendingLimit = 0.25;
-  const minimumConviction = 0.1;
+  const minimumConviction = 0.00001;
   const maxRatioNum = calculateMaxRatioNum(spendingLimit, minimumConviction);
   const weightNum = minimumConviction * maxRatioNum ** 2;
   const poolHash = await walletClient.writeContract({
