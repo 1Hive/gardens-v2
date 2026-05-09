@@ -140,7 +140,7 @@ export function Button({
           : ""
         : ""
       }
-      data-testid={testId ?? "button"}
+      data-testid={testId}
     >
       {isLoading && (
         <span className={"loading loading-spinner loading-sm text-inherit"} />

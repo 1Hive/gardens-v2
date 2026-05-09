@@ -14,11 +14,6 @@
     "noEmit": true,
     "types": ["node", "@playwright/test"]
   },
-  "include": [
-    "test/**/*",
-    "playwright.config.ts",
-    "tests/0-join.e2e.ts",
-    "wallet-setup"
-  ],
+  "include": ["tests/**/*", "playwright.config.ts", "wallet-setup"],
   "exclude": ["node_modules"]
 }

@@ -13,7 +13,7 @@
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "build:docs": "turbo run build --filter=docs...",
-    "postinstall": "pnpm --filter e2e exec playwright install chromium"
+    "postinstall": "sh -c 'if [ -n \"$CI\" ] || [ -n \"$E2E\" ]; then pnpm --filter e2e exec playwright install chromium; fi'"
   },
   "devDependencies": {
     "eslint-config-custom": "workspace:*",

@@ -98,17 +98,22 @@ export function useContractWriteWithConfirmations<
     return abiWithErrors(props.abi as Abi);
   }, [props.abi]);
 
+  const dataSuffix = useMemo(() => {
+    if (!shouldDivviTrack) return undefined;
+
+    const suffix = getDataSuffix({
+      consumer: DIVVI_CONSUMER as Address,
+      providers: DIVVI_PROVIDERS as Address[],
+    });
+
+    return (suffix.startsWith("0x") ? suffix : `0x${suffix}`) as `0x${string}`;
+  }, [shouldDivviTrack]);
+
   const propsWithChainId = {
     ...props,
     abi: (abiWithCustomErrors ?? props.abi) as TAbi,
     chainId: resolvedChaindId,
-    dataSuffix:
-      shouldDivviTrack
-        ? (`0x${getDataSuffix({
-            consumer: DIVVI_CONSUMER as Address,
-            providers: DIVVI_PROVIDERS as Address[],
-          })}` as `0x${string}`)
-        : undefined,
+    dataSuffix,
     confirmations:
       props.confirmations ??
       chainConfigMap[+resolvedChaindId]?.confirmations ??

@@ -96,28 +96,29 @@ test("should edit a pool", async () => {
   if (!strategyAddress) {
     throw new Error("No enabled strategy found to edit");
   }
+  const resolvedStrategyAddress = strategyAddress;
 
   const [arbitrableConfig, cvParams, superfluidToken] = await Promise.all([
     publicClient.readContract({
-      address: strategyAddress,
+      address: resolvedStrategyAddress,
       abi: cvStrategyAbi,
       functionName: "getArbitrableConfig",
     }),
     publicClient.readContract({
-      address: strategyAddress,
+      address: resolvedStrategyAddress,
       abi: cvStrategyAbi,
       functionName: "cvParams",
     }),
     publicClient
       .readContract({
-        address: strategyAddress,
+        address: resolvedStrategyAddress,
         abi: cvStrategyAbi,
         functionName: "superfluidToken",
       })
       .catch(() => zeroAddress),
   ]);
   const editHash = await walletClient.writeContract({
-    address: strategyAddress,
+    address: resolvedStrategyAddress,
     abi: cvStrategyAbi,
     functionName: "setPoolParams",
     args: [
@@ -152,7 +153,7 @@ test("should edit a pool", async () => {
     .poll(
       async () => {
         const updatedParams = await publicClient.readContract({
-          address: strategyAddress,
+          address: resolvedStrategyAddress,
           abi: cvStrategyAbi,
           functionName: "cvParams",
         });

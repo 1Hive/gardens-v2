@@ -159,7 +159,7 @@ export const ProposalsModalSupport = forwardRef<
       : 0;
 
     const poolWeightAllocatedInProposal = (
-      (inputValue * Number(memberPoolWeight)) /
+      (inputValue * Number(memberPoolWeight ?? 0)) /
       100
     ).toFixed(2);
 

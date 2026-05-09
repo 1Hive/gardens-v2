@@ -249,7 +249,6 @@ export async function approveTokenAllowance({
   metamask: MetaMask;
   extensionId: string;
 }) {
-  metamask.approveTokenPermission;
   // Need to wait for Metamask Notification page to exist, does not exist immediately after clicking 'Approve' button.
   // In Synpress source code, they use this logic in every method interacting with the Metamask notification page.
   const notificationPageUrl = `chrome-extension://${extensionId}/notification.html`;
