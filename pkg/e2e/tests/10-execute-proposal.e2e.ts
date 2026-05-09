@@ -30,6 +30,7 @@ const PROPOSAL_METADATA_HASH = "QmPjXaoDhSx4mMFCADow9Kea3NMcd44PNCqr8hFpsCpi6f";
 
 const erc20Abi = parseAbi([
   "function transfer(address to, uint256 amount) returns (bool)",
+  "function mint(address to, uint256 amount)",
   "function decimals() view returns (uint8)",
   "function balanceOf(address owner) view returns (uint256)",
 ]);
@@ -131,6 +132,53 @@ async function transferPoolTokensToStrategy({
 }) {
   const decimals = await getTokenDecimals(publicClient, token);
   const transferAmount = parseUnits(amount, decimals);
+  const account = walletClient.account.address as Address;
+  const initialBalance = await publicClient.readContract({
+    address: token,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [account],
+  });
+
+  if (initialBalance < transferAmount) {
+    const mintAmount = transferAmount - initialBalance;
+
+    try {
+      await publicClient.simulateContract({
+        account: walletClient.account,
+        address: token,
+        abi: erc20Abi,
+        functionName: "mint",
+        args: [account, mintAmount],
+      });
+
+      const mintHash = await walletClient.writeContract({
+        address: token,
+        abi: erc20Abi,
+        functionName: "mint",
+        args: [account, mintAmount],
+      });
+      const mintReceipt = await publicClient.waitForTransactionReceipt({
+        hash: mintHash,
+        confirmations: 1,
+        timeout: 180000,
+      });
+      expect(mintReceipt.status).toBe("success");
+
+      await waitForTokenBalanceAtLeast({
+        publicClient,
+        token,
+        owner: account,
+        minimumBalance: transferAmount,
+      });
+    } catch (error) {
+      throw new Error(
+        error instanceof Error
+          ? `Insufficient pool token balance and token mint is not open: ${error.message}`
+          : "Insufficient pool token balance and token mint is not open",
+      );
+    }
+  }
 
   const txHash = await walletClient.writeContract({
     address: token,
