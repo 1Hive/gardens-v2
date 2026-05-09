@@ -64,6 +64,7 @@ export function CommunityCard({
     <Card
       key={id}
       href={`/gardens/${chainId}/${id}`}
+      testId={`community-card-${id}`}
       className={` ${isNewCommunity ? "shadow-2xl" : ""}`}
     >
       <div className="flex justify-between text-neutral-content text-sm">

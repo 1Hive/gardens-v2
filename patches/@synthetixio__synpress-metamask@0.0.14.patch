@@ -1,0 +1,39 @@
+diff --git a/dist/cypress/index.js b/dist/cypress/index.js
+index 8a6d89c51ae1ce74016dc38808d6a4485f81a26e..e4f7c13d6a4299cecc3f92075f6806fe22f0baea 100644
+--- a/dist/cypress/index.js
++++ b/dist/cypress/index.js
+@@ -1752,7 +1752,7 @@ var MetaMask = class {
+     await this.homePage.closeTransactionDetails();
+   }
+ };
+-var DEFAULT_METAMASK_VERSION = "13.13.1";
++var DEFAULT_METAMASK_VERSION = "11.9.1";
+ var EXTENSION_DOWNLOAD_URL = `https://github.com/MetaMask/metamask-extension/releases/download/v${DEFAULT_METAMASK_VERSION}/metamask-chrome-${DEFAULT_METAMASK_VERSION}.zip`;
+ async function prepareExtension(forceCache = true) {
+   let outputDir = "";
+diff --git a/dist/playwright/index.js b/dist/playwright/index.js
+index 5d45086f53ce8e3cabf9176c0681002ec787c6c1..7fcd9f9f4f8ca45c562e87f357d3e7ca1650b3ec 100644
+--- a/dist/playwright/index.js
++++ b/dist/playwright/index.js
+@@ -1801,7 +1801,7 @@ var MetaMask = class {
+     await this.homePage.closeTransactionDetails();
+   }
+ };
+-var DEFAULT_METAMASK_VERSION = "13.13.1";
++var DEFAULT_METAMASK_VERSION = "11.9.1";
+ var EXTENSION_DOWNLOAD_URL = `https://github.com/MetaMask/metamask-extension/releases/download/v${DEFAULT_METAMASK_VERSION}/metamask-chrome-${DEFAULT_METAMASK_VERSION}.zip`;
+ async function prepareExtension(forceCache = true) {
+   let outputDir = "";
+diff --git a/src/prepareExtension.ts b/src/prepareExtension.ts
+index de5f6ee95cd87690dd4229f406bd2f423119048a..2376e29b9d885ec9f3417ecfc838b7484d2ad6fd 100644
+--- a/src/prepareExtension.ts
++++ b/src/prepareExtension.ts
+@@ -2,7 +2,7 @@ import path from 'node:path'
+ import { downloadFile, ensureCacheDirExists, unzipArchive } from '@synthetixio/synpress-cache'
+ import fs from 'fs-extra'
+ 
+-export const DEFAULT_METAMASK_VERSION = '13.13.1'
++export const DEFAULT_METAMASK_VERSION = '11.9.1'
+ export const EXTENSION_DOWNLOAD_URL = `https://github.com/MetaMask/metamask-extension/releases/download/v${DEFAULT_METAMASK_VERSION}/metamask-chrome-${DEFAULT_METAMASK_VERSION}.zip`
+ 
+ export async function prepareExtension(forceCache = true) {

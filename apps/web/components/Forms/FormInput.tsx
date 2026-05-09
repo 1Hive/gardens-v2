@@ -28,6 +28,7 @@ type Props = {
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
   suffix?: React.ReactNode;
   wide?: boolean;
+  testId?: string;
 };
 
 export function FormInput({
@@ -52,6 +53,7 @@ export function FormInput({
   onChange,
   suffix,
   wide = true,
+  testId,
 }: Props) {
   const registered = register?.(registerKey, {
     ...registerOptions,
@@ -121,6 +123,7 @@ export function FormInput({
             readOnly={readOnly || disabled}
             value={value}
             onChange={registered?.onChange ?? onChange}
+            data-testid={testId}
             {...otherProps}
           />
         : type === "textarea" ?
@@ -138,6 +141,7 @@ export function FormInput({
             readOnly={readOnly || disabled}
             onChange={registered?.onChange ?? onChange}
             value={value}
+            data-testid={testId}
             {...otherProps}
           />
         : <MarkdownEditor
@@ -153,6 +157,7 @@ export function FormInput({
             onChange={registered?.onChange ?? onChange}
             value={value}
             className={`input input-info dark:bg-primary-soft-dark ${disabled || readOnly ? disabledInputClassname : ""}`}
+            testId={testId}
             {...otherProps}
           />
         }
