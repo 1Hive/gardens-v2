@@ -5,17 +5,21 @@ import {
   Address,
   createPublicClient,
   createWalletClient,
-  defineChain,
   encodeAbiParameters,
   http,
   parseAbi,
   parseAbiParameters,
   parseUnits,
 } from "viem";
-import { metaMaskFixtures } from "./utils";
 import basicSetup from "../wallet-setup/basic.setup";
-import { connectWallet, expectNoErrorToast } from "./utils";
-import { getConfig } from "./utils";
+import {
+  connectWallet,
+  createE2EChain,
+  expectNoErrorToast,
+  fetchAlloAddress,
+  getConfig,
+  metaMaskFixtures,
+} from "./utils";
 import { proposalTestConfig } from "./proposal-test-config";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
@@ -547,23 +551,6 @@ async function waitForProposalExecutedOnChain({
     .toBe(4);
 }
 
-function createChain(chainId: string, rpcUrl: string) {
-  const id = Number(chainId);
-  if (!Number.isFinite(id)) {
-    throw new Error(`Invalid chain id: ${chainId}`);
-  }
-
-  return defineChain({
-    id,
-    name: "E2E Chain",
-    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-    rpcUrls: {
-      default: { http: [rpcUrl] },
-      public: { http: [rpcUrl] },
-    },
-  });
-}
-
 test("should execute a proposal", async ({
   context,
   page,
@@ -582,7 +569,7 @@ test("should execute a proposal", async ({
 
   const { chainId, communityId, subgraphUrl, rpcUrl, walletSeedPhrase } =
     getConfig();
-  const chain = createChain(chainId, rpcUrl);
+  const chain = createE2EChain();
   const account = mnemonicToAccount(walletSeedPhrase);
   const publicClient = createPublicClient({
     chain,
@@ -601,24 +588,7 @@ test("should execute a proposal", async ({
     token,
     proposals,
   } = subgraphRes.data.cvstrategies[0];
-  const allosRes = await fetch(graphUrl, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      query: `{
-        allos(first: 1000) {
-          id
-          chainId
-        }
-      }`,
-    }),
-  }).then((r) => r.json());
-  const alloAddress = allosRes.data.allos.find(
-    (allo: { chainId: string }) => allo.chainId === chainId,
-  )?.id as Address | undefined;
-  if (!alloAddress) {
-    throw new Error(`Unable to resolve Allo address for chain ${chainId}`);
-  }
+  const alloAddress = await fetchAlloAddress(graphUrl, chainId);
 
   const highestKnownProposalNumber = proposals.reduce(
     (max: number, item: { proposalNumber: string }) =>
@@ -669,9 +639,7 @@ test("should execute a proposal", async ({
           proposal.proposalNumber.toString(),
         ),
       ]),
-    ).map((proposalNumber) =>
-      BigInt(proposalNumber),
-    ),
+    ).map((proposalNumber) => BigInt(proposalNumber)),
     targetSupport,
   });
 

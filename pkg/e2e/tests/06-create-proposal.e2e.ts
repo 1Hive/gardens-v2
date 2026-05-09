@@ -3,7 +3,6 @@ import {
   Address,
   createPublicClient,
   createWalletClient,
-  defineChain,
   encodeAbiParameters,
   http,
   parseAbi,
@@ -12,7 +11,12 @@ import {
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import basicSetup from "../wallet-setup/basic.setup";
-import { getConfig, metaMaskFixtures } from "./utils";
+import {
+  createE2EChain,
+  fetchAlloAddress,
+  getConfig,
+  metaMaskFixtures,
+} from "./utils";
 import { proposalTestConfig } from "./proposal-test-config";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
@@ -26,23 +30,6 @@ const erc20Abi = parseAbi(["function decimals() view returns (uint8)"]);
 const alloAbi = parseAbi([
   "function registerRecipient(uint256 _poolId, bytes _data) payable returns (address)",
 ]);
-
-function createChain(chainId: string, rpcUrl: string) {
-  const id = Number(chainId);
-  if (!Number.isFinite(id)) {
-    throw new Error(`Invalid chain id: ${chainId}`);
-  }
-
-  return defineChain({
-    id,
-    name: "E2E Chain",
-    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-    rpcUrls: {
-      default: { http: [rpcUrl] },
-      public: { http: [rpcUrl] },
-    },
-  });
-}
 
 async function fetchLatestEnabledStrategyWithProposals(
   graphUrl: string,
@@ -71,35 +58,10 @@ async function fetchLatestEnabledStrategyWithProposals(
   }).then((r) => r.json());
 }
 
-async function fetchAlloAddress(graphUrl: string, chainId: string) {
-  const response = await fetch(graphUrl, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      query: `{
-        allos(first: 1000) {
-          id
-          chainId
-        }
-      }`,
-    }),
-  }).then((r) => r.json());
-
-  const alloAddress = response.data?.allos?.find(
-    (allo: { chainId: string }) => allo.chainId === chainId,
-  )?.id as Address | undefined;
-
-  if (!alloAddress) {
-    throw new Error(`Unable to resolve Allo address for chain ${chainId}`);
-  }
-
-  return alloAddress;
-}
-
 test("should create a proposal in the pool", async () => {
   const { chainId, communityId, rpcUrl, subgraphUrl, walletSeedPhrase } =
     getConfig();
-  const chain = createChain(chainId, rpcUrl);
+  const chain = createE2EChain();
   const account = mnemonicToAccount(walletSeedPhrase);
   const publicClient = createPublicClient({
     chain,

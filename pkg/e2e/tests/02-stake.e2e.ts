@@ -2,7 +2,6 @@ import { testWithSynpress } from "@synthetixio/synpress";
 import {
   createPublicClient,
   createWalletClient,
-  defineChain,
   http,
   maxUint256,
   parseAbi,
@@ -10,7 +9,7 @@ import {
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import basicSetup from "../wallet-setup/basic.setup";
-import { getConfig, metaMaskFixtures } from "./utils";
+import { createE2EChain, getConfig, metaMaskFixtures } from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
@@ -29,32 +28,10 @@ const registryCommunityAbi = parseAbi([
   "function increasePower(uint256 amount)",
 ]);
 
-function createChain(chainId: string, rpcUrl: string) {
-  const id = Number(chainId);
-  if (!Number.isFinite(id)) {
-    throw new Error(`Invalid chain id: ${chainId}`);
-  }
-
-  return defineChain({
-    id,
-    name: "E2E Chain",
-    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-    rpcUrls: {
-      default: { http: [rpcUrl] },
-      public: { http: [rpcUrl] },
-    },
-  });
-}
-
 test("should increase stake in community", async () => {
-  const {
-    chainId,
-    communityId,
-    governanceToken,
-    rpcUrl,
-    walletSeedPhrase,
-  } = getConfig();
-  const chain = createChain(chainId, rpcUrl);
+  const { chainId, communityId, governanceToken, rpcUrl, walletSeedPhrase } =
+    getConfig();
+  const chain = createE2EChain();
   const account = mnemonicToAccount(walletSeedPhrase);
   const publicClient = createPublicClient({
     chain,

@@ -37,7 +37,7 @@ const registryCommunityAbi = parseAbi([
 const isAddress = (value: string | null | undefined): value is Address =>
   typeof value === "string" && /^0x[a-fA-F0-9]{40}$/.test(value);
 
-function createE2EChain() {
+export function createE2EChain() {
   const { chainId, rpcUrl } = getConfig();
   const numericChainId = Number(chainId);
   if (!Number.isFinite(numericChainId)) {
@@ -65,6 +65,31 @@ function createE2EPublicClient() {
     chain: createE2EChain(),
     transport: http(rpcUrl),
   });
+}
+
+export async function fetchAlloAddress(graphUrl: string, chainId: string) {
+  const response = await fetch(graphUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      query: `{
+        allos(first: 1000) {
+          id
+          chainId
+        }
+      }`,
+    }),
+  }).then((r) => r.json());
+
+  const alloAddress = response.data?.allos?.find(
+    (allo: { chainId: string }) => allo.chainId === chainId,
+  )?.id as Address | undefined;
+
+  if (!alloAddress) {
+    throw new Error(`Unable to resolve Allo address for chain ${chainId}`);
+  }
+
+  return alloAddress;
 }
 
 export async function getConnectedAccount(page: Page) {
@@ -277,9 +302,7 @@ export async function leaveCommunityIfMember() {
         return true;
       }
 
-      lastError = new Error(
-        `unregister transaction ${hash} ${receipt.status}`,
-      );
+      lastError = new Error(`unregister transaction ${hash} ${receipt.status}`);
     } catch (error) {
       lastError = error;
     }

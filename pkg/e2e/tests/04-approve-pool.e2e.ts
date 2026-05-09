@@ -3,13 +3,12 @@ import {
   Address,
   createPublicClient,
   createWalletClient,
-  defineChain,
   http,
   parseAbi,
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import basicSetup from "../wallet-setup/basic.setup";
-import { getConfig, metaMaskFixtures } from "./utils";
+import { createE2EChain, getConfig, metaMaskFixtures } from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
@@ -27,23 +26,6 @@ type Strategy = {
   isEnabled: boolean;
   archived: boolean;
 };
-
-function createChain(chainId: string, rpcUrl: string) {
-  const id = Number(chainId);
-  if (!Number.isFinite(id)) {
-    throw new Error(`Invalid chain id: ${chainId}`);
-  }
-
-  return defineChain({
-    id,
-    name: "E2E Chain",
-    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-    rpcUrls: {
-      default: { http: [rpcUrl] },
-      public: { http: [rpcUrl] },
-    },
-  });
-}
 
 async function fetchLatestUnarchivedStrategy({
   graphUrl,
@@ -136,7 +118,7 @@ async function waitForStrategyEnabledInSubgraph({
 test("should approve a pool as council safe", async () => {
   const { chainId, communityId, rpcUrl, subgraphUrl, walletSeedPhrase } =
     getConfig();
-  const chain = createChain(chainId, rpcUrl);
+  const chain = createE2EChain();
   const publicClient = createPublicClient({
     chain,
     transport: http(rpcUrl),

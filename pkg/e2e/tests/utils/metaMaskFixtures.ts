@@ -23,21 +23,14 @@ const CACHE_DIR_NAME = ".cache-synpress";
 const browserChannel = process.env.PLAYWRIGHT_BROWSER_CHANNEL;
 const browserExecutablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH;
 const isHeadless = process.env.HEADLESS === "true";
-const defaultChromiumPath = path.join(
-  os.homedir(),
-  ".cache",
-  "ms-playwright",
-  "chromium-1140",
-  "chrome-linux",
-  "chrome"
-);
+const defaultChromiumPath = chromium.executablePath();
 
 async function persistLocalStorage(
   origins: {
     origin: string;
     localStorage: { name: string; value: string }[];
   }[],
-  context: { newPage: () => Promise<Page> }
+  context: { newPage: () => Promise<Page> },
 ) {
   const newPage = await context.newPage();
 
@@ -59,7 +52,7 @@ async function prepareExtension() {
   const extensionDir = path.join(
     process.cwd(),
     CACHE_DIR_NAME,
-    `metamask-chrome-${DEFAULT_METAMASK_VERSION}`
+    `metamask-chrome-${DEFAULT_METAMASK_VERSION}`,
   );
 
   try {
@@ -67,7 +60,7 @@ async function prepareExtension() {
   } catch {
     throw new Error(
       `MetaMask extension not found at ${extensionDir}. Run \
-"pnpm exec synpress wallet-setup --force" to rebuild the cache.`
+"pnpm exec synpress wallet-setup --force" to rebuild the cache.`,
     );
   }
 
@@ -94,7 +87,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function getExtensionIdFromProfile(
   contextPath: string,
-  extensionPath: string
+  extensionPath: string,
 ) {
   const preferencesPath = path.join(contextPath, "Default", "Preferences");
 
@@ -127,14 +120,14 @@ async function getExtensionIdFromExtensionsPage(context: {
 
     const extensionId = await page.evaluate(() => {
       const manager = document.querySelector(
-        "extensions-manager"
+        "extensions-manager",
       ) as HTMLElement | null;
       const items =
         manager?.shadowRoot?.querySelectorAll("extensions-item") ?? [];
 
       for (const item of Array.from(items)) {
         const nameEl = item.shadowRoot?.querySelector(
-          "#name"
+          "#name",
         ) as HTMLElement | null;
         const name = nameEl?.textContent?.trim().toLowerCase();
         if (name === "metamask") {
@@ -168,11 +161,11 @@ async function resolveExtensionId(context: {
     const urls = [
       ...context.backgroundPages().map((page) => page.url()),
       ...context.pages().map((page) => page.url()),
-      ...context.serviceWorkers().map((worker) => worker.url())
+      ...context.serviceWorkers().map((worker) => worker.url()),
     ];
 
     const extensionUrl = urls.find((url) =>
-      url.startsWith("chrome-extension://")
+      url.startsWith("chrome-extension://"),
     );
     if (extensionUrl) {
       cachedExtensionId = new URL(extensionUrl).host;
@@ -189,7 +182,7 @@ async function resolveExtensionId(context: {
   }
 
   throw new Error(
-    "[resolveExtensionId] MetaMask extension did not load in time."
+    "[resolveExtensionId] MetaMask extension did not load in time.",
   );
 }
 
@@ -197,7 +190,7 @@ export const metaMaskFixtures = (walletSetup: WalletSetup, slowMo = 0) => {
   return base.extend<MetaMaskFixtures>({
     _contextPath: async ({ browserName }, use, testInfo) => {
       const contextPath = await fs.mkdtemp(
-        path.join(os.tmpdir(), `synpress_${browserName}_${testInfo.testId}_`)
+        path.join(os.tmpdir(), `synpress_${browserName}_${testInfo.testId}_`),
       );
 
       await use(contextPath);
@@ -226,7 +219,7 @@ export const metaMaskFixtures = (walletSetup: WalletSetup, slowMo = 0) => {
 
       const browserArgs = [
         `--disable-extensions-except=${metamaskPath}`,
-        `--load-extension=${metamaskPath}`
+        `--load-extension=${metamaskPath}`,
       ];
 
       if (isHeadless) {
@@ -234,7 +227,7 @@ export const metaMaskFixtures = (walletSetup: WalletSetup, slowMo = 0) => {
 
         if (slowMo > 0) {
           console.warn(
-            "[WARNING] Slow motion makes no sense in headless mode. It will be ignored!"
+            "[WARNING] Slow motion makes no sense in headless mode. It will be ignored!",
           );
         }
       }
@@ -247,10 +240,10 @@ export const metaMaskFixtures = (walletSetup: WalletSetup, slowMo = 0) => {
         slowMo: isHeadless ? 0 : slowMo,
         ignoreDefaultArgs: [
           "--disable-extensions",
-          "--disable-component-extensions-with-background-pages"
+          "--disable-component-extensions-with-background-pages",
         ],
         ...(browserChannel ? { channel: browserChannel } : {}),
-        ...(executablePath ? { executablePath } : {})
+        ...(executablePath ? { executablePath } : {}),
       });
 
       const { cookies, origins } = await currentContext.storageState();
@@ -268,20 +261,20 @@ export const metaMaskFixtures = (walletSetup: WalletSetup, slowMo = 0) => {
       cachedMetaMaskPage = context.pages()[0] as Page;
 
       await cachedMetaMaskPage.goto(
-        `chrome-extension://${extensionId}/home.html`
+        `chrome-extension://${extensionId}/home.html`,
       );
       await cachedMetaMaskPage.waitForLoadState("domcontentloaded", {
-        timeout: 10000
+        timeout: 10000,
       });
       await cachedMetaMaskPage.waitForLoadState("networkidle", {
-        timeout: 10000
+        timeout: 10000,
       });
       // More resilient unlock with retries to avoid flaky popover blocking
       const dismissPopovers = async (p: Page) => {
         const selectors = [
           '.popover-container [data-testid="popover-close"]',
           'button[aria-label="Close"]',
-          '[data-testid="popover-close"]'
+          '[data-testid="popover-close"]',
         ];
         for (const sel of selectors) {
           const btn = p.locator(sel).first();
@@ -332,7 +325,7 @@ export const metaMaskFixtures = (walletSetup: WalletSetup, slowMo = 0) => {
         context,
         cachedMetaMaskPage,
         walletPassword,
-        extensionId
+        extensionId,
       );
 
       await use(metamask);
@@ -341,6 +334,6 @@ export const metaMaskFixtures = (walletSetup: WalletSetup, slowMo = 0) => {
       await page.goto("/");
 
       await use(page);
-    }
+    },
   });
 };

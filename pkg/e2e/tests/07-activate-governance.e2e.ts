@@ -3,13 +3,12 @@ import {
   Address,
   createPublicClient,
   createWalletClient,
-  defineChain,
   http,
   parseAbi,
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import basicSetup from "../wallet-setup/basic.setup";
-import { getConfig, metaMaskFixtures } from "./utils";
+import { createE2EChain, getConfig, metaMaskFixtures } from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
@@ -21,27 +20,10 @@ const registryCommunityAbi = parseAbi([
   "function memberPowerInStrategy(address member, address strategy) view returns (uint256)",
 ]);
 
-function createChain(chainId: string, rpcUrl: string) {
-  const id = Number(chainId);
-  if (!Number.isFinite(id)) {
-    throw new Error(`Invalid chain id: ${chainId}`);
-  }
-
-  return defineChain({
-    id,
-    name: "E2E Chain",
-    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-    rpcUrls: {
-      default: { http: [rpcUrl] },
-      public: { http: [rpcUrl] },
-    },
-  });
-}
-
 test("should activate governance in the pool", async () => {
   const { chainId, communityId, subgraphUrl, rpcUrl, walletSeedPhrase } =
     getConfig();
-  const chain = createChain(chainId, rpcUrl);
+  const chain = createE2EChain();
   const account = mnemonicToAccount(walletSeedPhrase);
   const publicClient = createPublicClient({
     chain,

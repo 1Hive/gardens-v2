@@ -3,14 +3,13 @@ import {
   Address,
   createPublicClient,
   createWalletClient,
-  defineChain,
   http,
   parseAbi,
   zeroAddress,
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import basicSetup from "../wallet-setup/basic.setup";
-import { getConfig, metaMaskFixtures } from "./utils";
+import { createE2EChain, getConfig, metaMaskFixtures } from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
@@ -24,24 +23,10 @@ const cvStrategyAbi = parseAbi([
   "function superfluidToken() view returns (address)",
 ]);
 
-function createChain(chainId: string, rpcUrl: string) {
-  const id = Number(chainId);
-  if (!Number.isFinite(id)) {
-    throw new Error(`Invalid chain id: ${chainId}`);
-  }
-
-  return defineChain({
-    id,
-    name: "E2E Chain",
-    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-    rpcUrls: {
-      default: { http: [rpcUrl] },
-      public: { http: [rpcUrl] },
-    },
-  });
-}
-
-async function fetchLatestEnabledStrategy(graphUrl: string, communityId: string) {
+async function fetchLatestEnabledStrategy(
+  graphUrl: string,
+  communityId: string,
+) {
   return fetch(graphUrl, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -63,7 +48,7 @@ async function fetchLatestEnabledStrategy(graphUrl: string, communityId: string)
 test("should edit a pool", async () => {
   const { chainId, communityId, subgraphUrl, rpcUrl, walletSeedPhrase } =
     getConfig();
-  const chain = createChain(chainId, rpcUrl);
+  const chain = createE2EChain();
   const account = mnemonicToAccount(walletSeedPhrase);
   const publicClient = createPublicClient({
     chain,

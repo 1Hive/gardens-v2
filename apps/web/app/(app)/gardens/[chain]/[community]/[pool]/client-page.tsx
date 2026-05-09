@@ -55,6 +55,7 @@ import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { logOnce } from "@/utils/log";
+import { getMemberActivationState } from "@/utils/memberActivation";
 import {
   calculatePercentageBigInt,
   formatTokenAmount,
@@ -419,12 +420,12 @@ export default function ClientPage({
 
   const isMemberCommunity = !!memberCommunityData?.isRegistered;
 
-  const hasResolvedMemberPower = memberPower != null;
-  const memberActivatedOnChain = hasResolvedMemberPower && memberPower > 0n;
-  const memberActivatedStrategy =
-    hasResolvedMemberPower ?
-      memberActivatedOnChain
-    : memberStrategyData?.memberStrategy?.activatedPoints > 0n;
+  const { hasResolvedMemberPower, memberActivatedStrategy } =
+    getMemberActivationState({
+      memberPower,
+      subgraphActivatedPoints:
+        memberStrategyData?.memberStrategy?.activatedPoints,
+    });
   const hasResolvedMembershipState =
     !wallet ||
     (hasStartedMembershipLookup && !isMemberFetching && !memberDataFetching);

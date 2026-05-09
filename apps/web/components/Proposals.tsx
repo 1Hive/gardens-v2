@@ -63,6 +63,7 @@ import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, registryCommunityABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { useErrorDetails } from "@/utils/getErrorName";
+import { getMemberActivationState } from "@/utils/memberActivation";
 import { bigIntMin, calculatePercentageBigInt } from "@/utils/numbers";
 
 // Types
@@ -220,14 +221,14 @@ export function Proposals({
   // Derived state
   const isMemberCommunity =
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
-  const hasResolvedMemberPower = memberPower != null;
-  const memberActivatedOnChain = hasResolvedMemberPower && memberPower > 0n;
-  const memberActivatedStrategy =
-    hasResolvedMemberPower ?
-      memberActivatedOnChain
-    : memberActivatedPointsFromSubgraph > 0n;
-  const memberActivatedPoints =
-    hasResolvedMemberPower ? memberPower : memberActivatedPointsFromSubgraph;
+  const {
+    hasResolvedMemberPower,
+    memberActivatedStrategy,
+    memberActivatedPoints,
+  } = getMemberActivationState({
+    memberPower,
+    subgraphActivatedPoints: memberActivatedPointsFromSubgraph,
+  });
 
   const [sortedProposals, setSortedProposals] = useState(strategy.proposals);
 

@@ -3,7 +3,6 @@ import {
   Address,
   createPublicClient,
   createWalletClient,
-  defineChain,
   http,
   maxUint256,
   parseAbi,
@@ -12,7 +11,7 @@ import {
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import basicSetup from "../wallet-setup/basic.setup";
-import { getConfig, metaMaskFixtures } from "./utils";
+import { createE2EChain, getConfig, metaMaskFixtures } from "./utils";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
@@ -53,23 +52,6 @@ const erc20Abi = parseAbi([
 const registryCommunityAbi = parseAbi([
   "function createPool(address _token, ((uint256 maxRatio,uint256 weight,uint256 decay,uint256 minThresholdPoints) cvParams,uint8 proposalType,uint8 pointSystem,(uint256 maxAmount) pointConfig,(address arbitrator,address tribunalSafe,uint256 submitterCollateralAmount,uint256 challengerCollateralAmount,uint256 defaultRuling,uint256 defaultRulingTimeout) arbitrableConfig,address registryCommunity,address votingPowerRegistry,address sybilScorer,uint256 sybilScorerThreshold,address[] initialAllowlist,address superfluidToken,uint256 streamingRatePerSecond) _params, (uint256 protocol,string pointer) _metadata) returns (uint256 poolId,address strategy)",
 ]);
-
-function createChain(chainId: string, rpcUrl: string) {
-  const id = Number(chainId);
-  if (!Number.isFinite(id)) {
-    throw new Error(`Invalid chain id: ${chainId}`);
-  }
-
-  return defineChain({
-    id,
-    name: "E2E Chain",
-    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-    rpcUrls: {
-      default: { http: [rpcUrl] },
-      public: { http: [rpcUrl] },
-    },
-  });
-}
 
 function calculateDecay(blockTime: number, convictionGrowth: number) {
   const halfLifeInSeconds = convictionGrowth * 24 * 60 * 60;
@@ -144,7 +126,7 @@ test("should create a pool in the community", async () => {
     throw new Error(`Missing create-pool config for chain ${chainId}`);
   }
 
-  const chain = createChain(chainId, rpcUrl);
+  const chain = createE2EChain();
   const account = mnemonicToAccount(walletSeedPhrase);
   const publicClient = createPublicClient({
     chain,
