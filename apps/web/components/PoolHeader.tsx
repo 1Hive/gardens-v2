@@ -835,6 +835,7 @@ export default function PoolHeader({
                           onClick={() => rejectPoolWrite()}
                           btnStyle="outline"
                           color="danger"
+                          testId="btn-archive"
                         >
                           Archive
                         </Button>
