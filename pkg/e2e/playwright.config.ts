@@ -87,9 +87,14 @@ export default defineConfig({
       dependencies: ["09-cancel-proposal"]
     },
     {
-      name: "99-leave",
-      testMatch: /99..*\.e2e\.ts$/,
+      name: "98-leave",
+      testMatch: /98..*\.e2e\.ts$/,
       dependencies: ["10-execute-proposal"]
+    },
+    {
+      name: "99-archive-pool",
+      testMatch: /99..*\.e2e\.ts$/,
+      dependencies: ["98-leave"]
     }
   ]
   // Additional Synpress-specific configuration can be added here
