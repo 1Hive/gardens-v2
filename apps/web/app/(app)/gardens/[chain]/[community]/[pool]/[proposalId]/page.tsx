@@ -73,8 +73,8 @@ export function titleCaseStatus(status?: string): string | undefined {
 
 const titlePrefix = "Gardens - ";
 
-function getRequestMetadataBase(): URL | undefined {
-  const requestHeaders = headers();
+async function getRequestMetadataBase(): Promise<URL | undefined> {
+  const requestHeaders = await headers();
   const host =
     requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
   if (!host) return undefined;
@@ -91,7 +91,7 @@ function getRequestMetadataBase(): URL | undefined {
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const metadataBase = getRequestMetadataBase();
+  const metadataBase = await getRequestMetadataBase();
   const fallbackDescription = ENDED_PROPOSAL_DESCRIPTION;
   const fallbackMetadata: Metadata = {
     metadataBase,
@@ -256,4 +256,3 @@ export default async function Page({
     />
   );
 }
-

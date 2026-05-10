@@ -23,8 +23,8 @@ function buildOgImagePath(params: PageParams["params"]) {
   return `/gardens/${params.chain}/${params.community}/opengraph-image?${OG_IMAGE_VERSION}`;
 }
 
-function getRequestMetadataBase(): URL | undefined {
-  const requestHeaders = headers();
+async function getRequestMetadataBase(): Promise<URL | undefined> {
+  const requestHeaders = await headers();
   const host =
     requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
   if (!host) return undefined;
@@ -43,7 +43,7 @@ const titlePrefix = "Gardens - ";
 export async function generateMetadata({
   params,
 }: PageParams): Promise<Metadata> {
-  const metadataBase = getRequestMetadataBase();
+  const metadataBase = await getRequestMetadataBase();
   const chainId = Number(params.chain);
   const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
   const fallbackMetadata: Metadata = {
@@ -125,4 +125,3 @@ export default function Page({
 }: PageParams) {
   return <ClientPage params={params} />;
 }
-
