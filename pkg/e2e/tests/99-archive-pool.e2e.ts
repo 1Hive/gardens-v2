@@ -6,6 +6,7 @@ import {
   connectWallet,
   expectNoErrorToast,
   getConfig,
+  getByTestId,
   metaMaskFixtures,
 } from "./utils";
 
@@ -113,7 +114,7 @@ test("should archive the e2e pool", async ({
   await page.bringToFront();
   await connectWallet(page, metamask);
 
-  const archiveButton = page.getByTestId("btn-archive");
+  const archiveButton = getByTestId(page, "btn-archive");
   await expect(archiveButton).toBeVisible({ timeout: 120000 });
   await expect(archiveButton).toBeEnabled({ timeout: 120000 });
   await archiveButton.click();
