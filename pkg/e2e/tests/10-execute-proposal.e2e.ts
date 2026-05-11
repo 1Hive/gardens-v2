@@ -1,5 +1,4 @@
 import { testWithSynpress } from "@synthetixio/synpress";
-import { MetaMask } from "@synthetixio/synpress/playwright";
 import { mnemonicToAccount } from "viem/accounts";
 import {
   Address,
@@ -13,7 +12,6 @@ import {
 } from "viem";
 import basicSetup from "../wallet-setup/basic.setup";
 import {
-  connectWallet,
   createE2EChain,
   expectNoErrorToast,
   fetchAlloAddress,
@@ -622,21 +620,8 @@ async function waitForProposalExecutedOnChain({
     .toBe(4);
 }
 
-test("should execute a proposal", async ({
-  context,
-  page,
-  metamaskPage,
-  extensionId,
-}) => {
-  const metamask = new MetaMask(
-    context,
-    metamaskPage,
-    basicSetup.walletPassword,
-    extensionId,
-  );
-
+test("should execute a proposal", async ({ page }) => {
   await page.bringToFront();
-  await connectWallet(page, metamask);
 
   const { chainId, communityId, subgraphUrl, rpcUrl, walletSeedPhrase } =
     getConfig();
