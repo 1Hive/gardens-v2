@@ -183,7 +183,7 @@ export function Proposals({
         function: "allocate",
       },
     ],
-    enabled: !!wallet,
+    enabled: !!wallet && !!strategy.registryCommunity.id,
   });
 
   const { data: memberStrategyData } = useSubgraphQuery<getMemberStrategyQuery>(

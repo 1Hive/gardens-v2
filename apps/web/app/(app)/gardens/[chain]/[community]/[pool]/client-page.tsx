@@ -298,7 +298,7 @@ export default function ClientPage({
         { topic: "community", id: communityAddress },
         { topic: "member", containerId: communityAddress },
       ],
-      enabled: wallet !== undefined,
+      enabled: wallet !== undefined && _community !== undefined,
     });
 
   const registryCommunity = result?.registryCommunity;
@@ -360,7 +360,7 @@ export default function ClientPage({
           },
         ]
       : undefined,
-    enabled: !!wallet && !!strategy?.registryCommunity?.id,
+    enabled: !!wallet && !!communityAddress,
   });
 
   const { data: memberStrategyData, fetching: memberStrategyFetching } =

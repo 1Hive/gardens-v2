@@ -476,7 +476,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       me: address?.toLowerCase(),
       comm: communityAddr?.toLowerCase(),
     },
-    enabled: !!address,
+    enabled: !!address && !!communityAddr,
   });
 
   const isMemberCommunity =

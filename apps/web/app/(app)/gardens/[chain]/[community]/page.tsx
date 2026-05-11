@@ -7,10 +7,10 @@ import { chainConfigMap } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 
 type PageParams = {
-  params: {
+  params: Promise<{
     chain: string;
     community: string;
-  };
+  }>;
 };
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,9 @@ export const fetchCache = "force-no-store";
 
 const OG_IMAGE_VERSION = "v=3";
 
-function buildOgImagePath(params: PageParams["params"]) {
+type ResolvedPageParams = Awaited<PageParams["params"]>;
+
+function buildOgImagePath(params: ResolvedPageParams) {
   return `/gardens/${params.chain}/${params.community}/opengraph-image?${OG_IMAGE_VERSION}`;
 }
 
@@ -43,9 +45,11 @@ const titlePrefix = "Gardens - ";
 export async function generateMetadata({
   params,
 }: PageParams): Promise<Metadata> {
+  const resolvedParams = await params;
   const metadataBase = await getRequestMetadataBase();
-  const chainId = Number(params.chain);
-  const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
+  const chainId = Number(resolvedParams.chain);
+  const chainConfig =
+    chainConfigMap[resolvedParams.chain] ?? chainConfigMap[chainId];
   const fallbackMetadata: Metadata = {
     metadataBase,
     title: titlePrefix + FALLBACK_TITLE,
@@ -53,19 +57,19 @@ export async function generateMetadata({
     openGraph: {
       title: titlePrefix + FALLBACK_TITLE,
       description,
-      images: [{ url: buildOgImagePath(params) }],
+      images: [{ url: buildOgImagePath(resolvedParams) }],
     },
     twitter: {
       card: "summary_large_image",
       title: titlePrefix + FALLBACK_TITLE,
       description,
-      images: [buildOgImagePath(params)],
+      images: [buildOgImagePath(resolvedParams)],
     },
   };
 
   if (chainConfig == null) {
     console.error("Unsupported chainId for community metadata generation.", {
-      chainId: params.chain,
+      chainId: resolvedParams.chain,
     });
     return fallbackMetadata;
   }
@@ -74,13 +78,13 @@ export async function generateMetadata({
     const communityResult = await queryByChain(
       chainConfig,
       getCommunityNameDocument,
-      { communityAddr: params.community },
+      { communityAddr: resolvedParams.community },
     );
 
     if (communityResult.error) {
       console.error("Error fetching community metadata.", {
-        chainId: params.chain,
-        community: params.community,
+        chainId: resolvedParams.chain,
+        community: resolvedParams.community,
         error: communityResult.error,
       });
       return fallbackMetadata;
@@ -101,27 +105,28 @@ export async function generateMetadata({
       openGraph: {
         title,
         description,
-        images: [{ url: buildOgImagePath(params) }],
+        images: [{ url: buildOgImagePath(resolvedParams) }],
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: [buildOgImagePath(params)],
+        images: [buildOgImagePath(resolvedParams)],
       },
     };
   } catch (error) {
     console.error("Failed to generate community metadata.", {
-      chainId: params.chain,
-      community: params.community,
+      chainId: resolvedParams.chain,
+      community: resolvedParams.community,
       error,
     });
     return fallbackMetadata;
   }
 }
 
-export default function Page({
+export default async function Page({
   params,
 }: PageParams) {
-  return <ClientPage params={params} />;
+  const resolvedParams = await params;
+  return <ClientPage params={resolvedParams} />;
 }

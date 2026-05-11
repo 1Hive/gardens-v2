@@ -322,7 +322,7 @@ export default function ClientPage({
       { topic: "community", id: communityAddr },
       { topic: "member", containerId: communityAddr },
     ],
-    enabled: accountAddress !== undefined,
+    enabled: accountAddress !== undefined && communityAddr !== undefined,
   });
 
   const { write: writeSetArchive, isLoading: isSetArchiveLoading } =
