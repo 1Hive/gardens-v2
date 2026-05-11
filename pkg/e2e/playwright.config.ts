@@ -65,7 +65,7 @@ export default defineConfig({
     {
       name: "06-create-proposal",
       testMatch: /06-.*\.e2e\.ts$/,
-      dependencies: ["04-approve-pool"],
+      dependencies: ["09-cancel-proposal", "11-dispute-proposal"],
     },
     {
       name: "07-activate-governance",
@@ -85,7 +85,7 @@ export default defineConfig({
     {
       name: "10-execute-proposal",
       testMatch: /10-.*\.e2e\.ts$/,
-      dependencies: ["07-activate-governance"],
+      dependencies: ["08-allocate-proposal"],
     },
     {
       name: "11-dispute-proposal",
