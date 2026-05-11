@@ -502,6 +502,8 @@ export const DisputeModal: FC<Props> = ({
     </div>
   );
 
+  const hasOpenDispute = isDisputed === true || isProposalEnded;
+
   return (
     <>
       {(proposalStatus === "active" || lastDispute != null) && (
@@ -510,16 +512,12 @@ export const DisputeModal: FC<Props> = ({
             color="secondary"
             btnStyle="outline"
             testId={
-              isDisputed || isProposalEnded ? "btn-open-dispute" : (
-                "btn-dispute-proposal"
-              )
+              hasOpenDispute ? "btn-open-dispute" : "btn-dispute-proposal"
             }
             onClick={() => setIsModalOpened(true)}
             className="w-full"
           >
-            {(isDisputed ?? isProposalEnded) ?
-              "Open dispute"
-            : "Dispute Proposal"}
+            {hasOpenDispute ? "Open dispute" : "Dispute Proposal"}
           </Button>
           <Modal
             title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}

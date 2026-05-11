@@ -4,12 +4,17 @@ import { notFound, redirect } from "next/navigation";
 import {
   getCommunityNameDocument,
   getPoolTitleDocument,
+  type getCommunityNameQuery,
+  type getPoolTitleQuery,
 } from "#/subgraph/.graphclient";
 import ClientPage from "./client-page";
-import { FALLBACK_TITLE, getDescriptionText } from "./opengraph-image";
+import {
+  getPoolOgDescriptionText,
+  POOL_OG_FALLBACK_TITLE,
+} from "./og-metadata";
 import { resolveStrategyAddress, stringifySearchParams } from "./route-helpers";
 import { chainConfigMap, type ChainData } from "@/configs/chains";
-import { queryByChain } from "@/providers/urql";
+import { queryByChain } from "@/services/queryByChain";
 import { PoolTypes } from "@/types";
 import { hasEthereumAddressFormat } from "@/utils/web3";
 
@@ -70,7 +75,7 @@ async function communityExistsOnChain(
     return false;
   }
 
-  const result = await queryByChain(
+  const result = await queryByChain<getCommunityNameQuery>(
     chainConfig,
     getCommunityNameDocument,
     { communityAddr: communityAddress.toLowerCase() },
@@ -95,19 +100,19 @@ export async function generateMetadata({
     ...params,
     pool: strategyAddress ?? params.pool,
   };
-  let description = getDescriptionText(undefined);
+  let description = getPoolOgDescriptionText(undefined);
   const fallbackMetadata: Metadata = {
     metadataBase,
-    title: titlePrefix + FALLBACK_TITLE,
+    title: titlePrefix + POOL_OG_FALLBACK_TITLE,
     description,
     openGraph: {
-      title: titlePrefix + FALLBACK_TITLE,
+      title: titlePrefix + POOL_OG_FALLBACK_TITLE,
       description,
       images: [{ url: buildOgImagePath(normalizedParams) }],
     },
     twitter: {
       card: "summary_large_image",
-      title: titlePrefix + FALLBACK_TITLE,
+      title: titlePrefix + POOL_OG_FALLBACK_TITLE,
       description,
       images: [buildOgImagePath(normalizedParams)],
     },
@@ -128,7 +133,7 @@ export async function generateMetadata({
   }
 
   try {
-    const poolResult = await queryByChain(
+    const poolResult = await queryByChain<getPoolTitleQuery>(
       chainConfig,
       getPoolTitleDocument,
       { strategyId: strategyAddress },
@@ -160,7 +165,7 @@ export async function generateMetadata({
         "active"
       : "unknown";
     const poolType = PoolTypes[pool?.config?.proposalType as number];
-    const actualDescription = getDescriptionText(poolType);
+    const actualDescription = getPoolOgDescriptionText(poolType);
     const ogImageUrl = buildOgImagePath(normalizedParams, status);
     return {
       metadataBase,

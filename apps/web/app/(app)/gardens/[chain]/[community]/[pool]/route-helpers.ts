@@ -3,7 +3,7 @@ import {
   type getStrategyByPoolQuery,
 } from "#/subgraph/.graphclient";
 import { chainConfigMap, type ChainData } from "@/configs/chains";
-import { queryByChain } from "@/providers/urql";
+import { queryByChain } from "@/services/queryByChain";
 import { hasEthereumAddressFormat } from "@/utils/web3";
 
 export type SearchParams =

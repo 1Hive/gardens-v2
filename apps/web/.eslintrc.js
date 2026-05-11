@@ -16,7 +16,13 @@ module.exports = {
     "prettier/prettier",
   ],
   plugins: ["react", "jsx-a11y"],
-  ignorePatterns: ["node_modules", "dist", "src/generated.ts", "public"],
+  ignorePatterns: [
+    "node_modules",
+    "dist",
+    "next-env.d.ts",
+    "src/generated.ts",
+    "public",
+  ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     project: "./tsconfig.json",

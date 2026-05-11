@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
 import { ImageResponse } from "next/og";
-import { getCommunityNameDocument } from "#/subgraph/.graphclient";
+import {
+  getCommunityNameDocument,
+  type getCommunityNameQuery,
+} from "#/subgraph/.graphclient";
+import {
+  COMMUNITY_OG_DESCRIPTION,
+  COMMUNITY_OG_FALLBACK_TITLE,
+} from "./og-metadata";
 import { COMMUNITY_IMAGE_BASE64, GARDEN_LOGO_BASE64 } from "./ogAssets";
 import { chainConfigMap, ChainIcon } from "@/configs/chains";
-import { queryByChain } from "@/providers/urql";
+import { queryByChain } from "@/services/queryByChain";
 
 export const runtime = "nodejs";
 
@@ -15,9 +22,8 @@ export const size = {
 };
 
 export const contentType = "image/png";
-export const description =
-  "Gardens community for collective decision-making and funding.";
-export const FALLBACK_TITLE = "Community";
+export const description = COMMUNITY_OG_DESCRIPTION;
+export const FALLBACK_TITLE = COMMUNITY_OG_FALLBACK_TITLE;
 
 // Image generation
 type ImageParams = {
@@ -266,7 +272,7 @@ export async function generateMetadata({
   }
 
   try {
-    const communityResult = await queryByChain(
+    const communityResult = await queryByChain<getCommunityNameQuery>(
       chainConfig,
       getCommunityNameDocument,
       {
@@ -317,7 +323,7 @@ export default async function Image({ params }: { params: ImageParams }) {
   }
 
   try {
-    const communityResult = await queryByChain(
+    const communityResult = await queryByChain<getCommunityNameQuery>(
       chainConfig,
       getCommunityNameDocument,
       {

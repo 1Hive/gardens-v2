@@ -12,7 +12,7 @@ export function resolveClientChain(chainId?: number): Chain {
 export function getRpcUrlForChain(chainId?: number) {
   const chain = resolveClientChain(chainId);
   return (
-    getConfigByChain(chain.id)?.rpcUrl?.trim() || chain.rpcUrls.default.http[0]
+    getConfigByChain(chain.id)?.rpcUrl?.trim() ?? chain.rpcUrls.default.http[0]
   );
 }
 

@@ -9,19 +9,6 @@ module.exports = {
     const addressPattern = "(0x[a-fA-F0-9]{40})";
     return [
       {
-        source: "/gardens/:chainId/:community/opengraph-image-:hash",
-        destination: "/gardens/:chainId/:community/opengraph-image",
-      },
-      {
-        source: "/gardens/:chainId/:community/:pool/opengraph-image-:hash",
-        destination: "/gardens/:chainId/:community/:pool/opengraph-image",
-      },
-      {
-        source:
-          "/gardens/:chainId/:community/:pool/:proposal/opengraph-image-:hash",
-        destination: "/gardens/:chainId/:community/:pool/:proposal/opengraph-image",
-      },
-      {
         source:
           "/gardens/:chainId/:governanceToken/:community/:poolId/:pool" +
           addressPattern,
@@ -125,13 +112,11 @@ module.exports = {
   },
   serverExternalPackages: ["ably"],
   productionBrowserSourceMaps: true,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
 };
 
 // Injected content via Sentry wizard below
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { withSentryConfig } = require("@sentry/nextjs");
 
 module.exports = withSentryConfig(module.exports, {

@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { getCommunityNameDocument } from "#/subgraph/.graphclient";
+import {
+  getCommunityNameDocument,
+  type getCommunityNameQuery,
+} from "#/subgraph/.graphclient";
 import ClientPage from "./client-page";
-import { FALLBACK_TITLE, description } from "./opengraph-image";
+import {
+  COMMUNITY_OG_DESCRIPTION,
+  COMMUNITY_OG_FALLBACK_TITLE,
+} from "./og-metadata";
 import { chainConfigMap } from "@/configs/chains";
-import { queryByChain } from "@/providers/urql";
+import { queryByChain } from "@/services/queryByChain";
 
 type PageParams = {
   params: {
@@ -48,17 +54,17 @@ export async function generateMetadata({
   const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
   const fallbackMetadata: Metadata = {
     metadataBase,
-    title: titlePrefix + FALLBACK_TITLE,
-    description,
+    title: titlePrefix + COMMUNITY_OG_FALLBACK_TITLE,
+    description: COMMUNITY_OG_DESCRIPTION,
     openGraph: {
-      title: titlePrefix + FALLBACK_TITLE,
-      description,
+      title: titlePrefix + COMMUNITY_OG_FALLBACK_TITLE,
+      description: COMMUNITY_OG_DESCRIPTION,
       images: [{ url: buildOgImagePath(params) }],
     },
     twitter: {
       card: "summary_large_image",
-      title: titlePrefix + FALLBACK_TITLE,
-      description,
+      title: titlePrefix + COMMUNITY_OG_FALLBACK_TITLE,
+      description: COMMUNITY_OG_DESCRIPTION,
       images: [buildOgImagePath(params)],
     },
   };
@@ -71,7 +77,7 @@ export async function generateMetadata({
   }
 
   try {
-    const communityResult = await queryByChain(
+    const communityResult = await queryByChain<getCommunityNameQuery>(
       chainConfig,
       getCommunityNameDocument,
       { communityAddr: params.community },
@@ -97,16 +103,16 @@ export async function generateMetadata({
     return {
       metadataBase,
       title,
-      description,
+      description: COMMUNITY_OG_DESCRIPTION,
       openGraph: {
         title,
-        description,
+        description: COMMUNITY_OG_DESCRIPTION,
         images: [{ url: buildOgImagePath(params) }],
       },
       twitter: {
         card: "summary_large_image",
         title,
-        description,
+        description: COMMUNITY_OG_DESCRIPTION,
         images: [buildOgImagePath(params)],
       },
     };

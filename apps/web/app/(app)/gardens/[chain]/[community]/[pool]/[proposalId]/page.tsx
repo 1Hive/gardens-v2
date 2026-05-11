@@ -11,7 +11,7 @@ import {
   stringifySearchParams,
 } from "../route-helpers";
 import { getConfigByChain } from "@/configs/chains";
-import { queryByChain } from "@/providers/urql";
+import { queryByChain } from "@/services/queryByChain";
 import { ProposalStatus } from "@/types";
 import {
   buildProposalEntityId,

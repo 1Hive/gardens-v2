@@ -45,8 +45,8 @@ import {
 import { PubSubProvider } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useTheme } from "@/providers/ThemeProvider";
-import { getEnvPublicClient } from "@/utils/publicClient";
 import { logOnce } from "@/utils/log";
+import { getEnvPublicClient } from "@/utils/publicClient";
 
 const dedupeChains = (chainList: Chain[]) =>
   chainList.filter(

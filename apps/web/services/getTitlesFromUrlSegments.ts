@@ -47,7 +47,7 @@ export const queryMap: Record<number, QueryMapItem> = {
   2: {
     document: getCommunityTitlesDocument,
     getVariables: (communityAddr: string, _segments: string[]) => ({
-      communityAddr: communityAddr.toLowerCase(),
+      communityAddr: communityAddr?.toLowerCase(),
     }),
     parseResult: async (
       resData: CommunityTitlesResult,
@@ -109,7 +109,7 @@ function getMetadataTitle(
   metadata: { title?: string | null } | null | undefined,
 ): string | undefined {
   const title = metadata?.title?.trim();
-  return title || undefined;
+  return title ?? undefined;
 }
 
 /**

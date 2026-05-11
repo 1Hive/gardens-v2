@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 import { ImageResponse } from "next/og";
-import { getPoolTitleDocument } from "#/subgraph/.graphclient";
+import {
+  getPoolTitleDocument,
+  type getPoolTitleQuery,
+} from "#/subgraph/.graphclient";
+import {
+  getPoolOgDescriptionText,
+  POOL_OG_FALLBACK_TITLE,
+} from "./og-metadata";
 import { resolveStrategyAddress } from "./route-helpers";
 import {
   GARDEN_LOGO_BASE64,
@@ -12,7 +19,7 @@ import {
   STATUS_REVIEW_ICON_BASE64,
 } from "../ogAssets";
 import { chainConfigMap, ChainIcon } from "@/configs/chains";
-import { queryByChain } from "@/providers/urql";
+import { queryByChain } from "@/services/queryByChain";
 import { PoolTypes } from "@/types";
 
 export const runtime = "nodejs";
@@ -28,19 +35,8 @@ export const size = {
 };
 
 export const contentType = "image/png";
-export const getDescriptionText = (
-  poolType: "signaling" | "funding" | "streaming" | undefined | null,
-) => {
-  switch (poolType) {
-    case "signaling":
-      return "Where collective coordination meets community sentiment.";
-    case "funding":
-      return "For collective resource allocation and project support.";
-    default:
-      return "A Gardens pool for collective decision-making and funding.";
-  }
-};
-export const FALLBACK_TITLE = "Pool";
+export const getDescriptionText = getPoolOgDescriptionText;
+export const FALLBACK_TITLE = POOL_OG_FALLBACK_TITLE;
 
 // Image generation
 type ImageParams = {
@@ -473,7 +469,7 @@ export async function generateMetadata({
   }
 
   try {
-    const poolResult = await queryByChain(
+    const poolResult = await queryByChain<getPoolTitleQuery>(
       chainConfig,
       getPoolTitleDocument,
       { strategyId: strategyAddress },
@@ -541,7 +537,7 @@ export default async function Image({ params }: { params: ImageParams }) {
   }
 
   try {
-    const poolResult = await queryByChain(
+    const poolResult = await queryByChain<getPoolTitleQuery>(
       chainConfig,
       getPoolTitleDocument,
       { strategyId: strategyAddress },
