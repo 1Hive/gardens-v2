@@ -55,7 +55,7 @@
     "lodash-es": "^4.17.23",
     "lokijs": "^1.5.12",
     "motion": "^12.4.7",
-    "next": "14.2.35",
+    "next": "15.5.18",
     "next-themes": "^0.2.1",
     "pino-pretty": "^10.2.3",
     "react": "18.2.0",
@@ -71,14 +71,16 @@
     "wagmi": "~1"
   },
   "overrides": {
-    "axios": "1.15.0",
+    "axios": "1.16.0",
     "base-x": "3.0.11",
     "defu": "6.1.7",
+    "fast-uri": "3.1.2",
     "h3": "1.15.11",
     "node-forge": "1.4.0",
     "rollup": "4.60.1",
     "serialize-javascript": "7.0.5",
-    "undici": "7.24.0"
+    "undici": "7.24.0",
+    "ws": "8.20.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.6.0",

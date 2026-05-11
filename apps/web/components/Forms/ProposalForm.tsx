@@ -388,6 +388,7 @@ export const ProposalForm = ({
                 type="number"
                 placeholder="0"
                 suffix={poolToken?.symbol}
+                testId="input-requested-amount"
               />
             </div>
           )}
@@ -439,6 +440,7 @@ export const ProposalForm = ({
                 }}
                 required
                 errors={errors}
+                testId="input-beneficiary-address"
               />
             </div>
           )}
@@ -451,6 +453,7 @@ export const ProposalForm = ({
               registerKey="title"
               type="text"
               placeholder="Example Title"
+              testId="input-proposal-title"
             />
           </div>
           <div className="flex flex-col">
@@ -467,6 +470,7 @@ export const ProposalForm = ({
               type="markdown"
               rows={10}
               placeholder="Proposal description"
+              testId="input-proposal-description"
             />
           </div>
         </div>
@@ -501,11 +505,15 @@ export const ProposalForm = ({
               isLoading={loading}
               disabled={isButtonDisabled}
               tooltip={tooltipMessage}
+              testId="btn-submit-proposal"
             >
               Submit
             </Button>
           </div>
-        : <Button type="submit">Preview</Button>}
+        : <Button type="submit" testId="btn-preview-proposal">
+            Preview
+          </Button>
+        }
       </div>
     </form>
   );

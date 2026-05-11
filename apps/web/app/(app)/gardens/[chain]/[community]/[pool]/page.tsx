@@ -41,8 +41,8 @@ function buildOgImagePath(
   return `/gardens/${params.chain}/${params.community}/${params.pool}/${OG_IMAGE_TOKEN}${query}`;
 }
 
-function getRequestMetadataBase(): URL | undefined {
-  const requestHeaders = headers();
+async function getRequestMetadataBase(): Promise<URL | undefined> {
+  const requestHeaders = await headers();
   const host =
     requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
   if (!host) return undefined;
@@ -84,7 +84,7 @@ async function communityExistsOnChain(
 export async function generateMetadata({
   params,
 }: PageParams): Promise<Metadata> {
-  const metadataBase = getRequestMetadataBase();
+  const metadataBase = await getRequestMetadataBase();
   const chainId = Number(params.chain);
   const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
   const strategyAddress = await resolveStrategyAddress(
@@ -240,4 +240,3 @@ export default async function Page(props: PageProps) {
     />
   );
 }
-

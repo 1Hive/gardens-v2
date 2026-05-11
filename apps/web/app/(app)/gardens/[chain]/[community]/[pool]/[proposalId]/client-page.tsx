@@ -1303,6 +1303,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                     <Button
                       icon={<BoltIcon height={18} width={18} />}
                       className="!w-full"
+                      testId="btn-execute-proposal"
                       onClick={() =>
                         writeDistribute?.({
                           args: [
