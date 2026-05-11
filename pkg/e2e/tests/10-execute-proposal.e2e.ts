@@ -117,7 +117,7 @@ async function waitForTokenBalanceAtLeast({
     .toBeGreaterThanOrEqual(minimumBalance);
 }
 
-async function transferPoolTokensToStrategy({
+async function fundPoolTokensToStrategy({
   publicClient,
   walletClient,
   token,
@@ -133,51 +133,61 @@ async function transferPoolTokensToStrategy({
   const decimals = await getTokenDecimals(publicClient, token);
   const transferAmount = parseUnits(amount, decimals);
   const account = walletClient.account.address as Address;
-  const initialBalance = await publicClient.readContract({
+  const initialStrategyBalance = await publicClient.readContract({
+    address: token,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [strategyAddress],
+  });
+
+  try {
+    await publicClient.simulateContract({
+      account: walletClient.account,
+      address: token,
+      abi: erc20Abi,
+      functionName: "mint",
+      args: [strategyAddress, transferAmount],
+    });
+
+    const mintHash = await walletClient.writeContract({
+      address: token,
+      abi: erc20Abi,
+      functionName: "mint",
+      args: [strategyAddress, transferAmount],
+    });
+    const mintReceipt = await publicClient.waitForTransactionReceipt({
+      hash: mintHash,
+      confirmations: 1,
+      timeout: 180000,
+    });
+    expect(mintReceipt.status).toBe("success");
+
+    const expectedStrategyBalance = initialStrategyBalance + transferAmount;
+    await waitForTokenBalanceAtLeast({
+      publicClient,
+      token,
+      owner: strategyAddress,
+      minimumBalance: expectedStrategyBalance,
+    });
+    return expectedStrategyBalance;
+  } catch (error) {
+    console.log(
+      `[execute-proposal] direct pool token mint unavailable, falling back to transfer: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+
+  const initialAccountBalance = await publicClient.readContract({
     address: token,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: [account],
   });
-
-  if (initialBalance < transferAmount) {
-    const mintAmount = transferAmount - initialBalance;
-
-    try {
-      await publicClient.simulateContract({
-        account: walletClient.account,
-        address: token,
-        abi: erc20Abi,
-        functionName: "mint",
-        args: [account, mintAmount],
-      });
-
-      const mintHash = await walletClient.writeContract({
-        address: token,
-        abi: erc20Abi,
-        functionName: "mint",
-        args: [account, mintAmount],
-      });
-      const mintReceipt = await publicClient.waitForTransactionReceipt({
-        hash: mintHash,
-        confirmations: 1,
-        timeout: 180000,
-      });
-      expect(mintReceipt.status).toBe("success");
-
-      await waitForTokenBalanceAtLeast({
-        publicClient,
-        token,
-        owner: account,
-        minimumBalance: transferAmount,
-      });
-    } catch (error) {
-      throw new Error(
-        error instanceof Error
-          ? `Insufficient pool token balance and token mint is not open: ${error.message}`
-          : "Insufficient pool token balance and token mint is not open",
-      );
-    }
+  if (initialAccountBalance < transferAmount) {
+    throw new Error(
+      `Insufficient pool token balance for fallback transfer: wallet balance ${initialAccountBalance.toString()} is below ${transferAmount.toString()}`,
+    );
   }
 
   const txHash = await walletClient.writeContract({
@@ -187,8 +197,21 @@ async function transferPoolTokensToStrategy({
     args: [strategyAddress, transferAmount],
   });
 
-  await publicClient.waitForTransactionReceipt({ hash: txHash });
-  return transferAmount;
+  const transferReceipt = await publicClient.waitForTransactionReceipt({
+    hash: txHash,
+    confirmations: 1,
+    timeout: 180000,
+  });
+  expect(transferReceipt.status).toBe("success");
+
+  const expectedStrategyBalance = initialStrategyBalance + transferAmount;
+  await waitForTokenBalanceAtLeast({
+    publicClient,
+    token,
+    owner: strategyAddress,
+    minimumBalance: expectedStrategyBalance,
+  });
+  return expectedStrategyBalance;
 }
 
 async function getProposalVoterStake({
@@ -699,7 +722,7 @@ test("should execute a proposal", async ({
     minimumStake: targetSupport,
   });
 
-  const fundedAmount = await transferPoolTokensToStrategy({
+  const fundedAmount = await fundPoolTokensToStrategy({
     publicClient,
     walletClient,
     token,
