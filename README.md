@@ -1,7 +1,7 @@
 # Gardens v2
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![CodeQL](https://github.com/1Hive/gardens-v2/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/1Hive/gardens-v2/actions/workflows/github-code-scanning/codeql)
-[![E2E](https://github.com/1Hive/gardens-v2/actions/workflows/e2e.yml/badge.svg?branch=main)](https://github.com/1Hive/gardens-v2/actions/workflows/e2e.yml)
+[![E2E](https://github.com/1Hive/gardens-v2/actions/workflows/e2e.yml/badge.svg?branch=main&event=push)](https://github.com/1Hive/gardens-v2/actions/workflows/e2e.yml)
 [![CI](https://github.com/1Hive/gardens-v2/actions/workflows/ci.yaml/badge.svg)](https://github.com/1Hive/gardens-v2/actions/workflows/ci.yaml)
 [![Copilot](https://github.com/1Hive/gardens-v2/actions/workflows/copilot-swe-agent/copilot/badge.svg)](https://github.com/1Hive/gardens-v2/actions/workflows/copilot-swe-agent/copilot)
 [![Known Vulnerabilities](https://snyk.io/test/github/1Hive/gardens-v2/badge.svg)](https://snyk.io/test/github/1Hive/gardens-v2)
