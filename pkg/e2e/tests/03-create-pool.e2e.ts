@@ -25,21 +25,18 @@ const E2E_POOL_METADATA_HASH = "QmPjXaoDhSx4mMFCADow9Kea3NMcd44PNCqr8hFpsCpi6f";
 
 const chainCreatePoolConfig: Record<
   string,
-  { arbitrator: Address; globalTribunal: Address; blockTime: number }
+  { arbitrator: Address; blockTime: number }
 > = {
   "421614": {
     arbitrator: "0x49222C53695C77a0F8b78Eb42606B893E98DfE6a",
-    globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     blockTime: 12,
   },
   "11155420": {
     arbitrator: "0xCcbAc15Eb0D8C241D4b6A74E650dE089c292D131",
-    globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     blockTime: 2,
   },
   "11155111": {
     arbitrator: "0x3678d8f5d4f04cb033b8ab4d85df384d0df9cb08",
-    globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     blockTime: 12,
   },
 };
@@ -198,7 +195,7 @@ test("should create a pool in the community", async () => {
         },
         arbitrableConfig: {
           arbitrator: createPoolConfig.arbitrator,
-          tribunalSafe: createPoolConfig.globalTribunal,
+          tribunalSafe: account.address,
           submitterCollateralAmount: parseUnits("0.0000000001", ETH_DECIMALS),
           challengerCollateralAmount: parseUnits("0.0000000001", ETH_DECIMALS),
           defaultRuling: 1n,

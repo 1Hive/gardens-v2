@@ -241,6 +241,15 @@ jobs:
           path: pkg/e2e/playwright-report
           retention-days: 14
 
+      - name: Upload Playwright failure artifacts
+        if: ${{ failure() && steps.preflight.outputs.run_e2e == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failure-artifacts
+          path: pkg/e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Skip E2E (missing secrets)
         if: steps.preflight.outputs.run_e2e != 'true'
         run: echo "Skipping E2E because required CI env vars/secrets are missing."

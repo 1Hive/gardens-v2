@@ -3,13 +3,13 @@ import { NextRequest } from "next/server";
 const ipfsGateway = process.env.IPFS_GATEWAY ?? "ipfs.io";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     hash: string;
-  };
+  }>;
 };
 
 export async function GET(req: NextRequest, { params }: RouteContext) {
-  const { hash } = params;
+  const { hash } = await params;
   const searchParams = new URL(req.url).searchParams;
   const ipfsUri = `https://${ipfsGateway}/ipfs/${hash}?${process.env.PINATA_KEY ? "pinataGatewayToken=" + process.env.PINATA_KEY : ""}`;
   const res = await fetch(ipfsUri, {

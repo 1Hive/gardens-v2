@@ -445,8 +445,8 @@ export default function ClientPage({ params }: ClientPageProps) {
   } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
-      proposalId: proposalEntityId.toLowerCase(),
-      communityId: communityAddr.toLowerCase(),
+      proposalId: proposalEntityId?.toLowerCase(),
+      communityId: communityAddr?.toLowerCase(),
     },
     changeScope:
       poolIdForScope != null ?
@@ -1143,6 +1143,8 @@ export default function ClientPage({ params }: ClientPageProps) {
 
   // };
   const status = ProposalStatus[proposalData.proposalStatus];
+  const canOpenDisputeModal =
+    status === "active" || status === "disputed" || status === "rejected";
   const streamingStatusLabel =
     isStreamingType ?
       status === "cancelled" ? "Cancelled"
@@ -1644,7 +1646,7 @@ export default function ClientPage({ params }: ClientPageProps) {
               )}
             </div>
             <div className="flex flex-col gap-4">
-              {(status === "active" || status === "disputed") &&
+              {canOpenDisputeModal &&
                 proposalData.strategy?.isEnabled &&
                 proposalDataForActions && (
                   <DisputeModal
@@ -1860,9 +1862,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                                       proposalData.strategy.config.proposalType
                                     ]
                                   }
-                                  isThresholdOutOfReach={
-                                    isThresholdOutOfReach
-                                  }
+                                  isThresholdOutOfReach={isThresholdOutOfReach}
                                   isThresholdBelowDisplayPrecision={
                                     isThresholdBelowDisplayPrecision
                                   }
@@ -2253,13 +2253,12 @@ export default function ClientPage({ params }: ClientPageProps) {
                   )}
                 </div>
                 <div className="flex flex-col gap-4">
-                  {(status === "active" || status === "disputed") &&
-                    proposalData.strategy.isEnabled && (
-                      <DisputeModal
-                        isMemberCommunity={isMemberCommunity}
-                        proposalData={{ ...proposalData, ...metadata }}
-                      />
-                    )}
+                  {canOpenDisputeModal && proposalData.strategy.isEnabled && (
+                    <DisputeModal
+                      isMemberCommunity={isMemberCommunity}
+                      proposalData={{ ...proposalData, ...metadata }}
+                    />
+                  )}
                 </div>
               </section>
               {isProposerConnected && proposalStatus === "active" && (

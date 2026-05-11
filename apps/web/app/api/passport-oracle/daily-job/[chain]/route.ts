@@ -131,14 +131,14 @@ const updateScores = async (chain: string) => {
 };
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     chain: string;
-  };
+  }>;
 };
 
 export async function GET(req: Request, { params }: RouteContext) {
   const apiKey = req.headers.get("authorization")?.replace("Bearer ", "");
-  const { chain } = params;
+  const { chain } = await params;
 
   if (apiKey !== process.env.CRON_SECRET) {
     console.error("Unauthorized", {

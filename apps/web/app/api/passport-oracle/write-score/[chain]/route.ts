@@ -25,13 +25,13 @@ const PASSPORT_KEEPER_PRIVATE_KEY = (
 const LOCAL_RPC = "http://127.0.0.1:8545";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     chain: string;
-  };
+  }>;
 };
 
 export async function POST(req: Request, { params }: RouteContext) {
-  const { chain: chainId } = params;
+  const { chain: chainId } = await params;
   const { user } = await req.json();
 
   if (typeof user !== "string") {

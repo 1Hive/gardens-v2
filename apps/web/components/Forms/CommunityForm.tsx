@@ -258,7 +258,7 @@ export const CommunityForm = () => {
       });
       if (selectedChainId) {
         router.push(
-          `/gardens/${selectedChainId}/${newCommunityAddr.toLowerCase()}?${QUERY_PARAMS.communityPage.newCommunity}=true`,
+          `/gardens/${selectedChainId}/${newCommunityAddr?.toLowerCase()}?${QUERY_PARAMS.communityPage.newCommunity}=true`,
         );
       }
     },

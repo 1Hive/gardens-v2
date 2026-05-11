@@ -318,6 +318,7 @@ export const DisputeModal: FC<Props> = ({
       : <div>
           <div className="w-full mb-4">
             <textarea
+              data-testid="input-dispute-reason"
               id="reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -387,6 +388,7 @@ export const DisputeModal: FC<Props> = ({
                 <Button
                   color="secondary"
                   btnStyle="outline"
+                  testId="btn-rule-abstain"
                   onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
                   isLoading={rulingLoading === ABSTAINED_RULING}
                   disabled={
@@ -412,6 +414,7 @@ export const DisputeModal: FC<Props> = ({
                     <Button
                       color="primary"
                       btnStyle="outline"
+                      testId="btn-rule-approve"
                       onClick={() => handleSubmitRuling(APPROVED_RULING)}
                       isLoading={rulingLoading === APPROVED_RULING}
                       disabled={!!disableTribunalSafeButtons}
@@ -429,6 +432,7 @@ export const DisputeModal: FC<Props> = ({
                     <Button
                       color="danger"
                       btnStyle="outline"
+                      testId="btn-rule-reject"
                       onClick={() => handleSubmitRuling(REJECTED_RULING)}
                       isLoading={rulingLoading === REJECTED_RULING}
                       disabled={!!disableTribunalSafeButtons}
@@ -477,6 +481,7 @@ export const DisputeModal: FC<Props> = ({
             <Button
               onClick={handleSubmit}
               color="danger"
+              testId="btn-submit-dispute-proposal"
               disabled={
                 !isConnected ||
                 missmatchUrl ||
@@ -504,6 +509,11 @@ export const DisputeModal: FC<Props> = ({
           <Button
             color="secondary"
             btnStyle="outline"
+            testId={
+              isDisputed || isProposalEnded ? "btn-open-dispute" : (
+                "btn-dispute-proposal"
+              )
+            }
             onClick={() => setIsModalOpened(true)}
             className="w-full"
           >
@@ -516,6 +526,7 @@ export const DisputeModal: FC<Props> = ({
             onClose={() => setIsModalOpened(false)}
             isOpen={isModalOpened}
             size="extra-large"
+            testId="dispute-proposal"
             footer={!isProposalEnded ? buttons : undefined}
           >
             <div className="">{content}</div>

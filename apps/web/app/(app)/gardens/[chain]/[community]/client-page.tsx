@@ -133,7 +133,7 @@ export default function ClientPage({
   } = useSubgraphQuery<getCommunityQuery>({
     query: getCommunityDocument,
     variables: {
-      communityAddr: communityAddr.toLowerCase(),
+      communityAddr: communityAddr?.toLowerCase(),
     },
     changeScope: [
       { topic: "community", id: communityAddr },
@@ -292,7 +292,7 @@ export default function ClientPage({
   const existingProtopianDelegation = delegatedProtopianCommunities?.find(
     (community) =>
       !(
-        community.id.toLowerCase() === communityAddr.toLowerCase() &&
+        community.id?.toLowerCase() === communityAddr?.toLowerCase() &&
         community.chain.id === chain?.id
       ),
   );
@@ -316,7 +316,7 @@ export default function ClientPage({
     query: isMemberDocument,
     variables: {
       me: accountAddress?.toLowerCase(),
-      comm: communityAddr.toLowerCase(),
+      comm: communityAddr?.toLowerCase(),
     },
     changeScope: [
       { topic: "community", id: communityAddr },
@@ -446,7 +446,7 @@ export default function ClientPage({
       return;
     }
 
-    const communityKey = communityAddr.toLowerCase();
+    const communityKey = communityAddr?.toLowerCase();
     if (pendingNewCommunityRefetch.current === communityKey) {
       return;
     }
@@ -713,9 +713,7 @@ export default function ClientPage({
     communityFeeAmount + // Community fee as % of min stake
     protocolFeeAmount; // Protocol fee as extra
   const headerCardBorderClass =
-    registryCommunity.archived ?
-      "!border-warning-content"
-    : "border-gray-200";
+    registryCommunity.archived ? "!border-warning-content" : "border-gray-200";
   const renderArchivedBadge = () => (
     <Badge color="warning" label="Archived" className="mt-3 w-fit" />
   );
@@ -728,22 +726,22 @@ export default function ClientPage({
           <header
             className={`border shadow-sm section-layout ${headerCardBorderClass}`}
           >
-              <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
-                {/* Image */}
-                <div className="flex-shrink-0 flex flex-col items-start">
-                  <div className="w-20 h-20 lg:w-24 lg:h-24 bg-primary-soft rounded-xl flex items-center justify-center shadow-sm p-1">
-                    <Image
-                      src={
+            <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
+              {/* Image */}
+              <div className="flex-shrink-0 flex flex-col items-start">
+                <div className="w-20 h-20 lg:w-24 lg:h-24 bg-primary-soft rounded-xl flex items-center justify-center shadow-sm p-1">
+                  <Image
+                    src={
                       is1hive ? OneHiveLogo
                       : isProtopianCommunity ?
                         ProtopianLogo
                       : CommunityLogo
                     }
-                      alt={`${communityName} community`}
-                    />
-                  </div>
-                  {registryCommunity.archived && renderArchivedBadge()}
+                    alt={`${communityName} community`}
+                  />
                 </div>
+                {registryCommunity.archived && renderArchivedBadge()}
+              </div>
 
               <div className="flex-1 flex-col lg:items-start lg:justify-between sm:gap-4 ">
                 <div
