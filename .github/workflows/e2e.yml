@@ -123,9 +123,13 @@ jobs:
           set -euo pipefail
 
           if [ -n "${PREVIEW_URL_OVERRIDE:-}" ]; then
-            echo "Using manually provided preview URL: ${PREVIEW_URL_OVERRIDE}"
-            echo "::notice::Using manually provided preview URL ${PREVIEW_URL_OVERRIDE}"
-            echo "preview_url=${PREVIEW_URL_OVERRIDE}" >> "$GITHUB_OUTPUT"
+            preview_url="${PREVIEW_URL_OVERRIDE}"
+            if [[ ! "${preview_url}" =~ ^https?:// ]]; then
+              preview_url="https://${preview_url}"
+            fi
+            echo "Using manually provided preview URL: ${preview_url}"
+            echo "::notice::Using manually provided preview URL ${preview_url}"
+            echo "preview_url=${preview_url}" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
