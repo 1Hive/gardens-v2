@@ -10,6 +10,14 @@ import {
   resolveStrategyAddress,
   stringifySearchParams,
 } from "../route-helpers";
+import {
+  ENDED_PROPOSAL_DESCRIPTION,
+  FALLBACK_TITLE,
+  getDescriptionFromStatus,
+  OG_IMAGE_TOKEN,
+  OG_IMAGE_VERSION,
+  titleCaseStatus,
+} from "./og-metadata";
 import { getConfigByChain } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { ProposalStatus } from "@/types";
@@ -22,15 +30,6 @@ import {
 export const dynamic = "force-dynamic"; // ensure latest proposal status for OG
 export const revalidate = 0; // do not cache this route
 export const fetchCache = "force-no-store"; // always fetch fresh metadata data
-export const FALLBACK_TITLE = "Gardens proposal";
-export const ACTIVE_PROPOSAL_DESCRIPTION =
-  "This proposal is active and can receive support from members";
-export const DISPUTED_PROPOSAL_DESCRIPTION =
-  "This proposal is disputed and now going through arbitration.";
-export const ENDED_PROPOSAL_DESCRIPTION =
-  "This proposal has ended and can no longer receive support.";
-export const OG_IMAGE_TOKEN = "opengraph-image";
-export const OG_IMAGE_VERSION = "v=3";
 
 type PageProps = {
   params: Promise<ProposalPageParams>;
@@ -52,23 +51,6 @@ export function buildOgImagePath(
   const query = paramsList.length ? `?${paramsList.join("&")}` : "";
   const proposalSlug = formatProposalSlug(params.proposalId);
   return `/gardens/${params.chain}/${params.community}/${params.pool}/${proposalSlug}/${OG_IMAGE_TOKEN}${query}`;
-}
-
-export function getDescriptionFromStatus(
-  status?: (typeof ProposalStatus)[number] | undefined,
-): string {
-  const normalized = status?.toLowerCase() as (typeof ProposalStatus)[number];
-  return (
-    normalized === "active" ? ACTIVE_PROPOSAL_DESCRIPTION
-    : normalized === "disputed" ? DISPUTED_PROPOSAL_DESCRIPTION
-    : ENDED_PROPOSAL_DESCRIPTION
-  );
-}
-
-export function titleCaseStatus(status?: string): string | undefined {
-  if (!status) return undefined;
-  const normalized = status.toLowerCase();
-  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
 const titlePrefix = "Gardens - ";
