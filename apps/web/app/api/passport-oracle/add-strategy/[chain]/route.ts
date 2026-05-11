@@ -21,14 +21,14 @@ const PASSPORT_KEEPER_PRIVATE_KEY =
 const LOCAL_RPC = "http://127.0.0.1:8545";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     chain: string;
-  };
+  }>;
 };
 
 export async function POST(req: Request, { params }: RouteContext) {
   const apiKey = req.headers.get("authorization")?.replace("Bearer ", "");
-  const { chain } = params;
+  const { chain } = await params;
 
   if (apiKey !== process.env.CRON_SECRET) {
     console.error("Unauthorized", {

@@ -10,7 +10,7 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 const chromiumUse = {
   ...devices["Desktop Chrome"],
   ...(browserChannel ? { channel: browserChannel } : {}),
-  ...(browserExecutablePath ? { executablePath: browserExecutablePath } : {})
+  ...(browserExecutablePath ? { executablePath: browserExecutablePath } : {}),
 };
 
 // Define Playwright configuration
@@ -29,73 +29,85 @@ export default defineConfig({
     // Set base
     // URL for tests
     baseURL,
-    trace: "on-first-retry"
+    screenshot: "only-on-failure",
+    trace: "on-first-retry",
   },
   projects: [
     {
       name: "00-prepare",
-      testMatch: /00-.*\.e2e\.ts$/
+      testMatch: /00-.*\.e2e\.ts$/,
     },
     {
       name: "01-join",
       testMatch: /01-.*\.e2e\.ts$/,
-      dependencies: ["00-prepare"]
+      dependencies: ["00-prepare"],
     },
     {
       name: "02-stake",
       testMatch: /02-.*\.e2e\.ts$/,
-      dependencies: ["01-join"]
+      dependencies: ["01-join"],
     },
     {
       name: "03-create-pool",
       testMatch: /03-.*\.e2e\.ts$/,
-      dependencies: ["02-stake"]
+      dependencies: ["02-stake"],
     },
     {
       name: "04-approve-pool",
       testMatch: /04-.*\.e2e\.ts$/,
-      dependencies: ["03-create-pool"]
+      dependencies: ["03-create-pool"],
     },
     {
       name: "05-edit-pool",
       testMatch: /05-.*\.e2e\.ts$/,
-      dependencies: ["04-approve-pool"]
+      dependencies: ["04-approve-pool"],
     },
     {
       name: "06-create-proposal",
       testMatch: /06-.*\.e2e\.ts$/,
-      dependencies: ["05-edit-pool"]
+      dependencies: ["04-approve-pool"],
     },
     {
       name: "07-activate-governance",
       testMatch: /07-.*\.e2e\.ts$/,
-      dependencies: ["06-create-proposal"]
+      dependencies: ["04-approve-pool"],
     },
     {
       name: "08-allocate-proposal",
       testMatch: /08-.*\.e2e\.ts$/,
-      dependencies: ["07-activate-governance"]
+      dependencies: ["06-create-proposal", "07-activate-governance"],
     },
     {
       name: "09-cancel-proposal",
       testMatch: /09-.*\.e2e\.ts$/,
-      dependencies: ["08-allocate-proposal"]
+      dependencies: ["04-approve-pool"],
     },
     {
       name: "10-execute-proposal",
       testMatch: /10-.*\.e2e\.ts$/,
-      dependencies: ["09-cancel-proposal"]
+      dependencies: ["07-activate-governance"],
+    },
+    {
+      name: "11-dispute-proposal",
+      testMatch: /11-.*\.e2e\.ts$/,
+      dependencies: ["04-approve-pool"],
     },
     {
       name: "98-leave",
       testMatch: /98..*\.e2e\.ts$/,
-      dependencies: ["10-execute-proposal"]
+      dependencies: [
+        "05-edit-pool",
+        "08-allocate-proposal",
+        "09-cancel-proposal",
+        "10-execute-proposal",
+        "11-dispute-proposal",
+      ],
     },
     {
       name: "99-archive-pool",
       testMatch: /99..*\.e2e\.ts$/,
-      dependencies: ["98-leave"]
-    }
-  ]
+      dependencies: ["98-leave"],
+    },
+  ],
   // Additional Synpress-specific configuration can be added here
 });
