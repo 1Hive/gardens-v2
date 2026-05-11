@@ -1,4 +1,5 @@
 import { testWithSynpress } from "@synthetixio/synpress";
+import { MetaMask } from "@synthetixio/synpress/playwright";
 import { mnemonicToAccount } from "viem/accounts";
 import {
   Address,
@@ -12,17 +13,19 @@ import {
 } from "viem";
 import basicSetup from "../wallet-setup/basic.setup";
 import {
+  confirmTransaction,
+  connectWallet,
   createE2EChain,
   expectNoErrorToast,
   fetchAlloAddress,
   getConfig,
+  getByTestId,
   metaMaskFixtures,
 } from "./utils";
 import { proposalTestConfig } from "./proposal-test-config";
 
 const test = testWithSynpress(metaMaskFixtures(basicSetup));
 const { expect } = test;
-const requestedAmount = proposalTestConfig.requestedAmount;
 const executionPoolFundingAmount = "1";
 const PROPOSAL_METADATA_HASH = "QmPjXaoDhSx4mMFCADow9Kea3NMcd44PNCqr8hFpsCpi6f";
 
@@ -34,7 +37,6 @@ const erc20Abi = parseAbi([
 ]);
 const alloAbi = parseAbi([
   "function allocate(uint256 _poolId, bytes _data) payable",
-  "function distribute(uint256 _poolId, address[] _recipientIds, bytes _data)",
   "function registerRecipient(uint256 _poolId, bytes _data) payable returns (address)",
 ]);
 const cvStrategyAbi = parseAbi([
@@ -46,6 +48,11 @@ const cvStrategyAbi = parseAbi([
 const registryCommunityAbi = parseAbi([
   "function memberPowerInStrategy(address member, address strategy) view returns (uint256)",
 ]);
+
+type StrategyProposal = {
+  proposalNumber: string;
+  proposalStatus: string;
+};
 
 test.setTimeout(600000);
 
@@ -506,7 +513,7 @@ async function waitForProposalToBeExecutable({
           lastLoggedAt = now;
         }
 
-        return conviction >= threshold;
+        return conviction > threshold;
       },
       {
         timeout: timeoutMs,
@@ -517,75 +524,23 @@ async function waitForProposalToBeExecutable({
     .toBe(true);
 }
 
-async function executeProposalDirectly({
+async function getProposalRequestedAmount({
   publicClient,
-  walletClient,
-  alloAddress,
-  poolId,
   strategyAddress,
   proposalNumber,
 }: {
   publicClient: any;
-  walletClient: any;
-  alloAddress: Address;
-  poolId: bigint;
   strategyAddress: Address;
   proposalNumber: bigint;
 }) {
-  const encodedData = encodeAbiParameters(
-    parseAbiParameters("uint256 proposalId"),
-    [proposalNumber],
-  );
+  const proposal = await publicClient.readContract({
+    address: strategyAddress,
+    abi: cvStrategyAbi,
+    functionName: "getProposal",
+    args: [proposalNumber],
+  });
 
-  let lastReceiptStatus: string | undefined;
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    await expect
-      .poll(
-        async () => {
-          try {
-            await publicClient.simulateContract({
-              account: walletClient.account,
-              address: alloAddress,
-              abi: alloAbi,
-              functionName: "distribute",
-              args: [poolId, [strategyAddress], encodedData],
-            });
-            return true;
-          } catch {
-            return false;
-          }
-        },
-        {
-          timeout: 180000,
-          intervals: [1000, 2000, 3000, 5000],
-          message: `proposal ${proposalNumber.toString()} execution simulation succeeds`,
-        },
-      )
-      .toBe(true);
-
-    const txHash = await walletClient.writeContract({
-      address: alloAddress,
-      abi: alloAbi,
-      functionName: "distribute",
-      args: [poolId, [strategyAddress], encodedData],
-    });
-
-    const receipt = await publicClient.waitForTransactionReceipt({
-      hash: txHash,
-      confirmations: 1,
-      timeout: 180000,
-    });
-    lastReceiptStatus = receipt.status;
-    if (receipt.status === "success") {
-      return;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, attempt * 5000));
-  }
-
-  throw new Error(
-    `proposal ${proposalNumber.toString()} execution transaction did not succeed; last receipt status was ${lastReceiptStatus}`,
-  );
+  return BigInt(proposal[3]);
 }
 
 async function waitForProposalExecutedOnChain({
@@ -620,7 +575,19 @@ async function waitForProposalExecutedOnChain({
     .toBe(4);
 }
 
-test("should execute a proposal", async ({ page }) => {
+test("should execute a proposal", async ({
+  context,
+  page,
+  metamaskPage,
+  extensionId,
+}) => {
+  const metamask = new MetaMask(
+    context,
+    metamaskPage,
+    basicSetup.walletPassword,
+    extensionId,
+  );
+
   await page.bringToFront();
 
   const { chainId, communityId, subgraphUrl, rpcUrl, walletSeedPhrase } =
@@ -643,30 +610,47 @@ test("should execute a proposal", async ({ page }) => {
     poolId,
     token,
     proposals,
-  } = subgraphRes.data.cvstrategies[0];
+  } = subgraphRes.data.cvstrategies[0] as {
+    id: Address;
+    poolId: string;
+    token: Address;
+    proposals: StrategyProposal[];
+  };
   const alloAddress = await fetchAlloAddress(graphUrl, chainId);
 
-  const highestKnownProposalNumber = proposals.reduce(
-    (max: number, item: { proposalNumber: string }) =>
-      Math.max(max, Number(item.proposalNumber)),
-    0,
+  let availableProposals = proposals;
+  let executableProposalNumber = Number(
+    availableProposals.find((proposal) => proposal.proposalStatus === "1")
+      ?.proposalNumber ?? 0,
   );
-  await createExecutionProposalDirectly({
-    publicClient,
-    walletClient,
-    alloAddress,
-    poolId: BigInt(poolId),
-    token,
-    beneficiary: account.address,
-  });
 
-  const createdProposalNumber = await waitForNewProposalIndexed({
-    graphUrl,
-    communityId,
-    previousProposalNumber: highestKnownProposalNumber,
-  });
+  if (executableProposalNumber === 0) {
+    const highestKnownProposalNumber = availableProposals.reduce(
+      (max: number, item: { proposalNumber: string }) =>
+        Math.max(max, Number(item.proposalNumber)),
+      0,
+    );
+    await createExecutionProposalDirectly({
+      publicClient,
+      walletClient,
+      alloAddress,
+      poolId: BigInt(poolId),
+      token,
+      beneficiary: account.address,
+    });
 
-  const resolvedProposalNumber = BigInt(createdProposalNumber);
+    executableProposalNumber = await waitForNewProposalIndexed({
+      graphUrl,
+      communityId,
+      previousProposalNumber: highestKnownProposalNumber,
+    });
+
+    subgraphRes = await fetchLatestStrategy(graphUrl, communityId);
+    availableProposals =
+      subgraphRes.data?.cvstrategies?.[0]?.proposals ?? availableProposals;
+  }
+
+  const resolvedProposalNumber = BigInt(executableProposalNumber);
   const configuredSupport = parseUnits(proposalTestConfig.supportAmount, 18);
   const memberPower = await publicClient.readContract({
     address: communityId,
@@ -691,7 +675,7 @@ test("should execute a proposal", async ({ page }) => {
     proposalNumbers: Array.from(
       new Set([
         resolvedProposalNumber.toString(),
-        ...proposals.map((proposal: { proposalNumber: string }) =>
+        ...availableProposals.map((proposal: { proposalNumber: string }) =>
           proposal.proposalNumber.toString(),
         ),
       ]),
@@ -721,24 +705,33 @@ test("should execute a proposal", async ({ page }) => {
     minimumBalance: fundedAmount,
   });
 
+  const proposalRequestedAmount = await getProposalRequestedAmount({
+    publicClient,
+    strategyAddress,
+    proposalNumber: resolvedProposalNumber,
+  });
+
   await waitForProposalToBeExecutable({
     publicClient,
     strategyAddress,
     proposalNumber: resolvedProposalNumber,
-    requestedAmount: parseUnits(
-      requestedAmount,
-      await getTokenDecimals(publicClient, token),
-    ),
+    requestedAmount: proposalRequestedAmount,
   });
 
-  await executeProposalDirectly({
-    publicClient,
-    walletClient,
-    alloAddress,
-    poolId: BigInt(poolId),
-    strategyAddress,
-    proposalNumber: resolvedProposalNumber,
-  });
+  const proposalRouteId = `${strategyAddress}-${executableProposalNumber}`;
+  await page.goto(
+    `/gardens/${chainId}/${communityId}/${poolId}/${proposalRouteId}`,
+    { timeout: 60000, waitUntil: "domcontentloaded" },
+  );
+  await page.bringToFront();
+  await connectWallet(page, metamask);
+
+  const executeButton = getByTestId(page, "btn-execute-proposal");
+  await expect(executeButton).toBeVisible({ timeout: 180000 });
+  await expect(executeButton).toBeEnabled({ timeout: 180000 });
+  await executeButton.click();
+  await confirmTransaction({ metamask, extensionId });
+  await page.bringToFront();
 
   await waitForProposalExecutedOnChain({
     publicClient,
@@ -746,10 +739,5 @@ test("should execute a proposal", async ({ page }) => {
     proposalNumber: resolvedProposalNumber,
   });
 
-  const proposalRouteId = `${strategyAddress}-${createdProposalNumber}`;
-  await page.goto(
-    `/gardens/${chainId}/${communityId}/${poolId}/${proposalRouteId}`,
-    { timeout: 60000, waitUntil: "domcontentloaded" },
-  );
   await expectNoErrorToast(page);
 });
