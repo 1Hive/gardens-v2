@@ -1042,7 +1042,6 @@ export function useProposalFilter<
     if (!sortBy) return filteredProposals;
 
     const list = [...filteredProposals];
-
     switch (sortBy) {
       case "newest":
         return list.sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
@@ -1081,6 +1080,9 @@ export function useProposalFilter<
   const setFilterWithLoading = (newFilter: FilterType) => {
     startTransition(() => {
       setFilter(newFilter);
+      if (newFilter === "closed" || newFilter === "executed") {
+        setSortBy("newest");
+      }
     });
   };
 
