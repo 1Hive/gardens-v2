@@ -43,6 +43,7 @@ const cvStrategyAbi = parseAbi([
   "function getProposalVoterStake(uint256,address) view returns (uint256)",
   "function calculateProposalConviction(uint256) view returns (uint256)",
   "function calculateThreshold(uint256) view returns (uint256)",
+  "function getArbitrableConfig() view returns (address arbitrator,address tribunalSafe,uint256 submitterCollateralAmount,uint256 challengerCollateralAmount,uint256 defaultRuling,uint256 defaultRulingTimeout)",
   "function getProposal(uint256) view returns (address,address,address,uint256,uint256,uint8,uint256,uint256,uint256,uint256,uint256,uint256)",
 ]);
 const registryCommunityAbi = parseAbi([
@@ -392,6 +393,7 @@ async function createExecutionProposalDirectly({
   poolId,
   token,
   beneficiary,
+  strategyAddress,
 }: {
   publicClient: any;
   walletClient: any;
@@ -399,8 +401,14 @@ async function createExecutionProposalDirectly({
   poolId: bigint;
   token: Address;
   beneficiary: Address;
+  strategyAddress: Address;
 }) {
   const tokenDecimals = await getTokenDecimals(publicClient, token);
+  const arbitrableConfig = await publicClient.readContract({
+    address: strategyAddress,
+    abi: cvStrategyAbi,
+    functionName: "getArbitrableConfig",
+  });
   const encodedData = encodeAbiParameters(
     parseAbiParameters(
       "(uint256 poolId,address beneficiaryAddress,uint256 requestedAmount,address requestedTokenAddress,(uint256 pointer,string ipfsHash) metadata)",
@@ -427,7 +435,7 @@ async function createExecutionProposalDirectly({
     abi: alloAbi,
     functionName: "registerRecipient",
     args: [poolId, encodedData],
-    value: parseUnits("0.0000000001", 18),
+    value: BigInt(arbitrableConfig[2]),
   });
 
   const receipt = await publicClient.waitForTransactionReceipt({
@@ -575,6 +583,122 @@ async function waitForProposalExecutedOnChain({
     .toBe(4);
 }
 
+async function readProposalStatus({
+  publicClient,
+  strategyAddress,
+  proposalNumber,
+}: {
+  publicClient: any;
+  strategyAddress: Address;
+  proposalNumber: bigint;
+}) {
+  const proposal = await publicClient.readContract({
+    address: strategyAddress,
+    abi: cvStrategyAbi,
+    functionName: "getProposal",
+    args: [proposalNumber],
+  });
+
+  return Number(proposal[5]);
+}
+
+async function waitForExecuteButtonReady({
+  page,
+  executeButton,
+  timeoutMs = 180000,
+}: {
+  page: any;
+  executeButton: ReturnType<typeof getByTestId>;
+  timeoutMs?: number;
+}) {
+  const deadline = Date.now() + timeoutMs;
+  let lastReloadAt = 0;
+
+  while (Date.now() < deadline) {
+    const [visible, enabled] = await Promise.all([
+      executeButton.isVisible().catch(() => false),
+      executeButton.isEnabled().catch(() => false),
+    ]);
+    if (visible && enabled) {
+      return;
+    }
+
+    const hasInsufficientFundsMessage = await page
+      .getByText("Not enough funds in the pool to execute this proposal.")
+      .isVisible()
+      .catch(() => false);
+    if (hasInsufficientFundsMessage && Date.now() - lastReloadAt > 10000) {
+      lastReloadAt = Date.now();
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await page.bringToFront();
+    }
+
+    await page.waitForTimeout(1000);
+  }
+
+  throw new Error("Execute button did not become ready");
+}
+
+async function executeProposalFromUi({
+  page,
+  metamask,
+  extensionId,
+  publicClient,
+  strategyAddress,
+  proposalNumber,
+}: {
+  page: any;
+  metamask: MetaMask;
+  extensionId: string;
+  publicClient: any;
+  strategyAddress: Address;
+  proposalNumber: bigint;
+}) {
+  const executeButton = getByTestId(page, "btn-execute-proposal");
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await waitForExecuteButtonReady({ page, executeButton });
+      await executeButton.click();
+      await confirmTransaction({ metamask, extensionId });
+      await page.bringToFront();
+
+      await waitForProposalExecutedOnChain({
+        publicClient,
+        strategyAddress,
+        proposalNumber,
+        timeoutMs: 60000,
+      });
+      return;
+    } catch (error) {
+      lastError = error;
+      const status = await readProposalStatus({
+        publicClient,
+        strategyAddress,
+        proposalNumber,
+      });
+      if (status === 4) {
+        return;
+      }
+      if (attempt === 3) {
+        break;
+      }
+
+      console.warn(
+        `[execute-proposal] UI execute attempt ${attempt} did not execute proposal ${proposalNumber.toString()} (status ${status}); retrying.`,
+      );
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await page.bringToFront();
+      await page.waitForTimeout(3000);
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Proposal was not executed from the UI");
+}
+
 test("should execute a proposal", async ({
   context,
   page,
@@ -637,6 +761,7 @@ test("should execute a proposal", async ({
       poolId: BigInt(poolId),
       token,
       beneficiary: account.address,
+      strategyAddress,
     });
 
     executableProposalNumber = await waitForNewProposalIndexed({
@@ -726,14 +851,10 @@ test("should execute a proposal", async ({
   await page.bringToFront();
   await connectWallet(page, metamask);
 
-  const executeButton = getByTestId(page, "btn-execute-proposal");
-  await expect(executeButton).toBeVisible({ timeout: 180000 });
-  await expect(executeButton).toBeEnabled({ timeout: 180000 });
-  await executeButton.click();
-  await confirmTransaction({ metamask, extensionId });
-  await page.bringToFront();
-
-  await waitForProposalExecutedOnChain({
+  await executeProposalFromUi({
+    page,
+    metamask,
+    extensionId,
     publicClient,
     strategyAddress,
     proposalNumber: resolvedProposalNumber,

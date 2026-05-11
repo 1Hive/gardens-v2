@@ -30,6 +30,9 @@ const erc20Abi = parseAbi(["function decimals() view returns (uint8)"]);
 const alloAbi = parseAbi([
   "function registerRecipient(uint256 _poolId, bytes _data) payable returns (address)",
 ]);
+const cvStrategyAbi = parseAbi([
+  "function getArbitrableConfig() view returns (address arbitrator,address tribunalSafe,uint256 submitterCollateralAmount,uint256 challengerCollateralAmount,uint256 defaultRuling,uint256 defaultRulingTimeout)",
+]);
 
 async function fetchLatestEnabledStrategyWithProposals(
   graphUrl: string,
@@ -77,7 +80,13 @@ test("should create a proposal in the pool", async () => {
     subgraphUrl,
     communityId,
   );
-  const { poolId, token, proposals } = subgraphRes.data.cvstrategies[0] as {
+  const {
+    id: strategyAddress,
+    poolId,
+    token,
+    proposals,
+  } = subgraphRes.data.cvstrategies[0] as {
+    id: Address;
     poolId: string;
     token: Address;
     proposals: { proposalNumber: string }[];
@@ -115,12 +124,17 @@ test("should create a proposal in the pool", async () => {
       },
     ],
   );
+  const arbitrableConfig = await publicClient.readContract({
+    address: strategyAddress,
+    abi: cvStrategyAbi,
+    functionName: "getArbitrableConfig",
+  });
   const hash = await walletClient.writeContract({
     address: alloAddress,
     abi: alloAbi,
     functionName: "registerRecipient",
     args: [BigInt(poolId), encodedData],
-    value: parseUnits("0.0000000001", 18),
+    value: BigInt(arbitrableConfig[2]),
   });
 
   await publicClient.waitForTransactionReceipt({

@@ -31,6 +31,9 @@ const alloAbi = parseAbi([
   "function registerRecipient(uint256 _poolId, bytes _data) payable returns (address)",
 ]);
 const cvStrategyAbi = parseAbi(["function cancelProposal(uint256 proposalId)"]);
+const cvStrategyConfigAbi = parseAbi([
+  "function getArbitrableConfig() view returns (address arbitrator,address tribunalSafe,uint256 submitterCollateralAmount,uint256 challengerCollateralAmount,uint256 defaultRuling,uint256 defaultRulingTimeout)",
+]);
 
 async function fetchLatestEnabledStrategyWithProposals(
   graphUrl: string,
@@ -123,12 +126,17 @@ test("should cancel a proposal", async () => {
       },
     ],
   );
+  const arbitrableConfig = await publicClient.readContract({
+    address: strategyAddress,
+    abi: cvStrategyConfigAbi,
+    functionName: "getArbitrableConfig",
+  });
   const createHash = await walletClient.writeContract({
     address: alloAddress,
     abi: alloAbi,
     functionName: "registerRecipient",
     args: [BigInt(poolId), encodedData],
-    value: parseUnits("0.0000000001", 18),
+    value: BigInt(arbitrableConfig[2]),
   });
   const createReceipt = await publicClient.waitForTransactionReceipt({
     hash: createHash,
