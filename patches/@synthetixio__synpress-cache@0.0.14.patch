@@ -1,0 +1,80 @@
+diff --git a/dist/cli/index.js b/dist/cli/index.js
+index e74aa754b5d0f64a2611bad1401bb802667ccb48..a62a1ce12c00c3caa0223d17c4dc00cdb51fd949 100755
+--- a/dist/cli/index.js
++++ b/dist/cli/index.js
+@@ -997,7 +997,8 @@ async function createCacheForWalletSetupFunction(extensionPath, contextCacheDirP
+   }
+   const context = await chromium.launchPersistentContext(contextCacheDirPath, {
+     headless: false,
+-    args: browserArgs
++    args: browserArgs,
++    ignoreDefaultArgs: ["--disable-extensions", "--disable-component-extensions-with-background-pages"]
+   });
+   const extensionPage = await waitForExtensionOnLoadPage(context, extensionPath);
+   try {
+diff --git a/dist/index.js b/dist/index.js
+index 1ae6b4b34ff40eeb7120c2281f499c2256db6586..8d06762f8ff4d22f103a37363b34137488ce64b5 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -383,7 +383,8 @@ async function createCacheForWalletSetupFunction(extensionPath, contextCacheDirP
+   }
+   const context = await chromium.launchPersistentContext(contextCacheDirPath, {
+     headless: false,
+-    args: browserArgs
++    args: browserArgs,
++    ignoreDefaultArgs: ["--disable-extensions", "--disable-component-extensions-with-background-pages"]
+   });
+   const extensionPage = await waitForExtensionOnLoadPage(context, extensionPath);
+   try {
+diff --git a/src/utils/createCacheForWalletSetupFunction.ts b/src/utils/createCacheForWalletSetupFunction.ts
+index 1302491a22b84b7a9f025dc1aed7ee31c01710f3..d202033068303aa821365c1561f603555a712d52 100644
+--- a/src/utils/createCacheForWalletSetupFunction.ts
++++ b/src/utils/createCacheForWalletSetupFunction.ts
+@@ -20,7 +20,8 @@ export async function createCacheForWalletSetupFunction(
+ 
+   const context = await chromium.launchPersistentContext(contextCacheDirPath, {
+     headless: false,
+-    args: browserArgs
++    args: browserArgs,
++    ignoreDefaultArgs: ['--disable-extensions', '--disable-component-extensions-with-background-pages']
+   })
+ 
+   const extensionPage = await waitForExtensionOnLoadPage(context, extensionPath)
+diff --git a/dist/cli/index.js b/dist/cli/index.js
+index a62a1ce12c00c3caa0223d17c4dc00cdb51fd949..6de3a8d9f04fe9f03bc2a89bc2592dbec8d2e13c 100755
+--- a/dist/cli/index.js
++++ b/dist/cli/index.js
+@@ -1234,7 +1234,7 @@ async function prepareExtensionPhantom() {
+ }
+ 
+ // src/prepareExtension.ts
+-var DEFAULT_METAMASK_VERSION = "13.13.1";
++var DEFAULT_METAMASK_VERSION = "11.9.1";
+ var EXTENSION_DOWNLOAD_URL = `https://github.com/MetaMask/metamask-extension/releases/download/v${DEFAULT_METAMASK_VERSION}/metamask-chrome-${DEFAULT_METAMASK_VERSION}.zip`;
+ async function prepareExtension() {
+   const cacheDirPath = ensureCacheDirExists();
+diff --git a/dist/index.js b/dist/index.js
+index 8d06762f8ff4d22f103a37363b34137488ce64b5..a488534a0f641143f8c8cf526435b94c69ef6f08 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -1242,7 +1242,7 @@ async function removeTempContextDir(contextDirPath) {
+ }
+ 
+ // src/prepareExtension.ts
+-var DEFAULT_METAMASK_VERSION = "13.13.1";
++var DEFAULT_METAMASK_VERSION = "11.9.1";
+ var EXTENSION_DOWNLOAD_URL = `https://github.com/MetaMask/metamask-extension/releases/download/v${DEFAULT_METAMASK_VERSION}/metamask-chrome-${DEFAULT_METAMASK_VERSION}.zip`;
+ async function prepareExtension() {
+   const cacheDirPath = ensureCacheDirExists();
+diff --git a/src/prepareExtension.ts b/src/prepareExtension.ts
+index ce10a6e348ef9fceef04dc0b9d93c53fbd4ff6f3..0126a87f1df9660bc6b634ab6dca130d5209fd61 100644
+--- a/src/prepareExtension.ts
++++ b/src/prepareExtension.ts
+@@ -1,6 +1,6 @@
+ import { downloadFile, ensureCacheDirExists, unzipArchive } from '.'
+ 
+-export const DEFAULT_METAMASK_VERSION = '13.13.1'
++export const DEFAULT_METAMASK_VERSION = '11.9.1'
+ export const EXTENSION_DOWNLOAD_URL = `https://github.com/MetaMask/metamask-extension/releases/download/v${DEFAULT_METAMASK_VERSION}/metamask-chrome-${DEFAULT_METAMASK_VERSION}.zip`
+ 
+ // NOTE: This function is copied from `wallets/metamask/src/prepareExtension.ts` only TEMPORARILY!

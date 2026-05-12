@@ -740,6 +740,7 @@ export function PoolForm({
               registerKey="title"
               type="text"
               placeholder="Your pool name..."
+              testId="input-pool-name"
             />
             <FormInput
               label="Description"
@@ -753,6 +754,7 @@ export function PoolForm({
               type="markdown"
               rows={7}
               placeholder="Enter a description of your pool..."
+              testId="input-pool-description"
             />
             {PoolTypes[strategyType] !== "signaling" && (
               <div className="flex items-end gap-4 flex-wrap md:flex-nowrap">
@@ -772,6 +774,7 @@ export function PoolForm({
                   placeholder="0x.."
                   className="font-mono text-sm w-full max-w-[29rem]"
                   suffix={customTokenData?.symbol}
+                  testId="input-token-address"
                 />
                 {networkSfMetadata && poolTokenAddress && customTokenData && (
                   <div className="mb-2">
@@ -1052,6 +1055,7 @@ export function PoolForm({
                 min: 1 / 10 ** ETH_DECIMALS,
               }}
               suffix={chain.nativeCurrency?.symbol ?? "ETH"}
+              testId="input-collateral-create-proposal"
             />
             <FormInput
               tooltip={
@@ -1067,6 +1071,7 @@ export function PoolForm({
                 min: 1 / 10 ** ETH_DECIMALS,
               }}
               suffix={chain.nativeCurrency?.symbol ?? "ETH"}
+              testId="input-dispute-proposal"
             />
             <FormInput
               label="Ruling Time"
@@ -1286,11 +1291,15 @@ export function PoolForm({
               isLoading={loading}
               disabled={!isConnected || missmatchUrl}
               tooltip={tooltipMessage}
+              testId="btn-submit-pool"
             >
               Submit
             </Button>
           </div>
-        : <Button type="submit">Preview</Button>}
+        : <Button type="submit" testId="btn-preview-pool">
+            Preview
+          </Button>
+        }
       </div>
     </form>
   );

@@ -129,11 +129,35 @@ const ConvictionBarChartBase = ({
         },
       ],
     },
+    // 2.1) Conviction < Threshold = Total Support
+    convictionLTThresholdEqSupport: {
+      condition: () =>
+        currentConvictionPct < thresholdPct &&
+        thresholdPct == proposalSupportPct,
+      details: [
+        {
+          message: "This proposal needs conviction to grow!",
+          growing: true,
+        },
+      ],
+    },
     //3) Total Support < Conviction < Threshold
     supportLTConvictionLTThreshold: {
       condition: () =>
         proposalSupportPct < currentConvictionPct &&
         currentConvictionPct < thresholdPct,
+      details: [
+        {
+          message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdPct} VP threshold.`,
+          growing: false,
+        },
+      ],
+    },
+    //3.1) Total Support < Conviction = Threshold
+    supportLTConvictionEqThreshold: {
+      condition: () =>
+        proposalSupportPct < currentConvictionPct &&
+        currentConvictionPct == thresholdPct,
       details: [
         {
           message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdPct} VP threshold.`,
@@ -152,6 +176,21 @@ const ConvictionBarChartBase = ({
             proposalType === "streaming" ?
               "This proposal is about to stream."
             : "This proposal is executable.",
+          growing: false,
+        },
+      ],
+    },
+    //4.1) Total Support = Threshold < Conviction
+    supportEqThresholdLTConviction: {
+      condition: () =>
+        proposalSupportPct == thresholdPct &&
+        thresholdPct < currentConvictionPct,
+      details: [
+        {
+          message:
+            proposalType === "streaming" ?
+              "This proposal is about to stream."
+            : "This proposal is ready to be executed!",
           growing: false,
         },
       ],
@@ -228,6 +267,19 @@ const ConvictionBarChartBase = ({
         },
       ],
     },
+    //10) Conviction = Total Support = Threshold
+    ConvictionEqSupportEqThreshold: {
+      condition: () =>
+        proposalSupportPct == currentConvictionPct &&
+        currentConvictionPct == thresholdPct &&
+        proposalSupportPct !== 0,
+      details: [
+        {
+          message: "More support needed",
+          growing: null,
+        },
+      ],
+    },
   };
 
   const { message, growing } = useMemo(() => {
@@ -244,7 +296,9 @@ const ConvictionBarChartBase = ({
   }, [
     currentConvictionPct,
     hasInsufficientPoolFunds,
+    isSignalingType,
     proposalSupportPct,
+    proposalType,
     thresholdPct,
   ]);
 

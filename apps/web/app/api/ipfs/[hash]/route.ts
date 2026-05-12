@@ -1,11 +1,15 @@
-// api/ipfs/[hash]
-
-import { Params } from "next/dist/shared/lib/router/utils/route-matcher";
 import { NextRequest } from "next/server";
 
 const ipfsGateway = process.env.IPFS_GATEWAY ?? "ipfs.io";
-export async function GET(req: NextRequest, { params }: Params) {
-  const { hash } = params;
+
+type RouteContext = {
+  params: Promise<{
+    hash: string;
+  }>;
+};
+
+export async function GET(req: NextRequest, { params }: RouteContext) {
+  const { hash } = await params;
   const searchParams = new URL(req.url).searchParams;
   const ipfsUri = `https://${ipfsGateway}/ipfs/${hash}?${process.env.PINATA_KEY ? "pinataGatewayToken=" + process.env.PINATA_KEY : ""}`;
   const res = await fetch(ipfsUri, {

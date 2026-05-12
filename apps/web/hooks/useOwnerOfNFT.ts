@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Address, Chain } from "viem";
 import { erc721ABI, useAccount } from "wagmi";
+import { getConfigByChain } from "@/configs/chains";
 import { NFTs } from "@/globals";
-import { getNFTsForWallet } from "@/services/alchemy";
+import { getNftHolderFlagsForWallet } from "@/services/alchemy";
 import { getEnvPublicClient } from "@/utils/publicClient";
 
 interface UseOwnerOfNFTParams {
@@ -27,37 +28,54 @@ export function useOwnerOfNFT({
   const [error, setError] = useState<string | null>(null);
   const { address } = useAccount();
   const fetching = useRef(false);
+  const checkedKey = useRef<string | null>(null);
 
   useEffect(() => {
     if (!enabled || !address || chains.length === 0) {
+      checkedKey.current = null;
+      fetching.current = false;
+      setLoading(false);
+      setIsOwner(undefined);
+      setError(null);
       return;
     }
 
+    const currentKey = `${address.toLowerCase()}:${nft}:${chains
+      .map((chain) => chain.id)
+      .join(",")}`;
+
     const checkOwnership = async () => {
-      if (loading || isOwner != null || fetching.current) return; // Prevent multiple calls if already loading
+      if (fetching.current || checkedKey.current === currentKey) return;
+
+      checkedKey.current = currentKey;
       fetching.current = true;
       setLoading(true);
       setError(null);
+      setIsOwner(undefined);
 
       try {
+        let foundOwner = false;
+
         for (const chain of chains) {
           const nftSelector = NFTs[nft];
           if (!nftSelector) continue;
 
           try {
             if (Array.isArray(nftSelector)) {
-              // Use alchemy to fetch all NFTs for the address
-              // TODO: Unhardcode for testnets
-              const [collectionAddress, tokenIdSelector] = nftSelector;
-              const nfts = await getNFTsForWallet(address);
-              const hasNFT = nfts.some(
-                (x) =>
-                  x.contract.address.toLowerCase() ===
-                    collectionAddress.toLowerCase() &&
-                  tokenIdSelector(x.tokenId),
+              const alchemyApiBaseUrl =
+                getConfigByChain(chain.id)?.alchemyApiBaseUrl;
+              if (!alchemyApiBaseUrl) continue;
+
+              const holderFlags = await getNftHolderFlagsForWallet(
+                address,
+                alchemyApiBaseUrl,
               );
+              const hasNFT =
+                (nft === "Protopian" && holderFlags.isProtopian) ||
+                (nft === "Keeper" && holderFlags.isKeeper);
 
               if (hasNFT) {
+                foundOwner = true;
                 setIsOwner(true);
                 break;
               }
@@ -74,6 +92,7 @@ export function useOwnerOfNFT({
               });
 
               if (data && data > 0) {
+                foundOwner = true;
                 setIsOwner(true);
                 break;
               }
@@ -90,17 +109,22 @@ export function useOwnerOfNFT({
             continue;
           }
         }
+
+        if (!foundOwner) {
+          setIsOwner(false);
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to check ownership",
         );
       } finally {
+        fetching.current = false;
         setLoading(false);
       }
     };
 
     checkOwnership();
-  }, [address, chains, enabled]);
+  }, [address, chains, enabled, nft]);
 
   return { isOwner, loading, error };
 }

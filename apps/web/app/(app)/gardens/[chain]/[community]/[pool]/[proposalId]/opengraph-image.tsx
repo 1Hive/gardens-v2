@@ -11,7 +11,7 @@ import {
   FALLBACK_TITLE,
   getDescriptionFromStatus,
   titleCaseStatus,
-} from "./page";
+} from "./og-metadata";
 import {
   GARDEN_LOGO_BASE64,
   POOL_FUNDING_ICON_BASE64,

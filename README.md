@@ -1,6 +1,7 @@
 # Gardens v2
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![CodeQL](https://github.com/1Hive/gardens-v2/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/1Hive/gardens-v2/actions/workflows/github-code-scanning/codeql)
+[![E2E](https://github.com/1Hive/gardens-v2/actions/workflows/e2e.yml/badge.svg?branch=main&event=push)](https://github.com/1Hive/gardens-v2/actions/workflows/e2e.yml)
 [![CI](https://github.com/1Hive/gardens-v2/actions/workflows/ci.yaml/badge.svg)](https://github.com/1Hive/gardens-v2/actions/workflows/ci.yaml)
 [![Copilot](https://github.com/1Hive/gardens-v2/actions/workflows/copilot-swe-agent/copilot/badge.svg)](https://github.com/1Hive/gardens-v2/actions/workflows/copilot-swe-agent/copilot)
 [![Known Vulnerabilities](https://snyk.io/test/github/1Hive/gardens-v2/badge.svg)](https://snyk.io/test/github/1Hive/gardens-v2)
@@ -12,7 +13,7 @@
 
 Gardens v2 is a modular governance framework that enables communities to create and manage multiple governance pools with customizable parameters and voting mechanisms. Our smart contracts are built to optimize for secure, flexible, intuitive, multi-network governance solutions.
 
-<!-- MARKEE:START:0xd264b6fea167eaf901d26edab476ac2a8b0e7312 -->
+<!-- MARKEE:START:0x2335bfa938b60c73f0a1d62c6ecc747e8c516d2c -->
 ```
   ╔══════════════════════════════════════════════════════╗
   ║                  ⡷⢾ ⣎⣱ ⣏⡱ ⣇⠜ ⣏⡉ ⣏⡉                 ║
@@ -27,8 +28,8 @@ Gardens v2 is a modular governance framework that enables communities to create 
                  ││                      ││
    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
-*Show the world you support this repo! [Change this message at markee.xyz](https://markee.xyz/ecosystem/platforms/github/0xd264b6fea167eaf901d26edab476ac2a8b0e7312) ^*
-<!-- MARKEE:END:0xd264b6fea167eaf901d26edab476ac2a8b0e7312 -->
+*Show the world you support this repo! [Change this message at markee.xyz](https://markee.xyz/ecosystem/platforms/github/0x2335bfa938b60c73f0a1d62c6ecc747e8c516d2c) ^*
+<!-- MARKEE:END:0x2335bfa938b60c73f0a1d62c6ecc747e8c516d2c -->
 
 🌱 **[Launch Gardens v2 App](https://app.gardens.fund/)**
 

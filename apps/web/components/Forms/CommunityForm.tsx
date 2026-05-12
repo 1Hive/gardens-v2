@@ -23,12 +23,7 @@ import { FormPreview, FormRow } from "./FormPreview";
 import { FormSelect } from "./FormSelect";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { Button } from "@/components";
-import {
-  chainConfigMap,
-  ChainIcon,
-  getChain,
-  getConfigByChain,
-} from "@/configs/chains";
+import { chainConfigMap, ChainIcon } from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -38,6 +33,7 @@ import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 import { registryFactoryABI } from "@/src/generated";
+import { ChainId } from "@/types";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
@@ -45,6 +41,7 @@ import {
   CV_PERCENTAGE_SCALE_DECIMALS,
 } from "@/utils/numbers";
 import { ethAddressRegEx } from "@/utils/text";
+import { getViemChain } from "@/utils/web3";
 
 // Constants
 const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** 18;
@@ -104,27 +101,26 @@ export const CommunityForm = () => {
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const publicClient = useMemo(() => {
-    if (!selectedChainId) {
-      return undefined;
-    }
 
-    const selectedChain = getChain(selectedChainId);
-    if (!selectedChain) {
-      return undefined;
-    }
-
-    const rpcUrl = getConfigByChain(selectedChainId)?.rpcUrl?.trim();
-
-    return createPublicClient({
-      chain: selectedChain,
-      transport: rpcUrl ? http(rpcUrl) : http(),
-    });
-  }, [selectedChainId]);
   const { isConnected, tooltipMessage } = useDisableButtons();
   const { switchNetwork, data: switchNetworkData } = useAppSwitchNetwork();
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
   const [tokenIsFetching, setTokenIsFetching] = useState<boolean>(false);
+  const normalizedChainId =
+    Number.isFinite(Number(selectedChainId)) ?
+      Number(selectedChainId)
+    : undefined;
+
+  const selectedChainPublicClient = useMemo(() => {
+    if (!normalizedChainId || !chainConfigMap[normalizedChainId]?.rpcUrl) {
+      return undefined;
+    }
+
+    return createPublicClient({
+      chain: getViemChain(normalizedChainId as ChainId),
+      transport: http(chainConfigMap[normalizedChainId].rpcUrl),
+    });
+  }, [normalizedChainId]);
 
   // Effect to validate token address when it changes
   useEffect(() => {
@@ -262,7 +258,7 @@ export const CommunityForm = () => {
       });
       if (selectedChainId) {
         router.push(
-          `/gardens/${selectedChainId}/${newCommunityAddr.toLowerCase()}?${QUERY_PARAMS.communityPage.newCommunity}=true`,
+          `/gardens/${selectedChainId}/${newCommunityAddr?.toLowerCase()}?${QUERY_PARAMS.communityPage.newCommunity}=true`,
         );
       }
     },
@@ -338,8 +334,7 @@ export const CommunityForm = () => {
       const hasCommunityFee = communityFeeAmount > 0n;
       const feeReceiverAddress = getValues("feeReceiver").trim();
       const communityFeeReceiver =
-        hasCommunityFee && isAddress(feeReceiverAddress) ?
-          feeReceiverAddress
+        hasCommunityFee && isAddress(feeReceiverAddress) ? feeReceiverAddress
         : zeroAddress;
       const councilSafeAddress = getValues("councilSafe").trim();
       const isKickMemberEnabled = previewData.isKickMemberEnabled;
@@ -392,7 +387,7 @@ export const CommunityForm = () => {
             _nonce: 0n,
             _registryFactory: registryFactoryAddr,
             covenantIpfsHash: ipfsHash,
-            _metadata: { protocol: 1n, pointer: "" },
+            _metadata: { protocol: 1n, pointer: ipfsHash },
           },
         ],
       });
@@ -438,18 +433,20 @@ export const CommunityForm = () => {
 
   const validateTokenAddress = async (address: string) => {
     if (!isAddress(address)) return "Invalid Token Address";
-    if (!selectedChainId) return "Please select a chain first";
-    if (+selectedChainId !== Number(connectedChainId))
-      return `Connect to ${chainConfigMap[selectedChainId]?.name} network`;
+    if (!normalizedChainId) return "Please select a chain first";
+    if (normalizedChainId !== Number(connectedChainId))
+      return `Connect to ${chainConfigMap[normalizedChainId]?.name} network`;
+    if (!selectedChainPublicClient)
+      return `Missing RPC for ${chainConfigMap[normalizedChainId]?.name} network`;
     try {
       setTokenIsFetching(true);
       const [symbol, decimals] = await Promise.all([
-        publicClient?.readContract({
+        selectedChainPublicClient.readContract({
           address: address as `0x${string}`,
           abi: erc20ABI,
           functionName: "symbol",
         }),
-        publicClient?.readContract({
+        selectedChainPublicClient.readContract({
           address: address as `0x${string}`,
           abi: erc20ABI,
           functionName: "decimals",
@@ -464,12 +461,12 @@ export const CommunityForm = () => {
         return true;
       } else {
         setTokenData(null);
-        return `Not a valid ERC20 token in ${chainConfigMap[selectedChainId]?.name} network`;
+        return `Not a valid ERC20 token in ${chainConfigMap[normalizedChainId]?.name} network`;
       }
     } catch (err) {
       console.error(err);
       setTokenData(null);
-      return `Not a valid ERC20 token in ${chainConfigMap[selectedChainId]?.name} network`;
+      return `Not a valid ERC20 token in ${chainConfigMap[normalizedChainId]?.name} network`;
     } finally {
       setTokenIsFetching(false);
     }

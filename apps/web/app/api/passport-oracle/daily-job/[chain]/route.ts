@@ -1,6 +1,3 @@
-// api/passport-oracles/daily-job
-
-import { Params } from "next/dist/shared/lib/router/utils/route-matcher";
 import { NextResponse } from "next/server";
 import { gql } from "urql";
 import {
@@ -133,9 +130,15 @@ const updateScores = async (chain: string) => {
   return updates;
 };
 
-export async function GET(req: Request, { params }: Params) {
+type RouteContext = {
+  params: Promise<{
+    chain: string;
+  }>;
+};
+
+export async function GET(req: Request, { params }: RouteContext) {
   const apiKey = req.headers.get("authorization")?.replace("Bearer ", "");
-  const { chain } = params;
+  const { chain } = await params;
 
   if (apiKey !== process.env.CRON_SECRET) {
     console.error("Unauthorized", {

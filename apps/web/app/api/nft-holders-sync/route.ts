@@ -19,6 +19,11 @@ import { registryFactoryABI } from "@/src/generated";
 import { ChainId } from "@/types";
 import { getViemChain } from "@/utils/web3";
 
+// Ensure serverful runtime and allow longer execution for pagination across owners
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 300; // up to 5 minutes on Vercel Pro
+
 const PAGE_SIZE = 1000;
 
 type NftHolderMember = {
@@ -35,6 +40,12 @@ type ChainSyncResult = {
   additions: string[];
   removals: string[];
   txHashes: string[];
+  dryRun: boolean;
+};
+
+type ChainSyncFailure = {
+  chainId: number;
+  error: string;
   dryRun: boolean;
 };
 
@@ -67,15 +78,18 @@ function getChainIdParam(request: Request): string | null {
   );
 }
 
-function getTargetChainIds(request: Request, dryRun: boolean): ChainId[] | string {
+function getTargetChainIds(request: Request): ChainId[] | string {
   const chainIdParam = getChainIdParam(request);
   const configuredChainIds = getConfiguredChainIds();
 
   if (chainIdParam == null) {
-    if (!dryRun) {
-      return "chainId is required for non-dry NFT holders sync";
-    }
+    return configuredChainIds;
+  }
 
+  if (
+    chainIdParam.toLowerCase() === "all" ||
+    chainIdParam.toLowerCase() === "all-chains"
+  ) {
     return configuredChainIds;
   }
 
@@ -223,7 +237,9 @@ function getRoleFlag(
   nftHolderType: NftHolderType,
   flags: NftHolderFlags | undefined,
 ): boolean {
-  return nftHolderType === "protopian" ? !!flags?.isProtopian : !!flags?.isKeeper;
+  return nftHolderType === "protopian" ?
+      !!flags?.isProtopian
+    : !!flags?.isKeeper;
 }
 
 function delay(ms: number): Promise<void> {
@@ -248,7 +264,10 @@ async function writeWithNonceRetry(
     try {
       return await write();
     } catch (error) {
-      if (!isReplacementUnderpricedError(error) || attempt === maxAttempts - 1) {
+      if (
+        !isReplacementUnderpricedError(error) ||
+        attempt === maxAttempts - 1
+      ) {
         throw error;
       }
 
@@ -263,7 +282,9 @@ function getAddressUniverse(
   desiredByAddress: Record<Address, NftHolderFlags>,
   indexedByChain: Partial<Record<ChainId, IndexedNftHolderMap>>,
 ): Address[] {
-  const addresses = new Set<Address>(Object.keys(desiredByAddress) as Address[]);
+  const addresses = new Set<Address>(
+    Object.keys(desiredByAddress) as Address[],
+  );
 
   for (const membersByAddress of Object.values(indexedByChain)) {
     if (!membersByAddress) continue;
@@ -346,19 +367,15 @@ async function syncNftHolderTypeForChain(params: {
   const candidateAdditions = universeAddresses.filter((address) => {
     return (
       getRoleFlag(nftHolderType, desiredByAddress[address]) &&
-      (
-        !getRoleFlag(nftHolderType, indexedByAddress[address]) ||
-        getRoleFlag(nftHolderType, conflictingByAddress[address])
-      )
+      (!getRoleFlag(nftHolderType, indexedByAddress[address]) ||
+        getRoleFlag(nftHolderType, conflictingByAddress[address]))
     );
   });
   const candidateRemovals = universeAddresses.filter((address) => {
     return (
       !getRoleFlag(nftHolderType, desiredByAddress[address]) &&
-      (
-        getRoleFlag(nftHolderType, indexedByAddress[address]) ||
-        getRoleFlag(nftHolderType, conflictingByAddress[address])
-      )
+      (getRoleFlag(nftHolderType, indexedByAddress[address]) ||
+        getRoleFlag(nftHolderType, conflictingByAddress[address]))
     );
   });
 
@@ -457,7 +474,7 @@ export async function GET(request: Request) {
     if (!dryRun) {
       privateKeyToAccount(privateKey as `0x${string}`);
     }
-    const targetChainIds = getTargetChainIds(request, dryRun);
+    const targetChainIds = getTargetChainIds(request);
     if (typeof targetChainIds === "string") {
       return NextResponse.json({ message: targetChainIds }, { status: 400 });
     }
@@ -470,49 +487,68 @@ export async function GET(request: Request) {
         return [chainId, indexMembers(members)] as const;
       }),
     );
-    const indexedByChain = Object.fromEntries(
-      indexedByChainEntries,
-    ) as Partial<Record<ChainId, IndexedNftHolderMap>>;
-    const universeAddresses = getAddressUniverse(desiredByAddress, indexedByChain);
+    const indexedByChain = Object.fromEntries(indexedByChainEntries) as Partial<
+      Record<ChainId, IndexedNftHolderMap>
+    >;
+    const universeAddresses = getAddressUniverse(
+      desiredByAddress,
+      indexedByChain,
+    );
     const conflictingByAddress = getRoleConflicts(
       indexedByChain,
       universeAddresses,
     );
     const results: ChainSyncResult[] = [];
+    const failures: ChainSyncFailure[] = [];
 
     for (const chainId of targetChainIds) {
       const indexedByAddress = indexedByChain[chainId] ?? {};
-      const protopianResult = await syncNftHolderTypeForChain({
-        chainId,
-        privateKey,
-        dryRun,
-        nftHolderType: "protopian",
-        desiredByAddress,
-        indexedByAddress,
-        conflictingByAddress,
-        universeAddresses,
-      });
-      if (protopianResult) {
-        results.push(protopianResult);
-      }
+      try {
+        const protopianResult = await syncNftHolderTypeForChain({
+          chainId,
+          privateKey,
+          dryRun,
+          nftHolderType: "protopian",
+          desiredByAddress,
+          indexedByAddress,
+          conflictingByAddress,
+          universeAddresses,
+        });
+        if (protopianResult) {
+          results.push(protopianResult);
+        }
 
-      const keeperResult = await syncNftHolderTypeForChain({
-        chainId,
-        privateKey,
-        dryRun,
-        nftHolderType: "keeper",
-        desiredByAddress,
-        indexedByAddress,
-        conflictingByAddress,
-        universeAddresses,
-      });
-      if (keeperResult) {
-        results.push(keeperResult);
+        const keeperResult = await syncNftHolderTypeForChain({
+          chainId,
+          privateKey,
+          dryRun,
+          nftHolderType: "keeper",
+          desiredByAddress,
+          indexedByAddress,
+          conflictingByAddress,
+          universeAddresses,
+        });
+        if (keeperResult) {
+          results.push(keeperResult);
+        }
+      } catch (error) {
+        console.error(
+          `NFT holders sync failed for chain ${String(chainId)}`,
+          error,
+        );
+        failures.push({
+          chainId: Number(chainId),
+          error: error instanceof Error ? error.message : "Unknown error",
+          dryRun,
+        });
       }
     }
 
     return NextResponse.json({
-      message: dryRun ? "NFT holders sync dry run completed" : "NFT holders sync completed",
+      message:
+        dryRun ?
+          "NFT holders sync dry run completed"
+        : "NFT holders sync completed",
       dryRun,
       indexedChains: allChainIds,
       targetChains: targetChainIds,
@@ -521,10 +557,12 @@ export async function GET(request: Request) {
         protopians: Object.values(desiredByAddress).filter(
           (holder) => holder.isProtopian,
         ).length,
-        keepers: Object.values(desiredByAddress).filter((holder) => holder.isKeeper)
-          .length,
+        keepers: Object.values(desiredByAddress).filter(
+          (holder) => holder.isKeeper,
+        ).length,
       },
       results,
+      failures,
     });
   } catch (error) {
     console.error("NFT holders sync failed", error);

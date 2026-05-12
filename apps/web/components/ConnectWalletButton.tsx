@@ -52,9 +52,12 @@ import { formatAddress } from "@/utils/formatAddress";
 
 const WALLETCONNECT_STORAGE_KEY_PREFIXES = [
   "wc@",
+  "wc_",
   "walletconnect",
+  "wallet_connect",
   "WALLETCONNECT_DEEPLINK_CHOICE",
 ];
+const WALLETCONNECT_STORAGE_KEYS = ["wc_storage_version"];
 const DISCONNECT_RESET_STORAGE_KEY_PREFIXES = [
   ...WALLETCONNECT_STORAGE_KEY_PREFIXES,
   "wagmi",
@@ -78,13 +81,17 @@ const clearDisconnectPersistence = (storage: Storage) => {
     if (!key) {
       continue;
     }
+    const normalizedKey = key.toLowerCase();
 
     if (
       DISCONNECT_RESET_STORAGE_KEY_PREFIXES.some((prefix) =>
-        key.startsWith(prefix),
+        normalizedKey.startsWith(prefix.toLowerCase()),
+      ) ||
+      WALLETCONNECT_STORAGE_KEYS.some(
+        (storageKey) => normalizedKey === storageKey.toLowerCase(),
       ) ||
       DISCONNECT_RESET_STORAGE_KEY_SUBSTRINGS.some((fragment) =>
-        key.includes(fragment),
+        normalizedKey.includes(fragment.toLowerCase()),
       )
     ) {
       keysToRemove.push(key);
@@ -98,12 +105,68 @@ const WALLETCONNECT_INDEXED_DB_NAME_FRAGMENTS = [
   "walletconnect",
   "wallet_connect",
   "wc@",
+  "wc_",
 ];
+const WALLETCONNECT_INDEXED_DB_NAMES = ["WALLET_CONNECT_V2_INDEXED_DB"];
+const WALLETCONNECT_INDEXED_DB_STORE_NAMES = ["keyvaluestorage"];
+
+const clearIndexedDbObjectStore = async (
+  databaseName: string,
+  storeName: string,
+) =>
+  new Promise<void>((resolve) => {
+    let settled = false;
+    const settle = () => {
+      if (!settled) {
+        settled = true;
+        resolve();
+      }
+    };
+    const request = window.indexedDB.open(databaseName);
+
+    request.onupgradeneeded = () => {
+      request.transaction?.abort();
+      settle();
+    };
+    request.onerror = () => settle();
+    request.onsuccess = () => {
+      const database = request.result;
+
+      if (!database.objectStoreNames.contains(storeName)) {
+        database.close();
+        settle();
+        return;
+      }
+
+      const transaction = database.transaction(storeName, "readwrite");
+      transaction.objectStore(storeName).clear();
+      transaction.oncomplete = () => {
+        database.close();
+        settle();
+      };
+      transaction.onerror = () => {
+        database.close();
+        settle();
+      };
+      transaction.onabort = () => {
+        database.close();
+        settle();
+      };
+    };
+  });
 
 const clearWalletConnectIndexedDb = async () => {
   if (typeof window === "undefined" || !("indexedDB" in window)) {
     return;
   }
+
+  await Promise.all(
+    WALLETCONNECT_INDEXED_DB_NAMES.flatMap((databaseName) =>
+      WALLETCONNECT_INDEXED_DB_STORE_NAMES.map((storeName) =>
+        clearIndexedDbObjectStore(databaseName, storeName),
+      ),
+    ),
+  );
 
   const indexedDbWithDatabases = window.indexedDB as IDBFactory & {
     databases?: () => Promise<Array<{ name?: string }>>;
@@ -328,6 +391,7 @@ export function ConnectWallet() {
                 return (
                   <Button
                     onClick={() => handleOpenConnectModal(openConnectModal)}
+                    testId="connectButton"
                   >
                     <Image
                       src={walletIcon}
@@ -385,6 +449,7 @@ export function ConnectWallet() {
                                   undefined
                                 )
                               }
+                              data-testid="accounts"
                             >
                               {ensName ?? formatAddress(acc.address)}
                             </h5>
@@ -398,7 +463,10 @@ export function ConnectWallet() {
                                   <ChainIcon chain={chain.id} height={14} />
                                   <p className="text-xs ml-1">{chain.name}</p>
                                 </>
-                              : <p className="text-xs text-danger-content dark:text-danger-content">
+                              : <p
+                                  className="text-xs text-danger-content dark:text-danger-content"
+                                  data-testid="wrong-network"
+                                >
                                   Switch To {chainFromPath?.name ?? ""} Network
                                 </p>
                               }
@@ -537,6 +605,7 @@ export function ConnectWallet() {
                                       strokeWidth={10}
                                     />
                                   }
+                                  testId="switch-network-button"
                                 >
                                   <TooltipIfOverflow>
                                     {`Switch to ${chainFromPath?.name ?? ""}`}

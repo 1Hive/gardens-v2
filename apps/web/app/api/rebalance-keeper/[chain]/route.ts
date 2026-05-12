@@ -13,9 +13,9 @@ import { ChainId } from "@/types";
 import { getViemChain } from "@/utils/web3";
 
 type Params = {
-  params: {
+  params: Promise<{
     chain: string;
-  };
+  }>;
 };
 
 type StrategyCandidate = {
@@ -339,7 +339,7 @@ export async function GET(req: Request, { params }: Params) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const chainParam = params.chain;
+  const { chain: chainParam } = await params;
   const isAllChains =
     chainParam.toLowerCase() === "all" ||
     chainParam.toLowerCase() === "all-chains";
@@ -394,7 +394,9 @@ export async function GET(req: Request, { params }: Params) {
       discoveredStrategies:
         acc.discoveredStrategies + curr.discoveredStrategies,
       sentTxs: acc.sentTxs + curr.sent.length,
-      gasUsed: acc.gasUsed + curr.sent.reduce((sum, tx) => sum + BigInt(tx.gasUsed), 0n),
+      gasUsed:
+        acc.gasUsed +
+        curr.sent.reduce((sum, tx) => sum + BigInt(tx.gasUsed), 0n),
       skipped: acc.skipped + curr.skipped.length,
       failedChains: acc.failedChains + (curr.error ? 1 : 0),
     }),

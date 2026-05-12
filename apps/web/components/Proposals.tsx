@@ -63,6 +63,7 @@ import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, registryCommunityABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { useErrorDetails } from "@/utils/getErrorName";
+import { getMemberActivationState } from "@/utils/memberActivation";
 import { bigIntMin, calculatePercentageBigInt } from "@/utils/numbers";
 
 // Types
@@ -182,7 +183,7 @@ export function Proposals({
         function: "allocate",
       },
     ],
-    enabled: !!wallet,
+    enabled: !!wallet && !!strategy.registryCommunity.id,
   });
 
   const { data: memberStrategyData } = useSubgraphQuery<getMemberStrategyQuery>(
@@ -203,7 +204,7 @@ export function Proposals({
     },
   );
 
-  const memberActivatedPoints: bigint = BigInt(
+  const memberActivatedPointsFromSubgraph: bigint = BigInt(
     memberStrategyData?.memberStrategy?.activatedPoints ?? 0,
   );
 
@@ -220,8 +221,14 @@ export function Proposals({
   // Derived state
   const isMemberCommunity =
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
-  const memberActivatedStrategy =
-    memberStrategyData?.memberStrategy?.activatedPoints > 0n;
+  const {
+    hasResolvedMemberPower,
+    memberActivatedStrategy,
+    memberActivatedPoints,
+  } = getMemberActivationState({
+    memberPower,
+    subgraphActivatedPoints: memberActivatedPointsFromSubgraph,
+  });
 
   const [sortedProposals, setSortedProposals] = useState(strategy.proposals);
 
@@ -754,6 +761,7 @@ export function Proposals({
                       !isConnected || missmatchUrl || !isMemberCommunity
                     }
                     tooltip={tooltipMessage}
+                    testId="btn-add-proposal"
                   >
                     Add New Proposal
                   </Button>
@@ -791,6 +799,7 @@ export function Proposals({
                           }
                           tooltip={tooltipMessage}
                           className="!w-full sm:!w-auto"
+                          testId="btn-add-proposal"
                         >
                           Add New Proposal
                         </Button>
@@ -806,6 +815,7 @@ export function Proposals({
                         enableCheck={strategy.sybil?.type === "Passport"}
                       >
                         <Button
+                          testId="btn-vote-on-proposals"
                           icon={
                             <AdjustmentsHorizontalIcon height={24} width={24} />
                           }
@@ -1032,7 +1042,6 @@ export function useProposalFilter<
     if (!sortBy) return filteredProposals;
 
     const list = [...filteredProposals];
-
     switch (sortBy) {
       case "newest":
         return list.sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
@@ -1071,6 +1080,9 @@ export function useProposalFilter<
   const setFilterWithLoading = (newFilter: FilterType) => {
     startTransition(() => {
       setFilter(newFilter);
+      if (newFilter === "closed" || newFilter === "executed") {
+        setSortBy("newest");
+      }
     });
   };
 

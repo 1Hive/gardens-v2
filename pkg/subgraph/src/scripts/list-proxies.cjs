@@ -38,7 +38,7 @@ const celoSubgraph =
   subgraphConfig.VERSION_PROD;
 const ethereumSubgraph =
   "https://api.studio.thegraph.com/query/102093/gardens-v-2-ethereum/" +
-  subgraphConfig.VERSION_ETHEREUM;
+  subgraphConfig.VERSION_PROD;
 
 const chainArg = process.argv
   .slice(2)

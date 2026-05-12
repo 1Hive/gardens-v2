@@ -55,6 +55,7 @@ import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { logOnce } from "@/utils/log";
+import { getMemberActivationState } from "@/utils/memberActivation";
 import {
   calculatePercentageBigInt,
   formatTokenAmount,
@@ -297,7 +298,7 @@ export default function ClientPage({
         { topic: "community", id: communityAddress },
         { topic: "member", containerId: communityAddress },
       ],
-      enabled: wallet !== undefined,
+      enabled: wallet !== undefined && _community !== undefined,
     });
 
   const registryCommunity = result?.registryCommunity;
@@ -359,7 +360,7 @@ export default function ClientPage({
           },
         ]
       : undefined,
-    enabled: !!wallet && !!strategy?.registryCommunity?.id,
+    enabled: !!wallet && !!communityAddress,
   });
 
   const { data: memberStrategyData, fetching: memberStrategyFetching } =
@@ -389,7 +390,7 @@ export default function ClientPage({
     isMemberCommunityResult?.isRegistered ? isMemberCommunityResult
     : memberCommunityFromPoolResult?.isRegistered ?
       memberCommunityFromPoolResult
-    : isMemberCommunityResult ?? memberCommunityFromPoolResult;
+    : (isMemberCommunityResult ?? memberCommunityFromPoolResult);
 
   const memberTokensInCommunity = BigInt(
     memberCommunityData?.stakedTokens ?? 0,
@@ -419,10 +420,12 @@ export default function ClientPage({
 
   const isMemberCommunity = !!memberCommunityData?.isRegistered;
 
-  const memberActivatedOnChain = memberPower != null && memberPower > 0n;
-  const memberActivatedStrategy =
-    memberActivatedOnChain ||
-    memberStrategyData?.memberStrategy?.activatedPoints > 0n;
+  const { hasResolvedMemberPower, memberActivatedStrategy } =
+    getMemberActivationState({
+      memberPower,
+      subgraphActivatedPoints:
+        memberStrategyData?.memberStrategy?.activatedPoints,
+    });
   const hasResolvedMembershipState =
     !wallet ||
     (hasStartedMembershipLookup && !isMemberFetching && !memberDataFetching);

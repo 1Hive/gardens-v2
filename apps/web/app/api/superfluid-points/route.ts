@@ -13,6 +13,7 @@ import {
 } from "@/services/superfluid-points";
 import { erc20ABI } from "@/src/generated";
 import { ChainId } from "@/types";
+import { isValidCid } from "@/utils/ipfs";
 import { getViemChain } from "@/utils/web3";
 
 type Strategy = {
@@ -681,16 +682,16 @@ const PINATA_POINTS_SNAPSHOT_CID =
   process.env.SUPERFLUID_POINTS_SNAPSHOT_CID ?? null;
 const PINATA_PRICE_CACHE_NAME =
   process.env.SUPERFLUID_PRICE_CACHE_NAME ?? "superfluid-token-prices";
+const PINATA_ENS_CACHE_NAME =
+  process.env.SUPERFLUID_ENS_CACHE_NAME ?? "superfluid-ens-cache";
 const PINATA_GROUP_ID =
   process.env.PINATA_GROUP_ID ?? "37bf2b9a-5a2e-4049-b138-8b1e180d44a4";
 const normalizeIpfsGateway = (gateway?: string | null) => {
   if (!gateway || gateway.trim() === "") return null;
   const trimmed = gateway.trim().replace(/\/$/, "");
-  return (
-    trimmed.startsWith("http://") || trimmed.startsWith("https://") ?
+  return trimmed.startsWith("http://") || trimmed.startsWith("https://") ?
       trimmed
-    : `https://${trimmed}`
-  );
+    : `https://${trimmed}`;
 };
 const IPFS_GATEWAY = normalizeIpfsGateway(process.env.IPFS_GATEWAY);
 const PINATA_JWT = process.env.PINATA_JWT;
@@ -714,15 +715,12 @@ const pinataClient =
 const CAN_WRITE_PINATA = Boolean(pinataClient);
 
 const getIpfsGatewayUrl = (cid: string) => {
-  const gateway = IPFS_GATEWAY?.replace(/\/$/, "");
-  if (!gateway) {
-    return `https://gateway.pinata.cloud/ipfs/${cid}`;
+  const gateway = IPFS_GATEWAY ?? "https://gateway.pinata.cloud";
+  const url = new URL(`/ipfs/${encodeURIComponent(cid)}`, gateway);
+  if (PINATA_KEY) {
+    url.searchParams.set("pinataGatewayToken", PINATA_KEY);
   }
-
-  const gatewayToken =
-    PINATA_KEY ? `?pinataGatewayToken=${PINATA_KEY}` : "";
-
-  return `${gateway}/ipfs/${cid}${gatewayToken}`;
+  return url.toString();
 };
 const SKIP_IDENTITY_RESOLUTION =
   (process.env.SUPERFLUID_SKIP_IDENTITY_RESOLUTION ?? "").toLowerCase() ===
@@ -735,6 +733,8 @@ let latestCreationBlockCacheCid: string | null =
   process.env.SUPERFLUID_BLOCK_CACHE_CID ?? null;
 let latestTransferLogCacheCid: string | null =
   process.env.SUPERFLUID_TRANSFER_CACHE_CID ?? null;
+let latestEnsCacheCid: string | null =
+  process.env.SUPERFLUID_ENS_CACHE_CID ?? null;
 const FARCASTER_GARDENS_USERNAME =
   process.env.FARCASTER_GARDENS_USERNAME ?? "gardens";
 let farcasterGardensFid: number | null = null;
@@ -760,6 +760,8 @@ type EnsCacheEntry = {
   fetchedAt: number;
 };
 let ensIdentityCache = new Map<string, EnsCacheEntry>();
+let ensIdentityCacheDirty = false;
+let ensIdentityCacheHydrated = false;
 let nativeSuperTokenCache = new Map<string, string>();
 let nativeTokenCache = new Map<string, string>();
 let latestPointsSnapshotCid: string | null = PINATA_POINTS_SNAPSHOT_CID;
@@ -794,15 +796,26 @@ const tokenPriceCache = new Map<
 >();
 let priceCacheDirty = false;
 let latestPriceCacheCid: string | null = null;
+let priceCacheHydrated = false;
 let lastEnsCachePrune = 0;
 const ENS_CACHE_PRUNE_INTERVAL_MS = 60 * 60 * 1000;
+const isEnsNegativeCacheEntry = (entry: EnsCacheEntry) =>
+  !entry.name && !entry.avatar;
+const setEnsIdentityCacheEntry = (address: string, entry: EnsCacheEntry) => {
+  ensIdentityCache.set(address.toLowerCase(), entry);
+  ensIdentityCacheDirty = true;
+};
 const ensureEnsCacheFresh = () => {
   const now = Date.now();
   if (now - lastEnsCachePrune < ENS_CACHE_PRUNE_INTERVAL_MS) return;
   lastEnsCachePrune = now;
   for (const [addr, entry] of ensIdentityCache.entries()) {
-    if (now - entry.fetchedAt >= ENS_CACHE_TTL_MS) {
+    if (
+      isEnsNegativeCacheEntry(entry) &&
+      now - entry.fetchedAt >= ENS_CACHE_TTL_MS
+    ) {
       ensIdentityCache.delete(addr);
+      ensIdentityCacheDirty = true;
     }
   }
 };
@@ -935,37 +948,38 @@ const fetchEnsIdentityByAddress = async (
   const key = address.toLowerCase();
   const cached = ensIdentityCache.get(key);
   const now = Date.now();
-  if (cached && now - cached.fetchedAt < ENS_CACHE_TTL_MS) {
-    if (cached.avatar) {
-      return { name: cached.name, avatar: cached.avatar };
-    }
-    const cachedName = cached.name;
-    const shouldRefreshAvatar =
-      typeof cachedName === "string" &&
-      cachedName.length > 0 &&
-      now - cached.fetchedAt >= ENS_AVATAR_RETRY_MS;
-    if (!shouldRefreshAvatar) {
-      return { name: cached.name, avatar: cached.avatar };
-    }
-    try {
-      const client = getMainnetClient();
-      const avatar = await resolveEnsAvatarWithFallback(client, cachedName);
-      if (!avatar) {
-        console.log("[superfluid-points] ens avatar not found for name", {
-          ens: cachedName,
-        });
+  if (cached) {
+    if (cached.name) {
+      if (cached.avatar) {
+        return { name: cached.name, avatar: cached.avatar };
       }
-      ensIdentityCache.set(key, {
-        name: cachedName,
-        avatar,
-        fetchedAt: now,
-      });
-      return { name: cachedName, avatar };
-    } catch (error) {
-      console.warn("[superfluid-points] ens avatar refresh failed", {
-        address,
-        error,
-      });
+      if (now - cached.fetchedAt < ENS_AVATAR_RETRY_MS) {
+        return { name: cached.name, avatar: cached.avatar };
+      }
+      try {
+        const client = getMainnetClient();
+        const avatar = await resolveEnsAvatarWithFallback(client, cached.name);
+        if (!avatar) {
+          console.log("[superfluid-points] ens avatar not found for name", {
+            ens: cached.name,
+          });
+        }
+        setEnsIdentityCacheEntry(key, {
+          name: cached.name,
+          avatar,
+          fetchedAt: now,
+        });
+        return { name: cached.name, avatar };
+      } catch (error) {
+        console.warn("[superfluid-points] ens avatar refresh failed", {
+          address,
+          error,
+        });
+        return { name: cached.name, avatar: cached.avatar };
+      }
+    }
+
+    if (now - cached.fetchedAt < ENS_CACHE_TTL_MS) {
       return { name: cached.name, avatar: cached.avatar };
     }
   }
@@ -984,13 +998,13 @@ const fetchEnsIdentityByAddress = async (
     } else {
       console.log("[superfluid-points] ens not found for address", { address });
     }
-    ensIdentityCache.set(key, { name: ens, avatar, fetchedAt: now });
+    setEnsIdentityCacheEntry(key, { name: ens, avatar, fetchedAt: now });
     return { name: ens, avatar };
   } catch (error) {
     const message = (error as Error)?.message ?? "";
     if (message.includes("reverse")) {
       // Reverse resolver often reverts when unset; ignore quietly after first hit
-      ensIdentityCache.set(key, {
+      setEnsIdentityCacheEntry(key, {
         name: null,
         avatar: null,
         fetchedAt: Date.now(),
@@ -998,7 +1012,7 @@ const fetchEnsIdentityByAddress = async (
       return { name: null, avatar: null };
     }
     console.warn("[superfluid-points] ens lookup failed", { address, error });
-    ensIdentityCache.set(key, {
+    setEnsIdentityCacheEntry(key, {
       name: null,
       avatar: null,
       fetchedAt: Date.now(),
@@ -1184,10 +1198,35 @@ const ensureLatestTransferCacheCid = async (): Promise<string | null> => {
   }
 };
 
+const ensureLatestEnsCacheCid = async (): Promise<string | null> => {
+  if (latestEnsCacheCid) return latestEnsCacheCid;
+  if (!CAN_WRITE_PINATA) return null;
+  try {
+    const data = await pinataClient?.pinList({
+      status: "pinned",
+      metadata: { name: PINATA_ENS_CACHE_NAME, keyvalues: {} },
+      pageLimit: 1,
+      pageOffset: 0,
+    } as any);
+    const cid = data?.rows?.[0]?.ipfs_pin_hash ?? null;
+    if (cid) {
+      latestEnsCacheCid = cid;
+      console.log("[superfluid-points] loaded latest ENS cache CID", { cid });
+      return cid;
+    }
+    return null;
+  } catch (error) {
+    console.warn("[superfluid-points] pinata pinList error (ENS cache)", {
+      error,
+    });
+    return null;
+  }
+};
+
 const fetchIpfsJson = async (
   cid: string,
 ): Promise<{ entries?: Record<string, string | null> } | null> => {
-  if (!cid) return null;
+  if (!cid || !isValidCid(cid)) return null;
   try {
     const url = getIpfsGatewayUrl(cid);
     const res = await fetch(url, { method: "GET" });
@@ -1224,6 +1263,8 @@ const hydrateCreationBlockCacheFromIpfs = async () => {
   console.log("[superfluid-points] hydrating creation block cache from IPFS", {
     cid: latestCreationBlockCacheCid,
     entries: Object.keys(remote.entries).length,
+    campaignVersion,
+    currentCampaignVersion,
   });
   creationCacheCampaignVersion = campaignVersion ?? null;
   for (const [addr, block] of Object.entries(remote.entries)) {
@@ -1256,6 +1297,8 @@ const hydrateTransferLogCacheFromIpfs = async () => {
   console.log("[superfluid-points] hydrating transfer log cache from IPFS", {
     cid: latestTransferLogCacheCid,
     entries: Object.keys(entries).length,
+    campaignVersion,
+    currentCampaignVersion,
   });
   transferCacheCampaignVersion = campaignVersion ?? null;
   for (const [key, value] of Object.entries(entries)) {
@@ -1278,6 +1321,55 @@ const hydrateTransferLogCacheFromIpfs = async () => {
       /* ignore malformed */
     }
   }
+};
+
+const hydrateEnsIdentityCacheFromIpfs = async () => {
+  if (ensIdentityCacheHydrated) return;
+  ensIdentityCacheHydrated = true;
+  if (!latestEnsCacheCid) {
+    await ensureLatestEnsCacheCid();
+  }
+  if (!latestEnsCacheCid) return;
+  const remote = (await fetchIpfsJson(latestEnsCacheCid)) as any;
+  const entries = remote?.entries;
+  if (!entries || typeof entries !== "object") return;
+
+  const now = Date.now();
+  let hydrated = 0;
+  const cacheEntries =
+    Array.isArray(entries) ? entries : (
+      Object.entries(entries).map(([address, entry]) => ({
+        address,
+        ...(entry && typeof entry === "object" ? entry : {}),
+      }))
+    );
+
+  for (const entry of cacheEntries) {
+    const address =
+      typeof entry?.address === "string" ? entry.address.toLowerCase() : "";
+    if (!address.startsWith("0x")) continue;
+    const name =
+      typeof entry?.name === "string" && entry.name.length > 0 ?
+        entry.name
+      : null;
+    const avatar =
+      typeof entry?.avatar === "string" && entry.avatar.length > 0 ?
+        entry.avatar
+      : null;
+    const fetchedAt =
+      typeof entry?.fetchedAt === "number" ? entry.fetchedAt : now;
+    if (!name && !avatar && now - fetchedAt >= ENS_CACHE_TTL_MS) continue;
+    const existing = ensIdentityCache.get(address);
+    if (existing && existing.fetchedAt > fetchedAt) continue;
+    ensIdentityCache.set(address, { name, avatar, fetchedAt });
+    hydrated++;
+  }
+
+  console.log("[superfluid-points] hydrated ENS cache from IPFS", {
+    cid: latestEnsCacheCid,
+    entries: hydrated,
+    ttlMs: ENS_CACHE_TTL_MS,
+  });
 };
 
 const pinCreationBlockCacheToIpfs = async (): Promise<string | null> => {
@@ -1329,70 +1421,88 @@ const persistCreationBlockCache = async (): Promise<string | null> => {
   return cid ?? latestCreationBlockCacheCid;
 };
 
-const cacheHydrationPromise = Promise.all([
-  hydrateCreationBlockCacheFromIpfs(),
-  hydrateTransferLogCacheFromIpfs(),
-  (async () => {
-    const cid =
-      latestPriceCacheCid ??
-      (await (async () => {
-        if (latestPriceCacheCid != null || !CAN_WRITE_PINATA) return null;
-        try {
-          const data = await pinataClient?.pinList({
-            status: "pinned",
-            metadata: { name: PINATA_PRICE_CACHE_NAME },
-            pageLimit: 1,
-            pageOffset: 0,
-          } as any);
-          const found = data?.rows?.[0]?.ipfs_pin_hash ?? null;
-          if (found) {
-            latestPriceCacheCid = found;
-            return found;
-          }
-          return null;
-        } catch {
-          return null;
+const hydratePriceCacheFromIpfs = async () => {
+  if (priceCacheHydrated) return;
+  priceCacheHydrated = true;
+  const cid =
+    latestPriceCacheCid ??
+    (await (async () => {
+      if (latestPriceCacheCid != null || !CAN_WRITE_PINATA) return null;
+      try {
+        const data = await pinataClient?.pinList({
+          status: "pinned",
+          metadata: { name: PINATA_PRICE_CACHE_NAME },
+          pageLimit: 1,
+          pageOffset: 0,
+        } as any);
+        const found = data?.rows?.[0]?.ipfs_pin_hash ?? null;
+        if (found) {
+          latestPriceCacheCid = found;
+          return found;
         }
-      })());
-    if (!cid) return;
-    const remote = await fetchIpfsJson(cid);
-    const entries =
-      remote && typeof remote === "object" && "entries" in remote ?
-        (remote as any).entries
-      : null;
-    if (!entries || typeof entries !== "object") return;
-    const now = Date.now();
-    let hydrated = 0;
-    for (const [key, val] of Object.entries(entries)) {
-      if (
-        !val ||
-        typeof val !== "object" ||
-        typeof (val as any).price !== "number" ||
-        typeof (val as any).fetchedAt !== "number"
-      ) {
-        continue;
+        return null;
+      } catch {
+        return null;
       }
-      const fetchedAt = (val as any).fetchedAt;
-      if (now - fetchedAt >= TOKEN_PRICE_CACHE_TTL_MS) continue;
-      const symbol =
-        typeof (val as any).symbol === "string" ? (val as any).symbol : "";
-      tokenPriceCache.set(key, {
-        price: (val as any).price,
-        fetchedAt,
-        symbol,
-      });
-      hydrated++;
+    })());
+  if (!cid) return;
+  const remote = await fetchIpfsJson(cid);
+  const entries =
+    remote && typeof remote === "object" && "entries" in remote ?
+      (remote as any).entries
+    : null;
+  if (!entries || typeof entries !== "object") return;
+  const now = Date.now();
+  let hydrated = 0;
+  for (const [key, val] of Object.entries(entries)) {
+    if (
+      !val ||
+      typeof val !== "object" ||
+      typeof (val as any).price !== "number" ||
+      typeof (val as any).fetchedAt !== "number"
+    ) {
+      continue;
     }
-    if (hydrated > 0) {
-      console.log("[superfluid-points] hydrated token price cache from IPFS", {
-        cid,
-        entries: hydrated,
-      });
-    }
-  })(),
-]).catch((error) => {
-  console.warn("[superfluid-points] cache hydration error", error);
-});
+    const fetchedAt = (val as any).fetchedAt;
+    if (now - fetchedAt >= TOKEN_PRICE_CACHE_TTL_MS) continue;
+    const symbol =
+      typeof (val as any).symbol === "string" ? (val as any).symbol : "";
+    tokenPriceCache.set(key, {
+      price: (val as any).price,
+      fetchedAt,
+      symbol,
+    });
+    hydrated++;
+  }
+  if (hydrated > 0) {
+    console.log("[superfluid-points] hydrated token price cache from IPFS", {
+      cid,
+      entries: hydrated,
+    });
+  }
+};
+
+const hydrateCachesFromIpfs = async () => {
+  const startedAt = Date.now();
+  try {
+    await Promise.all([
+      hydrateCreationBlockCacheFromIpfs(),
+      hydrateTransferLogCacheFromIpfs(),
+      hydratePriceCacheFromIpfs(),
+      hydrateEnsIdentityCacheFromIpfs(),
+    ]);
+    console.log("[superfluid-points] cache hydration complete", {
+      durationMs: Date.now() - startedAt,
+      campaignVersion: currentCampaignVersion,
+      creationBlockEntries: creationBlockCache.size,
+      transferLogEntries: transferLogCache.size,
+      priceEntries: tokenPriceCache.size,
+      ensEntries: ensIdentityCache.size,
+    });
+  } catch (error) {
+    console.warn("[superfluid-points] cache hydration error", error);
+  }
+};
 
 const ensureLatestPointsSnapshotCid = async (
   snapshotName = PINATA_POINTS_SNAPSHOT_NAME,
@@ -1444,9 +1554,15 @@ const hydratePointsSnapshotFromIpfs = async (
     count: wallets.length,
   });
   const farcasterMap = new Map<string, string>();
-  const ensMap = new Map<string, EnsCacheEntry>();
+  const ensMap = new Map<string, EnsCacheEntry>(ensIdentityCache);
   const nativeSuperMap = new Map<string, string>();
   const nativeTokenMap = new Map<string, string>();
+  const setSnapshotEnsEntry = (addr: string, entry: EnsCacheEntry) => {
+    const existing = ensMap.get(addr);
+    if (!existing || entry.fetchedAt >= existing.fetchedAt) {
+      ensMap.set(addr, entry);
+    }
+  };
   const ensCacheEntries =
     Array.isArray((data as any)?.ensCache) ? (data as any).ensCache : [];
   for (const entry of ensCacheEntries) {
@@ -1459,7 +1575,7 @@ const hydratePointsSnapshotFromIpfs = async (
       typeof entry?.name === "string" ? entry.name : entry?.name ?? null;
     const avatar =
       typeof entry?.avatar === "string" ? entry.avatar : entry?.avatar ?? null;
-    ensMap.set(addr, { name, avatar, fetchedAt });
+    setSnapshotEnsEntry(addr, { name, avatar, fetchedAt });
   }
   for (const w of wallets) {
     const addr = typeof w?.address === "string" ? w.address.toLowerCase() : "";
@@ -1473,7 +1589,7 @@ const hydratePointsSnapshotFromIpfs = async (
       const avatar =
         typeof w?.ensAvatar === "string" ? (w.ensAvatar as string) : null;
       if (name !== null || avatar !== null) {
-        ensMap.set(addr, { name, avatar, fetchedAt: Date.now() });
+        setSnapshotEnsEntry(addr, { name, avatar, fetchedAt: Date.now() });
       }
     }
     if (typeof w?.nativeSuperToken === "string") {
@@ -1507,6 +1623,12 @@ const findContractCreationBlock = async ({
     cached !== null &&
     (searchStart == null || cached >= searchStart)
   ) {
+    console.log("[superfluid-points] creation block cache hit", {
+      address,
+      block: cached.toString(),
+      searchStart: searchStart?.toString() ?? null,
+      searchEnd: searchEnd?.toString() ?? null,
+    });
     return cached;
   }
 
@@ -1516,6 +1638,12 @@ const findContractCreationBlock = async ({
       searchEnd
     : latestBlock;
   const lowerBound = searchStart != null && searchStart > 0n ? searchStart : 0n;
+  console.log("[superfluid-points] creation block cache miss", {
+    address,
+    cached: cached?.toString() ?? null,
+    lowerBound: lowerBound.toString(),
+    upperBound: upperBound.toString(),
+  });
 
   let hasCode = false;
   try {
@@ -1671,6 +1799,66 @@ const persistPriceCache = async (): Promise<string | null> => {
   const cid = await pinPriceCacheToIpfs();
   priceCacheDirty = false;
   return cid ?? latestPriceCacheCid;
+};
+
+const pinEnsIdentityCacheToIpfs = async (): Promise<string | null> => {
+  if (!CAN_WRITE_PINATA || !ensIdentityCacheDirty) return null;
+  ensureEnsCacheFresh();
+  const now = Date.now();
+  const entries = Object.fromEntries(
+    Array.from(ensIdentityCache.entries())
+      .filter(([, entry]) => {
+        if (!isEnsNegativeCacheEntry(entry)) return true;
+        return now - entry.fetchedAt < ENS_CACHE_TTL_MS;
+      })
+      .map(([address, entry]) => [
+        address,
+        {
+          name: entry.name,
+          avatar: entry.avatar,
+          fetchedAt: entry.fetchedAt,
+        },
+      ]),
+  );
+  const payload = {
+    updatedAt: new Date().toISOString(),
+    negativeTtlMs: ENS_CACHE_TTL_MS,
+    entries,
+  };
+  try {
+    const data = await pinataClient?.pinJSONToIPFS(
+      normalizeForPinata(payload),
+      {
+        pinataMetadata: {
+          name: PINATA_ENS_CACHE_NAME,
+          keyvalues: { updatedAt: payload.updatedAt },
+        } as any,
+        pinataOptions:
+          PINATA_GROUP_ID ? ({ groupId: PINATA_GROUP_ID } as any) : undefined,
+      },
+    );
+    if (data?.IpfsHash) {
+      latestEnsCacheCid = data.IpfsHash;
+      console.log("[superfluid-points] pinned ENS cache to IPFS", {
+        cid: data.IpfsHash,
+        entries: Object.keys(entries).length,
+      });
+      return data.IpfsHash;
+    }
+    return null;
+  } catch (error) {
+    console.warn("[superfluid-points] pinata pinJSONToIPFS error (ENS)", {
+      error,
+    });
+    return null;
+  }
+};
+
+const persistEnsIdentityCache = async (): Promise<string | null> => {
+  if (!ensIdentityCacheDirty) return null;
+  const cid = await pinEnsIdentityCacheToIpfs();
+  ensIdentityCacheDirty = false;
+  return cid ?? latestEnsCacheCid;
 };
 
 const pinPointsSnapshotToIpfs = async (
@@ -1956,6 +2144,17 @@ const fetchTransferLogs = async ({
     const cachedEnd = cached.endBlock;
     const coversStart = fromBlock >= cachedStart;
     const coversEnd = effectiveToBlock <= cachedEnd;
+    console.log("[superfluid-points] fetchTransferLogs cache lookup", {
+      cacheKey,
+      hit: true,
+      requestedStart: fromBlock.toString(),
+      requestedEnd: effectiveToBlock.toString(),
+      cachedStart: cachedStart.toString(),
+      cachedEnd: cachedEnd.toString(),
+      cachedLogs: cached.logs.length,
+      coversStart,
+      coversEnd,
+    });
     // Reuse cached logs for any covered range
     logs = cached.logs.filter((log) => {
       const bn = parseBlockNumber((log as any).blockNumber);
@@ -1963,6 +2162,11 @@ const fetchTransferLogs = async ({
     });
     if (!coversStart && cachedStart > 0n && fromBlock < cachedStart) {
       const gapEnd = cachedStart - 1n;
+      console.log("[superfluid-points] fetchTransferLogs backfill gap", {
+        cacheKey,
+        fromBlock: fromBlock.toString(),
+        toBlock: gapEnd.toString(),
+      });
       const gapLogs = await fetchTransferLogsFromChain({
         publicClient,
         token,
@@ -1977,6 +2181,11 @@ const fetchTransferLogs = async ({
       needFetchStart = cachedEnd + 1n;
     }
     if (!coversEnd && effectiveToBlock > cachedEnd) {
+      console.log("[superfluid-points] fetchTransferLogs forward gap", {
+        cacheKey,
+        fromBlock: (cachedEnd + 1n).toString(),
+        toBlock: effectiveToBlock.toString(),
+      });
       const forwardLogs = await fetchTransferLogsFromChain({
         publicClient,
         token,
@@ -1994,9 +2203,19 @@ const fetchTransferLogs = async ({
       transferLogCacheDirty = true;
       return logs;
     }
+    console.log("[superfluid-points] fetchTransferLogs cache covered", {
+      cacheKey,
+      count: logs.length,
+    });
     return logs;
   }
 
+  console.log("[superfluid-points] fetchTransferLogs cache lookup", {
+    cacheKey,
+    hit: false,
+    requestedStart: fromBlock.toString(),
+    requestedEnd: effectiveToBlock.toString(),
+  });
   const freshLogs = await fetchTransferLogsFromChain({
     publicClient,
     token,
@@ -3035,7 +3254,7 @@ export async function GET(req: Request) {
   }
   // Reset transient state each run
   notionDisabled = false;
-  await cacheHydrationPromise;
+  await hydrateCachesFromIpfs();
   if (!traceOnly) {
     await hydratePointsSnapshotFromIpfs(snapshotName);
   }
@@ -3063,17 +3282,20 @@ export async function GET(req: Request) {
         creationBlockCacheCid: null,
         transferLogCacheCid: null,
         priceCacheCid: null,
+        ensCacheCid: null,
       };
     }
-    const [creationPin, transferPin, pricePin] = await Promise.all([
+    const [creationPin, transferPin, pricePin, ensPin] = await Promise.all([
       persistCreationBlockCache(),
       persistTransferLogCache(),
       persistPriceCache(),
+      persistEnsIdentityCache(),
     ]);
     return {
       creationBlockCacheCid: creationPin ?? latestCreationBlockCacheCid ?? null,
       transferLogCacheCid: transferPin ?? latestTransferLogCacheCid ?? null,
       priceCacheCid: pricePin ?? latestPriceCacheCid ?? null,
+      ensCacheCid: ensPin ?? latestEnsCacheCid ?? null,
     };
   };
   const logPinnedArtifacts = (extras?: {
@@ -3081,6 +3303,7 @@ export async function GET(req: Request) {
     creationBlockCacheCid?: string | null;
     transferLogCacheCid?: string | null;
     priceCacheCid?: string | null;
+    ensCacheCid?: string | null;
     runLogsCid?: string | null;
   }) => {
     console.log("[superfluid-points] pinned IPFS artifacts", {
@@ -3104,12 +3327,14 @@ export async function GET(req: Request) {
         responsePointsCid ??
         latestPointsSnapshotCid ??
         null,
+      ensCacheCid: extras?.ensCacheCid ?? responseEnsCid ?? latestEnsCacheCid,
       runLogsCid: extras?.runLogsCid ?? responseRunLogsCid ?? null,
     });
   };
   let responseCreationCid: string | null = null;
   let responseTransferCid: string | null = null;
   let responsePointsCid: string | null = null;
+  let responseEnsCid: string | null = null;
   let pinnedPriceCacheCid: string | null = null;
   let responseRunLogsCid: string | null = null;
   const notionExistingPages = new Map<
@@ -3787,14 +4012,7 @@ export async function GET(req: Request) {
         nativeSuperToken: nativeSuperTokenByWallet.get(targetWallet) ?? null,
         nativeToken: nativeTokenByWallet.get(targetWallet) ?? null,
         activities: walletActivitiesByWallet.get(targetWallet) ?? [],
-        checksum: [
-          targetWallet,
-          0,
-          0,
-          0,
-          0,
-          0,
-        ].join("|"),
+        checksum: [targetWallet, 0, 0, 0, 0, 0].join("|"),
       };
 
       return NextResponse.json(
@@ -3828,7 +4046,8 @@ export async function GET(req: Request) {
               ensAvatar: wallet.ensAvatar,
             },
             activities: wallet.activities,
-            communitiesJoined: walletCommunitiesByWallet.get(targetWallet) ?? [],
+            communitiesJoined:
+              walletCommunitiesByWallet.get(targetWallet) ?? [],
           },
           dryRun: STACK_DRY_RUN || traceOnly,
           traceOnly,
@@ -3841,6 +4060,7 @@ export async function GET(req: Request) {
     const pinned = await flushCaches();
     responseCreationCid = pinned.creationBlockCacheCid;
     responseTransferCid = pinned.transferLogCacheCid;
+    responseEnsCid = pinned.ensCacheCid;
     pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
     if (!traceOnly) {
       responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
@@ -3889,6 +4109,7 @@ export async function GET(req: Request) {
         transferLogCacheCid:
           responseTransferCid ?? latestTransferLogCacheCid ?? null,
         priceCacheCid: pinned.priceCacheCid ?? latestPriceCacheCid ?? null,
+        ensCacheCid: responseEnsCid ?? latestEnsCacheCid ?? null,
         pointsSnapshotCid: responsePointsCid,
         campaignId: effectiveCampaignId,
         runLogsCid: responseRunLogsCid,
@@ -3909,6 +4130,7 @@ export async function GET(req: Request) {
     const pinned = await flushCaches();
     responseCreationCid = pinned.creationBlockCacheCid;
     responseTransferCid = pinned.transferLogCacheCid;
+    responseEnsCid = pinned.ensCacheCid;
     pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
     if (!traceOnly) {
       responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
@@ -3936,6 +4158,7 @@ export async function GET(req: Request) {
           responseCreationCid ?? latestCreationBlockCacheCid ?? null,
         transferLogCacheCid:
           responseTransferCid ?? latestTransferLogCacheCid ?? null,
+        ensCacheCid: responseEnsCid ?? latestEnsCacheCid ?? null,
         runLogsCid: responseRunLogsCid,
       },
       { status: 500 },

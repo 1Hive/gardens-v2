@@ -62,11 +62,17 @@ const getConfiguredChains = () => dedupeChains([...CHAINS, base, mainnet]);
 
 const createCustomConfig = (
   skipAutoConnect: boolean,
+  walletConnectResetVersion: number,
   preferredSimulatedChain: Chain | undefined,
   simulatedWallet?: Address,
 ) => {
   const usedChains = getConfiguredChains();
   const chains = usedChains;
+  // RainbowKit caches WalletConnect connectors by serialized options.
+  // Changing this on reset forces a fresh connector after stale WC sessions.
+  const walletConnectModalZIndex = 1100 + walletConnectResetVersion;
+  const walletConnectProjectId =
+    process.env.NEXT_PUBLIC_WALLET_CONNECT_ID ?? "";
   const connectorFactory = connectorsForWallets([
     {
       groupName: "Recommended",
@@ -77,7 +83,15 @@ const createCustomConfig = (
         coinbaseWallet({ appName: "Gardens V2", chains }),
         walletConnectWallet({
           chains,
-          projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_ID ?? "",
+          projectId: walletConnectProjectId,
+          options: {
+            projectId: walletConnectProjectId,
+            qrModalOptions: {
+              themeVariables: {
+                "--wcm-z-index": walletConnectModalZIndex.toString(),
+              },
+            },
+          },
         }),
       ],
     },
@@ -209,6 +223,7 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
     const { config, simulatedConnector: newSimulatedConnector } =
       createCustomConfig(
         skipAutoConnect,
+        walletConnectResetVersion,
         preferredSimulatedChain,
         simulatedWallet,
       );

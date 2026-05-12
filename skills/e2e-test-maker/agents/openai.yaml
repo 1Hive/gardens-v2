@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gardens E2E Test Maker"
+  short_description: "Build and repair Gardens Playwright/Synpress E2E tests."
+  default_prompt: "Use this skill when creating or fixing Gardens V2 E2E tests."

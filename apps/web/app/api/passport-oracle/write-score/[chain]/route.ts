@@ -1,6 +1,3 @@
-// api/passport-oracle/write-score
-
-import { Params } from "next/dist/shared/lib/router/utils/route-matcher";
 import { NextResponse } from "next/server";
 import {
   createPublicClient,
@@ -27,8 +24,14 @@ const PASSPORT_KEEPER_PRIVATE_KEY = (
 )?.trim() as Hex | undefined;
 const LOCAL_RPC = "http://127.0.0.1:8545";
 
-export async function POST(req: Request, { params }: Params) {
-  const { chain: chainId } = params as { chain: string };
+type RouteContext = {
+  params: Promise<{
+    chain: string;
+  }>;
+};
+
+export async function POST(req: Request, { params }: RouteContext) {
+  const { chain: chainId } = await params;
   const { user } = await req.json();
 
   if (typeof user !== "string") {
