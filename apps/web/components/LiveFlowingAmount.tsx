@@ -38,7 +38,7 @@ export const LiveFlowingAmount = memo(function LiveFlowingAmount({
     const interval = window.setInterval(() => {
       if (document.hidden) return;
       setNowMs(Date.now());
-    }, 200);
+    }, 100);
 
     return () => clearInterval(interval);
   }, [normalizedRate, normalizedValue]);
