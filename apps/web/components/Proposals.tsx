@@ -221,14 +221,11 @@ export function Proposals({
   // Derived state
   const isMemberCommunity =
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
-  const {
-    hasResolvedMemberPower,
-    memberActivatedStrategy,
-    memberActivatedPoints,
-  } = getMemberActivationState({
+  const { memberActivatedStrategy, memberActivatedPoints } =
+    getMemberActivationState({
     memberPower,
     subgraphActivatedPoints: memberActivatedPointsFromSubgraph,
-  });
+    });
 
   const [sortedProposals, setSortedProposals] = useState(strategy.proposals);
 

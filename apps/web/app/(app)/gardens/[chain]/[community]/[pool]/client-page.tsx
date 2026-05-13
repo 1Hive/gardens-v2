@@ -432,12 +432,11 @@ export default function ClientPage({
 
   const isMemberCommunity = !!memberCommunityData?.isRegistered;
 
-  const { hasResolvedMemberPower, memberActivatedStrategy } =
-    getMemberActivationState({
-      memberPower,
-      subgraphActivatedPoints:
-        memberStrategyData?.memberStrategy?.activatedPoints,
-    });
+  const { memberActivatedStrategy } = getMemberActivationState({
+    memberPower,
+    subgraphActivatedPoints:
+      memberStrategyData?.memberStrategy?.activatedPoints,
+  });
   const hasResolvedMembershipState =
     !wallet ||
     (hasStartedMembershipLookup && !isMemberFetching && !memberDataFetching);

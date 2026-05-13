@@ -510,7 +510,7 @@ export const DisputeModal: FC<Props> = ({
             color="secondary"
             btnStyle="outline"
             testId={
-              isDisputed || isProposalEnded ? "btn-open-dispute" : (
+              isDisputed === true || isProposalEnded ? "btn-open-dispute" : (
                 "btn-dispute-proposal"
               )
             }
