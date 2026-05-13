@@ -22,6 +22,7 @@ export const LiveFlowingAmount = memo(function LiveFlowingAmount({
     value != null && Number.isFinite(value) ? value : null;
   const normalizedRate =
     Number.isFinite(rawRatePerSecond) ? rawRatePerSecond : 0;
+  const shouldTick = normalizedValue != null && normalizedRate !== 0;
 
   const startedAtMsRef = useRef<number>(Date.now());
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
@@ -29,11 +30,12 @@ export const LiveFlowingAmount = memo(function LiveFlowingAmount({
   useEffect(() => {
     const nextNowMs = Date.now();
     startedAtMsRef.current = nextNowMs;
-    setNowMs(nextNowMs);
-  }, [normalizedRate, normalizedValue]);
 
-  useEffect(() => {
-    if (normalizedValue == null || normalizedRate === 0) return;
+    if (!shouldTick) {
+      return;
+    }
+
+    setNowMs(nextNowMs);
 
     const interval = window.setInterval(() => {
       if (document.hidden) return;
@@ -41,7 +43,7 @@ export const LiveFlowingAmount = memo(function LiveFlowingAmount({
     }, 100);
 
     return () => clearInterval(interval);
-  }, [normalizedRate, normalizedValue]);
+  }, [shouldTick, normalizedRate, normalizedValue]);
 
   if (normalizedValue == null) {
     return (
