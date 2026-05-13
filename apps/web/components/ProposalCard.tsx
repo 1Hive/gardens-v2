@@ -26,6 +26,7 @@ import {
 import { Countdown } from "./Countdown";
 import { DisplayNumber } from "./DisplayNumber";
 import { Divider } from "./Divider";
+import { LiveFlowingAmount } from "./LiveFlowingAmount";
 import { ProposalInputItem } from "./Proposals";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import { Badge, Card, EthAddress } from "@/components";
@@ -277,7 +278,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       PoolTypes[strategyConfig.proposalType] === "signaling";
     const isStreamingType =
       PoolTypes[strategyConfig.proposalType] === "streaming";
-    const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
     const [escrowBalanceSnapshotBn, setEscrowBalanceSnapshotBn] = useState<
       bigint | null
     >(null);
@@ -326,25 +326,19 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const currentFlowRateBn =
       liveCurrentFlowRateBn ?? subgraphCurrentFlowRateBn;
 
+    const displayedNowMs = BigInt(Date.now());
     const lastSnapshotAtMs = lastSnapshotAtBn * 1000n;
     const elapsedMs =
       (
         !isFrozenStreamingProposal &&
         currentFlowRateBn > 0n &&
         lastSnapshotAtMs > 0n &&
-        nowMs > lastSnapshotAtMs
+        displayedNowMs > lastSnapshotAtMs
       ) ?
-        nowMs - lastSnapshotAtMs
+        displayedNowMs - lastSnapshotAtMs
       : 0n;
     const totalReceivedByEscrowBn =
       streamedUntilSnapshotBn + (currentFlowRateBn * elapsedMs) / 1000n;
-    const shouldTickFallback = useMemo(
-      () =>
-        isStreamingType &&
-        !isFrozenStreamingProposal &&
-        explorerTotalStreamedBn == null,
-      [explorerTotalStreamedBn, isFrozenStreamingProposal, isStreamingType],
-    );
     const isDisputedStreamingProposal =
       isStreamingType && resolvedProposalStatus === "disputed";
 
@@ -352,21 +346,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       setEscrowBalanceSnapshotBn(null);
       setEscrowBalanceSnapshotAtMs(0n);
     }, [proposalData.id, proposalData.streamingEscrow]);
-
-    const shouldTickLiveValues =
-      shouldTickFallback ||
-      (isDisputedStreamingProposal &&
-        !isFrozenStreamingProposal &&
-        currentFlowRateBn > 0n &&
-        escrowBalanceSnapshotBn != null);
-
-    useEffect(() => {
-      if (!shouldTickLiveValues) return;
-      const interval = setInterval(() => {
-        setNowMs(BigInt(Date.now()));
-      }, 100);
-      return () => clearInterval(interval);
-    }, [shouldTickLiveValues]);
 
     const proposalFlowPerMonth =
       (
@@ -414,9 +393,9 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         escrowBalanceSnapshotBn != null &&
         !isFrozenStreamingProposal &&
         currentFlowRateBn > 0n &&
-        nowMs > escrowBalanceSnapshotAtMs
+        displayedNowMs > escrowBalanceSnapshotAtMs
       ) ?
-        nowMs - escrowBalanceSnapshotAtMs
+        displayedNowMs - escrowBalanceSnapshotAtMs
       : 0n;
     const liveEscrowSuperTokenBalanceBn =
       escrowBalanceSnapshotBn != null ?
@@ -443,10 +422,13 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       isStreamingType && poolToken && totalStreamedToBeneficiaryBn != null ?
         +formatUnits(totalStreamedToBeneficiaryBn, poolToken.decimals)
       : null;
-    const proposalTotalStreamedDisplay =
-      poolToken ?
-        `${(proposalTotalStreamed ?? 0).toFixed(5)} ${poolToken.symbol}`
-      : null;
+    const proposalTotalStreamedRatePerSecond =
+      isStreamingType &&
+      poolToken &&
+      !isFrozenStreamingProposal &&
+      currentFlowRateBn > 0n ?
+        Number(formatUnits(currentFlowRateBn, poolToken.decimals))
+      : 0;
 
     const hasThreshold = thresholdPct != null;
     const thresholdValue = thresholdPct ?? 0;
@@ -682,7 +664,13 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           </p>
 
                           <p className="text-sm font-mono tabular-nums dark:text-neutral-soft-content">
-                            {proposalTotalStreamedDisplay}
+                            <LiveFlowingAmount
+                              value={proposalTotalStreamed}
+                              ratePerSecond={proposalTotalStreamedRatePerSecond}
+                              suffix={poolToken?.symbol}
+                              fractionDigits={5}
+                              className="text-sm dark:text-neutral-soft-content"
+                            />
                           </p>
                         </div>
                       )}

@@ -83,7 +83,16 @@ module.exports = {
       fontFamily: {
         press: ["var(--font-inter)"],
         chakra: ["var(--font-chakra)"],
-        mono: ["Chakra Petch", "monospace"],
+        mono: [
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "Monaco",
+          "Consolas",
+          '"Liberation Mono"',
+          '"Courier New"',
+          "monospace",
+        ],
       },
       colors: {
         //added color for the our daisy - lightTheme

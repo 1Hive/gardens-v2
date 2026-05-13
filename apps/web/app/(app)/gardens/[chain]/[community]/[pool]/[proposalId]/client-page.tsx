@@ -26,6 +26,7 @@ import {
   DisplayNumber,
   EthAddress,
   InfoBox,
+  LiveFlowingAmount,
   Statistic,
   DataTable,
 } from "@/components";
@@ -48,6 +49,7 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
 import { MetadataV1, useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
+import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import {
   dismissPendingSubgraphRefreshToast,
   useSubgraphQuery,
@@ -191,66 +193,6 @@ const getLiveBeneficiaryBalanceBn = ({
     : null;
 };
 
-const LiveStreamedTotal = memo(function LiveStreamedTotal({
-  poolToken,
-  proposalFlowRateBn,
-  streamedUntilSnapshotBn,
-  lastSnapshotAtBn,
-  explorerTotalStreamedBn,
-  isDisputedStreamingProposal,
-  escrowBalanceSnapshotBn,
-  escrowBalanceSnapshotAtMs,
-  escrowSuperTokenBalanceValue,
-}: {
-  poolToken?: { decimals: number; symbol: string } | null;
-  proposalFlowRateBn: bigint;
-  streamedUntilSnapshotBn: bigint;
-  lastSnapshotAtBn: bigint;
-  explorerTotalStreamedBn?: bigint | null;
-  isDisputedStreamingProposal: boolean;
-  escrowBalanceSnapshotBn: bigint | null;
-  escrowBalanceSnapshotAtMs: bigint;
-  escrowSuperTokenBalanceValue?: bigint;
-}) {
-  const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
-  const shouldTickFallback = explorerTotalStreamedBn == null;
-  const shouldTickLiveValues =
-    shouldTickFallback ||
-    (isDisputedStreamingProposal &&
-      proposalFlowRateBn > 0n &&
-      escrowBalanceSnapshotBn != null);
-
-  useEffect(() => {
-    if (!shouldTickLiveValues) return;
-    const interval = setInterval(() => {
-      if (typeof document !== "undefined" && document.hidden) return;
-      setNowMs(BigInt(Date.now()));
-    }, 100);
-    return () => clearInterval(interval);
-  }, [shouldTickLiveValues]);
-  const totalStreamedToBeneficiaryBn = getProposalTotalStreamedToBeneficiaryBn({
-    proposalFlowRateBn,
-    streamedUntilSnapshotBn,
-    lastSnapshotAtBn,
-    nowMs,
-    explorerTotalStreamedBn,
-    isDisputedStreamingProposal,
-    escrowBalanceSnapshotBn,
-    escrowBalanceSnapshotAtMs,
-    escrowSuperTokenBalanceValue,
-  });
-  const proposalTotalStreamedDisplay =
-    poolToken ?
-      `${(+formatUnits(totalStreamedToBeneficiaryBn, poolToken.decimals)).toFixed(5)} ${poolToken.symbol}`
-    : "--";
-
-  return (
-    <span className="font-mono tabular-nums">
-      {proposalTotalStreamedDisplay}
-    </span>
-  );
-});
-
 const LiveAccumulatedAmount = memo(function LiveAccumulatedAmount({
   poolToken,
   proposalFlowRateBn,
@@ -309,79 +251,6 @@ const LiveAccumulatedAmount = memo(function LiveAccumulatedAmount({
   );
 });
 
-const LiveClaimableAmount = memo(function LiveClaimableAmount({
-  poolToken,
-  proposalFlowRateBn,
-  streamedUntilSnapshotBn,
-  lastSnapshotAtBn,
-  explorerTotalStreamedBn,
-  isDisputedStreamingProposal,
-  escrowBalanceSnapshotBn,
-  escrowBalanceSnapshotAtMs,
-  escrowSuperTokenBalanceValue,
-  beneficiaryBalanceSnapshotBn,
-  beneficiaryBalanceSnapshotAtMs,
-}: {
-  poolToken?: { decimals: number; symbol: string } | null;
-  proposalFlowRateBn: bigint;
-  streamedUntilSnapshotBn: bigint;
-  lastSnapshotAtBn: bigint;
-  explorerTotalStreamedBn?: bigint | null;
-  isDisputedStreamingProposal: boolean;
-  escrowBalanceSnapshotBn: bigint | null;
-  escrowBalanceSnapshotAtMs: bigint;
-  escrowSuperTokenBalanceValue?: bigint;
-  beneficiaryBalanceSnapshotBn: bigint | null;
-  beneficiaryBalanceSnapshotAtMs: bigint;
-}) {
-  const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
-  const shouldTickLiveValues =
-    !isDisputedStreamingProposal && proposalFlowRateBn > 0n;
-
-  useEffect(() => {
-    if (!shouldTickLiveValues) return;
-    const interval = setInterval(() => {
-      if (typeof document !== "undefined" && document.hidden) return;
-      setNowMs(BigInt(Date.now()));
-    }, 100);
-    return () => clearInterval(interval);
-  }, [shouldTickLiveValues]);
-
-  const proposalClaimableCapBn = getProposalTotalStreamedToBeneficiaryBn({
-    proposalFlowRateBn,
-    streamedUntilSnapshotBn,
-    lastSnapshotAtBn,
-    nowMs,
-    explorerTotalStreamedBn,
-    isDisputedStreamingProposal,
-    escrowBalanceSnapshotBn,
-    escrowBalanceSnapshotAtMs,
-    escrowSuperTokenBalanceValue,
-  });
-  const liveBeneficiaryBalanceBn = getLiveBeneficiaryBalanceBn({
-    beneficiaryBalanceSnapshotBn,
-    beneficiaryBalanceSnapshotAtMs,
-    proposalFlowRateBn,
-    nowMs,
-  });
-  const claimableBn =
-    liveBeneficiaryBalanceBn != null ?
-      liveBeneficiaryBalanceBn < proposalClaimableCapBn ?
-        liveBeneficiaryBalanceBn
-      : proposalClaimableCapBn
-    : proposalClaimableCapBn;
-  const claimableDisplay =
-    poolToken ?
-      `${Number(formatUnits(claimableBn, poolToken.decimals)).toFixed(6)} ${poolToken.symbol}`
-    : "--";
-
-  return (
-    <span className="block w-full text-right font-mono tabular-nums">
-      {claimableDisplay}
-    </span>
-  );
-});
-
 export type ProposalPageParams = {
   proposalId: string;
   community: string;
@@ -422,9 +291,6 @@ export default function ClientPage({ params }: ClientPageProps) {
     useState<bigint | null>(null);
   const [beneficiaryBalanceSnapshotAtMs, setBeneficiaryBalanceSnapshotAtMs] =
     useState<bigint>(0n);
-  const [claimableNowMs, setClaimableNowMs] = useState<bigint>(() =>
-    BigInt(Date.now()),
-  );
 
   const router = useRouter();
 
@@ -667,6 +533,12 @@ export default function ClientPage({ params }: ClientPageProps) {
       !!poolTokenAddr && !!proposalData?.strategy?.id && !isSignalingType,
   });
   const poolToken = poolTokenResult?.poolToken;
+  const { superToken: poolSuperToken } = useSuperfluidToken({
+    token: poolTokenAddr,
+    chainId,
+    enabled: isStreamingType && !!poolTokenAddr,
+  });
+  const isPureSuperfluidPoolToken = poolSuperToken?.sameAsUnderlying === true;
 
   const proposalStream =
     // Backward-compatible read while graph client schema catches up.
@@ -748,6 +620,7 @@ export default function ClientPage({ params }: ClientPageProps) {
   const isBeneficiaryConnected = beneficiary === address?.toLowerCase();
   const streamTokenDecimals = poolToken?.decimals ?? 18;
   const currentFlowRateForDisplay = proposalFlowRateBn;
+  const displayedNowMs = BigInt(Date.now());
   const isThresholdOutOfReach =
     minThresholdPointsBn >
     BigInt(proposalData?.strategy?.totalEffectiveActivePoints ?? 0);
@@ -812,19 +685,6 @@ export default function ClientPage({ params }: ClientPageProps) {
     setBeneficiaryBalanceSnapshotBn(beneficiarySuperTokenBalance.value);
     setBeneficiaryBalanceSnapshotAtMs(BigInt(Date.now()));
   }, [beneficiarySuperTokenBalance?.value]);
-
-  const shouldTickClaimable =
-    isStreamingType &&
-    !isDisputedStreamingProposal &&
-    (currentFlowRateForDisplay ?? 0n) > 0n;
-  useEffect(() => {
-    if (!shouldTickClaimable) return;
-    const interval = setInterval(() => {
-      if (typeof document !== "undefined" && document.hidden) return;
-      setClaimableNowMs(BigInt(Date.now()));
-    }, 500);
-    return () => clearInterval(interval);
-  }, [shouldTickClaimable]);
 
   useEffect(() => {
     if (convictionRefreshing && currentConvictionPct != null) {
@@ -1023,7 +883,6 @@ export default function ClientPage({ params }: ClientPageProps) {
       onConfirmations: async () => {
         setBeneficiaryBalanceSnapshotBn(0n);
         setBeneficiaryBalanceSnapshotAtMs(BigInt(Date.now()));
-        setClaimableNowMs(BigInt(Date.now()));
         await refetchSuperToken();
       },
     });
@@ -1048,45 +907,62 @@ export default function ClientPage({ params }: ClientPageProps) {
     });
     return poolToken?.symbol ? `${value} ${poolToken.symbol}` : value;
   };
-  const claimableElapsedMs =
-    (
-      shouldTickClaimable &&
-      beneficiaryBalanceSnapshotAtMs > 0n &&
-      claimableNowMs > beneficiaryBalanceSnapshotAtMs
-    ) ?
-      claimableNowMs - beneficiaryBalanceSnapshotAtMs
-    : 0n;
-  const liveBeneficiarySuperTokenBalanceBn =
-    beneficiaryBalanceSnapshotBn != null ?
-      beneficiaryBalanceSnapshotBn +
-      ((currentFlowRateForDisplay ?? 0n) * claimableElapsedMs) / 1000n
-    : null;
-  const proposalClaimableCapBn = getProposalTotalStreamedToBeneficiaryBn({
+  const totalStreamedToBeneficiaryBn = getProposalTotalStreamedToBeneficiaryBn({
     proposalFlowRateBn,
     streamedUntilSnapshotBn,
     lastSnapshotAtBn,
-    nowMs: claimableNowMs,
+    nowMs: displayedNowMs,
     explorerTotalStreamedBn,
     isDisputedStreamingProposal,
     escrowBalanceSnapshotBn,
     escrowBalanceSnapshotAtMs,
     escrowSuperTokenBalanceValue: escrowSuperTokenBalance?.value,
   });
-  const liveProposalClaimableBn =
-    liveBeneficiarySuperTokenBalanceBn != null ?
-      liveBeneficiarySuperTokenBalanceBn < proposalClaimableCapBn ?
-        liveBeneficiarySuperTokenBalanceBn
-      : proposalClaimableCapBn
+  const totalStreamedDisplayValue =
+    isStreamingType && poolToken ?
+      Number(formatUnits(totalStreamedToBeneficiaryBn, poolToken.decimals))
     : null;
-  const liveBeneficiarySuperTokenBalanceForClaimBn =
-    liveProposalClaimableBn ?? 0n;
+  const totalStreamedRatePerSecond =
+    isStreamingType &&
+    poolToken &&
+    !isDisputedStreamingProposal &&
+    proposalFlowRateBn > 0n ?
+      Number(formatUnits(proposalFlowRateBn, poolToken.decimals))
+    : 0;
+  const liveBeneficiarySuperTokenBalanceBn = getLiveBeneficiaryBalanceBn({
+    beneficiaryBalanceSnapshotBn,
+    beneficiaryBalanceSnapshotAtMs,
+    proposalFlowRateBn: currentFlowRateForDisplay ?? 0n,
+    nowMs: displayedNowMs,
+  });
+  const claimableBn =
+    liveBeneficiarySuperTokenBalanceBn != null ?
+      liveBeneficiarySuperTokenBalanceBn < totalStreamedToBeneficiaryBn ?
+        liveBeneficiarySuperTokenBalanceBn
+      : totalStreamedToBeneficiaryBn
+    : totalStreamedToBeneficiaryBn;
+  const claimableDisplayValue =
+    isStreamingType && poolToken ?
+      Number(formatUnits(claimableBn, poolToken.decimals))
+    : null;
+  const claimableRatePerSecond =
+    isStreamingType &&
+    poolToken &&
+    !isDisputedStreamingProposal &&
+    currentFlowRateForDisplay > 0n ?
+      Number(formatUnits(currentFlowRateForDisplay, poolToken.decimals))
+    : 0;
+  const liveBeneficiarySuperTokenBalanceForClaimBn = claimableBn;
   const minimumClaimableDisplayBn =
     streamTokenDecimals > 6 ? 10n ** BigInt(streamTokenDecimals - 6) : 1n;
   const hasMeaningfulClaimableAmount =
     liveBeneficiarySuperTokenBalanceForClaimBn >= minimumClaimableDisplayBn;
 
   const showUnwrapSuperTokenButton =
-    isStreamingType && isBeneficiaryConnected && hasMeaningfulClaimableAmount;
+    isStreamingType &&
+    !isPureSuperfluidPoolToken &&
+    isBeneficiaryConnected &&
+    hasMeaningfulClaimableAmount;
   const disableUnwrapBtnConditions: ConditionObject[] = [
     {
       condition: !isBeneficiaryConnected,
@@ -1360,20 +1236,11 @@ export default function ClientPage({ params }: ClientPageProps) {
                   <p className="subtitle2">Total</p>
                   <div className="flex items-center gap-2">
                     <p className="text-right font-mono tabular-nums">
-                      <LiveStreamedTotal
-                        poolToken={poolToken}
-                        proposalFlowRateBn={proposalFlowRateBn}
-                        streamedUntilSnapshotBn={streamedUntilSnapshotBn}
-                        lastSnapshotAtBn={lastSnapshotAtBn}
-                        explorerTotalStreamedBn={explorerTotalStreamedBn}
-                        isDisputedStreamingProposal={
-                          isDisputedStreamingProposal
-                        }
-                        escrowBalanceSnapshotBn={escrowBalanceSnapshotBn}
-                        escrowBalanceSnapshotAtMs={escrowBalanceSnapshotAtMs}
-                        escrowSuperTokenBalanceValue={
-                          escrowSuperTokenBalance?.value
-                        }
+                      <LiveFlowingAmount
+                        value={totalStreamedDisplayValue}
+                        ratePerSecond={totalStreamedRatePerSecond}
+                        suffix={poolToken?.symbol}
+                        fractionDigits={5}
                       />
                     </p>
                   </div>
@@ -1397,30 +1264,20 @@ export default function ClientPage({ params }: ClientPageProps) {
                     : <p className="text-right">--</p>}
                   </div>
                 )}
-                <div className="flex items-center justify-between gap-3">
-                  <p className="subtitle2">Claimable</p>
-                  <div className="min-w-0 flex-1">
-                    <LiveClaimableAmount
-                      poolToken={poolToken}
-                      proposalFlowRateBn={proposalFlowRateBn}
-                      streamedUntilSnapshotBn={streamedUntilSnapshotBn}
-                      lastSnapshotAtBn={lastSnapshotAtBn}
-                      explorerTotalStreamedBn={explorerTotalStreamedBn}
-                      isDisputedStreamingProposal={isDisputedStreamingProposal}
-                      escrowBalanceSnapshotBn={escrowBalanceSnapshotBn}
-                      escrowBalanceSnapshotAtMs={escrowBalanceSnapshotAtMs}
-                      escrowSuperTokenBalanceValue={
-                        escrowSuperTokenBalance?.value
-                      }
-                      beneficiaryBalanceSnapshotBn={
-                        beneficiaryBalanceSnapshotBn
-                      }
-                      beneficiaryBalanceSnapshotAtMs={
-                        beneficiaryBalanceSnapshotAtMs
-                      }
-                    />
+                {!isPureSuperfluidPoolToken && (
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="subtitle2">Claimable</p>
+                    <div className="min-w-0 flex-1">
+                      <LiveFlowingAmount
+                        value={claimableDisplayValue}
+                        ratePerSecond={claimableRatePerSecond}
+                        suffix={poolToken?.symbol}
+                        fractionDigits={6}
+                        className="block w-full text-right"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
                 {isDisputedStreamingProposal && (
                   <div className="flex items-center justify-between gap-3">
                     <p className="subtitle2">Accumulated</p>
@@ -1578,23 +1435,13 @@ export default function ClientPage({ params }: ClientPageProps) {
                         <div className="flex items-baseline gap-1">
                           <h6 className="text-neutral-soft-content">Total:</h6>
                           <p className="text-neutral-soft-content text-sm">
-                            <LiveStreamedTotal
-                              poolToken={poolToken}
-                              proposalFlowRateBn={proposalFlowRateBn}
-                              streamedUntilSnapshotBn={streamedUntilSnapshotBn}
-                              lastSnapshotAtBn={lastSnapshotAtBn}
-                              explorerTotalStreamedBn={explorerTotalStreamedBn}
-                              isDisputedStreamingProposal={
-                                isDisputedStreamingProposal
-                              }
-                              escrowBalanceSnapshotBn={escrowBalanceSnapshotBn}
-                              escrowBalanceSnapshotAtMs={
-                                escrowBalanceSnapshotAtMs
-                              }
-                              escrowSuperTokenBalanceValue={
-                                escrowSuperTokenBalance?.value
-                              }
-                            />
+                                  <LiveFlowingAmount
+                                    value={totalStreamedDisplayValue}
+                                    ratePerSecond={totalStreamedRatePerSecond}
+                                    suffix={poolToken?.symbol}
+                                    fractionDigits={5}
+                                    className="text-sm text-neutral-soft-content"
+                                  />
                           </p>
                         </div>
                       </div>
@@ -1959,22 +1806,11 @@ export default function ClientPage({ params }: ClientPageProps) {
                       <p className="subtitle2">Total</p>
                       <div className="flex items-center gap-2">
                         <p className="text-right font-mono tabular-nums">
-                          <LiveStreamedTotal
-                            poolToken={poolToken}
-                            proposalFlowRateBn={proposalFlowRateBn}
-                            streamedUntilSnapshotBn={streamedUntilSnapshotBn}
-                            lastSnapshotAtBn={lastSnapshotAtBn}
-                            explorerTotalStreamedBn={explorerTotalStreamedBn}
-                            isDisputedStreamingProposal={
-                              isDisputedStreamingProposal
-                            }
-                            escrowBalanceSnapshotBn={escrowBalanceSnapshotBn}
-                            escrowBalanceSnapshotAtMs={
-                              escrowBalanceSnapshotAtMs
-                            }
-                            escrowSuperTokenBalanceValue={
-                              escrowSuperTokenBalance?.value
-                            }
+                          <LiveFlowingAmount
+                            value={totalStreamedDisplayValue}
+                            ratePerSecond={totalStreamedRatePerSecond}
+                            suffix={poolToken?.symbol}
+                            fractionDigits={5}
                           />
                         </p>
                       </div>
@@ -1997,32 +1833,20 @@ export default function ClientPage({ params }: ClientPageProps) {
                         : <p className="text-right">--</p>}
                       </div>
                     )}
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="subtitle2">Claimable</p>
-                      <div className="min-w-0 flex-1">
-                        <LiveClaimableAmount
-                          poolToken={poolToken}
-                          proposalFlowRateBn={proposalFlowRateBn}
-                          streamedUntilSnapshotBn={streamedUntilSnapshotBn}
-                          lastSnapshotAtBn={lastSnapshotAtBn}
-                          explorerTotalStreamedBn={explorerTotalStreamedBn}
-                          isDisputedStreamingProposal={
-                            isDisputedStreamingProposal
-                          }
-                          escrowBalanceSnapshotBn={escrowBalanceSnapshotBn}
-                          escrowBalanceSnapshotAtMs={escrowBalanceSnapshotAtMs}
-                          escrowSuperTokenBalanceValue={
-                            escrowSuperTokenBalance?.value
-                          }
-                          beneficiaryBalanceSnapshotBn={
-                            beneficiaryBalanceSnapshotBn
-                          }
-                          beneficiaryBalanceSnapshotAtMs={
-                            beneficiaryBalanceSnapshotAtMs
-                          }
-                        />
+                    {!isPureSuperfluidPoolToken && (
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="subtitle2">Claimable</p>
+                        <div className="min-w-0 flex-1">
+                          <LiveFlowingAmount
+                            value={claimableDisplayValue}
+                            ratePerSecond={claimableRatePerSecond}
+                            suffix={poolToken?.symbol}
+                            fractionDigits={6}
+                            className="block w-full text-right"
+                          />
+                        </div>
                       </div>
-                    </div>
+                    )}
                     {isDisputedStreamingProposal && (
                       <div className="flex items-center justify-between gap-3">
                         <p className="subtitle2">Accumulated</p>
@@ -2220,28 +2044,12 @@ export default function ClientPage({ params }: ClientPageProps) {
                                   Total:
                                 </h6>
                                 <p className="text-neutral-soft-content text-sm">
-                                  <LiveStreamedTotal
-                                    poolToken={poolToken}
-                                    proposalFlowRateBn={proposalFlowRateBn}
-                                    streamedUntilSnapshotBn={
-                                      streamedUntilSnapshotBn
-                                    }
-                                    lastSnapshotAtBn={lastSnapshotAtBn}
-                                    explorerTotalStreamedBn={
-                                      explorerTotalStreamedBn
-                                    }
-                                    isDisputedStreamingProposal={
-                                      isDisputedStreamingProposal
-                                    }
-                                    escrowBalanceSnapshotBn={
-                                      escrowBalanceSnapshotBn
-                                    }
-                                    escrowBalanceSnapshotAtMs={
-                                      escrowBalanceSnapshotAtMs
-                                    }
-                                    escrowSuperTokenBalanceValue={
-                                      escrowSuperTokenBalance?.value
-                                    }
+                                  <LiveFlowingAmount
+                                    value={totalStreamedDisplayValue}
+                                    ratePerSecond={totalStreamedRatePerSecond}
+                                    suffix={poolToken?.symbol}
+                                    fractionDigits={5}
+                                    className="text-sm text-neutral-soft-content"
                                   />
                                 </p>
                               </div>
