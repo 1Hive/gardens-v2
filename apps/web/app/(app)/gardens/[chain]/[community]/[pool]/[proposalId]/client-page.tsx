@@ -883,6 +883,7 @@ export default function ClientPage({ params }: ClientPageProps) {
           containerId: poolId,
           function: "rebalance",
         } as any);
+        window.location.reload();
       },
     });
 
