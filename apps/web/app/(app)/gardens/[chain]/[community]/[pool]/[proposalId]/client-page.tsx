@@ -620,7 +620,6 @@ export default function ClientPage({ params }: ClientPageProps) {
   const isBeneficiaryConnected = beneficiary === address?.toLowerCase();
   const streamTokenDecimals = poolToken?.decimals ?? 18;
   const currentFlowRateForDisplay = proposalFlowRateBn;
-  const displayedNowMs = BigInt(Date.now());
   const isThresholdOutOfReach =
     minThresholdPointsBn >
     BigInt(proposalData?.strategy?.totalEffectiveActivePoints ?? 0);
@@ -638,6 +637,21 @@ export default function ClientPage({ params }: ClientPageProps) {
     enabled:
       isStreamingType && !!resolvedStreamingEscrow && !!superTokenAddress,
   });
+  const displayedNowMs = useMemo(
+    () => BigInt(Date.now()),
+    [
+      proposalFlowRateBn,
+      streamedUntilSnapshotBn,
+      lastSnapshotAtBn,
+      explorerTotalStreamedBn,
+      isDisputedStreamingProposal,
+      escrowBalanceSnapshotBn,
+      escrowBalanceSnapshotAtMs,
+      escrowSuperTokenBalance?.value,
+      beneficiaryBalanceSnapshotBn,
+      beneficiaryBalanceSnapshotAtMs,
+    ],
+  );
   const {
     currentConvictionPct,
     thresholdPct,

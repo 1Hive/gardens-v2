@@ -1,7 +1,13 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react";
 import {
   HandRaisedIcon,
   ExclamationTriangleIcon,
@@ -318,8 +324,18 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     });
     const currentFlowRateBn =
       liveCurrentFlowRateBn ?? subgraphCurrentFlowRateBn;
-
-    const displayedNowMs = BigInt(Date.now());
+    const displayedNowMs = useMemo(
+      () => BigInt(Date.now()),
+      [
+        currentFlowRateBn,
+        streamedUntilSnapshotBn,
+        lastSnapshotAtBn,
+        explorerTotalStreamedBn,
+        isFrozenStreamingProposal,
+        escrowBalanceSnapshotBn,
+        escrowBalanceSnapshotAtMs,
+      ],
+    );
     const lastSnapshotAtMs = lastSnapshotAtBn * 1000n;
     const elapsedMs =
       (

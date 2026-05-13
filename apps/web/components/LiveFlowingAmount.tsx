@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 export const LiveFlowingAmount = memo(function LiveFlowingAmount({
   value,
@@ -17,17 +17,18 @@ export const LiveFlowingAmount = memo(function LiveFlowingAmount({
   className?: string;
   placeholder?: string;
 }) {
+  const rawRatePerSecond = ratePerSecond ?? 0;
   const normalizedValue =
     value != null && Number.isFinite(value) ? value : null;
   const normalizedRate =
-    Number.isFinite(ratePerSecond ?? 0) ? ratePerSecond ?? 0 : 0;
+    Number.isFinite(rawRatePerSecond) ? rawRatePerSecond : 0;
 
-  const [startedAtMs, setStartedAtMs] = useState<number>(() => Date.now());
+  const startedAtMsRef = useRef<number>(Date.now());
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
 
   useEffect(() => {
     const nextNowMs = Date.now();
-    setStartedAtMs(nextNowMs);
+    startedAtMsRef.current = nextNowMs;
     setNowMs(nextNowMs);
   }, [normalizedRate, normalizedValue]);
 
@@ -35,9 +36,9 @@ export const LiveFlowingAmount = memo(function LiveFlowingAmount({
     if (normalizedValue == null || normalizedRate === 0) return;
 
     const interval = window.setInterval(() => {
-      if (typeof document !== "undefined" && document.hidden) return;
+      if (document.hidden) return;
       setNowMs(Date.now());
-    }, 100);
+    }, 200);
 
     return () => clearInterval(interval);
   }, [normalizedRate, normalizedValue]);
@@ -50,7 +51,7 @@ export const LiveFlowingAmount = memo(function LiveFlowingAmount({
     );
   }
 
-  const elapsedSeconds = Math.max(0, nowMs - startedAtMs) / 1000;
+  const elapsedSeconds = Math.max(0, nowMs - startedAtMsRef.current) / 1000;
   const displayValue = normalizedValue + normalizedRate * elapsedSeconds;
   const formattedValue = `${displayValue.toFixed(fractionDigits)}${suffix ? ` ${suffix}` : ""}`;
 
