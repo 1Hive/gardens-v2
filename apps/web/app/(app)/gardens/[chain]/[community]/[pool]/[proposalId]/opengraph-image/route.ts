@@ -25,5 +25,8 @@ export async function GET(request: Request, { params }: RouteContext) {
     communityName: url.searchParams.get("communityName") ?? undefined,
   };
 
-  return Image({ params, searchParams });
+  return Image({
+    params: Promise.resolve(params),
+    searchParams: Promise.resolve(searchParams),
+  });
 }

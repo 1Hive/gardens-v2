@@ -48,6 +48,19 @@ type LoadedProposal = {
   data: ProposalImageData | null;
 };
 
+type ProposalImageSearchParams = {
+  status?: string;
+  title?: string;
+  poolType?: string;
+  poolTitle?: string;
+  communityName?: string;
+};
+
+type ProposalImageProps = {
+  params: Promise<ProposalPageParams>;
+  searchParams?: Promise<ProposalImageSearchParams>;
+};
+
 const STATUS_STYLES: Record<string, { text: string; background: string }> = {
   active: { text: "#065F46", background: "#D1FAE5" },
   inactive: { text: "#1F2937", background: "#E5E7EB" },
@@ -462,15 +475,14 @@ async function renderImage({
 
 export async function generateMetadata({
   params,
-}: {
-  params: ProposalPageParams;
-}): Promise<Metadata> {
+}: ProposalImageProps): Promise<Metadata> {
   const fallbackMetadata: Metadata = {
     title: FALLBACK_TITLE,
     description: ENDED_PROPOSAL_DESCRIPTION,
   };
 
-  const { data } = await loadProposal(params);
+  const resolvedParams = await params;
+  const { data } = await loadProposal(resolvedParams);
 
   if (!data) {
     return fallbackMetadata;
@@ -488,23 +500,16 @@ export async function generateMetadata({
 export default async function Image({
   params,
   searchParams,
-}: {
-  params: ProposalPageParams;
-  searchParams?: {
-    status?: string;
-    title?: string;
-    poolType?: string;
-    poolTitle?: string;
-    communityName?: string;
-  };
-}) {
-  const searchStatus = normalizeStatus(searchParams?.status);
-  const searchTitle = searchParams?.title?.trim();
-  const searchPoolType = normalizePoolType(searchParams?.poolType);
+}: ProposalImageProps) {
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  const searchStatus = normalizeStatus(resolvedSearchParams?.status);
+  const searchTitle = resolvedSearchParams?.title?.trim();
+  const searchPoolType = normalizePoolType(resolvedSearchParams?.poolType);
   const chainId = (() => {
-    const numericChainId = Number(params.chain);
+    const numericChainId = Number(resolvedParams.chain);
     const chainConfig =
-      getConfigByChain(params.chain) ??
+      getConfigByChain(resolvedParams.chain) ??
       (Number.isFinite(numericChainId) ?
         getConfigByChain(numericChainId)
       : undefined);
@@ -520,13 +525,13 @@ export default async function Image({
       title: searchTitle && searchTitle.length > 0 ? searchTitle : FALLBACK_TITLE,
       status: searchStatus,
       poolType: searchPoolType,
-      poolTitle: searchParams?.poolTitle?.trim() ?? null,
-      communityName: searchParams?.communityName?.trim() ?? null,
+      poolTitle: resolvedSearchParams?.poolTitle?.trim() ?? null,
+      communityName: resolvedSearchParams?.communityName?.trim() ?? null,
       chainId,
     });
   }
 
-  const { data } = await loadProposal(params);
+  const { data } = await loadProposal(resolvedParams);
   const status = searchStatus ?? data?.status;
 
   try {
@@ -536,15 +541,18 @@ export default async function Image({
       : data?.title ?? FALLBACK_TITLE,
       status,
       poolType: searchPoolType ?? data?.poolType,
-      poolTitle: searchParams?.poolTitle?.trim() ?? data?.poolTitle ?? null,
+      poolTitle:
+        resolvedSearchParams?.poolTitle?.trim() ?? data?.poolTitle ?? null,
       communityName:
-        searchParams?.communityName?.trim() ?? data?.communityName ?? null,
+        resolvedSearchParams?.communityName?.trim() ??
+        data?.communityName ??
+        null,
       chainId,
     });
   } catch (error) {
     console.error("Failed to render proposal OG image.", {
-      chainId: params.chain,
-      proposalId: params.proposalId,
+      chainId: resolvedParams.chain,
+      proposalId: resolvedParams.proposalId,
       error,
     });
 
