@@ -193,15 +193,11 @@ export const ProposalsModalSupport = forwardRef<
 
     const streamingStatusLabel =
       isStreamingType ?
-        (resolvedProposalStatus === "cancelled" ?
-          "Cancelled"
-        : resolvedProposalStatus === "disputed" ?
-          "Disputed"
-        : resolvedProposalStatus === "executed" ?
-          "Closed"
-        : readyToBeExecuted || proposalWillPass ?
-          "About to stream"
-        : "Active, not streaming")
+        resolvedProposalStatus === "cancelled" ? "Cancelled"
+        : resolvedProposalStatus === "disputed" ? "Disputed"
+        : resolvedProposalStatus === "executed" ? "Closed"
+        : readyToBeExecuted || proposalWillPass ? "About to stream"
+        : "Active"
       : undefined;
 
     const ProposalCountDown = (
@@ -237,10 +233,12 @@ export const ProposalsModalSupport = forwardRef<
             PoolTypes[strategyConfig.proposalType] === "funding" ?
               "Estimated time to pass:"
             : "Before streaming starts:"
-          : !alreadyExecuted &&
+          : (
+            !alreadyExecuted &&
             resolvedProposalStatus !== "disputed" &&
             readyToBeExecuted &&
-            !isSignalingType ?
+            !isSignalingType
+          ) ?
             isStreamingType ?
               "About to stream"
             : "Ready to be executed"

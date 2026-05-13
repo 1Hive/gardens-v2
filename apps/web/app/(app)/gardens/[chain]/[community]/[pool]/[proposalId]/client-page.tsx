@@ -1152,7 +1152,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       : status === "executed" ? "Closed"
       : currentFlowRateForDisplay > 0n ? "Streaming"
       : hasReachedThreshold ? "About to stream"
-      : status === "active" ? "Not Streaming"
+      : status === "active" ? "Active"
       : undefined
     : undefined;
   const hasThreshold = thresholdPct != null;
