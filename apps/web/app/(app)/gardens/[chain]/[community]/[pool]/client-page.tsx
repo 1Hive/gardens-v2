@@ -79,20 +79,28 @@ const toBigInt = (value: unknown): bigint => {
   return 0n;
 };
 
+type PoolProposalStreamLike = {
+  currentUnits?: bigint | string | number | null;
+  currentFlowRate?: bigint | string | number | null;
+  streamedUntilSnapshot?: bigint | string | number | null;
+  lastSnapshotAt?: bigint | string | number | null;
+  isStopped?: boolean | null;
+};
+
+type PoolProposalLike = {
+  proposalStream?: PoolProposalStreamLike | null;
+  proposalStreams?: PoolProposalStreamLike[] | null;
+};
+
+const getProposalStream = (proposal: PoolProposalLike) =>
+  proposal.proposalStream ?? proposal.proposalStreams?.[0] ?? null;
+
 const LivePoolStreamedTotal = memo(function LivePoolStreamedTotal({
   proposals,
   poolToken,
   freezeAtSnapshot = false,
 }: {
-  proposals:
-    | Array<{
-        proposalStream?: {
-          currentFlowRate?: bigint | string | number | null;
-          streamedUntilSnapshot?: bigint | string | number | null;
-          lastSnapshotAt?: bigint | string | number | null;
-        } | null;
-      }>
-    | undefined;
+  proposals: PoolProposalLike[] | undefined;
   poolToken?: { decimals: number; symbol: string } | null;
   freezeAtSnapshot?: boolean;
 }) {
@@ -102,7 +110,7 @@ const LivePoolStreamedTotal = memo(function LivePoolStreamedTotal({
     () =>
       !freezeAtSnapshot &&
       (proposals ?? []).some(
-        (proposal) => toBigInt(proposal.proposalStream?.currentFlowRate) > 0n,
+        (proposal) => toBigInt(getProposalStream(proposal)?.currentFlowRate) > 0n,
       ),
     [freezeAtSnapshot, proposals],
   );
@@ -118,7 +126,7 @@ const LivePoolStreamedTotal = memo(function LivePoolStreamedTotal({
 
   const totalStreamedBn = useMemo(() => {
     const total = (proposals ?? []).reduce((acc, proposal) => {
-      const proposalStream = proposal.proposalStream;
+      const proposalStream = getProposalStream(proposal);
       if (!proposalStream) return acc;
 
       const currentFlowRate =
@@ -737,12 +745,28 @@ export default function ClientPage({
     sender: strategy?.id,
     includePoolMembers: false,
   });
+  const proposalFlowRateFallbackBn = useMemo(
+    () =>
+      (strategy?.proposals ?? []).reduce((acc, proposal) => {
+        const proposalStream = getProposalStream(proposal);
+        if (!proposalStream || proposalStream.isStopped) {
+          return acc;
+        }
+
+        return acc + toBigInt(proposalStream.currentFlowRate);
+      }, 0n),
+    [strategy?.proposals],
+  );
   const currentFlowRateForDisplay =
-    liveCurrentFlowRateBn ?? streamLastFlowRate ?? 0n;
+    liveCurrentFlowRateBn != null && liveCurrentFlowRateBn > 0n ?
+      liveCurrentFlowRateBn
+    : streamLastFlowRate != null && streamLastFlowRate > 0n ?
+      streamLastFlowRate
+    : proposalFlowRateFallbackBn;
   const hasEligibleStreamingProposal = useMemo(
     () =>
       (strategy?.proposals ?? []).some((proposal) => {
-        const proposalStream = proposal.proposalStream;
+        const proposalStream = getProposalStream(proposal);
         if (!proposalStream || proposalStream.isStopped) {
           return false;
         }
