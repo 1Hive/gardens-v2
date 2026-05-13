@@ -335,12 +335,17 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     : walletBalance?.value;
   const walletBalanceExact =
     walletBalance ? formatUnits(walletBalance.value, poolToken.decimals) : "0";
+  const isPureSuperfluidToken = superToken?.sameAsUnderlying === true;
+  const pureSuperTokenAvailableBalanceBn =
+    superToken ? superToken.value - reservedSuperTokenBn : walletBalanceScaledUpBn;
 
   const hasInsufficientBalance =
     !!walletBalance?.formatted && +walletBalance.formatted < amount;
 
   const effectiveAvailableBalanceScaledBn =
-    (
+    isPureSuperfluidToken ?
+      pureSuperTokenAvailableBalanceBn
+    : (
       userSuperTokenAvailableBudgetBn != null &&
       walletBalanceScaledUpBn != null &&
       superToken
@@ -356,7 +361,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     : null;
 
   const hasInsufficientStreamBalance =
-    hasInsufficientBalance &&
     effectiveAvailableBalanceScaledBn != null &&
     requestedAmountBnScaledUpBn != null &&
     effectiveAvailableBalanceScaledBn < requestedAmountBnScaledUpBn;
@@ -524,13 +528,18 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   };
 
   const availableBalanceTooltipMessage = [
-    walletBalance && +walletBalance.formatted > 0 ?
+    effectiveAvailableBalance != null && isPureSuperfluidToken ?
+      `${roundToSignificant(effectiveAvailableBalance, 4, { truncate: true })} ${poolToken?.symbol}`
+    : walletBalance && +walletBalance.formatted > 0 ?
       `${roundToSignificant(walletBalance.formatted, 4, { truncate: true })} ${poolToken?.symbol}`
     : null,
-    superToken && superToken.formatted != null && +superToken.formatted > 0 ?
+    !isPureSuperfluidToken &&
+      superToken &&
+      superToken.formatted != null &&
+      +superToken.formatted > 0 ?
       `${roundToSignificant(superToken.formatted, 4, { truncate: true })} ${superToken.symbol}`
     : null,
-    reservedSuperToken != null && reservedSuperToken > 0 ?
+    !isPureSuperfluidToken && reservedSuperToken != null && reservedSuperToken > 0 ?
       `- ${roundToSignificant(reservedSuperToken, 4, { truncate: true })} ${superToken?.symbol} reserved for other streams`
     : null,
   ]
@@ -730,7 +739,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                   {poolToken?.symbol}
                 </div>
               </div>
-              {showUseSuperTokenBalance && (
+              {showUseSuperTokenBalance && !isPureSuperfluidToken && (
                 <div>
                   <FormCheckBox
                     registerKey="useExistingBalance"
