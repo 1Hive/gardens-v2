@@ -227,7 +227,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           (old ?? 0n) + (streamRequestedAmountPerSecScaledUpBn as bigint),
       );
       setCurrentUserFlowRateBn(streamRequestedAmountPerSecScaledUpBn as bigint);
-      window.location.reload();
     },
     args: [
       superToken?.address as Address,
@@ -257,7 +256,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           (currentUserFlowRateBn ?? 0n),
       );
       setCurrentUserFlowRateBn(streamRequestedAmountPerSecScaledUpBn as bigint);
-      window.location.reload();
     },
     args: [
       superToken?.address as Address,

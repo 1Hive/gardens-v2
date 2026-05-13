@@ -709,7 +709,6 @@ export default function ClientPage({
           containerId: poolId,
           function: "rebalance",
         });
-        window.location.reload();
       },
     });
 
