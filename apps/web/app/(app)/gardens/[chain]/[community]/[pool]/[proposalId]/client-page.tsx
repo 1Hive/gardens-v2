@@ -49,12 +49,12 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
 import { MetadataV1, useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
-import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import {
   dismissPendingSubgraphRefreshToast,
   useSubgraphQuery,
 } from "@/hooks/useSubgraphQuery";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
+import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
 import { superTokenABI } from "@/src/customAbis";
 import { alloABI, cvStrategyABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus, Column } from "@/types";
@@ -923,10 +923,12 @@ export default function ClientPage({ params }: ClientPageProps) {
       Number(formatUnits(totalStreamedToBeneficiaryBn, poolToken.decimals))
     : null;
   const totalStreamedRatePerSecond =
-    isStreamingType &&
-    poolToken &&
-    !isDisputedStreamingProposal &&
-    proposalFlowRateBn > 0n ?
+    (
+      isStreamingType &&
+      poolToken &&
+      !isDisputedStreamingProposal &&
+      proposalFlowRateBn > 0n
+    ) ?
       Number(formatUnits(proposalFlowRateBn, poolToken.decimals))
     : 0;
   const liveBeneficiarySuperTokenBalanceBn = getLiveBeneficiaryBalanceBn({
@@ -946,10 +948,12 @@ export default function ClientPage({ params }: ClientPageProps) {
       Number(formatUnits(claimableBn, poolToken.decimals))
     : null;
   const claimableRatePerSecond =
-    isStreamingType &&
-    poolToken &&
-    !isDisputedStreamingProposal &&
-    currentFlowRateForDisplay > 0n ?
+    (
+      isStreamingType &&
+      poolToken &&
+      !isDisputedStreamingProposal &&
+      currentFlowRateForDisplay > 0n
+    ) ?
       Number(formatUnits(currentFlowRateForDisplay, poolToken.decimals))
     : 0;
   const liveBeneficiarySuperTokenBalanceForClaimBn = claimableBn;
@@ -1435,13 +1439,13 @@ export default function ClientPage({ params }: ClientPageProps) {
                         <div className="flex items-baseline gap-1">
                           <h6 className="text-neutral-soft-content">Total:</h6>
                           <p className="text-neutral-soft-content text-sm">
-                                  <LiveFlowingAmount
-                                    value={totalStreamedDisplayValue}
-                                    ratePerSecond={totalStreamedRatePerSecond}
-                                    suffix={poolToken?.symbol}
-                                    fractionDigits={5}
-                                    className="text-sm text-neutral-soft-content"
-                                  />
+                            <LiveFlowingAmount
+                              value={totalStreamedDisplayValue}
+                              ratePerSecond={totalStreamedRatePerSecond}
+                              suffix={poolToken?.symbol}
+                              fractionDigits={5}
+                              className="text-sm text-neutral-soft-content"
+                            />
                           </p>
                         </div>
                       </div>

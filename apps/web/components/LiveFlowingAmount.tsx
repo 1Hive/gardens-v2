@@ -19,7 +19,8 @@ export const LiveFlowingAmount = memo(function LiveFlowingAmount({
 }) {
   const normalizedValue =
     value != null && Number.isFinite(value) ? value : null;
-  const normalizedRate = Number.isFinite(ratePerSecond ?? 0) ? (ratePerSecond ?? 0) : 0;
+  const normalizedRate =
+    Number.isFinite(ratePerSecond ?? 0) ? ratePerSecond ?? 0 : 0;
 
   const [startedAtMs, setStartedAtMs] = useState<number>(() => Date.now());
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
@@ -36,13 +37,17 @@ export const LiveFlowingAmount = memo(function LiveFlowingAmount({
     const interval = window.setInterval(() => {
       if (typeof document !== "undefined" && document.hidden) return;
       setNowMs(Date.now());
-    }, 200);
+    }, 100);
 
     return () => clearInterval(interval);
   }, [normalizedRate, normalizedValue]);
 
   if (normalizedValue == null) {
-    return <span className={`font-mono tabular-nums ${className}`.trim()}>{placeholder}</span>;
+    return (
+      <span className={`font-mono tabular-nums ${className}`.trim()}>
+        {placeholder}
+      </span>
+    );
   }
 
   const elapsedSeconds = Math.max(0, nowMs - startedAtMs) / 1000;

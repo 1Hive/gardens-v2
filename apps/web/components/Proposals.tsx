@@ -1036,7 +1036,9 @@ export function useProposalFilter<
     | "mostConviction"
     | null;
 
-  const [sortBy, setSortBy] = useState<SortType>("newest");
+  const [sortBy, setSortBy] = useState<SortType>("mostConviction");
+  const [hasManualSortSelection, setHasManualSortSelection] =
+    useState(false);
 
   const filteredAndSorted = useMemo(() => {
     if (!sortBy) return filteredProposals;
@@ -1080,7 +1082,11 @@ export function useProposalFilter<
   const setFilterWithLoading = (newFilter: FilterType) => {
     startTransition(() => {
       setFilter(newFilter);
-      if (newFilter === "closed" || newFilter === "executed") {
+      if (hasManualSortSelection) return;
+
+      if (newFilter === "active") {
+        setSortBy("mostConviction");
+      } else if (newFilter === "closed" || newFilter === "executed") {
         setSortBy("newest");
       }
     });
@@ -1088,6 +1094,7 @@ export function useProposalFilter<
 
   const setSortByWithLoading = (newSort: SortType) => {
     startTransition(() => {
+      setHasManualSortSelection(true);
       setSortBy(newSort);
     });
   };

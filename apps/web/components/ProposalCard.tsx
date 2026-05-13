@@ -1,13 +1,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 "use client";
 
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useState,
-} from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import {
   HandRaisedIcon,
   ExclamationTriangleIcon,
@@ -26,10 +20,9 @@ import {
 import { Countdown } from "./Countdown";
 import { DisplayNumber } from "./DisplayNumber";
 import { Divider } from "./Divider";
-import { LiveFlowingAmount } from "./LiveFlowingAmount";
 import { ProposalInputItem } from "./Proposals";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { Badge, Card, EthAddress } from "@/components";
+import { Badge, Card, EthAddress, LiveFlowingAmount } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
@@ -423,10 +416,12 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         +formatUnits(totalStreamedToBeneficiaryBn, poolToken.decimals)
       : null;
     const proposalTotalStreamedRatePerSecond =
-      isStreamingType &&
-      poolToken &&
-      !isFrozenStreamingProposal &&
-      currentFlowRateBn > 0n ?
+      (
+        isStreamingType &&
+        poolToken &&
+        !isFrozenStreamingProposal &&
+        currentFlowRateBn > 0n
+      ) ?
         Number(formatUnits(currentFlowRateBn, poolToken.decimals))
       : 0;
 
