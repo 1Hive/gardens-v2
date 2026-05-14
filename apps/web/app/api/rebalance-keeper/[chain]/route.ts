@@ -259,6 +259,7 @@ async function runKeeperForChain({
       console.warn("rebalance-keeper: failed to fetch gas token usd price", {
         chainId: chainConfig.id,
         gasTokenSymbol,
+        impact: "rebalance will continue without USD gas cost enrichment",
         error: error instanceof Error ? error.message : "unknown_error",
       });
     }

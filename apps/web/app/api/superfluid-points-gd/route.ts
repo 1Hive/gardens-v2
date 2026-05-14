@@ -1471,6 +1471,21 @@ const persistTransferLogCache = async (): Promise<string | null> => {
   return cid ?? latestTransferLogCacheCid;
 };
 
+const unpinPriceCacheCid = async (cid: string | null) => {
+  if (!CAN_WRITE_PINATA || !cid) return;
+  try {
+    await pinataClient?.unpin(cid);
+    console.log("[superfluid-points] unpinned previous token price cache", {
+      cid,
+    });
+  } catch (error) {
+    console.warn("[superfluid-points] pinata unpin error (prices)", {
+      cid,
+      error,
+    });
+  }
+};
+
 const pinPriceCacheToIpfs = async (): Promise<string | null> => {
   if (
     !CAN_WRITE_PINATA ||
@@ -1487,19 +1502,7 @@ const pinPriceCacheToIpfs = async (): Promise<string | null> => {
   };
   try {
     const previousCid = latestPriceCacheCid;
-    if (previousCid) {
-      try {
-        await pinataClient?.unpin(previousCid);
-        console.log("[superfluid-points] unpinned previous token price cache", {
-          cid: previousCid,
-        });
-      } catch (error) {
-        console.warn("[superfluid-points] pinata unpin error (prices)", {
-          cid: previousCid,
-          error,
-        });
-      }
-    }
+    await unpinPriceCacheCid(previousCid);
     const data = await pinataClient?.pinJSONToIPFS(
       normalizeForPinata(payload),
       {

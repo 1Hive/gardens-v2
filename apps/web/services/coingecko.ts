@@ -109,7 +109,13 @@ const pinataClient =
           pinataSecretApiKey: PINATA_SECRET,
         });
       } catch (error) {
-        console.warn("[coingecko] failed to init pinata SDK", error);
+        console.warn("[coingecko] failed to init pinata SDK", {
+          authMode:
+            PINATA_JWT ? "jwt"
+            : PINATA_KEY && PINATA_SECRET ? "api_key_secret"
+            : "none",
+          error,
+        });
         return null;
       }
     })()
