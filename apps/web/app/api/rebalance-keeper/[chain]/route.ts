@@ -64,6 +64,9 @@ const USD_PRECISION = 6;
 const USD_PRECISION_MULTIPLIER = 10 ** USD_PRECISION;
 const REBALANCE_KEEPER_EXCLUDED_CHAIN_IDS = new Set<number>([421614]);
 
+const roundToUsdPrecision = (value: number) =>
+  Math.round(value * USD_PRECISION_MULTIPLIER) / USD_PRECISION_MULTIPLIER;
+
 const STRATEGY_QUERY = `
   query RebalanceCandidates($first: Int!, $skip: Int!) {
     cvstrategies(
@@ -320,11 +323,10 @@ async function runKeeperForChain({
           : undefined;
         const gasCostUsd =
           gasCostWei != null && gasTokenUsdPrice != null ?
-            Math.round(
+            roundToUsdPrecision(
               parseFloat(formatEther(BigInt(gasCostWei))) *
-                gasTokenUsdPrice *
-                USD_PRECISION_MULTIPLIER,
-            ) / USD_PRECISION_MULTIPLIER
+                gasTokenUsdPrice,
+            )
           : undefined;
         if (gasCostUsd != null) {
           gasCostUsdTotal += gasCostUsd;
@@ -365,9 +367,7 @@ async function runKeeperForChain({
     return {
       chainId: chainConfig.id,
       discoveredStrategies: strategies.length,
-      gasCostUsdTotal:
-        Math.round(gasCostUsdTotal * USD_PRECISION_MULTIPLIER) /
-        USD_PRECISION_MULTIPLIER,
+      gasCostUsdTotal: roundToUsdPrecision(gasCostUsdTotal),
       sent,
       skipped,
     };
@@ -467,7 +467,7 @@ export async function GET(req: Request, { params }: Params) {
     discoveredStrategies: totals.discoveredStrategies,
     sentTxs: totals.sentTxs,
     gasUsed: totals.gasUsed.toString(),
-    gasCostUsd: Number(totals.gasCostUsd.toFixed(USD_PRECISION)),
+    gasCostUsd: roundToUsdPrecision(totals.gasCostUsd),
     skipped: totals.skipped,
     failedChains: totals.failedChains,
   });
@@ -483,7 +483,7 @@ export async function GET(req: Request, { params }: Params) {
       totals: {
         ...totals,
         gasUsed: totals.gasUsed.toString(),
-        gasCostUsd: Number(totals.gasCostUsd.toFixed(USD_PRECISION)),
+        gasCostUsd: roundToUsdPrecision(totals.gasCostUsd),
       },
       results,
     },

@@ -102,11 +102,10 @@ const getOverridePrice = (
 };
 
 const getRequestHeaders = () => {
-  if (!process.env.COINGECKO_API_KEY) {
+  const apiKey = process.env.COINGECKO_API_KEY;
+  if (!apiKey) {
     throw new Error("COINGECKO_API_KEY is not set");
   }
-
-  const apiKey = process.env.COINGECKO_API_KEY;
   const headerKey =
     process.env.COINGECKO_USE_PRO?.toLowerCase() === "true" ?
       "x-cg-pro-api-key"
