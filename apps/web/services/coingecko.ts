@@ -210,8 +210,6 @@ async function fetchGasTokenUsdPrice({
 
   const entry = data[coinId];
   if (!entry?.usd) {
-    const overridePrice = getOverridePrice(chainId, `native:${chainId}`, symbol);
-    if (overridePrice != null) return overridePrice;
     throw new Error(
       `Coingecko gas token price missing in response for ${coinId} on ${chainId}`,
     );

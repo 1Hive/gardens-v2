@@ -314,7 +314,7 @@ async function runKeeperForChain({
           : undefined;
         const gasCostUsd =
           gasCostWei != null && gasTokenUsdPrice != null ?
-            Number(
+            parseFloat(
               (
                 Number(formatEther(BigInt(gasCostWei))) * gasTokenUsdPrice
               ).toFixed(6),
