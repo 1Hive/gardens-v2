@@ -221,14 +221,11 @@ export function Proposals({
   // Derived state
   const isMemberCommunity =
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
-  const {
-    hasResolvedMemberPower,
-    memberActivatedStrategy,
-    memberActivatedPoints,
-  } = getMemberActivationState({
+  const { memberActivatedStrategy, memberActivatedPoints } =
+    getMemberActivationState({
     memberPower,
     subgraphActivatedPoints: memberActivatedPointsFromSubgraph,
-  });
+    });
 
   const [sortedProposals, setSortedProposals] = useState(strategy.proposals);
 
@@ -1037,6 +1034,8 @@ export function useProposalFilter<
     | null;
 
   const [sortBy, setSortBy] = useState<SortType>("mostConviction");
+  const [hasManualSortSelection, setHasManualSortSelection] =
+    useState(false);
 
   const filteredAndSorted = useMemo(() => {
     if (!sortBy) return filteredProposals;
@@ -1080,7 +1079,13 @@ export function useProposalFilter<
   const setFilterWithLoading = (newFilter: FilterType) => {
     startTransition(() => {
       setFilter(newFilter);
-      if (newFilter === "closed" || newFilter === "executed") {
+      if (hasManualSortSelection) return;
+
+      if (newFilter === "all") {
+        setSortBy("newest");
+      } else if (newFilter === "active") {
+        setSortBy("mostConviction");
+      } else if (newFilter === "closed" || newFilter === "executed") {
         setSortBy("newest");
       }
     });
@@ -1088,6 +1093,7 @@ export function useProposalFilter<
 
   const setSortByWithLoading = (newSort: SortType) => {
     startTransition(() => {
+      setHasManualSortSelection(true);
       setSortBy(newSort);
     });
   };
@@ -1122,8 +1128,8 @@ function ProposalFiltersUI({
   const FILTERS = useMemo(() => {
     const allFilters = ["all", "active", "executed", "closed"];
 
-    // Remove "executed" filter when poolType is a signaling pool
-    return +poolType === 0 ?
+    // Only funding pools have a separate executed proposal state in filters.
+    return PoolTypes[poolType] !== "funding" ?
         allFilters.filter((f) => f !== "executed")
       : allFilters;
   }, [poolType]);

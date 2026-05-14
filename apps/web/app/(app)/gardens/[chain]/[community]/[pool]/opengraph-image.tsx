@@ -49,6 +49,10 @@ type ImageParams = {
   pool: string;
 };
 
+type ImageProps = {
+  params: Promise<ImageParams>;
+};
+
 let cachedGardenLogoDataUrl: string | null = null;
 
 let fundingBackgroundDataUrl: string | null = null;
@@ -437,14 +441,14 @@ async function renderImage({
 
 export async function generateMetadata({
   params,
-}: {
-  params: ImageParams;
-}): Promise<Metadata> {
-  const chainId = Number(params.chain);
-  const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
-  const strategySlug = params.pool?.toString();
+}: ImageProps): Promise<Metadata> {
+  const resolvedParams = await params;
+  const chainId = Number(resolvedParams.chain);
+  const chainConfig =
+    chainConfigMap[resolvedParams.chain] ?? chainConfigMap[chainId];
+  const strategySlug = resolvedParams.pool?.toString();
   const strategyAddress = await resolveStrategyAddress(
-    params.chain,
+    resolvedParams.chain,
     strategySlug ?? "",
   );
 
@@ -457,7 +461,7 @@ export async function generateMetadata({
 
   if (chainConfig == null) {
     console.error("Unsupported chainId for pool opengraph-image metadata.", {
-      chainId: params.chain,
+      chainId: resolvedParams.chain,
     });
     return fallbackMetadata;
   }
@@ -483,7 +487,7 @@ export async function generateMetadata({
 
     if (poolResult.error) {
       console.error("Error fetching pool metadata for OG image.", {
-        chainId: params.chain,
+        chainId: resolvedParams.chain,
         strategyAddress,
         error: poolResult.error,
       });
@@ -506,7 +510,7 @@ export async function generateMetadata({
     };
   } catch (error) {
     console.error("Failed to generate metadata for pool OG image.", {
-      chainId: params.chain,
+      chainId: resolvedParams.chain,
       strategyAddress,
       error,
     });
@@ -514,18 +518,20 @@ export async function generateMetadata({
   }
 }
 
-export default async function Image({ params }: { params: ImageParams }) {
-  const chainId = Number(params.chain);
-  const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
-  const strategySlug = params.pool?.toString();
+export default async function Image({ params }: ImageProps) {
+  const resolvedParams = await params;
+  const chainId = Number(resolvedParams.chain);
+  const chainConfig =
+    chainConfigMap[resolvedParams.chain] ?? chainConfigMap[chainId];
+  const strategySlug = resolvedParams.pool?.toString();
   const strategyAddress = await resolveStrategyAddress(
-    params.chain,
+    resolvedParams.chain,
     strategySlug ?? "",
   );
 
   if (chainConfig == null) {
     console.error("Unsupported chainId for pool opengraph-image generation.", {
-      chainId: params.chain,
+      chainId: resolvedParams.chain,
     });
     return renderImage({ title: "Pool", chainId });
   }
@@ -551,7 +557,7 @@ export default async function Image({ params }: { params: ImageParams }) {
 
     if (poolResult.error) {
       console.error("Error fetching pool data for OG image.", {
-        chainId: params.chain,
+        chainId: resolvedParams.chain,
         strategyAddress,
         error: poolResult.error,
       });
@@ -562,7 +568,7 @@ export default async function Image({ params }: { params: ImageParams }) {
 
     if (!poolData) {
       console.error("Missing pool data for OG image.", {
-        chainId: params.chain,
+        chainId: resolvedParams.chain,
         strategyAddress,
       });
       return await renderImage({ title: "Pool", chainId });
@@ -586,7 +592,7 @@ export default async function Image({ params }: { params: ImageParams }) {
     });
   } catch (error) {
     console.error("Failed to fetch pool data for OG image.", {
-      chainId: params.chain,
+      chainId: resolvedParams.chain,
       strategyAddress,
       error,
     });
