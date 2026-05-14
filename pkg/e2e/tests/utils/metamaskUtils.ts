@@ -482,6 +482,15 @@ export async function confirmTransaction({
   };
 
   let clicked = false;
+  const markAsClickedIfTransactionClosed = async () => {
+    if (await findTransactionPage()) {
+      return false;
+    }
+
+    clicked = true;
+    return true;
+  };
+
   for (let i = 0; i < 120; i++) {
     const latestNotificationPage = await findTransactionPage();
     if (latestNotificationPage) {
@@ -509,8 +518,7 @@ export async function confirmTransaction({
         clicked = true;
         break;
       } catch {
-        if (!(await findTransactionPage())) {
-          clicked = true;
+        if (await markAsClickedIfTransactionClosed()) {
           break;
         }
         try {
@@ -518,8 +526,7 @@ export async function confirmTransaction({
           clicked = true;
           break;
         } catch {
-          if (!(await findTransactionPage())) {
-            clicked = true;
+          if (await markAsClickedIfTransactionClosed()) {
             break;
           }
         }
@@ -530,7 +537,6 @@ export async function confirmTransaction({
       break;
     }
 
-    let advancedTransactionStep = false;
     for (const selector of nextSelectors) {
       const button = notificationPage.locator(selector).first();
       const visible = await button.isVisible().catch(() => false);
@@ -546,28 +552,20 @@ export async function confirmTransaction({
       await button.scrollIntoViewIfNeeded().catch(() => {});
       try {
         await button.click({ timeout: 5000 });
-        advancedTransactionStep = true;
         await sleep(1500);
-        if (!(await findTransactionPage())) {
-          clicked = true;
-        }
+        await markAsClickedIfTransactionClosed();
         break;
       } catch {
-        if (!(await findTransactionPage())) {
-          clicked = true;
+        if (await markAsClickedIfTransactionClosed()) {
           break;
         }
         try {
           await button.click({ timeout: 5000, force: true });
-          advancedTransactionStep = true;
           await sleep(1500);
-          if (!(await findTransactionPage())) {
-            clicked = true;
-          }
+          await markAsClickedIfTransactionClosed();
           break;
         } catch {
-          if (!(await findTransactionPage())) {
-            clicked = true;
+          if (await markAsClickedIfTransactionClosed()) {
             break;
           }
         }
@@ -576,11 +574,6 @@ export async function confirmTransaction({
 
     if (clicked) {
       break;
-    }
-
-    if (advancedTransactionStep) {
-      await sleep(250);
-      continue;
     }
 
     await sleep(250);
