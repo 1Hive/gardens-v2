@@ -31,6 +31,7 @@ type StrategyCandidate = {
 type ChainRunResult = {
   chainId: number | string;
   discoveredStrategies: number;
+  gasCostUsdTotal: number;
   sent: Array<{
     strategy: Address;
     txHash: `0x${string}`;
@@ -175,11 +176,12 @@ async function runKeeperForChain({
   const chainConfig = getConfigByChain(chainId);
   if (!chainConfig) {
     return {
-      chainId: String(chainId),
-      discoveredStrategies: 0,
-      sent: [],
-      skipped: [],
-      error: `Unsupported chain: ${String(chainId)}`,
+        chainId: String(chainId),
+        discoveredStrategies: 0,
+        gasCostUsdTotal: 0,
+        sent: [],
+        skipped: [],
+        error: `Unsupported chain: ${String(chainId)}`,
     };
   }
 
@@ -207,12 +209,13 @@ async function runKeeperForChain({
       subgraphFallback,
     );
     if (!strategies.length) {
-      return {
-        chainId: chainConfig.id,
-        discoveredStrategies: 0,
-        sent: [],
-        skipped: [],
-      };
+        return {
+          chainId: chainConfig.id,
+          discoveredStrategies: 0,
+          gasCostUsdTotal: 0,
+          sent: [],
+          skipped: [],
+        };
     }
 
     const block = await publicClient.getBlock({ blockTag: "latest" });
@@ -228,6 +231,7 @@ async function runKeeperForChain({
       gasCostUsd?: number;
     }> = [];
     const skipped: Array<{ strategy: Address; reason: string }> = [];
+    let gasCostUsdTotal = 0;
     const gasTokenSymbol = getViemChain(chainId).nativeCurrency.symbol;
     let gasTokenUsdPrice: number | undefined;
 
@@ -314,12 +318,15 @@ async function runKeeperForChain({
           : undefined;
         const gasCostUsd =
           gasCostWei != null && gasTokenUsdPrice != null ?
-            parseFloat(
-              (
-                Number(formatEther(BigInt(gasCostWei))) * gasTokenUsdPrice
-              ).toFixed(6),
-            )
+            Math.round(
+              parseFloat(formatEther(BigInt(gasCostWei))) *
+                gasTokenUsdPrice *
+                1_000_000,
+            ) / 1_000_000
           : undefined;
+        if (gasCostUsd != null) {
+          gasCostUsdTotal += gasCostUsd;
+        }
 
         console.info("rebalance-keeper: rebalance transaction confirmed", {
           chainId: chainConfig.id,
@@ -356,6 +363,7 @@ async function runKeeperForChain({
     return {
       chainId: chainConfig.id,
       discoveredStrategies: strategies.length,
+      gasCostUsdTotal: Math.round(gasCostUsdTotal * 1_000_000) / 1_000_000,
       sent,
       skipped,
     };
@@ -363,6 +371,7 @@ async function runKeeperForChain({
     return {
       chainId: String(chainId),
       discoveredStrategies: 0,
+      gasCostUsdTotal: 0,
       sent: [],
       skipped: [],
       error: error instanceof Error ? error.message : "unknown_error",
@@ -434,9 +443,7 @@ export async function GET(req: Request, { params }: Params) {
       gasUsed:
         acc.gasUsed +
         curr.sent.reduce((sum, tx) => sum + BigInt(tx.gasUsed), 0n),
-      gasCostUsd:
-        acc.gasCostUsd +
-        curr.sent.reduce((sum, tx) => sum + (tx.gasCostUsd ?? 0), 0),
+      gasCostUsd: acc.gasCostUsd + curr.gasCostUsdTotal,
       skipped: acc.skipped + curr.skipped.length,
       failedChains: acc.failedChains + (curr.error ? 1 : 0),
     }),
