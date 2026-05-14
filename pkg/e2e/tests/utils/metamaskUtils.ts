@@ -414,10 +414,13 @@ export async function confirmTransaction({
   const confirmSelectors = [
     '[data-testid="confirm-footer-button"]',
     'button:has-text("Confirm")',
+    'button:has-text("Sign")',
+    'button:has-text("Submit")',
   ];
   const nextSelectors = [
     '[data-testid="page-container-footer-next"]',
     'button:has-text("Next")',
+    'button:has-text("Continue")',
   ];
   const transactionButtonSelectors = [...confirmSelectors, ...nextSelectors];
   const findExtensionPages = () =>
@@ -452,7 +455,7 @@ export async function confirmTransaction({
   };
 
   // Wait for the transaction confirmation popup
-  for (let i = 0; i < 80; i++) {
+  for (let i = 0; i < 120; i++) {
     notificationPage = await findTransactionPage();
     if (notificationPage) break;
     await sleep(250);
@@ -479,7 +482,7 @@ export async function confirmTransaction({
   };
 
   let clicked = false;
-  for (let i = 0; i < 80; i++) {
+  for (let i = 0; i < 120; i++) {
     const latestNotificationPage = await findTransactionPage();
     if (latestNotificationPage) {
       notificationPage = latestNotificationPage;
@@ -506,11 +509,20 @@ export async function confirmTransaction({
         clicked = true;
         break;
       } catch {
+        if (!(await findTransactionPage())) {
+          clicked = true;
+          break;
+        }
         try {
           await button.click({ timeout: 5000, force: true });
           clicked = true;
           break;
-        } catch {}
+        } catch {
+          if (!(await findTransactionPage())) {
+            clicked = true;
+            break;
+          }
+        }
       }
     }
 
@@ -518,6 +530,7 @@ export async function confirmTransaction({
       break;
     }
 
+    let advancedTransactionStep = false;
     for (const selector of nextSelectors) {
       const button = notificationPage.locator(selector).first();
       const visible = await button.isVisible().catch(() => false);
@@ -533,15 +546,41 @@ export async function confirmTransaction({
       await button.scrollIntoViewIfNeeded().catch(() => {});
       try {
         await button.click({ timeout: 5000 });
+        advancedTransactionStep = true;
         await sleep(1500);
+        if (!(await findTransactionPage())) {
+          clicked = true;
+        }
         break;
       } catch {
+        if (!(await findTransactionPage())) {
+          clicked = true;
+          break;
+        }
         try {
           await button.click({ timeout: 5000, force: true });
+          advancedTransactionStep = true;
           await sleep(1500);
+          if (!(await findTransactionPage())) {
+            clicked = true;
+          }
           break;
-        } catch {}
+        } catch {
+          if (!(await findTransactionPage())) {
+            clicked = true;
+            break;
+          }
+        }
       }
+    }
+
+    if (clicked) {
+      break;
+    }
+
+    if (advancedTransactionStep) {
+      await sleep(250);
+      continue;
     }
 
     await sleep(250);
