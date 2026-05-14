@@ -260,7 +260,10 @@ async function runKeeperForChain({
         chainId: chainConfig.id,
         gasTokenSymbol,
         impact: "rebalance will continue without USD gas cost enrichment",
-        error: error instanceof Error ? error.message : "unknown_error",
+        error:
+          error instanceof Error ?
+            { name: error.name, message: error.message, stack: error.stack }
+          : error,
       });
     }
 
