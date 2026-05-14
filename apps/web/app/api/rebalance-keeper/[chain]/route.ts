@@ -3,12 +3,14 @@ import {
   Address,
   createPublicClient,
   createWalletClient,
+  formatEther,
   http,
   isAddress,
   parseAbi,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { chainConfigMap, getConfigByChain } from "@/configs/chains";
+import { getGasTokenUsdPrice } from "@/services/coingecko";
 import { ChainId } from "@/types";
 import { getViemChain } from "@/utils/web3";
 
@@ -35,6 +37,9 @@ type ChainRunResult = {
     gasUsed: string;
     effectiveGasPrice?: string;
     gasCostWei?: string;
+    gasTokenSymbol?: string;
+    gasTokenUsdPrice?: number;
+    gasCostUsd?: number;
   }>;
   skipped: Array<{ strategy: Address; reason: string }>;
   error?: string;
@@ -218,8 +223,26 @@ async function runKeeperForChain({
       gasUsed: string;
       effectiveGasPrice?: string;
       gasCostWei?: string;
+      gasTokenSymbol?: string;
+      gasTokenUsdPrice?: number;
+      gasCostUsd?: number;
     }> = [];
     const skipped: Array<{ strategy: Address; reason: string }> = [];
+    const gasTokenSymbol = getViemChain(chainId).nativeCurrency.symbol;
+    let gasTokenUsdPrice: number | undefined;
+
+    try {
+      gasTokenUsdPrice = await getGasTokenUsdPrice({
+        chainId: chainConfig.id,
+        symbol: gasTokenSymbol,
+      });
+    } catch (error) {
+      console.warn("rebalance-keeper: failed to fetch gas token usd price", {
+        chainId: chainConfig.id,
+        gasTokenSymbol,
+        error: error instanceof Error ? error.message : "unknown_error",
+      });
+    }
 
     for (const strategy of strategies) {
       try {
@@ -289,6 +312,14 @@ async function runKeeperForChain({
           receipt.effectiveGasPrice != null ?
             (receipt.gasUsed * receipt.effectiveGasPrice).toString()
           : undefined;
+        const gasCostUsd =
+          gasCostWei != null && gasTokenUsdPrice != null ?
+            Number(
+              (
+                Number(formatEther(BigInt(gasCostWei))) * gasTokenUsdPrice
+              ).toFixed(6),
+            )
+          : undefined;
 
         console.info("rebalance-keeper: rebalance transaction confirmed", {
           chainId: chainConfig.id,
@@ -297,6 +328,9 @@ async function runKeeperForChain({
           gasUsed,
           effectiveGasPrice,
           gasCostWei,
+          gasTokenSymbol,
+          gasTokenUsdPrice,
+          gasCostUsd,
         });
 
         sent.push({
@@ -305,6 +339,9 @@ async function runKeeperForChain({
           gasUsed,
           effectiveGasPrice,
           gasCostWei,
+          gasTokenSymbol,
+          gasTokenUsdPrice,
+          gasCostUsd,
         });
       } catch (error) {
         const reason = error instanceof Error ? error.message : "unknown_error";
@@ -397,6 +434,9 @@ export async function GET(req: Request, { params }: Params) {
       gasUsed:
         acc.gasUsed +
         curr.sent.reduce((sum, tx) => sum + BigInt(tx.gasUsed), 0n),
+      gasCostUsd:
+        acc.gasCostUsd +
+        curr.sent.reduce((sum, tx) => sum + (tx.gasCostUsd ?? 0), 0),
       skipped: acc.skipped + curr.skipped.length,
       failedChains: acc.failedChains + (curr.error ? 1 : 0),
     }),
@@ -404,6 +444,7 @@ export async function GET(req: Request, { params }: Params) {
       discoveredStrategies: 0,
       sentTxs: 0,
       gasUsed: 0n,
+      gasCostUsd: 0,
       skipped: 0,
       failedChains: 0,
     },
@@ -415,6 +456,7 @@ export async function GET(req: Request, { params }: Params) {
     discoveredStrategies: totals.discoveredStrategies,
     sentTxs: totals.sentTxs,
     gasUsed: totals.gasUsed.toString(),
+    gasCostUsd: Number(totals.gasCostUsd.toFixed(6)),
     skipped: totals.skipped,
     failedChains: totals.failedChains,
   });
@@ -430,6 +472,7 @@ export async function GET(req: Request, { params }: Params) {
       totals: {
         ...totals,
         gasUsed: totals.gasUsed.toString(),
+        gasCostUsd: Number(totals.gasCostUsd.toFixed(6)),
       },
       results,
     },

@@ -7,6 +7,8 @@ type SupportedPlatform =
   | "arbitrum-one"
   | "optimistic-ethereum";
 
+type SupportedCoinId = "ethereum" | "matic-network" | "celo" | "xdai";
+
 const getBaseUrl = () => {
   if (process.env.COINGECKO_API_BASE) return process.env.COINGECKO_API_BASE;
   const apiKey = process.env.COINGECKO_API_KEY?.toLowerCase() ?? "";
@@ -30,10 +32,26 @@ const PLATFORM_BY_CHAIN: Record<number, SupportedPlatform> = {
   10: "optimistic-ethereum",
 };
 
+const GAS_TOKEN_COIN_ID_BY_CHAIN: Record<number, SupportedCoinId> = {
+  1: "ethereum",
+  10: "ethereum",
+  100: "xdai",
+  137: "matic-network",
+  8453: "ethereum",
+  42220: "celo",
+  42161: "ethereum",
+  421614: "ethereum",
+  11155111: "ethereum",
+  11155420: "ethereum",
+};
+
 const COINGECKO_TOKEN_PRICE_URL = (
   platform: SupportedPlatform,
   baseUrl: string,
 ) => `${baseUrl}/simple/token_price/${platform}`;
+
+const COINGECKO_COIN_PRICE_URL = (baseUrl: string) =>
+  `${baseUrl}/simple/price`;
 
 type OverrideEntry =
   | { price: number | string; label?: string }
@@ -81,6 +99,23 @@ const getOverridePrice = (
   );
 };
 
+const getRequestHeaders = () => {
+  if (!process.env.COINGECKO_API_KEY) {
+    throw new Error("COINGECKO_API_KEY is not set");
+  }
+
+  const apiKey = process.env.COINGECKO_API_KEY;
+  const headerKey =
+    process.env.COINGECKO_USE_PRO?.toLowerCase() === "true" ?
+      "x-cg-pro-api-key"
+    : "x-cg-demo-api-key";
+
+  return {
+    accept: "application/json",
+    ...(apiKey ? { [headerKey]: apiKey } : {}),
+  };
+};
+
 async function fetchTokenUsdPrice({
   chainId,
   address,
@@ -98,27 +133,14 @@ async function fetchTokenUsdPrice({
     throw new Error(`Unsupported chainId for Coingecko price: ${chainId}`);
   }
 
-  if (!process.env.COINGECKO_API_KEY) {
-    throw new Error("COINGECKO_API_KEY is not set");
-  }
-
   const primaryBase = getBaseUrl();
   const primaryUrl = new URL(COINGECKO_TOKEN_PRICE_URL(platform, primaryBase));
   primaryUrl.searchParams.set("contract_addresses", address.toLowerCase());
   primaryUrl.searchParams.set("vs_currencies", "usd");
 
-  const apiKey = process.env.COINGECKO_API_KEY;
-  const headerKey =
-    process.env.COINGECKO_USE_PRO?.toLowerCase() === "true" ?
-      "x-cg-pro-api-key"
-    : "x-cg-demo-api-key";
-
   const request = async (targetUrl: URL) => {
     const res = await fetch(targetUrl, {
-      headers: {
-        accept: "application/json",
-        ...(apiKey ? { [headerKey]: apiKey } : {}),
-      },
+      headers: getRequestHeaders(),
       next: { revalidate: 0 },
     });
     return res;
@@ -150,6 +172,54 @@ async function fetchTokenUsdPrice({
   return entry.usd;
 }
 
+async function fetchGasTokenUsdPrice({
+  chainId,
+  symbol,
+}: {
+  chainId: number;
+  symbol?: string;
+}): Promise<number> {
+  const override = getOverridePrice(chainId, `native:${chainId}`, symbol);
+  if (override != null) return override;
+
+  const coinId = GAS_TOKEN_COIN_ID_BY_CHAIN[chainId];
+  if (!coinId) {
+    throw new Error(`Unsupported chainId for Coingecko gas token price: ${chainId}`);
+  }
+
+  const url = new URL(COINGECKO_COIN_PRICE_URL(getBaseUrl()));
+  url.searchParams.set("ids", coinId);
+  url.searchParams.set("vs_currencies", "usd");
+
+  const response = await fetch(url, {
+    headers: getRequestHeaders(),
+    next: { revalidate: 0 },
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(
+      `Failed to fetch Coingecko gas token price (${response.status}): ${body}`,
+    );
+  }
+
+  const data = (await response.json()) as Record<
+    SupportedCoinId,
+    { usd?: number | null } | undefined
+  >;
+
+  const entry = data[coinId];
+  if (!entry?.usd) {
+    const overridePrice = getOverridePrice(chainId, `native:${chainId}`, symbol);
+    if (overridePrice != null) return overridePrice;
+    throw new Error(
+      `Coingecko gas token price missing in response for ${coinId} on ${chainId}`,
+    );
+  }
+
+  return entry.usd;
+}
+
 const priceCache = new Map<string, { value: number; expiresAt: number }>();
 
 const FIFTEEN_MIN_MS = 15 * 60 * 1000;
@@ -170,6 +240,25 @@ export async function getTokenUsdPrice(params: {
   }
 
   const value = await fetchTokenUsdPrice(params);
+  priceCache.set(cacheKey, { value, expiresAt: Date.now() + FIFTEEN_MIN_MS });
+  return value;
+}
+
+/**
+ * Returns the USD price for a chain's native gas token using Coingecko.
+ * Throws on any error or missing price.
+ */
+export async function getGasTokenUsdPrice(params: {
+  chainId: number;
+  symbol?: string;
+}): Promise<number> {
+  const cacheKey = `native:${params.chainId}`;
+  const cached = priceCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value;
+  }
+
+  const value = await fetchGasTokenUsdPrice(params);
   priceCache.set(cacheKey, { value, expiresAt: Date.now() + FIFTEEN_MIN_MS });
   return value;
 }
