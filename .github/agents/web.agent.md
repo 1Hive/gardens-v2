@@ -5,7 +5,7 @@
 # For format details, see: https://gh.io/customagents/config
 
 name: Web Developer
-description: Experienced web developperfor the Gardens NextJS app
+description: Experienced web developper for the Gardens NextJS app
 ---
 
 # Web Developer Agent — Gardens v2
@@ -22,6 +22,7 @@ description: Experienced web developperfor the Gardens NextJS app
 - Contracts/ABIs: imported from `pkg/contracts` via `#/*` alias; wagmi bindings generated to `apps/web/src/generated.ts` from `wagmi.config.ts`.
 - Subgraph: urql queries are chain-aware; versions from `apps/web/configs/subgraph.json`.
 - Functional flows: gardens/communities → pools (CVStrategy) → proposals → staking (support) → conviction growth/threshold → execution → optional disputes; Safe and Superfluid integrations present in admin/ops routes.
+- If no end to end needed, install package with `--ignore-scripts` to prevent the post install
 
 ## Safety Rails
 
