@@ -45,6 +45,8 @@ type ChainRunResult = {
   error?: string;
 };
 
+type ConfirmedRebalanceTx = ChainRunResult["sent"][number];
+
 const REBALANCE_KEEPER_ABI = parseAbi([
   "function rebalance()",
   "function proposalType() view returns (uint8)",
@@ -338,41 +340,51 @@ async function runKeeperForChain({
           receipt.effectiveGasPrice != null ?
             (receipt.gasUsed * receipt.effectiveGasPrice).toString()
           : undefined;
-        const gasCostWeiValue =
-          gasCostWei != null ? BigInt(gasCostWei) : undefined;
-        const gasCostUsd =
-          gasCostWeiValue != null && gasTokenUsdPrice != null ?
-            calculateGasCostUsd({
-              gasCostWei: gasCostWeiValue,
-              gasTokenUsdPrice,
-            })
-          : undefined;
-        if (gasCostUsd != null) {
-          gasCostUsdTotal += gasCostUsd;
+        const confirmedTx: ConfirmedRebalanceTx = {
+          strategy,
+          txHash: hash,
+          gasUsed,
+          effectiveGasPrice,
+          gasCostWei,
+          gasTokenSymbol,
+        };
+
+        try {
+          const gasCostWeiValue =
+            gasCostWei != null ? BigInt(gasCostWei) : undefined;
+          const gasCostUsd =
+            gasCostWeiValue != null && gasTokenUsdPrice != null ?
+              calculateGasCostUsd({
+                gasCostWei: gasCostWeiValue,
+                gasTokenUsdPrice,
+              })
+            : undefined;
+
+          if (gasTokenUsdPrice != null) {
+            confirmedTx.gasTokenUsdPrice = gasTokenUsdPrice;
+          }
+          if (gasCostUsd != null) {
+            confirmedTx.gasCostUsd = gasCostUsd;
+            gasCostUsdTotal += gasCostUsd;
+          }
+        } catch (error) {
+          console.warn(
+            "rebalance-keeper: failed to enrich confirmed rebalance transaction",
+            {
+              chainId: chainConfig.id,
+              strategy,
+              txHash: hash,
+              error: error instanceof Error ? error.message : "unknown_error",
+            },
+          );
         }
 
         console.info("rebalance-keeper: rebalance transaction confirmed", {
           chainId: chainConfig.id,
-          strategy,
-          txHash: hash,
-          gasUsed,
-          effectiveGasPrice,
-          gasCostWei,
-          gasTokenSymbol,
-          gasTokenUsdPrice,
-          gasCostUsd,
+          ...confirmedTx,
         });
 
-        sent.push({
-          strategy,
-          txHash: hash,
-          gasUsed,
-          effectiveGasPrice,
-          gasCostWei,
-          gasTokenSymbol,
-          gasTokenUsdPrice,
-          gasCostUsd,
-        });
+        sent.push(confirmedTx);
       } catch (error) {
         const reason = error instanceof Error ? error.message : "unknown_error";
         const normalizedReason =
