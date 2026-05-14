@@ -609,7 +609,7 @@ export function PoolForm({
         name: "Super" + customTokenData?.name,
         symbol: customTokenData?.symbol + "x",
         id: newSuperToken.token,
-        underlyingToken: poolTokenAddress,
+        underlyingToken: poolTokenAddress ?? zeroAddress,
       });
     },
   });
@@ -711,12 +711,16 @@ export function PoolForm({
   };
 
   const handleEnableStreaming = async () => {
+    if (!poolTokenAddress || !customTokenData) {
+      return;
+    }
+
     writeCreateSuperTokenAsync({
       args: [
         poolTokenAddress,
         1,
-        "Super " + customTokenData!.name,
-        customTokenData!.symbol + "x",
+        "Super " + customTokenData.name,
+        customTokenData.symbol + "x",
       ],
     });
   };
