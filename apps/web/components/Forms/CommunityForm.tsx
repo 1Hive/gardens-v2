@@ -112,7 +112,10 @@ export const CommunityForm = () => {
     : undefined;
 
   const selectedChainPublicClient = useMemo(() => {
-    if (!normalizedChainId || !chainConfigMap[normalizedChainId]?.rpcUrl) {
+    if (
+      normalizedChainId == null ||
+      !chainConfigMap[normalizedChainId]?.rpcUrl
+    ) {
       return undefined;
     }
 
@@ -433,7 +436,7 @@ export const CommunityForm = () => {
 
   const validateTokenAddress = async (address: string) => {
     if (!isAddress(address)) return "Invalid Token Address";
-    if (!normalizedChainId) return "Please select a chain first";
+    if (normalizedChainId == null) return "Please select a chain first";
     if (normalizedChainId !== Number(connectedChainId))
       return `Connect to ${chainConfigMap[normalizedChainId]?.name} network`;
     if (!selectedChainPublicClient)

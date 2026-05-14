@@ -7,10 +7,6 @@ import {
 } from "#/subgraph/.graphclient";
 import ClientPage, { type ProposalPageParams } from "./client-page";
 import {
-  resolveStrategyAddress,
-  stringifySearchParams,
-} from "../route-helpers";
-import {
   ENDED_PROPOSAL_DESCRIPTION,
   FALLBACK_TITLE,
   getDescriptionFromStatus,
@@ -18,6 +14,10 @@ import {
   OG_IMAGE_VERSION,
   titleCaseStatus,
 } from "./og-metadata";
+import {
+  resolveStrategyAddress,
+  stringifySearchParams,
+} from "../route-helpers";
 import { getConfigByChain } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { ProposalStatus } from "@/types";

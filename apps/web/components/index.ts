@@ -38,3 +38,4 @@ export { InfoWrapper } from "./InfoWrapper";
 export { DataTable } from "./DataTable";
 export { TransactionStatusNotification } from "./TransactionStatusNotification";
 export { LoadingToast } from "./LoadingToast";
+export { LiveFlowingAmount } from "./LiveFlowingAmount";

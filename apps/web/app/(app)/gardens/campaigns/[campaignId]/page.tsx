@@ -4,9 +4,9 @@ import { SuperBanner } from "@/assets";
 import { CAMPAIGNS, CampaignId } from "@/utils/campaigns";
 
 type PageParams = {
-  params: {
+  params: Promise<{
     campaignId: CampaignId;
-  };
+  }>;
 };
 
 const titlePrefix = "Gardens - ";
@@ -14,7 +14,8 @@ const titlePrefix = "Gardens - ";
 export async function generateMetadata({
   params,
 }: PageParams): Promise<Metadata> {
-  const campaign = CAMPAIGNS[params.campaignId];
+  const resolvedParams = await params;
+  const campaign = CAMPAIGNS[resolvedParams.campaignId];
   const campaignTitle = campaign?.name;
   const ogImage =
     typeof SuperBanner === "string" ? SuperBanner : SuperBanner.src;
@@ -38,9 +39,10 @@ export async function generateMetadata({
   return fallbackMetadata;
 }
 
-export default function Page({
+export default async function Page({
   params,
 }: PageParams) {
-  return <ClientPage campaignId={params.campaignId} />;
+  const resolvedParams = await params;
+  return <ClientPage campaignId={resolvedParams.campaignId} />;
 }
 

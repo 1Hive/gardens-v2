@@ -7,18 +7,24 @@ import {
 } from "#/subgraph/.graphclient";
 import ClientPage from "./client-page";
 import { FALLBACK_TITLE, getDescriptionText } from "./opengraph-image";
-import { resolveStrategyAddress, stringifySearchParams } from "./route-helpers";
+import {
+  resolveStrategyAddress,
+  stringifySearchParams,
+  type SearchParams,
+} from "./route-helpers";
 import { chainConfigMap, type ChainData } from "@/configs/chains";
 import { queryByChain } from "@/providers/urql";
 import { PoolTypes } from "@/types";
 import { hasEthereumAddressFormat } from "@/utils/web3";
 
-type PageParams = {
-  params: {
-    chain: string;
-    community: string;
-    pool: string;
-  };
+type RouteParams = {
+  chain: string;
+  community: string;
+  pool: string;
+};
+
+type MetadataProps = {
+  params: Promise<RouteParams>;
 };
 
 export const dynamic = "force-dynamic"; // keep metadata fresh for status-aware OG images
@@ -29,7 +35,7 @@ const OG_IMAGE_TOKEN = "opengraph-image";
 const OG_IMAGE_VERSION = "v=4";
 
 function buildOgImagePath(
-  params: PageParams["params"],
+  params: RouteParams,
   status?: "active" | "in-review" | "archived" | "unknown",
 ) {
   const queryParts: string[] = [];
@@ -83,17 +89,19 @@ async function communityExistsOnChain(
 
 export async function generateMetadata({
   params,
-}: PageParams): Promise<Metadata> {
+}: MetadataProps): Promise<Metadata> {
+  const resolvedParams = await params;
   const metadataBase = await getRequestMetadataBase();
-  const chainId = Number(params.chain);
-  const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
+  const chainId = Number(resolvedParams.chain);
+  const chainConfig =
+    chainConfigMap[resolvedParams.chain] ?? chainConfigMap[chainId];
   const strategyAddress = await resolveStrategyAddress(
-    params.chain,
-    params.pool,
+    resolvedParams.chain,
+    resolvedParams.pool,
   );
   const normalizedParams = {
-    ...params,
-    pool: strategyAddress ?? params.pool,
+    ...resolvedParams,
+    pool: strategyAddress ?? resolvedParams.pool,
   };
   let description = getDescriptionText(undefined);
   const fallbackMetadata: Metadata = {
@@ -115,14 +123,14 @@ export async function generateMetadata({
 
   if (chainConfig == null) {
     console.error("Unsupported chainId for pool metadata generation.", {
-      chainId: params.chain,
+      chainId: resolvedParams.chain,
     });
     return fallbackMetadata;
   }
 
   if (!strategyAddress) {
     console.error("Missing strategy address for pool metadata generation.", {
-      strategySlug: params.pool,
+      strategySlug: resolvedParams.pool,
     });
     return fallbackMetadata;
   }
@@ -138,7 +146,7 @@ export async function generateMetadata({
 
     if (poolResult.error) {
       console.error("Error fetching pool metadata.", {
-        chainId: params.chain,
+        chainId: resolvedParams.chain,
         strategyAddress,
         error: poolResult.error,
       });
@@ -180,7 +188,7 @@ export async function generateMetadata({
     };
   } catch (error) {
     console.error("Failed to generate pool metadata.", {
-      chainId: params.chain,
+      chainId: resolvedParams.chain,
       strategyAddress,
       error,
     });
@@ -188,36 +196,38 @@ export async function generateMetadata({
   }
 }
 
-type PageProps = PageParams & {
-  searchParams: Record<string, string | string[] | undefined>;
+type PageProps = {
+  params: Promise<RouteParams>;
+  searchParams?: Promise<SearchParams>;
 };
 
 export default async function Page(props: PageProps) {
-  const numericChain = Number(props.params.chain);
-  const chainConfig =
-    chainConfigMap[props.params.chain] ?? chainConfigMap[numericChain];
+  const params = await props.params;
+  const searchParams = await props.searchParams;
+  const numericChain = Number(params.chain);
+  const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[numericChain];
 
   const currentCommunityExists = await communityExistsOnChain(
     chainConfig,
-    props.params.community,
+    params.community,
   );
 
   if (!currentCommunityExists) {
     const legacyCommunityExists = await communityExistsOnChain(
       chainConfig,
-      props.params.pool,
+      params.pool,
     );
 
     if (legacyCommunityExists) {
       redirect(
-        `/gardens/${props.params.chain}/${props.params.pool}${stringifySearchParams(props.searchParams)}`,
+        `/gardens/${params.chain}/${params.pool}${stringifySearchParams(searchParams)}`,
       );
     }
   }
 
   const strategyAddress = await resolveStrategyAddress(
-    props.params.chain,
-    props.params.pool,
+    params.chain,
+    params.pool,
   );
 
   if (!strategyAddress) {
@@ -225,16 +235,16 @@ export default async function Page(props: PageProps) {
   }
 
   const normalizedSlug = strategyAddress.toLowerCase();
-  if (props.params.pool.toLowerCase() !== normalizedSlug) {
+  if (params.pool.toLowerCase() !== normalizedSlug) {
     redirect(
-      `/gardens/${props.params.chain}/${props.params.community}/${normalizedSlug}${stringifySearchParams(props.searchParams)}`,
+      `/gardens/${params.chain}/${params.community}/${normalizedSlug}${stringifySearchParams(searchParams)}`,
     );
   }
 
   return (
     <ClientPage
       params={{
-        ...props.params,
+        ...params,
         pool: normalizedSlug,
       }}
     />

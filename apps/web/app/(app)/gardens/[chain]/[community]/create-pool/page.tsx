@@ -6,18 +6,23 @@ const DESCRIPTION =
   "Spin up a dedicated pool so your community can coordinate funding and signaling decisions together.";
 
 type PageParams = {
-  params: {
+  params: Promise<{
     chain: string;
     community: string;
-  };
+  }>;
 };
 
-function buildCommunityOgImagePath(params: PageParams["params"]) {
+type ResolvedPageParams = Awaited<PageParams["params"]>;
+
+function buildCommunityOgImagePath(params: ResolvedPageParams) {
   return `/gardens/${params.chain}/${params.community}/create-pool/opengraph-image?v=1`;
 }
 
-export function generateMetadata({ params }: PageParams): Metadata {
-  const ogImage = buildCommunityOgImagePath(params);
+export async function generateMetadata({
+  params,
+}: PageParams): Promise<Metadata> {
+  const resolvedParams = await params;
+  const ogImage = buildCommunityOgImagePath(resolvedParams);
   return {
     title: TITLE,
     description: DESCRIPTION,
@@ -35,8 +40,9 @@ export function generateMetadata({ params }: PageParams): Metadata {
   };
 }
 
-export default function Page({
+export default async function Page({
   params,
 }: PageParams) {
-  return <ClientPage params={params} />;
+  const resolvedParams = await params;
+  return <ClientPage params={resolvedParams} />;
 }
