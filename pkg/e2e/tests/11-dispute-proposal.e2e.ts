@@ -32,6 +32,7 @@ test.setTimeout(600000);
 const PROPOSAL_METADATA_HASH = "QmPjXaoDhSx4mMFCADow9Kea3NMcd44PNCqr8hFpsCpi6f";
 const DISPUTE_REASON = "E2E dispute: proposal violates the covenant.";
 const REJECTED_RULING = 2;
+const MAX_WALLET_STATE_ATTEMPTS = 2;
 
 const erc20Abi = parseAbi(["function decimals() view returns (uint8)"]);
 const alloAbi = parseAbi([
@@ -313,7 +314,7 @@ async function ensureWalletConnected(page: any, metamask: MetaMask) {
   };
 
   let walletState = "loading";
-  for (let attempt = 1; attempt <= 2; attempt++) {
+  for (let attempt = 1; attempt <= MAX_WALLET_STATE_ATTEMPTS; attempt++) {
     await expect
       .poll(
         async () => {

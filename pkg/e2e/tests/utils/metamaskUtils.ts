@@ -482,14 +482,7 @@ export async function confirmTransaction({
   };
 
   let clicked = false;
-  const markAsClickedIfTransactionClosed = async () => {
-    if (await findTransactionPage()) {
-      return false;
-    }
-
-    clicked = true;
-    return true;
-  };
+  const isTransactionClosed = async () => !(await findTransactionPage());
 
   for (let i = 0; i < 120; i++) {
     const latestNotificationPage = await findTransactionPage();
@@ -518,7 +511,8 @@ export async function confirmTransaction({
         clicked = true;
         break;
       } catch {
-        if (await markAsClickedIfTransactionClosed()) {
+        if (await isTransactionClosed()) {
+          clicked = true;
           break;
         }
         try {
@@ -526,7 +520,8 @@ export async function confirmTransaction({
           clicked = true;
           break;
         } catch {
-          if (await markAsClickedIfTransactionClosed()) {
+          if (await isTransactionClosed()) {
+            clicked = true;
             break;
           }
         }
@@ -553,19 +548,21 @@ export async function confirmTransaction({
       try {
         await button.click({ timeout: 5000 });
         await sleep(1500);
-        await markAsClickedIfTransactionClosed();
+        clicked = await isTransactionClosed();
         break;
       } catch {
-        if (await markAsClickedIfTransactionClosed()) {
+        if (await isTransactionClosed()) {
+          clicked = true;
           break;
         }
         try {
           await button.click({ timeout: 5000, force: true });
           await sleep(1500);
-          await markAsClickedIfTransactionClosed();
+          clicked = await isTransactionClosed();
           break;
         } catch {
-          if (await markAsClickedIfTransactionClosed()) {
+          if (await isTransactionClosed()) {
+            clicked = true;
             break;
           }
         }
