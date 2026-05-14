@@ -206,6 +206,16 @@ const fetchIpfsJson = async <T>(cid: string): Promise<T | null> => {
   }
 };
 
+const unpinPriceCacheCid = async (cid: string | null) => {
+  if (!CAN_WRITE_PINATA || !cid) return;
+  try {
+    await pinataClient?.unpin(cid);
+    console.log("[coingecko] unpinned previous price cache", { cid });
+  } catch (error) {
+    console.warn("[coingecko] pinata unpin error (prices)", { cid, error });
+  }
+};
+
 const hydratePriceCacheFromPinata = async () => {
   if (priceCacheHydrated) return;
   priceCacheHydrated = true;
@@ -279,6 +289,8 @@ const persistPriceCache = async (): Promise<string | null> => {
   };
 
   try {
+    const previousCid = latestPriceCacheCid;
+    await unpinPriceCacheCid(previousCid);
     const data = await pinataClient?.pinJSONToIPFS(normalizeForPinata(payload), {
       pinataMetadata: {
         name: COINGECKO_PRICE_CACHE_NAME,

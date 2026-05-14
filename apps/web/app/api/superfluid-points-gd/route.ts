@@ -1486,6 +1486,20 @@ const pinPriceCacheToIpfs = async (): Promise<string | null> => {
     entries,
   };
   try {
+    const previousCid = latestPriceCacheCid;
+    if (previousCid) {
+      try {
+        await pinataClient?.unpin(previousCid);
+        console.log("[superfluid-points] unpinned previous token price cache", {
+          cid: previousCid,
+        });
+      } catch (error) {
+        console.warn("[superfluid-points] pinata unpin error (prices)", {
+          cid: previousCid,
+          error,
+        });
+      }
+    }
     const data = await pinataClient?.pinJSONToIPFS(
       normalizeForPinata(payload),
       {
