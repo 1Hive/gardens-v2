@@ -3,7 +3,6 @@ import {
   Address,
   createPublicClient,
   createWalletClient,
-  formatEther,
   http,
   isAddress,
   parseAbi,
@@ -62,10 +61,28 @@ const ACTIVE_STATUS = 1;
 const DISPUTED_STATUS = 5;
 const USD_PRECISION = 6;
 const USD_PRECISION_MULTIPLIER = 10 ** USD_PRECISION;
+const WEI_PER_NATIVE_TOKEN = 10n ** 18n;
 const REBALANCE_KEEPER_EXCLUDED_CHAIN_IDS = new Set<number>([421614]);
 
 const roundToUsdPrecision = (value: number) =>
   Math.round(value * USD_PRECISION_MULTIPLIER) / USD_PRECISION_MULTIPLIER;
+
+const calculateGasCostUsd = ({
+  gasCostWei,
+  gasTokenUsdPrice,
+}: {
+  gasCostWei: bigint;
+  gasTokenUsdPrice: number;
+}) => {
+  const gasTokenUsdScaled = BigInt(
+    Math.round(gasTokenUsdPrice * USD_PRECISION_MULTIPLIER),
+  );
+  const gasCostUsdScaled =
+    (gasCostWei * gasTokenUsdScaled + WEI_PER_NATIVE_TOKEN / 2n) /
+    WEI_PER_NATIVE_TOKEN;
+
+  return Number(gasCostUsdScaled) / USD_PRECISION_MULTIPLIER;
+};
 
 const STRATEGY_QUERY = `
   query RebalanceCandidates($first: Int!, $skip: Int!) {
@@ -321,12 +338,14 @@ async function runKeeperForChain({
           receipt.effectiveGasPrice != null ?
             (receipt.gasUsed * receipt.effectiveGasPrice).toString()
           : undefined;
+        const gasCostWeiValue =
+          gasCostWei != null ? BigInt(gasCostWei) : undefined;
         const gasCostUsd =
-          gasCostWei != null && gasTokenUsdPrice != null ?
-            roundToUsdPrecision(
-              parseFloat(formatEther(BigInt(gasCostWei))) *
-                gasTokenUsdPrice,
-            )
+          gasCostWeiValue != null && gasTokenUsdPrice != null ?
+            calculateGasCostUsd({
+              gasCostWei: gasCostWeiValue,
+              gasTokenUsdPrice,
+            })
           : undefined;
         if (gasCostUsd != null) {
           gasCostUsdTotal += gasCostUsd;

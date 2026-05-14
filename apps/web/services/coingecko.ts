@@ -72,7 +72,7 @@ const parsedOverrides = (() => {
   }
 })();
 
-const getGasTokenOverrideKey = (chainId: number) => `native-gas-token:${chainId}`;
+const getGasTokenOverrideKey = (chainId: number) => `gas-token:${chainId}`;
 
 const coercePrice = (entry: OverrideEntry | undefined | null) => {
   if (entry == null) return null;
