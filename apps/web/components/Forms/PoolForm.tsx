@@ -191,6 +191,8 @@ const defaultEthProposalColateral = 0.002;
 const defaultEthChallengeColateral = 0.001;
 const defaultMaticProposalColateral = 10;
 const defaultMaticChallengeColateral = 5;
+const toAddressOrUndefined = (value?: string): Address | undefined =>
+  value && isAddress(value) ? (value.toLowerCase() as Address) : undefined;
 
 export function PoolForm({
   governanceToken,
@@ -229,7 +231,9 @@ export function PoolForm({
   const sybilResistanceType = watch("sybilResistanceType");
   const sybilResistanceValue = watch("sybilResistanceValue");
   const tribunalAddress = watch("tribunalAddress");
-  const poolTokenAddress = watch("poolTokenAddress").toLowerCase() as Address;
+  const normalizedTribunalAddress = tribunalAddress?.toLowerCase();
+  const normalizedGlobalTribunal = chain.globalTribunal?.toLowerCase();
+  const poolTokenAddress = toAddressOrUndefined(watch("poolTokenAddress"));
 
   const { superToken, setSuperToken, isFetching } = useSuperfluidToken({
     token: poolTokenAddress,
@@ -599,6 +603,10 @@ export function PoolForm({
         "SuperTokenCreated",
       ).args;
 
+      if (!poolTokenAddress) {
+        return;
+      }
+
       setSuperToken({
         name: "Super" + customTokenData?.name,
         symbol: customTokenData?.symbol + "x",
@@ -705,12 +713,16 @@ export function PoolForm({
   };
 
   const handleEnableStreaming = async () => {
+    if (!poolTokenAddress || !customTokenData) {
+      return;
+    }
+
     writeCreateSuperTokenAsync({
       args: [
         poolTokenAddress,
         1,
-        "Super " + customTokenData!.name,
-        customTokenData!.symbol + "x",
+        "Super " + customTokenData.name,
+        customTokenData.symbol + "x",
       ],
     });
   };
@@ -1115,17 +1127,11 @@ export function PoolForm({
                 label="Use global tribunal"
                 registerKey="useGlobalTribunal"
                 tooltip="Check this box to use the Gardens global tribunal Safe to rule on proposal disputes in the Pool, a service we offer if your community does not have an impartial 3rd party that can rule on violations of the Covenant."
-                value={
-                  tribunalAddress?.toLowerCase() ===
-                  chain.globalTribunal?.toLowerCase()
-                }
+                value={normalizedTribunalAddress === normalizedGlobalTribunal}
                 onChange={() => {
                   setValue(
                     "tribunalAddress",
-                    (
-                      tribunalAddress.toLowerCase() ===
-                        chain.globalTribunal?.toLowerCase()
-                    ) ?
+                    normalizedTribunalAddress === normalizedGlobalTribunal ?
                       ""
                     : chain.globalTribunal ?? "",
                   );
