@@ -234,7 +234,7 @@ export function PoolForm({
   const normalizedPoolTokenAddress = watch("poolTokenAddress")?.toLowerCase();
   const poolTokenAddress =
     isAddress(normalizedPoolTokenAddress ?? "") ?
-      (normalizedPoolTokenAddress as Address)
+      normalizedPoolTokenAddress
     : undefined;
 
   const { superToken, setSuperToken, isFetching } = useSuperfluidToken({
@@ -605,11 +605,15 @@ export function PoolForm({
         "SuperTokenCreated",
       ).args;
 
+      if (!poolTokenAddress) {
+        return;
+      }
+
       setSuperToken({
         name: "Super" + customTokenData?.name,
         symbol: customTokenData?.symbol + "x",
         id: newSuperToken.token,
-        underlyingToken: poolTokenAddress ?? zeroAddress,
+        underlyingToken: poolTokenAddress,
       });
     },
   });
