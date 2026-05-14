@@ -200,12 +200,12 @@ async function runKeeperForChain({
   const chainConfig = getConfigByChain(chainId);
   if (!chainConfig) {
     return {
-        chainId: String(chainId),
-        discoveredStrategies: 0,
-        gasCostUsdTotal: 0,
-        sent: [],
-        skipped: [],
-        error: `Unsupported chain: ${String(chainId)}`,
+      chainId: String(chainId),
+      discoveredStrategies: 0,
+      gasCostUsdTotal: 0,
+      sent: [],
+      skipped: [],
+      error: `Unsupported chain: ${String(chainId)}`,
     };
   }
 
@@ -233,27 +233,18 @@ async function runKeeperForChain({
       subgraphFallback,
     );
     if (!strategies.length) {
-        return {
-          chainId: chainConfig.id,
-          discoveredStrategies: 0,
-          gasCostUsdTotal: 0,
-          sent: [],
-          skipped: [],
-        };
+      return {
+        chainId: chainConfig.id,
+        discoveredStrategies: 0,
+        gasCostUsdTotal: 0,
+        sent: [],
+        skipped: [],
+      };
     }
 
     const block = await publicClient.getBlock({ blockTag: "latest" });
     const now = Number(block.timestamp);
-    const sent: Array<{
-      strategy: Address;
-      txHash: `0x${string}`;
-      gasUsed: string;
-      effectiveGasPrice?: string;
-      gasCostWei?: string;
-      gasTokenSymbol?: string;
-      gasTokenUsdPrice?: number;
-      gasCostUsd?: number;
-    }> = [];
+    const sent: ConfirmedRebalanceTx[] = [];
     const skipped: Array<{ strategy: Address; reason: string }> = [];
     let gasCostUsdTotal = 0;
     const gasTokenSymbol = getViemChain(chainId).nativeCurrency.symbol;
