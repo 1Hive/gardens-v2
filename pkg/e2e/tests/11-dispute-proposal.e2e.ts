@@ -292,45 +292,56 @@ async function waitForDisputeRuled({
 }
 
 async function ensureWalletConnected(page: any, metamask: MetaMask) {
+  const getWalletState = async () => {
+    if (
+      await page
+        .getByTestId("accounts")
+        .isVisible()
+        .catch(() => false)
+    ) {
+      return "connected";
+    }
+    if (
+      await page
+        .getByTestId("connectButton")
+        .isVisible()
+        .catch(() => false)
+    ) {
+      return "disconnected";
+    }
+    return "loading";
+  };
+
   let walletState = "loading";
-
-  await expect
-    .poll(
-      async () => {
-        if (
-          await page
-            .getByTestId("accounts")
-            .isVisible()
-            .catch(() => false)
-        ) {
-          walletState = "connected";
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    await expect
+      .poll(
+        async () => {
+          walletState = await getWalletState();
           return walletState;
-        }
-        if (
-          await page
-            .getByTestId("connectButton")
-            .isVisible()
-            .catch(() => false)
-        ) {
-          walletState = "disconnected";
-          return walletState;
-        }
-        walletState = "loading";
-        return walletState;
-      },
-      {
-        timeout: 60000,
-        intervals: [500, 1000, 2000],
-        message: "wallet connection state is visible",
-      },
-    )
-    .not.toBe("loading");
+        },
+        {
+          timeout: 60000,
+          intervals: [500, 1000, 2000],
+          message: "wallet connection state is visible",
+        },
+      )
+      .not.toBe("loading");
 
-  if (walletState === "connected") {
-    return;
+    if (walletState === "connected") {
+      return;
+    }
+
+    if (walletState === "disconnected") {
+      await connectWallet(page, metamask);
+      return;
+    }
+
+    if (attempt === 1) {
+      await page.reload({ waitUntil: "domcontentloaded", timeout: 60000 });
+      await page.bringToFront();
+    }
   }
-
-  await connectWallet(page, metamask);
 }
 
 async function mockIpfsJsonUpload(page: any) {
