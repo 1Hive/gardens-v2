@@ -681,7 +681,7 @@ const EXCLUDED_WALLETS: Set<string> = new Set(
 const PINATA_POINTS_SNAPSHOT_CID =
   process.env.SUPERFLUID_POINTS_SNAPSHOT_CID ?? null;
 const PINATA_PRICE_CACHE_NAME =
-  process.env.SUPERFLUID_PRICE_CACHE_NAME ?? "superfluid-token-prices";
+  process.env.COINGECKO_PRICE_CACHE_NAME ?? "token-prices";
 const PINATA_ENS_CACHE_NAME =
   process.env.SUPERFLUID_ENS_CACHE_NAME ?? "superfluid-ens-cache";
 const PINATA_GROUP_ID =
@@ -792,7 +792,7 @@ const fetchEnsAvatarFromMetadata = async (
 };
 const tokenPriceCache = new Map<
   string,
-  { price: number; fetchedAt: number; symbol: string }
+  { value: number; expiresAt: number; symbol?: string }
 >();
 let priceCacheDirty = false;
 let latestPriceCacheCid: string | null = null;
@@ -1458,18 +1458,18 @@ const hydratePriceCacheFromIpfs = async () => {
     if (
       !val ||
       typeof val !== "object" ||
-      typeof (val as any).price !== "number" ||
-      typeof (val as any).fetchedAt !== "number"
+      typeof (val as any).value !== "number" ||
+      typeof (val as any).expiresAt !== "number"
     ) {
       continue;
     }
-    const fetchedAt = (val as any).fetchedAt;
-    if (now - fetchedAt >= TOKEN_PRICE_CACHE_TTL_MS) continue;
+    const expiresAt = (val as any).expiresAt;
+    if (expiresAt <= now) continue;
     const symbol =
       typeof (val as any).symbol === "string" ? (val as any).symbol : "";
     tokenPriceCache.set(key, {
-      price: (val as any).price,
-      fetchedAt,
+      value: (val as any).value,
+      expiresAt,
       symbol,
     });
     hydrated++;
@@ -1757,6 +1757,21 @@ const persistTransferLogCache = async (): Promise<string | null> => {
   return cid ?? latestTransferLogCacheCid;
 };
 
+const unpinPriceCacheCid = async (cid: string | null) => {
+  if (!CAN_WRITE_PINATA || !cid) return;
+  try {
+    await pinataClient?.unpin(cid);
+    console.log("[superfluid-points] unpinned previous token price cache", {
+      cid,
+    });
+  } catch (error) {
+    console.warn("[superfluid-points] pinata unpin error (prices)", {
+      cid,
+      error,
+    });
+  }
+};
+
 const pinPriceCacheToIpfs = async (): Promise<string | null> => {
   if (!CAN_WRITE_PINATA || !priceCacheDirty || tokenPriceCache.size === 0)
     return null;
@@ -1767,6 +1782,8 @@ const pinPriceCacheToIpfs = async (): Promise<string | null> => {
     entries,
   };
   try {
+    const previousCid = latestPriceCacheCid;
+    await unpinPriceCacheCid(previousCid);
     const data = await pinataClient?.pinJSONToIPFS(
       normalizeForPinata(payload),
       {
@@ -2779,15 +2796,19 @@ const processChain = async ({
     const key = `${chainId}-${toLower(token)}`;
     const cached = tokenPriceCache.get(key);
     const now = Date.now();
-    if (cached && now - cached.fetchedAt < TOKEN_PRICE_CACHE_TTL_MS) {
-      return cached.price;
+    if (cached && cached.expiresAt > now) {
+      return cached.value;
     }
     const price = await getTokenUsdPrice({
       chainId: Number(chainId),
       address: token,
       symbol,
     });
-    tokenPriceCache.set(key, { price, fetchedAt: now, symbol });
+    tokenPriceCache.set(key, {
+      value: price,
+      expiresAt: now + TOKEN_PRICE_CACHE_TTL_MS,
+      symbol,
+    });
     priceCacheDirty = true;
     return price;
   };

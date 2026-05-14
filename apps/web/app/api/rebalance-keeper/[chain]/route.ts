@@ -9,6 +9,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { chainConfigMap, getConfigByChain } from "@/configs/chains";
+import { getGasTokenUsdPrice } from "@/services/coingecko";
 import { ChainId } from "@/types";
 import { getViemChain } from "@/utils/web3";
 
@@ -29,16 +30,22 @@ type StrategyCandidate = {
 type ChainRunResult = {
   chainId: number | string;
   discoveredStrategies: number;
+  gasCostUsdTotal: number;
   sent: Array<{
     strategy: Address;
     txHash: `0x${string}`;
     gasUsed: string;
     effectiveGasPrice?: string;
     gasCostWei?: string;
+    gasTokenSymbol?: string;
+    gasTokenUsdPrice?: number;
+    gasCostUsd?: number;
   }>;
   skipped: Array<{ strategy: Address; reason: string }>;
   error?: string;
 };
+
+type ConfirmedRebalanceTx = ChainRunResult["sent"][number];
 
 const REBALANCE_KEEPER_ABI = parseAbi([
   "function rebalance()",
@@ -54,7 +61,30 @@ const STRATEGY_PAGE_SIZE = 500;
 const STREAMING_PROPOSAL_TYPE = 2;
 const ACTIVE_STATUS = 1;
 const DISPUTED_STATUS = 5;
+const USD_PRECISION = 6;
+const USD_PRECISION_MULTIPLIER = 10 ** USD_PRECISION;
+const WEI_PER_NATIVE_TOKEN = 10n ** 18n;
 const REBALANCE_KEEPER_EXCLUDED_CHAIN_IDS = new Set<number>([421614]);
+
+const roundToUsdPrecision = (value: number) =>
+  Math.round(value * USD_PRECISION_MULTIPLIER) / USD_PRECISION_MULTIPLIER;
+
+const calculateGasCostUsd = ({
+  gasCostWei,
+  gasTokenUsdPrice,
+}: {
+  gasCostWei: bigint;
+  gasTokenUsdPrice: number;
+}) => {
+  const gasTokenUsdScaled = BigInt(
+    Math.round(gasTokenUsdPrice * USD_PRECISION_MULTIPLIER),
+  );
+  const gasCostUsdScaled =
+    (gasCostWei * gasTokenUsdScaled + WEI_PER_NATIVE_TOKEN / 2n) /
+    WEI_PER_NATIVE_TOKEN;
+
+  return Number(gasCostUsdScaled) / USD_PRECISION_MULTIPLIER;
+};
 
 const STRATEGY_QUERY = `
   query RebalanceCandidates($first: Int!, $skip: Int!) {
@@ -172,6 +202,7 @@ async function runKeeperForChain({
     return {
       chainId: String(chainId),
       discoveredStrategies: 0,
+      gasCostUsdTotal: 0,
       sent: [],
       skipped: [],
       error: `Unsupported chain: ${String(chainId)}`,
@@ -205,6 +236,7 @@ async function runKeeperForChain({
       return {
         chainId: chainConfig.id,
         discoveredStrategies: 0,
+        gasCostUsdTotal: 0,
         sent: [],
         skipped: [],
       };
@@ -212,14 +244,28 @@ async function runKeeperForChain({
 
     const block = await publicClient.getBlock({ blockTag: "latest" });
     const now = Number(block.timestamp);
-    const sent: Array<{
-      strategy: Address;
-      txHash: `0x${string}`;
-      gasUsed: string;
-      effectiveGasPrice?: string;
-      gasCostWei?: string;
-    }> = [];
+    const sent: ConfirmedRebalanceTx[] = [];
     const skipped: Array<{ strategy: Address; reason: string }> = [];
+    let gasCostUsdTotal = 0;
+    const gasTokenSymbol = getViemChain(chainId).nativeCurrency.symbol;
+    let gasTokenUsdPrice: number | undefined;
+
+    try {
+      gasTokenUsdPrice = await getGasTokenUsdPrice({
+        chainId: chainConfig.id,
+        symbol: gasTokenSymbol,
+      });
+    } catch (error) {
+      console.warn("rebalance-keeper: failed to fetch gas token usd price", {
+        chainId: chainConfig.id,
+        gasTokenSymbol,
+        impact: "rebalance will continue without USD gas cost enrichment",
+        error:
+          error instanceof Error ?
+            { name: error.name, message: error.message, stack: error.stack }
+          : error,
+      });
+    }
 
     for (const strategy of strategies) {
       try {
@@ -289,23 +335,51 @@ async function runKeeperForChain({
           receipt.effectiveGasPrice != null ?
             (receipt.gasUsed * receipt.effectiveGasPrice).toString()
           : undefined;
+        const confirmedTx: ConfirmedRebalanceTx = {
+          strategy,
+          txHash: hash,
+          gasUsed,
+          effectiveGasPrice,
+          gasCostWei,
+          gasTokenSymbol,
+        };
+
+        try {
+          const gasCostWeiValue =
+            gasCostWei != null ? BigInt(gasCostWei) : undefined;
+          const gasCostUsd =
+            gasCostWeiValue != null && gasTokenUsdPrice != null ?
+              calculateGasCostUsd({
+                gasCostWei: gasCostWeiValue,
+                gasTokenUsdPrice,
+              })
+            : undefined;
+
+          if (gasTokenUsdPrice != null) {
+            confirmedTx.gasTokenUsdPrice = gasTokenUsdPrice;
+          }
+          if (gasCostUsd != null) {
+            confirmedTx.gasCostUsd = gasCostUsd;
+            gasCostUsdTotal += gasCostUsd;
+          }
+        } catch (error) {
+          console.warn(
+            "rebalance-keeper: failed to enrich confirmed rebalance transaction",
+            {
+              chainId: chainConfig.id,
+              strategy,
+              txHash: hash,
+              error: error instanceof Error ? error.message : "unknown_error",
+            },
+          );
+        }
 
         console.info("rebalance-keeper: rebalance transaction confirmed", {
           chainId: chainConfig.id,
-          strategy,
-          txHash: hash,
-          gasUsed,
-          effectiveGasPrice,
-          gasCostWei,
+          ...confirmedTx,
         });
 
-        sent.push({
-          strategy,
-          txHash: hash,
-          gasUsed,
-          effectiveGasPrice,
-          gasCostWei,
-        });
+        sent.push(confirmedTx);
       } catch (error) {
         const reason = error instanceof Error ? error.message : "unknown_error";
         const normalizedReason =
@@ -319,6 +393,7 @@ async function runKeeperForChain({
     return {
       chainId: chainConfig.id,
       discoveredStrategies: strategies.length,
+      gasCostUsdTotal: roundToUsdPrecision(gasCostUsdTotal),
       sent,
       skipped,
     };
@@ -326,6 +401,7 @@ async function runKeeperForChain({
     return {
       chainId: String(chainId),
       discoveredStrategies: 0,
+      gasCostUsdTotal: 0,
       sent: [],
       skipped: [],
       error: error instanceof Error ? error.message : "unknown_error",
@@ -397,6 +473,7 @@ export async function GET(req: Request, { params }: Params) {
       gasUsed:
         acc.gasUsed +
         curr.sent.reduce((sum, tx) => sum + BigInt(tx.gasUsed), 0n),
+      gasCostUsd: acc.gasCostUsd + curr.gasCostUsdTotal,
       skipped: acc.skipped + curr.skipped.length,
       failedChains: acc.failedChains + (curr.error ? 1 : 0),
     }),
@@ -404,6 +481,7 @@ export async function GET(req: Request, { params }: Params) {
       discoveredStrategies: 0,
       sentTxs: 0,
       gasUsed: 0n,
+      gasCostUsd: 0,
       skipped: 0,
       failedChains: 0,
     },
@@ -415,6 +493,7 @@ export async function GET(req: Request, { params }: Params) {
     discoveredStrategies: totals.discoveredStrategies,
     sentTxs: totals.sentTxs,
     gasUsed: totals.gasUsed.toString(),
+    gasCostUsd: roundToUsdPrecision(totals.gasCostUsd),
     skipped: totals.skipped,
     failedChains: totals.failedChains,
   });
@@ -430,6 +509,7 @@ export async function GET(req: Request, { params }: Params) {
       totals: {
         ...totals,
         gasUsed: totals.gasUsed.toString(),
+        gasCostUsd: roundToUsdPrecision(totals.gasCostUsd),
       },
       results,
     },
