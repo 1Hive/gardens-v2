@@ -229,7 +229,13 @@ export function PoolForm({
   const sybilResistanceType = watch("sybilResistanceType");
   const sybilResistanceValue = watch("sybilResistanceValue");
   const tribunalAddress = watch("tribunalAddress");
-  const poolTokenAddress = watch("poolTokenAddress").toLowerCase() as Address;
+  const normalizedTribunalAddress = tribunalAddress?.toLowerCase();
+  const normalizedGlobalTribunal = chain.globalTribunal?.toLowerCase();
+  const normalizedPoolTokenAddress = watch("poolTokenAddress")?.toLowerCase();
+  const poolTokenAddress =
+    isAddress(normalizedPoolTokenAddress ?? "") ?
+      (normalizedPoolTokenAddress as Address)
+    : undefined;
 
   const { superToken, setSuperToken, isFetching } = useSuperfluidToken({
     token: poolTokenAddress,
@@ -1115,17 +1121,11 @@ export function PoolForm({
                 label="Use global tribunal"
                 registerKey="useGlobalTribunal"
                 tooltip="Check this box to use the Gardens global tribunal Safe to rule on proposal disputes in the Pool, a service we offer if your community does not have an impartial 3rd party that can rule on violations of the Covenant."
-                value={
-                  tribunalAddress?.toLowerCase() ===
-                  chain.globalTribunal?.toLowerCase()
-                }
+                value={normalizedTribunalAddress === normalizedGlobalTribunal}
                 onChange={() => {
                   setValue(
                     "tribunalAddress",
-                    (
-                      tribunalAddress.toLowerCase() ===
-                        chain.globalTribunal?.toLowerCase()
-                    ) ?
+                    normalizedTribunalAddress === normalizedGlobalTribunal ?
                       ""
                     : chain.globalTribunal ?? "",
                   );
