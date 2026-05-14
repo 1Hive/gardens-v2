@@ -25,6 +25,10 @@ type ImageParams = {
   community: string;
 };
 
+type ImageProps = {
+  params: Promise<ImageParams>;
+};
+
 let cachedCommunityImageDataUrl: string | null = null;
 
 let cachedGardenLogoDataUrl: string | null = null;
@@ -246,11 +250,11 @@ async function renderImage(title: string, chainId: number) {
 
 export async function generateMetadata({
   params,
-}: {
-  params: ImageParams;
-}): Promise<Metadata> {
-  const chainId = Number(params.chain);
-  const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
+}: ImageProps): Promise<Metadata> {
+  const resolvedParams = await params;
+  const chainId = Number(resolvedParams.chain);
+  const chainConfig =
+    chainConfigMap[resolvedParams.chain] ?? chainConfigMap[chainId];
 
   const fallbackMetadata: Metadata = {
     title: FALLBACK_TITLE,
@@ -260,7 +264,7 @@ export async function generateMetadata({
   if (chainConfig == null) {
     console.error(
       "Unsupported chainId for community opengraph-image metadata.",
-      { chainId: params.chain },
+      { chainId: resolvedParams.chain },
     );
     return fallbackMetadata;
   }
@@ -270,14 +274,14 @@ export async function generateMetadata({
       chainConfig,
       getCommunityNameDocument,
       {
-        communityAddr: params.community,
+        communityAddr: resolvedParams.community,
       },
     );
 
     if (communityResult.error) {
       console.error("Error fetching community metadata for OG image.", {
-        chainId: params.chain,
-        community: params.community,
+        chainId: resolvedParams.chain,
+        community: resolvedParams.community,
         error: communityResult.error,
       });
       return fallbackMetadata;
@@ -296,22 +300,24 @@ export async function generateMetadata({
     };
   } catch (error) {
     console.error("Failed to generate metadata for community OG image.", {
-      chainId: params.chain,
-      community: params.community,
+      chainId: resolvedParams.chain,
+      community: resolvedParams.community,
       error,
     });
     return fallbackMetadata;
   }
 }
 
-export default async function Image({ params }: { params: ImageParams }) {
-  const chainId = Number(params.chain);
-  const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[chainId];
+export default async function Image({ params }: ImageProps) {
+  const resolvedParams = await params;
+  const chainId = Number(resolvedParams.chain);
+  const chainConfig =
+    chainConfigMap[resolvedParams.chain] ?? chainConfigMap[chainId];
 
   if (chainConfig == null) {
     console.error(
       "Unsupported chainId for community opengraph-image generation.",
-      { chainId: params.chain },
+      { chainId: resolvedParams.chain },
     );
     return renderImage("Community", chainId);
   }
@@ -321,14 +327,14 @@ export default async function Image({ params }: { params: ImageParams }) {
       chainConfig,
       getCommunityNameDocument,
       {
-        communityAddr: params.community,
+        communityAddr: resolvedParams.community,
       },
     );
 
     if (communityResult.error) {
       console.error("Error fetching community data for OG image.", {
-        chainId: params.chain,
-        community: params.community,
+        chainId: resolvedParams.chain,
+        community: resolvedParams.community,
         error: communityResult.error,
       });
       return await renderImage("Community", chainId);
@@ -341,8 +347,8 @@ export default async function Image({ params }: { params: ImageParams }) {
     return await renderImage(communityName, chainId);
   } catch (error) {
     console.error("Failed to fetch community data for OG image.", {
-      chainId: params.chain,
-      community: params.community,
+      chainId: resolvedParams.chain,
+      community: resolvedParams.community,
       error,
     });
     return await renderImage("Community", chainId);

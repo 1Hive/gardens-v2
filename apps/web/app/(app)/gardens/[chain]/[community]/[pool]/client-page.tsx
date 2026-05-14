@@ -29,6 +29,7 @@ import {
   CheckSybil,
   EthAddress,
   InfoBox,
+  LiveFlowingAmount,
   PoolGovernance,
   PoolMetrics,
   Proposals,
@@ -104,27 +105,15 @@ const LivePoolStreamedTotal = memo(function LivePoolStreamedTotal({
   poolToken?: { decimals: number; symbol: string } | null;
   freezeAtSnapshot?: boolean;
 }) {
-  const [nowMs, setNowMs] = useState<bigint>(() => BigInt(Date.now()));
+  const { totalStreamedValue, totalStreamedRatePerSecond } = useMemo(() => {
+    if (!poolToken) {
+      return {
+        totalStreamedValue: null,
+        totalStreamedRatePerSecond: 0,
+      };
+    }
 
-  const hasActiveFlow = useMemo(
-    () =>
-      !freezeAtSnapshot &&
-      (proposals ?? []).some(
-        (proposal) => toBigInt(getProposalStream(proposal)?.currentFlowRate) > 0n,
-      ),
-    [freezeAtSnapshot, proposals],
-  );
-
-  useEffect(() => {
-    if (!hasActiveFlow) return;
-    const interval = window.setInterval(() => {
-      if (typeof document !== "undefined" && document.hidden) return;
-      setNowMs(BigInt(Date.now()));
-    }, 100);
-    return () => clearInterval(interval);
-  }, [hasActiveFlow]);
-
-  const totalStreamedBn = useMemo(() => {
+    const nowMs = BigInt(Date.now());
     const total = (proposals ?? []).reduce((acc, proposal) => {
       const proposalStream = getProposalStream(proposal);
       if (!proposalStream) return acc;
@@ -149,17 +138,32 @@ const LivePoolStreamedTotal = memo(function LivePoolStreamedTotal({
       );
     }, 0n);
 
-    return total > 0n ? total : null;
-  }, [freezeAtSnapshot, nowMs, proposals]);
+    const totalFlowRateBn =
+      freezeAtSnapshot ? 0n
+      : (proposals ?? []).reduce(
+          (acc, proposal) =>
+            acc + toBigInt(getProposalStream(proposal)?.currentFlowRate),
+          0n,
+        );
 
-  if (!poolToken || totalStreamedBn == null) {
+    return {
+      totalStreamedValue:
+        total > 0n ? Number(formatUnits(total, poolToken.decimals)) : null,
+      totalStreamedRatePerSecond:
+        totalFlowRateBn > 0n ? Number(formatUnits(totalFlowRateBn, poolToken.decimals)) : 0,
+    };
+  }, [freezeAtSnapshot, poolToken, proposals]);
+
+  if (!poolToken || totalStreamedValue == null) {
     return <span className="font-mono tabular-nums">--</span>;
   }
 
   return (
-    <span className="font-mono tabular-nums">
-      {Number(formatUnits(totalStreamedBn, poolToken.decimals)).toFixed(5)}
-    </span>
+    <LiveFlowingAmount
+      value={totalStreamedValue}
+      ratePerSecond={totalStreamedRatePerSecond}
+      fractionDigits={5}
+    />
   );
 });
 
@@ -428,12 +432,11 @@ export default function ClientPage({
 
   const isMemberCommunity = !!memberCommunityData?.isRegistered;
 
-  const { hasResolvedMemberPower, memberActivatedStrategy } =
-    getMemberActivationState({
-      memberPower,
-      subgraphActivatedPoints:
-        memberStrategyData?.memberStrategy?.activatedPoints,
-    });
+  const { memberActivatedStrategy } = getMemberActivationState({
+    memberPower,
+    subgraphActivatedPoints:
+      memberStrategyData?.memberStrategy?.activatedPoints,
+  });
   const hasResolvedMembershipState =
     !wallet ||
     (hasStartedMembershipLookup && !isMemberFetching && !memberDataFetching);
@@ -640,6 +643,7 @@ export default function ClientPage({
     +minThresholdPoints > +totalPointsActivatedInPool;
 
   const poolType = proposalType != null ? PoolTypes[proposalType] : undefined;
+
   const isStreamingPool = poolType === "streaming";
   const needsFundingToken = poolType === "funding";
   const isMissingFundingToken =

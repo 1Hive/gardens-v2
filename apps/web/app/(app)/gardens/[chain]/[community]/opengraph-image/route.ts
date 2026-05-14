@@ -10,5 +10,5 @@ type RouteContext = {
 export const runtime = "edge";
 
 export async function GET(_: Request, { params }: RouteContext) {
-  return Image({ params });
+  return Image({ params: Promise.resolve(params) });
 }
