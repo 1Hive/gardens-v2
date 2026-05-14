@@ -60,6 +60,8 @@ const STRATEGY_PAGE_SIZE = 500;
 const STREAMING_PROPOSAL_TYPE = 2;
 const ACTIVE_STATUS = 1;
 const DISPUTED_STATUS = 5;
+const USD_PRECISION = 6;
+const USD_PRECISION_MULTIPLIER = 10 ** USD_PRECISION;
 const REBALANCE_KEEPER_EXCLUDED_CHAIN_IDS = new Set<number>([421614]);
 
 const STRATEGY_QUERY = `
@@ -321,8 +323,8 @@ async function runKeeperForChain({
             Math.round(
               parseFloat(formatEther(BigInt(gasCostWei))) *
                 gasTokenUsdPrice *
-                1_000_000,
-            ) / 1_000_000
+                USD_PRECISION_MULTIPLIER,
+            ) / USD_PRECISION_MULTIPLIER
           : undefined;
         if (gasCostUsd != null) {
           gasCostUsdTotal += gasCostUsd;
@@ -363,7 +365,9 @@ async function runKeeperForChain({
     return {
       chainId: chainConfig.id,
       discoveredStrategies: strategies.length,
-      gasCostUsdTotal: Math.round(gasCostUsdTotal * 1_000_000) / 1_000_000,
+      gasCostUsdTotal:
+        Math.round(gasCostUsdTotal * USD_PRECISION_MULTIPLIER) /
+        USD_PRECISION_MULTIPLIER,
       sent,
       skipped,
     };
@@ -463,7 +467,7 @@ export async function GET(req: Request, { params }: Params) {
     discoveredStrategies: totals.discoveredStrategies,
     sentTxs: totals.sentTxs,
     gasUsed: totals.gasUsed.toString(),
-    gasCostUsd: Number(totals.gasCostUsd.toFixed(6)),
+    gasCostUsd: Number(totals.gasCostUsd.toFixed(USD_PRECISION)),
     skipped: totals.skipped,
     failedChains: totals.failedChains,
   });
@@ -479,7 +483,7 @@ export async function GET(req: Request, { params }: Params) {
       totals: {
         ...totals,
         gasUsed: totals.gasUsed.toString(),
-        gasCostUsd: Number(totals.gasCostUsd.toFixed(6)),
+        gasCostUsd: Number(totals.gasCostUsd.toFixed(USD_PRECISION)),
       },
       results,
     },

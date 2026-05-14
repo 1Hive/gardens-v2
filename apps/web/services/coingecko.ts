@@ -72,6 +72,8 @@ const parsedOverrides = (() => {
   }
 })();
 
+const getGasTokenOverrideKey = (chainId: number) => `native-gas-token:${chainId}`;
+
 const coercePrice = (entry: OverrideEntry | undefined | null) => {
   if (entry == null) return null;
   if (typeof entry === "number") return entry;
@@ -179,7 +181,11 @@ async function fetchGasTokenUsdPrice({
   chainId: number;
   symbol?: string;
 }): Promise<number> {
-  const override = getOverridePrice(chainId, `native:${chainId}`, symbol);
+  const override = getOverridePrice(
+    chainId,
+    getGasTokenOverrideKey(chainId),
+    symbol,
+  );
   if (override != null) return override;
 
   const coinId = GAS_TOKEN_COIN_ID_BY_CHAIN[chainId];
@@ -250,7 +256,7 @@ export async function getGasTokenUsdPrice(params: {
   chainId: number;
   symbol?: string;
 }): Promise<number> {
-  const cacheKey = `native:${params.chainId}`;
+  const cacheKey = getGasTokenOverrideKey(params.chainId);
   const cached = priceCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
     return cached.value;
