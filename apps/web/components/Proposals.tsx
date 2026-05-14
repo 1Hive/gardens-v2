@@ -1081,7 +1081,9 @@ export function useProposalFilter<
       setFilter(newFilter);
       if (hasManualSortSelection) return;
 
-      if (newFilter === "active") {
+      if (newFilter === "all") {
+        setSortBy("newest");
+      } else if (newFilter === "active") {
         setSortBy("mostConviction");
       } else if (newFilter === "closed" || newFilter === "executed") {
         setSortBy("newest");
