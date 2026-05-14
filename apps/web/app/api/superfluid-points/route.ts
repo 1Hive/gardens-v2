@@ -681,7 +681,9 @@ const EXCLUDED_WALLETS: Set<string> = new Set(
 const PINATA_POINTS_SNAPSHOT_CID =
   process.env.SUPERFLUID_POINTS_SNAPSHOT_CID ?? null;
 const PINATA_PRICE_CACHE_NAME =
-  process.env.SUPERFLUID_PRICE_CACHE_NAME ?? "superfluid-token-prices";
+  process.env.SUPERFLUID_PRICE_CACHE_NAME ??
+  process.env.COINGECKO_PRICE_CACHE_NAME ??
+  "token-prices";
 const PINATA_ENS_CACHE_NAME =
   process.env.SUPERFLUID_ENS_CACHE_NAME ?? "superfluid-ens-cache";
 const PINATA_GROUP_ID =

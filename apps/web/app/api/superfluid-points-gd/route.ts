@@ -521,7 +521,9 @@ const EXCLUDED_WALLETS_GD: Set<string> = new Set(
     .filter((a) => a.startsWith("0x")),
 );
 const PINATA_PRICE_CACHE_NAME =
-  process.env.SUPERFLUID_PRICE_CACHE_NAME ?? "superfluid-token-prices";
+  process.env.SUPERFLUID_PRICE_CACHE_NAME ??
+  process.env.COINGECKO_PRICE_CACHE_NAME ??
+  "token-prices";
 const PINATA_GROUP_ID =
   process.env.PINATA_GROUP_ID ?? "37bf2b9a-5a2e-4049-b138-8b1e180d44a4";
 const IPFS_GATEWAY = `https://${process.env.IPFS_GATEWAY}`;

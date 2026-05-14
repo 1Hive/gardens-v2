@@ -57,8 +57,10 @@ const COINGECKO_TOKEN_PRICE_URL = (
 const COINGECKO_COIN_PRICE_URL = (baseUrl: string) =>
   `${baseUrl}/simple/price`;
 const COINGECKO_PRICE_CACHE_NAME =
-  process.env.COINGECKO_PRICE_CACHE_NAME ?? "coingecko-token-prices";
-const COINGECKO_PRICE_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+  process.env.COINGECKO_PRICE_CACHE_NAME ??
+  process.env.SUPERFLUID_PRICE_CACHE_NAME ??
+  "token-prices";
+const COINGECKO_PRICE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const PINATA_GROUP_ID =
   process.env.PINATA_GROUP_ID ?? "37bf2b9a-5a2e-4049-b138-8b1e180d44a4";
 
