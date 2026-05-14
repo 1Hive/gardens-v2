@@ -191,6 +191,8 @@ const defaultEthProposalColateral = 0.002;
 const defaultEthChallengeColateral = 0.001;
 const defaultMaticProposalColateral = 10;
 const defaultMaticChallengeColateral = 5;
+const toAddressOrUndefined = (value?: string): Address | undefined =>
+  value && isAddress(value) ? value : undefined;
 
 export function PoolForm({
   governanceToken,
@@ -232,10 +234,7 @@ export function PoolForm({
   const normalizedTribunalAddress = tribunalAddress?.toLowerCase();
   const normalizedGlobalTribunal = chain.globalTribunal?.toLowerCase();
   const normalizedPoolTokenAddress = watch("poolTokenAddress")?.toLowerCase();
-  const poolTokenAddress =
-    isAddress(normalizedPoolTokenAddress ?? "") ?
-      normalizedPoolTokenAddress
-    : undefined;
+  const poolTokenAddress = toAddressOrUndefined(normalizedPoolTokenAddress);
 
   const { superToken, setSuperToken, isFetching } = useSuperfluidToken({
     token: poolTokenAddress,
