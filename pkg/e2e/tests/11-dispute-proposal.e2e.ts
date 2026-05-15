@@ -315,19 +315,29 @@ async function ensureWalletConnected(page: any, metamask: MetaMask) {
 
   let walletState = "loading";
   for (let attempt = 1; attempt <= MAX_WALLET_STATE_ATTEMPTS; attempt++) {
-    await expect
-      .poll(
-        async () => {
-          walletState = await getWalletState();
-          return walletState;
-        },
-        {
-          timeout: 60000,
-          intervals: [500, 1000, 2000],
-          message: "wallet connection state is visible",
-        },
-      )
-      .not.toBe("loading");
+    try {
+      await expect
+        .poll(
+          async () => {
+            walletState = await getWalletState();
+            return walletState;
+          },
+          {
+            timeout: 60000,
+            intervals: [500, 1000, 2000],
+            message: "wallet connection state is visible",
+          },
+        )
+        .not.toBe("loading");
+    } catch (error) {
+      if (attempt === MAX_WALLET_STATE_ATTEMPTS) {
+        throw error;
+      }
+
+      await page.reload({ waitUntil: "domcontentloaded", timeout: 60000 });
+      await page.bringToFront();
+      continue;
+    }
 
     if (walletState === "connected") {
       return;
@@ -336,11 +346,6 @@ async function ensureWalletConnected(page: any, metamask: MetaMask) {
     if (walletState === "disconnected") {
       await connectWallet(page, metamask);
       return;
-    }
-
-    if (attempt === 1) {
-      await page.reload({ waitUntil: "domcontentloaded", timeout: 60000 });
-      await page.bringToFront();
     }
   }
 }
