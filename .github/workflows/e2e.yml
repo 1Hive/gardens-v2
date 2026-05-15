@@ -138,13 +138,13 @@ jobs:
             const chainId = Number(chainIdRaw);
             const minGasWei = BigInt(minGasWeiRaw);
             const account = mnemonicToAccount(mnemonic.trim());
-            const nativeUnit = (process.env.E2E_NATIVE_CURRENCY_SYMBOL_CI || "NATIVE").trim() || "NATIVE";
+            const nativeUnit = process.env.E2E_NATIVE_CURRENCY_SYMBOL_CI?.trim() || "NATIVE";
 
             const client = createPublicClient({
               chain: {
                 id: chainId,
                 name: `chain-${chainId}`,
-                nativeCurrency: { name: "Native", symbol: "NATIVE", decimals: 18 },
+                nativeCurrency: { name: "Native", symbol: nativeUnit, decimals: 18 },
                 rpcUrls: { default: { http: [rpcUrl] } },
               },
               transport: http(rpcUrl),
