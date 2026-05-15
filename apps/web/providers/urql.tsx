@@ -1,13 +1,10 @@
 import {
-  AnyVariables,
   Client,
   createClient,
-  DocumentInput,
   fetchExchange,
-  OperationContext,
   ssrExchange,
 } from "urql";
-import { ChainData, getConfigByChain } from "@/configs/chains";
+import { getConfigByChain } from "@/configs/chains";
 import { ChainId } from "@/types";
 
 let urqlRecord: Record<
@@ -90,28 +87,4 @@ export function initUrqlClient(
     urqlClient: urqlRecord[chainId][0],
     ssrCache: urqlRecord[chainId][1],
   };
-}
-
-const { urqlClient } = initUrqlClient();
-
-export async function queryByChain<
-  Data = any,
-  Variables extends AnyVariables = AnyVariables,
->(
-  chain: Pick<ChainData, "subgraphUrl" | "publishedSubgraphUrl">,
-  query: DocumentInput<any, Variables>,
-  variables: Variables = {} as Variables,
-  context?: Partial<OperationContext>,
-  skipPublished?: boolean,
-) {
-  if (chain == null) {
-    throw new Error("Chain not supported");
-  }
-  return urqlClient.query<Data>(query, variables, {
-    url:
-      !!skipPublished || !chain.publishedSubgraphUrl ?
-        chain.subgraphUrl
-      : chain.publishedSubgraphUrl,
-    ...context,
-  });
 }

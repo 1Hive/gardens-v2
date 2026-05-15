@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useFlag } from "@/hooks/useFlag";
-import { queryByChain } from "@/providers/urql";
+import { queryByChain } from "@/providers/queryByChain";
 import {
   parseStaticSegment,
   queryMap,

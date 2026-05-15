@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { ImageResponse } from "next/og";
-import { getPoolTitleDocument } from "#/subgraph/.graphclient";
+import {
+  getPoolTitleDocument,
+  type getPoolTitleQuery,
+} from "#/subgraph/.graphclient";
 import { resolveStrategyAddress } from "./route-helpers";
 import {
   GARDEN_LOGO_BASE64,
@@ -12,7 +15,7 @@ import {
   STATUS_REVIEW_ICON_BASE64,
 } from "../ogAssets";
 import { chainConfigMap, ChainIcon } from "@/configs/chains";
-import { queryByChain } from "@/providers/urql";
+import { queryByChain } from "@/providers/queryByChain";
 import { PoolTypes } from "@/types";
 
 export const runtime = "nodejs";
@@ -477,7 +480,7 @@ export async function generateMetadata({
   }
 
   try {
-    const poolResult = await queryByChain(
+    const poolResult = await queryByChain<getPoolTitleQuery>(
       chainConfig,
       getPoolTitleDocument,
       { strategyId: strategyAddress },
@@ -547,7 +550,7 @@ export default async function Image({ params }: ImageProps) {
   }
 
   try {
-    const poolResult = await queryByChain(
+    const poolResult = await queryByChain<getPoolTitleQuery>(
       chainConfig,
       getPoolTitleDocument,
       { strategyId: strategyAddress },

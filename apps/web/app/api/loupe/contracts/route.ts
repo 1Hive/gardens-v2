@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { gql } from "urql";
 import networksConfig from "#/contracts/config/networks.json";
 import { getConfigByChain } from "@/configs/chains";
-import { queryByChain } from "@/providers/urql";
+import { queryByChain } from "@/providers/queryByChain";
 import { ChainId } from "@/types";
 
 export const runtime = "nodejs";

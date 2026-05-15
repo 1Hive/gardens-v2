@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import {
   getCommunityNameDocument,
   getPoolTitleDocument,
+  type getCommunityNameQuery,
+  type getPoolTitleQuery,
 } from "#/subgraph/.graphclient";
 import ClientPage from "./client-page";
 import { FALLBACK_TITLE, getDescriptionText } from "./opengraph-image";
@@ -13,7 +15,7 @@ import {
   type SearchParams,
 } from "./route-helpers";
 import { chainConfigMap, type ChainData } from "@/configs/chains";
-import { queryByChain } from "@/providers/urql";
+import { queryByChain } from "@/providers/queryByChain";
 import { PoolTypes } from "@/types";
 import { hasEthereumAddressFormat } from "@/utils/web3";
 
@@ -76,7 +78,7 @@ async function communityExistsOnChain(
     return false;
   }
 
-  const result = await queryByChain(
+  const result = await queryByChain<getCommunityNameQuery>(
     chainConfig,
     getCommunityNameDocument,
     { communityAddr: communityAddress.toLowerCase() },
@@ -136,7 +138,7 @@ export async function generateMetadata({
   }
 
   try {
-    const poolResult = await queryByChain(
+    const poolResult = await queryByChain<getPoolTitleQuery>(
       chainConfig,
       getPoolTitleDocument,
       { strategyId: strategyAddress },

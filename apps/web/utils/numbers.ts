@@ -137,6 +137,19 @@ export function calculatePercentageBigInt(
   return Number(bps) / 100;
 }
 
+export function toBigInt(value: unknown): bigint {
+  if (typeof value === "bigint") return value;
+  if (typeof value === "number") return BigInt(Math.trunc(value));
+  if (typeof value === "string") {
+    try {
+      return BigInt(value);
+    } catch {
+      return 0n;
+    }
+  }
+  return 0n;
+}
+
 export function calculatePercentage(value1: number, value2: number): number {
   if (!value1 || !value2) {
     return 0;
