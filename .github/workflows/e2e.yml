@@ -127,7 +127,7 @@ jobs:
             const rpcUrl = process.env.E2E_RPC_URL_CI;
             const mnemonic = process.env.E2E_WALLET_SEED_PHRASE_CI;
             const chainIdRaw = process.env.E2E_CHAIN_ID_CI;
-            const minGasWeiRaw = process.env.E2E_MIN_GAS_WEI_CI || "20000000000000000";
+            const minGasWeiRaw = process.env.E2E_MIN_GAS_WEI_CI;
 
             if (!rpcUrl || !mnemonic || !chainIdRaw) {
               console.log("::warning::Skipping gas check due to missing RPC URL, chain id, or wallet seed phrase.");
@@ -142,7 +142,7 @@ jobs:
               chain: {
                 id: chainId,
                 name: `chain-${chainId}`,
-                nativeCurrency: { name: "Native", symbol: "ETH", decimals: 18 },
+                nativeCurrency: { name: "Native", symbol: "NATIVE", decimals: 18 },
                 rpcUrls: { default: { http: [rpcUrl] } },
               },
               transport: http(rpcUrl),
