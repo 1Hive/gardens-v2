@@ -6,7 +6,7 @@ import {
   HandRaisedIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
-import { Address, formatUnits } from "viem";
+import { Address, formatUnits, isAddress } from "viem";
 import {
   Allo,
   CVProposal,
@@ -204,12 +204,20 @@ export const ProposalsModalSupport = forwardRef<
       isStreamingType &&
       (resolvedProposalStatus === "disputed" ||
         resolvedProposalStatus === "cancelled");
+    const streamingEscrowAddress =
+      isAddress(proposalData.streamingEscrow ?? "") ?
+        proposalData.streamingEscrow
+      : undefined;
+    const superfluidTokenAddress =
+      isAddress(strategyConfig.superfluidToken ?? "") ?
+        strategyConfig.superfluidToken
+      : undefined;
     const {
       currentFlowRateBn: liveCurrentFlowRateBn,
       hasFetched: hasFetchedLiveProposalFlow,
     } = useSuperfluidStream({
-      receiver: (proposalData.streamingEscrow as Address) ?? "",
-      superToken: (strategyConfig.superfluidToken as Address) ?? "",
+      receiver: streamingEscrowAddress ?? "",
+      superToken: superfluidTokenAddress ?? "",
       chainId,
       containerId: proposalData.id,
     });
