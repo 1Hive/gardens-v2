@@ -991,7 +991,7 @@ contract CVStreamingFacetTest is Test {
         assertGt(gdaAgreement.flowRate(), 0);
     }
 
-    function test_rebalance_tops_up_escrow_deposit_before_sync() public {
+    function test_rebalance_tops_up_escrow_deposit_with_buffer_before_sync() public {
         MockStreamingEscrowSync escrow = new MockStreamingEscrowSync();
         escrow.setRequiredDeposit(50 ether);
 
@@ -1001,7 +1001,38 @@ contract CVStreamingFacetTest is Test {
 
         facet.rebalance();
 
-        assertEq(superToken.balanceOf(address(escrow)), 50 ether);
+        assertEq(superToken.balanceOf(address(escrow)), 50.25 ether);
+        assertEq(escrow.syncCount(), 1);
+    }
+
+    function test_rebalance_tops_up_buffer_when_escrow_has_exact_required_deposit() public {
+        MockStreamingEscrowSync escrow = new MockStreamingEscrowSync();
+        escrow.setRequiredDeposit(50 ether);
+
+        superToken.mint(address(escrow), 50 ether);
+        superToken.mint(address(facet), 1 ether);
+        facet.setupProposal(1, ProposalStatus.Active, 1 ether, 0, block.number - 5);
+        facet.setStreamingEscrowExternal(1, address(escrow));
+
+        facet.rebalance();
+
+        assertEq(superToken.balanceOf(address(escrow)), 50.25 ether);
+        assertEq(escrow.syncCount(), 1);
+    }
+
+    function test_rebalance_does_not_top_up_when_escrow_has_buffered_deposit() public {
+        MockStreamingEscrowSync escrow = new MockStreamingEscrowSync();
+        escrow.setRequiredDeposit(50 ether);
+
+        superToken.mint(address(escrow), 50.25 ether);
+        superToken.mint(address(facet), 1 ether);
+        facet.setupProposal(1, ProposalStatus.Active, 1 ether, 0, block.number - 5);
+        facet.setStreamingEscrowExternal(1, address(escrow));
+
+        facet.rebalance();
+
+        assertEq(superToken.balanceOf(address(escrow)), 50.25 ether);
+        assertEq(superToken.balanceOf(address(facet)), 1 ether);
         assertEq(escrow.syncCount(), 1);
     }
 

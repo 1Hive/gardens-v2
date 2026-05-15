@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   Address,
+  PublicClient,
   createPublicClient,
   createWalletClient,
   http,
@@ -8,6 +9,12 @@ import {
   parseAbi,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import {
+  ACTIVE_STATUS,
+  DEFAULT_SIGNIFICANT_RATE_CHANGE_BPS,
+  DISPUTED_STATUS,
+  safeEvaluateRebalanceDecision,
+} from "./rebalanceDecision";
 import { chainConfigMap, getConfigByChain } from "@/configs/chains";
 import { getGasTokenUsdPrice } from "@/services/coingecko";
 import { ChainId } from "@/types";
@@ -21,10 +28,24 @@ type Params = {
 
 type StrategyCandidate = {
   id: string;
+  metadata?: {
+    title?: string | null;
+  } | null;
+  registryCommunity?: {
+    id?: string | null;
+    communityName?: string | null;
+  } | null;
   config?: {
     proposalType?: string | number | null;
   } | null;
   proposals?: Array<{ id: string }> | null;
+};
+
+type SelectedStrategyCandidate = {
+  address: Address;
+  title: string | null;
+  communityAddress: Address | null;
+  communityTitle: string | null;
 };
 
 type ChainRunResult = {
@@ -33,6 +54,12 @@ type ChainRunResult = {
   gasCostUsdTotal: number;
   sent: Array<{
     strategy: Address;
+    title?: string | null;
+    communityAddress?: Address | null;
+    communityTitle?: string | null;
+    uri?: string | null;
+    rebalanceReason?: string;
+    rebalanceError?: string;
     txHash: `0x${string}`;
     gasUsed: string;
     effectiveGasPrice?: string;
@@ -41,7 +68,15 @@ type ChainRunResult = {
     gasTokenUsdPrice?: number;
     gasCostUsd?: number;
   }>;
-  skipped: Array<{ strategy: Address; reason: string }>;
+  skipped: Array<{
+    strategy: Address;
+    title?: string | null;
+    communityAddress?: Address | null;
+    communityTitle?: string | null;
+    uri?: string | null;
+    rebalanceError?: string;
+    reason: string;
+  }>;
   error?: string;
 };
 
@@ -53,18 +88,39 @@ const REBALANCE_KEEPER_ABI = parseAbi([
   "function lastRebalanceAt() view returns (uint256)",
   "function rebalanceCooldown() view returns (uint256)",
   "function isAuthorizedRebalanceCaller(address) view returns (bool)",
+  "function proposalCounter() view returns (uint256)",
+  "function getPoolAmount() view returns (uint256)",
+  "function totalPointsActivated() view returns (uint256)",
+  "function cvParams() view returns (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPoints)",
+  "function calculateThreshold(uint256 requestedAmount) view returns (uint256)",
+  "function calculateProposalConviction(uint256 proposalId) view returns (uint256)",
+  "function getProposal(uint256 proposalId) view returns (address submitter, address beneficiary, address requestedToken, uint256 requestedAmount, uint256 stakedAmount, uint8 proposalStatus, uint256 blockLast, uint256 convictionLast, uint256 threshold, uint256 voterStakedPoints, uint256 arbitrableConfigVersion, uint256 protocol)",
+  "function streamingEscrow(uint256 proposalId) view returns (address)",
+  "function streamingRatePerSecond() view returns (uint256)",
+  "function superfluidToken() view returns (address)",
+  "function superfluidGDA() view returns (address)",
   "error UnauthorizedRebalanceCaller(address caller)",
   "error RebalanceCooldownActive(uint256 secondsRemaining)",
 ]);
 
+const SUPER_TOKEN_ABI = parseAbi([
+  "function balanceOf(address account) view returns (uint256)",
+]);
+
+const SUPERFLUID_POOL_ABI = parseAbi([
+  "function getTotalFlowRate() view returns (int96)",
+  "function getUnits(address memberAddr) view returns (uint128)",
+  "function getMemberFlowRate(address memberAddr) view returns (int96)",
+]);
+
 const STRATEGY_PAGE_SIZE = 500;
 const STREAMING_PROPOSAL_TYPE = 2;
-const ACTIVE_STATUS = 1;
-const DISPUTED_STATUS = 5;
 const USD_PRECISION = 6;
 const USD_PRECISION_MULTIPLIER = 10 ** USD_PRECISION;
 const WEI_PER_NATIVE_TOKEN = 10n ** 18n;
 const REBALANCE_KEEPER_EXCLUDED_CHAIN_IDS = new Set<number>([421614]);
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+const GARDENS_APP_BASE_URL = "https://app.gardens.fund";
 
 const roundToUsdPrecision = (value: number) =>
   Math.round(value * USD_PRECISION_MULTIPLIER) / USD_PRECISION_MULTIPLIER;
@@ -86,6 +142,277 @@ const calculateGasCostUsd = ({
   return Number(gasCostUsdScaled) / USD_PRECISION_MULTIPLIER;
 };
 
+const normalizeTitle = (title: string | null | undefined) => {
+  const trimmed = title?.trim();
+  return trimmed === "" ? null : trimmed ?? null;
+};
+
+const buildGardenUri = ({
+  chainId,
+  communityAddress,
+  strategyAddress,
+}: {
+  chainId: number | string;
+  communityAddress: Address | null;
+  strategyAddress: Address;
+}) =>
+  communityAddress == null ?
+    null
+  : `${GARDENS_APP_BASE_URL}/gardens/${chainId}/${communityAddress}/${strategyAddress}`;
+
+const readBigintEnv = (key: string, fallback: bigint) => {
+  const raw = process.env[key];
+  if (raw == null || raw.trim() === "") return fallback;
+  try {
+    const parsed = BigInt(raw);
+    return parsed >= 0n ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const getCvParam = (
+  cvParams: unknown,
+  index: number,
+  key: "maxRatio" | "weight" | "decay" | "minThresholdPoints",
+) => {
+  const tuple = cvParams as Record<string, unknown> & Array<unknown>;
+  return BigInt((tuple[key] ?? tuple[index] ?? 0) as bigint | number | string);
+};
+
+const getProposalStatus = (proposal: unknown) => {
+  const tuple = proposal as Record<string, unknown> & Array<unknown>;
+  return Number(tuple.proposalStatus ?? tuple[5] ?? -1);
+};
+
+async function readOptionalBigInt({
+  publicClient,
+  address,
+  abi,
+  functionName,
+  args,
+}: {
+  publicClient: PublicClient;
+  address: Address;
+  abi: typeof SUPER_TOKEN_ABI | typeof SUPERFLUID_POOL_ABI;
+  functionName: string;
+  args?: readonly unknown[];
+}) {
+  try {
+    const result = await publicClient.readContract({
+      address,
+      abi,
+      functionName,
+      args,
+    } as any);
+    return BigInt(result as bigint);
+  } catch {
+    return undefined;
+  }
+}
+
+async function shouldRunRebalance({
+  publicClient,
+  strategy,
+}: {
+  publicClient: PublicClient;
+  strategy: Address;
+}): Promise<{ shouldRun: boolean; reason?: string; error?: string }> {
+  const thresholdBps = readBigintEnv(
+    "STREAMING_REBALANCE_SIGNIFICANT_RATE_CHANGE_BPS",
+    DEFAULT_SIGNIFICANT_RATE_CHANGE_BPS,
+  );
+
+  try {
+    const [
+      proposalCounter,
+      poolAmount,
+      totalPointsActivated,
+      cvParams,
+      threshold,
+      streamingRatePerSecond,
+      superfluidToken,
+      superfluidGDA,
+    ] = await Promise.all([
+      publicClient.readContract({
+        address: strategy,
+        abi: REBALANCE_KEEPER_ABI,
+        functionName: "proposalCounter",
+      }),
+      publicClient.readContract({
+        address: strategy,
+        abi: REBALANCE_KEEPER_ABI,
+        functionName: "getPoolAmount",
+      }),
+      publicClient.readContract({
+        address: strategy,
+        abi: REBALANCE_KEEPER_ABI,
+        functionName: "totalPointsActivated",
+      }),
+      publicClient.readContract({
+        address: strategy,
+        abi: REBALANCE_KEEPER_ABI,
+        functionName: "cvParams",
+      }),
+      publicClient.readContract({
+        address: strategy,
+        abi: REBALANCE_KEEPER_ABI,
+        functionName: "calculateThreshold",
+        args: [0n],
+      }),
+      publicClient.readContract({
+        address: strategy,
+        abi: REBALANCE_KEEPER_ABI,
+        functionName: "streamingRatePerSecond",
+      }),
+      publicClient.readContract({
+        address: strategy,
+        abi: REBALANCE_KEEPER_ABI,
+        functionName: "superfluidToken",
+      }),
+      publicClient.readContract({
+        address: strategy,
+        abi: REBALANCE_KEEPER_ABI,
+        functionName: "superfluidGDA",
+      }),
+    ]);
+
+    const superTokenAddress = superfluidToken as Address;
+    const gdaAddress = superfluidGDA as Address;
+    if (superTokenAddress === ZERO_ADDRESS || gdaAddress === ZERO_ADDRESS) {
+      return { shouldRun: false, reason: "streaming_not_configured" };
+    }
+
+    const currentTotalFlowRate =
+      (await readOptionalBigInt({
+        publicClient,
+        address: gdaAddress,
+        abi: SUPERFLUID_POOL_ABI,
+        functionName: "getTotalFlowRate",
+      })) ?? 0n;
+
+    const proposalCount = Number(proposalCounter);
+    if (proposalCount === 0) {
+      return currentTotalFlowRate === 0n ?
+          { shouldRun: false, reason: "no_proposals" }
+        : { shouldRun: true, reason: "no_proposals_stop_flow" };
+    }
+
+    if (BigInt(poolAmount) === 0n && currentTotalFlowRate === 0n) {
+      return { shouldRun: false, reason: "pool_empty_zero_flow" };
+    }
+
+    const superTokenBalance =
+      (await readOptionalBigInt({
+        publicClient,
+        address: superTokenAddress,
+        abi: SUPER_TOKEN_ABI,
+        functionName: "balanceOf",
+        args: [strategy],
+      })) ?? 0n;
+
+    const decay = getCvParam(cvParams, 2, "decay");
+    const proposals: Array<{
+      escrow: Address;
+      status: number;
+      conviction: bigint;
+      currentUnits: bigint;
+      currentFlowRate: bigint;
+    }> = [];
+
+    for (let id = 1; id <= proposalCount; id++) {
+      const [proposal, escrowAddress] = await Promise.all([
+        publicClient.readContract({
+          address: strategy,
+          abi: REBALANCE_KEEPER_ABI,
+          functionName: "getProposal",
+          args: [BigInt(id)],
+        }),
+        publicClient.readContract({
+          address: strategy,
+          abi: REBALANCE_KEEPER_ABI,
+          functionName: "streamingEscrow",
+          args: [BigInt(id)],
+        }),
+      ]);
+      const escrow = escrowAddress as Address;
+      if (escrow === ZERO_ADDRESS) continue;
+
+      const [conviction, currentUnits, currentFlowRate] = await Promise.all([
+        publicClient.readContract({
+          address: strategy,
+          abi: REBALANCE_KEEPER_ABI,
+          functionName: "calculateProposalConviction",
+          args: [BigInt(id)],
+        }),
+        readOptionalBigInt({
+          publicClient,
+          address: gdaAddress,
+          abi: SUPERFLUID_POOL_ABI,
+          functionName: "getUnits",
+          args: [escrow],
+        }),
+        readOptionalBigInt({
+          publicClient,
+          address: gdaAddress,
+          abi: SUPERFLUID_POOL_ABI,
+          functionName: "getMemberFlowRate",
+          args: [escrow],
+        }),
+      ]);
+
+      const status = getProposalStatus(proposal);
+      const convictionValue = BigInt(conviction);
+
+      proposals.push({
+        escrow,
+        status,
+        conviction: convictionValue,
+        currentUnits: currentUnits ?? 0n,
+        currentFlowRate: currentFlowRate ?? 0n,
+      });
+    }
+
+    return safeEvaluateRebalanceDecision(
+      {
+        // Candidate discovery already filters enabled strategies. The internal
+        // _isStrategyEnabled selector is not exposed on every strategy diamond.
+        isStrategyEnabled: true,
+        proposalCount,
+        poolAmount: BigInt(poolAmount),
+        totalPointsActivated: BigInt(totalPointsActivated),
+        decay,
+        threshold: BigInt(threshold),
+        streamingRatePerSecond: BigInt(streamingRatePerSecond),
+        superTokenBalance,
+        currentTotalFlowRate,
+        hasStreamingConfig: true,
+        thresholdBps,
+        proposals: proposals.map((proposal) => ({
+          status: proposal.status,
+          conviction: proposal.conviction,
+          currentUnits: proposal.currentUnits,
+          currentFlowRate: proposal.currentFlowRate,
+          hasEscrow: true,
+        })),
+      },
+      (error) => {
+        console.warn("rebalance-keeper: decision failed, rebalancing safely", {
+          strategy,
+          error: error instanceof Error ? error.message : "unknown_error",
+        });
+      },
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "unknown_error";
+    console.warn("rebalance-keeper: preflight failed, falling back to simulate", {
+      strategy,
+      error: message,
+    });
+    return { shouldRun: true, reason: "preflight_failed", error: message };
+  }
+}
+
 const STRATEGY_QUERY = `
   query RebalanceCandidates($first: Int!, $skip: Int!) {
     cvstrategies(
@@ -94,6 +421,13 @@ const STRATEGY_QUERY = `
       where: { isEnabled: true, archived: false }
     ) {
       id
+      metadata {
+        title
+      }
+      registryCommunity {
+        id
+        communityName
+      }
       config {
         proposalType
       }
@@ -137,9 +471,9 @@ async function querySubgraph<T>(
 async function fetchStrategyCandidates(
   primaryUrl: string,
   fallbackUrl?: string,
-): Promise<Address[]> {
+): Promise<SelectedStrategyCandidate[]> {
   let skip = 0;
-  const selected: Address[] = [];
+  const selected = new Map<string, SelectedStrategyCandidate>();
 
   // Retry the same page on fallback if primary fails.
   const fetchPage = async (offset: number) => {
@@ -173,7 +507,20 @@ async function fetchStrategyCandidates(
         hasActiveOrDisputed &&
         isAddress(strategy.id)
       ) {
-        selected.push(strategy.id as Address);
+        const address = strategy.id.toLowerCase() as Address;
+        const communityAddress =
+          strategy.registryCommunity?.id != null &&
+          isAddress(strategy.registryCommunity.id) ?
+            (strategy.registryCommunity.id.toLowerCase() as Address)
+          : null;
+        selected.set(address, {
+          address,
+          title: normalizeTitle(strategy.metadata?.title),
+          communityAddress,
+          communityTitle: normalizeTitle(
+            strategy.registryCommunity?.communityName,
+          ),
+        });
       }
     }
 
@@ -181,9 +528,7 @@ async function fetchStrategyCandidates(
     skip += STRATEGY_PAGE_SIZE;
   }
 
-  return Array.from(new Set(selected.map((x) => x.toLowerCase()))).map(
-    (x) => x as Address,
-  );
+  return Array.from(selected.values());
 }
 
 async function runKeeperForChain({
@@ -245,29 +590,52 @@ async function runKeeperForChain({
     const block = await publicClient.getBlock({ blockTag: "latest" });
     const now = Number(block.timestamp);
     const sent: ConfirmedRebalanceTx[] = [];
-    const skipped: Array<{ strategy: Address; reason: string }> = [];
+    const skipped: ChainRunResult["skipped"] = [];
     let gasCostUsdTotal = 0;
     const gasTokenSymbol = getViemChain(chainId).nativeCurrency.symbol;
     let gasTokenUsdPrice: number | undefined;
 
-    try {
-      gasTokenUsdPrice = await getGasTokenUsdPrice({
-        chainId: chainConfig.id,
-        symbol: gasTokenSymbol,
-      });
-    } catch (error) {
-      console.warn("rebalance-keeper: failed to fetch gas token usd price", {
+    if (!chainConfig.isTestnet) {
+      try {
+        gasTokenUsdPrice = await getGasTokenUsdPrice({
+          chainId: chainConfig.id,
+          symbol: gasTokenSymbol,
+        });
+      } catch (error) {
+        console.warn("rebalance-keeper: failed to fetch gas token usd price", {
+          chainId: chainConfig.id,
+          gasTokenSymbol,
+          impact: "rebalance will continue without USD gas cost enrichment",
+          error:
+            error instanceof Error ?
+              { name: error.name, message: error.message, stack: error.stack }
+            : error,
+        });
+      }
+    } else {
+      console.info("rebalance-keeper: skipping testnet gas USD enrichment", {
         chainId: chainConfig.id,
         gasTokenSymbol,
-        impact: "rebalance will continue without USD gas cost enrichment",
-        error:
-          error instanceof Error ?
-            { name: error.name, message: error.message, stack: error.stack }
-          : error,
       });
     }
 
-    for (const strategy of strategies) {
+    for (const strategyCandidate of strategies) {
+      const {
+        address: strategy,
+        title,
+        communityAddress,
+        communityTitle,
+      } = strategyCandidate;
+      const strategyResponseContext = {
+        title,
+        communityAddress,
+        communityTitle,
+        uri: buildGardenUri({
+          chainId: chainConfig.id,
+          communityAddress,
+          strategyAddress: strategy,
+        }),
+      };
       try {
         const proposalType = Number(
           await publicClient.readContract({
@@ -277,7 +645,11 @@ async function runKeeperForChain({
           }),
         );
         if (proposalType !== STREAMING_PROPOSAL_TYPE) {
-          skipped.push({ strategy, reason: "not_streaming_pool" });
+          skipped.push({
+            strategy,
+            ...strategyResponseContext,
+            reason: "not_streaming_pool",
+          });
           continue;
         }
 
@@ -290,6 +662,7 @@ async function runKeeperForChain({
         if (!isAuthorizedCaller) {
           skipped.push({
             strategy,
+            ...strategyResponseContext,
             reason: `unauthorized_rebalance_caller:${account.address}`,
           });
           continue;
@@ -311,7 +684,25 @@ async function runKeeperForChain({
         const nextRebalanceAt = Number(lastRebalanceAt) + Number(cooldown);
         const secondsLeft = nextRebalanceAt - now;
         if (Number(cooldown) > 0 && secondsLeft > minSecondsLeft) {
-          skipped.push({ strategy, reason: `cooldown_active_${secondsLeft}s` });
+          skipped.push({
+            strategy,
+            ...strategyResponseContext,
+            reason: `cooldown_active_${secondsLeft}s`,
+          });
+          continue;
+        }
+
+        const rebalanceNeed = await shouldRunRebalance({
+          publicClient,
+          strategy,
+        });
+        if (!rebalanceNeed.shouldRun) {
+          skipped.push({
+            strategy,
+            ...strategyResponseContext,
+            rebalanceError: rebalanceNeed.error,
+            reason: rebalanceNeed.reason ?? "rebalance_noop",
+          });
           continue;
         }
 
@@ -323,7 +714,12 @@ async function runKeeperForChain({
         });
 
         if (dryRun) {
-          skipped.push({ strategy, reason: "dry_run" });
+          skipped.push({
+            strategy,
+            ...strategyResponseContext,
+            rebalanceError: rebalanceNeed.error,
+            reason: "dry_run",
+          });
           continue;
         }
 
@@ -337,6 +733,9 @@ async function runKeeperForChain({
           : undefined;
         const confirmedTx: ConfirmedRebalanceTx = {
           strategy,
+          ...strategyResponseContext,
+          rebalanceReason: rebalanceNeed.reason,
+          rebalanceError: rebalanceNeed.error,
           txHash: hash,
           gasUsed,
           effectiveGasPrice,
@@ -386,7 +785,11 @@ async function runKeeperForChain({
           reason.includes("gas required exceeds allowance (0)") ?
             `${reason}\nHint: keeper ${account.address} has no native balance on chain ${chainConfig.id}. Fund this wallet to pay gas.`
           : reason;
-        skipped.push({ strategy, reason: normalizedReason });
+        skipped.push({
+          strategy,
+          ...strategyResponseContext,
+          reason: normalizedReason,
+        });
       }
     }
 
