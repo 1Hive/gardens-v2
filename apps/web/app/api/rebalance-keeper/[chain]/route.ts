@@ -121,6 +121,7 @@ const WEI_PER_NATIVE_TOKEN = 10n ** 18n;
 const REBALANCE_KEEPER_EXCLUDED_CHAIN_IDS = new Set<number>([421614]);
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const GARDENS_APP_BASE_URL = "https://app.gardens.fund";
+const PROPOSAL_MULTICALL_CHUNK_SIZE = 75;
 
 const roundToUsdPrecision = (value: number) =>
   Math.round(value * USD_PRECISION_MULTIPLIER) / USD_PRECISION_MULTIPLIER;
@@ -185,30 +186,51 @@ const getProposalStatus = (proposal: unknown) => {
   return Number(tuple.proposalStatus ?? tuple[5] ?? -1);
 };
 
-async function readOptionalBigInt({
+type MulticallResult = {
+  status: "success" | "failure";
+  result?: unknown;
+  error?: Error;
+};
+
+const requireMulticallResult = (result: MulticallResult, label: string) => {
+  if (result.status !== "success") {
+    throw new Error(`${label}_read_failed`);
+  }
+
+  return result.result;
+};
+
+const optionalMulticallBigInt = (result: MulticallResult) => {
+  if (result.status !== "success" || result.result == null) return undefined;
+  return BigInt(result.result as bigint);
+};
+
+async function multicallInChunks({
   publicClient,
-  address,
-  abi,
-  functionName,
-  args,
+  contracts,
+  chunkSize = PROPOSAL_MULTICALL_CHUNK_SIZE,
 }: {
   publicClient: PublicClient;
-  address: Address;
-  abi: typeof SUPER_TOKEN_ABI | typeof SUPERFLUID_POOL_ABI;
-  functionName: string;
-  args?: readonly unknown[];
+  contracts: Array<{
+    address: Address;
+    abi: typeof REBALANCE_KEEPER_ABI | typeof SUPER_TOKEN_ABI | typeof SUPERFLUID_POOL_ABI;
+    functionName: string;
+    args?: readonly unknown[];
+  }>;
+  chunkSize?: number;
 }) {
-  try {
-    const result = await publicClient.readContract({
-      address,
-      abi,
-      functionName,
-      args,
-    } as any);
-    return BigInt(result as bigint);
-  } catch {
-    return undefined;
+  const results: MulticallResult[] = [];
+
+  for (let index = 0; index < contracts.length; index += chunkSize) {
+    const chunk = contracts.slice(index, index + chunkSize);
+    const chunkResults = await publicClient.multicall({
+      allowFailure: true,
+      contracts: chunk as any,
+    });
+    results.push(...(chunkResults as MulticallResult[]));
   }
+
+  return results;
 }
 
 async function shouldRunRebalance({
@@ -224,58 +246,85 @@ async function shouldRunRebalance({
   );
 
   try {
+    const strategyReads = await publicClient.multicall({
+      allowFailure: true,
+      contracts: [
+        {
+          address: strategy,
+          abi: REBALANCE_KEEPER_ABI,
+          functionName: "proposalCounter",
+        },
+        {
+          address: strategy,
+          abi: REBALANCE_KEEPER_ABI,
+          functionName: "getPoolAmount",
+        },
+        {
+          address: strategy,
+          abi: REBALANCE_KEEPER_ABI,
+          functionName: "totalPointsActivated",
+        },
+        {
+          address: strategy,
+          abi: REBALANCE_KEEPER_ABI,
+          functionName: "cvParams",
+        },
+        {
+          address: strategy,
+          abi: REBALANCE_KEEPER_ABI,
+          functionName: "calculateThreshold",
+          args: [0n],
+        },
+        {
+          address: strategy,
+          abi: REBALANCE_KEEPER_ABI,
+          functionName: "streamingRatePerSecond",
+        },
+        {
+          address: strategy,
+          abi: REBALANCE_KEEPER_ABI,
+          functionName: "superfluidToken",
+        },
+        {
+          address: strategy,
+          abi: REBALANCE_KEEPER_ABI,
+          functionName: "superfluidGDA",
+        },
+      ] as const,
+    });
     const [
-      proposalCounter,
-      poolAmount,
-      totalPointsActivated,
-      cvParams,
-      threshold,
-      streamingRatePerSecond,
-      superfluidToken,
-      superfluidGDA,
-    ] = await Promise.all([
-      publicClient.readContract({
-        address: strategy,
-        abi: REBALANCE_KEEPER_ABI,
-        functionName: "proposalCounter",
-      }),
-      publicClient.readContract({
-        address: strategy,
-        abi: REBALANCE_KEEPER_ABI,
-        functionName: "getPoolAmount",
-      }),
-      publicClient.readContract({
-        address: strategy,
-        abi: REBALANCE_KEEPER_ABI,
-        functionName: "totalPointsActivated",
-      }),
-      publicClient.readContract({
-        address: strategy,
-        abi: REBALANCE_KEEPER_ABI,
-        functionName: "cvParams",
-      }),
-      publicClient.readContract({
-        address: strategy,
-        abi: REBALANCE_KEEPER_ABI,
-        functionName: "calculateThreshold",
-        args: [0n],
-      }),
-      publicClient.readContract({
-        address: strategy,
-        abi: REBALANCE_KEEPER_ABI,
-        functionName: "streamingRatePerSecond",
-      }),
-      publicClient.readContract({
-        address: strategy,
-        abi: REBALANCE_KEEPER_ABI,
-        functionName: "superfluidToken",
-      }),
-      publicClient.readContract({
-        address: strategy,
-        abi: REBALANCE_KEEPER_ABI,
-        functionName: "superfluidGDA",
-      }),
-    ]);
+      proposalCounterResult,
+      poolAmountResult,
+      totalPointsActivatedResult,
+      cvParamsResult,
+      thresholdResult,
+      streamingRatePerSecondResult,
+      superfluidTokenResult,
+      superfluidGDAResult,
+    ] = strategyReads as MulticallResult[];
+    const proposalCounter = requireMulticallResult(
+      proposalCounterResult,
+      "proposal_counter",
+    );
+    const poolAmount = requireMulticallResult(poolAmountResult, "pool_amount");
+    const totalPointsActivated = requireMulticallResult(
+      totalPointsActivatedResult,
+      "total_points_activated",
+    );
+    const cvParams = requireMulticallResult(cvParamsResult, "cv_params");
+    const threshold = requireMulticallResult(thresholdResult, "threshold");
+    const streamingRatePerSecond = requireMulticallResult(
+      streamingRatePerSecondResult,
+      "streaming_rate",
+    );
+    const superfluidToken = requireMulticallResult(
+      superfluidTokenResult,
+      "superfluid_token",
+    );
+    const superfluidGDA = requireMulticallResult(
+      superfluidGDAResult,
+      "superfluid_gda",
+    );
 
     const superTokenAddress = superfluidToken as Address;
     const gdaAddress = superfluidGDA as Address;
@@ -283,13 +332,28 @@ async function shouldRunRebalance({
       return { shouldRun: false, reason: "streaming_not_configured" };
     }
 
+    const [currentTotalFlowRateResult, superTokenBalanceResult] =
+      (await publicClient.multicall({
+        allowFailure: true,
+        contracts: [
+          {
+            address: gdaAddress,
+            abi: SUPERFLUID_POOL_ABI,
+            functionName: "getTotalFlowRate",
+          },
+          {
+            address: superTokenAddress,
+            abi: SUPER_TOKEN_ABI,
+            functionName: "balanceOf",
+            args: [strategy],
+          },
+        ] as const,
+      })) as MulticallResult[];
+
     const currentTotalFlowRate =
-      (await readOptionalBigInt({
-        publicClient,
-        address: gdaAddress,
-        abi: SUPERFLUID_POOL_ABI,
-        functionName: "getTotalFlowRate",
-      })) ?? 0n;
+      optionalMulticallBigInt(currentTotalFlowRateResult) ?? 0n;
+    const superTokenBalance =
+      optionalMulticallBigInt(superTokenBalanceResult) ?? 0n;
 
     const proposalCount = Number(proposalCounter);
     if (proposalCount === 0) {
@@ -298,80 +362,86 @@ async function shouldRunRebalance({
         : { shouldRun: true, reason: "no_proposals_stop_flow" };
     }
 
-    if (BigInt(poolAmount) === 0n && currentTotalFlowRate === 0n) {
+    if (BigInt(poolAmount as bigint) === 0n && currentTotalFlowRate === 0n) {
       return { shouldRun: false, reason: "pool_empty_zero_flow" };
     }
 
-    const superTokenBalance =
-      (await readOptionalBigInt({
-        publicClient,
-        address: superTokenAddress,
-        abi: SUPER_TOKEN_ABI,
-        functionName: "balanceOf",
-        args: [strategy],
-      })) ?? 0n;
-
     const decay = getCvParam(cvParams, 2, "decay");
-    const proposals: Array<{
+    const proposalContracts = Array.from(
+      { length: proposalCount },
+      (_, index) => BigInt(index + 1),
+    ).flatMap((proposalId) => [
+      {
+        address: strategy,
+        abi: REBALANCE_KEEPER_ABI,
+        functionName: "getProposal",
+        args: [proposalId],
+      },
+      {
+        address: strategy,
+        abi: REBALANCE_KEEPER_ABI,
+        functionName: "streamingEscrow",
+        args: [proposalId],
+      },
+      {
+        address: strategy,
+        abi: REBALANCE_KEEPER_ABI,
+        functionName: "calculateProposalConviction",
+        args: [proposalId],
+      },
+    ]);
+    const proposalResults = await multicallInChunks({
+      publicClient,
+      contracts: proposalContracts,
+    });
+
+    const proposalSnapshots: Array<{
       escrow: Address;
       status: number;
       conviction: bigint;
-      currentUnits: bigint;
-      currentFlowRate: bigint;
     }> = [];
 
-    for (let id = 1; id <= proposalCount; id++) {
-      const [proposal, escrowAddress] = await Promise.all([
-        publicClient.readContract({
-          address: strategy,
-          abi: REBALANCE_KEEPER_ABI,
-          functionName: "getProposal",
-          args: [BigInt(id)],
-        }),
-        publicClient.readContract({
-          address: strategy,
-          abi: REBALANCE_KEEPER_ABI,
-          functionName: "streamingEscrow",
-          args: [BigInt(id)],
-        }),
-      ]);
+    for (let index = 0; index < proposalCount; index++) {
+      const resultIndex = index * 3;
+      const proposal = requireMulticallResult(
+        proposalResults[resultIndex],
+        `proposal_${index + 1}`,
+      );
+      const escrowAddress = requireMulticallResult(
+        proposalResults[resultIndex + 1],
+        `proposal_${index + 1}_escrow`,
+      );
+      const conviction = requireMulticallResult(
+        proposalResults[resultIndex + 2],
+        `proposal_${index + 1}_conviction`,
+      );
       const escrow = escrowAddress as Address;
       if (escrow === ZERO_ADDRESS) continue;
 
-      const [conviction, currentUnits, currentFlowRate] = await Promise.all([
-        publicClient.readContract({
-          address: strategy,
-          abi: REBALANCE_KEEPER_ABI,
-          functionName: "calculateProposalConviction",
-          args: [BigInt(id)],
-        }),
-        readOptionalBigInt({
-          publicClient,
+      proposalSnapshots.push({
+        escrow,
+        status: getProposalStatus(proposal),
+        conviction: BigInt(conviction as bigint),
+      });
+    }
+
+    const memberResults = await multicallInChunks({
+      publicClient,
+      contracts: proposalSnapshots.flatMap((proposal) => [
+        {
           address: gdaAddress,
           abi: SUPERFLUID_POOL_ABI,
           functionName: "getUnits",
-          args: [escrow],
-        }),
-        readOptionalBigInt({
-          publicClient,
+          args: [proposal.escrow],
+        },
+        {
           address: gdaAddress,
           abi: SUPERFLUID_POOL_ABI,
           functionName: "getMemberFlowRate",
-          args: [escrow],
-        }),
-      ]);
-
-      const status = getProposalStatus(proposal);
-      const convictionValue = BigInt(conviction);
-
-      proposals.push({
-        escrow,
-        status,
-        conviction: convictionValue,
-        currentUnits: currentUnits ?? 0n,
-        currentFlowRate: currentFlowRate ?? 0n,
-      });
-    }
+          args: [proposal.escrow],
+        },
+      ]),
+    });
 
     return safeEvaluateRebalanceDecision(
       {
@@ -379,20 +449,22 @@ async function shouldRunRebalance({
         // _isStrategyEnabled selector is not exposed on every strategy diamond.
         isStrategyEnabled: true,
         proposalCount,
-        poolAmount: BigInt(poolAmount),
-        totalPointsActivated: BigInt(totalPointsActivated),
+        poolAmount: BigInt(poolAmount as bigint),
+        totalPointsActivated: BigInt(totalPointsActivated as bigint),
         decay,
-        threshold: BigInt(threshold),
-        streamingRatePerSecond: BigInt(streamingRatePerSecond),
+        threshold: BigInt(threshold as bigint),
+        streamingRatePerSecond: BigInt(streamingRatePerSecond as bigint),
         superTokenBalance,
         currentTotalFlowRate,
         hasStreamingConfig: true,
         thresholdBps,
-        proposals: proposals.map((proposal) => ({
+        proposals: proposalSnapshots.map((proposal, index) => ({
           status: proposal.status,
           conviction: proposal.conviction,
-          currentUnits: proposal.currentUnits,
-          currentFlowRate: proposal.currentFlowRate,
+          currentUnits:
+            optionalMulticallBigInt(memberResults[index * 2]) ?? 0n,
+          currentFlowRate:
+            optionalMulticallBigInt(memberResults[index * 2 + 1]) ?? 0n,
           hasEscrow: true,
         })),
       },
