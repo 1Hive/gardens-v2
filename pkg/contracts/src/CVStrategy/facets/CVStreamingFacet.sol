@@ -349,12 +349,15 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             return false;
         }
 
+        // Keep a 50 bps buffer above Superfluid's required deposit; 10_000 bps is 100%.
+        uint256 targetDeposit = requiredDeposit + Math.ceilDiv(requiredDeposit * 50, 10_000);
+
         uint256 escrowBalance = superfluidToken.balanceOf(escrow);
-        if (escrowBalance >= requiredDeposit) {
+        if (escrowBalance >= targetDeposit) {
             return false;
         }
 
-        uint256 missingDeposit = requiredDeposit - escrowBalance;
+        uint256 missingDeposit = targetDeposit - escrowBalance;
         uint256 strategyBalance = superfluidToken.balanceOf(address(this));
         if (strategyBalance == 0) {
             return false;
