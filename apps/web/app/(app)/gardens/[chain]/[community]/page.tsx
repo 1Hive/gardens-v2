@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { getCommunityNameDocument } from "#/subgraph/.graphclient";
+import {
+  getCommunityNameDocument,
+  type getCommunityNameQuery,
+} from "#/subgraph/.graphclient";
 import ClientPage from "./client-page";
 import { FALLBACK_TITLE, description } from "./opengraph-image";
 import { chainConfigMap } from "@/configs/chains";
@@ -75,7 +78,7 @@ export async function generateMetadata({
   }
 
   try {
-    const communityResult = await queryByChain(
+    const communityResult = await queryByChain<getCommunityNameQuery>(
       chainConfig,
       getCommunityNameDocument,
       { communityAddr: resolvedParams.community },

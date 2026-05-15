@@ -3,6 +3,7 @@ import { type ChainData } from "@/configs/chains";
 
 type QueryByChainContext = {
   fetchOptions?: RequestInit | (() => RequestInit);
+  requestPolicy?: string;
   url?: string;
 };
 

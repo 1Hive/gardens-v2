@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { ImageResponse } from "next/og";
-import { getPoolTitleDocument } from "#/subgraph/.graphclient";
+import {
+  getPoolTitleDocument,
+  type getPoolTitleQuery,
+} from "#/subgraph/.graphclient";
 import { resolveStrategyAddress } from "./route-helpers";
 import {
   GARDEN_LOGO_BASE64,
@@ -477,7 +480,7 @@ export async function generateMetadata({
   }
 
   try {
-    const poolResult = await queryByChain(
+    const poolResult = await queryByChain<getPoolTitleQuery>(
       chainConfig,
       getPoolTitleDocument,
       { strategyId: strategyAddress },
@@ -547,7 +550,7 @@ export default async function Image({ params }: ImageProps) {
   }
 
   try {
-    const poolResult = await queryByChain(
+    const poolResult = await queryByChain<getPoolTitleQuery>(
       chainConfig,
       getPoolTitleDocument,
       { strategyId: strategyAddress },
