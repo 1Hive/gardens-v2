@@ -45,6 +45,7 @@ jobs:
       E2E_SUBGRAPH_URL_CI: ${{ vars.E2E_SUBGRAPH_URL_CI || secrets.E2E_SUBGRAPH_URL_CI }}
       E2E_WALLET_SEED_PHRASE_CI: ${{ secrets.E2E_WALLET_SEED_PHRASE_CI }}
       E2E_MIN_GAS_WEI_CI: ${{ vars.E2E_MIN_GAS_WEI_CI || secrets.E2E_MIN_GAS_WEI_CI || '20000000000000000' }}
+      E2E_NATIVE_CURRENCY_SYMBOL_CI: ${{ vars.E2E_NATIVE_CURRENCY_SYMBOL_CI || secrets.E2E_NATIVE_CURRENCY_SYMBOL_CI || 'NATIVE' }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
       VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID || secrets.VERCEL_TEAM_ID }}
@@ -130,14 +131,14 @@ jobs:
             const minGasWeiRaw = process.env.E2E_MIN_GAS_WEI_CI;
 
             if (!rpcUrl || !mnemonic || !chainIdRaw) {
-              console.log("::warning::Skipping gas check due to missing RPC URL, chain id, or wallet seed phrase.");
+              console.log("::warning::Skipping gas check due to missing RPC URL, chain ID, or wallet seed phrase.");
               process.exit(0);
             }
 
             const chainId = Number(chainIdRaw);
             const minGasWei = BigInt(minGasWeiRaw);
             const account = mnemonicToAccount(mnemonic.trim());
-            const nativeUnit = "NATIVE";
+            const nativeUnit = (process.env.E2E_NATIVE_CURRENCY_SYMBOL_CI || "NATIVE").trim() || "NATIVE";
 
             const client = createPublicClient({
               chain: {
