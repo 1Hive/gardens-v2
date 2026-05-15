@@ -137,6 +137,7 @@ jobs:
             const chainId = Number(chainIdRaw);
             const minGasWei = BigInt(minGasWeiRaw);
             const account = mnemonicToAccount(mnemonic.trim());
+            const nativeUnit = "NATIVE";
 
             const client = createPublicClient({
               chain: {
@@ -154,13 +155,13 @@ jobs:
 
             if (balanceWei < minGasWei) {
               console.log(
-                `::warning::Insufficient gas for E2E wallet ${account.address}. Balance=${balanceEth} ETH, required minimum=${minEth} ETH.`
+                `::warning::Insufficient gas for E2E wallet ${account.address}. Balance=${balanceEth} ${nativeUnit}, required minimum=${minEth} ${nativeUnit}.`
               );
               process.exit(1);
             }
 
             console.log(
-              `::notice::Sufficient gas for E2E wallet ${account.address}. Balance=${balanceEth} ETH, required minimum=${minEth} ETH.`
+              `::notice::Sufficient gas for E2E wallet ${account.address}. Balance=${balanceEth} ${nativeUnit}, required minimum=${minEth} ${nativeUnit}.`
             );
           })().catch((error) => {
             console.log(`::warning::Gas check failed with error: ${error instanceof Error ? error.message : String(error)}`);
