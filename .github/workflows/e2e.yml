@@ -138,13 +138,13 @@ jobs:
             const chainId = Number(chainIdRaw);
             const minGasWei = BigInt(minGasWeiRaw);
             const account = mnemonicToAccount(mnemonic.trim());
-            const nativeUnit = process.env.E2E_NATIVE_CURRENCY_SYMBOL_CI?.trim() || "NATIVE";
+            const nativeSymbol = process.env.E2E_NATIVE_CURRENCY_SYMBOL_CI?.trim() || "NATIVE";
 
             const client = createPublicClient({
               chain: {
                 id: chainId,
                 name: `chain-${chainId}`,
-                nativeCurrency: { name: "Native", symbol: nativeUnit, decimals: 18 },
+                nativeCurrency: { name: "Native", symbol: nativeSymbol, decimals: 18 },
                 rpcUrls: { default: { http: [rpcUrl] } },
               },
               transport: http(rpcUrl),
@@ -156,13 +156,13 @@ jobs:
 
             if (balanceWei < minGasWei) {
               console.log(
-                `::warning::Insufficient gas for E2E wallet ${account.address}. Balance=${balanceEth} ${nativeUnit}, required minimum=${minEth} ${nativeUnit}.`
+                `::warning::Insufficient gas for E2E wallet ${account.address}. Balance=${balanceEth} ${nativeSymbol}, required minimum=${minEth} ${nativeSymbol}.`
               );
               process.exit(1);
             }
 
             console.log(
-              `::notice::Sufficient gas for E2E wallet ${account.address}. Balance=${balanceEth} ${nativeUnit}, required minimum=${minEth} ${nativeUnit}.`
+              `::notice::Sufficient gas for E2E wallet ${account.address}. Balance=${balanceEth} ${nativeSymbol}, required minimum=${minEth} ${nativeSymbol}.`
             );
           })().catch((error) => {
             console.log(`::warning::Gas check failed with error: ${error instanceof Error ? error.message : String(error)}`);
