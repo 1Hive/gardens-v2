@@ -26,9 +26,6 @@ interface IStreamingEscrowSync {
 contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
     using SuperTokenV1Library for ISuperToken;
 
-    uint256 internal constant ESCROW_DEPOSIT_BUFFER_BPS = 50;
-    uint256 internal constant BPS_DENOMINATOR = 10_000;
-
     /*|--------------------------------------------|*/
     /*|              ERRORS                        |*/
     /*|--------------------------------------------|*/
@@ -352,7 +349,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             return false;
         }
 
-        uint256 targetDeposit = requiredDeposit + Math.ceilDiv(requiredDeposit * ESCROW_DEPOSIT_BUFFER_BPS, BPS_DENOMINATOR);
+        uint256 targetDeposit = requiredDeposit + Math.ceilDiv(requiredDeposit * 50, 10_000);
 
         uint256 escrowBalance = superfluidToken.balanceOf(escrow);
         if (escrowBalance >= targetDeposit) {
