@@ -22,11 +22,13 @@ import { Badge, EthAddress } from "@/components";
 import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import {
   ProposalDataLight,
   useConvictionRead,
 } from "@/hooks/useConvictionRead";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { calculatePercentageBigInt } from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
@@ -34,16 +36,28 @@ import { prettyTimestamp } from "@/utils/text";
 export type ProposalCardProps = {
   proposalData: Pick<
     CVProposal,
-    "id" | "proposalStatus" | "metadataHash" | "createdAt" | "submitter"
+    | "id"
+    | "proposalStatus"
+    | "metadataHash"
+    | "createdAt"
+    | "submitter"
+    | "streamingEscrow"
   > &
     ProposalDataLight & {
       metadata?: Maybe<Pick<ProposalMetadata, "title">>;
+      proposalStream?: Maybe<{
+        currentFlowRate: bigint;
+      }>;
+      proposalStreams?: Array<{
+        currentFlowRate: bigint;
+      }>;
     };
   strategyConfig: Pick<
     CVStrategyConfig,
     | "decay"
     | "proposalType"
     | "allowlist"
+    | "superfluidToken"
     | "weight"
     | "maxRatio"
     | "minThresholdPoints"
@@ -100,6 +114,7 @@ export const ProposalsModalSupport = forwardRef<
     },
     ref,
   ) => {
+    const chainId = useChainIdFromPath();
     const { data: metadataResult } = useMetadataIpfsFetch({
       hash: proposalData.metadataHash,
       enabled: !proposalData.metadata,
@@ -167,9 +182,39 @@ export const ProposalsModalSupport = forwardRef<
       PoolTypes[strategyConfig.proposalType] === "signaling";
     const isStreamingType =
       PoolTypes[strategyConfig.proposalType] === "streaming";
+    const proposalStream =
+      proposalData.proposalStream ?? proposalData.proposalStreams?.[0];
+    const toBigInt = (value: unknown): bigint => {
+      if (typeof value === "bigint") return value;
+      if (typeof value === "number") return BigInt(Math.trunc(value));
+      if (typeof value === "string") {
+        try {
+          return BigInt(value);
+        } catch {
+          return 0n;
+        }
+      }
+      return 0n;
+    };
+    const subgraphCurrentFlowRateBn = toBigInt(proposalStream?.currentFlowRate);
 
     const resolvedProposalStatus = ProposalStatus[proposalStatus];
     const alreadyExecuted = resolvedProposalStatus === "executed";
+    const isFrozenStreamingProposal =
+      isStreamingType &&
+      (resolvedProposalStatus === "disputed" ||
+        resolvedProposalStatus === "cancelled");
+    const {
+      currentFlowRateBn: liveCurrentFlowRateBn,
+      hasFetched: hasFetchedLiveProposalFlow,
+    } = useSuperfluidStream({
+      receiver: (proposalData.streamingEscrow as Address) ?? "",
+      superToken: (strategyConfig.superfluidToken as Address) ?? "",
+      chainId,
+      containerId: proposalData.id,
+    });
+    const currentFlowRateBn =
+      liveCurrentFlowRateBn ?? subgraphCurrentFlowRateBn;
 
     const supportNeededToPass = (
       (thresholdPct ?? 0) - (totalSupportPct ?? 0)
@@ -190,13 +235,23 @@ export const ProposalsModalSupport = forwardRef<
 
     const impossibleToPass =
       (thresholdPct != null && thresholdPct >= 100) || minThGtTotalEffPoints;
+    const hasActiveStream = (currentFlowRateBn ?? 0n) > 0n;
+    const showStreamingAboutToStart =
+      isStreamingType &&
+      !isFrozenStreamingProposal &&
+      !alreadyExecuted &&
+      hasFetchedLiveProposalFlow &&
+      currentFlowRateBn === 0n &&
+      subgraphCurrentFlowRateBn > 0n &&
+      (poolToken?.balance ?? 0n) > 0n;
 
     const streamingStatusLabel =
       isStreamingType ?
         resolvedProposalStatus === "cancelled" ? "Cancelled"
         : resolvedProposalStatus === "disputed" ? "Disputed"
         : resolvedProposalStatus === "executed" ? "Closed"
-        : readyToBeExecuted || proposalWillPass ? "About to stream"
+        : hasActiveStream ? "Streaming"
+        : showStreamingAboutToStart || readyToBeExecuted ? "About to stream"
         : "Active"
       : undefined;
 
@@ -236,6 +291,7 @@ export const ProposalsModalSupport = forwardRef<
           : (
             !alreadyExecuted &&
             resolvedProposalStatus !== "disputed" &&
+            !hasActiveStream &&
             readyToBeExecuted &&
             !isSignalingType
           ) ?
@@ -257,9 +313,9 @@ export const ProposalsModalSupport = forwardRef<
     );
 
     const isProposalEnded =
-      ProposalStatus[proposalStatus] === "cancelled" ||
-      ProposalStatus[proposalStatus] === "rejected" ||
-      ProposalStatus[proposalStatus] === "executed";
+      resolvedProposalStatus === "cancelled" ||
+      resolvedProposalStatus === "rejected" ||
+      resolvedProposalStatus === "executed";
 
     return (
       <>
