@@ -32,6 +32,7 @@ test.setTimeout(600000);
 const PROPOSAL_METADATA_HASH = "QmPjXaoDhSx4mMFCADow9Kea3NMcd44PNCqr8hFpsCpi6f";
 const DISPUTE_REASON = "E2E dispute: proposal violates the covenant.";
 const REJECTED_RULING = 2;
+const MAX_WALLET_STATE_ATTEMPTS = 2;
 
 const erc20Abi = parseAbi(["function decimals() view returns (uint8)"]);
 const alloAbi = parseAbi([
@@ -292,45 +293,61 @@ async function waitForDisputeRuled({
 }
 
 async function ensureWalletConnected(page: any, metamask: MetaMask) {
+  const getWalletState = async () => {
+    if (
+      await page
+        .getByTestId("accounts")
+        .isVisible()
+        .catch(() => false)
+    ) {
+      return "connected";
+    }
+    if (
+      await page
+        .getByTestId("connectButton")
+        .isVisible()
+        .catch(() => false)
+    ) {
+      return "disconnected";
+    }
+    return "loading";
+  };
+
   let walletState = "loading";
+  for (let attempt = 1; attempt <= MAX_WALLET_STATE_ATTEMPTS; attempt++) {
+    try {
+      await expect
+        .poll(
+          async () => {
+            walletState = await getWalletState();
+            return walletState;
+          },
+          {
+            timeout: 60000,
+            intervals: [500, 1000, 2000],
+            message: "wallet connection state is visible",
+          },
+        )
+        .not.toBe("loading");
+    } catch (error) {
+      if (attempt === MAX_WALLET_STATE_ATTEMPTS) {
+        throw error;
+      }
 
-  await expect
-    .poll(
-      async () => {
-        if (
-          await page
-            .getByTestId("accounts")
-            .isVisible()
-            .catch(() => false)
-        ) {
-          walletState = "connected";
-          return walletState;
-        }
-        if (
-          await page
-            .getByTestId("connectButton")
-            .isVisible()
-            .catch(() => false)
-        ) {
-          walletState = "disconnected";
-          return walletState;
-        }
-        walletState = "loading";
-        return walletState;
-      },
-      {
-        timeout: 60000,
-        intervals: [500, 1000, 2000],
-        message: "wallet connection state is visible",
-      },
-    )
-    .not.toBe("loading");
+      await page.reload({ waitUntil: "domcontentloaded", timeout: 60000 });
+      await page.bringToFront();
+      continue;
+    }
 
-  if (walletState === "connected") {
-    return;
+    if (walletState === "connected") {
+      return;
+    }
+
+    if (walletState === "disconnected") {
+      await connectWallet(page, metamask);
+      return;
+    }
   }
-
-  await connectWallet(page, metamask);
 }
 
 async function mockIpfsJsonUpload(page: any) {
