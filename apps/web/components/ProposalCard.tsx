@@ -47,6 +47,7 @@ import {
   SEC_TO_MONTH,
   calculatePercentageBigInt,
   roundToSignificant,
+  toBigInt,
 } from "@/utils/numbers";
 import { formatProposalSlug } from "@/utils/proposals";
 import { prettyTimestamp } from "@/utils/text";
@@ -286,19 +287,6 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const proposalStream =
       proposalData.proposalStream ?? proposalData.proposalStreams?.[0];
 
-    const toBigInt = (value: unknown): bigint => {
-      if (typeof value === "bigint") return value;
-      if (typeof value === "number") return BigInt(Math.trunc(value));
-      if (typeof value === "string") {
-        try {
-          return BigInt(value);
-        } catch {
-          return 0n;
-        }
-      }
-      return 0n;
-    };
-
     const subgraphCurrentFlowRateBn = toBigInt(proposalStream?.currentFlowRate);
     const streamedUntilSnapshotBn = toBigInt(
       proposalStream?.streamedUntilSnapshot,
@@ -478,7 +466,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         : resolvedProposalStatus === "disputed" ? "Disputed"
         : resolvedProposalStatus === "executed" ? "Closed"
         : hasActiveStream ? "Streaming"
-        : readyToBeExecuted ? "About to stream"
+        : showStreamingAboutToStart || readyToBeExecuted ? "About to stream"
         : "Active"
       : undefined;
 

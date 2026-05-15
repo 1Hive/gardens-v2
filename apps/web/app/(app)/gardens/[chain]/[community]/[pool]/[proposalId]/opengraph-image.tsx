@@ -19,7 +19,7 @@ import {
 } from "../../ogAssets";
 import { resolveStrategyAddress } from "../route-helpers";
 import { ChainIcon, getConfigByChain } from "@/configs/chains";
-import { queryByChain } from "@/providers/urql";
+import { queryByChain } from "@/providers/queryByChain";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { buildProposalEntityId } from "@/utils/proposals";
 

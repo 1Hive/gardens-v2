@@ -12,7 +12,7 @@ import {
   STATUS_REVIEW_ICON_BASE64,
 } from "../ogAssets";
 import { chainConfigMap, ChainIcon } from "@/configs/chains";
-import { queryByChain } from "@/providers/urql";
+import { queryByChain } from "@/providers/queryByChain";
 import { PoolTypes } from "@/types";
 
 export const runtime = "nodejs";

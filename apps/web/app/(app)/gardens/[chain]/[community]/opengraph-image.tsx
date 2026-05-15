@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 import { getCommunityNameDocument } from "#/subgraph/.graphclient";
 import { COMMUNITY_IMAGE_BASE64, GARDEN_LOGO_BASE64 } from "./ogAssets";
 import { chainConfigMap, ChainIcon } from "@/configs/chains";
-import { queryByChain } from "@/providers/urql";
+import { queryByChain } from "@/providers/queryByChain";
 
 export const runtime = "nodejs";
 

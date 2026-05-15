@@ -30,7 +30,7 @@ import {
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { PoolTypes, ProposalStatus } from "@/types";
-import { calculatePercentageBigInt } from "@/utils/numbers";
+import { calculatePercentageBigInt, toBigInt } from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
 export type ProposalCardProps = {
@@ -184,18 +184,6 @@ export const ProposalsModalSupport = forwardRef<
       PoolTypes[strategyConfig.proposalType] === "streaming";
     const proposalStream =
       proposalData.proposalStream ?? proposalData.proposalStreams?.[0];
-    const toBigInt = (value: unknown): bigint => {
-      if (typeof value === "bigint") return value;
-      if (typeof value === "number") return BigInt(Math.trunc(value));
-      if (typeof value === "string") {
-        try {
-          return BigInt(value);
-        } catch {
-          return 0n;
-        }
-      }
-      return 0n;
-    };
     const subgraphCurrentFlowRateBn = toBigInt(proposalStream?.currentFlowRate);
 
     const resolvedProposalStatus = ProposalStatus[proposalStatus];

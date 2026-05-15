@@ -13,7 +13,7 @@ import {
   type SearchParams,
 } from "./route-helpers";
 import { chainConfigMap, type ChainData } from "@/configs/chains";
-import { queryByChain } from "@/providers/urql";
+import { queryByChain } from "@/providers/queryByChain";
 import { PoolTypes } from "@/types";
 import { hasEthereumAddressFormat } from "@/utils/web3";
 
