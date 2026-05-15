@@ -120,7 +120,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node - <<'NODE'
+          pnpm --filter e2e exec node - <<'NODE'
           (async () => {
             const { createPublicClient, formatEther, http } = await import("viem");
             const { mnemonicToAccount } = await import("viem/accounts");
