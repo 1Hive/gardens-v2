@@ -422,10 +422,12 @@ export default function ClientPage({
               containerId: poolId,
               type: "update",
             },
-            { topic: "member", id: wallet, containerId: poolId },
+            ...(wallet ?
+              [{ topic: "member" as const, id: wallet, containerId: poolId }]
+            : []),
           ]
         : undefined,
-      enabled: !!wallet,
+      enabled: !!strategy?.id,
     });
 
   const membersStrategies = membersStrategyData?.memberStrategies;

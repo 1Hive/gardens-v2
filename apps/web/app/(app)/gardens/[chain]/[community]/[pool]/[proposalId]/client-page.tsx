@@ -18,6 +18,8 @@ import {
   getProposalSupportersDocument,
   isMemberDocument,
   isMemberQuery,
+  getMembersStrategyDocument,
+  getMembersStrategyQuery,
 } from "#/subgraph/.graphclient";
 import {
   Badge,
@@ -74,10 +76,78 @@ import { prettyTimestamp } from "@/utils/text";
 
 type ProposalSupporter = {
   id: string;
-  stakes: { amount: number }[];
+  stakes: { amount: number | string | bigint }[];
+  activatedPoints?: number | string | bigint | null;
 };
 type SupporterColumn = Column<ProposalSupporter>;
 const SYNC_STREAM_HIDE_WINDOW_SECONDS = 15 * 60;
+
+const toBigIntValue = (value: unknown): bigint => {
+  if (typeof value === "bigint") return value;
+  if (typeof value === "number") return BigInt(Math.trunc(value));
+  if (typeof value === "string") {
+    try {
+      return BigInt(value);
+    } catch {
+      return 0n;
+    }
+  }
+  return 0n;
+};
+
+const getSupporterStakeAmount = (supporter: ProposalSupporter) =>
+  (supporter.stakes ?? []).reduce(
+    (total, stake) => total + toBigIntValue(stake.amount),
+    0n,
+  );
+
+const getSupporterVotingPowerUsedPct = (supporter: ProposalSupporter) => {
+  const activatedPoints = toBigIntValue(supporter.activatedPoints);
+  return activatedPoints > 0n ?
+      calculatePercentageBigInt(
+        getSupporterStakeAmount(supporter),
+        activatedPoints,
+      )
+    : undefined;
+};
+
+const getSupporterPoolVotingPower = (
+  supporter: ProposalSupporter,
+  totalActivePoints: number | string | bigint | undefined,
+) => {
+  const activePoints = toBigIntValue(totalActivePoints);
+  return activePoints > 0n ?
+      calculatePercentageBigInt(
+        getSupporterStakeAmount(supporter),
+        activePoints,
+      )
+    : undefined;
+};
+
+const getMemberIdFromMemberStrategyId = (
+  memberStrategyId: string,
+  strategyId: string,
+) => {
+  const normalizedMemberStrategyId = memberStrategyId.toLowerCase();
+  const strategySuffix = `-${strategyId.toLowerCase()}`;
+  return normalizedMemberStrategyId.endsWith(strategySuffix) ?
+      normalizedMemberStrategyId.slice(0, -strategySuffix.length)
+    : undefined;
+};
+
+const formatVotingPowerPct = (value: number | undefined) =>
+  value == null ? "--" : (
+    `${value.toLocaleString(undefined, {
+      maximumFractionDigits: 2,
+    })}%`
+  );
+
+const formatVotingPower = (value: number | undefined) =>
+  value == null ? "--" : (
+    `${value.toLocaleString(undefined, {
+      maximumFractionDigits: 2,
+    })} VP`
+  );
 
 const getElapsedMs = ({
   flowRateBn,
@@ -335,6 +405,22 @@ export default function ClientPage({ params }: ClientPageProps) {
     },
   );
 
+  const { data: membersStrategyData } =
+    useSubgraphQuery<getMembersStrategyQuery>({
+      query: getMembersStrategyDocument,
+      variables: {
+        strategyId: strategyAddress,
+      },
+      changeScope:
+        poolIdForScope != null ?
+          {
+            topic: "proposal",
+            containerId: poolIdForScope,
+            type: "update",
+          }
+        : undefined,
+    });
+
   //query to get member registry in community
   const { data: memberData } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
@@ -362,11 +448,28 @@ export default function ClientPage({ params }: ClientPageProps) {
       }
     : undefined;
   const proposalSupporters = supportersData?.members;
+  const activatedPointsByMember = useMemo(() => {
+    const activatedPoints = new Map<string, bigint>();
+    membersStrategyData?.memberStrategies.forEach((memberStrategy) => {
+      const memberId = getMemberIdFromMemberStrategyId(
+        memberStrategy.id,
+        strategyAddress,
+      );
+      if (memberId == null) return;
+      activatedPoints.set(
+        memberId,
+        toBigIntValue(memberStrategy.activatedPoints),
+      );
+    });
+    return activatedPoints;
+  }, [membersStrategyData?.memberStrategies, strategyAddress]);
   const resolvedPoolId =
     proposalData?.strategy?.poolId != null ?
       Number(proposalData.strategy.poolId)
     : undefined;
   const poolId = resolvedPoolId;
+  const totalEffectiveActivePoints =
+    proposalData?.strategy?.totalEffectiveActivePoints;
 
   useEffect(() => {
     if (
@@ -385,20 +488,18 @@ export default function ClientPage({ params }: ClientPageProps) {
         .map((item) => ({
           id: item.id,
           stakes: item.stakes?.map((stake) => ({ amount: stake.amount })) ?? [],
+          activatedPoints: activatedPointsByMember.get(item.id.toLowerCase()),
         }))
         .sort((a, b) => {
-          const maxStakeA = Math.max(
-            ...(a.stakes ?? []).map((stake) => stake.amount),
+          const stakeA = getSupporterStakeAmount(a);
+          const stakeB = getSupporterStakeAmount(b);
+          return (
+            stakeA === stakeB ? 0
+            : stakeA < stakeB ? 1
+            : -1
           );
-          const maxStakeB = Math.max(
-            ...(b.stakes ?? []).map((stake) => stake.amount),
-          );
-          return maxStakeB - maxStakeA;
         })
     : [];
-  const totalEffectiveActivePoints =
-    proposalData?.strategy?.totalEffectiveActivePoints;
-
   //
 
   const proposalIdNumber =
@@ -551,26 +652,13 @@ export default function ClientPage({ params }: ClientPageProps) {
       }
     )?.proposalStreams?.[0];
 
-  const toBigInt = (value: unknown): bigint => {
-    if (typeof value === "bigint") return value;
-    if (typeof value === "number") return BigInt(Math.trunc(value));
-    if (typeof value === "string") {
-      try {
-        return BigInt(value);
-      } catch {
-        return 0n;
-      }
-    }
-    return 0n;
-  };
-
   const proposalFlowRateBn =
     (
       proposalStream &&
       typeof proposalStream === "object" &&
       "currentFlowRate" in proposalStream
     ) ?
-      toBigInt(proposalStream.currentFlowRate)
+      toBigIntValue(proposalStream.currentFlowRate)
     : 0n;
   const streamedUntilSnapshotBn =
     (
@@ -578,7 +666,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       typeof proposalStream === "object" &&
       "streamedUntilSnapshot" in proposalStream
     ) ?
-      toBigInt(proposalStream.streamedUntilSnapshot)
+      toBigIntValue(proposalStream.streamedUntilSnapshot)
     : 0n;
   const lastSnapshotAtBn =
     (
@@ -586,9 +674,9 @@ export default function ClientPage({ params }: ClientPageProps) {
       typeof proposalStream === "object" &&
       "lastSnapshotAt" in proposalStream
     ) ?
-      toBigInt(proposalStream.lastSnapshotAt)
+      toBigIntValue(proposalStream.lastSnapshotAt)
     : 0n;
-  const minThresholdPointsBn = toBigInt(
+  const minThresholdPointsBn = toBigIntValue(
     proposalData?.strategy?.config?.minThresholdPoints ?? 0,
   );
   const superfluidStreamResult = useSuperfluidStream({
@@ -1557,10 +1645,8 @@ export default function ClientPage({ params }: ClientPageProps) {
               <section>
                 <ProposalSupportersTable
                   supporters={filteredAndSortedProposalSupporters}
-                  beneficiary={beneficiary}
-                  submitter={submitter}
                   totalActivePoints={totalEffectiveActivePoints}
-                  totalStakedAmount={totalSupportPct}
+                  totalVotingPowerUsedPct={totalSupportPct}
                   openSupportersModal={openSupportersModal}
                   setOpenSupportersModal={setOpenSupportersModal}
                 />
@@ -2114,10 +2200,8 @@ export default function ClientPage({ params }: ClientPageProps) {
             totalSupportPct != null && (
               <ProposalSupportersTable
                 supporters={filteredAndSortedProposalSupporters}
-                beneficiary={beneficiary}
-                submitter={submitter}
                 totalActivePoints={totalEffectiveActivePoints}
-                totalStakedAmount={totalSupportPct}
+                totalVotingPowerUsedPct={totalSupportPct}
                 openSupportersModal={openSupportersModal}
                 setOpenSupportersModal={setOpenSupportersModal}
                 withModal={false}
@@ -2132,25 +2216,21 @@ export default function ClientPage({ params }: ClientPageProps) {
 const ProposalSupportersTable = ({
   supporters,
   totalActivePoints,
-  totalStakedAmount,
+  totalVotingPowerUsedPct,
   openSupportersModal,
   setOpenSupportersModal,
-  beneficiary,
-  submitter,
   withModal = true,
 }: {
   supporters: ProposalSupporter[];
-  beneficiary: string | undefined;
-  submitter: string | undefined;
-  totalActivePoints: number;
-  totalStakedAmount: number;
+  totalActivePoints: number | string | bigint | undefined;
+  totalVotingPowerUsedPct: number;
   openSupportersModal: boolean;
   setOpenSupportersModal: (open: boolean) => void;
   withModal?: boolean;
 }) => {
   const columns: SupporterColumn[] = [
     {
-      header: `Member${(supporters?.length ?? 0) === 1 ? "" : "s"}`,
+      header: "Member",
       render: (supporter: ProposalSupporter) => (
         <EthAddress
           address={supporter.id as Address}
@@ -2162,22 +2242,32 @@ const ProposalSupportersTable = ({
       ),
     },
     {
-      header: "Role",
-      render: (supporter: ProposalSupporter) =>
-        supporter.id === beneficiary ? "Beneficiary"
-        : supporter.id === submitter ? "Submitter"
-        : "Member",
+      header: (
+        <span className="block w-full text-right text-neutral-soft-content">
+          Voting Power
+        </span>
+      ),
+      render: (supporter: ProposalSupporter) => (
+        <span className="block w-full text-right">
+          {formatVotingPower(
+            getSupporterPoolVotingPower(supporter, totalActivePoints),
+          )}
+        </span>
+      ),
+      className: "text-right min-w-[9rem]",
     },
     {
-      header: "Support",
-      render: (supporter: ProposalSupporter) =>
-        totalActivePoints > 0 ?
-          `${calculatePercentageBigInt(
-            BigInt(supporter?.stakes[0]?.amount),
-            BigInt(totalActivePoints),
-          )} VP`
-        : undefined,
-      className: "flex items-center justify-end mt-2",
+      header: (
+        <span className="block w-full text-right text-neutral-soft-content">
+          Voting power used
+        </span>
+      ),
+      render: (supporter: ProposalSupporter) => (
+        <span className="block w-full text-right">
+          {formatVotingPowerPct(getSupporterVotingPowerUsedPct(supporter))}
+        </span>
+      ),
+      className: "text-right min-w-[8rem]",
     },
   ];
 
@@ -2191,7 +2281,7 @@ const ProposalSupportersTable = ({
       footer={
         <div className="flex justify-between items-end gap-2 mr-1 sm:mr-10">
           <p className="subtitle">Total Support: </p>
-          <p className=""> {totalStakedAmount} VP</p>
+          <p>{formatVotingPower(totalVotingPowerUsedPct)}</p>
         </div>
       }
       className="border1 rounded-lg bg-neutral p-2"
