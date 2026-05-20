@@ -428,10 +428,9 @@ export function handlePointsDeactivated(event: PointsDeactivated): void {
                 proposal.proposalNumber
               );
               if (contractProposal.reverted) {
-                log.error(
-                  "handlePointsDeactivated getProposal reverted:{}",
-                  [proposal.proposalNumber.toString()]
-                );
+                log.error("handlePointsDeactivated getProposal reverted:{}", [
+                  proposal.proposalNumber.toString()
+                ]);
                 return;
               }
               let prop = contractProposal.value;
@@ -854,7 +853,6 @@ export function handleSuperfluidTokenUpdated(
   }
 
   hydrateMissingStreamInfoFromContract(event.address, streamInfo);
-  streamInfo.updatedAt = event.block.timestamp;
   streamInfo.save();
 }
 
@@ -868,7 +866,6 @@ export function handleSuperfluidGDAConnected(
 
   streamInfo.superfluidGDA = event.params.gda.toHexString();
   hydrateMissingStreamInfoFromContract(event.address, streamInfo);
-  streamInfo.updatedAt = event.block.timestamp;
   streamInfo.save();
 }
 
@@ -882,7 +879,6 @@ export function handleSuperfluidStreamingRateUpdated(
 
   streamInfo.maxFlowRate = event.params.streamingRatePerSecond;
   hydrateMissingStreamInfoFromContract(event.address, streamInfo);
-  streamInfo.updatedAt = event.block.timestamp;
   streamInfo.save();
 }
 
@@ -898,7 +894,6 @@ export function handleSuperfluidGDADisconnected(
     streamInfo.superfluidGDA = Address.zero().toHexString();
   }
   hydrateMissingStreamInfoFromContract(event.address, streamInfo);
-  streamInfo.updatedAt = event.block.timestamp;
   streamInfo.save();
 }
 
@@ -911,7 +906,6 @@ export function handleStreamRateUpdated(event: StreamRateUpdated): void {
   streamInfo.streamLastFlowRate = event.params.flowRate;
   streamInfo.superfluidGDA = event.params.gda.toHexString();
   hydrateMissingStreamInfoFromContract(event.address, streamInfo);
-  streamInfo.updatedAt = event.block.timestamp;
   streamInfo.save();
 
   recomputeProposalStreamRates(event.address, event.block.timestamp);
@@ -951,7 +945,6 @@ export function handleStreamMemberUnitUpdated(event: ethereum.Event): void {
     totalUnits = ZERO;
   }
   streamInfo.totalMemberUnits = totalUnits;
-  streamInfo.updatedAt = event.block.timestamp;
   streamInfo.save();
 
   recomputeProposalStreamRates(event.address, event.block.timestamp);
@@ -977,7 +970,9 @@ export function handleEscrowStreamStopped(event: ethereum.Event): void {
   accrueProposalStreamSnapshot(proposalStream, event.block.timestamp);
 
   if (proposalStream.currentUnits.gt(ZERO)) {
-    const reduced = streamInfo.totalMemberUnits.minus(proposalStream.currentUnits);
+    const reduced = streamInfo.totalMemberUnits.minus(
+      proposalStream.currentUnits
+    );
     streamInfo.totalMemberUnits = reduced.lt(ZERO) ? ZERO : reduced;
   }
 
@@ -988,7 +983,6 @@ export function handleEscrowStreamStopped(event: ethereum.Event): void {
   proposalStream.updatedAt = event.block.timestamp;
   proposalStream.save();
 
-  streamInfo.updatedAt = event.block.timestamp;
   streamInfo.save();
 
   recomputeProposalStreamRates(event.address, event.block.timestamp);
@@ -1015,7 +1009,6 @@ export function handleSuperfluidPoolCreated(
   streamInfo.maxFlowRate = event.params.maxStreamingRate;
   streamInfo.superfluidGDA = event.params.gda.toHexString();
   hydrateMissingStreamInfoFromContract(event.address, streamInfo);
-  streamInfo.updatedAt = event.block.timestamp;
   streamInfo.save();
 
   cvs.stream = streamInfo.id;
@@ -1279,7 +1272,10 @@ function getProposalStatus(
   return BigInt.fromI32(proposal.value.getProposalStatus());
 }
 
-function proposalEscrowIndexId(strategyAddress: Address, escrow: string): string {
+function proposalEscrowIndexId(
+  strategyAddress: Address,
+  escrow: string
+): string {
   return `${strategyAddress.toHexString()}-${escrow.toLowerCase()}`;
 }
 
@@ -1350,8 +1346,10 @@ function accrueProposalStreamSnapshot(
     return;
   }
   const elapsed = timestamp.minus(proposalStream.lastSnapshotAt);
-  proposalStream.streamedUntilSnapshot = proposalStream.streamedUntilSnapshot
-    .plus(proposalStream.currentFlowRate.times(elapsed));
+  proposalStream.streamedUntilSnapshot =
+    proposalStream.streamedUntilSnapshot.plus(
+      proposalStream.currentFlowRate.times(elapsed)
+    );
   proposalStream.lastSnapshotAt = timestamp;
 }
 
@@ -1435,9 +1433,7 @@ function getOrCreateStrategyStreamInfo(
   if (streamInfo.get("createdAt") == null) {
     streamInfo.createdAt = timestamp;
   }
-  if (streamInfo.get("updatedAt") == null) {
-    streamInfo.updatedAt = timestamp;
-  }
+  streamInfo.updatedAt = timestamp;
 
   return streamInfo;
 }
