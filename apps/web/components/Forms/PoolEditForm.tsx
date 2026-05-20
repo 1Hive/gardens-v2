@@ -188,6 +188,10 @@ export default function PoolEditForm({
     globalTribunal,
   } = useChainFromPath()!;
   const nativeDecimals = nativeCurrency?.decimals ?? ETH_DECIMALS;
+  const governanceTokenDecimals =
+    strategy.registryCommunity?.garden?.decimals != null ?
+      Number(strategy.registryCommunity.garden.decimals)
+    : ETH_DECIMALS;
   const monthlyBudget =
     strategy.stream != null && strategy.stream.maxFlowRate != null ?
       Number(
@@ -429,7 +433,7 @@ export default function PoolEditForm({
 
     const minThresholdPoints = parseUnits(
       (previewData.minThresholdPoints ?? 0).toString(),
-      token?.decimals ?? 18,
+      governanceTokenDecimals,
     );
 
     const initialAllowList =
