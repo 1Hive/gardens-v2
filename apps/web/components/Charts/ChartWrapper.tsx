@@ -13,6 +13,7 @@ type ChartWrapperProps = {
   message?: string;
   growing?: boolean | null;
   isSignalingType?: boolean;
+  isStreamingPool?: boolean;
   proposalStatus?: string;
   support?: number;
   threshold?: number;
@@ -26,6 +27,7 @@ export const ChartWrapper = ({
   message,
   growing,
   isSignalingType,
+  isStreamingPool,
   proposalStatus,
   support,
   threshold,
@@ -59,7 +61,10 @@ export const ChartWrapper = ({
         borderColor: chartColors.markLine,
       },
       className: "w-5 border-t-[1px] border-dashed rotate-90 -mx-3",
-      info: "The minimum level of conviction required for a proposal to pass.",
+      info:
+        isStreamingPool ?
+          "The minimum level of conviction required for a proposal to stream."
+        : "The minimum level of conviction required for a proposal to pass.",
       value:
         isThresholdOutOfReach ? "Out of reach"
         : isThresholdBelowDisplayPrecision ? "< 0.01 VP"

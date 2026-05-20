@@ -174,7 +174,7 @@ const ConvictionBarChartBase = ({
         {
           message:
             proposalType === "streaming" ?
-              "This proposal is about to stream."
+              "This proposal is streaming."
             : "This proposal is executable.",
           growing: false,
         },
@@ -189,7 +189,7 @@ const ConvictionBarChartBase = ({
         {
           message:
             proposalType === "streaming" ?
-              "This proposal is about to stream."
+              "This proposal is streaming."
             : "This proposal is ready to be executed!",
           growing: false,
         },
@@ -204,7 +204,7 @@ const ConvictionBarChartBase = ({
         {
           message:
             proposalType === "streaming" ?
-              "This proposal is about to stream."
+              "This proposal is streaming."
             : "This proposal is ready to be executed!",
           growing: true,
         },
@@ -219,7 +219,7 @@ const ConvictionBarChartBase = ({
         {
           message:
             proposalType === "streaming" ?
-              "This proposal is about to stream."
+              "This proposal is streaming."
             : "This proposal is ready to be executed!",
           growing: false,
         },
@@ -248,7 +248,7 @@ const ConvictionBarChartBase = ({
         {
           message:
             proposalType === "streaming" ?
-              "This proposal is about to stream."
+              "This proposal is streaming."
             : "This proposal is ready to be executed!",
           growing: null,
         },
@@ -504,6 +504,7 @@ const ConvictionBarChartBase = ({
             message={isSignalingType ? undefined : message}
             growing={growing}
             isSignalingType={isSignalingType}
+            isStreamingPool={proposalType === "streaming"}
             proposalStatus={proposalStatus}
             support={proposalSupportPct}
             threshold={thresholdPct}
