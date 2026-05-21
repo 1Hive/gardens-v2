@@ -122,8 +122,13 @@ export const ProposalsModalSupport = forwardRef<
 
     const metadata = proposalData.metadata ?? metadataResult;
 
-    const { proposalNumber, proposalStatus, requestedAmount, submitter } =
-      proposalData;
+    const {
+      proposalNumber,
+      proposalStatus,
+      requestedAmount,
+      submitter,
+      beneficiary,
+    } = proposalData;
 
     const searchParams = useCollectQueryParams();
     const isNewProposal =
@@ -339,23 +344,56 @@ export const ProposalsModalSupport = forwardRef<
               </div>
               <div className="flex  justify-between items-center">
                 <div className="flex sm:items-center flex-col items-start sm:flex-row gap-2">
-                  <div
-                    className="flex items-center gap-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                    }}
-                  >
-                    <p>By</p>
-                    <EthAddress
-                      address={submitter as Address}
-                      shortenAddress={true}
-                      actions="copy"
-                      textColor="var(--color-grey-100)"
-                    />
-                  </div>
+                  {submitter === beneficiary ?
+                    <div
+                      className="flex items-center gap-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                      }}
+                    >
+                      <EthAddress
+                        address={submitter as Address}
+                        shortenAddress={true}
+                        actions="copy"
+                        textColor="var(--color-grey-100)"
+                      />
+                    </div>
+                  : <>
+                      <div
+                        className="flex items-center gap-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                        }}
+                      >
+                        <p>By</p>
+                        <EthAddress
+                          address={submitter as Address}
+                          shortenAddress={true}
+                          actions="copy"
+                          textColor="var(--color-grey-100)"
+                        />
+                      </div>
+                      <div
+                        className="flex items-center gap-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                        }}
+                      >
+                        <p>To</p>
+                        <EthAddress
+                          address={beneficiary as Address}
+                          shortenAddress={true}
+                          actions="copy"
+                          textColor="var(--color-grey-100)"
+                        />
+                      </div>
+                    </>
+                  }
                   <div className="flex gap-6 text-neutral-soft-content justify-end">
-                    {!isSignalingType && poolToken && (
+                    {!isSignalingType && poolToken && !isStreamingType && (
                       <div className="flex items-center gap-1 justify-self-end">
                         <div className="hidden sm:block w-1 h-1 rounded-full bg-neutral-soft-content" />
                         <p className="text-sm ml-1 dark:text-neutral-soft-content">
