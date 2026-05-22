@@ -135,13 +135,24 @@ const GARDENS_APP_BASE_URL = "https://app.gardens.fund";
 const PROPOSAL_MULTICALL_CHUNK_SIZE = 75;
 
 let ablyClient: Ably.Rest | null = null;
+let hasWarnedMissingAblyKey = false;
 
 const getAblyClient = () => {
   if (ablyClient != null) return ablyClient;
 
   const key = process.env.NEXT_ABLY_API_KEY;
-  if (!key) return null;
+  if (!key) {
+    if (!hasWarnedMissingAblyKey) {
+      console.warn(
+        "rebalance-keeper: NEXT_ABLY_API_KEY is unset; stream updates will not be published",
+      );
+      hasWarnedMissingAblyKey = true;
+    }
+    return null;
+  }
 
+  // Ably.Rest uses plain HTTP requests, so reusing a client here is only to
+  // avoid rebuilding it for every rebalance confirmation.
   ablyClient = new Ably.Rest({ key });
   return ablyClient;
 };

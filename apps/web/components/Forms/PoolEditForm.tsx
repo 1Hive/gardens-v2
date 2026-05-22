@@ -391,7 +391,7 @@ export default function PoolEditForm({
         topic: "pool",
         function: "setPoolParams",
         type: "update",
-        id: strategy.poolId,
+        id: strategy.id,
         chainId: chainId,
       });
     },

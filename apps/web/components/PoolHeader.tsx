@@ -168,7 +168,7 @@ export default function PoolHeader({
       changeScope: {
         topic: "pool",
         type: "update",
-        id: strategy.poolId,
+        id: strategy.id,
         chainId: chainId,
       },
     });
@@ -512,7 +512,7 @@ export default function PoolHeader({
         topic: "pool",
         function: "setPoolParams",
         type: "update",
-        id: strategy.poolId,
+        id: strategy.id,
         chainId: chainId,
       });
     },

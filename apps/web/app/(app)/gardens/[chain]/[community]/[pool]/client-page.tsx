@@ -186,7 +186,6 @@ export default function ClientPage({
   const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
   const strategyAddress = poolSlug.toLowerCase();
   const pendingNewPoolRefetch = useRef<string | null>(null);
-  const [poolIdForScope, setPoolIdForScope] = useState<number | undefined>();
   const [hasResolvedInitialNewPoolLookup, setHasResolvedInitialNewPoolLookup] =
     useState(() => !Boolean(newPoolId));
   const { data, error, refetch, fetching } = useSubgraphQuery<getPoolDataQuery>(
@@ -197,30 +196,27 @@ export default function ClientPage({
       },
       changeScope: [
         {
+          topic: "pool",
+          id: strategyAddress,
+          type: "update",
+        },
+        {
           topic: "proposal",
           containerId: strategyAddress,
           type: "update",
         },
-        ...(poolIdForScope != null ?
-          [
-            {
-              topic: "pool" as const,
-              id: poolIdForScope,
-            },
-            {
-              topic: "member" as const,
-              function: "activatePoints",
-              type: "update" as const,
-              containerId: strategyAddress,
-            },
-            {
-              topic: "member" as const,
-              function: "deactivatePoints",
-              type: "update" as const,
-              containerId: strategyAddress,
-            },
-          ]
-        : []),
+        {
+          topic: "member" as const,
+          function: "activatePoints",
+          type: "update" as const,
+          containerId: strategyAddress,
+        },
+        {
+          topic: "member" as const,
+          function: "deactivatePoints",
+          type: "update" as const,
+          containerId: strategyAddress,
+        },
       ],
     },
   );
@@ -256,16 +252,6 @@ export default function ClientPage({
       }
     });
   }, [newPoolId, strategy, error]);
-
-  useEffect(() => {
-    if (
-      resolvedPoolId != null &&
-      resolvedPoolId !== poolIdForScope &&
-      Number.isFinite(resolvedPoolId)
-    ) {
-      setPoolIdForScope(resolvedPoolId);
-    }
-  }, [resolvedPoolId, poolIdForScope]);
 
   useEffect(() => {
     if (newPoolId && strategy) {

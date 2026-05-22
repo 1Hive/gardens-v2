@@ -195,7 +195,7 @@ export const DisputeModal: FC<Props> = ({
           type: "update",
           function: "disputeProposal",
           id: proposalData.proposalNumber,
-            containerId: proposalData.strategy.id,
+          containerId: proposalData.strategy.id,
           chainId,
         });
       },
