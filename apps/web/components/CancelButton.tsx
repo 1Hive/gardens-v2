@@ -37,7 +37,7 @@ function CancelButton({ proposalData }: Props) {
         type: "update",
         function: "cancelProposal",
         id: +proposalNumber,
-        containerId: proposalData.strategy.poolId,
+        containerId: proposalData.strategy.id,
         chainId: chainId,
       });
     },

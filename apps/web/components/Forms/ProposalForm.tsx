@@ -214,7 +214,7 @@ export const ProposalForm = ({
         topic: "proposal",
         type: "update",
         function: "registerRecipient",
-        containerId: poolId,
+        containerId: strategy.id,
         id: proposalId.toString(), // proposalId is a bigint
         chainId,
       });

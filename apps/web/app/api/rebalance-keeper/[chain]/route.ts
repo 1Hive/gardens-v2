@@ -1,3 +1,4 @@
+import Ably from "ably";
 import { NextResponse } from "next/server";
 import {
   Address,
@@ -16,6 +17,7 @@ import {
   safeEvaluateRebalanceDecision,
 } from "./rebalanceDecision";
 import { chainConfigMap, getConfigByChain } from "@/configs/chains";
+import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
 import { getGasTokenUsdPrice } from "@/services/coingecko";
 import { ChainId } from "@/types";
 import { getViemChain } from "@/utils/web3";
@@ -131,6 +133,36 @@ const REBALANCE_KEEPER_EXCLUDED_CHAIN_IDS = new Set<number>([421614]);
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const GARDENS_APP_BASE_URL = "https://app.gardens.fund";
 const PROPOSAL_MULTICALL_CHUNK_SIZE = 75;
+
+let ablyClient: Ably.Rest | null = null;
+
+const getAblyClient = () => {
+  if (ablyClient != null) return ablyClient;
+
+  const key = process.env.NEXT_ABLY_API_KEY;
+  if (!key) return null;
+
+  ablyClient = new Ably.Rest({ key });
+  return ablyClient;
+};
+
+const publishStreamRebalance = async ({
+  chainId,
+  strategy,
+}: {
+  chainId: ChainId;
+  strategy: Address;
+}) => {
+  const client = getAblyClient();
+  if (!client) return;
+
+  await client.channels.get(CHANGE_EVENT_CHANNEL_NAME).publish("stream", {
+    topic: "stream",
+    function: "rebalance",
+    containerId: strategy,
+    chainId,
+  });
+};
 
 const roundToUsdPrecision = (value: number) =>
   Math.round(value * USD_PRECISION_MULTIPLIER) / USD_PRECISION_MULTIPLIER;
@@ -886,6 +918,20 @@ async function runKeeperForChain({
           chainId: chainConfig.id,
           ...confirmedTx,
         });
+
+        try {
+          await publishStreamRebalance({
+            chainId: chainConfig.id,
+            strategy,
+          });
+        } catch (error) {
+          console.warn("rebalance-keeper: failed to publish stream update", {
+            chainId: chainConfig.id,
+            strategy,
+            txHash: hash,
+            error: error instanceof Error ? error.message : "unknown_error",
+          });
+        }
 
         sent.push(confirmedTx);
       } catch (error) {

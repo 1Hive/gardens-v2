@@ -347,7 +347,6 @@ export default function ClientPage({ params }: ClientPageProps) {
   }, []);
 
   const strategyAddress = poolSlug.toLowerCase();
-  const [poolIdForScope, setPoolIdForScope] = useState<number | undefined>();
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
   const [openSupportersModal, setOpenSupportersModal] = useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
@@ -366,6 +365,7 @@ export default function ClientPage({ params }: ClientPageProps) {
 
   const { address } = useAccount();
   const routerSearchParams = useSearchParams();
+
   const collectedParams = useCollectQueryParams();
   const [initialSearchParams] = useState<Record<string, string> | null>(() => {
     if (typeof window === "undefined") return null;
@@ -385,10 +385,10 @@ export default function ClientPage({ params }: ClientPageProps) {
       communityId: communityAddr?.toLowerCase(),
     },
     changeScope:
-      poolIdForScope != null ?
+      strategyAddress != null ?
         {
           topic: "proposal",
-          containerId: poolIdForScope,
+          containerId: strategyAddress,
           id: proposalNumber,
           type: "update",
         }
@@ -412,10 +412,10 @@ export default function ClientPage({ params }: ClientPageProps) {
         strategyId: strategyAddress,
       },
       changeScope:
-        poolIdForScope != null ?
+        strategyAddress != null ?
           {
             topic: "proposal",
-            containerId: poolIdForScope,
+            containerId: strategyAddress,
             type: "update",
           }
         : undefined,
@@ -463,23 +463,8 @@ export default function ClientPage({ params }: ClientPageProps) {
     });
     return activatedPoints;
   }, [membersStrategyData?.memberStrategies, strategyAddress]);
-  const resolvedPoolId =
-    proposalData?.strategy?.poolId != null ?
-      Number(proposalData.strategy.poolId)
-    : undefined;
-  const poolId = resolvedPoolId;
   const totalEffectiveActivePoints =
     proposalData?.strategy?.totalEffectiveActivePoints;
-
-  useEffect(() => {
-    if (
-      resolvedPoolId != null &&
-      resolvedPoolId !== poolIdForScope &&
-      Number.isFinite(resolvedPoolId)
-    ) {
-      setPoolIdForScope(resolvedPoolId);
-    }
-  }, [resolvedPoolId, poolIdForScope]);
 
   const filteredAndSortedProposalSupporters: ProposalSupporter[] =
     proposalSupporters ?
@@ -627,11 +612,10 @@ export default function ClientPage({ params }: ClientPageProps) {
     proposalStatus !== "executed" && proposalStatus !== "cancelled";
 
   const poolTokenResult = usePoolToken({
-    poolAddress: proposalData?.strategy?.id,
+    poolAddress: strategyAddress,
     poolTokenAddr,
     chainId,
-    enabled:
-      !!poolTokenAddr && !!proposalData?.strategy?.id && !isSignalingType,
+    enabled: !!poolTokenAddr && !!strategyAddress && !isSignalingType,
   });
   const poolToken = poolTokenResult?.poolToken;
   const { superToken: poolSuperToken } = useSuperfluidToken({
@@ -683,7 +667,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     receiver: resolvedStreamingEscrow as Address,
     superToken: proposalData?.strategy?.config?.superfluidToken as Address,
     chainId,
-    containerId: poolId ?? proposalSlug,
+    containerId: strategyAddress,
   });
   const explorerTotalStreamedBn = (
     superfluidStreamResult as typeof superfluidStreamResult & {
@@ -763,7 +747,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       !supportersData ||
       proposalIdNumber == null ||
       updatedConviction == null ||
-      poolId == null);
+      strategyAddress == null);
 
   useEffect(() => {
     if (fetching || !isAwaitingProposal) return;
@@ -827,7 +811,7 @@ export default function ClientPage({ params }: ClientPageProps) {
         type: "update",
         function: "distribute",
         id: proposalNumber,
-        containerId: poolId,
+        containerId: strategyAddress,
         chainId,
       });
     },
@@ -968,7 +952,7 @@ export default function ClientPage({ params }: ClientPageProps) {
         void refetchLastRebalanceAt();
         publish({
           topic: "stream",
-          containerId: poolId,
+          containerId: strategyAddress,
           function: "rebalance",
         } as any);
       },
@@ -1107,7 +1091,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     !supportersData ||
     proposalIdNumber == null ||
     updatedConviction == null ||
-    poolId == null
+    strategyAddress == null
   ) {
     return (
       <div className="col-span-12 flex min-h-[40vh] items-center justify-center">
@@ -1283,31 +1267,33 @@ export default function ClientPage({ params }: ClientPageProps) {
                   >
                     Go to Vote on Proposals
                   </Button>
-                  {!isSignalingType && !isStreamingType && (
-                    <Button
-                      icon={<BoltIcon height={18} width={18} />}
-                      className="!w-full"
-                      testId="btn-execute-proposal"
-                      onClick={() =>
-                        writeDistribute?.({
-                          args: [
-                            BigInt(poolId),
-                            [proposalData?.strategy?.id as Address],
-                            encodedDataProposalId(proposalIdNumber),
-                          ],
-                        })
-                      }
-                      disabled={
-                        isExecuteButtonDisabled ||
-                        !isConnected ||
-                        missmatchUrl ||
-                        proposalStatus === "disputed"
-                      }
-                      tooltip={executeBtnTooltipMessage}
-                    >
-                      Execute
-                    </Button>
-                  )}
+                  {!isSignalingType &&
+                    !isStreamingType &&
+                    proposalData?.strategy != null && (
+                      <Button
+                        icon={<BoltIcon height={18} width={18} />}
+                        className="!w-full"
+                        testId="btn-execute-proposal"
+                        onClick={() =>
+                          writeDistribute?.({
+                            args: [
+                              BigInt(proposalData.strategy.poolId),
+                              [proposalData.strategy.id as Address],
+                              encodedDataProposalId(proposalIdNumber),
+                            ],
+                          })
+                        }
+                        disabled={
+                          isExecuteButtonDisabled ||
+                          !isConnected ||
+                          missmatchUrl ||
+                          proposalStatus === "disputed"
+                        }
+                        tooltip={executeBtnTooltipMessage}
+                      >
+                        Execute
+                      </Button>
+                    )}
                 </div>
               </div>
             )}
@@ -1852,30 +1838,32 @@ export default function ClientPage({ params }: ClientPageProps) {
                       >
                         Vote on Proposals
                       </Button>
-                      {!isSignalingType && !isStreamingType && (
-                        <Button
-                          icon={<BoltIcon height={18} width={18} />}
-                          className="w-full"
-                          onClick={() =>
-                            writeDistribute?.({
-                              args: [
-                                BigInt(poolId),
-                                [proposalData?.strategy?.id as Address],
-                                encodedDataProposalId(proposalIdNumber),
-                              ],
-                            })
-                          }
-                          disabled={
-                            isExecuteButtonDisabled ||
-                            !isConnected ||
-                            missmatchUrl ||
-                            proposalStatus === "disputed"
-                          }
-                          tooltip={executeBtnTooltipMessage}
-                        >
-                          Execute
-                        </Button>
-                      )}
+                      {!isSignalingType &&
+                        !isStreamingType &&
+                        proposalData?.strategy != null && (
+                          <Button
+                            icon={<BoltIcon height={18} width={18} />}
+                            className="w-full"
+                            onClick={() =>
+                              writeDistribute?.({
+                                args: [
+                                  BigInt(proposalData.strategy.poolId),
+                                  [proposalData.strategy.id as Address],
+                                  encodedDataProposalId(proposalIdNumber),
+                                ],
+                              })
+                            }
+                            disabled={
+                              isExecuteButtonDisabled ||
+                              !isConnected ||
+                              missmatchUrl ||
+                              proposalStatus === "disputed"
+                            }
+                            tooltip={executeBtnTooltipMessage}
+                          >
+                            Execute
+                          </Button>
+                        )}
                     </div>
                   </div>
                 )}

@@ -261,7 +261,7 @@ export const EditProposalForm = ({
         topic: "proposal",
         type: "update",
         function: "editProposal",
-        containerId: strategy.poolId,
+        containerId: strategy.id,
         id: proposal.proposalNumber.toString(), // proposalNumber is a bigint
         chainId,
       });

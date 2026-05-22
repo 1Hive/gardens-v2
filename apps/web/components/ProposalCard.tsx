@@ -105,7 +105,7 @@ export type ProposalCardProps = {
   communityToken: Parameters<typeof useConvictionRead>[0]["tokenData"];
   inputHandler: (proposalId: string, value: bigint) => void;
   minThGtTotalEffPoints: boolean;
-  poolId: number;
+  poolAddress: string;
 };
 
 export type ProposalHandle = {
@@ -132,7 +132,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       memberPoolWeight,
       communityToken: tokenData,
       minThGtTotalEffPoints,
-      poolId,
+      poolAddress,
     },
     ref,
   ) => {
@@ -224,7 +224,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         {
           topic: "proposal",
           type: "update",
-          containerId: poolId,
+          containerId: poolAddress,
           id: proposalNumber,
         },
         (payload) => {
@@ -240,7 +240,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       return () => {
         unsubscribe(subscriptionId);
       };
-    }, [poolId, proposalNumber, subscribe, unsubscribe]);
+    }, [poolAddress, proposalNumber, subscribe, unsubscribe]);
 
     useImperativeHandle(
       ref,
@@ -308,7 +308,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       receiver: proposalData.streamingEscrow as Address,
       superToken: strategyConfig.superfluidToken as Address,
       chainId,
-      containerId: poolId,
+      containerId: poolAddress,
     });
     const currentFlowRateBn =
       liveCurrentFlowRateBn ?? subgraphCurrentFlowRateBn;

@@ -101,13 +101,13 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     receiver: poolAddress,
     superToken: superToken?.address as Address,
     chainId,
-    containerId: poolId,
+    containerId: poolAddress,
   });
   const { currentFlowRateBn: directPoolFlowRateBn } = useSuperfluidStream({
     receiver: (streamReceiver ?? "") as Address,
     superToken: superToken?.address as Address,
     chainId,
-    containerId: streamReceiver ?? poolId,
+    containerId: poolAddress,
     sender: streamSender,
     includePoolMembers: false,
   });

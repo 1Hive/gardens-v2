@@ -102,7 +102,7 @@ export const DisputeModal: FC<Props> = ({
     changeScope: {
       topic: "proposal",
       id: proposalData?.proposalNumber,
-      containerId: proposalData?.strategy.poolId,
+      containerId: proposalData?.strategy.id,
       type: "update",
     },
     enabled: proposalData != null,
@@ -195,7 +195,7 @@ export const DisputeModal: FC<Props> = ({
           type: "update",
           function: "disputeProposal",
           id: proposalData.proposalNumber,
-          containerId: proposalData.strategy.poolId,
+            containerId: proposalData.strategy.id,
           chainId,
         });
       },
@@ -231,7 +231,7 @@ export const DisputeModal: FC<Props> = ({
         type: "update",
         function: "executeRuling",
         id: proposalData.proposalNumber,
-        containerId: proposalData.strategy.poolId,
+        containerId: proposalData.strategy.id,
         chainId,
       });
     },
@@ -253,7 +253,7 @@ export const DisputeModal: FC<Props> = ({
         type: "update",
         function: "rule",
         id: proposalData.proposalNumber,
-        containerId: proposalData.strategy.poolId,
+        containerId: proposalData.strategy.id,
         chainId,
       });
     },

@@ -139,18 +139,21 @@ const LivePoolStreamedTotal = memo(function LivePoolStreamedTotal({
     }, 0n);
 
     const totalFlowRateBn =
-      freezeAtSnapshot ? 0n
-      : (proposals ?? []).reduce(
+      freezeAtSnapshot ? 0n : (
+        (proposals ?? []).reduce(
           (acc, proposal) =>
             acc + toBigInt(getProposalStream(proposal)?.currentFlowRate),
           0n,
-        );
+        )
+      );
 
     return {
       totalStreamedValue:
         total > 0n ? Number(formatUnits(total, poolToken.decimals)) : null,
       totalStreamedRatePerSecond:
-        totalFlowRateBn > 0n ? Number(formatUnits(totalFlowRateBn, poolToken.decimals)) : 0,
+        totalFlowRateBn > 0n ?
+          Number(formatUnits(totalFlowRateBn, poolToken.decimals))
+        : 0,
     };
   }, [freezeAtSnapshot, poolToken, proposals]);
 
@@ -192,32 +195,33 @@ export default function ClientPage({
       variables: {
         strategyId: strategyAddress,
       },
-      changeScope:
-        poolIdForScope != null ?
+      changeScope: [
+        {
+          topic: "proposal",
+          containerId: strategyAddress,
+          type: "update",
+        },
+        ...(poolIdForScope != null ?
           [
             {
-              topic: "pool",
+              topic: "pool" as const,
               id: poolIdForScope,
             },
             {
-              topic: "proposal",
-              containerId: poolIdForScope,
-              type: "update",
-            },
-            {
-              topic: "member",
+              topic: "member" as const,
               function: "activatePoints",
-              type: "update",
-              containerId: poolIdForScope,
+              type: "update" as const,
+              containerId: strategyAddress,
             },
             {
-              topic: "member",
+              topic: "member" as const,
               function: "deactivatePoints",
-              type: "update",
-              containerId: poolIdForScope,
+              type: "update" as const,
+              containerId: strategyAddress,
             },
           ]
-        : undefined,
+        : []),
+      ],
     },
   );
 
@@ -367,7 +371,7 @@ export default function ClientPage({
           },
           {
             topic: "proposal",
-            containerId: poolId,
+            containerId: strategyAddress,
             function: "allocate",
           },
         ]
@@ -386,10 +390,10 @@ export default function ClientPage({
           [
             {
               topic: "proposal",
-              containerId: poolId,
+              containerId: strategyAddress,
               type: "update",
             },
-            { topic: "member", id: wallet, containerId: poolId },
+            { topic: "member", id: wallet, containerId: strategyAddress },
           ]
         : undefined,
       enabled: !!wallet && !!strategy?.id,
@@ -402,7 +406,7 @@ export default function ClientPage({
     isMemberCommunityResult?.isRegistered ? isMemberCommunityResult
     : memberCommunityFromPoolResult?.isRegistered ?
       memberCommunityFromPoolResult
-    : (isMemberCommunityResult ?? memberCommunityFromPoolResult);
+    : isMemberCommunityResult ?? memberCommunityFromPoolResult;
 
   const memberTokensInCommunity = BigInt(
     memberCommunityData?.stakedTokens ?? 0,
@@ -419,11 +423,11 @@ export default function ClientPage({
           [
             {
               topic: "proposal",
-              containerId: poolId,
+              containerId: strategyAddress,
               type: "update",
             },
             ...(wallet ?
-              [{ topic: "member" as const, id: wallet, containerId: poolId }]
+              [{ topic: "member" as const, id: wallet, containerId: strategyAddress }]
             : []),
           ]
         : undefined,
@@ -504,7 +508,7 @@ export default function ClientPage({
       {
         topic: "member",
         id: wallet,
-        containerId: poolId ?? strategy?.poolId,
+        containerId: strategyAddress,
         type: "update",
       },
       () => {
@@ -516,7 +520,7 @@ export default function ClientPage({
         unsubscribe(subscriptionId.current);
       }
     };
-  }, [connected, poolId]);
+  }, [connected, strategyAddress]);
 
   const poolTokenAddr = strategy?.token as Address;
 
@@ -617,7 +621,7 @@ export default function ClientPage({
   const maxAmount = strategy?.config?.maxAmount ?? 0;
 
   const { poolToken, isLoading: isPoolTokenLoading } = usePoolToken({
-    poolAddress: strategy?.id,
+    poolAddress: strategyAddress,
     poolTokenAddr: poolTokenAddr,
     chainId,
     enabled:
@@ -707,9 +711,10 @@ export default function ClientPage({
       onConfirmations: () => {
         void refetchLastRebalanceAt();
         publish({
-          topic: "proposal",
-          containerId: poolId,
+          topic: "stream",
+          containerId: strategyAddress,
           function: "rebalance",
+          chainId,
         });
       },
     });
@@ -745,9 +750,8 @@ export default function ClientPage({
     receiver: (streamInfo?.superfluidGDA ?? "") as Address,
     superToken: (effectiveSuperToken ?? "") as Address,
     chainId,
-    containerId:
-      streamInfo?.superfluidGDA ?? poolId ?? strategy?.id ?? "pool-stream",
-    sender: strategy?.id,
+    containerId: strategyAddress,
+    sender: strategyAddress,
     includePoolMembers: false,
   });
   const proposalFlowRateFallbackBn = useMemo(
@@ -765,8 +769,7 @@ export default function ClientPage({
   const currentFlowRateForDisplay =
     liveCurrentFlowRateBn != null && liveCurrentFlowRateBn > 0n ?
       liveCurrentFlowRateBn
-    : streamLastFlowRate != null && streamLastFlowRate > 0n ?
-      streamLastFlowRate
+    : streamLastFlowRate != null && streamLastFlowRate > 0n ? streamLastFlowRate
     : proposalFlowRateFallbackBn;
   const hasEligibleStreamingProposal = useMemo(
     () =>

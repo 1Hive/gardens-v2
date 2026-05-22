@@ -71,7 +71,7 @@ export type ProposalCardProps = {
     formatted: string;
   };
   isAllocationView: boolean;
-
+  poolAddress: string;
   memberActivatedPoints: bigint;
   memberPoolWeight?: number;
   executeDisabled: boolean;
@@ -105,7 +105,7 @@ export const ProposalsModalSupport = forwardRef<
       inputData,
       poolToken,
       isAllocationView,
-
+      poolAddress,
       memberActivatedPoints,
       memberPoolWeight,
       communityToken: tokenData,
@@ -212,7 +212,7 @@ export const ProposalsModalSupport = forwardRef<
       receiver: streamingEscrowAddress ?? "",
       superToken: superfluidTokenAddress ?? "",
       chainId,
-      containerId: proposalData.id,
+      containerId: poolAddress,
     });
     const currentFlowRateBn =
       liveCurrentFlowRateBn ?? subgraphCurrentFlowRateBn;
