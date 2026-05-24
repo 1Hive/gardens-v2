@@ -26,6 +26,10 @@
       "schedule": "0 * * * *"
     },
     {
+      "path": "/api/superfluid-points?campaignId=511",
+      "schedule": "0 * * * *"
+    },
+    {
       "path": "/api/rebalance-keeper/all",
       "schedule": "*/15 * * * *"
     },

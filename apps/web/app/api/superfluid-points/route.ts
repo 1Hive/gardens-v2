@@ -5,6 +5,11 @@ import pinataSDK from "@pinata/sdk";
 import { NextResponse } from "next/server";
 import { AnyVariables, Client, createClient, fetchExchange, gql } from "urql";
 import { Address, createPublicClient, formatUnits, http, parseAbi } from "viem";
+import {
+  applyPoolActivityMultiplier,
+  calculateCampaignWalletPoints,
+  getPoolActivityMultiplier,
+} from "./points";
 import { chainConfigMap } from "@/configs/chains";
 import { getTokenUsdPrice } from "@/services/coingecko";
 import {
@@ -568,6 +573,10 @@ const CAMPAIGN_INTERVALS_BY_CAMPAIGN: Record<
   "510": {
     startTimestamp: 1772582400, // March 4, 2026 00:00:00 UTC
     endTimestamp: 1780272000, // June 1, 2026 00:00:00 UTC
+  },
+  "511": {
+    startTimestamp: 1779580800, // May 24, 2026 00:00:00 UTC
+    endTimestamp: 1782604800, // June 28, 2026 00:00:00 UTC
   },
 };
 let currentCampaignStartMS = DEFAULT_CAMPAIGN_START_MS;
@@ -2776,6 +2785,7 @@ const processChain = async ({
       fundUsd: number;
       streamUsd: number;
       members: CommunityInfo["members"];
+      bonusApplied: boolean;
     }
   >();
   const streamTotalsByPool = new Map<string, number>();
@@ -2818,6 +2828,9 @@ const processChain = async ({
     const poolAddress = pool.id;
     const underlyingToken = pool.token;
     const poolTitle = pool.metadata?.title ?? null;
+    const activityMultiplier = getPoolActivityMultiplier(
+      pool.config?.proposalType,
+    );
     if (pool.config?.proposalType === "0") {
       console.warn(
         `Skipping signaling pool ${poolAddress} on ${chainId} (proposalType=0)`,
@@ -2915,6 +2928,7 @@ const processChain = async ({
         tokenDecimals: tokenDecimals as number,
         priceUsd,
         userTotals,
+        multiplier: activityMultiplier,
         recordActivity: ({ from, usd }) => {
           const list = walletActivities.get(from) ?? [];
           list.push({
@@ -2926,7 +2940,7 @@ const processChain = async ({
             communityName: community?.communityName ?? null,
             token: toLower(underlyingToken),
             chainId,
-            bonusApplied: false,
+            bonusApplied: activityMultiplier > 1,
           });
           walletActivities.set(from, list);
         },
@@ -2966,22 +2980,26 @@ const processChain = async ({
       for (const [sender, usd] of streamUsdBySender.entries()) {
         if (usd < 10) continue;
         const key = toLower(sender);
+        const streamUsd = applyPoolActivityMultiplier(
+          usd,
+          pool.config?.proposalType,
+        );
         const prev = userTotals.get(key) ?? { fundUsd: 0, streamUsd: 0 };
         userTotals.set(key, {
           ...prev,
-          streamUsd: prev.streamUsd + usd,
+          streamUsd: prev.streamUsd + streamUsd,
         });
         const list = walletActivities.get(key) ?? [];
         list.push({
           type: "stream",
-          amountUsd: usd,
+          amountUsd: streamUsd,
           poolAddress: toLower(poolAddress),
           poolName: poolTitle,
           communityId: community?.id ? toLower(community.id) : null,
           communityName: community?.communityName ?? null,
           token: toLower(underlyingToken),
           chainId,
-          bonusApplied: false,
+          bonusApplied: activityMultiplier > 1,
         });
         walletActivities.set(key, list);
       }
@@ -3021,6 +3039,7 @@ const processChain = async ({
         fundUsd: 0,
         streamUsd: 0,
         members: community.members,
+        bonusApplied: false,
       };
       let fundUsdForCommunity = 0;
       if (superToken.sameAsUnderlying) {
@@ -3033,9 +3052,16 @@ const processChain = async ({
           tokenDecimals: tokenDecimals as number,
           priceUsd,
         });
-        entry.fundUsd += fundUsdForCommunity;
+        entry.fundUsd += applyPoolActivityMultiplier(
+          fundUsdForCommunity,
+          pool.config?.proposalType,
+        );
       }
-      entry.streamUsd += streamUsdTotalAll;
+      entry.streamUsd += applyPoolActivityMultiplier(
+        streamUsdTotalAll,
+        pool.config?.proposalType,
+      );
+      entry.bonusApplied ||= activityMultiplier > 1;
       communityTotals.set(community.id, entry);
 
       const processed = processedCommunities.get(community.id) ?? {
@@ -3045,9 +3071,19 @@ const processChain = async ({
         fundUsd: 0,
         pools: [],
       };
-      processed.streamUsd = (processed.streamUsd ?? 0) + streamUsdTotalAll;
+      processed.streamUsd =
+        (processed.streamUsd ?? 0) +
+        applyPoolActivityMultiplier(
+          streamUsdTotalAll,
+          pool.config?.proposalType,
+        );
       if (superToken.sameAsUnderlying) {
-        processed.fundUsd = (processed.fundUsd ?? 0) + fundUsdForCommunity;
+        processed.fundUsd =
+          (processed.fundUsd ?? 0) +
+          applyPoolActivityMultiplier(
+            fundUsdForCommunity,
+            pool.config?.proposalType,
+          );
       }
       processed.pools.push({
         poolAddress: toLower(poolAddress),
@@ -3105,7 +3141,7 @@ const processChain = async ({
         sharePercent: share * 100,
         token: "aggregate",
         chainId,
-        bonusApplied: false,
+        bonusApplied: entry.bonusApplied,
       });
       walletActivities.set(key, list);
     }
@@ -3611,25 +3647,22 @@ export async function GET(req: Request) {
     for (const address of scopedAddresses) {
       if (EXCLUDED_WALLETS.has(address)) continue;
       const value = totals.get(address) ?? { fundUsd: 0, streamUsd: 0 };
-      const fundPoints = value.fundUsd >= 10 ? Math.floor(value.fundUsd) : 0;
-      const streamPoints =
-        value.streamUsd >= 10 ? Math.floor(value.streamUsd) : 0;
-      const governanceStakePts = Math.floor(
-        governanceStakePointsByWallet.get(address) ?? 0,
-      );
-      const farcasterPts = Math.floor(
-        farcasterPointsByWallet.get(address) ?? 0,
-      );
-      const totalPoints =
-        fundPoints + streamPoints + governanceStakePts + farcasterPts;
+      const pointTarget = calculateCampaignWalletPoints({
+        address,
+        fundUsd: value.fundUsd,
+        streamUsd: value.streamUsd,
+        governanceStakePoints: governanceStakePointsByWallet.get(address) ?? 0,
+        farcasterPoints: farcasterPointsByWallet.get(address) ?? 0,
+      });
+      const totalPoints = pointTarget.totalPoints;
       if (totalPoints <= 0) continue;
 
       walletPointTargets.push({
         address,
-        fundPoints,
-        streamPoints,
-        governanceStakePoints: governanceStakePts,
-        farcasterPoints: farcasterPts,
+        fundPoints: pointTarget.fundPoints,
+        streamPoints: pointTarget.streamPoints,
+        governanceStakePoints: pointTarget.governanceStakePoints,
+        farcasterPoints: pointTarget.farcasterPoints,
         totalPoints,
         fundUsd: value.fundUsd,
         streamUsd: value.streamUsd,

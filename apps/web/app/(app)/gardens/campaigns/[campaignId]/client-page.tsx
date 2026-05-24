@@ -223,6 +223,73 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
       activities: ["Stake & Governance"],
       pointsInfo: "Points split based on stake size",
     },
+    {
+      title: "3x Bonus in Streaming Pools",
+      description:
+        "Activities related to Streaming pools earn triple points during this campaign.",
+      icon: <CurrencyDollarIcon className="h-5 w-5" />,
+      activities: ["Streaming Pool"],
+      pointsInfo: "x3 points multiplier",
+      highlighted: true,
+    },
+  ],
+  "4": [
+    {
+      title: "Follow Gardens on Farcaster",
+      description: (
+        <>
+          Stay connected with the Gardens community.{" "}
+          <Link
+            href="https://farcaster.xyz/gardens"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Follow Gardens on Farcaster
+          </Link>
+          .
+        </>
+      ),
+      icon: <ChatBubbleLeftRightIcon className="h-5 w-5" />,
+      activities: ["Farcaster Follow"],
+      pointsInfo: "1 point",
+    },
+    {
+      title: "Add Funds into a Funding Pool",
+      description: (
+        <>
+          Stream funds or make a one-time transfer in{" "}
+          <Link
+            href="https://docs.superfluid.org/docs/concepts/overview/super-tokens#pure-super-tokens"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Pure Super Token
+          </Link>{" "}
+          into a funding pool.{" "}
+        </>
+      ),
+      icon: <ArrowTrendingUpIcon className="h-5 w-5" />,
+      activities: ["Add Funds"],
+      pointsInfo: "1 point per $1 added (minimum $10)",
+    },
+    {
+      title: "Join a Community & Increase Your Stake",
+      description: "Become an active member and increase your stake.",
+      icon: <UsersIcon className="h-5 w-5" />,
+      activities: ["Stake & Governance"],
+      pointsInfo: "Points split based on stake size",
+    },
+    {
+      title: "3x Bonus in Streaming Pools",
+      description:
+        "Activities related to Streaming pools earn triple points during this campaign.",
+      icon: <CurrencyDollarIcon className="h-5 w-5" />,
+      activities: ["Streaming Pool"],
+      pointsInfo: "x3 points multiplier",
+      highlighted: true,
+    },
   ],
 };
 
@@ -270,7 +337,8 @@ export default function GardensGrowthInitiativePage({
 
   const campaigns = CAMPAIGNS[campaignId];
   const isEndedCampaign = !isCampaignActive(campaigns?.endDate ?? "");
-  const showSuperfluidClaimLink = campaignId === "1" || campaignId === "3";
+  const showSuperfluidClaimLink =
+    campaignId === "1" || campaignId === "3" || campaignId === "4";
 
   const howToParticipate = PARTICIPATION_BY_CAMPAIGN[campaignId] ?? [];
 

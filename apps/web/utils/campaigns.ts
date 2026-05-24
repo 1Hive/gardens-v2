@@ -1,6 +1,6 @@
 import { SuperBanner, SuperLogo, GoodDollarLogo } from "@/assets";
 
-export type CampaignId = "1" | "2" | "3";
+export type CampaignId = "1" | "2" | "3" | "4";
 
 export interface CampaignConfig {
   id: CampaignId;
@@ -47,6 +47,17 @@ export const CAMPAIGNS = {
     banner: SuperBanner,
     logo: SuperLogo,
     leaderboardEndpoint: "/api/superfluid-points/leaderboard?campaignId=510",
+  },
+  "4": {
+    id: 511,
+    name: "Superfluid Ecosystem Rewards Season 6",
+    description:
+      "Earn SUP rewards by staking governance tokens, adding funds to pools, following Gardens on Farcaster, and earning triple points in Streaming pools.",
+    tokenSymbol: "SUP",
+    endDate: "28 Jun 2026",
+    banner: SuperBanner,
+    logo: SuperLogo,
+    leaderboardEndpoint: "/api/superfluid-points/leaderboard?campaignId=511",
   },
 } as const;
 
