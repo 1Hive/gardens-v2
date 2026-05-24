@@ -9,6 +9,7 @@ import {
   applyPoolActivityMultiplier,
   calculateCampaignWalletPoints,
   getPoolActivityMultiplier,
+  shouldCountDirectFunding,
 } from "./points";
 import { chainConfigMap } from "@/configs/chains";
 import { getTokenUsdPrice } from "@/services/coingecko";
@@ -2860,30 +2861,35 @@ const processChain = async ({
       continue;
     }
 
+    const hasConfiguredSuperToken = Boolean(pool.config?.superfluidToken);
     const superToken = await getCachedSuperToken(underlyingToken);
-    if (!superToken) {
+    if (!superToken && !hasConfiguredSuperToken) {
       console.warn(
         `Super token not found for ${underlyingToken} on ${chainId}, skipping`,
       );
       continue;
     }
-    if (superToken.sameAsUnderlying) {
+    if (superToken?.sameAsUnderlying) {
       nativePools.push({ poolAddress, token: underlyingToken });
     }
 
-    const hasConfiguredSuperToken = Boolean(pool.config?.superfluidToken);
-    if (!hasConfiguredSuperToken && !superToken.sameAsUnderlying) {
+    const allowDirectFunding = shouldCountDirectFunding({
+      proposalType: pool.config?.proposalType,
+      sameAsUnderlying: Boolean(superToken?.sameAsUnderlying),
+    });
+    const allowStreams =
+      hasConfiguredSuperToken || Boolean(superToken?.sameAsUnderlying);
+    if (!allowDirectFunding && !allowStreams) {
       console.warn(
-        `Skipping pool ${poolAddress} on ${chainId}: no superfluid token configured and token is not native super token`,
+        `Skipping pool ${poolAddress} on ${chainId}: no countable funding or stream source`,
       );
       continue;
     }
 
-    const allowStreams = hasConfiguredSuperToken || superToken.sameAsUnderlying;
     const superfluidTokenAddress =
       allowStreams ?
         (pool.config?.superfluidToken as Address | null | undefined) ??
-        superToken.id
+        superToken?.id
       : null;
 
     const superTokenDecimals =
@@ -2891,10 +2897,8 @@ const processChain = async ({
         await getCachedDecimals(superfluidTokenAddress)
       : null;
 
-    let tokenDecimals: number | null = null;
-    if (superToken.sameAsUnderlying) {
-      tokenDecimals = await getCachedDecimals(underlyingToken);
-    }
+    const tokenDecimals =
+      allowDirectFunding ? await getCachedDecimals(underlyingToken) : null;
 
     const creationBlock = await findContractCreationBlock({
       publicClient,
@@ -2918,14 +2922,14 @@ const processChain = async ({
 
     const community = communityByPool.get(poolAddress);
 
-    if (superToken.sameAsUnderlying) {
+    if (allowDirectFunding && tokenDecimals !== null) {
       await accumulateFundingPoints({
         publicClient,
         poolAddress,
         token: underlyingToken,
         fromBlock: poolStartBlock,
         toBlock: endBlock,
-        tokenDecimals: tokenDecimals as number,
+        tokenDecimals,
         priceUsd,
         userTotals,
         multiplier: activityMultiplier,
@@ -3042,14 +3046,14 @@ const processChain = async ({
         bonusApplied: false,
       };
       let fundUsdForCommunity = 0;
-      if (superToken.sameAsUnderlying) {
+      if (allowDirectFunding && tokenDecimals !== null) {
         fundUsdForCommunity = await computeFundUsdToPool({
           publicClient,
           poolAddress,
           token: underlyingToken,
           fromBlock: poolStartBlock,
           toBlock: endBlock,
-          tokenDecimals: tokenDecimals as number,
+          tokenDecimals,
           priceUsd,
         });
         entry.fundUsd += applyPoolActivityMultiplier(
@@ -3077,7 +3081,7 @@ const processChain = async ({
           streamUsdTotalAll,
           pool.config?.proposalType,
         );
-      if (superToken.sameAsUnderlying) {
+      if (allowDirectFunding) {
         processed.fundUsd =
           (processed.fundUsd ?? 0) +
           applyPoolActivityMultiplier(
@@ -3297,17 +3301,21 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   }
-  let superfluidStackClient: ReturnType<typeof getSuperfluidPointsClient>;
-  try {
-    superfluidStackClient = getSuperfluidPointsClient(
-      campaignIdOverride ?? undefined,
-    );
-  } catch (err) {
-    console.error("[superfluid-points] stack client init failed", err);
-    return NextResponse.json(
-      { error: "Stack client not configured" },
-      { status: 500 },
-    );
+  let superfluidStackClient: ReturnType<
+    typeof getSuperfluidPointsClient
+  > | null = null;
+  if (!traceOnly) {
+    try {
+      superfluidStackClient = getSuperfluidPointsClient(
+        campaignIdOverride ?? undefined,
+      );
+    } catch (err) {
+      console.error("[superfluid-points] stack client init failed", err);
+      return NextResponse.json(
+        { error: "Stack client not configured" },
+        { status: 500 },
+      );
+    }
   }
   // Reset transient state each run
   notionDisabled = false;
@@ -3680,6 +3688,9 @@ export async function GET(req: Request) {
     const fetchExistingTotalsByAddress = async (): Promise<
       Map<string, Record<string, number>>
     > => {
+      if (!superfluidStackClient) {
+        throw new Error("Stack client not configured");
+      }
       const limit = 250;
       let offset = 0;
       const existingMap = new Map<string, Record<string, number>>();
@@ -3865,6 +3876,9 @@ export async function GET(req: Request) {
         wallet: targetWallet,
       });
     } else if (allEventPayloads.length && !STACK_DRY_RUN) {
+      if (!superfluidStackClient) {
+        throw new Error("Stack client not configured");
+      }
       console.log("[superfluid-points] stack sendEvents request", {
         count: allEventPayloads.length,
       });

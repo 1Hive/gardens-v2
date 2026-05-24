@@ -5,6 +5,7 @@ import {
   applyPoolActivityMultiplier,
   calculateCampaignWalletPoints,
   getPoolActivityMultiplier,
+  shouldCountDirectFunding,
 } from "./points";
 
 describe("superfluid campaign points", () => {
@@ -77,5 +78,32 @@ describe("superfluid campaign points", () => {
       farcasterPoints: 1,
       totalPoints: 119,
     });
+  });
+
+  it("counts direct funding for streaming pools even when the stream token is separate", () => {
+    expect(
+      shouldCountDirectFunding({
+        proposalType: "2",
+        sameAsUnderlying: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("keeps direct funding enabled for native super-token pools", () => {
+    expect(
+      shouldCountDirectFunding({
+        proposalType: "1",
+        sameAsUnderlying: true,
+      }),
+    ).toBe(true);
+  });
+
+  it("does not count direct funding for non-streaming pools with separate super tokens", () => {
+    expect(
+      shouldCountDirectFunding({
+        proposalType: "1",
+        sameAsUnderlying: false,
+      }),
+    ).toBe(false);
   });
 });

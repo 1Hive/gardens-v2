@@ -24,6 +24,15 @@ export const getPoolActivityMultiplier = (proposalType: ProposalType) =>
     STREAMING_POOL_ACTIVITY_MULTIPLIER
   : 1;
 
+export const shouldCountDirectFunding = ({
+  proposalType,
+  sameAsUnderlying,
+}: {
+  proposalType: ProposalType;
+  sameAsUnderlying: boolean;
+}) =>
+  String(proposalType) === STREAMING_POOL_PROPOSAL_TYPE || sameAsUnderlying;
+
 export const applyPoolActivityMultiplier = (
   amount: number,
   proposalType: ProposalType,
