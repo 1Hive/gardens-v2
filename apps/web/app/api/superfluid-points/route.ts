@@ -3408,6 +3408,7 @@ export async function GET(req: Request) {
   const syncNotionOnDryRun =
     parseBooleanParam(url.searchParams.get("syncNotion")) && !traceOnly;
   const canSyncNotion = !traceOnly && (!dryRun || syncNotionOnDryRun);
+  const canWritePinataForRun = !traceOnly;
   const includeWalletCommunityDebug = targetWallet != null;
   const hasCampaignIdOverride = campaignIdParam.length > 0;
   const parsedCampaignId = hasCampaignIdOverride ? Number(campaignIdParam) : 0;
@@ -3501,7 +3502,7 @@ export async function GET(req: Request) {
   }
 
   const flushCaches = async () => {
-    if (dryRun) {
+    if (!canWritePinataForRun) {
       return {
         creationBlockCacheCid: null,
         transferLogCacheCid: null,
@@ -4074,7 +4075,7 @@ export async function GET(req: Request) {
     // Export as CSV (Notion sync runs when configured; CSV remains fallback)
     const walletBreakdownCsv = buildWalletCsv(walletBreakdown);
     const pointsSnapshotPromise =
-      !dryRun && walletBreakdown.length && CAN_WRITE_PINATA ?
+      canWritePinataForRun && walletBreakdown.length && CAN_WRITE_PINATA ?
         pinPointsSnapshotToIpfs(walletBreakdown, snapshotName)
       : null;
 
@@ -4319,7 +4320,7 @@ export async function GET(req: Request) {
     responseTransferCid = pinned.transferLogCacheCid;
     responseEnsCid = pinned.ensCacheCid;
     pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
-    if (!dryRun) {
+    if (canWritePinataForRun) {
       responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
       logPinnedArtifacts({
         pointsSnapshotCid: responsePointsCid,
@@ -4390,7 +4391,7 @@ export async function GET(req: Request) {
     responseTransferCid = pinned.transferLogCacheCid;
     responseEnsCid = pinned.ensCacheCid;
     pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
-    if (!dryRun) {
+    if (canWritePinataForRun) {
       responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
       logPinnedArtifacts({
         pointsSnapshotCid: responsePointsCid,
