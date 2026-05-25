@@ -3272,6 +3272,9 @@ export async function GET(req: Request) {
   const traceOnly = traceOnlyRequested || Boolean(targetWallet);
   const dryRunRequested = parseBooleanParam(url.searchParams.get("dryRun"));
   const dryRun = SUPERFLUID_POINTS_DRY_RUN || dryRunRequested || traceOnly;
+  const syncNotionOnDryRun =
+    parseBooleanParam(url.searchParams.get("syncNotion")) && !traceOnly;
+  const canSyncNotion = !traceOnly && (!dryRun || syncNotionOnDryRun);
   const includeWalletCommunityDebug = targetWallet != null;
   const hasCampaignIdOverride = campaignIdParam.length > 0;
   const parsedCampaignId = hasCampaignIdOverride ? Number(campaignIdParam) : 0;
@@ -3939,7 +3942,12 @@ export async function GET(req: Request) {
       failed: 0,
     };
 
-    if (!dryRun && notionClient && NOTION_DB_ID_TRIMMED && !notionDisabled) {
+    if (
+      canSyncNotion &&
+      notionClient &&
+      NOTION_DB_ID_TRIMMED &&
+      !notionDisabled
+    ) {
       notionSync.attempted = true;
       try {
         // Fetch existing pages to update in place
@@ -4066,6 +4074,7 @@ export async function GET(req: Request) {
       if (!notionSync.attempted) {
         console.log("[superfluid-points] Skipping Notion sync", {
           dryRun,
+          syncNotionOnDryRun,
           hasClient: Boolean(notionClient),
           hasDbId: Boolean(NOTION_DB_ID_TRIMMED),
           notionDisabled,
@@ -4142,6 +4151,7 @@ export async function GET(req: Request) {
               walletCommunitiesByWallet.get(targetWallet) ?? [],
           },
           dryRun,
+          syncNotionOnDryRun,
           traceOnly,
           debug: chainDebug,
         },
@@ -4213,6 +4223,7 @@ export async function GET(req: Request) {
           endIso: new Date(end * 1000).toISOString(),
         },
         dryRun,
+        syncNotionOnDryRun,
         traceOnly,
         debug: chainDebug,
       },
