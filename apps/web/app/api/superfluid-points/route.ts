@@ -13,10 +13,6 @@ import {
 } from "./points";
 import { chainConfigMap } from "@/configs/chains";
 import { getTokenUsdPrice } from "@/services/coingecko";
-import {
-  STACK_DRY_RUN,
-  getSuperfluidPointsClient,
-} from "@/services/superfluid-points";
 import { erc20ABI } from "@/src/generated";
 import { ChainId } from "@/types";
 import { isValidCid } from "@/utils/ipfs";
@@ -193,6 +189,9 @@ const parseBooleanParam = (value?: string | null) => {
   const normalized = value.trim().toLowerCase();
   return ["1", "true", "yes", "on"].includes(normalized);
 };
+const SUPERFLUID_POINTS_DRY_RUN = parseBooleanParam(
+  process.env.SUPERFLUID_POINTS_DRY_RUN,
+);
 const safeStringify = (value: unknown) => {
   try {
     return JSON.stringify(value, (_key, val) =>
@@ -3270,7 +3269,8 @@ export async function GET(req: Request) {
     url.searchParams.get("traceOnly"),
   );
   const traceOnly = traceOnlyRequested || Boolean(targetWallet);
-  const dryRun = STACK_DRY_RUN || traceOnly;
+  const dryRunRequested = parseBooleanParam(url.searchParams.get("dryRun"));
+  const dryRun = SUPERFLUID_POINTS_DRY_RUN || dryRunRequested || traceOnly;
   const includeWalletCommunityDebug = targetWallet != null;
   const hasCampaignIdOverride = campaignIdParam.length > 0;
   const parsedCampaignId = hasCampaignIdOverride ? Number(campaignIdParam) : 0;
@@ -3322,22 +3322,6 @@ export async function GET(req: Request) {
       { message: "Campaign ended; sync not executed." },
       { status: 200 },
     );
-  }
-  let superfluidStackClient: ReturnType<
-    typeof getSuperfluidPointsClient
-  > | null = null;
-  if (!traceOnly) {
-    try {
-      superfluidStackClient = getSuperfluidPointsClient(
-        campaignIdOverride ?? undefined,
-      );
-    } catch (err) {
-      console.error("[superfluid-points] stack client init failed", err);
-      return NextResponse.json(
-        { error: "Stack client not configured" },
-        { status: 500 },
-      );
-    }
   }
   // Reset transient state each run
   notionDisabled = false;
@@ -3699,133 +3683,12 @@ export async function GET(req: Request) {
       });
     }
 
-    const BASE_EVENT_NAMES = [
-      "fundPoints",
-      "streamPoints",
-      "governanceStakePoints",
-      "farcasterPoints",
-    ] as const;
-    const eventNames = new Set<string>(BASE_EVENT_NAMES);
-
-    const fetchExistingTotalsByAddress = async (): Promise<
-      Map<string, Record<string, number>>
-    > => {
-      if (!superfluidStackClient) {
-        throw new Error("Stack client not configured");
-      }
-      const limit = 250;
-      let offset = 0;
-      const existingMap = new Map<string, Record<string, number>>();
-      while (true) {
-        console.log("[superfluid-points] stack getEvents sweep request", {
-          offset,
-          limit,
-        });
-        const res = await superfluidStackClient.eventClient.getEvents({
-          query: { limit, offset },
-        });
-        console.log("[superfluid-points] stack getEvents sweep response", {
-          offset,
-          limit,
-          count: Array.isArray(res) ? res.length : 0,
-        });
-        if (!Array.isArray(res) || res.length === 0) break;
-        for (const evt of res as any[]) {
-          const name = evt?.event as string;
-          if (typeof name !== "string" || !name.length) continue;
-          eventNames.add(name);
-          const pts = Number(evt?.points ?? 0);
-          const addr =
-            evt?.address ??
-            evt?.walletAddress ??
-            evt?.accountAddress ??
-            evt?.account;
-          if (typeof addr !== "string" || !addr.toLowerCase().startsWith("0x"))
-            continue;
-          const key = addr.toLowerCase();
-          const existingTotals =
-            existingMap.get(key) ??
-            Array.from(eventNames).reduce(
-              (acc, n) => {
-                acc[n] = 0;
-                return acc;
-              },
-              {} as Record<string, number>,
-            );
-          existingTotals[name] = (existingTotals[name] ?? 0) + pts;
-          existingMap.set(key, existingTotals);
-        }
-        offset += res.length;
-        if (res.length < limit) break;
-      }
-      return existingMap;
-    };
-
-    const allEventPayloads: Array<{
-      event: string;
-      payload: { account: string; points: number; metadata?: any };
-    }> = [];
-    const existingTotalsByAddress =
-      traceOnly ?
-        new Map<string, Record<string, number>>()
-      : await fetchExistingTotalsByAddress();
-
-    const emptyCategoryTotals = Array.from(eventNames).reduce(
-      (acc, n) => {
-        acc[n] = 0;
-        return acc;
-      },
-      {} as Record<string, number>,
-    );
-
     for (const wallet of walletPointTargets) {
-      const existingByCategory =
-        existingTotalsByAddress.get(wallet.address) ?? emptyCategoryTotals;
-      const targetByCategory: Record<string, number> = {};
-      for (const name of eventNames) {
-        targetByCategory[name] =
-          name === "fundPoints" ? wallet.fundPoints
-          : name === "streamPoints" ? wallet.streamPoints
-          : name === "governanceStakePoints" ? wallet.governanceStakePoints
-          : name === "farcasterPoints" ? wallet.farcasterPoints
-          : 0;
-      }
-      const deltas: Record<string, number> = {};
-      for (const name of eventNames) {
-        deltas[name] = targetByCategory[name] - (existingByCategory[name] ?? 0);
-        if (deltas[name] !== 0) {
-          allEventPayloads.push({
-            event: name,
-            payload: {
-              account: wallet.address,
-              points: deltas[name],
-              metadata: {
-                category: name,
-                target: targetByCategory[name],
-                existing: existingByCategory[name] ?? 0,
-                fundPoints: wallet.fundPoints,
-                streamPoints: wallet.streamPoints,
-                governanceStakePoints: wallet.governanceStakePoints,
-                farcasterPoints: wallet.farcasterPoints,
-              },
-            },
-          });
-        }
-      }
-      const existingTotal = Object.values(existingByCategory).reduce(
-        (acc, n) => acc + Number(n ?? 0),
-        0,
-      );
-      const addedDelta = Object.values(deltas).reduce(
-        (acc, n) => acc + (n > 0 ? n : 0),
-        0,
-      );
-
       updates.push({
         address: wallet.address,
-        added: addedDelta,
+        added: wallet.totalPoints,
         total: wallet.totalPoints,
-        existing: existingTotal,
+        existing: 0,
         target: wallet.totalPoints,
       });
       walletBreakdown.push({
@@ -3855,72 +3718,13 @@ export async function GET(req: Request) {
       });
     }
 
-    // Remove accounts that are no longer in the current target list
-    for (const [address, existingByCategory] of existingTotalsByAddress) {
-      if (walletPointTargets.find((w) => w.address === address)) continue;
-      const targetByCategory: Record<string, number> = {};
-      for (const name of eventNames) {
-        targetByCategory[name] = 0;
-      }
-      const deltas: Record<string, number> = {};
-      for (const name of eventNames) {
-        deltas[name] = targetByCategory[name] - (existingByCategory[name] ?? 0);
-        if (deltas[name] !== 0) {
-          allEventPayloads.push({
-            event: name,
-            payload: {
-              account: address,
-              points: deltas[name],
-              metadata: {
-                category: name,
-                target: targetByCategory[name],
-                existing: existingByCategory[name] ?? 0,
-              },
-            },
-          });
-        }
-      }
-      const existingTotal = Object.values(existingByCategory).reduce(
-        (acc, n) => acc + Number(n ?? 0),
-        0,
-      );
-      updates.push({
-        address,
-        added: 0,
-        total: 0,
-        existing: existingTotal,
-        target: 0,
-      });
-    }
-
     if (traceOnly) {
-      console.log("[superfluid-points] TRACE ONLY - skipping event diff sync", {
+      console.log("[superfluid-points] TRACE ONLY - skipping writes", {
         wallet: targetWallet,
       });
-    } else if (allEventPayloads.length && !STACK_DRY_RUN) {
-      if (!superfluidStackClient) {
-        throw new Error("Stack client not configured");
-      }
-      console.log("[superfluid-points] stack sendEvents request", {
-        count: allEventPayloads.length,
-      });
-      for (let i = 0; i < allEventPayloads.length; i += 250) {
-        const batch = allEventPayloads.slice(i, i + 250);
-        console.log("[superfluid-points] stack sendEvents batch", {
-          batchStart: i,
-          batchEnd: i + batch.length - 1,
-          batchSize: batch.length,
-        });
-        const resp = await superfluidStackClient.eventClient.sendEvents(batch);
-        console.log("[superfluid-points] stack sendEvents response", {
-          batchStart: i,
-          batchEnd: i + batch.length - 1,
-          response: resp,
-        });
-      }
-    } else if (STACK_DRY_RUN) {
-      console.log("[superfluid-points] DRY RUN - skipping event pushes", {
-        eventCount: allEventPayloads.length,
+    } else if (dryRun) {
+      console.log("[superfluid-points] DRY RUN - skipping writes", {
+        walletCount: walletPointTargets.length,
       });
     }
 
@@ -4176,7 +3980,7 @@ export async function GET(req: Request) {
         message:
           traceOnly ?
             "Superfluid wallet trace completed"
-          : "Superfluid stack sync completed",
+          : "Superfluid points sync completed",
         updated: updates,
         totals: responseTotals,
         missingPrices: missingPriceEntries,
@@ -4239,7 +4043,7 @@ export async function GET(req: Request) {
     console.log = originalConsole.log;
     console.warn = originalConsole.warn;
     console.error = originalConsole.error;
-    console.error("Superfluid stack cron error", error);
+    console.error("Superfluid points cron error", error);
     const message =
       error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json(
