@@ -229,6 +229,7 @@ const NOTION_DB_ID_NORMALIZED =
 const NOTION_DATA_SOURCE_ID = process.env.NOTION_DATA_SOURCE_ID?.trim() ?? null;
 const NOTION_DATA_SOURCE_ID_BY_CAMPAIGN: Record<string, string> = {
   "510": "318d6929-d014-8009-9e92-000b335dc6ea",
+  "511": "36bd6929-d014-808c-8fc2-000b77b14155",
 };
 let notionDataSourceId: string | null = NOTION_DATA_SOURCE_ID;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -3243,8 +3244,19 @@ export async function GET(req: Request) {
   console.error = record("error") as typeof console.error;
 
   const auth = req.headers.get("authorization")?.replace("Bearer ", "");
+  const cronSecret = process.env.CRON_SECRET?.trim();
 
-  if (auth !== process.env.CRON_SECRET) {
+  if (!cronSecret) {
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
+    return NextResponse.json(
+      { error: "CRON_SECRET is not configured" },
+      { status: 500 },
+    );
+  }
+
+  if (auth !== cronSecret) {
     console.log = originalConsole.log;
     console.warn = originalConsole.warn;
     console.error = originalConsole.error;
@@ -3258,6 +3270,7 @@ export async function GET(req: Request) {
     url.searchParams.get("traceOnly"),
   );
   const traceOnly = traceOnlyRequested || Boolean(targetWallet);
+  const dryRun = STACK_DRY_RUN || traceOnly;
   const includeWalletCommunityDebug = targetWallet != null;
   const hasCampaignIdOverride = campaignIdParam.length > 0;
   const parsedCampaignId = hasCampaignIdOverride ? Number(campaignIdParam) : 0;
@@ -3289,6 +3302,15 @@ export async function GET(req: Request) {
   const effectiveCampaignId =
     campaignIdOverride ??
     (Number(process.env.SUPERFLUID_POINT_SYSTEM_ID ?? "") || null);
+  if (effectiveCampaignId === null) {
+    console.log = originalConsole.log;
+    console.warn = originalConsole.warn;
+    console.error = originalConsole.error;
+    return NextResponse.json(
+      { error: "campaignId query or SUPERFLUID_POINT_SYSTEM_ID is required" },
+      { status: 400 },
+    );
+  }
   setCampaignIntervalForCampaign(effectiveCampaignId);
   setNotionDataSourceForCampaign(effectiveCampaignId);
   ensureEnsCacheFresh();
@@ -3342,7 +3364,7 @@ export async function GET(req: Request) {
   }
 
   const flushCaches = async () => {
-    if (traceOnly) {
+    if (dryRun) {
       return {
         creationBlockCacheCid: null,
         transferLogCacheCid: null,
@@ -3905,7 +3927,7 @@ export async function GET(req: Request) {
     // Export as CSV (Notion sync runs when configured; CSV remains fallback)
     const walletBreakdownCsv = buildWalletCsv(walletBreakdown);
     const pointsSnapshotPromise =
-      !traceOnly && walletBreakdown.length && CAN_WRITE_PINATA ?
+      !dryRun && walletBreakdown.length && CAN_WRITE_PINATA ?
         pinPointsSnapshotToIpfs(walletBreakdown, snapshotName)
       : null;
 
@@ -3916,7 +3938,7 @@ export async function GET(req: Request) {
       failed: 0,
     };
 
-    if (!traceOnly && notionClient && NOTION_DB_ID_TRIMMED && !notionDisabled) {
+    if (!dryRun && notionClient && NOTION_DB_ID_TRIMMED && !notionDisabled) {
       notionSync.attempted = true;
       try {
         // Fetch existing pages to update in place
@@ -4042,6 +4064,7 @@ export async function GET(req: Request) {
     } else {
       if (!notionSync.attempted) {
         console.log("[superfluid-points] Skipping Notion sync", {
+          dryRun,
           hasClient: Boolean(notionClient),
           hasDbId: Boolean(NOTION_DB_ID_TRIMMED),
           notionDisabled,
@@ -4117,7 +4140,7 @@ export async function GET(req: Request) {
             communitiesJoined:
               walletCommunitiesByWallet.get(targetWallet) ?? [],
           },
-          dryRun: STACK_DRY_RUN || traceOnly,
+          dryRun,
           traceOnly,
           debug: chainDebug,
         },
@@ -4130,7 +4153,7 @@ export async function GET(req: Request) {
     responseTransferCid = pinned.transferLogCacheCid;
     responseEnsCid = pinned.ensCacheCid;
     pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
-    if (!traceOnly) {
+    if (!dryRun) {
       responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
       logPinnedArtifacts({
         pointsSnapshotCid: responsePointsCid,
@@ -4188,7 +4211,7 @@ export async function GET(req: Request) {
           startIso: new Date(start * 1000).toISOString(),
           endIso: new Date(end * 1000).toISOString(),
         },
-        dryRun: STACK_DRY_RUN || traceOnly,
+        dryRun,
         traceOnly,
         debug: chainDebug,
       },
@@ -4200,7 +4223,7 @@ export async function GET(req: Request) {
     responseTransferCid = pinned.transferLogCacheCid;
     responseEnsCid = pinned.ensCacheCid;
     pinnedPriceCacheCid = pinned.priceCacheCid ?? pinnedPriceCacheCid;
-    if (!traceOnly) {
+    if (!dryRun) {
       responseRunLogsCid = await pinRunLogsToIpfs(runLogBuffer);
       logPinnedArtifacts({
         pointsSnapshotCid: responsePointsCid,
