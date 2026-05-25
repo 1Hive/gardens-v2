@@ -54,6 +54,77 @@ type WalletActivity = {
   bonusApplied: boolean;
 };
 
+const NOTION_RICH_TEXT_CHUNK_SIZE = 1_900;
+
+const hashString = (value: string) => {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (Math.imul(31, hash) + value.charCodeAt(i)) | 0;
+  }
+  return (hash >>> 0).toString(16);
+};
+
+const formatUsd = (value: number) =>
+  Number.isFinite(value) ?
+    `$${value.toLocaleString("en-US", {
+      minimumFractionDigits: value >= 1 ? 2 : 6,
+      maximumFractionDigits: value >= 1 ? 2 : 6,
+    })}`
+  : "$0.00";
+
+const formatPercent = (value?: number) =>
+  typeof value === "number" && Number.isFinite(value) ?
+    `${value.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4,
+    })}%`
+  : null;
+
+const formatWalletActivityBreakdown = (activities: WalletActivity[]) => {
+  if (!activities.length) return "No eligible activities.";
+
+  const labels: Record<WalletActivity["type"], string> = {
+    fund: "Direct funding",
+    stream: "Streaming",
+    governance: "Governance stake",
+  };
+
+  const sections = (["fund", "stream", "governance"] as const)
+    .map((type) => {
+      const typeActivities = activities.filter(
+        (activity) => activity.type === type,
+      );
+      if (!typeActivities.length) return null;
+      const lines = typeActivities.map((activity, index) => {
+        const details = [
+          `${index + 1}. ${formatUsd(activity.amountUsd)}`,
+          `chain=${activity.chainId}`,
+          `strategy=${activity.poolAddress ?? "n/a"}`,
+          `pool=${activity.poolName ?? "n/a"}`,
+          `community=${activity.communityName ?? activity.communityId ?? "n/a"}`,
+          `token=${activity.token}`,
+          `bonus=${activity.bonusApplied ? "x3" : "none"}`,
+        ];
+        const share = formatPercent(activity.sharePercent);
+        if (share) details.push(`stakeShare=${share}`);
+        return details.join(" | ");
+      });
+      return `${labels[type]} (${typeActivities.length})\n${lines.join("\n")}`;
+    })
+    .filter(Boolean);
+
+  return sections.join("\n\n");
+};
+
+const toNotionRichText = (content: string) => {
+  const normalized = content.length ? content : "No eligible activities.";
+  const chunks: string[] = [];
+  for (let i = 0; i < normalized.length; i += NOTION_RICH_TEXT_CHUNK_SIZE) {
+    chunks.push(normalized.slice(i, i + NOTION_RICH_TEXT_CHUNK_SIZE));
+  }
+  return chunks.map((chunk) => ({ text: { content: chunk } }));
+};
+
 type CommunityInfo = {
   id: string;
   communityName?: string | null;
@@ -387,6 +458,7 @@ const upsertNotionWallet = async ({
   governanceStakePoints,
   totalPoints,
   farcasterPoints,
+  breakdown,
 }: {
   address: string;
   fundPoints: number;
@@ -394,6 +466,7 @@ const upsertNotionWallet = async ({
   governanceStakePoints: number;
   totalPoints: number;
   farcasterPoints: number;
+  breakdown: string;
 }): Promise<boolean> => {
   if (!notionClient || !NOTION_DB_ID_NORMALIZED || notionDisabled) return false;
   const checksumReady = await ensureNotionChecksumProperty();
@@ -411,6 +484,7 @@ const upsertNotionWallet = async ({
     governanceStakePoints,
     farcasterPoints,
     totalPoints,
+    hashString(breakdown),
   ].join("|");
   const props = {
     Wallet: { title: [{ text: { content: normalized } }] },
@@ -419,6 +493,7 @@ const upsertNotionWallet = async ({
     "Governance Stake": { number: governanceStakePoints },
     Farcaster: { number: farcasterPoints },
     "Total Pts": { number: totalPoints },
+    Breakdown: { rich_text: toNotionRichText(breakdown) },
     Checksum: { rich_text: [{ text: { content: checksum } }] },
   } as Record<string, any>;
 
@@ -540,6 +615,7 @@ const upsertNotionWallet = async ({
             governanceStakePoints,
             farcasterPoints,
             totalPoints,
+            breakdown,
           });
         }
       } catch (retryErr) {
@@ -3634,6 +3710,7 @@ export async function GET(req: Request) {
       nativeSuperToken: string | null;
       nativeToken: string | null;
       activities: WalletActivity[];
+      breakdown: string;
       checksum: string;
     }[] = [];
 
@@ -3832,6 +3909,8 @@ export async function GET(req: Request) {
         existing: existingTotal,
         target: wallet.totalPoints,
       });
+      const activities = walletActivitiesByWallet.get(wallet.address) ?? [];
+      const breakdown = formatWalletActivityBreakdown(activities);
       walletBreakdown.push({
         address: wallet.address,
         fundUsd: wallet.fundUsd,
@@ -3847,7 +3926,8 @@ export async function GET(req: Request) {
         ensAvatar: ensAvatarByWallet.get(wallet.address) || null,
         nativeSuperToken: nativeSuperTokenByWallet.get(wallet.address) ?? null,
         nativeToken: nativeTokenByWallet.get(wallet.address) ?? null,
-        activities: walletActivitiesByWallet.get(wallet.address) ?? [],
+        activities,
+        breakdown,
         checksum: [
           wallet.address.toLowerCase(),
           wallet.fundPoints,
@@ -3855,6 +3935,7 @@ export async function GET(req: Request) {
           wallet.governanceStakePoints,
           wallet.farcasterPoints,
           wallet.totalPoints,
+          hashString(breakdown),
         ].join("|"),
       });
     }
@@ -4022,6 +4103,7 @@ export async function GET(req: Request) {
                   governanceStakePoints: wallet.governanceStakePoints,
                   farcasterPoints: wallet.farcasterPoints,
                   totalPoints: wallet.totalPoints,
+                  breakdown: wallet.breakdown,
                 });
               }),
             );
@@ -4113,6 +4195,9 @@ export async function GET(req: Request) {
         nativeSuperToken: nativeSuperTokenByWallet.get(targetWallet) ?? null,
         nativeToken: nativeTokenByWallet.get(targetWallet) ?? null,
         activities: walletActivitiesByWallet.get(targetWallet) ?? [],
+        breakdown: formatWalletActivityBreakdown(
+          walletActivitiesByWallet.get(targetWallet) ?? [],
+        ),
         checksum: [targetWallet, 0, 0, 0, 0, 0].join("|"),
       };
 
@@ -4147,6 +4232,7 @@ export async function GET(req: Request) {
               ensAvatar: wallet.ensAvatar,
             },
             activities: wallet.activities,
+            breakdown: wallet.breakdown,
             communitiesJoined:
               walletCommunitiesByWallet.get(targetWallet) ?? [],
           },
