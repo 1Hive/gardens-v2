@@ -13,10 +13,7 @@ import {
 } from "./points";
 import { chainConfigMap } from "@/configs/chains";
 import { getTokenUsdPrice } from "@/services/coingecko";
-import {
-  STACK_DRY_RUN,
-  getSuperfluidPointsClient,
-} from "@/services/superfluid-points";
+import { getSuperfluidPointsClient } from "@/services/superfluid-points";
 import { erc20ABI } from "@/src/generated";
 import { ChainId } from "@/types";
 import { isValidCid } from "@/utils/ipfs";
@@ -193,6 +190,9 @@ const parseBooleanParam = (value?: string | null) => {
   const normalized = value.trim().toLowerCase();
   return ["1", "true", "yes", "on"].includes(normalized);
 };
+const SUPERFLUID_POINTS_DRY_RUN = parseBooleanParam(
+  process.env.SUPERFLUID_POINTS_DRY_RUN,
+);
 const safeStringify = (value: unknown) => {
   try {
     return JSON.stringify(value, (_key, val) =>
@@ -3270,7 +3270,8 @@ export async function GET(req: Request) {
     url.searchParams.get("traceOnly"),
   );
   const traceOnly = traceOnlyRequested || Boolean(targetWallet);
-  const dryRun = STACK_DRY_RUN || traceOnly;
+  const dryRunRequested = parseBooleanParam(url.searchParams.get("dryRun"));
+  const dryRun = SUPERFLUID_POINTS_DRY_RUN || dryRunRequested || traceOnly;
   const includeWalletCommunityDebug = targetWallet != null;
   const hasCampaignIdOverride = campaignIdParam.length > 0;
   const parsedCampaignId = hasCampaignIdOverride ? Number(campaignIdParam) : 0;
@@ -3323,18 +3324,18 @@ export async function GET(req: Request) {
       { status: 200 },
     );
   }
-  let superfluidStackClient: ReturnType<
+  let superfluidPointsClient: ReturnType<
     typeof getSuperfluidPointsClient
   > | null = null;
-  if (!traceOnly) {
+  if (!dryRun) {
     try {
-      superfluidStackClient = getSuperfluidPointsClient(
+      superfluidPointsClient = getSuperfluidPointsClient(
         campaignIdOverride ?? undefined,
       );
     } catch (err) {
-      console.error("[superfluid-points] stack client init failed", err);
+      console.error("[superfluid-points] points client init failed", err);
       return NextResponse.json(
-        { error: "Stack client not configured" },
+        { error: "Superfluid points client not configured" },
         { status: 500 },
       );
     }
@@ -3710,21 +3711,21 @@ export async function GET(req: Request) {
     const fetchExistingTotalsByAddress = async (): Promise<
       Map<string, Record<string, number>>
     > => {
-      if (!superfluidStackClient) {
-        throw new Error("Stack client not configured");
+      if (!superfluidPointsClient) {
+        throw new Error("Superfluid points client not configured");
       }
       const limit = 250;
       let offset = 0;
       const existingMap = new Map<string, Record<string, number>>();
       while (true) {
-        console.log("[superfluid-points] stack getEvents sweep request", {
+        console.log("[superfluid-points] points service getEvents sweep request", {
           offset,
           limit,
         });
-        const res = await superfluidStackClient.eventClient.getEvents({
+        const res = await superfluidPointsClient.eventClient.getEvents({
           query: { limit, offset },
         });
-        console.log("[superfluid-points] stack getEvents sweep response", {
+        console.log("[superfluid-points] points service getEvents sweep response", {
           offset,
           limit,
           count: Array.isArray(res) ? res.length : 0,
@@ -3766,7 +3767,7 @@ export async function GET(req: Request) {
       payload: { account: string; points: number; metadata?: any };
     }> = [];
     const existingTotalsByAddress =
-      traceOnly ?
+      dryRun ?
         new Map<string, Record<string, number>>()
       : await fetchExistingTotalsByAddress();
 
@@ -3894,32 +3895,32 @@ export async function GET(req: Request) {
     }
 
     if (traceOnly) {
-      console.log("[superfluid-points] TRACE ONLY - skipping event diff sync", {
+      console.log("[superfluid-points] TRACE ONLY - skipping points service sync", {
         wallet: targetWallet,
       });
-    } else if (allEventPayloads.length && !STACK_DRY_RUN) {
-      if (!superfluidStackClient) {
-        throw new Error("Stack client not configured");
+    } else if (allEventPayloads.length && !dryRun) {
+      if (!superfluidPointsClient) {
+        throw new Error("Superfluid points client not configured");
       }
-      console.log("[superfluid-points] stack sendEvents request", {
+      console.log("[superfluid-points] points service sendEvents request", {
         count: allEventPayloads.length,
       });
       for (let i = 0; i < allEventPayloads.length; i += 250) {
         const batch = allEventPayloads.slice(i, i + 250);
-        console.log("[superfluid-points] stack sendEvents batch", {
+        console.log("[superfluid-points] points service sendEvents batch", {
           batchStart: i,
           batchEnd: i + batch.length - 1,
           batchSize: batch.length,
         });
-        const resp = await superfluidStackClient.eventClient.sendEvents(batch);
-        console.log("[superfluid-points] stack sendEvents response", {
+        const resp = await superfluidPointsClient.eventClient.sendEvents(batch);
+        console.log("[superfluid-points] points service sendEvents response", {
           batchStart: i,
           batchEnd: i + batch.length - 1,
           response: resp,
         });
       }
-    } else if (STACK_DRY_RUN) {
-      console.log("[superfluid-points] DRY RUN - skipping event pushes", {
+    } else if (dryRun) {
+      console.log("[superfluid-points] DRY RUN - skipping points service pushes", {
         eventCount: allEventPayloads.length,
       });
     }
@@ -4176,7 +4177,7 @@ export async function GET(req: Request) {
         message:
           traceOnly ?
             "Superfluid wallet trace completed"
-          : "Superfluid stack sync completed",
+          : "Superfluid points sync completed",
         updated: updates,
         totals: responseTotals,
         missingPrices: missingPriceEntries,
@@ -4239,7 +4240,7 @@ export async function GET(req: Request) {
     console.log = originalConsole.log;
     console.warn = originalConsole.warn;
     console.error = originalConsole.error;
-    console.error("Superfluid stack cron error", error);
+    console.error("Superfluid points cron error", error);
     const message =
       error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json(
