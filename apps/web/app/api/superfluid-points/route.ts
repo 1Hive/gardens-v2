@@ -44,6 +44,7 @@ type SuperTokenResult = {
 type WalletActivity = {
   type: "fund" | "stream" | "governance";
   amountUsd: number;
+  points: number;
   poolAddress: string | null;
   poolName?: string | null;
   communityId?: string | null;
@@ -80,6 +81,14 @@ const formatPercent = (value?: number) =>
     })}%`
   : null;
 
+const formatPoints = (value: number) =>
+  Number.isFinite(value) ?
+    value.toLocaleString("en-US", {
+      minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+      maximumFractionDigits: 2,
+    })
+  : "0";
+
 const formatWalletActivityBreakdown = (activities: WalletActivity[]) => {
   if (!activities.length) return "No eligible activities.";
 
@@ -97,17 +106,18 @@ const formatWalletActivityBreakdown = (activities: WalletActivity[]) => {
       if (!typeActivities.length) return null;
       const lines = typeActivities.map((activity, index) => {
         const details = [
-          `${index + 1}. ${formatUsd(activity.amountUsd)}`,
-          `chain=${activity.chainId}`,
-          `strategy=${activity.poolAddress ?? "n/a"}`,
-          `pool=${activity.poolName ?? "n/a"}`,
-          `community=${activity.communityName ?? activity.communityId ?? "n/a"}`,
-          `token=${activity.token}`,
-          `bonus=${activity.bonusApplied ? "x3" : "none"}`,
+          `${index + 1}. ${formatPoints(activity.points)} pts`,
+          `   - USD: ${formatUsd(activity.amountUsd)}`,
+          `   - Chain: ${activity.chainId}`,
+          `   - Strategy: ${activity.poolAddress ?? "n/a"}`,
+          `   - Pool: ${activity.poolName ?? "n/a"}`,
+          `   - Community: ${activity.communityName ?? activity.communityId ?? "n/a"}`,
+          `   - Token: ${activity.token}`,
+          `   - Bonus: ${activity.bonusApplied ? "x3" : "none"}`,
         ];
         const share = formatPercent(activity.sharePercent);
-        if (share) details.push(`stakeShare=${share}`);
-        return details.join(" | ");
+        if (share) details.push(`   - Stake share: ${share}`);
+        return details.join("\n");
       });
       return `${labels[type]} (${typeActivities.length})\n${lines.join("\n")}`;
     })
@@ -2567,6 +2577,7 @@ const accumulateFundingPoints = async ({
   recordActivity?: (params: {
     from: string;
     usd: number;
+    points: number;
     poolAddress?: string | null;
     poolName?: string | null;
     communityId?: string | null;
@@ -2609,7 +2620,8 @@ const accumulateFundingPoints = async ({
     if (recordActivity) {
       recordActivity({
         from: key,
-        usd: delta,
+        usd,
+        points: delta,
         poolAddress: toLower(poolAddress),
         poolName: null,
         communityId: null,
@@ -2862,6 +2874,8 @@ const processChain = async ({
     {
       fundUsd: number;
       streamUsd: number;
+      rawFundUsd: number;
+      rawStreamUsd: number;
       members: CommunityInfo["members"];
       bonusApplied: boolean;
     }
@@ -3010,11 +3024,12 @@ const processChain = async ({
         priceUsd,
         userTotals,
         multiplier: activityMultiplier,
-        recordActivity: ({ from, usd }) => {
+        recordActivity: ({ from, usd, points }) => {
           const list = walletActivities.get(from) ?? [];
           list.push({
             type: "fund",
             amountUsd: usd,
+            points,
             poolAddress: toLower(poolAddress),
             poolName: poolTitle,
             communityId: community?.id ? toLower(community.id) : null,
@@ -3073,7 +3088,8 @@ const processChain = async ({
         const list = walletActivities.get(key) ?? [];
         list.push({
           type: "stream",
-          amountUsd: streamUsd,
+          amountUsd: usd,
+          points: streamUsd,
           poolAddress: toLower(poolAddress),
           poolName: poolTitle,
           communityId: community?.id ? toLower(community.id) : null,
@@ -3119,6 +3135,8 @@ const processChain = async ({
       const entry = communityTotals.get(community.id) ?? {
         fundUsd: 0,
         streamUsd: 0,
+        rawFundUsd: 0,
+        rawStreamUsd: 0,
         members: community.members,
         bonusApplied: false,
       };
@@ -3137,11 +3155,13 @@ const processChain = async ({
           fundUsdForCommunity,
           pool.config?.proposalType,
         );
+        entry.rawFundUsd += fundUsdForCommunity;
       }
       entry.streamUsd += applyPoolActivityMultiplier(
         streamUsdTotalAll,
         pool.config?.proposalType,
       );
+      entry.rawStreamUsd += streamUsdTotalAll;
       entry.bonusApplied ||= activityMultiplier > 1;
       communityTotals.set(community.id, entry);
 
@@ -3180,6 +3200,7 @@ const processChain = async ({
   // Split community totals to members
   for (const [communityId, entry] of communityTotals.entries()) {
     let totalPts = entry.fundUsd + entry.streamUsd;
+    const rawUsd = entry.rawFundUsd + entry.rawStreamUsd;
 
     if (totalPts <= 0) continue;
 
@@ -3214,7 +3235,8 @@ const processChain = async ({
       const list = walletActivities.get(key) ?? [];
       list.push({
         type: "governance",
-        amountUsd: points,
+        amountUsd: rawUsd * share,
+        points,
         poolAddress,
         poolName,
         communityId: communityIdLower,
