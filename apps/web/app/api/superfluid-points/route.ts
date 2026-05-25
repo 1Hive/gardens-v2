@@ -42,16 +42,17 @@ type SuperTokenResult = {
 };
 
 type WalletActivity = {
-  type: "fund" | "stream" | "governance";
+  type: "fund" | "stream" | "governance" | "farcaster";
   amountUsd: number;
   points: number;
   poolAddress: string | null;
   poolName?: string | null;
   communityId?: string | null;
   communityName?: string | null;
+  farcasterUsername?: string | null;
   sharePercent?: number;
   token: string;
-  chainId: ChainId;
+  chainId?: ChainId;
   bonusApplied: boolean;
 };
 
@@ -96,9 +97,10 @@ const formatWalletActivityBreakdown = (activities: WalletActivity[]) => {
     fund: "Direct funding",
     stream: "Streaming",
     governance: "Governance stake",
+    farcaster: "Farcaster",
   };
 
-  const sections = (["fund", "stream", "governance"] as const)
+  const sections = (["fund", "stream", "governance", "farcaster"] as const)
     .map((type) => {
       const typeActivities = activities.filter(
         (activity) => activity.type === type,
@@ -108,13 +110,19 @@ const formatWalletActivityBreakdown = (activities: WalletActivity[]) => {
         const details = [
           `${index + 1}. ${formatPoints(activity.points)} pts`,
           `   - USD: ${formatUsd(activity.amountUsd)}`,
-          `   - Chain: ${activity.chainId}`,
+          `   - Chain: ${activity.chainId ?? "n/a"}`,
           `   - Strategy: ${activity.poolAddress ?? "n/a"}`,
           `   - Pool: ${activity.poolName ?? "n/a"}`,
           `   - Community: ${activity.communityName ?? activity.communityId ?? "n/a"}`,
           `   - Token: ${activity.token}`,
           `   - Bonus: ${activity.bonusApplied ? "x3" : "none"}`,
         ];
+        if (activity.type === "farcaster") {
+          details.push(
+            `   - Source: follows @${FARCASTER_GARDENS_USERNAME}`,
+            `   - Username: ${activity.farcasterUsername ?? "n/a"}`,
+          );
+        }
         const share = formatPercent(activity.sharePercent);
         if (share) details.push(`   - Stake share: ${share}`);
         return details.join("\n");
@@ -124,6 +132,33 @@ const formatWalletActivityBreakdown = (activities: WalletActivity[]) => {
     .filter(Boolean);
 
   return sections.join("\n\n");
+};
+
+const buildWalletActivitiesWithFarcaster = ({
+  activities,
+  farcasterPoints,
+  farcasterUsername,
+}: {
+  activities: WalletActivity[];
+  farcasterPoints: number;
+  farcasterUsername: string | null;
+}) => {
+  if (farcasterPoints <= 0) return activities;
+  return [
+    ...activities,
+    {
+      type: "farcaster",
+      amountUsd: 0,
+      points: farcasterPoints,
+      poolAddress: null,
+      poolName: null,
+      communityId: null,
+      communityName: null,
+      farcasterUsername,
+      token: "n/a",
+      bonusApplied: false,
+    } satisfies WalletActivity,
+  ];
 };
 
 const toNotionRichText = (content: string) => {
@@ -3931,7 +3966,13 @@ export async function GET(req: Request) {
         existing: existingTotal,
         target: wallet.totalPoints,
       });
-      const activities = walletActivitiesByWallet.get(wallet.address) ?? [];
+      const farcasterUsername =
+        farcasterUsernameByWallet.get(wallet.address) ?? null;
+      const activities = buildWalletActivitiesWithFarcaster({
+        activities: walletActivitiesByWallet.get(wallet.address) ?? [],
+        farcasterPoints: wallet.farcasterPoints,
+        farcasterUsername,
+      });
       const breakdown = formatWalletActivityBreakdown(activities);
       walletBreakdown.push({
         address: wallet.address,
@@ -3942,8 +3983,7 @@ export async function GET(req: Request) {
         governanceStakePoints: wallet.governanceStakePoints,
         farcasterPoints: wallet.farcasterPoints,
         totalPoints: wallet.totalPoints,
-        farcasterUsername:
-          farcasterUsernameByWallet.get(wallet.address) ?? null,
+        farcasterUsername,
         ensName: ensNameByWallet.get(wallet.address) || null,
         ensAvatar: ensAvatarByWallet.get(wallet.address) || null,
         nativeSuperToken: nativeSuperTokenByWallet.get(wallet.address) ?? null,
@@ -4200,6 +4240,15 @@ export async function GET(req: Request) {
       : Object.fromEntries(totals.entries());
 
     if (targetWallet) {
+      const fallbackFarcasterPoints =
+        farcasterPointsByWallet.get(targetWallet) ?? 0;
+      const fallbackFarcasterUsername =
+        farcasterUsernameByWallet.get(targetWallet) ?? null;
+      const fallbackActivities = buildWalletActivitiesWithFarcaster({
+        activities: walletActivitiesByWallet.get(targetWallet) ?? [],
+        farcasterPoints: fallbackFarcasterPoints,
+        farcasterUsername: fallbackFarcasterUsername,
+      });
       const wallet = walletBreakdown.find(
         (entry) => entry.address === targetWallet,
       ) ?? {
@@ -4209,17 +4258,15 @@ export async function GET(req: Request) {
         fundPoints: 0,
         streamPoints: 0,
         governanceStakePoints: 0,
-        farcasterPoints: 0,
+        farcasterPoints: fallbackFarcasterPoints,
         totalPoints: 0,
-        farcasterUsername: farcasterUsernameByWallet.get(targetWallet) ?? null,
+        farcasterUsername: fallbackFarcasterUsername,
         ensName: ensNameByWallet.get(targetWallet) || null,
         ensAvatar: ensAvatarByWallet.get(targetWallet) || null,
         nativeSuperToken: nativeSuperTokenByWallet.get(targetWallet) ?? null,
         nativeToken: nativeTokenByWallet.get(targetWallet) ?? null,
-        activities: walletActivitiesByWallet.get(targetWallet) ?? [],
-        breakdown: formatWalletActivityBreakdown(
-          walletActivitiesByWallet.get(targetWallet) ?? [],
-        ),
+        activities: fallbackActivities,
+        breakdown: formatWalletActivityBreakdown(fallbackActivities),
         checksum: [targetWallet, 0, 0, 0, 0, 0].join("|"),
       };
 
