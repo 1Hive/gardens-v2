@@ -223,15 +223,6 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
       activities: ["Stake & Governance"],
       pointsInfo: "Points split based on stake size",
     },
-    {
-      title: "3x Bonus in Streaming Pools",
-      description:
-        "Activities related to Streaming pools earn triple points during this campaign.",
-      icon: <CurrencyDollarIcon className="h-5 w-5" />,
-      activities: ["Streaming Pool"],
-      pointsInfo: "x3 points multiplier",
-      highlighted: true,
-    },
   ],
   "4": [
     {
@@ -279,12 +270,13 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
       description: "Become an active member and increase your stake.",
       icon: <UsersIcon className="h-5 w-5" />,
       activities: ["Stake & Governance"],
-      pointsInfo: "Points split based on stake size",
+      pointsInfo:
+        "Matching points split between the community for adding funds - 1 point per $1 added (min $10)",
     },
     {
       title: "3x Bonus in Streaming Pools",
       description:
-        "Activities related to Streaming pools earn triple points during this campaign.",
+        "Streaming pools earn triple points for adding funds and governance tokens staked",
       icon: <CurrencyDollarIcon className="h-5 w-5" />,
       activities: ["Streaming Pool"],
       pointsInfo: "x3 points multiplier",
