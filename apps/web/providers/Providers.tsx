@@ -59,6 +59,9 @@ export const AUTOCONNECT_RESET_EVENT = "gardens:autoconnect-reset";
 export const SKIP_AUTOCONNECT_STORAGE_KEY = "gardens:skip-autoconnect";
 
 const getConfiguredChains = () => dedupeChains([...CHAINS, base, mainnet]);
+// RainbowKit's modal overlay ships with z-index 2147483646 in its bundled CSS.
+// Keep WalletConnect one step above it so the QR/deeplink modal is clickable.
+const WALLETCONNECT_MODAL_Z_INDEX = 2147483647;
 
 const createCustomConfig = (
   skipAutoConnect: boolean,
@@ -71,7 +74,6 @@ const createCustomConfig = (
   // RainbowKit caches WalletConnect connectors by serialized options.
   // Keep the modal above RainbowKit's overlay while still varying the
   // serialized options after a reset to force a fresh connector.
-  const walletConnectModalZIndex = 2147483647;
   const walletConnectProjectId =
     process.env.NEXT_PUBLIC_WALLET_CONNECT_ID ?? "";
   const connectorFactory = connectorsForWallets([
@@ -91,7 +93,9 @@ const createCustomConfig = (
                 projectId: walletConnectProjectId,
                 qrModalOptions: {
                   themeVariables: {
-                    "--wcm-z-index": walletConnectModalZIndex.toString(),
+                    "--wcm-z-index": WALLETCONNECT_MODAL_Z_INDEX.toString(),
+                    // WalletConnect connectors are cached from serialized options.
+                    // This unused custom variable changes on reset to force a fresh instance.
                     "--gardens-walletconnect-reset":
                       walletConnectResetVersion.toString(),
                   },
