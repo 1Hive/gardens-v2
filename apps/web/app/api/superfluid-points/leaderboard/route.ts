@@ -143,6 +143,13 @@ const SUPERFLUID_POOL_TOTALS_QUERY = gql`
   }
 `;
 const TOTAL_STREAMED_SUP_FALLBACK = 3_578;
+// Temporary manual totals used for campaigns whose streamed SUP cannot yet be
+// sourced reliably from the subgraph endpoint. Remove/update these overrides
+// once campaign-specific subgraph totals are reliable.
+const TOTAL_STREAMED_SUP_OVERRIDES_BY_CAMPAIGN: Record<string, number> = {
+  "510": 483_000,
+  "511": 0,
+};
 const DEFAULT_TARGET_STREAM_SUP = 847_000;
 const TARGET_STREAM_SUP_BY_CAMPAIGN: Record<string, number> = {
   "510": 519_000,
@@ -197,6 +204,21 @@ const fetchSuperfluidTotals = async (
   }
 };
 
+const getTotalStreamedSup = async (
+  campaignId?: string | null,
+  gardensGdaId?: string,
+) => {
+  const campaignOverride =
+    campaignId ?
+      TOTAL_STREAMED_SUP_OVERRIDES_BY_CAMPAIGN[campaignId]
+    : undefined;
+  if (campaignOverride !== undefined) {
+    return campaignOverride;
+  }
+
+  return (await fetchSuperfluidTotals(gardensGdaId)) ?? TOTAL_STREAMED_SUP_FALLBACK;
+};
+
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
@@ -245,9 +267,10 @@ export async function GET(request: Request) {
       hasCampaignSpecificGdaId ?
         GARDENS_GDA_ID_BY_CAMPAIGN[String(campaignIdFromQuery)]
       : DEFAULT_GARDENS_GDA_ID;
-    const totalStreamedSup =
-      (await fetchSuperfluidTotals(gardensGdaId)) ??
-      TOTAL_STREAMED_SUP_FALLBACK;
+    const totalStreamedSup = await getTotalStreamedSup(
+      campaignIdFromQuery,
+      gardensGdaId,
+    );
     const targetStreamSup =
       (campaignIdFromQuery ?
         TARGET_STREAM_SUP_BY_CAMPAIGN[String(campaignIdFromQuery)]
