@@ -106,6 +106,7 @@ export type ProposalCardProps = {
   inputHandler: (proposalId: string, value: bigint) => void;
   minThGtTotalEffPoints: boolean;
   poolAddress: string;
+  onConvictionUpdate?: (id: string, conviction: bigint) => void;
 };
 
 export type ProposalHandle = {
@@ -133,6 +134,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       communityToken: tokenData,
       minThGtTotalEffPoints,
       poolAddress,
+      onConvictionUpdate,
     },
     ref,
   ) => {
@@ -211,9 +213,10 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     });
 
     useEffect(() => {
-      if (updatedConviction != null && currentConvictionPct != null) {
+      if (updatedConviction != null) {
+        onConvictionUpdate?.(proposalData.id, updatedConviction);
       }
-    }, [updatedConviction, currentConvictionPct]);
+    }, [updatedConviction, onConvictionUpdate, proposalData.id]);
 
     useEffect(() => {
       setOptimisticProposalStatus(null);
