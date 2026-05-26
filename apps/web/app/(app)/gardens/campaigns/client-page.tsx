@@ -261,13 +261,15 @@ export default function CampaignsPage() {
                     >
                       <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden mb-4">
                         <div
-                          className="h-full bg-neutral-soft-content transition-all"
+                          className="h-full bg-primary-content transition-all"
                           style={{
                             width: `${
                               ((statsByCampaign[c.slug]?.totalStreamedSup ??
                                 0) /
-                                (statsByCampaign[c.slug]?.targetStreamSup ??
-                                  10)) *
+                               Math.max(
+                                 statsByCampaign[c.slug]?.targetStreamSup ?? 0,
+                                 1,
+                               )) *
                               100
                             }%`,
                           }}
