@@ -193,7 +193,7 @@ const TransactionToastManager = ({ entries, notify, remove }: ManagerProps) => {
       const notifProps = mapStatusToNotification(entry, explorerPreference);
       const toastOptions: ToastOptions = {
         toastId: entry.toastId,
-        icon: <></>,
+        icon: false,
         autoClose: notifProps.autoClose ?? NOTIFICATION_AUTO_CLOSE_DELAY,
         className: "no-icon",
         type: notifProps.type,

@@ -575,7 +575,7 @@ export function PoolForm({
         topic: "pool",
         function: "createPool",
         type: "add",
-        id: newPoolData._poolId.toString(), // Never propagate direct bigint outside of javascript environment
+        id: strategyAddress,
         containerId: communityAddr,
         chainId: chain.id,
       });

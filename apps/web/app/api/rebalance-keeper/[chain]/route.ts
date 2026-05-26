@@ -1,3 +1,4 @@
+import Ably from "ably";
 import { NextResponse } from "next/server";
 import {
   Address,
@@ -16,6 +17,7 @@ import {
   safeEvaluateRebalanceDecision,
 } from "./rebalanceDecision";
 import { chainConfigMap, getConfigByChain } from "@/configs/chains";
+import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
 import { getGasTokenUsdPrice } from "@/services/coingecko";
 import { ChainId } from "@/types";
 import { getViemChain } from "@/utils/web3";
@@ -38,6 +40,9 @@ type StrategyCandidate = {
   config?: {
     proposalType?: string | number | null;
   } | null;
+  stream?: {
+    updatedAt?: string | number | null;
+  } | null;
   proposals?: Array<{ id: string }> | null;
 };
 
@@ -46,6 +51,8 @@ type SelectedStrategyCandidate = {
   title: string | null;
   communityAddress: Address | null;
   communityTitle: string | null;
+  lastRebalanceAt: string | null;
+  lastRebalanceDateTime: string | null;
 };
 
 type ChainRunResult = {
@@ -58,6 +65,8 @@ type ChainRunResult = {
     communityAddress?: Address | null;
     communityTitle?: string | null;
     uri?: string | null;
+    lastRebalanceAt?: string | null;
+    lastRebalanceDateTime?: string | null;
     rebalanceReason?: string;
     rebalanceError?: string;
     txHash: `0x${string}`;
@@ -74,6 +83,8 @@ type ChainRunResult = {
     communityAddress?: Address | null;
     communityTitle?: string | null;
     uri?: string | null;
+    lastRebalanceAt?: string | null;
+    lastRebalanceDateTime?: string | null;
     rebalanceError?: string;
     reason: string;
   }>;
@@ -123,6 +134,47 @@ const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const GARDENS_APP_BASE_URL = "https://app.gardens.fund";
 const PROPOSAL_MULTICALL_CHUNK_SIZE = 75;
 
+let ablyClient: Ably.Rest | null = null;
+let hasWarnedMissingAblyKey = false;
+
+const getAblyClient = () => {
+  if (ablyClient != null) return ablyClient;
+
+  const key = process.env.NEXT_ABLY_API_KEY;
+  if (!key) {
+    if (!hasWarnedMissingAblyKey) {
+      console.warn(
+        "rebalance-keeper: NEXT_ABLY_API_KEY is unset; stream updates will not be published",
+      );
+      hasWarnedMissingAblyKey = true;
+    }
+    return null;
+  }
+
+  // Ably.Rest uses plain HTTP requests, so reusing a client here is only to
+  // avoid rebuilding it for every rebalance confirmation.
+  ablyClient = new Ably.Rest({ key });
+  return ablyClient;
+};
+
+const publishStreamRebalance = async ({
+  chainId,
+  strategy,
+}: {
+  chainId: ChainId;
+  strategy: Address;
+}) => {
+  const client = getAblyClient();
+  if (!client) return;
+
+  await client.channels.get(CHANGE_EVENT_CHANNEL_NAME).publish("stream", {
+    topic: "stream",
+    function: "rebalance",
+    containerId: strategy,
+    chainId,
+  });
+};
+
 const roundToUsdPrecision = (value: number) =>
   Math.round(value * USD_PRECISION_MULTIPLIER) / USD_PRECISION_MULTIPLIER;
 
@@ -146,6 +198,24 @@ const calculateGasCostUsd = ({
 const normalizeTitle = (title: string | null | undefined) => {
   const trimmed = title?.trim();
   return trimmed === "" ? null : trimmed ?? null;
+};
+
+const normalizeTimestamp = (timestamp: string | number | null | undefined) => {
+  if (timestamp == null) return null;
+  const raw = String(timestamp).trim();
+  return raw === "" ? null : raw;
+};
+
+const timestampToDateTime = (
+  timestamp: string | number | null | undefined,
+) => {
+  const normalized = normalizeTimestamp(timestamp);
+  if (normalized == null) return null;
+
+  const seconds = Number(normalized);
+  if (!Number.isFinite(seconds) || seconds <= 0) return null;
+
+  return new Date(seconds * 1000).toISOString();
 };
 
 const buildGardenUri = ({
@@ -503,6 +573,9 @@ const STRATEGY_QUERY = `
       config {
         proposalType
       }
+      stream {
+        updatedAt
+      }
       proposals(first: 1, where: { proposalStatus_in: [${ACTIVE_STATUS}, ${DISPUTED_STATUS}] }) {
         id
       }
@@ -592,6 +665,8 @@ async function fetchStrategyCandidates(
           communityTitle: normalizeTitle(
             strategy.registryCommunity?.communityName,
           ),
+          lastRebalanceAt: normalizeTimestamp(strategy.stream?.updatedAt),
+          lastRebalanceDateTime: timestampToDateTime(strategy.stream?.updatedAt),
         });
       }
     }
@@ -697,11 +772,15 @@ async function runKeeperForChain({
         title,
         communityAddress,
         communityTitle,
+        lastRebalanceAt,
+        lastRebalanceDateTime,
       } = strategyCandidate;
       const strategyResponseContext = {
         title,
         communityAddress,
         communityTitle,
+        lastRebalanceAt,
+        lastRebalanceDateTime,
         uri: buildGardenUri({
           chainId: chainConfig.id,
           communityAddress,
@@ -740,7 +819,7 @@ async function runKeeperForChain({
           continue;
         }
 
-        const [lastRebalanceAt, cooldown] = await Promise.all([
+        const [contractLastRebalanceAt, cooldown] = await Promise.all([
           publicClient.readContract({
             address: strategy,
             abi: REBALANCE_KEEPER_ABI,
@@ -753,7 +832,8 @@ async function runKeeperForChain({
           }),
         ]);
 
-        const nextRebalanceAt = Number(lastRebalanceAt) + Number(cooldown);
+        const nextRebalanceAt =
+          Number(contractLastRebalanceAt) + Number(cooldown);
         const secondsLeft = nextRebalanceAt - now;
         if (Number(cooldown) > 0 && secondsLeft > minSecondsLeft) {
           skipped.push({
@@ -849,6 +929,20 @@ async function runKeeperForChain({
           chainId: chainConfig.id,
           ...confirmedTx,
         });
+
+        try {
+          await publishStreamRebalance({
+            chainId: chainConfig.id,
+            strategy,
+          });
+        } catch (error) {
+          console.warn("rebalance-keeper: failed to publish stream update", {
+            chainId: chainConfig.id,
+            strategy,
+            txHash: hash,
+            error: error instanceof Error ? error.message : "unknown_error",
+          });
+        }
 
         sent.push(confirmedTx);
       } catch (error) {

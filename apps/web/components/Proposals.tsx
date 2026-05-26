@@ -175,11 +175,11 @@ export function Proposals({
       {
         topic: "member",
         id: wallet,
-        containerId: strategy.poolId,
+        containerId: strategy.id,
       },
       {
         topic: "proposal",
-        containerId: strategy.poolId,
+        containerId: strategy.id,
         function: "allocate",
       },
     ],
@@ -195,10 +195,10 @@ export function Proposals({
       changeScope: [
         {
           topic: "proposal",
-          containerId: strategy.poolId,
+          containerId: strategy.id,
           type: "update",
         },
-        { topic: "member", id: wallet, containerId: strategy.poolId },
+        { topic: "member", id: wallet, containerId: strategy.id },
       ],
       enabled: !!wallet,
     },
@@ -223,8 +223,8 @@ export function Proposals({
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
   const { memberActivatedStrategy, memberActivatedPoints } =
     getMemberActivationState({
-    memberPower,
-    subgraphActivatedPoints: memberActivatedPointsFromSubgraph,
+      memberPower,
+      subgraphActivatedPoints: memberActivatedPointsFromSubgraph,
     });
 
   const [sortedProposals, setSortedProposals] = useState(strategy.proposals);
@@ -480,7 +480,7 @@ export function Proposals({
       publish({
         topic: "proposal",
         type: "update",
-        containerId: strategy.poolId,
+        containerId: strategy.id,
         function: "allocate",
       });
       if (toastId.current != null) {
@@ -866,7 +866,7 @@ export function Proposals({
               <Fragment key={proposalData.proposalNumber}>
                 <ProposalCard
                   proposalData={proposalData}
-                  poolId={Number(strategy.poolId)}
+                  poolAddress={strategy.id}
                   strategyConfig={strategy.config}
                   inputData={inputs[proposalData.id]}
                   stakedFilter={stakedFilters[proposalData.id]}
@@ -933,6 +933,7 @@ export function Proposals({
                       communityToken={strategy.registryCommunity.garden}
                       isPoolEnabled={strategy.isEnabled}
                       minThGtTotalEffPoints={minThGtTotalEffPoints}
+                      poolAddress={strategy.id}
                     />
                   </Fragment>
                 ))}
@@ -1034,8 +1035,7 @@ export function useProposalFilter<
     | null;
 
   const [sortBy, setSortBy] = useState<SortType>("mostConviction");
-  const [hasManualSortSelection, setHasManualSortSelection] =
-    useState(false);
+  const [hasManualSortSelection, setHasManualSortSelection] = useState(false);
 
   const filteredAndSorted = useMemo(() => {
     if (!sortBy) return filteredProposals;

@@ -112,7 +112,7 @@ export function PoolCard({ pool, token }: Props) {
               isEnabled &&
               poolToken &&
               poolType != null &&
-              PoolTypes[poolType] === "funding"
+              PoolTypes[poolType] !== "signaling"
             ) ?
               <Statistic icon={<CurrencyDollarIcon />} label="funds">
                 <DisplayNumber

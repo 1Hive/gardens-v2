@@ -168,7 +168,7 @@ export default function PoolHeader({
       changeScope: {
         topic: "pool",
         type: "update",
-        id: strategy.poolId,
+        id: strategy.id,
         chainId: chainId,
       },
     });
@@ -197,15 +197,16 @@ export default function PoolHeader({
     blockTime,
   );
 
-  //problem here, we are passing decimals from pool token decimals but it it decimals from the GOV token
   const communityGovTokenDecimals =
-    strategy?.registryCommunity?.garden?.decimals;
+    strategy?.registryCommunity?.garden?.decimals != null ?
+      Number(strategy.registryCommunity.garden.decimals)
+    : undefined;
 
   const minThresholdPoints =
-    poolToken ?
-      formatTokenAmount(
-        strategy.config.minThresholdPoints,
-        +communityGovTokenDecimals,
+    strategy.config.minThresholdPoints != null ?
+      formatUnits(
+        BigInt(strategy.config.minThresholdPoints),
+        communityGovTokenDecimals ?? 18,
       )
     : "0";
 
@@ -511,7 +512,7 @@ export default function PoolHeader({
         topic: "pool",
         function: "setPoolParams",
         type: "update",
-        id: strategy.poolId,
+        id: strategy.id,
         chainId: chainId,
       });
     },

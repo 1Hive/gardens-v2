@@ -58,7 +58,7 @@ export function ActivatePoints({
         id: connectedAccount,
         type: "update",
         function: "activatePoints",
-        containerId: strategy.poolId,
+        containerId: strategy.id,
         chainId,
       });
     },
@@ -81,7 +81,7 @@ export function ActivatePoints({
       publish({
         topic: "member",
         id: connectedAccount,
-        containerId: strategy.poolId,
+        containerId: strategy.id,
         type: "update",
         function: "deactivatePoints",
         chainId,
