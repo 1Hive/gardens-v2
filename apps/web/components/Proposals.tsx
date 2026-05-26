@@ -1202,8 +1202,8 @@ function ProposalFiltersUI({
       },
     ];
 
-    // Remove "Requested Amount" option when poolType is a signaling pool
-    return +poolType === 0 ?
+    // Only funding pools support sorting by requested amount.
+    return PoolTypes[poolType] !== "funding" ?
         options.filter((opt) => opt.key !== "mostRequested")
       : options;
   }, [poolType]);
