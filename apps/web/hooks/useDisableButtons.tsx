@@ -17,10 +17,12 @@ export interface DisableButtonsHookProps {
 export function useDisableButtons(
   conditions?: ConditionObject[],
 ): DisableButtonsHookProps {
-  const { isConnected } = useAccount();
+  const { isConnected, connector } = useAccount();
   const urlChain = useChainFromPath();
   const { chain } = useNetwork(); // wallet connected chain object
-  const missmatchUrlAndWalletChain = chain?.id !== urlChain?.id;
+  const isWalletConnect = connector?.id === "walletConnect";
+  const missmatchUrlAndWalletChain =
+    !isWalletConnect && chain?.id !== urlChain?.id;
 
   const tooltipMessage = useMemo(() => {
     if (!isConnected) {

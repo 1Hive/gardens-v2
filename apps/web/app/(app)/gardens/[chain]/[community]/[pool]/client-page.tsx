@@ -260,7 +260,7 @@ export default function ClientPage({
   }, [newPoolId, strategy]);
   const communityAddress = strategy?.registryCommunity.id as Address;
 
-  const { address: wallet } = useAccount();
+  const { address: wallet, connector } = useAccount();
 
   const tokenDecimals = strategy?.registryCommunity.garden.decimals;
 
@@ -566,6 +566,7 @@ export default function ClientPage({
     : null);
 
   const connectedChainId = useChainId();
+  const isWalletConnectConnection = connector?.id === "walletConnect";
 
   const { data: superTokenInfo } = useBalance({
     address: wallet as Address,
@@ -794,6 +795,7 @@ export default function ClientPage({
   }
 
   const isWrongNetwork =
+    !isWalletConnectConnection &&
     connectedChainId != null &&
     expectedChainId != null &&
     connectedChainId !== expectedChainId;

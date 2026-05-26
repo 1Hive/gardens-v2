@@ -380,7 +380,10 @@ export function ConnectWallet() {
       {({ account: acc, chain, openConnectModal, mounted }) => {
         const ready = mounted;
         const connected = ready && !!acc && !!chain;
+        const isWalletConnectConnection =
+          account.connector?.id === "walletConnect";
         const isWrongNetwork =
+          !isWalletConnectConnection &&
           chain?.id != urlChainId && urlChainId != null && !isNaN(urlChainId);
 
         return (
@@ -416,7 +419,7 @@ export function ConnectWallet() {
                       <Menu.Button>
                         <div
                           className={`flex w-fit cursor-pointer items-center gap-4 rounded-2xl pl-4 py-2 hover:opacity-85 pr-2 
-                             ${cn({ "bg-danger-soft dark:bg-danger-soft-dark": urlChainId != null && urlChainId !== chain.id }, { "bg-primary": urlChainId == null || urlChainId === chain.id })}      
+                            ${cn({ "bg-danger-soft dark:bg-danger-soft-dark": isWrongNetwork }, { "bg-primary": !isWrongNetwork })}      
                           `}
                         >
                           {isWrongNetwork ?
@@ -457,7 +460,7 @@ export function ConnectWallet() {
                               {(
                                 urlChainId == null ||
                                 isNaN(urlChainId!) ||
-                                chain.id === urlChainId
+                                !isWrongNetwork
                               ) ?
                                 <>
                                   <ChainIcon chain={chain.id} height={14} />
