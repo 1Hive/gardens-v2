@@ -39,6 +39,7 @@ import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chains";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { isWrongNetworkForConnection } from "@/hooks/useDisableButtons";
 import { useExplorerPreference } from "@/hooks/useExplorerPreference";
 import { useHasContractCode } from "@/hooks/useHasContractCode";
 import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
@@ -380,11 +381,10 @@ export function ConnectWallet() {
       {({ account: acc, chain, openConnectModal, mounted }) => {
         const ready = mounted;
         const connected = ready && !!acc && !!chain;
-        const isWalletConnectConnection =
-          account.connector?.id === "walletConnect";
         const isWrongNetwork =
-          !isWalletConnectConnection &&
-          chain?.id != urlChainId && urlChainId != null && !isNaN(urlChainId);
+          urlChainId != null &&
+          !isNaN(urlChainId) &&
+          isWrongNetworkForConnection(chain?.id, urlChainId, account.connector?.id);
 
         return (
           <>

@@ -6,6 +6,7 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { formatEther, parseEther, UserRejectedRequestError } from "viem";
 import { useAccount, useBalance, useChainId } from "wagmi";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
+import { isWrongNetworkForConnection } from "@/hooks/useDisableButtons";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { MarkeeAbi } from "@/src/customAbis";
 import {
@@ -82,7 +83,7 @@ export default function MarkeeModal({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const suppressDialogCloseRef = useRef(false);
 
-  const { address } = useAccount();
+  const { address, connector } = useAccount();
   const connectedChainId = useChainId();
   const {
     switchNetwork,
@@ -95,6 +96,11 @@ export default function MarkeeModal({
 
   const activeAddress = address;
   const isOnBase = connectedChainId === MarkeeNetwork.id;
+  const isWrongNetwork = isWrongNetworkForConnection(
+    connectedChainId,
+    MarkeeNetwork.id,
+    connector?.id,
+  );
   const isConnected = !!activeAddress;
   const { data: baseBalanceData } = useBalance({
     address: activeAddress,
@@ -230,7 +236,7 @@ export default function MarkeeModal({
       setInputError("Connect your wallet before submitting.");
       return;
     }
-    if (!isOnBase) {
+    if (isWrongNetwork) {
       try {
         await switchNetworkAsync(MarkeeNetwork.id);
         setInputError("Switched to Base. Please submit again.");
@@ -271,7 +277,7 @@ export default function MarkeeModal({
     parsedAmount > baseBalance;
   const amountHasError = ethError || hasInsufficientBalance;
   const buyDisabled =
-    isLoading || (isConnected && !isOnBase) || hasInsufficientBalance;
+    isLoading || (isConnected && isWrongNetwork) || hasInsufficientBalance;
   const buyTooltip = hasInsufficientBalance ? "Insufficient balance" : "";
   const isFormDirty =
     message.length > 0 || name.length > 0 || ethAmount.length > 0;
@@ -579,7 +585,7 @@ export default function MarkeeModal({
           </div>
 
           {/* Wrong network banner */}
-          {isConnected && !isOnBase && (
+          {isConnected && isWrongNetwork && (
             <div className="mb-4 rounded border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 flex items-center justify-between">
               <p className="text-sm text-yellow-400">
                 Switch to Base to pay for the sign.

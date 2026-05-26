@@ -44,6 +44,7 @@ import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { isWrongNetworkForConnection } from "@/hooks/useDisableButtons";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { usePoolToken } from "@/hooks/usePoolToken";
@@ -566,7 +567,6 @@ export default function ClientPage({
     : null);
 
   const connectedChainId = useChainId();
-  const isWalletConnectConnection = connector?.id === "walletConnect";
 
   const { data: superTokenInfo } = useBalance({
     address: wallet as Address,
@@ -795,10 +795,13 @@ export default function ClientPage({
   }
 
   const isWrongNetwork =
-    !isWalletConnectConnection &&
     connectedChainId != null &&
     expectedChainId != null &&
-    connectedChainId !== expectedChainId;
+    isWrongNetworkForConnection(
+      connectedChainId,
+      expectedChainId,
+      connector?.id,
+    );
 
   if (!strategy) {
     const title =

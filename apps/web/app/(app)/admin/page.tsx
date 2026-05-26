@@ -24,6 +24,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { CHAINS } from "@/configs/chains";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
+import { isWrongNetworkForConnection } from "@/hooks/useDisableButtons";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { logOnce } from "@/utils/log";
 import { shortenAddress } from "@/utils/text";
@@ -203,7 +204,12 @@ export default function DiamondAdminPage() {
   const { chain } = useNetwork();
   const { switchNetworkAsync, isLoading: isSwitchingNetwork } =
     useAppSwitchNetwork();
-  const { isConnected } = useAccount();
+  const { isConnected, connector } = useAccount();
+  const isWrongNetwork = isWrongNetworkForConnection(
+    chain?.id,
+    selectedChainId,
+    connector?.id,
+  );
 
   const {
     data: rawFacets,
@@ -535,7 +541,7 @@ export default function DiamondAdminPage() {
         );
       }
 
-      if (chain?.id !== selectedChainId) {
+      if (isWrongNetwork) {
         await switchNetworkAsync(selectedChainId);
       }
 
@@ -900,7 +906,7 @@ export default function DiamondAdminPage() {
                       to send write transactions.
                     </p>
                   )}
-                  {isConnected && chain?.id !== selectedChainId && (
+                  {isConnected && isWrongNetwork && (
                     <p className="text-xs text-neutral-muted">
                       Wallet network ({chain?.name ?? chain?.id}) will switch to{" "}
                       {selectedChain?.name ?? selectedChainId} before sending.

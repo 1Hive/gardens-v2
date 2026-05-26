@@ -45,6 +45,7 @@ import { InfoBox } from "@/components/InfoBox";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { CHAINS, getExplorerUrl } from "@/configs/chains";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
+import { isWrongNetworkForConnection } from "@/hooks/useDisableButtons";
 import { useExplorerPreference } from "@/hooks/useExplorerPreference";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import {
@@ -819,7 +820,12 @@ export default function DiamondAdminPage() {
   const { chain } = useNetwork();
   const { switchNetworkAsync, isLoading: isSwitchingNetwork } =
     useAppSwitchNetwork();
-  const { address: connectedAddress, isConnected } = useAccount();
+  const { address: connectedAddress, connector, isConnected } = useAccount();
+  const isWrongNetwork = isWrongNetworkForConnection(
+    chain?.id,
+    selectedChainId,
+    connector?.id,
+  );
 
   const {
     data: rawFacets,
@@ -2177,7 +2183,7 @@ export default function DiamondAdminPage() {
         );
       }
 
-      if (chain?.id !== selectedChainId) {
+      if (isWrongNetwork) {
         await switchNetworkAsync(selectedChainId);
       }
 
@@ -2839,7 +2845,7 @@ export default function DiamondAdminPage() {
                         transactions.
                       </p>
                     )}
-                    {isConnected && chain?.id !== selectedChainId && (
+                    {isConnected && isWrongNetwork && (
                       <p className="text-xs text-neutral-muted">
                         Wallet network ({chain?.name ?? chain?.id}) will switch
                         to {selectedChain?.name ?? selectedChainId} before

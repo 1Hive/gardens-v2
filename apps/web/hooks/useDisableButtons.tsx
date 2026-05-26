@@ -14,15 +14,25 @@ export interface DisableButtonsHookProps {
   isButtonDisabled: boolean;
 }
 
+export const isWalletConnectConnection = (connectorId?: string) =>
+  connectorId === "walletConnect";
+
+export const isWrongNetworkForConnection = (
+  connectedChainId?: number,
+  expectedChainId?: number,
+  connectorId?: string,
+) =>
+  !isWalletConnectConnection(connectorId) &&
+  connectedChainId !== expectedChainId;
+
 export function useDisableButtons(
   conditions?: ConditionObject[],
 ): DisableButtonsHookProps {
   const { isConnected, connector } = useAccount();
   const urlChain = useChainFromPath();
   const { chain } = useNetwork(); // wallet connected chain object
-  const isWalletConnect = connector?.id === "walletConnect";
   const missmatchUrlAndWalletChain =
-    !isWalletConnect && chain?.id !== urlChain?.id;
+    isWrongNetworkForConnection(chain?.id, urlChain?.id, connector?.id);
 
   const tooltipMessage = useMemo(() => {
     if (!isConnected) {
