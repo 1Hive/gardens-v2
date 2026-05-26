@@ -22,10 +22,32 @@ export type CheatName = (typeof cheats)[number];
 
 const getStorageKey = (flag: CheatName) => `flag_${flag}`;
 
+const getGlobalFlagCommandName = (flag: CheatName, enabled: boolean) =>
+  `flag_${flag}${enabled ? "Disable" : "Enable"}`;
+
+const syncGlobalFlagCommands = () => {
+  const windowWithFlagCommands = window as unknown as Record<string, unknown>;
+
+  cheats.forEach((flag) => {
+    const isEnabled = window.localStorage.getItem(getStorageKey(flag)) === "true";
+    const enableCommandName = getGlobalFlagCommandName(flag, false);
+    const disableCommandName = getGlobalFlagCommandName(flag, true);
+    delete windowWithFlagCommands[enableCommandName];
+    delete windowWithFlagCommands[disableCommandName];
+
+    const commandName = getGlobalFlagCommandName(flag, isEnabled);
+    windowWithFlagCommands[commandName] = () => {
+      window.localStorage.setItem(getStorageKey(flag), isEnabled ? "false" : "true");
+      syncGlobalFlagCommands();
+    };
+  });
+};
+
 const setAllFlags = (enabled: boolean) => {
   cheats.forEach((flag) => {
     window.localStorage.setItem(getStorageKey(flag), enabled ? "true" : "false");
   });
+  syncGlobalFlagCommands();
 };
 
 // Cannot use dynamic key resolving since its resolve at build time
@@ -88,11 +110,13 @@ export const useFlag = (
         console.info("🚩Flags commands:");
         cheats.forEach((c) => {
           const isEnabled = localStorage.getItem(getStorageKey(c)) === "true";
-          console.info(`localStorage.setItem("${getStorageKey(c)}", ${!isEnabled})`);
+          console.info(`window.${getGlobalFlagCommandName(c, isEnabled)}()`);
         });
         console.info('useFlags(true) // enable all');
         console.info('useFlags(false) // disable all');
       };
+
+      syncGlobalFlagCommands();
     }
   }, []);
 
