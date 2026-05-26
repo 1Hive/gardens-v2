@@ -143,6 +143,9 @@ export function Proposals({
   const [showManageSupportTooltip, setShowManageSupportTooltip] =
     useState(false);
   const proposalCardRefs = useRef<Map<string, ProposalHandle>>(new Map());
+  const [liveConvictions, setLiveConvictions] = useState<
+    Record<string, bigint>
+  >({});
 
   // Hooks
   const { address: wallet } = useAccount();
@@ -160,6 +163,16 @@ export function Proposals({
     (id: string) => (inst: ProposalHandle | null) => {
       if (inst) proposalCardRefs.current.set(id, inst);
       else proposalCardRefs.current.delete(id); // cleanup on unmount
+    },
+    [],
+  );
+
+  const handleConvictionUpdate = useCallback(
+    (id: string, conviction: bigint) => {
+      setLiveConvictions((prev) => {
+        if (prev[id] === conviction) return prev;
+        return { ...prev, [id]: conviction };
+      });
     },
     [],
   );
@@ -718,7 +731,7 @@ export function Proposals({
     sortBy: sortBy,
     setSortBy: setSortBy,
     filtered: filteredAndSorted,
-  } = useProposalFilter(sortedProposals);
+  } = useProposalFilter(sortedProposals, liveConvictions);
   const selectedFilterTitle =
     filter == null || filter === "all" ?
       "All Proposals"
@@ -885,6 +898,7 @@ export function Proposals({
                   communityToken={strategy.registryCommunity.garden}
                   isPoolEnabled={strategy.isEnabled}
                   minThGtTotalEffPoints={minThGtTotalEffPoints}
+                  onConvictionUpdate={handleConvictionUpdate}
                 />
               </Fragment>
             ))}
@@ -983,8 +997,9 @@ export function useProposalFilter<
     stakedAmount?: string | number;
     requestedAmount?: string | number;
     convictionLast?: string | number;
+    id: string;
   },
->(proposals: T[]) {
+>(proposals: T[], liveConvictions?: Record<string, bigint>) {
   const toSortableBigInt = (value?: string | number) => {
     if (typeof value === "number") return BigInt(value);
     if (typeof value === "string") {
@@ -1049,9 +1064,11 @@ export function useProposalFilter<
         return list.sort((a, b) => Number(a.createdAt) - Number(b.createdAt));
 
       case "mostSupported":
-        return list.sort(
-          (a, b) => Number(b.stakedAmount) - Number(a.stakedAmount),
-        );
+        return list.sort((a, b) => {
+          const aStaked = toSortableBigInt(a.stakedAmount);
+          const bStaked = toSortableBigInt(b.stakedAmount);
+          return aStaked < bStaked ? 1 : aStaked > bStaked ? -1 : 0;
+        });
 
       case "mostRequested":
         return list.sort(
@@ -1060,8 +1077,10 @@ export function useProposalFilter<
 
       case "mostConviction":
         return list.sort((a, b) => {
-          const aConviction = toSortableBigInt(a.convictionLast);
-          const bConviction = toSortableBigInt(b.convictionLast);
+          const aConviction =
+            liveConvictions?.[a.id] ?? toSortableBigInt(a.convictionLast);
+          const bConviction =
+            liveConvictions?.[b.id] ?? toSortableBigInt(b.convictionLast);
 
           return (
             aConviction < bConviction ? 1
@@ -1073,7 +1092,7 @@ export function useProposalFilter<
       default:
         return list;
     }
-  }, [filteredProposals, sortBy]);
+  }, [filteredProposals, sortBy, liveConvictions]);
 
   // Wrapped setters with loading state
   const setFilterWithLoading = (newFilter: FilterType) => {
