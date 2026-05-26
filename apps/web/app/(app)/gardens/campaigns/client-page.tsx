@@ -179,6 +179,12 @@ export default function CampaignsPage() {
           </div>
         : displayedCampaigns.map((c) => {
             const isEndedCampaign = !isCampaignActive(c.endDate, now);
+            const totalStreamedSup = statsByCampaign[c.slug]?.totalStreamedSup ?? 0;
+            const targetStreamSup = statsByCampaign[c.slug]?.targetStreamSup;
+            const progressPercentage =
+              targetStreamSup && targetStreamSup > 0 ?
+                Math.min(100, (totalStreamedSup / targetStreamSup) * 100)
+              : 0;
             const cardBorderClasses =
               isEndedCampaign ? "border-danger/50" : (
                 "border-neutral-soft-content/30 dark:border-white/10"
@@ -243,14 +249,10 @@ export default function CampaignsPage() {
                       <div className="flex justify-between text-sm mb-2">
                         <span className="">Claimed</span>
                         <span className="font-medium">
-                          {formatNumber(
-                            statsByCampaign[c.slug]?.totalStreamedSup ?? 0,
-                          )}{" "}
-                          /{" "}
-                          {formatNumber(
-                            statsByCampaign[c.slug]?.targetStreamSup ?? 0,
-                          )}{" "}
-                          {c.tokenSymbol}
+                        {formatNumber(totalStreamedSup)}{" "}
+                        /{" "}
+                        {formatNumber(targetStreamSup ?? 0)}{" "}
+                        {c.tokenSymbol}
                         </span>
                       </div>
                     </Skeleton>
@@ -261,15 +263,9 @@ export default function CampaignsPage() {
                     >
                       <div className="h-2 bg-neutral-soft dark:bg-neutral-soft-content rounded-full overflow-hidden mb-4">
                         <div
-                          className="h-full bg-neutral-soft-content transition-all"
+                          className="h-full bg-primary-content transition-all"
                           style={{
-                            width: `${
-                              ((statsByCampaign[c.slug]?.totalStreamedSup ??
-                                0) /
-                                (statsByCampaign[c.slug]?.targetStreamSup ??
-                                  10)) *
-                              100
-                            }%`,
+                            width: `${progressPercentage}%`,
                           }}
                         />
                       </div>
