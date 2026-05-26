@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 type Props<TValue> = {
   key: string;
@@ -13,6 +13,17 @@ export function useWatchLocalStorage<TValue = string>({
   deserializer = (v) => v as TValue,
   serializer = (v) => (v as unknown as string).toString(),
 }: Props<TValue>) {
+  const deserializerRef = useRef(deserializer);
+  const initialValueRef = useRef(initialValue);
+
+  useEffect(() => {
+    deserializerRef.current = deserializer;
+  }, [deserializer]);
+
+  useEffect(() => {
+    initialValueRef.current = initialValue;
+  }, [initialValue]);
+
   const [value, setValue] = useState<TValue | undefined>(() => {
     if (typeof window === "undefined") {
       return initialValue;
@@ -20,7 +31,7 @@ export function useWatchLocalStorage<TValue = string>({
 
     try {
       const item = window.localStorage.getItem(key);
-      return item ? deserializer(item) : initialValue;
+      return item ? deserializerRef.current(item) : initialValue;
     } catch (error) {
       console.error(error);
       return initialValue;
@@ -41,14 +52,30 @@ export function useWatchLocalStorage<TValue = string>({
       return;
     }
 
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== key) {
+        return;
+      }
+      if (event.newValue === null) {
+        setValue(initialValueRef.current);
+        return;
+      }
+      setValue(deserializerRef.current(event.newValue));
+    };
+
+    window.addEventListener("storage", handleStorage);
+
     const interval = setInterval(() => {
       const item = window.localStorage.getItem(key);
       if (item !== null) {
-        setValue(deserializer(item));
+        setValue(deserializerRef.current(item));
+        return;
       }
+      setValue(initialValueRef.current);
     }, 1000);
 
     return () => {
+      window.removeEventListener("storage", handleStorage);
       clearInterval(interval);
     };
   }, [key]);
