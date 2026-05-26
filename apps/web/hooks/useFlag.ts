@@ -25,6 +25,14 @@ const getStorageKey = (flag: CheatName) => `flag_${flag}`;
 const getGlobalFlagCommandName = (flag: CheatName, enabled: boolean) =>
   `flag_${flag}${enabled ? "Disable" : "Enable"}`;
 
+const setFlagStorageValue = (flag: CheatName, enabled: boolean) => {
+  const key = getStorageKey(flag);
+  const newValue = enabled ? "true" : "false";
+  window.localStorage.setItem(key, newValue);
+  // Native storage events do not fire in the same tab, so dispatch one for immediate UI updates.
+  window.dispatchEvent(new StorageEvent("storage", { key, newValue }));
+};
+
 const syncGlobalFlagCommands = () => {
   const windowWithFlagCommands = window as unknown as Record<string, unknown>;
 
@@ -37,7 +45,7 @@ const syncGlobalFlagCommands = () => {
 
     const commandName = getGlobalFlagCommandName(flag, isEnabled);
     windowWithFlagCommands[commandName] = () => {
-      window.localStorage.setItem(getStorageKey(flag), isEnabled ? "false" : "true");
+      setFlagStorageValue(flag, !isEnabled);
       syncGlobalFlagCommands();
     };
   });
@@ -45,7 +53,7 @@ const syncGlobalFlagCommands = () => {
 
 const setAllFlags = (enabled: boolean) => {
   cheats.forEach((flag) => {
-    window.localStorage.setItem(getStorageKey(flag), enabled ? "true" : "false");
+    setFlagStorageValue(flag, enabled);
   });
   syncGlobalFlagCommands();
 };
