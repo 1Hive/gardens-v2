@@ -201,6 +201,19 @@ const fetchSuperfluidTotals = async (
   }
 };
 
+const getTotalStreamedSup = async (
+  campaignId?: string | null,
+  gardensGdaId?: string,
+) => {
+  const campaignOverride =
+    campaignId ? TOTAL_STREAMED_SUP_BY_CAMPAIGN[campaignId] : undefined;
+  if (campaignOverride !== undefined) {
+    return campaignOverride;
+  }
+
+  return (await fetchSuperfluidTotals(gardensGdaId)) ?? TOTAL_STREAMED_SUP_FALLBACK;
+};
+
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
@@ -249,12 +262,10 @@ export async function GET(request: Request) {
       hasCampaignSpecificGdaId ?
         GARDENS_GDA_ID_BY_CAMPAIGN[String(campaignIdFromQuery)]
       : DEFAULT_GARDENS_GDA_ID;
-    const totalStreamedSup =
-      (campaignIdFromQuery ?
-        TOTAL_STREAMED_SUP_BY_CAMPAIGN[String(campaignIdFromQuery)]
-      : undefined) ??
-      ((await fetchSuperfluidTotals(gardensGdaId)) ??
-        TOTAL_STREAMED_SUP_FALLBACK);
+    const totalStreamedSup = await getTotalStreamedSup(
+      campaignIdFromQuery,
+      gardensGdaId,
+    );
     const targetStreamSup =
       (campaignIdFromQuery ?
         TARGET_STREAM_SUP_BY_CAMPAIGN[String(campaignIdFromQuery)]
