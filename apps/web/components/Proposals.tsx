@@ -146,6 +146,8 @@ export function Proposals({
   const [liveConvictions, setLiveConvictions] = useState<
     Record<string, bigint>
   >({});
+  const pendingConvictionsRef = useRef<Record<string, bigint>>({});
+  const convictionFlushFrameRef = useRef<number | null>(null);
 
   // Hooks
   const { address: wallet } = useAccount();
@@ -167,15 +169,47 @@ export function Proposals({
     [],
   );
 
+  const flushPendingConvictions = useCallback(() => {
+    convictionFlushFrameRef.current = null;
+    const pendingUpdates = pendingConvictionsRef.current;
+    pendingConvictionsRef.current = {};
+    const pendingEntries = Object.entries(pendingUpdates);
+
+    if (pendingEntries.length === 0) return;
+
+    setLiveConvictions((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      for (const [id, conviction] of pendingEntries) {
+        if (next[id] === conviction) continue;
+        next[id] = conviction;
+        changed = true;
+      }
+
+      return changed ? next : prev;
+    });
+  }, []);
+
+  const scheduleConvictionFlush = useCallback(() => {
+    if (convictionFlushFrameRef.current != null) return;
+    convictionFlushFrameRef.current = requestAnimationFrame(flushPendingConvictions);
+  }, [flushPendingConvictions]);
+
   const handleConvictionUpdate = useCallback(
     (id: string, conviction: bigint) => {
-      setLiveConvictions((prev) => {
-        if (prev[id] === conviction) return prev;
-        return { ...prev, [id]: conviction };
-      });
+      pendingConvictionsRef.current[id] = conviction;
+      scheduleConvictionFlush();
     },
-    [],
+    [scheduleConvictionFlush],
   );
+
+  useEffect(() => {
+    return () => {
+      if (convictionFlushFrameRef.current == null) return;
+      cancelAnimationFrame(convictionFlushFrameRef.current);
+    };
+  }, []);
 
   // Queries
   const { data: memberData, error } = useSubgraphQuery<isMemberQuery>({
@@ -1071,9 +1105,11 @@ export function useProposalFilter<
         });
 
       case "mostRequested":
-        return list.sort(
-          (a, b) => Number(b.requestedAmount) - Number(a.requestedAmount),
-        );
+        return list.sort((a, b) => {
+          const aRequested = toSortableBigInt(a.requestedAmount);
+          const bRequested = toSortableBigInt(b.requestedAmount);
+          return aRequested < bRequested ? 1 : aRequested > bRequested ? -1 : 0;
+        });
 
       case "mostConviction":
         return list.sort((a, b) => {
