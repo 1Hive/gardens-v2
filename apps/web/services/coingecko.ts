@@ -15,6 +15,9 @@ type PriceCacheEntry = { value: number; expiresAt: number; symbol?: string };
 const coingeckoBaseUrl =
   process.env.COINGECKO_API_BASE ?? "https://api.coingecko.com/api/v3";
 const getBaseUrl = () => {
+  if (process.env.COINGECKO_API_BASE) {
+    return coingeckoBaseUrl;
+  }
   const apiKey = process.env.COINGECKO_API_KEY?.toLowerCase() ?? "";
   const isDemo = apiKey.startsWith("demo");
   if (isDemo) {

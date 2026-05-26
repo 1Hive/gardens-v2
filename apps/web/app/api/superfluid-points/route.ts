@@ -404,6 +404,7 @@ const ensureNotionDataSourceId = async (): Promise<string | null> => {
 };
 
 let notionChecksumEnsured = false;
+let notionBreakdownEnsured = false;
 const getNotionDataSourceIdForCampaign = (campaignId?: number | null) => {
   if (campaignId !== null && campaignId !== undefined) {
     return (
@@ -419,39 +420,62 @@ const setNotionDataSourceForCampaign = (campaignId?: number | null) => {
   if (notionDataSourceId === nextDataSourceId) return;
   notionDataSourceId = nextDataSourceId;
   notionChecksumEnsured = false;
+  notionBreakdownEnsured = false;
 };
 
-const ensureNotionChecksumProperty = async (): Promise<boolean> => {
+const ensureNotionRichTextProperty = async (
+  propertyName: "Breakdown" | "Checksum",
+): Promise<boolean> => {
   if (!notionClient || !NOTION_DB_ID_NORMALIZED) return false;
-  if (notionChecksumEnsured) return true;
+  if (
+    (propertyName === "Checksum" && notionChecksumEnsured) ||
+    (propertyName === "Breakdown" && notionBreakdownEnsured)
+  ) {
+    return true;
+  }
   try {
     const db = await notionClient.databases.retrieve({
       database_id: NOTION_DB_ID_NORMALIZED,
     });
     const props = (db as any)?.properties ?? {};
-    if (props?.Checksum?.type === "rich_text") {
-      notionChecksumEnsured = true;
+    if (props?.[propertyName]?.type === "rich_text") {
+      if (propertyName === "Checksum") {
+        notionChecksumEnsured = true;
+      } else {
+        notionBreakdownEnsured = true;
+      }
       return true;
     }
     await (notionClient as any).databases.update({
       database_id: NOTION_DB_ID_NORMALIZED,
       properties: {
-        Checksum: { rich_text: {} },
+        [propertyName]: { rich_text: {} },
       },
     });
-    notionChecksumEnsured = true;
+    if (propertyName === "Checksum") {
+      notionChecksumEnsured = true;
+    } else {
+      notionBreakdownEnsured = true;
+    }
     console.log(
-      "[superfluid-points] added Checksum property to Notion database",
-      { databaseId: NOTION_DB_ID_NORMALIZED },
+      `[superfluid-points] added ${propertyName} property to Notion database`,
+      { databaseId: NOTION_DB_ID_NORMALIZED, propertyName },
     );
     return true;
   } catch (error) {
-    console.error("[superfluid-points] failed to ensure Checksum property", {
-      error,
-    });
+    console.error(
+      `[superfluid-points] failed to ensure ${propertyName} property`,
+      { error, propertyName },
+    );
     return false;
   }
 };
+
+const ensureNotionChecksumProperty = async (): Promise<boolean> =>
+  ensureNotionRichTextProperty("Checksum");
+
+const ensureNotionBreakdownProperty = async (): Promise<boolean> =>
+  ensureNotionRichTextProperty("Breakdown");
 
 const notionQueryDb = async (
   body: Record<string, any>,
@@ -518,6 +542,13 @@ const upsertNotionWallet = async ({
   if (!checksumReady) {
     console.warn(
       "[superfluid-points] skipping Notion upsert because Checksum column is missing and could not be created",
+    );
+    return false;
+  }
+  const breakdownReady = await ensureNotionBreakdownProperty();
+  if (!breakdownReady) {
+    console.warn(
+      "[superfluid-points] skipping Notion upsert because Breakdown column is missing and could not be created",
     );
     return false;
   }

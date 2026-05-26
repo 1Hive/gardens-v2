@@ -54,7 +54,7 @@ export const CAMPAIGNS = {
     description:
       "Earn SUP rewards by staking governance tokens, adding funds to pools, following Gardens on Farcaster, and earning triple points in Streaming pools.",
     tokenSymbol: "SUP",
-    endDate: "August 31 2026",
+    endDate: "28 Jun 2026",
     banner: SuperBanner,
     logo: SuperLogo,
     leaderboardEndpoint: "/api/superfluid-points/leaderboard?campaignId=511",
