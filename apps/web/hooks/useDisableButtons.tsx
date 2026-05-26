@@ -1,5 +1,9 @@
 import { useMemo } from "react";
 import { useAccount, useNetwork } from "wagmi";
+import {
+  isWalletConnectConnection,
+  isWrongNetworkForConnection,
+} from "@/utils/network";
 import { useChainFromPath } from "./useChainFromPath";
 
 export interface ConditionObject {
@@ -14,16 +18,7 @@ export interface DisableButtonsHookProps {
   isButtonDisabled: boolean;
 }
 
-export const isWalletConnectConnection = (connectorId?: string) =>
-  connectorId === "walletConnect";
-
-export const isWrongNetworkForConnection = (
-  connectedChainId?: number,
-  expectedChainId?: number,
-  connectorId?: string,
-) =>
-  !isWalletConnectConnection(connectorId) &&
-  connectedChainId !== expectedChainId;
+export { isWalletConnectConnection, isWrongNetworkForConnection };
 
 export function useDisableButtons(
   conditions?: ConditionObject[],
