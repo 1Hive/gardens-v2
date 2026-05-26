@@ -6,8 +6,8 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { formatEther, parseEther, UserRejectedRequestError } from "viem";
 import { useAccount, useBalance, useChainId } from "wagmi";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
-import { isWrongNetworkForConnection } from "@/hooks/useDisableButtons";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { isWrongNetworkForConnection } from "@/hooks/useDisableButtons";
 import { MarkeeAbi } from "@/src/customAbis";
 import {
   fetchMarkeeLeaderboard,
