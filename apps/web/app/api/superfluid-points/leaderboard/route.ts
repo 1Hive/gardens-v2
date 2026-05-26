@@ -143,6 +143,10 @@ const SUPERFLUID_POOL_TOTALS_QUERY = gql`
   }
 `;
 const TOTAL_STREAMED_SUP_FALLBACK = 3_578;
+const TOTAL_STREAMED_SUP_BY_CAMPAIGN: Record<string, number> = {
+  "510": 483_000,
+  "511": 0,
+};
 const DEFAULT_TARGET_STREAM_SUP = 847_000;
 const TARGET_STREAM_SUP_BY_CAMPAIGN: Record<string, number> = {
   "510": 519_000,
@@ -246,8 +250,11 @@ export async function GET(request: Request) {
         GARDENS_GDA_ID_BY_CAMPAIGN[String(campaignIdFromQuery)]
       : DEFAULT_GARDENS_GDA_ID;
     const totalStreamedSup =
-      (await fetchSuperfluidTotals(gardensGdaId)) ??
-      TOTAL_STREAMED_SUP_FALLBACK;
+      (campaignIdFromQuery ?
+        TOTAL_STREAMED_SUP_BY_CAMPAIGN[String(campaignIdFromQuery)]
+      : undefined) ??
+      ((await fetchSuperfluidTotals(gardensGdaId)) ??
+        TOTAL_STREAMED_SUP_FALLBACK);
     const targetStreamSup =
       (campaignIdFromQuery ?
         TARGET_STREAM_SUP_BY_CAMPAIGN[String(campaignIdFromQuery)]
