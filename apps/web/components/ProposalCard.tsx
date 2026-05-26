@@ -216,7 +216,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       if (updatedConviction != null && currentConvictionPct != null) {
         onConvictionUpdate?.(proposalData.id, updatedConviction);
       }
-    }, [updatedConviction, currentConvictionPct]);
+    }, [updatedConviction, currentConvictionPct, onConvictionUpdate, proposalData.id]);
 
     useEffect(() => {
       setOptimisticProposalStatus(null);
