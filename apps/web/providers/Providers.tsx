@@ -59,6 +59,9 @@ export const AUTOCONNECT_RESET_EVENT = "gardens:autoconnect-reset";
 export const SKIP_AUTOCONNECT_STORAGE_KEY = "gardens:skip-autoconnect";
 
 const getConfiguredChains = () => dedupeChains([...CHAINS, base, mainnet]);
+// RainbowKit's modal overlay ships with z-index 2147483646 in its bundled CSS.
+// Keep WalletConnect one step above it so the QR/deeplink modal is clickable.
+const WALLETCONNECT_MODAL_Z_INDEX = 2147483647;
 
 const createCustomConfig = (
   skipAutoConnect: boolean,
@@ -69,8 +72,8 @@ const createCustomConfig = (
   const usedChains = getConfiguredChains();
   const chains = usedChains;
   // RainbowKit caches WalletConnect connectors by serialized options.
-  // Changing this on reset forces a fresh connector after stale WC sessions.
-  const walletConnectModalZIndex = 1100 + walletConnectResetVersion;
+  // Keep the modal above RainbowKit's overlay while still varying the
+  // serialized options after a reset to force a fresh connector.
   const walletConnectProjectId =
     process.env.NEXT_PUBLIC_WALLET_CONNECT_ID ?? "";
   const connectorFactory = connectorsForWallets([
@@ -81,18 +84,26 @@ const createCustomConfig = (
         rabbyWallet({ chains }),
         frameWallet({ chains }),
         coinbaseWallet({ appName: "Gardens V2", chains }),
-        walletConnectWallet({
-          chains,
-          projectId: walletConnectProjectId,
-          options: {
-            projectId: walletConnectProjectId,
-            qrModalOptions: {
-              themeVariables: {
-                "--wcm-z-index": walletConnectModalZIndex.toString(),
+        ...(walletConnectProjectId ?
+          [
+            walletConnectWallet({
+              chains,
+              projectId: walletConnectProjectId,
+              options: {
+                projectId: walletConnectProjectId,
+                qrModalOptions: {
+                  themeVariables: {
+                    "--wcm-z-index": WALLETCONNECT_MODAL_Z_INDEX.toString(),
+                    // WalletConnect connectors are cached from serialized options.
+                    // This unused custom variable changes on reset to force a fresh instance.
+                    "--gardens-walletconnect-reset":
+                      walletConnectResetVersion.toString(),
+                  },
+                },
               },
-            },
-          },
-        }),
+            }),
+          ]
+        : []),
       ],
     },
   ]);
