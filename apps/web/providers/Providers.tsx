@@ -1,8 +1,14 @@
 "use client";
 
-import React, { Suspense, useEffect, useMemo, useState } from "react";
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { AddrethConfig } from "addreth";
-import { ConnectKitProvider, getDefaultConnectors } from "connectkit";
+import { ConnectKitProvider, getDefaultConnectors, useModal } from "connectkit";
 import { Bounce, ToastContainer } from "react-toastify";
 import { Address, createWalletClient, custom, isAddress } from "viem";
 import { base } from "viem/chains";
@@ -12,6 +18,7 @@ import {
   configureChains,
   createConfig,
   mainnet,
+  useAccount,
   WagmiConfig,
 } from "wagmi";
 import { connect, disconnect } from "wagmi/actions";
@@ -32,6 +39,11 @@ import { PubSubProvider } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useTheme } from "@/providers/ThemeProvider";
 import { logOnce } from "@/utils/log";
+import {
+  getWalletConnectDeepLinkChoice,
+  isMobileBrowser,
+  WalletConnectDeepLinkChoice,
+} from "@/utils/walletConnectMobile";
 
 const dedupeChains = (chainList: Chain[]) =>
   chainList.filter(
@@ -332,6 +344,7 @@ const ThemeAware = ({ children }: { children: React.ReactNode }) => {
           walletConnectName: "WalletConnect",
         }}
       >
+        <MobileWalletConnectStatus />
         <TransactionNotificationProvider>
           {children}
         </TransactionNotificationProvider>
@@ -351,6 +364,145 @@ const ThemeAware = ({ children }: { children: React.ReactNode }) => {
         transition={Bounce}
       />
     </>
+  );
+};
+
+const MobileWalletConnectStatus = () => {
+  const account = useAccount();
+  const { open: connectModalOpen, setOpen: setConnectModalOpen } = useModal();
+  const [walletChoice, setWalletChoice] =
+    useState<WalletConnectDeepLinkChoice | null>(null);
+  const [hasReturnedFromWallet, setHasReturnedFromWallet] = useState(false);
+
+  useEffect(() => {
+    if (!connectModalOpen || !isMobileBrowser()) {
+      if (!account.isConnecting && !account.isReconnecting) {
+        setWalletChoice(null);
+        setHasReturnedFromWallet(false);
+      }
+      return;
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        const choice = getWalletConnectDeepLinkChoice();
+        if (choice) {
+          setWalletChoice(choice);
+          setHasReturnedFromWallet(false);
+        }
+        return;
+      }
+
+      if (document.visibilityState === "visible") {
+        const choice = getWalletConnectDeepLinkChoice();
+        if (choice) {
+          setWalletChoice(choice);
+          setHasReturnedFromWallet(true);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [
+    account.isConnecting,
+    account.isReconnecting,
+    connectModalOpen,
+    setWalletChoice,
+  ]);
+
+  useEffect(() => {
+    if (account.isConnected) {
+      setWalletChoice(null);
+      setHasReturnedFromWallet(false);
+      setConnectModalOpen(false);
+    }
+  }, [account.isConnected, setConnectModalOpen]);
+
+  useEffect(() => {
+    if (
+      connectModalOpen &&
+      isMobileBrowser() &&
+      (account.isConnecting || account.isReconnecting)
+    ) {
+      const choice = getWalletConnectDeepLinkChoice();
+      if (choice) {
+        setWalletChoice(choice);
+      }
+    }
+  }, [account.isConnecting, account.isReconnecting, connectModalOpen]);
+
+  const handleRetry = useCallback(() => {
+    const choice = walletChoice ?? getWalletConnectDeepLinkChoice();
+    if (!choice) {
+      return;
+    }
+    setWalletChoice(choice);
+    setHasReturnedFromWallet(false);
+    window.open(choice.href, "_self");
+  }, [walletChoice]);
+
+  const handleChooseAnotherWallet = useCallback(() => {
+    setWalletChoice(null);
+    setHasReturnedFromWallet(false);
+    setConnectModalOpen(true);
+  }, [setConnectModalOpen]);
+
+  const showConnectingStatus = Boolean(
+    connectModalOpen &&
+      walletChoice != null &&
+      !account.isConnected &&
+      isMobileBrowser() &&
+      (hasReturnedFromWallet || account.isConnecting || account.isReconnecting),
+  );
+
+  if (!showConnectingStatus || walletChoice == null) {
+    return null;
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-neutral-content/50 px-4 backdrop-blur-sm dark:bg-black/70"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mobile-wallet-connect-title"
+    >
+      <div className="w-full max-w-sm rounded-2xl border border-neutral-soft bg-neutral p-5 text-neutral-content shadow-2xl dark:border-neutral-soft-dark">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <span className="loading loading-spinner loading-md text-primary" />
+          <div className="flex flex-col gap-2">
+            <h2
+              id="mobile-wallet-connect-title"
+              className="text-lg font-semibold"
+            >
+              Connecting wallet
+            </h2>
+            <p className="text-sm text-neutral-soft-content">
+              Approve the connection in {walletChoice.label}, then return to
+              Gardens.
+            </p>
+          </div>
+          <div className="flex w-full flex-col gap-2">
+            <button
+              type="button"
+              className="w-full rounded-lg bg-primary-button px-4 py-2 text-sm font-medium text-neutral-inverted-content transition hover:bg-primary-hover-content dark:bg-primary-dark-base dark:hover:bg-primary-dark-hover"
+              onClick={handleRetry}
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              className="w-full rounded-lg border border-neutral-soft px-4 py-2 text-sm font-medium text-neutral-content transition hover:border-primary-content hover:text-primary-content dark:border-white/15 dark:text-neutral-inverted-content"
+              onClick={handleChooseAnotherWallet}
+            >
+              Choose another wallet
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
