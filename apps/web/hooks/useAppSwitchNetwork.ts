@@ -1,10 +1,39 @@
 import { useCallback } from "react";
 import { toast } from "react-toastify";
-import { useAccount, useSwitchNetwork } from "wagmi";
+import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { getChain } from "@/configs/chains";
+
+const getWalletConnectDebugError = (error: unknown) => {
+  const value = error as {
+    name?: unknown;
+    message?: unknown;
+    shortMessage?: unknown;
+    cause?: { name?: unknown; message?: unknown; shortMessage?: unknown };
+  };
+
+  return {
+    name: typeof value?.name === "string" ? value.name : undefined,
+    message: typeof value?.message === "string" ? value.message : undefined,
+    shortMessage:
+      typeof value?.shortMessage === "string" ? value.shortMessage : undefined,
+    cause: {
+      name:
+        typeof value?.cause?.name === "string" ? value.cause.name : undefined,
+      message:
+        typeof value?.cause?.message === "string" ?
+          value.cause.message
+        : undefined,
+      shortMessage:
+        typeof value?.cause?.shortMessage === "string" ?
+          value.cause.shortMessage
+        : undefined,
+    },
+  };
+};
 
 export function useAppSwitchNetwork() {
   const { connector } = useAccount();
+  const { chain } = useNetwork();
   const switchNetworkResult = useSwitchNetwork();
   const isWalletConnect =
     connector?.id === "walletConnect" ||
@@ -28,19 +57,66 @@ export function useAppSwitchNetwork() {
 
   const trySwitchNetworkAsync = useCallback(
     async (chainId?: number) => {
+      console.info("[walletconnect-debug] switchNetwork requested", {
+        connector: {
+          id: connector?.id,
+          name: connector?.name,
+          ready: connector?.ready,
+        },
+        currentChain:
+          chain ?
+            {
+              id: chain.id,
+              name: chain.name,
+              unsupported: chain.unsupported,
+            }
+          : undefined,
+        targetChainId: chainId,
+        isWalletConnect,
+        hasSwitchNetwork: switchNetworkResult.switchNetwork != null,
+        hasSwitchNetworkAsync: switchNetworkResult.switchNetworkAsync != null,
+      });
+
       if (chainId == null || !switchNetworkResult.switchNetworkAsync) {
+        console.info("[walletconnect-debug] switchNetwork unavailable", {
+          targetChainId: chainId,
+          hasSwitchNetworkAsync: switchNetworkResult.switchNetworkAsync != null,
+        });
         showWalletConnectReconnectToast(chainId);
         return undefined;
       }
 
       try {
-        return await switchNetworkResult.switchNetworkAsync(chainId);
-      } catch {
+        const result = await switchNetworkResult.switchNetworkAsync(chainId);
+        console.info("[walletconnect-debug] switchNetwork resolved", {
+          targetChainId: chainId,
+          result:
+            result ?
+              {
+                id: result.id,
+                name: result.name,
+              }
+            : undefined,
+        });
+        return result;
+      } catch (error) {
+        console.info("[walletconnect-debug] switchNetwork failed", {
+          targetChainId: chainId,
+          error: getWalletConnectDebugError(error),
+        });
         showWalletConnectReconnectToast(chainId);
         return undefined;
       }
     },
-    [showWalletConnectReconnectToast, switchNetworkResult],
+    [
+      chain,
+      connector?.id,
+      connector?.name,
+      connector?.ready,
+      isWalletConnect,
+      showWalletConnectReconnectToast,
+      switchNetworkResult,
+    ],
   );
 
   const switchNetwork = useCallback(

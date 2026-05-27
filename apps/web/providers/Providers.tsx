@@ -19,6 +19,7 @@ import {
   createConfig,
   mainnet,
   useAccount,
+  useNetwork,
   WagmiConfig,
 } from "wagmi";
 import { connect, disconnect } from "wagmi/actions";
@@ -193,6 +194,42 @@ const resetStaleWalletStorageForConnectKitMigration = () => {
   }
 };
 
+const getWalletConnectProviderSnapshot = async (provider: any) => {
+  if (!provider) {
+    return null;
+  }
+
+  let chainId: unknown;
+  let accounts: unknown;
+
+  try {
+    chainId = await provider.request?.({ method: "eth_chainId" });
+  } catch (error) {
+    chainId = {
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  try {
+    accounts = await provider.request?.({ method: "eth_accounts" });
+  } catch (error) {
+    accounts = {
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  return {
+    chainId,
+    accounts,
+    sessionTopic: provider.session?.topic,
+    sessionNamespaces: provider.session?.namespaces,
+    sessionRequiredNamespaces: provider.session?.requiredNamespaces,
+    sessionOptionalNamespaces: provider.session?.optionalNamespaces,
+    providerChainId: provider.chainId,
+    providerAccounts: provider.accounts,
+  };
+};
+
 const createCustomConfig = (
   preferredSimulatedChain: Chain | undefined,
   simulatedWallet?: Address,
@@ -329,6 +366,21 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
   useEffect(() => {
     resetStaleWalletStorageForConnectKitMigration();
 
+    console.info("[walletconnect-debug] creating wagmi config", {
+      routeChain: chain ? { id: chain.id, name: chain.name } : undefined,
+      preferredSimulatedChain:
+        preferredSimulatedChain ?
+          {
+            id: preferredSimulatedChain.id,
+            name: preferredSimulatedChain.name,
+          }
+        : undefined,
+      configuredChains: getConfiguredChains().map((configuredChain) => ({
+        id: configuredChain.id,
+        name: configuredChain.name,
+      })),
+    });
+
     const { config, simulatedConnector: newSimulatedConnector } =
       createCustomConfig(preferredSimulatedChain, simulatedWallet);
     setWagmiConfig(config);
@@ -414,6 +466,7 @@ const ThemeAware = ({ children }: { children: React.ReactNode }) => {
         }}
       >
         <MobileWalletConnectStatus />
+        <WalletConnectDebugLogger />
         <TransactionNotificationProvider>
           {children}
         </TransactionNotificationProvider>
@@ -434,6 +487,118 @@ const ThemeAware = ({ children }: { children: React.ReactNode }) => {
       />
     </>
   );
+};
+
+const WalletConnectDebugLogger = () => {
+  const account = useAccount();
+  const { chain } = useNetwork();
+  const isWalletConnect =
+    account.connector?.id === "walletConnect" ||
+    account.connector?.id === "walletConnectLegacy";
+
+  useEffect(() => {
+    console.info("[walletconnect-debug] wagmi account/network state", {
+      status: account.status,
+      isConnected: account.isConnected,
+      isConnecting: account.isConnecting,
+      isReconnecting: account.isReconnecting,
+      connector:
+        account.connector ?
+          {
+            id: account.connector.id,
+            name: account.connector.name,
+            ready: account.connector.ready,
+          }
+        : undefined,
+      address: account.address,
+      chain:
+        chain ?
+          {
+            id: chain.id,
+            name: chain.name,
+            unsupported: chain.unsupported,
+          }
+        : undefined,
+    });
+  }, [
+    account.address,
+    account.connector,
+    account.isConnected,
+    account.isConnecting,
+    account.isReconnecting,
+    account.status,
+    chain,
+  ]);
+
+  useEffect(() => {
+    if (!account.connector || !isWalletConnect) {
+      return;
+    }
+
+    let cancelled = false;
+    const cleanupListeners: Array<() => void> = [];
+
+    account.connector
+      .getProvider()
+      .then(async (provider) => {
+        if (cancelled) {
+          return;
+        }
+
+        console.info("[walletconnect-debug] provider snapshot", {
+          connector: {
+            id: account.connector?.id,
+            name: account.connector?.name,
+          },
+          snapshot: await getWalletConnectProviderSnapshot(provider),
+        });
+
+        const subscribe = (eventName: string) => {
+          const handler = async (...args: unknown[]) => {
+            console.info("[walletconnect-debug] provider event", {
+              eventName,
+              args,
+              snapshot: await getWalletConnectProviderSnapshot(provider),
+            });
+          };
+
+          provider.on?.(eventName, handler);
+          cleanupListeners.push(() => {
+            provider.removeListener?.(eventName, handler);
+            provider.off?.(eventName, handler);
+          });
+        };
+
+        [
+          "connect",
+          "disconnect",
+          "accountsChanged",
+          "chainChanged",
+          "session_event",
+          "session_update",
+          "session_delete",
+          "display_uri",
+        ].forEach(subscribe);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.info("[walletconnect-debug] provider inspection failed", {
+            connector: {
+              id: account.connector?.id,
+              name: account.connector?.name,
+            },
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      cleanupListeners.forEach((cleanup) => cleanup());
+    };
+  }, [account.connector, isWalletConnect]);
+
+  return null;
 };
 
 const MobileWalletConnectStatus = () => {
