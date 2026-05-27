@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  Fragment,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { Fragment, useCallback, useMemo, useState } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
@@ -25,7 +19,6 @@ import {
   Address,
   useAccount,
   useBalance,
-  useConnect,
   useDisconnect,
   useEnsAvatar,
   useEnsName,
@@ -43,160 +36,7 @@ import { useExplorerPreference } from "@/hooks/useExplorerPreference";
 import { useHasContractCode } from "@/hooks/useHasContractCode";
 import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import {
-  AUTOCONNECT_RESET_EVENT,
-  SKIP_AUTOCONNECT_STORAGE_KEY,
-  WALLETCONNECT_RESET_EVENT,
-} from "@/providers/Providers";
 import { formatAddress } from "@/utils/formatAddress";
-
-const WALLETCONNECT_STORAGE_KEY_PREFIXES = [
-  "wc@",
-  "wc_",
-  "walletconnect",
-  "wallet_connect",
-  "WALLETCONNECT_DEEPLINK_CHOICE",
-];
-const WALLETCONNECT_STORAGE_KEYS = ["wc_storage_version"];
-const DISCONNECT_RESET_STORAGE_KEY_PREFIXES = [
-  ...WALLETCONNECT_STORAGE_KEY_PREFIXES,
-  "wagmi",
-  "rk-",
-];
-const DISCONNECT_RESET_STORAGE_KEY_SUBSTRINGS = ["recentWalletIds"];
-
-type WalletConnectProviderLike = {
-  disconnect?: () => Promise<void> | void;
-  session?: unknown;
-  modal?: {
-    closeModal?: () => void;
-  };
-};
-
-const clearDisconnectPersistence = (storage: Storage) => {
-  const keysToRemove: string[] = [];
-
-  for (let i = 0; i < storage.length; i += 1) {
-    const key = storage.key(i);
-    if (!key) {
-      continue;
-    }
-    const normalizedKey = key.toLowerCase();
-
-    if (
-      DISCONNECT_RESET_STORAGE_KEY_PREFIXES.some((prefix) =>
-        normalizedKey.startsWith(prefix.toLowerCase()),
-      ) ||
-      WALLETCONNECT_STORAGE_KEYS.some(
-        (storageKey) => normalizedKey === storageKey.toLowerCase(),
-      ) ||
-      DISCONNECT_RESET_STORAGE_KEY_SUBSTRINGS.some((fragment) =>
-        normalizedKey.includes(fragment.toLowerCase()),
-      )
-    ) {
-      keysToRemove.push(key);
-    }
-  }
-
-  keysToRemove.forEach((key) => storage.removeItem(key));
-};
-
-const WALLETCONNECT_INDEXED_DB_NAME_FRAGMENTS = [
-  "walletconnect",
-  "wallet_connect",
-  "wc@",
-  "wc_",
-];
-const WALLETCONNECT_INDEXED_DB_NAMES = ["WALLET_CONNECT_V2_INDEXED_DB"];
-const WALLETCONNECT_INDEXED_DB_STORE_NAMES = ["keyvaluestorage"];
-
-const clearIndexedDbObjectStore = async (
-  databaseName: string,
-  storeName: string,
-) =>
-  new Promise<void>((resolve) => {
-    let settled = false;
-    const settle = () => {
-      if (!settled) {
-        settled = true;
-        resolve();
-      }
-    };
-    const request = window.indexedDB.open(databaseName);
-
-    request.onupgradeneeded = () => {
-      request.transaction?.abort();
-      settle();
-    };
-    request.onerror = () => settle();
-    request.onsuccess = () => {
-      const database = request.result;
-
-      if (!database.objectStoreNames.contains(storeName)) {
-        database.close();
-        settle();
-        return;
-      }
-
-      const transaction = database.transaction(storeName, "readwrite");
-      transaction.objectStore(storeName).clear();
-      transaction.oncomplete = () => {
-        database.close();
-        settle();
-      };
-      transaction.onerror = () => {
-        database.close();
-        settle();
-      };
-      transaction.onabort = () => {
-        database.close();
-        settle();
-      };
-    };
-  });
-
-const clearWalletConnectIndexedDb = async () => {
-  if (typeof window === "undefined" || !("indexedDB" in window)) {
-    return;
-  }
-
-  await Promise.all(
-    WALLETCONNECT_INDEXED_DB_NAMES.flatMap((databaseName) =>
-      WALLETCONNECT_INDEXED_DB_STORE_NAMES.map((storeName) =>
-        clearIndexedDbObjectStore(databaseName, storeName),
-      ),
-    ),
-  );
-
-  const indexedDbWithDatabases = window.indexedDB as IDBFactory & {
-    databases?: () => Promise<Array<{ name?: string }>>;
-  };
-
-  if (indexedDbWithDatabases.databases == null) {
-    return;
-  }
-
-  const databases = await indexedDbWithDatabases.databases();
-  await Promise.all(
-    databases.map(async ({ name }) => {
-      if (
-        !name ||
-        !WALLETCONNECT_INDEXED_DB_NAME_FRAGMENTS.some((fragment) =>
-          name.toLowerCase().includes(fragment),
-        )
-      ) {
-        return;
-      }
-
-      await new Promise<void>((resolve) => {
-        const request = window.indexedDB.deleteDatabase(name);
-        request.onsuccess = () => resolve();
-        request.onerror = () => resolve();
-        request.onblocked = () => resolve();
-      });
-    }),
-  );
-};
 
 export function ConnectWallet() {
   const path = usePathname();
@@ -225,7 +65,6 @@ export function ConnectWallet() {
   const { switchNetwork } = useAppSwitchNetwork();
   const { explorerPreference, setExplorerPreference } = useExplorerPreference();
   const { disconnectAsync } = useDisconnect();
-  const { connectors } = useConnect();
   const { isOwner: isFirstHolder } = useOwnerOfNFT({
     nft: "FirstHolder",
     chains: [optimism, arbitrum, base, mainnet],
@@ -265,69 +104,18 @@ export function ConnectWallet() {
   );
 
   const [selectedNFTIndex, setSelectedNFTIndex] = useState(0);
-
-  useEffect(() => {
-    if (!account.isConnected || account.connector?.id !== "walletConnect") {
-      return;
-    }
-
-    type WalletConnectProviderWithModal = {
-      modal?: {
-        closeModal?: () => void;
-      };
-    };
-
-    void account.connector
-      .getProvider()
-      .then((provider) => {
-        (provider as WalletConnectProviderWithModal).modal?.closeModal?.();
-      })
-      .catch(() => {
-        // Ignore provider access failures. This only cleans up a stale QR modal.
-      });
-  }, [account.connector, account.isConnected]);
-
-  useEffect(() => {
-    if (!account.isConnected || typeof window === "undefined") {
-      return;
-    }
-
-    if (window.localStorage.getItem(SKIP_AUTOCONNECT_STORAGE_KEY) !== "true") {
-      return;
-    }
-
-    window.localStorage.removeItem(SKIP_AUTOCONNECT_STORAGE_KEY);
-  }, [account.isConnected]);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   const handleDisconnect = useCallback(async () => {
-    const connector = account.connector;
-    const isWalletConnectConnector = connector?.id === "walletConnect";
-    let provider: WalletConnectProviderLike | null = null;
-
     try {
-      if (isWalletConnectConnector) {
-        provider =
-          (await connector.getProvider()) as WalletConnectProviderLike | null;
-
-        provider?.modal?.closeModal?.();
-      }
-    } catch {
-      // Ignore provider-level disconnect failures and still clear local state.
-    } finally {
+      setIsDisconnecting(true);
       await disconnectAsync();
-
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(SKIP_AUTOCONNECT_STORAGE_KEY, "true");
-        clearDisconnectPersistence(window.localStorage);
-        clearDisconnectPersistence(window.sessionStorage);
-        await clearWalletConnectIndexedDb();
-        window.dispatchEvent(new Event(AUTOCONNECT_RESET_EVENT));
-        window.dispatchEvent(new Event(WALLETCONNECT_RESET_EVENT));
-      }
+    } finally {
+      setIsDisconnecting(false);
     }
-  }, [account.connector, disconnectAsync]);
+  }, [disconnectAsync]);
 
-  const wallet = connectors[0].name;
+  const wallet = account.connector?.name ?? "Wallet";
   const isMockConnection = account.connector?.id === "mock";
   const { hasContractCode: hasGardenTokenContract } = useHasContractCode({
     address: tokenUrlAddress,
@@ -611,6 +399,7 @@ export function ConnectWallet() {
                                 }}
                                 btnStyle="filled"
                                 color="danger"
+                                disabled={isDisconnecting}
                                 className="w-full"
                                 icon={
                                   <PowerIcon
@@ -619,7 +408,9 @@ export function ConnectWallet() {
                                   />
                                 }
                               >
-                                Disconnect
+                                {isDisconnecting ?
+                                  "Disconnecting..."
+                                : "Disconnect"}
                               </Button>
                             </Menu.Item>
                           </div>

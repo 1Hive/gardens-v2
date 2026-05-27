@@ -4,7 +4,6 @@ import React, { Suspense, useEffect, useMemo, useState } from "react";
 import {
   connectorsForWallets,
   darkTheme as rainbowDarkTheme,
-  getWalletConnectConnector,
   lightTheme,
   RainbowKitProvider,
 } from "@rainbow-me/rainbowkit";
@@ -17,27 +16,24 @@ import {
 } from "@rainbow-me/rainbowkit/wallets";
 import { AddrethConfig } from "addreth";
 import { Bounce, ToastContainer } from "react-toastify";
-import {
-  Address,
-  createWalletClient,
-  custom,
-  isAddress,
-} from "viem";
+import { Address, createWalletClient, custom, isAddress } from "viem";
 import { base } from "viem/chains";
 import {
   Chain,
   ConnectorAlreadyConnectedError,
+  configureChains,
   createConfig,
   mainnet,
-  PublicClient,
   WagmiConfig,
 } from "wagmi";
 import { connect, disconnect } from "wagmi/actions";
 import { MockConnector } from "wagmi/connectors/mock";
+import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
+import { publicProvider } from "wagmi/providers/public";
 import ThemeProvider from "./ThemeProvider";
 import { TransactionNotificationProvider } from "./TransactionNotificationProvider";
 import { UrqlProvider } from "./UrqlProvider";
-import { CHAINS } from "@/configs/chains";
+import { CHAINS, getConfigByChain } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import {
   QueryParamsProvider,
@@ -47,7 +43,6 @@ import { PubSubProvider } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useTheme } from "@/providers/ThemeProvider";
 import { logOnce } from "@/utils/log";
-import { getEnvPublicClient } from "@/utils/publicClient";
 
 const dedupeChains = (chainList: Chain[]) =>
   chainList.filter(
@@ -55,76 +50,47 @@ const dedupeChains = (chainList: Chain[]) =>
       arr.findIndex((item) => item.id === candidate.id) === index,
   );
 
-export const WALLETCONNECT_RESET_EVENT = "gardens:walletconnect-reset";
-export const AUTOCONNECT_RESET_EVENT = "gardens:autoconnect-reset";
-export const SKIP_AUTOCONNECT_STORAGE_KEY = "gardens:skip-autoconnect";
-
 const getConfiguredChains = () => dedupeChains([...CHAINS, base, mainnet]);
+
+const APP_NAME = "Gardens V2";
+
 // RainbowKit's modal overlay ships with z-index 2147483646 in its bundled CSS.
 // Keep WalletConnect one step above it so the QR/deeplink modal is clickable.
 const WALLETCONNECT_MODAL_Z_INDEX = 2147483647;
 
-const createWalletConnectModalWallet = (
-  chains: Chain[],
-  projectId: string,
-  walletConnectResetVersion: number,
-) => {
-  const walletConnectOptions = {
-    projectId,
-    qrModalOptions: {
-      themeVariables: {
-        "--wcm-z-index": WALLETCONNECT_MODAL_Z_INDEX.toString(),
-        // WalletConnect connectors are cached from serialized options.
-        // This unused custom variable changes on reset to force a fresh instance.
-        "--gardens-walletconnect-reset":
-          walletConnectResetVersion.toString(),
-      },
-    },
-  };
-
-  const baseWallet = walletConnectWallet({
-    chains,
-    projectId,
-    options: walletConnectOptions,
-  });
-
-  return {
-    ...baseWallet,
-    createConnector: () => {
-      const connector = getWalletConnectConnector({
-        version: "2",
-        chains,
-        projectId,
-        options: {
-          ...walletConnectOptions,
-          showQrModal: true,
-        },
-      });
-
-      return { connector };
-    },
-  };
-};
-
 const createCustomConfig = (
-  skipAutoConnect: boolean,
-  walletConnectResetVersion: number,
   preferredSimulatedChain: Chain | undefined,
   simulatedWallet?: Address,
 ) => {
-  const usedChains = getConfiguredChains();
-  const chains = usedChains;
+  const { chains, publicClient } = configureChains(getConfiguredChains(), [
+    jsonRpcProvider({
+      rpc: (chain) => ({
+        http:
+          getConfigByChain(chain.id)?.rpcUrl?.trim() ??
+          chain.rpcUrls.default.http[0],
+      }),
+    }),
+    publicProvider(),
+  ]);
   const walletConnectProjectId =
     process.env.NEXT_PUBLIC_WALLET_CONNECT_ID ?? "";
   const walletConnectWalletEntry =
     !walletConnectProjectId ?
       []
     : [
-        createWalletConnectModalWallet(
+        walletConnectWallet({
           chains,
-          walletConnectProjectId,
-          walletConnectResetVersion,
-        ),
+          projectId: walletConnectProjectId,
+          options: {
+            projectId: walletConnectProjectId,
+            isNewChainsStale: false,
+            qrModalOptions: {
+              themeVariables: {
+                "--wcm-z-index": WALLETCONNECT_MODAL_Z_INDEX.toString(),
+              },
+            },
+          },
+        }),
       ];
 
   const connectorFactory = connectorsForWallets([
@@ -134,7 +100,7 @@ const createCustomConfig = (
         injectedWallet({ chains }),
         rabbyWallet({ chains }),
         frameWallet({ chains }),
-        coinbaseWallet({ appName: "Gardens V2", chains }),
+        coinbaseWallet({ appName: APP_NAME, chains }),
         ...walletConnectWalletEntry,
       ],
     },
@@ -173,9 +139,9 @@ const createCustomConfig = (
 
   return {
     config: createConfig({
-      autoConnect: !skipAutoConnect,
+      autoConnect: true,
       connectors: resolvedConnectors,
-      publicClient: ({ chainId }): PublicClient => getEnvPublicClient(chainId),
+      publicClient,
     }),
     simulatedConnector,
   };
@@ -219,66 +185,21 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
   }, [queryParams]);
   const preferredSimulatedChain = simulatedWallet ? chain : undefined;
 
-  const [wagmiConfig, setWagmiConfig] = useState<CustomWagmiConfig | null>(null);
+  const [wagmiConfig, setWagmiConfig] = useState<CustomWagmiConfig | null>(
+    null,
+  );
   const [simulatedConnector, setSimulatedConnector] =
     useState<MockConnector | null>(null);
   const [activeSimulatedWallet, setActiveSimulatedWallet] =
     useState<Address | null>(null);
-  const [walletConnectResetVersion, setWalletConnectResetVersion] = useState(0);
-  const [skipAutoConnect, setSkipAutoConnect] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    setSkipAutoConnect(
-      window.localStorage.getItem(SKIP_AUTOCONNECT_STORAGE_KEY) === "true",
-    );
-  }, []);
-
-  useEffect(() => {
-    const handleWalletConnectReset = () => {
-      setWalletConnectResetVersion((value) => value + 1);
-    };
-    const handleAutoConnectReset = () => {
-      setSkipAutoConnect(
-        window.localStorage.getItem(SKIP_AUTOCONNECT_STORAGE_KEY) === "true",
-      );
-    };
-
-    window.addEventListener(WALLETCONNECT_RESET_EVENT, handleWalletConnectReset);
-    window.addEventListener(AUTOCONNECT_RESET_EVENT, handleAutoConnectReset);
-
-    return () => {
-      window.removeEventListener(
-        WALLETCONNECT_RESET_EVENT,
-        handleWalletConnectReset,
-      );
-      window.removeEventListener(
-        AUTOCONNECT_RESET_EVENT,
-        handleAutoConnectReset,
-      );
-    };
-  }, []);
 
   useEffect(() => {
     const { config, simulatedConnector: newSimulatedConnector } =
-      createCustomConfig(
-        skipAutoConnect,
-        walletConnectResetVersion,
-        preferredSimulatedChain,
-        simulatedWallet,
-      );
+      createCustomConfig(preferredSimulatedChain, simulatedWallet);
     setWagmiConfig(config);
     setSimulatedConnector(newSimulatedConnector ?? null);
     setMounted(true);
-  }, [
-    simulatedWallet,
-    preferredSimulatedChain,
-    skipAutoConnect,
-    walletConnectResetVersion,
-  ]);
+  }, [simulatedWallet, preferredSimulatedChain]);
 
   useEffect(() => {
     if (!wagmiConfig) {
@@ -326,17 +247,12 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
     return null;
   }
 
-  const providerResetKey = `wagmi-${walletConnectResetVersion}`;
-
   return (
     <UrqlProvider>
-      <WagmiConfig key={providerResetKey} config={wagmiConfig}>
+      <WagmiConfig config={wagmiConfig}>
         <AddrethConfig>
           <ThemeProvider>
-            <ThemeAware
-              chains={wagmiConfig.chains ?? []}
-              rainbowKitResetVersion={walletConnectResetVersion}
-            >
+            <ThemeAware chains={wagmiConfig.chains ?? []}>
               <PubSubProvider>{children}</PubSubProvider>
             </ThemeAware>
           </ThemeProvider>
@@ -348,11 +264,9 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
 
 const ThemeAware = ({
   chains,
-  rainbowKitResetVersion,
   children,
 }: {
   chains: Chain[];
-  rainbowKitResetVersion: number;
   children: React.ReactNode;
 }) => {
   const { resolvedTheme } = useTheme();
@@ -369,12 +283,7 @@ const ThemeAware = ({
 
   return (
     <>
-      <RainbowKitProvider
-        key={`rainbowkit-${rainbowKitResetVersion}`}
-        modalSize="compact"
-        chains={chains}
-        theme={theme}
-      >
+      <RainbowKitProvider modalSize="compact" chains={chains} theme={theme}>
         <TransactionNotificationProvider>
           {children}
         </TransactionNotificationProvider>
