@@ -4,6 +4,7 @@ import React, { Suspense, useEffect, useMemo, useState } from "react";
 import {
   connectorsForWallets,
   darkTheme as rainbowDarkTheme,
+  getWalletConnectConnector,
   lightTheme,
   RainbowKitProvider,
 } from "@rainbow-me/rainbowkit";
@@ -54,6 +55,20 @@ const dedupeChains = (chainList: Chain[]) =>
       arr.findIndex((item) => item.id === candidate.id) === index,
   );
 
+const MOBILE_BROWSER_USER_AGENT =
+  /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
+
+const isMobileBrowser = () => {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  return (
+    MOBILE_BROWSER_USER_AGENT.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+};
+
 export const WALLETCONNECT_RESET_EVENT = "gardens:walletconnect-reset";
 export const AUTOCONNECT_RESET_EVENT = "gardens:autoconnect-reset";
 export const SKIP_AUTOCONNECT_STORAGE_KEY = "gardens:skip-autoconnect";
@@ -63,6 +78,52 @@ const getConfiguredChains = () => dedupeChains([...CHAINS, base, mainnet]);
 // Keep WalletConnect one step above it so the QR/deeplink modal is clickable.
 const WALLETCONNECT_MODAL_Z_INDEX = 2147483647;
 
+const createWalletConnectBrowserModalWallet = (
+  chains: Chain[],
+  projectId: string,
+  walletConnectResetVersion: number,
+) => {
+  const walletConnectOptions = {
+    projectId,
+    qrModalOptions: {
+      themeVariables: {
+        "--wcm-z-index": WALLETCONNECT_MODAL_Z_INDEX.toString(),
+        // WalletConnect connectors are cached from serialized options.
+        // This unused custom variable changes on reset to force a fresh instance.
+        "--gardens-walletconnect-reset":
+          walletConnectResetVersion.toString(),
+      },
+    },
+  };
+
+  const baseWallet = walletConnectWallet({
+    chains,
+    projectId,
+    options: walletConnectOptions,
+  });
+
+  return {
+    ...baseWallet,
+    createConnector: () => {
+      if (!isMobileBrowser()) {
+        return baseWallet.createConnector();
+      }
+
+      const connector = getWalletConnectConnector({
+        version: "2",
+        chains,
+        projectId,
+        options: {
+          ...walletConnectOptions,
+          showQrModal: true,
+        },
+      });
+
+      return { connector };
+    },
+  };
+};
+
 const createCustomConfig = (
   skipAutoConnect: boolean,
   walletConnectResetVersion: number,
@@ -71,9 +132,6 @@ const createCustomConfig = (
 ) => {
   const usedChains = getConfiguredChains();
   const chains = usedChains;
-  // RainbowKit caches WalletConnect connectors by serialized options.
-  // Keep the modal above RainbowKit's overlay while still varying the
-  // serialized options after a reset to force a fresh connector.
   const walletConnectProjectId =
     process.env.NEXT_PUBLIC_WALLET_CONNECT_ID ?? "";
   const connectorFactory = connectorsForWallets([
@@ -86,22 +144,11 @@ const createCustomConfig = (
         coinbaseWallet({ appName: "Gardens V2", chains }),
         ...(walletConnectProjectId ?
           [
-            walletConnectWallet({
+            createWalletConnectBrowserModalWallet(
               chains,
-              projectId: walletConnectProjectId,
-              options: {
-                projectId: walletConnectProjectId,
-                qrModalOptions: {
-                  themeVariables: {
-                    "--wcm-z-index": WALLETCONNECT_MODAL_Z_INDEX.toString(),
-                    // WalletConnect connectors are cached from serialized options.
-                    // This unused custom variable changes on reset to force a fresh instance.
-                    "--gardens-walletconnect-reset":
-                      walletConnectResetVersion.toString(),
-                  },
-                },
-              },
-            }),
+              walletConnectProjectId,
+              walletConnectResetVersion,
+            ),
           ]
         : []),
       ],
