@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { AddrethConfig } from "addreth";
@@ -38,6 +39,7 @@ import {
   useCollectQueryParams,
 } from "@/contexts/collectQueryParams.context";
 import { PubSubProvider } from "@/contexts/pubsub.context";
+import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useTheme } from "@/providers/ThemeProvider";
 import { logOnce } from "@/utils/log";
@@ -600,6 +602,7 @@ const ThemeAware = ({ children }: { children: React.ReactNode }) => {
         }}
       >
         <MobileWalletConnectStatus />
+        <WalletConnectRouteChainSync />
         <WalletConnectDebugLogger />
         <TransactionNotificationProvider>
           {children}
@@ -621,6 +624,76 @@ const ThemeAware = ({ children }: { children: React.ReactNode }) => {
       />
     </>
   );
+};
+
+const WalletConnectRouteChainSync = () => {
+  const account = useAccount();
+  const { chain } = useNetwork();
+  const chainFromPath = useChainFromPath() as Chain | undefined;
+  const { switchNetworkAsync } = useAppSwitchNetwork();
+  const lastSwitchKeyRef = useRef<string | null>(null);
+  const isWalletConnect =
+    account.connector?.id === "walletConnect" ||
+    account.connector?.id === "walletConnectLegacy";
+
+  useEffect(() => {
+    if (
+      !account.isConnected ||
+      !isWalletConnect ||
+      chain?.id == null ||
+      chainFromPath?.id == null
+    ) {
+      return;
+    }
+
+    if (chain.id === chainFromPath.id) {
+      lastSwitchKeyRef.current = null;
+      return;
+    }
+
+    const switchKey = `${account.address ?? ""}:${chain.id}->${chainFromPath.id}`;
+    if (lastSwitchKeyRef.current === switchKey) {
+      return;
+    }
+
+    lastSwitchKeyRef.current = switchKey;
+
+    console.info("[walletconnect-debug] route chain sync requested", {
+      connector: {
+        id: account.connector?.id,
+        name: account.connector?.name,
+      },
+      currentChain: {
+        id: chain.id,
+        name: chain.name,
+        unsupported: chain.unsupported,
+      },
+      routeChain: {
+        id: chainFromPath.id,
+        name: chainFromPath.name,
+      },
+    });
+
+    void switchNetworkAsync(chainFromPath.id, {
+      showReconnectToast: false,
+    }).then((result) => {
+      console.info("[walletconnect-debug] route chain sync completed", {
+        targetChainId: chainFromPath.id,
+        result: result ? { id: result.id, name: result.name } : undefined,
+      });
+    });
+  }, [
+    account.address,
+    account.connector?.id,
+    account.connector?.name,
+    account.isConnected,
+    chain,
+    chainFromPath,
+    isWalletConnect,
+    switchNetworkAsync,
+  ]);
+
+  return null;
 };
 
 const WalletConnectDebugLogger = () => {

@@ -47,16 +47,18 @@ export function useAppSwitchNetwork() {
     const targetChain = getChain(chainId);
     const targetChainName = targetChain?.name ?? `chain ${chainId}`;
 
-    toast.info(
-      `Reconnect WalletConnect to approve ${targetChainName}, then switch to it in your wallet and try again.`,
-      {
-        toastId: `walletconnect-reconnect-${chainId}`,
-      },
-    );
+    toast.info(`Reconnect WalletConnect to approve ${targetChainName}.`, {
+      toastId: `walletconnect-reconnect-${chainId}`,
+    });
   }, []);
 
   const trySwitchNetworkAsync = useCallback(
-    async (chainId?: number) => {
+    async (
+      chainId?: number,
+      options: { showReconnectToast?: boolean } = {},
+    ) => {
+      const showReconnectToast = options.showReconnectToast ?? true;
+
       console.info("[walletconnect-debug] switchNetwork requested", {
         connector: {
           id: connector?.id,
@@ -82,7 +84,9 @@ export function useAppSwitchNetwork() {
           targetChainId: chainId,
           hasSwitchNetworkAsync: switchNetworkResult.switchNetworkAsync != null,
         });
-        showWalletConnectReconnectToast(chainId);
+        if (showReconnectToast) {
+          showWalletConnectReconnectToast(chainId);
+        }
         return undefined;
       }
 
@@ -104,7 +108,9 @@ export function useAppSwitchNetwork() {
           targetChainId: chainId,
           error: getWalletConnectDebugError(error),
         });
-        showWalletConnectReconnectToast(chainId);
+        if (showReconnectToast) {
+          showWalletConnectReconnectToast(chainId);
+        }
         return undefined;
       }
     },
@@ -132,9 +138,9 @@ export function useAppSwitchNetwork() {
   );
 
   const switchNetworkAsync = useCallback(
-    async (chainId?: number) => {
+    async (chainId?: number, options?: { showReconnectToast?: boolean }) => {
       if (isWalletConnect) {
-        return trySwitchNetworkAsync(chainId);
+        return trySwitchNetworkAsync(chainId, options);
       }
 
       return switchNetworkResult.switchNetworkAsync?.(chainId);
