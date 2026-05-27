@@ -29,6 +29,7 @@ export function useOwnerOfNFT({
   const { address } = useAccount();
   const fetching = useRef(false);
   const checkedKey = useRef<string | null>(null);
+  const chainIdsKey = chains.map((chain) => chain.id).join(",");
 
   useEffect(() => {
     if (!enabled || !address || chains.length === 0) {
@@ -40,9 +41,7 @@ export function useOwnerOfNFT({
       return;
     }
 
-    const currentKey = `${address.toLowerCase()}:${nft}:${chains
-      .map((chain) => chain.id)
-      .join(",")}`;
+    const currentKey = `${address.toLowerCase()}:${nft}:${chainIdsKey}`;
 
     const checkOwnership = async () => {
       if (fetching.current || checkedKey.current === currentKey) return;
@@ -124,7 +123,7 @@ export function useOwnerOfNFT({
     };
 
     checkOwnership();
-  }, [address, chains, enabled, nft]);
+  }, [address, chainIdsKey, enabled, nft]);
 
   return { isOwner, loading, error };
 }

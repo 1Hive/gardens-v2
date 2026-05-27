@@ -55,20 +55,6 @@ const dedupeChains = (chainList: Chain[]) =>
       arr.findIndex((item) => item.id === candidate.id) === index,
   );
 
-const MOBILE_BROWSER_USER_AGENT =
-  /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
-
-const isMobileBrowser = () => {
-  if (typeof navigator === "undefined") {
-    return false;
-  }
-
-  return (
-    MOBILE_BROWSER_USER_AGENT.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
-  );
-};
-
 export const WALLETCONNECT_RESET_EVENT = "gardens:walletconnect-reset";
 export const AUTOCONNECT_RESET_EVENT = "gardens:autoconnect-reset";
 export const SKIP_AUTOCONNECT_STORAGE_KEY = "gardens:skip-autoconnect";
@@ -78,7 +64,7 @@ const getConfiguredChains = () => dedupeChains([...CHAINS, base, mainnet]);
 // Keep WalletConnect one step above it so the QR/deeplink modal is clickable.
 const WALLETCONNECT_MODAL_Z_INDEX = 2147483647;
 
-const createMobileBrowserWalletConnectWallet = (
+const createWalletConnectModalWallet = (
   chains: Chain[],
   projectId: string,
   walletConnectResetVersion: number,
@@ -133,29 +119,12 @@ const createCustomConfig = (
   const walletConnectWalletEntry =
     !walletConnectProjectId ?
       []
-    : isMobileBrowser() ?
-      [
-        createMobileBrowserWalletConnectWallet(
+    : [
+        createWalletConnectModalWallet(
           chains,
           walletConnectProjectId,
           walletConnectResetVersion,
         ),
-      ]
-    : [
-        walletConnectWallet({
-          chains,
-          projectId: walletConnectProjectId,
-          options: {
-            projectId: walletConnectProjectId,
-            qrModalOptions: {
-              themeVariables: {
-                "--wcm-z-index": WALLETCONNECT_MODAL_Z_INDEX.toString(),
-                "--gardens-walletconnect-reset":
-                  walletConnectResetVersion.toString(),
-              },
-            },
-          },
-        }),
       ];
 
   const connectorFactory = connectorsForWallets([
