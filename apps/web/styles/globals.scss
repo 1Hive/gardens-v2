@@ -39,6 +39,45 @@
   --scrollbar-thumb: #8c8c8c;
   --scrollbar-thumb-hover: #a0a0a0; /* hover color */
   --scrollbar-track: #eeeeee;
+
+  --ck-gardens-overlay-background: rgba(0, 0, 0, 0.42);
+  --ck-gardens-modal-box-shadow: 0 24px 80px rgba(0, 0, 0, 0.18);
+  --ck-gardens-body-color: #252525;
+  --ck-gardens-body-color-muted: #8c8c8c;
+  --ck-gardens-body-color-muted-hover: #252525;
+  --ck-gardens-body-background: #ffffff;
+  --ck-gardens-body-background-transparent: rgba(255, 255, 255, 0);
+  --ck-gardens-body-background-secondary: #f9f9f9;
+  --ck-gardens-body-background-secondary-hover-background: #eeeeee;
+  --ck-gardens-body-background-secondary-hover-outline: #65ad18;
+  --ck-gardens-body-background-tertiary: #f1f1f1;
+  --ck-gardens-body-action-color: #8c8c8c;
+  --ck-gardens-body-divider: #d5d5d5;
+  --ck-gardens-body-color-valid: #65ad18;
+  --ck-gardens-primary-button-color: #252525;
+  --ck-gardens-primary-button-background: #ffffff;
+  --ck-gardens-primary-button-hover-background: #eeeeee;
+  --ck-gardens-primary-button-active-background: #ebfbd8;
+  --ck-gardens-primary-button-box-shadow: inset 0 0 0 1px #d5d5d5;
+  --ck-gardens-secondary-button-color: #252525;
+  --ck-gardens-secondary-button-background: #f9f9f9;
+  --ck-gardens-secondary-button-hover-background: #ebfbd8;
+  --ck-gardens-secondary-button-box-shadow: inset 0 0 0 1px #d5d5d5;
+  --ck-gardens-tertiary-button-background: #f9f9f9;
+  --ck-gardens-focus-color: #65ad18;
+  --ck-gardens-tooltip-background: #ffffff;
+  --ck-gardens-tooltip-background-secondary: #f9f9f9;
+  --ck-gardens-tooltip-color: #252525;
+  --ck-gardens-tooltip-shadow: 0 12px 36px rgba(0, 0, 0, 0.12);
+  --ck-gardens-dropdown-button-color: #252525;
+  --ck-gardens-dropdown-button-background: #ffffff;
+  --ck-gardens-dropdown-button-hover-color: #252525;
+  --ck-gardens-dropdown-button-hover-background: #f9f9f9;
+  --ck-gardens-dropdown-button-box-shadow: inset 0 0 0 1px #d5d5d5;
+  --ck-gardens-qr-dot-color: #252525;
+  --ck-gardens-qr-border-color: #d5d5d5;
+  --ck-gardens-qr-background: #ffffff;
+  --ck-gardens-copytoclipboard-stroke: #8c8c8c;
 }
 
 [data-theme="darkTheme"] {
@@ -48,6 +87,48 @@
   --scrollbar-thumb: #555;
   --scrollbar-thumb-hover: #666;
   --scrollbar-track: #1f1f1f;
+
+  --ck-gardens-overlay-background: rgba(0, 0, 0, 0.72);
+  --ck-gardens-modal-box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+  --ck-gardens-body-color: #eeeeee;
+  --ck-gardens-body-color-muted: #acacac;
+  --ck-gardens-body-color-muted-hover: #ffffff;
+  --ck-gardens-body-background: #252525;
+  --ck-gardens-body-background-transparent: rgba(37, 37, 37, 0);
+  --ck-gardens-body-background-secondary: #1a1a1a;
+  --ck-gardens-body-background-secondary-hover-background: #333333;
+  --ck-gardens-body-background-secondary-hover-outline: #63b693;
+  --ck-gardens-body-background-tertiary: #303030;
+  --ck-gardens-body-action-color: #acacac;
+  --ck-gardens-body-divider: rgba(213, 213, 213, 0.28);
+  --ck-gardens-body-color-valid: #63b693;
+  --ck-gardens-primary-button-color: #eeeeee;
+  --ck-gardens-primary-button-background: #1a1a1a;
+  --ck-gardens-primary-button-hover-background: #303030;
+  --ck-gardens-primary-button-active-background: #3c5b4b;
+  --ck-gardens-primary-button-box-shadow: inset 0 0 0 1px
+    rgba(213, 213, 213, 0.28);
+  --ck-gardens-secondary-button-color: #eeeeee;
+  --ck-gardens-secondary-button-background: #303030;
+  --ck-gardens-secondary-button-hover-background: #3c5b4b;
+  --ck-gardens-secondary-button-box-shadow: inset 0 0 0 1px
+    rgba(213, 213, 213, 0.28);
+  --ck-gardens-tertiary-button-background: #303030;
+  --ck-gardens-focus-color: #63b693;
+  --ck-gardens-tooltip-background: #1a1a1a;
+  --ck-gardens-tooltip-background-secondary: #252525;
+  --ck-gardens-tooltip-color: #eeeeee;
+  --ck-gardens-tooltip-shadow: 0 12px 36px rgba(0, 0, 0, 0.42);
+  --ck-gardens-dropdown-button-color: #eeeeee;
+  --ck-gardens-dropdown-button-background: #252525;
+  --ck-gardens-dropdown-button-hover-color: #ffffff;
+  --ck-gardens-dropdown-button-hover-background: #303030;
+  --ck-gardens-dropdown-button-box-shadow: inset 0 0 0 1px
+    rgba(213, 213, 213, 0.28);
+  --ck-gardens-qr-dot-color: #eeeeee;
+  --ck-gardens-qr-border-color: rgba(213, 213, 213, 0.28);
+  --ck-gardens-qr-background: #252525;
+  --ck-gardens-copytoclipboard-stroke: #acacac;
 }
 
 * {

@@ -1,20 +1,8 @@
 "use client";
 
 import React, { Suspense, useEffect, useMemo, useState } from "react";
-import {
-  connectorsForWallets,
-  darkTheme as rainbowDarkTheme,
-  lightTheme,
-  RainbowKitProvider,
-} from "@rainbow-me/rainbowkit";
-import {
-  coinbaseWallet,
-  frameWallet,
-  injectedWallet,
-  rabbyWallet,
-  walletConnectWallet,
-} from "@rainbow-me/rainbowkit/wallets";
 import { AddrethConfig } from "addreth";
+import { ConnectKitProvider, getDefaultConnectors } from "connectkit";
 import { Bounce, ToastContainer } from "react-toastify";
 import { Address, createWalletClient, custom, isAddress } from "viem";
 import { base } from "viem/chains";
@@ -28,6 +16,7 @@ import {
 } from "wagmi";
 import { connect, disconnect } from "wagmi/actions";
 import { MockConnector } from "wagmi/connectors/mock";
+import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
 import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 import { publicProvider } from "wagmi/providers/public";
 import ThemeProvider from "./ThemeProvider";
@@ -53,10 +42,81 @@ const dedupeChains = (chainList: Chain[]) =>
 const getConfiguredChains = () => dedupeChains([...CHAINS, base, mainnet]);
 
 const APP_NAME = "Gardens V2";
+const APP_DESCRIPTION = "Gardens governance and funding";
+const APP_URL =
+  typeof window === "undefined" ?
+    "https://app.gardens.fund"
+  : window.location.origin;
+const APP_ICON = `${APP_URL}/favicon.ico`;
+const APP_METADATA = {
+  name: APP_NAME,
+  description: APP_DESCRIPTION,
+  url: APP_URL,
+  icons: [APP_ICON],
+};
 
-// RainbowKit's modal overlay ships with z-index 2147483646 in its bundled CSS.
-// Keep WalletConnect one step above it so the QR/deeplink modal is clickable.
-const WALLETCONNECT_MODAL_Z_INDEX = 2147483647;
+const CONNECT_KIT_THEME = {
+  "--ck-font-family": "var(--font-chakra)",
+  "--ck-border-radius": "16px",
+  "--ck-overlay-background": "var(--ck-gardens-overlay-background)",
+  "--ck-modal-box-shadow": "var(--ck-gardens-modal-box-shadow)",
+  "--ck-body-color": "var(--ck-gardens-body-color)",
+  "--ck-body-color-muted": "var(--ck-gardens-body-color-muted)",
+  "--ck-body-color-muted-hover": "var(--ck-gardens-body-color-muted-hover)",
+  "--ck-body-background": "var(--ck-gardens-body-background)",
+  "--ck-body-background-transparent":
+    "var(--ck-gardens-body-background-transparent)",
+  "--ck-body-background-secondary":
+    "var(--ck-gardens-body-background-secondary)",
+  "--ck-body-background-secondary-hover-background":
+    "var(--ck-gardens-body-background-secondary-hover-background)",
+  "--ck-body-background-secondary-hover-outline":
+    "var(--ck-gardens-body-background-secondary-hover-outline)",
+  "--ck-body-background-tertiary": "var(--ck-gardens-body-background-tertiary)",
+  "--ck-body-action-color": "var(--ck-gardens-body-action-color)",
+  "--ck-body-divider": "var(--ck-gardens-body-divider)",
+  "--ck-body-color-danger": "#eb4848",
+  "--ck-body-color-valid": "var(--ck-gardens-body-color-valid)",
+  "--ck-primary-button-color": "var(--ck-gardens-primary-button-color)",
+  "--ck-primary-button-background":
+    "var(--ck-gardens-primary-button-background)",
+  "--ck-primary-button-hover-background":
+    "var(--ck-gardens-primary-button-hover-background)",
+  "--ck-primary-button-active-background":
+    "var(--ck-gardens-primary-button-active-background)",
+  "--ck-primary-button-box-shadow":
+    "var(--ck-gardens-primary-button-box-shadow)",
+  "--ck-primary-button-border-radius": "8px",
+  "--ck-secondary-button-color": "var(--ck-gardens-secondary-button-color)",
+  "--ck-secondary-button-background":
+    "var(--ck-gardens-secondary-button-background)",
+  "--ck-secondary-button-hover-background":
+    "var(--ck-gardens-secondary-button-hover-background)",
+  "--ck-secondary-button-box-shadow":
+    "var(--ck-gardens-secondary-button-box-shadow)",
+  "--ck-secondary-button-border-radius": "8px",
+  "--ck-tertiary-button-background":
+    "var(--ck-gardens-tertiary-button-background)",
+  "--ck-focus-color": "var(--ck-gardens-focus-color)",
+  "--ck-tooltip-background": "var(--ck-gardens-tooltip-background)",
+  "--ck-tooltip-background-secondary":
+    "var(--ck-gardens-tooltip-background-secondary)",
+  "--ck-tooltip-color": "var(--ck-gardens-tooltip-color)",
+  "--ck-tooltip-shadow": "var(--ck-gardens-tooltip-shadow)",
+  "--ck-dropdown-button-color": "var(--ck-gardens-dropdown-button-color)",
+  "--ck-dropdown-button-background":
+    "var(--ck-gardens-dropdown-button-background)",
+  "--ck-dropdown-button-hover-color":
+    "var(--ck-gardens-dropdown-button-hover-color)",
+  "--ck-dropdown-button-hover-background":
+    "var(--ck-gardens-dropdown-button-hover-background)",
+  "--ck-dropdown-button-box-shadow":
+    "var(--ck-gardens-dropdown-button-box-shadow)",
+  "--ck-qr-dot-color": "var(--ck-gardens-qr-dot-color)",
+  "--ck-qr-border-color": "var(--ck-gardens-qr-border-color)",
+  "--ck-qr-background": "var(--ck-gardens-qr-background)",
+  "--ck-copytoclipboard-stroke": "var(--ck-gardens-copytoclipboard-stroke)",
+};
 
 const createCustomConfig = (
   preferredSimulatedChain: Chain | undefined,
@@ -74,37 +134,32 @@ const createCustomConfig = (
   ]);
   const walletConnectProjectId =
     process.env.NEXT_PUBLIC_WALLET_CONNECT_ID ?? "";
-  const walletConnectWalletEntry =
-    !walletConnectProjectId ?
-      []
-    : [
-        walletConnectWallet({
-          chains,
-          projectId: walletConnectProjectId,
-          options: {
-            projectId: walletConnectProjectId,
-            isNewChainsStale: false,
-            qrModalOptions: {
-              themeVariables: {
-                "--wcm-z-index": WALLETCONNECT_MODAL_Z_INDEX.toString(),
-              },
-            },
-          },
-        }),
-      ];
-
-  const connectorFactory = connectorsForWallets([
-    {
-      groupName: "Recommended",
-      wallets: [
-        injectedWallet({ chains }),
-        rabbyWallet({ chains }),
-        frameWallet({ chains }),
-        coinbaseWallet({ appName: APP_NAME, chains }),
-        ...walletConnectWalletEntry,
-      ],
+  const defaultConnectors = getDefaultConnectors({
+    chains,
+    walletConnectProjectId,
+    app: {
+      ...APP_METADATA,
+      icon: APP_ICON,
     },
-  ]);
+  });
+  const walletConnectConnector =
+    walletConnectProjectId ?
+      new WalletConnectConnector({
+        chains,
+        options: {
+          projectId: walletConnectProjectId,
+          showQrModal: false,
+          isNewChainsStale: false,
+          metadata: APP_METADATA,
+        },
+      })
+    : null;
+  const connectors =
+    walletConnectConnector ?
+      defaultConnectors.map((connector) =>
+        connector.id === "walletConnect" ? walletConnectConnector : connector,
+      )
+    : defaultConnectors;
 
   let simulatedConnector: MockConnector | undefined;
   if (simulatedWallet) {
@@ -133,7 +188,6 @@ const createCustomConfig = (
     });
   }
 
-  const connectors = connectorFactory();
   const resolvedConnectors =
     simulatedConnector ? [simulatedConnector, ...connectors] : connectors;
 
@@ -252,7 +306,7 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
       <WagmiConfig config={wagmiConfig}>
         <AddrethConfig>
           <ThemeProvider>
-            <ThemeAware chains={wagmiConfig.chains ?? []}>
+            <ThemeAware>
               <PubSubProvider>{children}</PubSubProvider>
             </ThemeAware>
           </ThemeProvider>
@@ -262,32 +316,26 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
   );
 };
 
-const ThemeAware = ({
-  chains,
-  children,
-}: {
-  chains: Chain[];
-  children: React.ReactNode;
-}) => {
+const ThemeAware = ({ children }: { children: React.ReactNode }) => {
   const { resolvedTheme } = useTheme();
-  const theme = useMemo(
-    () =>
-      (resolvedTheme === "darkTheme" ? rainbowDarkTheme : lightTheme)({
-        accentColor: "var(--color-primary)",
-        accentColorForeground: "var(--color-black)",
-        borderRadius: "large",
-        overlayBlur: "small",
-      }),
-    [resolvedTheme],
-  );
 
   return (
     <>
-      <RainbowKitProvider modalSize="compact" chains={chains} theme={theme}>
+      <ConnectKitProvider
+        mode="auto"
+        theme="auto"
+        customTheme={CONNECT_KIT_THEME}
+        options={{
+          hideNoWalletCTA: false,
+          overlayBlur: 6,
+          walletConnectCTA: "both",
+          walletConnectName: "WalletConnect",
+        }}
+      >
         <TransactionNotificationProvider>
           {children}
         </TransactionNotificationProvider>
-      </RainbowKitProvider>
+      </ConnectKitProvider>
       <ToastContainer
         style={{ zIndex: 1000 }}
         position="top-right"

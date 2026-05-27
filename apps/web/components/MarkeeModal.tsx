@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { ChevronDownIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useModal } from "connectkit";
 import { formatEther, parseEther, UserRejectedRequestError } from "viem";
 import { useAccount, useBalance, useChainId } from "wagmi";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
@@ -89,7 +89,7 @@ export default function MarkeeModal({
     switchNetworkAsync,
     isLoading: isSwitching,
   } = useAppSwitchNetwork();
-  const { openConnectModal, connectModalOpen } = useConnectModal();
+  const { open: connectModalOpen, setOpen: setConnectModalOpen } = useModal();
   const [hiddenForConnect, setHiddenForConnect] = useState(false);
   const [connectModalWasOpened, setConnectModalWasOpened] = useState(false);
 
@@ -288,17 +288,13 @@ export default function MarkeeModal({
   };
 
   const handleOpenWalletConnect = () => {
-    if (!openConnectModal) {
-      return;
-    }
-
     suppressDialogCloseRef.current = true;
     setHiddenForConnect(true);
     setConnectModalWasOpened(false);
     dialogRef.current?.close();
 
     requestAnimationFrame(() => {
-      openConnectModal();
+      setConnectModalOpen(true);
     });
   };
 
@@ -490,7 +486,8 @@ export default function MarkeeModal({
               ETH Amount
               {isOnBase && baseBalance !== null && (
                 <span className="text-xs text-neutral-content/40 font-normal ml-2">
-                  (balance: {parseFloat(formatEther(baseBalance)).toFixed(3)} ETH)
+                  (balance: {parseFloat(formatEther(baseBalance)).toFixed(3)}{" "}
+                  ETH)
                 </span>
               )}
             </label>

@@ -20,6 +20,7 @@ type Props = {
   contractName?: React.ReactNode;
   showContractName?: boolean;
   showClickToExplorer?: boolean;
+  clickHint?: React.ReactNode;
   auxiliaryLink?: {
     href: string;
     label: React.ReactNode;
@@ -49,6 +50,7 @@ export function TransactionStatusNotification({
   contractName,
   showContractName = false,
   showClickToExplorer,
+  clickHint,
   auxiliaryLink,
   index,
 }: Props) {
@@ -61,6 +63,8 @@ export function TransactionStatusNotification({
     contractName !== false;
   const hasMessage =
     message !== undefined && message !== null && message !== false;
+  const hasClickHint =
+    clickHint !== undefined && clickHint !== null && clickHint !== false;
   const textClass =
     showClickToExplorer ? textColor : "dark:text-neutral-inverted-content";
   const contractNameClass =
@@ -108,6 +112,7 @@ export function TransactionStatusNotification({
             target="_blank"
             rel="noopener noreferrer"
             className="w-fit text-sm italic underline underline-offset-2"
+            onClick={(event) => event.stopPropagation()}
           >
             {auxiliaryLink.label}
           </a>
@@ -116,6 +121,9 @@ export function TransactionStatusNotification({
           <div className="w-full text-sm italic">
             Click to see in block explorer
           </div>
+        )}
+        {hasClickHint && (
+          <div className="w-full text-sm italic">{clickHint}</div>
         )}
       </div>
     </div>

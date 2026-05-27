@@ -42,6 +42,69 @@ const DIVVI_PROVIDERS = process.env.NEXT_PUBLIC_DIVVI_PROVIDERS?.split(",") ?? [
 const IS_E2E =
   process.env.NEXT_PUBLIC_E2E === "true" || process.env.E2E === "true";
 
+const WALLETCONNECT_DEEPLINK_CHOICE_STORAGE_KEY =
+  "WALLETCONNECT_DEEPLINK_CHOICE";
+
+const WALLETCONNECT_CONNECTOR_IDS = new Set([
+  "walletConnect",
+  "walletConnectLegacy",
+]);
+
+type WalletApprovalLink = {
+  href: string;
+  label: string;
+};
+
+const isMobileBrowser = () => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return (
+    window.matchMedia("(pointer: coarse)").matches ||
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|Opera Mini/u.test(
+      window.navigator.userAgent,
+    )
+  );
+};
+
+const getWalletConnectApprovalLink = (
+  connectorId?: string,
+): WalletApprovalLink | undefined => {
+  if (
+    !connectorId ||
+    !WALLETCONNECT_CONNECTOR_IDS.has(connectorId) ||
+    !isMobileBrowser()
+  ) {
+    return undefined;
+  }
+
+  try {
+    const storedChoice = window.localStorage.getItem(
+      WALLETCONNECT_DEEPLINK_CHOICE_STORAGE_KEY,
+    );
+    if (!storedChoice) {
+      return undefined;
+    }
+
+    const choice = JSON.parse(storedChoice) as {
+      href?: unknown;
+      name?: unknown;
+    };
+    const href = typeof choice.href === "string" ? choice.href : undefined;
+    if (!href) {
+      return undefined;
+    }
+
+    return {
+      href,
+      label: typeof choice.name === "string" ? choice.name : "wallet",
+    };
+  } catch {
+    return undefined;
+  }
+};
+
 /**
  * this hook is used to write to a contract and wait for confirmations.
  * @param props
@@ -233,9 +296,8 @@ export function useContractWriteWithConfirmations<
   };
 
   const rawTransactionHash = txResult.data?.hash;
-  const transactionHash = isRpcTransactionHash(rawTransactionHash) ?
-      rawTransactionHash
-    : undefined;
+  const transactionHash =
+    isRpcTransactionHash(rawTransactionHash) ? rawTransactionHash : undefined;
   const safeTransactionHash =
     rawTransactionHash != null && transactionHash == null ?
       rawTransactionHash
@@ -289,6 +351,13 @@ export function useContractWriteWithConfirmations<
     txResult.variables,
     txWaitResult.status,
   ]);
+  const walletApprovalLink = useMemo(
+    () =>
+      computedStatus === "waiting" ?
+        getWalletConnectApprovalLink(connector?.id)
+      : undefined,
+    [computedStatus, connector?.id],
+  );
 
   useTransactionNotification({
     toastId,
@@ -299,6 +368,7 @@ export function useContractWriteWithConfirmations<
     targetAddress: props.address,
     transactionStatus: computedStatus,
     transactionError: txResult.error,
+    walletApprovalLink,
     enabled: props.showNotification ?? true, // default to true
     fallbackErrorMessage: props.fallbackErrorMessage,
     contractName: props.contractName,

@@ -6,7 +6,9 @@ import { getChain } from "@/configs/chains";
 export function useAppSwitchNetwork() {
   const { connector } = useAccount();
   const switchNetworkResult = useSwitchNetwork();
-  const isWalletConnect = connector?.id === "walletConnect";
+  const isWalletConnect =
+    connector?.id === "walletConnect" ||
+    connector?.id === "walletConnectLegacy";
 
   const showWalletConnectReconnectToast = useCallback((chainId?: number) => {
     if (chainId == null) {
