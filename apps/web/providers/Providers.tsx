@@ -66,6 +66,22 @@ const APP_METADATA = {
   url: APP_URL,
   icons: [APP_ICON],
 };
+const WALLET_STORAGE_MIGRATION_KEY =
+  "gardens.wallet-storage-migration.connectkit.v1";
+const STALE_WALLET_STORAGE_EXACT_KEYS = new Set([
+  "wagmi.cache",
+  "wagmi.connected",
+  "wagmi.store",
+  "WALLETCONNECT_DEEPLINK_CHOICE",
+]);
+const STALE_WALLET_STORAGE_PREFIXES = [
+  "rainbowkit.",
+  "rk_",
+  "rk-",
+  "walletconnect",
+  "WALLETCONNECT_",
+  "wc@2:",
+];
 
 const CONNECT_KIT_THEME = {
   "--ck-font-family": "var(--font-chakra)",
@@ -130,6 +146,53 @@ const CONNECT_KIT_THEME = {
   "--ck-copytoclipboard-stroke": "var(--ck-gardens-copytoclipboard-stroke)",
 };
 
+const shouldRemoveStaleWalletStorageKey = (key: string) =>
+  STALE_WALLET_STORAGE_EXACT_KEYS.has(key) ||
+  STALE_WALLET_STORAGE_PREFIXES.some((prefix) => key.startsWith(prefix));
+
+const removeStaleWalletStorageEntries = (storage: Storage) => {
+  const keys = Array.from({ length: storage.length }, (_, index) =>
+    storage.key(index),
+  ).filter((key): key is string => key != null);
+  const staleKeys = keys.filter(shouldRemoveStaleWalletStorageKey);
+
+  staleKeys.forEach((key) => storage.removeItem(key));
+
+  return staleKeys;
+};
+
+const resetStaleWalletStorageForConnectKitMigration = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    if (window.localStorage.getItem(WALLET_STORAGE_MIGRATION_KEY) === "done") {
+      return;
+    }
+
+    const localStorageKeys = removeStaleWalletStorageEntries(
+      window.localStorage,
+    );
+    const sessionStorageKeys = removeStaleWalletStorageEntries(
+      window.sessionStorage,
+    );
+
+    window.localStorage.setItem(WALLET_STORAGE_MIGRATION_KEY, "done");
+
+    if (localStorageKeys.length > 0 || sessionStorageKeys.length > 0) {
+      console.info("[wallet-migration] cleared stale wallet storage", {
+        localStorageKeys,
+        sessionStorageKeys,
+      });
+    }
+  } catch (error) {
+    console.info("[wallet-migration] failed to clear stale wallet storage", {
+      error,
+    });
+  }
+};
+
 const createCustomConfig = (
   preferredSimulatedChain: Chain | undefined,
   simulatedWallet?: Address,
@@ -146,9 +209,11 @@ const createCustomConfig = (
   ]);
   const walletConnectProjectId =
     process.env.NEXT_PUBLIC_WALLET_CONNECT_ID ?? "";
+  // Do not pass walletConnectProjectId here: ConnectKit constructs the
+  // WalletConnect provider eagerly, so replacing that connector afterwards
+  // leaves an extra provider racing the real QR pairing session.
   const defaultConnectors = getDefaultConnectors({
     chains,
-    walletConnectProjectId,
     app: {
       ...APP_METADATA,
       icon: APP_ICON,
@@ -169,7 +234,9 @@ const createCustomConfig = (
   const connectors =
     walletConnectConnector ?
       defaultConnectors.map((connector) =>
-        connector.id === "walletConnect" ? walletConnectConnector : connector,
+        connector.id === "walletConnectLegacy" ?
+          walletConnectConnector
+        : connector,
       )
     : defaultConnectors;
 
@@ -260,6 +327,8 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
     useState<Address | null>(null);
 
   useEffect(() => {
+    resetStaleWalletStorageForConnectKitMigration();
+
     const { config, simulatedConnector: newSimulatedConnector } =
       createCustomConfig(preferredSimulatedChain, simulatedWallet);
     setWagmiConfig(config);

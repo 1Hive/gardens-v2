@@ -131,6 +131,17 @@
   --ck-gardens-copytoclipboard-stroke: #acacac;
 }
 
+#__CONNECTKIT__ [role="dialog"] h1 {
+  width: 100% !important;
+  text-align: center !important;
+}
+
+#__CONNECTKIT__ [role="dialog"] h1 + div {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  text-align: center !important;
+}
+
 * {
   margin: 0;
   padding: 0;

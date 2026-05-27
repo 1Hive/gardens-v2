@@ -1,6 +1,12 @@
 "use client";
 
-import React, { Fragment, useCallback, useMemo, useState } from "react";
+import React, {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
@@ -41,12 +47,124 @@ import { formatAddress } from "@/utils/formatAddress";
 
 const RABBY_MIPD_CONNECTOR_NAMES = new Set([
   "ca334957-11c4-49a7-adf1-6b0cf47cbc8b",
+  "e8425e47-28e2-4902-8844-223700322a77",
 ]);
 
 const getWalletDisplayName = (name?: string) => {
   if (!name) return "Wallet";
   if (RABBY_MIPD_CONNECTOR_NAMES.has(name)) return "Rabby Wallet";
   return name;
+};
+
+const hasProviderInfoMatching = (
+  provider: any,
+  matcher: (value: string) => boolean,
+) => {
+  const providerInfo = [
+    provider?.info?.name,
+    provider?.info?.rdns,
+    provider?.selectedProvider?.info?.name,
+    provider?.selectedProvider?.info?.rdns,
+    ...(Array.isArray(provider?.providers) ?
+      provider.providers.flatMap((nestedProvider: any) => [
+        nestedProvider?.info?.name,
+        nestedProvider?.info?.rdns,
+      ])
+    : []),
+  ];
+
+  return providerInfo.some(
+    (value) => typeof value === "string" && matcher(value.toLowerCase()),
+  );
+};
+
+const getWalletDisplayNameFromProvider = (provider: any) => {
+  if (
+    provider?.isRabby === true ||
+    provider?.selectedProvider?.isRabby === true ||
+    (Array.isArray(provider?.providers) &&
+      provider.providers.some(
+        (nestedProvider: any) => nestedProvider?.isRabby === true,
+      )) ||
+    hasProviderInfoMatching(provider, (value) => value.includes("rabby"))
+  ) {
+    return "Rabby Wallet";
+  }
+
+  if (
+    provider?.isCoinbaseWallet === true ||
+    provider?.selectedProvider?.isCoinbaseWallet === true ||
+    (Array.isArray(provider?.providers) &&
+      provider.providers.some(
+        (nestedProvider: any) => nestedProvider?.isCoinbaseWallet === true,
+      )) ||
+    hasProviderInfoMatching(provider, (value) => value.includes("coinbase"))
+  ) {
+    return "Coinbase Wallet";
+  }
+
+  if (
+    provider?.isBraveWallet === true ||
+    provider?.selectedProvider?.isBraveWallet === true ||
+    (Array.isArray(provider?.providers) &&
+      provider.providers.some(
+        (nestedProvider: any) => nestedProvider?.isBraveWallet === true,
+      )) ||
+    hasProviderInfoMatching(provider, (value) => value.includes("brave"))
+  ) {
+    return "Brave Wallet";
+  }
+
+  if (
+    provider?.isFrame === true ||
+    provider?.selectedProvider?.isFrame === true ||
+    (Array.isArray(provider?.providers) &&
+      provider.providers.some(
+        (nestedProvider: any) => nestedProvider?.isFrame === true,
+      )) ||
+    hasProviderInfoMatching(provider, (value) => value.includes("frame"))
+  ) {
+    return "Frame";
+  }
+
+  if (
+    provider?.isMetaMask === true ||
+    provider?.selectedProvider?.isMetaMask === true ||
+    (Array.isArray(provider?.providers) &&
+      provider.providers.some(
+        (nestedProvider: any) => nestedProvider?.isMetaMask === true,
+      )) ||
+    hasProviderInfoMatching(provider, (value) => value.includes("metamask"))
+  ) {
+    return "MetaMask";
+  }
+
+  return undefined;
+};
+
+const getProviderDebugMetadata = (provider: any) => {
+  if (!provider) {
+    return null;
+  }
+
+  return {
+    info: provider.info,
+    selectedProviderInfo: provider.selectedProvider?.info,
+    providers:
+      Array.isArray(provider.providers) ?
+        provider.providers.map((nestedProvider: any) => ({
+          info: nestedProvider?.info,
+          isRabby: nestedProvider?.isRabby,
+          isMetaMask: nestedProvider?.isMetaMask,
+          isCoinbaseWallet: nestedProvider?.isCoinbaseWallet,
+        }))
+      : undefined,
+    isRabby: provider.isRabby,
+    isMetaMask: provider.isMetaMask,
+    isCoinbaseWallet: provider.isCoinbaseWallet,
+    isFrame: provider.isFrame,
+    isBraveWallet: provider.isBraveWallet,
+  };
 };
 
 export function ConnectWallet() {
@@ -119,6 +237,9 @@ export function ConnectWallet() {
 
   const [selectedNFTIndex, setSelectedNFTIndex] = useState(0);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [providerWalletDisplayName, setProviderWalletDisplayName] = useState<
+    string | null
+  >(null);
 
   const handleDisconnect = useCallback(async () => {
     try {
@@ -129,8 +250,55 @@ export function ConnectWallet() {
     }
   }, [disconnectAsync]);
 
-  const wallet = getWalletDisplayName(account.connector?.name);
+  const wallet =
+    providerWalletDisplayName ?? getWalletDisplayName(account.connector?.name);
   const isMockConnection = account.connector?.id === "mock";
+
+  useEffect(() => {
+    if (!account.isConnected || !account.connector) {
+      setProviderWalletDisplayName(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    account.connector
+      .getProvider()
+      .then((provider) => {
+        if (cancelled) {
+          return;
+        }
+
+        setProviderWalletDisplayName(
+          getWalletDisplayNameFromProvider(provider) ?? null,
+        );
+
+        console.info("[wallet-debug] connected wallet metadata", {
+          connector: {
+            id: account.connector?.id,
+            name: account.connector?.name,
+            ready: account.connector?.ready,
+          },
+          provider: getProviderDebugMetadata(provider),
+        });
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.info("[wallet-debug] failed to inspect wallet provider", {
+            connector: {
+              id: account.connector?.id,
+              name: account.connector?.name,
+            },
+            error,
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [account.connector, account.isConnected]);
+
   const { hasContractCode: hasGardenTokenContract } = useHasContractCode({
     address: tokenUrlAddress,
     chainId: urlChainId,
@@ -304,22 +472,21 @@ export function ConnectWallet() {
               <div className="flex flex-col gap-4 rounded-lg p-4 min-w-[300px]">
                 {/* wallet and token balance info */}
                 <Menu.Item as="div" className="flex flex-col gap-2">
-                  <div className="flex justify-between py-1">
-                    <p className="subtitle2">Wallet</p>{" "}
-                    <p className="subtitle2">{wallet}</p>
+                  <div className="flex w-full items-start justify-between gap-3 py-1">
+                    <p className="subtitle2">Wallet</p>
+                    <p className="subtitle2 min-w-0 break-words text-right w-fit">
+                      {wallet}
+                    </p>
                   </div>
-                  <div className="flex justify-between py-1">
-                    <p className="subtitle2">Balance</p>
-                    {token ?
+                  {token && (
+                    <div className="flex justify-between py-1">
+                      <p className="subtitle2">Balance</p>
                       <DisplayNumber
                         number={(token.formatted ?? 0).toString()}
                         tokenSymbol={token.symbol}
                       />
-                    : <span className="subtitle2 text-neutral-soft-content">
-                        Unavailable
-                      </span>
-                    }
-                  </div>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between gap-3 py-1">
                     <p className="subtitle2">Explorer</p>
                     <label className="flex items-center gap-2 cursor-pointer">
