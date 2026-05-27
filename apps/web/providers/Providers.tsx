@@ -46,8 +46,8 @@ import {
 import { PubSubProvider } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useTheme } from "@/providers/ThemeProvider";
-import { getEnvPublicClient } from "@/utils/publicClient";
 import { logOnce } from "@/utils/log";
+import { getEnvPublicClient } from "@/utils/publicClient";
 
 const dedupeChains = (chainList: Chain[]) =>
   chainList.filter(
@@ -78,7 +78,7 @@ const getConfiguredChains = () => dedupeChains([...CHAINS, base, mainnet]);
 // Keep WalletConnect one step above it so the QR/deeplink modal is clickable.
 const WALLETCONNECT_MODAL_Z_INDEX = 2147483647;
 
-const createWalletConnectBrowserModalWallet = (
+const createMobileBrowserWalletConnectWallet = (
   chains: Chain[],
   projectId: string,
   walletConnectResetVersion: number,
@@ -105,10 +105,6 @@ const createWalletConnectBrowserModalWallet = (
   return {
     ...baseWallet,
     createConnector: () => {
-      if (!isMobileBrowser()) {
-        return baseWallet.createConnector();
-      }
-
       const connector = getWalletConnectConnector({
         version: "2",
         chains,
@@ -134,6 +130,34 @@ const createCustomConfig = (
   const chains = usedChains;
   const walletConnectProjectId =
     process.env.NEXT_PUBLIC_WALLET_CONNECT_ID ?? "";
+  const walletConnectWalletEntry =
+    !walletConnectProjectId ?
+      []
+    : isMobileBrowser() ?
+      [
+        createMobileBrowserWalletConnectWallet(
+          chains,
+          walletConnectProjectId,
+          walletConnectResetVersion,
+        ),
+      ]
+    : [
+        walletConnectWallet({
+          chains,
+          projectId: walletConnectProjectId,
+          options: {
+            projectId: walletConnectProjectId,
+            qrModalOptions: {
+              themeVariables: {
+                "--wcm-z-index": WALLETCONNECT_MODAL_Z_INDEX.toString(),
+                "--gardens-walletconnect-reset":
+                  walletConnectResetVersion.toString(),
+              },
+            },
+          },
+        }),
+      ];
+
   const connectorFactory = connectorsForWallets([
     {
       groupName: "Recommended",
@@ -142,15 +166,7 @@ const createCustomConfig = (
         rabbyWallet({ chains }),
         frameWallet({ chains }),
         coinbaseWallet({ appName: "Gardens V2", chains }),
-        ...(walletConnectProjectId ?
-          [
-            createWalletConnectBrowserModalWallet(
-              chains,
-              walletConnectProjectId,
-              walletConnectResetVersion,
-            ),
-          ]
-        : []),
+        ...walletConnectWalletEntry,
       ],
     },
   ]);

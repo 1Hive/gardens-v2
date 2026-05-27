@@ -8,16 +8,18 @@ export function useAppSwitchNetwork() {
   const switchNetworkResult = useSwitchNetwork();
   const isWalletConnect = connector?.id === "walletConnect";
 
-  const showManualSwitchToast = useCallback((chainId?: number) => {
+  const showWalletConnectReconnectToast = useCallback((chainId?: number) => {
     if (chainId == null) {
       return;
     }
 
     const targetChain = getChain(chainId);
+    const targetChainName = targetChain?.name ?? `chain ${chainId}`;
+
     toast.info(
-      `Switch network to ${targetChain?.name ?? `chain ${chainId}`} in your wallet.`,
+      `Reconnect WalletConnect to approve ${targetChainName}, then switch to it in your wallet and try again.`,
       {
-        toastId: `walletconnect-manual-switch-${chainId}`,
+        toastId: `walletconnect-reconnect-${chainId}`,
       },
     );
   }, []);
@@ -25,18 +27,18 @@ export function useAppSwitchNetwork() {
   const trySwitchNetworkAsync = useCallback(
     async (chainId?: number) => {
       if (chainId == null || !switchNetworkResult.switchNetworkAsync) {
-        showManualSwitchToast(chainId);
+        showWalletConnectReconnectToast(chainId);
         return undefined;
       }
 
       try {
         return await switchNetworkResult.switchNetworkAsync(chainId);
       } catch {
-        showManualSwitchToast(chainId);
+        showWalletConnectReconnectToast(chainId);
         return undefined;
       }
     },
-    [showManualSwitchToast, switchNetworkResult],
+    [showWalletConnectReconnectToast, switchNetworkResult],
   );
 
   const switchNetwork = useCallback(
