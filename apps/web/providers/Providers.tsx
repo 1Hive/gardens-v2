@@ -364,7 +364,10 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
       <WagmiConfig key={providerResetKey} config={wagmiConfig}>
         <AddrethConfig>
           <ThemeProvider>
-            <ThemeAware chains={wagmiConfig.chains ?? []}>
+            <ThemeAware
+              chains={wagmiConfig.chains ?? []}
+              rainbowKitResetVersion={walletConnectResetVersion}
+            >
               <PubSubProvider>{children}</PubSubProvider>
             </ThemeAware>
           </ThemeProvider>
@@ -376,9 +379,11 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
 
 const ThemeAware = ({
   chains,
+  rainbowKitResetVersion,
   children,
 }: {
   chains: Chain[];
+  rainbowKitResetVersion: number;
   children: React.ReactNode;
 }) => {
   const { resolvedTheme } = useTheme();
@@ -395,7 +400,12 @@ const ThemeAware = ({
 
   return (
     <>
-      <RainbowKitProvider modalSize="compact" chains={chains} theme={theme}>
+      <RainbowKitProvider
+        key={`rainbowkit-${rainbowKitResetVersion}`}
+        modalSize="compact"
+        chains={chains}
+        theme={theme}
+      >
         <TransactionNotificationProvider>
           {children}
         </TransactionNotificationProvider>

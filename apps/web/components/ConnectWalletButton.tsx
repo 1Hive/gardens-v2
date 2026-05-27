@@ -316,14 +316,6 @@ export function ConnectWallet() {
     } finally {
       await disconnectAsync();
 
-      if (isWalletConnectConnector && provider?.session) {
-        try {
-          await provider.disconnect?.();
-        } catch {
-          // Ignore late WalletConnect provider disconnect failures after wagmi disconnect.
-        }
-      }
-
       if (typeof window !== "undefined") {
         window.localStorage.setItem(SKIP_AUTOCONNECT_STORAGE_KEY, "true");
         clearDisconnectPersistence(window.localStorage);
