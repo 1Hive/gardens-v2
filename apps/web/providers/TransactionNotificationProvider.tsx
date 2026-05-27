@@ -32,6 +32,10 @@ type TransactionToastPayload = {
   targetAddress?: `0x${string}` | string | undefined;
   transactionError?: Error | null;
   fallbackErrorMessage?: string;
+  walletApprovalLink?: {
+    href: string;
+    label: string;
+  };
   enabled?: boolean;
   chainId?: number;
   confirmations?: number;
@@ -107,6 +111,8 @@ function areEntriesEqual(
     prev.targetAddress === next.targetAddress &&
     prev.transactionError === next.transactionError &&
     prev.fallbackErrorMessage === next.fallbackErrorMessage &&
+    prev.walletApprovalLink?.href === next.walletApprovalLink?.href &&
+    prev.walletApprovalLink?.label === next.walletApprovalLink?.label &&
     prev.enabled === next.enabled &&
     prev.chainId === next.chainId &&
     prev.confirmations === next.confirmations &&
@@ -207,6 +213,7 @@ const TransactionToastManager = ({ entries, notify, remove }: ManagerProps) => {
           message={notifProps.message}
           contractName={entry.contractName}
           showClickToExplorer={notifProps.showClickToExplorer}
+          clickHint={notifProps.clickHint}
           auxiliaryLink={notifProps.auxiliaryLink}
         />
       );
@@ -239,6 +246,7 @@ type NotificationRenderConfig = {
   message: React.ReactNode;
   type: ToastOptions["type"];
   showClickToExplorer: boolean;
+  clickHint?: React.ReactNode;
   auxiliaryLink?: {
     href: string;
     label: React.ReactNode;
@@ -266,6 +274,11 @@ const mapStatusToNotification = (
   const safeQueueUrl = getSafeQueueUrl(entry.chainId, entry.safeAddress);
   const explorerTransactionHash =
     isRpcTransactionHash(entry.transactionHash) ? entry.transactionHash : null;
+  const openWalletApproval = () => {
+    if (entry.walletApprovalLink?.href) {
+      window.open(entry.walletApprovalLink.href, "_self");
+    }
+  };
   const openExplorer = () => {
     if (explorerTransactionHash) {
       window.open(`${chainUrl}/tx/${explorerTransactionHash}`, "_blank");
@@ -275,9 +288,14 @@ const mapStatusToNotification = (
   switch (entry.status) {
     case "waiting":
       return {
-        message: "Waiting for signature",
+        message:
+          entry.walletApprovalLink ?
+            `Waiting for signature in ${entry.walletApprovalLink.label}`
+          : "Waiting for signature",
         type: "warning" as ToastOptions["type"],
         showClickToExplorer: false,
+        clickHint: entry.walletApprovalLink ? "Tap to open wallet" : undefined,
+        onClick: entry.walletApprovalLink ? openWalletApproval : undefined,
         auxiliaryLink:
           safeQueueUrl && entry.safeTransactionHash ?
             {
@@ -407,16 +425,16 @@ const TransactionStatusWatcher = ({
 }) => {
   const shouldWatchSafeTransaction = Boolean(
     entry.watchTransaction !== false &&
-    entry.transactionHash == null &&
-    entry.safeTransactionHash != null &&
-    entry.chainId != null &&
-    (entry.status === "waiting" || entry.status === "loading"),
+      entry.transactionHash == null &&
+      entry.safeTransactionHash != null &&
+      entry.chainId != null &&
+      (entry.status === "waiting" || entry.status === "loading"),
   );
   const shouldWatch = Boolean(
     entry.watchTransaction !== false &&
-    isRpcTransactionHash(entry.transactionHash) &&
-    entry.chainId != null &&
-    (entry.status === "waiting" || entry.status === "loading"),
+      isRpcTransactionHash(entry.transactionHash) &&
+      entry.chainId != null &&
+      (entry.status === "waiting" || entry.status === "loading"),
   );
 
   const { status, error } = useWaitForTransaction({
@@ -510,8 +528,7 @@ const TransactionStatusWatcher = ({
               safeTransactionHash: resolvedSafeTxHash,
               transactionError:
                 data.isSuccessful === false ?
-                  (entry.transactionError ??
-                  new Error("Safe transaction failed"))
+                  entry.transactionError ?? new Error("Safe transaction failed")
                 : null,
             });
             return;
@@ -579,7 +596,7 @@ const TransactionStatusWatcher = ({
             safeTransactionHash: matchedSafeTxHash,
             transactionError:
               matchingTransaction.isSuccessful === false ?
-                (entry.transactionError ?? new Error("Safe transaction failed"))
+                entry.transactionError ?? new Error("Safe transaction failed")
               : null,
           });
         }

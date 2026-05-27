@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useModal } from "connectkit";
 import { Address, useAccount } from "wagmi";
 import { CVStrategy, CVStrategyConfig } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
@@ -32,7 +32,7 @@ export function ActivatePoints({
   activate = true,
 }: ActiveMemberProps) {
   const { address: connectedAccount } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { setOpen: setConnectModalOpen } = useModal();
   const chainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
   const allowList = (strategy?.config?.allowlist as Address[]) ?? [];
@@ -93,12 +93,12 @@ export function ActivatePoints({
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
 
   function handleActivate() {
-    if (!connectedAccount) return openConnectModal?.();
+    if (!connectedAccount) return setConnectModalOpen(true);
     writeActivatePoints?.({ args: [] });
   }
 
   function handleDeactivate() {
-    if (!connectedAccount) return openConnectModal?.();
+    if (!connectedAccount) return setConnectModalOpen(true);
     writeDeactivatePoints?.({ args: [] });
   }
 

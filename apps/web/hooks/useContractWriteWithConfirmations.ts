@@ -19,6 +19,12 @@ import { chainConfigMap } from "@/configs/chains";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useFlag } from "@/hooks/useFlag";
 import { abiWithErrors } from "@/utils/abi";
+import {
+  getWalletConnectDeepLinkChoice,
+  isMobileBrowser,
+  WALLETCONNECT_CONNECTOR_IDS,
+  WalletConnectDeepLinkChoice,
+} from "@/utils/walletConnectMobile";
 
 export type ComputedStatus =
   | "loading"
@@ -41,6 +47,20 @@ const DIVVI_PROVIDERS = process.env.NEXT_PUBLIC_DIVVI_PROVIDERS?.split(",") ?? [
 
 const IS_E2E =
   process.env.NEXT_PUBLIC_E2E === "true" || process.env.E2E === "true";
+
+const getWalletConnectApprovalLink = (
+  connectorId?: string,
+): WalletConnectDeepLinkChoice | undefined => {
+  if (
+    !connectorId ||
+    !WALLETCONNECT_CONNECTOR_IDS.has(connectorId) ||
+    !isMobileBrowser()
+  ) {
+    return undefined;
+  }
+
+  return getWalletConnectDeepLinkChoice();
+};
 
 /**
  * this hook is used to write to a contract and wait for confirmations.
@@ -233,9 +253,8 @@ export function useContractWriteWithConfirmations<
   };
 
   const rawTransactionHash = txResult.data?.hash;
-  const transactionHash = isRpcTransactionHash(rawTransactionHash) ?
-      rawTransactionHash
-    : undefined;
+  const transactionHash =
+    isRpcTransactionHash(rawTransactionHash) ? rawTransactionHash : undefined;
   const safeTransactionHash =
     rawTransactionHash != null && transactionHash == null ?
       rawTransactionHash
@@ -289,6 +308,13 @@ export function useContractWriteWithConfirmations<
     txResult.variables,
     txWaitResult.status,
   ]);
+  const walletApprovalLink = useMemo(
+    () =>
+      computedStatus === "waiting" ?
+        getWalletConnectApprovalLink(connector?.id)
+      : undefined,
+    [computedStatus, connector?.id],
+  );
 
   useTransactionNotification({
     toastId,
@@ -299,6 +325,7 @@ export function useContractWriteWithConfirmations<
     targetAddress: props.address,
     transactionStatus: computedStatus,
     transactionError: txResult.error,
+    walletApprovalLink,
     enabled: props.showNotification ?? true, // default to true
     fallbackErrorMessage: props.fallbackErrorMessage,
     contractName: props.contractName,

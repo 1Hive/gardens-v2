@@ -1,43 +1,36 @@
 "use client";
 
-import React, { Suspense, useEffect, useMemo, useState } from "react";
-import {
-  connectorsForWallets,
-  darkTheme as rainbowDarkTheme,
-  getWalletConnectConnector,
-  lightTheme,
-  RainbowKitProvider,
-} from "@rainbow-me/rainbowkit";
-import {
-  coinbaseWallet,
-  frameWallet,
-  injectedWallet,
-  rabbyWallet,
-  walletConnectWallet,
-} from "@rainbow-me/rainbowkit/wallets";
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { AddrethConfig } from "addreth";
+import { ConnectKitProvider, getDefaultConnectors, useModal } from "connectkit";
 import { Bounce, ToastContainer } from "react-toastify";
-import {
-  Address,
-  createWalletClient,
-  custom,
-  isAddress,
-} from "viem";
+import { Address, createWalletClient, custom, isAddress } from "viem";
 import { base } from "viem/chains";
 import {
   Chain,
   ConnectorAlreadyConnectedError,
+  configureChains,
   createConfig,
   mainnet,
-  PublicClient,
+  useAccount,
+  useNetwork,
   WagmiConfig,
 } from "wagmi";
 import { connect, disconnect } from "wagmi/actions";
 import { MockConnector } from "wagmi/connectors/mock";
+import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
+import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
+import { publicProvider } from "wagmi/providers/public";
 import ThemeProvider from "./ThemeProvider";
 import { TransactionNotificationProvider } from "./TransactionNotificationProvider";
 import { UrqlProvider } from "./UrqlProvider";
-import { CHAINS } from "@/configs/chains";
+import { CHAINS, getConfigByChain } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import {
   QueryParamsProvider,
@@ -46,8 +39,12 @@ import {
 import { PubSubProvider } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useTheme } from "@/providers/ThemeProvider";
-import { getEnvPublicClient } from "@/utils/publicClient";
 import { logOnce } from "@/utils/log";
+import {
+  getWalletConnectDeepLinkChoice,
+  isMobileBrowser,
+  WalletConnectDeepLinkChoice,
+} from "@/utils/walletConnectMobile";
 
 const dedupeChains = (chainList: Chain[]) =>
   chainList.filter(
@@ -55,105 +52,230 @@ const dedupeChains = (chainList: Chain[]) =>
       arr.findIndex((item) => item.id === candidate.id) === index,
   );
 
-const MOBILE_BROWSER_USER_AGENT =
-  /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
+const getConfiguredChains = () => dedupeChains([...CHAINS, base, mainnet]);
 
-const isMobileBrowser = () => {
-  if (typeof navigator === "undefined") {
-    return false;
-  }
+const APP_NAME = "Gardens V2";
+const APP_DESCRIPTION = "Gardens governance and funding";
+const APP_URL =
+  typeof window === "undefined" ?
+    "https://app.gardens.fund"
+  : window.location.origin;
+const APP_ICON = `${APP_URL}/favicon.ico`;
+const APP_METADATA = {
+  name: APP_NAME,
+  description: APP_DESCRIPTION,
+  url: APP_URL,
+  icons: [APP_ICON],
+};
+const WALLET_STORAGE_MIGRATION_KEY =
+  "gardens.wallet-storage-migration.connectkit.v1";
+const STALE_WALLET_STORAGE_EXACT_KEYS = new Set([
+  "wagmi.cache",
+  "wagmi.connected",
+  "wagmi.store",
+  "WALLETCONNECT_DEEPLINK_CHOICE",
+]);
+const STALE_WALLET_STORAGE_PREFIXES = [
+  "rainbowkit.",
+  "rk_",
+  "rk-",
+  "walletconnect",
+  "WALLETCONNECT_",
+  "wc@2:",
+];
 
-  return (
-    MOBILE_BROWSER_USER_AGENT.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
-  );
+const CONNECT_KIT_THEME = {
+  "--ck-font-family": "var(--font-chakra)",
+  "--ck-border-radius": "16px",
+  "--ck-overlay-background": "var(--ck-gardens-overlay-background)",
+  "--ck-modal-box-shadow": "var(--ck-gardens-modal-box-shadow)",
+  "--ck-body-color": "var(--ck-gardens-body-color)",
+  "--ck-body-color-muted": "var(--ck-gardens-body-color-muted)",
+  "--ck-body-color-muted-hover": "var(--ck-gardens-body-color-muted-hover)",
+  "--ck-body-background": "var(--ck-gardens-body-background)",
+  "--ck-body-background-transparent":
+    "var(--ck-gardens-body-background-transparent)",
+  "--ck-body-background-secondary":
+    "var(--ck-gardens-body-background-secondary)",
+  "--ck-body-background-secondary-hover-background":
+    "var(--ck-gardens-body-background-secondary-hover-background)",
+  "--ck-body-background-secondary-hover-outline":
+    "var(--ck-gardens-body-background-secondary-hover-outline)",
+  "--ck-body-background-tertiary": "var(--ck-gardens-body-background-tertiary)",
+  "--ck-body-action-color": "var(--ck-gardens-body-action-color)",
+  "--ck-body-divider": "var(--ck-gardens-body-divider)",
+  "--ck-body-color-danger": "#eb4848",
+  "--ck-body-color-valid": "var(--ck-gardens-body-color-valid)",
+  "--ck-primary-button-color": "var(--ck-gardens-primary-button-color)",
+  "--ck-primary-button-background":
+    "var(--ck-gardens-primary-button-background)",
+  "--ck-primary-button-hover-background":
+    "var(--ck-gardens-primary-button-hover-background)",
+  "--ck-primary-button-active-background":
+    "var(--ck-gardens-primary-button-active-background)",
+  "--ck-primary-button-box-shadow":
+    "var(--ck-gardens-primary-button-box-shadow)",
+  "--ck-primary-button-border-radius": "8px",
+  "--ck-secondary-button-color": "var(--ck-gardens-secondary-button-color)",
+  "--ck-secondary-button-background":
+    "var(--ck-gardens-secondary-button-background)",
+  "--ck-secondary-button-hover-background":
+    "var(--ck-gardens-secondary-button-hover-background)",
+  "--ck-secondary-button-box-shadow":
+    "var(--ck-gardens-secondary-button-box-shadow)",
+  "--ck-secondary-button-border-radius": "8px",
+  "--ck-tertiary-button-background":
+    "var(--ck-gardens-tertiary-button-background)",
+  "--ck-focus-color": "var(--ck-gardens-focus-color)",
+  "--ck-tooltip-background": "var(--ck-gardens-tooltip-background)",
+  "--ck-tooltip-background-secondary":
+    "var(--ck-gardens-tooltip-background-secondary)",
+  "--ck-tooltip-color": "var(--ck-gardens-tooltip-color)",
+  "--ck-tooltip-shadow": "var(--ck-gardens-tooltip-shadow)",
+  "--ck-dropdown-button-color": "var(--ck-gardens-dropdown-button-color)",
+  "--ck-dropdown-button-background":
+    "var(--ck-gardens-dropdown-button-background)",
+  "--ck-dropdown-button-hover-color":
+    "var(--ck-gardens-dropdown-button-hover-color)",
+  "--ck-dropdown-button-hover-background":
+    "var(--ck-gardens-dropdown-button-hover-background)",
+  "--ck-dropdown-button-box-shadow":
+    "var(--ck-gardens-dropdown-button-box-shadow)",
+  "--ck-qr-dot-color": "var(--ck-gardens-qr-dot-color)",
+  "--ck-qr-border-color": "var(--ck-gardens-qr-border-color)",
+  "--ck-qr-background": "var(--ck-gardens-qr-background)",
+  "--ck-copytoclipboard-stroke": "var(--ck-gardens-copytoclipboard-stroke)",
 };
 
-export const WALLETCONNECT_RESET_EVENT = "gardens:walletconnect-reset";
-export const AUTOCONNECT_RESET_EVENT = "gardens:autoconnect-reset";
-export const SKIP_AUTOCONNECT_STORAGE_KEY = "gardens:skip-autoconnect";
+const shouldRemoveStaleWalletStorageKey = (key: string) =>
+  STALE_WALLET_STORAGE_EXACT_KEYS.has(key) ||
+  STALE_WALLET_STORAGE_PREFIXES.some((prefix) => key.startsWith(prefix));
 
-const getConfiguredChains = () => dedupeChains([...CHAINS, base, mainnet]);
-// RainbowKit's modal overlay ships with z-index 2147483646 in its bundled CSS.
-// Keep WalletConnect one step above it so the QR/deeplink modal is clickable.
-const WALLETCONNECT_MODAL_Z_INDEX = 2147483647;
+const removeStaleWalletStorageEntries = (storage: Storage) => {
+  const keys = Array.from({ length: storage.length }, (_, index) =>
+    storage.key(index),
+  ).filter((key): key is string => key != null);
+  const staleKeys = keys.filter(shouldRemoveStaleWalletStorageKey);
 
-const createWalletConnectBrowserModalWallet = (
-  chains: Chain[],
-  projectId: string,
-  walletConnectResetVersion: number,
-) => {
-  const walletConnectOptions = {
-    projectId,
-    qrModalOptions: {
-      themeVariables: {
-        "--wcm-z-index": WALLETCONNECT_MODAL_Z_INDEX.toString(),
-        // WalletConnect connectors are cached from serialized options.
-        // This unused custom variable changes on reset to force a fresh instance.
-        "--gardens-walletconnect-reset":
-          walletConnectResetVersion.toString(),
-      },
-    },
-  };
+  staleKeys.forEach((key) => storage.removeItem(key));
 
-  const baseWallet = walletConnectWallet({
-    chains,
-    projectId,
-    options: walletConnectOptions,
-  });
+  return staleKeys;
+};
+
+const resetStaleWalletStorageForConnectKitMigration = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    if (window.localStorage.getItem(WALLET_STORAGE_MIGRATION_KEY) === "done") {
+      return;
+    }
+
+    const localStorageKeys = removeStaleWalletStorageEntries(
+      window.localStorage,
+    );
+    const sessionStorageKeys = removeStaleWalletStorageEntries(
+      window.sessionStorage,
+    );
+
+    window.localStorage.setItem(WALLET_STORAGE_MIGRATION_KEY, "done");
+
+    if (localStorageKeys.length > 0 || sessionStorageKeys.length > 0) {
+      console.info("[wallet-migration] cleared stale wallet storage", {
+        localStorageKeys,
+        sessionStorageKeys,
+      });
+    }
+  } catch (error) {
+    console.info("[wallet-migration] failed to clear stale wallet storage", {
+      error,
+    });
+  }
+};
+
+const getWalletConnectProviderSnapshot = async (provider: any) => {
+  if (!provider) {
+    return null;
+  }
+
+  let chainId: unknown;
+  let accounts: unknown;
+
+  try {
+    chainId = await provider.request?.({ method: "eth_chainId" });
+  } catch (error) {
+    chainId = {
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  try {
+    accounts = await provider.request?.({ method: "eth_accounts" });
+  } catch (error) {
+    accounts = {
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 
   return {
-    ...baseWallet,
-    createConnector: () => {
-      if (!isMobileBrowser()) {
-        return baseWallet.createConnector();
-      }
-
-      const connector = getWalletConnectConnector({
-        version: "2",
-        chains,
-        projectId,
-        options: {
-          ...walletConnectOptions,
-          showQrModal: true,
-        },
-      });
-
-      return { connector };
-    },
+    chainId,
+    accounts,
+    sessionTopic: provider.session?.topic,
+    sessionNamespaces: provider.session?.namespaces,
+    sessionRequiredNamespaces: provider.session?.requiredNamespaces,
+    sessionOptionalNamespaces: provider.session?.optionalNamespaces,
+    providerChainId: provider.chainId,
+    providerAccounts: provider.accounts,
   };
 };
 
 const createCustomConfig = (
-  skipAutoConnect: boolean,
-  walletConnectResetVersion: number,
   preferredSimulatedChain: Chain | undefined,
   simulatedWallet?: Address,
 ) => {
-  const usedChains = getConfiguredChains();
-  const chains = usedChains;
+  const { chains, publicClient } = configureChains(getConfiguredChains(), [
+    jsonRpcProvider({
+      rpc: (chain) => ({
+        http:
+          getConfigByChain(chain.id)?.rpcUrl?.trim() ??
+          chain.rpcUrls.default.http[0],
+      }),
+    }),
+    publicProvider(),
+  ]);
   const walletConnectProjectId =
     process.env.NEXT_PUBLIC_WALLET_CONNECT_ID ?? "";
-  const connectorFactory = connectorsForWallets([
-    {
-      groupName: "Recommended",
-      wallets: [
-        injectedWallet({ chains }),
-        rabbyWallet({ chains }),
-        frameWallet({ chains }),
-        coinbaseWallet({ appName: "Gardens V2", chains }),
-        ...(walletConnectProjectId ?
-          [
-            createWalletConnectBrowserModalWallet(
-              chains,
-              walletConnectProjectId,
-              walletConnectResetVersion,
-            ),
-          ]
-        : []),
-      ],
+  // Do not pass walletConnectProjectId here: ConnectKit constructs the
+  // WalletConnect provider eagerly, so replacing that connector afterwards
+  // leaves an extra provider racing the real QR pairing session.
+  const defaultConnectors = getDefaultConnectors({
+    chains,
+    app: {
+      ...APP_METADATA,
+      icon: APP_ICON,
     },
-  ]);
+  });
+  const walletConnectConnector =
+    walletConnectProjectId ?
+      new WalletConnectConnector({
+        chains,
+        options: {
+          projectId: walletConnectProjectId,
+          showQrModal: false,
+          isNewChainsStale: false,
+          metadata: APP_METADATA,
+        },
+      })
+    : null;
+  const connectors =
+    walletConnectConnector ?
+      defaultConnectors.map((connector) =>
+        connector.id === "walletConnectLegacy" ?
+          walletConnectConnector
+        : connector,
+      )
+    : defaultConnectors;
 
   let simulatedConnector: MockConnector | undefined;
   if (simulatedWallet) {
@@ -182,15 +304,14 @@ const createCustomConfig = (
     });
   }
 
-  const connectors = connectorFactory();
   const resolvedConnectors =
     simulatedConnector ? [simulatedConnector, ...connectors] : connectors;
 
   return {
     config: createConfig({
-      autoConnect: !skipAutoConnect,
+      autoConnect: true,
       connectors: resolvedConnectors,
-      publicClient: ({ chainId }): PublicClient => getEnvPublicClient(chainId),
+      publicClient,
     }),
     simulatedConnector,
   };
@@ -234,66 +355,38 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
   }, [queryParams]);
   const preferredSimulatedChain = simulatedWallet ? chain : undefined;
 
-  const [wagmiConfig, setWagmiConfig] = useState<CustomWagmiConfig | null>(null);
+  const [wagmiConfig, setWagmiConfig] = useState<CustomWagmiConfig | null>(
+    null,
+  );
   const [simulatedConnector, setSimulatedConnector] =
     useState<MockConnector | null>(null);
   const [activeSimulatedWallet, setActiveSimulatedWallet] =
     useState<Address | null>(null);
-  const [walletConnectResetVersion, setWalletConnectResetVersion] = useState(0);
-  const [skipAutoConnect, setSkipAutoConnect] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    resetStaleWalletStorageForConnectKitMigration();
 
-    setSkipAutoConnect(
-      window.localStorage.getItem(SKIP_AUTOCONNECT_STORAGE_KEY) === "true",
-    );
-  }, []);
+    console.info("[walletconnect-debug] creating wagmi config", {
+      routeChain: chain ? { id: chain.id, name: chain.name } : undefined,
+      preferredSimulatedChain:
+        preferredSimulatedChain ?
+          {
+            id: preferredSimulatedChain.id,
+            name: preferredSimulatedChain.name,
+          }
+        : undefined,
+      configuredChains: getConfiguredChains().map((configuredChain) => ({
+        id: configuredChain.id,
+        name: configuredChain.name,
+      })),
+    });
 
-  useEffect(() => {
-    const handleWalletConnectReset = () => {
-      setWalletConnectResetVersion((value) => value + 1);
-    };
-    const handleAutoConnectReset = () => {
-      setSkipAutoConnect(
-        window.localStorage.getItem(SKIP_AUTOCONNECT_STORAGE_KEY) === "true",
-      );
-    };
-
-    window.addEventListener(WALLETCONNECT_RESET_EVENT, handleWalletConnectReset);
-    window.addEventListener(AUTOCONNECT_RESET_EVENT, handleAutoConnectReset);
-
-    return () => {
-      window.removeEventListener(
-        WALLETCONNECT_RESET_EVENT,
-        handleWalletConnectReset,
-      );
-      window.removeEventListener(
-        AUTOCONNECT_RESET_EVENT,
-        handleAutoConnectReset,
-      );
-    };
-  }, []);
-
-  useEffect(() => {
     const { config, simulatedConnector: newSimulatedConnector } =
-      createCustomConfig(
-        skipAutoConnect,
-        walletConnectResetVersion,
-        preferredSimulatedChain,
-        simulatedWallet,
-      );
+      createCustomConfig(preferredSimulatedChain, simulatedWallet);
     setWagmiConfig(config);
     setSimulatedConnector(newSimulatedConnector ?? null);
     setMounted(true);
-  }, [
-    simulatedWallet,
-    preferredSimulatedChain,
-    skipAutoConnect,
-    walletConnectResetVersion,
-  ]);
+  }, [simulatedWallet, preferredSimulatedChain]);
 
   useEffect(() => {
     if (!wagmiConfig) {
@@ -341,14 +434,12 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
     return null;
   }
 
-  const providerResetKey = `wagmi-${walletConnectResetVersion}`;
-
   return (
     <UrqlProvider>
-      <WagmiConfig key={providerResetKey} config={wagmiConfig}>
+      <WagmiConfig config={wagmiConfig}>
         <AddrethConfig>
           <ThemeProvider>
-            <ThemeAware chains={wagmiConfig.chains ?? []}>
+            <ThemeAware>
               <PubSubProvider>{children}</PubSubProvider>
             </ThemeAware>
           </ThemeProvider>
@@ -358,32 +449,28 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
   );
 };
 
-const ThemeAware = ({
-  chains,
-  children,
-}: {
-  chains: Chain[];
-  children: React.ReactNode;
-}) => {
+const ThemeAware = ({ children }: { children: React.ReactNode }) => {
   const { resolvedTheme } = useTheme();
-  const theme = useMemo(
-    () =>
-      (resolvedTheme === "darkTheme" ? rainbowDarkTheme : lightTheme)({
-        accentColor: "var(--color-primary)",
-        accentColorForeground: "var(--color-black)",
-        borderRadius: "large",
-        overlayBlur: "small",
-      }),
-    [resolvedTheme],
-  );
 
   return (
     <>
-      <RainbowKitProvider modalSize="compact" chains={chains} theme={theme}>
+      <ConnectKitProvider
+        mode="auto"
+        theme="auto"
+        customTheme={CONNECT_KIT_THEME}
+        options={{
+          hideNoWalletCTA: false,
+          overlayBlur: 6,
+          walletConnectCTA: "both",
+          walletConnectName: "WalletConnect",
+        }}
+      >
+        <MobileWalletConnectStatus />
+        <WalletConnectDebugLogger />
         <TransactionNotificationProvider>
           {children}
         </TransactionNotificationProvider>
-      </RainbowKitProvider>
+      </ConnectKitProvider>
       <ToastContainer
         style={{ zIndex: 1000 }}
         position="top-right"
@@ -399,6 +486,257 @@ const ThemeAware = ({
         transition={Bounce}
       />
     </>
+  );
+};
+
+const WalletConnectDebugLogger = () => {
+  const account = useAccount();
+  const { chain } = useNetwork();
+  const isWalletConnect =
+    account.connector?.id === "walletConnect" ||
+    account.connector?.id === "walletConnectLegacy";
+
+  useEffect(() => {
+    console.info("[walletconnect-debug] wagmi account/network state", {
+      status: account.status,
+      isConnected: account.isConnected,
+      isConnecting: account.isConnecting,
+      isReconnecting: account.isReconnecting,
+      connector:
+        account.connector ?
+          {
+            id: account.connector.id,
+            name: account.connector.name,
+            ready: account.connector.ready,
+          }
+        : undefined,
+      address: account.address,
+      chain:
+        chain ?
+          {
+            id: chain.id,
+            name: chain.name,
+            unsupported: chain.unsupported,
+          }
+        : undefined,
+    });
+  }, [
+    account.address,
+    account.connector,
+    account.isConnected,
+    account.isConnecting,
+    account.isReconnecting,
+    account.status,
+    chain,
+  ]);
+
+  useEffect(() => {
+    if (!account.connector || !isWalletConnect) {
+      return;
+    }
+
+    let cancelled = false;
+    const cleanupListeners: Array<() => void> = [];
+
+    account.connector
+      .getProvider()
+      .then(async (provider) => {
+        if (cancelled) {
+          return;
+        }
+
+        console.info("[walletconnect-debug] provider snapshot", {
+          connector: {
+            id: account.connector?.id,
+            name: account.connector?.name,
+          },
+          snapshot: await getWalletConnectProviderSnapshot(provider),
+        });
+
+        const subscribe = (eventName: string) => {
+          const handler = async (...args: unknown[]) => {
+            console.info("[walletconnect-debug] provider event", {
+              eventName,
+              args,
+              snapshot: await getWalletConnectProviderSnapshot(provider),
+            });
+          };
+
+          provider.on?.(eventName, handler);
+          cleanupListeners.push(() => {
+            provider.removeListener?.(eventName, handler);
+            provider.off?.(eventName, handler);
+          });
+        };
+
+        [
+          "connect",
+          "disconnect",
+          "accountsChanged",
+          "chainChanged",
+          "session_event",
+          "session_update",
+          "session_delete",
+          "display_uri",
+        ].forEach(subscribe);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.info("[walletconnect-debug] provider inspection failed", {
+            connector: {
+              id: account.connector?.id,
+              name: account.connector?.name,
+            },
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      cleanupListeners.forEach((cleanup) => cleanup());
+    };
+  }, [account.connector, isWalletConnect]);
+
+  return null;
+};
+
+const MobileWalletConnectStatus = () => {
+  const account = useAccount();
+  const { open: connectModalOpen, setOpen: setConnectModalOpen } = useModal();
+  const [walletChoice, setWalletChoice] =
+    useState<WalletConnectDeepLinkChoice | null>(null);
+  const [hasReturnedFromWallet, setHasReturnedFromWallet] = useState(false);
+
+  useEffect(() => {
+    if (!connectModalOpen || !isMobileBrowser()) {
+      if (!account.isConnecting && !account.isReconnecting) {
+        setWalletChoice(null);
+        setHasReturnedFromWallet(false);
+      }
+      return;
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        const choice = getWalletConnectDeepLinkChoice();
+        if (choice) {
+          setWalletChoice(choice);
+          setHasReturnedFromWallet(false);
+        }
+        return;
+      }
+
+      if (document.visibilityState === "visible") {
+        const choice = getWalletConnectDeepLinkChoice();
+        if (choice) {
+          setWalletChoice(choice);
+          setHasReturnedFromWallet(true);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [
+    account.isConnecting,
+    account.isReconnecting,
+    connectModalOpen,
+    setWalletChoice,
+  ]);
+
+  useEffect(() => {
+    if (account.isConnected) {
+      setWalletChoice(null);
+      setHasReturnedFromWallet(false);
+      setConnectModalOpen(false);
+    }
+  }, [account.isConnected, setConnectModalOpen]);
+
+  useEffect(() => {
+    if (
+      connectModalOpen &&
+      isMobileBrowser() &&
+      (account.isConnecting || account.isReconnecting)
+    ) {
+      const choice = getWalletConnectDeepLinkChoice();
+      if (choice) {
+        setWalletChoice(choice);
+      }
+    }
+  }, [account.isConnecting, account.isReconnecting, connectModalOpen]);
+
+  const handleRetry = useCallback(() => {
+    const choice = walletChoice ?? getWalletConnectDeepLinkChoice();
+    if (!choice) {
+      return;
+    }
+    setWalletChoice(choice);
+    setHasReturnedFromWallet(false);
+    window.open(choice.href, "_self");
+  }, [walletChoice]);
+
+  const handleChooseAnotherWallet = useCallback(() => {
+    setWalletChoice(null);
+    setHasReturnedFromWallet(false);
+    setConnectModalOpen(true);
+  }, [setConnectModalOpen]);
+
+  const showConnectingStatus = Boolean(
+    connectModalOpen &&
+      walletChoice != null &&
+      !account.isConnected &&
+      isMobileBrowser() &&
+      (hasReturnedFromWallet || account.isConnecting || account.isReconnecting),
+  );
+
+  if (!showConnectingStatus || walletChoice == null) {
+    return null;
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-neutral-content/50 px-4 backdrop-blur-sm dark:bg-black/70"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mobile-wallet-connect-title"
+    >
+      <div className="w-full max-w-sm rounded-2xl border border-neutral-soft bg-neutral p-5 text-neutral-content shadow-2xl dark:border-neutral-soft-dark">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <span className="loading loading-spinner loading-md text-primary" />
+          <div className="flex flex-col gap-2">
+            <h2
+              id="mobile-wallet-connect-title"
+              className="text-lg font-semibold"
+            >
+              Connecting wallet
+            </h2>
+            <p className="text-sm text-neutral-soft-content">
+              Approve the connection in {walletChoice.label}, then return to
+              Gardens.
+            </p>
+          </div>
+          <div className="flex w-full flex-col gap-2">
+            <button
+              type="button"
+              className="w-full rounded-lg bg-primary-button px-4 py-2 text-sm font-medium text-neutral-inverted-content transition hover:bg-primary-hover-content dark:bg-primary-dark-base dark:hover:bg-primary-dark-hover"
+              onClick={handleRetry}
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              className="w-full rounded-lg border border-neutral-soft px-4 py-2 text-sm font-medium text-neutral-content transition hover:border-primary-content hover:text-primary-content dark:border-white/15 dark:text-neutral-inverted-content"
+              onClick={handleChooseAnotherWallet}
+            >
+              Choose another wallet
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
