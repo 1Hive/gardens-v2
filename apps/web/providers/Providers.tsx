@@ -302,18 +302,28 @@ class RequiredChainWalletConnectConnector extends WalletConnectConnector {
       const optionalChains = this.chains
         .filter((chain) => chain.id !== targetChainId)
         .map((chain) => chain.id);
+      const relayDisplayUri = (uri: string) => {
+        this.emit("message", { type: "display_uri", data: uri });
+      };
 
       console.info("[walletconnect-debug] required chain pairing request", {
         targetChainId,
         optionalChains,
       });
 
-      this.emit("message", { type: "connecting" });
-      await provider.connect({
-        pairingTopic: config.pairingTopic,
-        chains: [targetChainId],
-        optionalChains,
-      });
+      provider.on?.("display_uri", relayDisplayUri);
+
+      try {
+        this.emit("message", { type: "connecting" });
+        await provider.connect({
+          pairingTopic: config.pairingTopic,
+          chains: [targetChainId],
+          optionalChains,
+        });
+      } finally {
+        provider.removeListener?.("display_uri", relayDisplayUri);
+        provider.off?.("display_uri", relayDisplayUri);
+      }
     }
 
     return super.connect(config);
