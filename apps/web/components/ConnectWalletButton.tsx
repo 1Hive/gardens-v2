@@ -44,15 +44,13 @@ import { useHasContractCode } from "@/hooks/useHasContractCode";
 import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { formatAddress } from "@/utils/formatAddress";
-
-const RABBY_MIPD_CONNECTOR_NAMES = new Set([
-  "ca334957-11c4-49a7-adf1-6b0cf47cbc8b",
-  "e8425e47-28e2-4902-8844-223700322a77",
-]);
+import {
+  clearWalletConnectSessionStorage,
+  WALLETCONNECT_CONNECTOR_IDS,
+} from "@/utils/walletConnectMobile";
 
 const getWalletDisplayName = (name?: string) => {
   if (!name) return "Wallet";
-  if (RABBY_MIPD_CONNECTOR_NAMES.has(name)) return "Rabby Wallet";
   return name;
 };
 
@@ -85,8 +83,7 @@ const getWalletDisplayNameFromProvider = (provider: any) => {
     (Array.isArray(provider?.providers) &&
       provider.providers.some(
         (nestedProvider: any) => nestedProvider?.isRabby === true,
-      )) ||
-    hasProviderInfoMatching(provider, (value) => value.includes("rabby"))
+      ))
   ) {
     return "Rabby Wallet";
   }
@@ -242,13 +239,27 @@ export function ConnectWallet() {
   >(null);
 
   const handleDisconnect = useCallback(async () => {
+    const connector = account.connector;
+    const isWalletConnect =
+      connector != null && WALLETCONNECT_CONNECTOR_IDS.has(connector.id);
+
     try {
       setIsDisconnecting(true);
       await disconnectAsync();
     } finally {
+      if (isWalletConnect) {
+        const removedKeys = clearWalletConnectSessionStorage();
+        console.info("[walletconnect-debug] cleared storage on disconnect", {
+          connector: {
+            id: connector?.id,
+            name: connector?.name,
+          },
+          removedKeys,
+        });
+      }
       setIsDisconnecting(false);
     }
-  }, [disconnectAsync]);
+  }, [account.connector, disconnectAsync]);
 
   const wallet =
     providerWalletDisplayName ?? getWalletDisplayName(account.connector?.name);

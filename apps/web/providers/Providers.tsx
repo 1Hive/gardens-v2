@@ -19,6 +19,7 @@ import {
   createConfig,
   mainnet,
   useAccount,
+  useConnect,
   useNetwork,
   WagmiConfig,
 } from "wagmi";
@@ -52,7 +53,13 @@ const dedupeChains = (chainList: Chain[]) =>
       arr.findIndex((item) => item.id === candidate.id) === index,
   );
 
-const getConfiguredChains = () => dedupeChains([...CHAINS, base, mainnet]);
+const getConfiguredChains = (preferredChain?: Chain) =>
+  dedupeChains([
+    ...(preferredChain ? [preferredChain] : []),
+    ...CHAINS,
+    base,
+    mainnet,
+  ]);
 
 const APP_NAME = "Gardens V2";
 const APP_DESCRIPTION = "Gardens governance and funding";
@@ -68,11 +75,12 @@ const APP_METADATA = {
   icons: [APP_ICON],
 };
 const WALLET_STORAGE_MIGRATION_KEY =
-  "gardens.wallet-storage-migration.connectkit.v1";
+  "gardens.wallet-storage-migration.connectkit.v2";
 const STALE_WALLET_STORAGE_EXACT_KEYS = new Set([
   "wagmi.cache",
   "wagmi.connected",
   "wagmi.store",
+  "wagmi.wallet",
   "WALLETCONNECT_DEEPLINK_CHOICE",
 ]);
 const STALE_WALLET_STORAGE_PREFIXES = [
@@ -230,11 +238,111 @@ const getWalletConnectProviderSnapshot = async (provider: any) => {
   };
 };
 
+const parseWalletConnectChainId = (value: unknown) => {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const [, chainId] = value.match(/^eip155:(\d+)/u) ?? [];
+  if (!chainId) {
+    return undefined;
+  }
+
+  const parsed = Number(chainId);
+  return Number.isNaN(parsed) ? undefined : parsed;
+};
+
+const getWalletConnectApprovedChainIds = (provider: any) => {
+  const namespaces = provider?.session?.namespaces;
+  if (!namespaces) {
+    return new Set<number>();
+  }
+
+  const values = Object.values(namespaces).flatMap((namespace: any) => [
+    ...(Array.isArray(namespace?.chains) ? namespace.chains : []),
+    ...(Array.isArray(namespace?.accounts) ? namespace.accounts : []),
+  ]);
+
+  return new Set(
+    values
+      .map(parseWalletConnectChainId)
+      .filter((chainId): chainId is number => chainId != null),
+  );
+};
+
+class RequiredChainWalletConnectConnector extends WalletConnectConnector {
+  async connect(
+    config: { chainId?: number; pairingTopic?: string } = {},
+  ): Promise<{
+    account: Address;
+    chain: { id: number; unsupported: boolean };
+  }> {
+    const targetChainId = this.getTargetChainId(config.chainId);
+    const provider = await this.getProvider();
+
+    if (provider.session && targetChainId != null) {
+      const approvedChainIds = getWalletConnectApprovedChainIds(provider);
+      if (!approvedChainIds.has(targetChainId)) {
+        console.info(
+          "[walletconnect-debug] disconnecting session missing target chain",
+          {
+            targetChainId,
+            approvedChainIds: Array.from(approvedChainIds),
+          },
+        );
+        await provider.disconnect().catch((error: unknown) => {
+          console.info("[walletconnect-debug] failed to disconnect session", {
+            error,
+          });
+        });
+      }
+    }
+
+    if (!provider.session && targetChainId != null) {
+      const optionalChains = this.chains
+        .filter((chain) => chain.id !== targetChainId)
+        .map((chain) => chain.id);
+
+      console.info("[walletconnect-debug] required chain pairing request", {
+        targetChainId,
+        optionalChains,
+      });
+
+      this.emit("message", { type: "connecting" });
+      await provider.connect({
+        pairingTopic: config.pairingTopic,
+        chains: [targetChainId],
+        optionalChains,
+      });
+    }
+
+    return super.connect(config);
+  }
+
+  private getTargetChainId(chainId?: number) {
+    if (chainId && !this.isChainUnsupported(chainId)) {
+      return chainId;
+    }
+
+    const store = this.storage?.getItem<{
+      state?: { data?: { chain?: { id?: number } } };
+    }>("store");
+    const lastUsedChainId = store?.state?.data?.chain?.id;
+    if (lastUsedChainId && !this.isChainUnsupported(lastUsedChainId)) {
+      return lastUsedChainId;
+    }
+
+    return this.chains[0]?.id;
+  }
+}
+
 const createCustomConfig = (
+  preferredChain: Chain | undefined,
   preferredSimulatedChain: Chain | undefined,
   simulatedWallet?: Address,
 ) => {
-  const { chains, publicClient } = configureChains(getConfiguredChains(), [
+  const configuredChains = getConfiguredChains(preferredChain);
+  const { chains, publicClient } = configureChains(configuredChains, [
     jsonRpcProvider({
       rpc: (chain) => ({
         http:
@@ -258,7 +366,7 @@ const createCustomConfig = (
   });
   const walletConnectConnector =
     walletConnectProjectId ?
-      new WalletConnectConnector({
+      new RequiredChainWalletConnectConnector({
         chains,
         options: {
           projectId: walletConnectProjectId,
@@ -366,6 +474,7 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
   useEffect(() => {
     resetStaleWalletStorageForConnectKitMigration();
 
+    const configuredChains = getConfiguredChains(chain);
     console.info("[walletconnect-debug] creating wagmi config", {
       routeChain: chain ? { id: chain.id, name: chain.name } : undefined,
       preferredSimulatedChain:
@@ -375,18 +484,18 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
             name: preferredSimulatedChain.name,
           }
         : undefined,
-      configuredChains: getConfiguredChains().map((configuredChain) => ({
+      configuredChains: configuredChains.map((configuredChain) => ({
         id: configuredChain.id,
         name: configuredChain.name,
       })),
     });
 
     const { config, simulatedConnector: newSimulatedConnector } =
-      createCustomConfig(preferredSimulatedChain, simulatedWallet);
+      createCustomConfig(chain, preferredSimulatedChain, simulatedWallet);
     setWagmiConfig(config);
     setSimulatedConnector(newSimulatedConnector ?? null);
     setMounted(true);
-  }, [simulatedWallet, preferredSimulatedChain]);
+  }, [chain, simulatedWallet, preferredSimulatedChain]);
 
   useEffect(() => {
     if (!wagmiConfig) {
@@ -451,6 +560,20 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
 
 const ThemeAware = ({ children }: { children: React.ReactNode }) => {
   const { resolvedTheme } = useTheme();
+  const chainFromPath = useChainFromPath() as Chain | undefined;
+
+  useEffect(() => {
+    console.info("[walletconnect-debug] connectkit route chain option", {
+      initialChainId: chainFromPath?.id,
+      routeChain:
+        chainFromPath ?
+          {
+            id: chainFromPath.id,
+            name: chainFromPath.name,
+          }
+        : undefined,
+    });
+  }, [chainFromPath]);
 
   return (
     <>
@@ -463,6 +586,7 @@ const ThemeAware = ({ children }: { children: React.ReactNode }) => {
           overlayBlur: 6,
           walletConnectCTA: "both",
           walletConnectName: "WalletConnect",
+          initialChainId: chainFromPath?.id,
         }}
       >
         <MobileWalletConnectStatus />
@@ -491,10 +615,39 @@ const ThemeAware = ({ children }: { children: React.ReactNode }) => {
 
 const WalletConnectDebugLogger = () => {
   const account = useAccount();
+  const { connectors } = useConnect();
   const { chain } = useNetwork();
   const isWalletConnect =
     account.connector?.id === "walletConnect" ||
     account.connector?.id === "walletConnectLegacy";
+
+  useEffect(() => {
+    console.info("[walletconnect-debug] connector registry", {
+      connectors: connectors.map((connector) => ({
+        id: connector.id,
+        name: connector.name,
+        ready: connector.ready,
+        chains: connector.chains.map((connectorChain) => ({
+          id: connectorChain.id,
+          name: connectorChain.name,
+        })),
+        options:
+          (
+            connector.id === "walletConnect" ||
+            connector.id === "walletConnectLegacy"
+          ) ?
+            {
+              isNewChainsStale: (
+                connector as { options?: { isNewChainsStale?: unknown } }
+              ).options?.isNewChainsStale,
+              showQrModal: (
+                connector as { options?: { showQrModal?: unknown } }
+              ).options?.showQrModal,
+            }
+          : undefined,
+      })),
+    });
+  }, [connectors]);
 
   useEffect(() => {
     console.info("[walletconnect-debug] wagmi account/network state", {
