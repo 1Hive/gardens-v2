@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import {
   getCommunityNameDocument,
   getPoolTitleDocument,
@@ -233,7 +233,7 @@ export default async function Page(props: PageProps) {
   );
 
   if (!strategyAddress) {
-    notFound();
+    redirect("https://gardens-v2-dev.vercel.app/gardens");
   }
 
   const normalizedSlug = strategyAddress.toLowerCase();
