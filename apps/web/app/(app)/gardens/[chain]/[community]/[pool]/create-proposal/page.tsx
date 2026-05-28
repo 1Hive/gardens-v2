@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import ClientPage from "./client-page";
 import {
+  GARDENS_DEV_FALLBACK_URL,
   resolveStrategyAddress,
   stringifySearchParams,
   type SearchParams,
@@ -71,7 +72,7 @@ export default async function Page({
   );
 
   if (!strategyAddress) {
-    redirect("https://gardens-v2-dev.vercel.app/gardens");
+    redirect(GARDENS_DEV_FALLBACK_URL);
   }
 
   const normalizedSlug = strategyAddress.toLowerCase();

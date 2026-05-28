@@ -15,6 +15,7 @@ import {
   titleCaseStatus,
 } from "./og-metadata";
 import {
+  GARDENS_DEV_FALLBACK_URL,
   resolveStrategyAddress,
   stringifySearchParams,
 } from "../route-helpers";
@@ -217,7 +218,7 @@ export default async function Page({
   );
 
   if (!strategyAddress) {
-    redirect("https://gardens-v2-dev.vercel.app/gardens");
+    redirect(GARDENS_DEV_FALLBACK_URL);
   }
 
   const normalizedStrategy = strategyAddress.toLowerCase();

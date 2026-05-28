@@ -6,6 +6,9 @@ import { chainConfigMap, type ChainData } from "@/configs/chains";
 import { queryByChain } from "@/providers/queryByChain";
 import { hasEthereumAddressFormat } from "@/utils/web3";
 
+export const GARDENS_DEV_FALLBACK_URL =
+  "https://gardens-v2-dev.vercel.app/gardens";
+
 export type SearchParams =
   | Record<string, string | string[] | undefined>
   | undefined;
