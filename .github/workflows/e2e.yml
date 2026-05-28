@@ -248,19 +248,21 @@ jobs:
                   branch_history_query="${branch_history_query}&teamId=${VERCEL_TEAM_ID}"
                 fi
 
-                branch_history_response="$(curl -fsSL \
-                  -H "Authorization: ${VERCEL_TOKEN}" \
-                  "${base_api}${branch_history_query}")"
-
-                ready_branch_url="$(echo "${branch_history_response}" | jq -r --arg branch_alias "${branch_alias}" --arg sha "${PR_HEAD_SHA}" '
-                  [.deployments[]
-                    | select((.readyState // .state // "") == "READY")
-                    | select((.meta.branchAlias // "") == $branch_alias)
-                    | select((.meta.githubCommitSha // "") != $sha)
-                    | select((.url // "") != "")]
-                  | sort_by(.createdAt)
-                  | last
-                  | .url // empty')"
+                if branch_history_response="$(curl -fsSL \
+                  -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+                  "${base_api}${branch_history_query}")"; then
+                  ready_branch_url="$(echo "${branch_history_response}" | jq -r --arg branch_alias "${branch_alias}" --arg sha "${PR_HEAD_SHA}" '
+                    [.deployments[]
+                      | select((.readyState // .state // "") == "READY")
+                      | select((.meta.branchAlias // "") == $branch_alias)
+                      | select((.meta.githubCommitSha // "") != $sha)
+                      | select((.url // "") != "")]
+                    | sort_by(.createdAt)
+                    | last
+                    | .url // empty')"
+                else
+                  echo "::warning::Unable to fetch Vercel branch deployment history; falling back to branch alias or configured fallback URL."
+                fi
               fi
 
               if [ -n "${ready_branch_url}" ]; then
