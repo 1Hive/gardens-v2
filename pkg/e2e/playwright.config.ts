@@ -6,9 +6,7 @@ config();
 
 const browserChannel = process.env.PLAYWRIGHT_BROWSER_CHANNEL;
 const browserExecutablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH;
-const baseURL =
-  process.env.PLAYWRIGHT_BASE_URL ??
-  "https://gardens-v2-dev.vercel.app/gardens";
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 const chromiumUse = {
   ...devices["Desktop Chrome"],
   ...(browserChannel ? { channel: browserChannel } : {}),
