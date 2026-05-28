@@ -585,7 +585,15 @@ export async function confirmTransaction({
 
 export async function connectWallet(page: Page, metamask: MetaMask) {
   await page.getByTestId("connectButton").click();
-  await page.getByText("MetaMask").click();
+  const injectedWalletOption = page.getByTestId("rk-wallet-option-injected");
+  if ((await injectedWalletOption.count()) > 0) {
+    await injectedWalletOption.click();
+  } else {
+    await page
+      .getByRole("button", { name: "MetaMask", exact: true })
+      .first()
+      .click();
+  }
   const maxConnectAttempts = 3;
   let lastError: unknown;
 
