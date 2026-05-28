@@ -302,10 +302,12 @@ jobs:
 
           echo "Warming up preview deployment at: ${PREVIEW_URL}"
 
+          placeholder_pattern='Deployment was cancelled|This page will update once the build completes|View Build'
+          response_file=""
+          trap 'rm -f "${response_file}"' EXIT
+
           # Give the deployment a short grace period before probing.
           sleep 20
-
-          placeholder_pattern='Deployment was cancelled|This page will update once the build completes|View Build'
 
           # Probe for up to 5 minutes to absorb first-hit build/cold-start latency.
           for i in {1..30}; do
@@ -324,11 +326,13 @@ jobs:
               else
                 echo "Preview is responding with application content (HTTP ${status})."
                 rm -f "${response_file}"
+                response_file=""
                 exit 0
               fi
             fi
 
             rm -f "${response_file}"
+            response_file=""
             sleep 10
           done
 
