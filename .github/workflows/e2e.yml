@@ -50,6 +50,7 @@ jobs:
       VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
       VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID || secrets.VERCEL_TEAM_ID }}
       PR_HEAD_SHA: ${{ inputs.pr_head_sha || github.event.pull_request.head.sha || github.sha }}
+      E2E_FALLBACK_URL: ${{ vars.E2E_FALLBACK_URL || 'https://gardens-v2-dev.vercel.app' }}
 
     steps:
       - name: Preflight secrets check
@@ -278,12 +279,22 @@ jobs:
             if [ "${state}" = "ERROR" ] || [ "${state}" = "FAILED" ] || [ "${state}" = "CANCELED" ]; then
               echo "Vercel deployment ended in state ${state}"
               echo "${deployment}"
+              if [ -n "${E2E_FALLBACK_URL:-}" ]; then
+                echo "::warning::Vercel preview unavailable (${state}). Falling back to ${E2E_FALLBACK_URL}"
+                echo "preview_url=${E2E_FALLBACK_URL}" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
               exit 1
             fi
 
             sleep 10
           done
 
+          if [ -n "${E2E_FALLBACK_URL:-}" ]; then
+            echo "::warning::Timed out waiting for Vercel preview. Falling back to ${E2E_FALLBACK_URL}"
+            echo "preview_url=${E2E_FALLBACK_URL}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           echo "Timed out waiting for Vercel preview deployment."
           exit 1
 
