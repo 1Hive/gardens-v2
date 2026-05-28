@@ -10,7 +10,6 @@ import {
 import ClientPage from "./client-page";
 import { FALLBACK_TITLE, getDescriptionText } from "./opengraph-image";
 import {
-  GARDENS_DEV_FALLBACK_URL,
   resolveStrategyAddress,
   stringifySearchParams,
   type SearchParams,
@@ -234,7 +233,7 @@ export default async function Page(props: PageProps) {
   );
 
   if (!strategyAddress) {
-    redirect(GARDENS_DEV_FALLBACK_URL);
+    redirect("https://gardens-v2-dev.vercel.app/gardens");
   }
 
   const normalizedSlug = strategyAddress.toLowerCase();
