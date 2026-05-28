@@ -585,7 +585,12 @@ export async function confirmTransaction({
 
 export async function connectWallet(page: Page, metamask: MetaMask) {
   await page.getByTestId("connectButton").click();
-  await page.getByTestId("rk-wallet-option-injected").click();
+  // Use .first() to guard against duplicate "MetaMask" buttons that can
+  // appear behind the wallet modal from other page elements.
+  await page
+    .getByRole("button", { name: "MetaMask", exact: true })
+    .first()
+    .click();
   const maxConnectAttempts = 3;
   let lastError: unknown;
 
