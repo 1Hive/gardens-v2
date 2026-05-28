@@ -273,13 +273,25 @@ const getWalletConnectApprovedChainIds = (provider: any) => {
 };
 
 class RequiredChainWalletConnectConnector extends WalletConnectConnector {
+  private readonly requiredChainId?: number;
+
+  constructor({
+    requiredChainId,
+    ...config
+  }: ConstructorParameters<typeof WalletConnectConnector>[0] & {
+    requiredChainId?: number;
+  }) {
+    super(config);
+    this.requiredChainId = requiredChainId;
+  }
+
   async connect(
     config: { chainId?: number; pairingTopic?: string } = {},
   ): Promise<{
     account: Address;
     chain: { id: number; unsupported: boolean };
   }> {
-    const targetChainId = this.getTargetChainId(config.chainId);
+    const targetChainId = this.getRequiredTargetChainId(config.chainId);
     const provider = await this.getProvider();
 
     if (provider.session && targetChainId != null) {
@@ -331,20 +343,14 @@ class RequiredChainWalletConnectConnector extends WalletConnectConnector {
     return super.connect(config);
   }
 
-  private getTargetChainId(chainId?: number) {
-    if (chainId && !this.isChainUnsupported(chainId)) {
-      return chainId;
+  private getRequiredTargetChainId(chainId?: number) {
+    const targetChainId = chainId ?? this.requiredChainId;
+
+    if (targetChainId && !this.isChainUnsupported(targetChainId)) {
+      return targetChainId;
     }
 
-    const store = this.storage?.getItem<{
-      state?: { data?: { chain?: { id?: number } } };
-    }>("store");
-    const lastUsedChainId = store?.state?.data?.chain?.id;
-    if (lastUsedChainId && !this.isChainUnsupported(lastUsedChainId)) {
-      return lastUsedChainId;
-    }
-
-    return this.chains[0]?.id;
+    return undefined;
   }
 }
 
@@ -380,6 +386,7 @@ const createCustomConfig = (
     walletConnectProjectId ?
       new RequiredChainWalletConnectConnector({
         chains,
+        requiredChainId: preferredChain?.id,
         options: {
           projectId: walletConnectProjectId,
           showQrModal: false,
