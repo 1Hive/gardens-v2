@@ -6,6 +6,7 @@ const WALLETCONNECT_STORAGE_PREFIXES = [
   "wc@2:",
 ];
 const WAGMI_CONNECTION_STORAGE_KEYS = [
+  "connectKit.lastConnectorId",
   "wagmi.cache",
   "wagmi.connected",
   "wagmi.store",

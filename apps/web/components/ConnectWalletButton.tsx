@@ -54,6 +54,32 @@ const getWalletDisplayName = (name?: string) => {
   return name;
 };
 
+const disconnectWalletConnectProviderSession = async (
+  connector: ReturnType<typeof useAccount>["connector"],
+) => {
+  if (!connector || !WALLETCONNECT_CONNECTOR_IDS.has(connector.id)) {
+    return;
+  }
+
+  try {
+    const provider = await connector.getProvider();
+    if (provider?.session) {
+      await provider.disconnect();
+    }
+  } catch (error) {
+    console.info(
+      "[walletconnect-debug] failed to disconnect provider session",
+      {
+        connector: {
+          id: connector.id,
+          name: connector.name,
+        },
+        error,
+      },
+    );
+  }
+};
+
 const hasProviderInfoMatching = (
   provider: any,
   matcher: (value: string) => boolean,
@@ -245,6 +271,7 @@ export function ConnectWallet() {
 
     try {
       setIsDisconnecting(true);
+      await disconnectWalletConnectProviderSession(connector);
       await disconnectAsync();
     } finally {
       if (isWalletConnect) {
