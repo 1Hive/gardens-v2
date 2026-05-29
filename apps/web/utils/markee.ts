@@ -114,7 +114,7 @@ export async function fetchMarkeeLeaderboard(leaderboardAddress: Address) {
     args: [10n],
   });
 
-  if (!addresses.length) return [] as MarkeeEntry[];
+  if (!addresses.length) return [];
 
   const markeeCalls = addresses.flatMap((addr) => [
     { address: addr, abi: MARKEE_READ_ABI, functionName: "message" as const },
@@ -130,14 +130,15 @@ export async function fetchMarkeeLeaderboard(leaderboardAddress: Address) {
     .map((addr, i) => ({
       id: addr.toLowerCase(),
       address: addr.toLowerCase(),
-      message: results[i * 2].status === "success" ? results[i * 2].result : "",
+      message:
+        results[i * 2].status === "success" ? results[i * 2].result ?? "" : "",
       name:
         results[i * 2 + 1].status === "success" ?
-          results[i * 2 + 1].result
+          results[i * 2 + 1].result ?? ""
         : "",
       totalFundsAdded: (funds[i] ?? 0n).toString(),
     }))
-    .filter((entry) => entry.message?.trim() !== "");
+    .filter((entry) => entry.message.trim() !== "");
 }
 
 // ─── View Tracking ────────────────────────────────────────────────────────────
