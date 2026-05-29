@@ -89,10 +89,8 @@ export async function fetchMarkeeSignData(leaderboardAddress: Address) {
     allowFailure: true,
   });
 
-  const message =
-    results[0].status === "success" ? (results[0].result as string) : "";
-  const name =
-    results[1].status === "success" ? (results[1].result as string) : "";
+  const message = results[0].status === "success" ? results[0].result : "";
+  const name = results[1].status === "success" ? results[1].result : "";
 
   return {
     minimumPrice: minimumPrice.toString(),
@@ -109,12 +107,12 @@ export async function fetchMarkeeSignData(leaderboardAddress: Address) {
 }
 
 export async function fetchMarkeeLeaderboard(leaderboardAddress: Address) {
-  const [addresses, funds] = (await client.readContract({
+  const [addresses, funds] = await client.readContract({
     address: leaderboardAddress,
     abi: LEADERBOARD_ABI,
     functionName: "getTopMarkees",
     args: [10n],
-  })) as [readonly `0x${string}`[], readonly bigint[]];
+  });
 
   if (!addresses.length) return [] as MarkeeEntry[];
 
@@ -132,17 +130,14 @@ export async function fetchMarkeeLeaderboard(leaderboardAddress: Address) {
     .map((addr, i) => ({
       id: addr.toLowerCase(),
       address: addr.toLowerCase(),
-      message:
-        results[i * 2].status === "success" ?
-          (results[i * 2].result as string)
-        : "",
+      message: results[i * 2].status === "success" ? results[i * 2].result : "",
       name:
         results[i * 2 + 1].status === "success" ?
-          (results[i * 2 + 1].result as string)
+          results[i * 2 + 1].result
         : "",
       totalFundsAdded: (funds[i] ?? 0n).toString(),
     }))
-    .filter((entry) => entry.message.trim() !== "") as MarkeeEntry[];
+    .filter((entry) => entry.message?.trim() !== "");
 }
 
 // ─── View Tracking ────────────────────────────────────────────────────────────
