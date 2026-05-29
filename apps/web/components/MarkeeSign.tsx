@@ -8,7 +8,7 @@ import { MarkeeAbi } from "@/src/customAbis";
 import {
   fetchMarkeeSignData,
   recordMarkeeView,
-  GARDENS_STRATEGY,
+  GARDENS_LEADERBOARD,
   MarkeeNetwork,
 } from "@/utils/markee";
 
@@ -58,7 +58,7 @@ export default function MarkeeSign() {
   const [totalViews, setTotalViews] = useState<number | null>(null);
 
   const { data: onchainMinPrice } = useContractRead({
-    address: GARDENS_STRATEGY,
+    address: GARDENS_LEADERBOARD,
     abi: MarkeeAbi,
     functionName: "minimumPrice",
     chainId: MarkeeNetwork.id,
@@ -68,7 +68,7 @@ export default function MarkeeSign() {
     setLoading(true);
     setLoadError(null);
     try {
-      const strategy = await fetchMarkeeSignData(GARDENS_STRATEGY);
+      const strategy = await fetchMarkeeSignData(GARDENS_LEADERBOARD);
       const markee = strategy?.markees?.[0];
       const subgraphMinPrice = BigInt(strategy?.minimumPrice ?? 0);
       const onchainMinPriceValue =
