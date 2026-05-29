@@ -122,13 +122,15 @@ export async function fetchMarkeeLeaderboard(leaderboardAddress: Address) {
 
   const results = await client.multicall({ contracts: markeeCalls, allowFailure: true });
 
-  return addresses.map((addr, i) => ({
-    id: addr.toLowerCase(),
-    address: addr.toLowerCase(),
-    message: results[i * 2].status === "success" ? (results[i * 2].result as string) : "",
-    name: results[i * 2 + 1].status === "success" ? (results[i * 2 + 1].result as string) : "",
-    totalFundsAdded: (funds[i] ?? 0n).toString(),
-  })) as MarkeeEntry[];
+  return addresses
+    .map((addr, i) => ({
+      id: addr.toLowerCase(),
+      address: addr.toLowerCase(),
+      message: results[i * 2].status === "success" ? (results[i * 2].result as string) : "",
+      name: results[i * 2 + 1].status === "success" ? (results[i * 2 + 1].result as string) : "",
+      totalFundsAdded: (funds[i] ?? 0n).toString(),
+    }))
+    .filter((entry) => entry.message.trim() !== "") as MarkeeEntry[];
 }
 
 // ─── View Tracking ────────────────────────────────────────────────────────────
