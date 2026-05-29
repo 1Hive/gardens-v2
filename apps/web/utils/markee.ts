@@ -1,11 +1,9 @@
 import { Address, createPublicClient, http } from "viem";
 import { base } from "viem/chains";
+import { chainConfigMap } from "@/configs/chains";
 
 export const GARDENS_LEADERBOARD =
   "0x2768BC6e90266248BD8bCF5401C36D8049CdF671" as Address;
-
-// Keep old name as alias so any remaining imports still resolve
-export const GARDENS_STRATEGY = GARDENS_LEADERBOARD;
 
 export const MarkeeNetwork = base;
 
@@ -61,7 +59,8 @@ const MARKEE_READ_ABI = [
   },
 ] as const;
 
-const client = createPublicClient({ chain: base, transport: http() });
+const rpc = chainConfigMap[MarkeeNetwork.id].rpcUrl;
+const client = createPublicClient({ chain: base, transport: http(rpc) });
 
 export async function fetchMarkeeSignData(leaderboardAddress: Address) {
   const [addresses, funds] = await client.readContract({
@@ -69,7 +68,7 @@ export async function fetchMarkeeSignData(leaderboardAddress: Address) {
     abi: LEADERBOARD_ABI,
     functionName: "getTopMarkees",
     args: [1n],
-  }) as [readonly `0x${string}`[], readonly bigint[]];
+  });
 
   const minimumPrice = await client.readContract({
     address: leaderboardAddress,
@@ -90,28 +89,32 @@ export async function fetchMarkeeSignData(leaderboardAddress: Address) {
     allowFailure: true,
   });
 
-  const message = results[0].status === "success" ? (results[0].result as string) : "";
-  const name = results[1].status === "success" ? (results[1].result as string) : "";
+  const message =
+    results[0].status === "success" ? (results[0].result as string) : "";
+  const name =
+    results[1].status === "success" ? (results[1].result as string) : "";
 
   return {
     minimumPrice: minimumPrice.toString(),
-    markees: [{
-      id: topAddr.toLowerCase(),
-      address: topAddr.toLowerCase(),
-      message,
-      name,
-      totalFundsAdded: (funds[0] ?? 0n).toString(),
-    }] as MarkeeEntry[],
+    markees: [
+      {
+        id: topAddr.toLowerCase(),
+        address: topAddr.toLowerCase(),
+        message,
+        name,
+        totalFundsAdded: (funds[0] ?? 0n).toString(),
+      },
+    ] as MarkeeEntry[],
   };
 }
 
 export async function fetchMarkeeLeaderboard(leaderboardAddress: Address) {
-  const [addresses, funds] = await client.readContract({
+  const [addresses, funds] = (await client.readContract({
     address: leaderboardAddress,
     abi: LEADERBOARD_ABI,
     functionName: "getTopMarkees",
     args: [10n],
-  }) as [readonly `0x${string}`[], readonly bigint[]];
+  })) as [readonly `0x${string}`[], readonly bigint[]];
 
   if (!addresses.length) return [] as MarkeeEntry[];
 
@@ -120,14 +123,23 @@ export async function fetchMarkeeLeaderboard(leaderboardAddress: Address) {
     { address: addr, abi: MARKEE_READ_ABI, functionName: "name" as const },
   ]);
 
-  const results = await client.multicall({ contracts: markeeCalls, allowFailure: true });
+  const results = await client.multicall({
+    contracts: markeeCalls,
+    allowFailure: true,
+  });
 
   return addresses
     .map((addr, i) => ({
       id: addr.toLowerCase(),
       address: addr.toLowerCase(),
-      message: results[i * 2].status === "success" ? (results[i * 2].result as string) : "",
-      name: results[i * 2 + 1].status === "success" ? (results[i * 2 + 1].result as string) : "",
+      message:
+        results[i * 2].status === "success" ?
+          (results[i * 2].result as string)
+        : "",
+      name:
+        results[i * 2 + 1].status === "success" ?
+          (results[i * 2 + 1].result as string)
+        : "",
       totalFundsAdded: (funds[i] ?? 0n).toString(),
     }))
     .filter((entry) => entry.message.trim() !== "") as MarkeeEntry[];
