@@ -177,7 +177,10 @@ export const ProposalForm = ({
       description: getValues("description"),
     };
 
-    const ipfsHash = await ipfsJsonUpload(json);
+    const ipfsHash = await ipfsJsonUpload(json, {
+      walletAddress: connectedWallet,
+      purpose: "proposal-create",
+    });
     if (ipfsHash) {
       if (previewData === undefined) {
         throw new Error("No preview data");
