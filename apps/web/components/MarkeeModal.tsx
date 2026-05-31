@@ -11,7 +11,7 @@ import { MarkeeAbi } from "@/src/customAbis";
 import {
   fetchMarkeeLeaderboard,
   fetchMarkeeViews,
-  GARDENS_STRATEGY,
+  GARDENS_LEADERBOARD,
   MarkeeNetwork,
 } from "@/utils/markee";
 import { getTxMessage } from "@/utils/transactionMessages";
@@ -106,7 +106,7 @@ export default function MarkeeModal({
 
   const { writeAsync, isLoading: isPending } =
     useContractWriteWithConfirmations({
-      address: GARDENS_STRATEGY,
+      address: GARDENS_LEADERBOARD,
       abi: MarkeeAbi,
       functionName: "createMarkee",
       contractName: "TopDawgPartnerStrategy",
@@ -149,7 +149,7 @@ export default function MarkeeModal({
     if (!leaderboardOpen || leaderboard.length > 0) return;
     setLeaderboardLoading(true);
     setLeaderboardError(null);
-    fetchMarkeeLeaderboard(GARDENS_STRATEGY)
+    fetchMarkeeLeaderboard(GARDENS_LEADERBOARD)
       .then((entries) => {
         setLeaderboard(entries);
         const addresses = entries.map((e) => e.address);
