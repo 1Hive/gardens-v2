@@ -65,3 +65,4 @@ apps/web/.osmium/wallets.json
 tools/**/*.exe
 tools/**/*.zip
 pkg/e2e/.cache-synpress/
+.vercel

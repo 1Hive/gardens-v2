@@ -7,6 +7,7 @@ import {
   createWalletClient,
   custom,
   http,
+  zeroAddress,
 } from "viem";
 import { celo } from "viem/chains";
 import { useAccount } from "wagmi";
@@ -54,9 +55,8 @@ export const useGoodDollarSdk = ({ enabled }: Props) => {
     if (address && identitySDK) {
       return identitySDK
         .getWhitelistedRoot(address)
-        .then(({ isWhitelisted, root }) => {
-          const isVerified =
-            isWhitelisted && root.toLowerCase() === address.toLowerCase();
+        .then(({ root }) => {
+          const isVerified = root !== zeroAddress;
           setIsWalletVerified(isVerified);
           return isVerified;
         });

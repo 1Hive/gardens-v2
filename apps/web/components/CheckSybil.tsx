@@ -75,11 +75,6 @@ export function CheckSybil({
   const isGoodDollarCallback =
     searchParams[QUERY_PARAMS.poolPage.goodDollar] === "true";
 
-  const shouldShowGoodDollarActivation =
-    isWalletVerified && ((isGoodDollarVerifiedInGardens ?? false) || forceIsVerified);
-  const shouldShowGoodDollarVerificationCta =
-    !isWalletVerified && !isGoodDollarCallback;
-
   useEffect(() => {
     if (triggerClose) {
       setIsModalOpen(false);
@@ -119,6 +114,12 @@ export function CheckSybil({
     enabled:
       !!walletAddr && strategy.sybil?.type === "GoodDollar" && enableCheck,
   });
+
+  const shouldShowGoodDollarActivation =
+    isWalletVerified &&
+    ((isGoodDollarVerifiedInGardens ?? false) || forceIsVerified);
+  const shouldShowGoodDollarVerificationCta =
+    !isWalletVerified && !isGoodDollarCallback;
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
@@ -391,7 +392,11 @@ export function CheckSybil({
       });
       const callbackUrl = new URL(window.location.href);
       callbackUrl.searchParams.set(QUERY_PARAMS.poolPage.goodDollar, "true");
-      const link = await sdk?.generateFVLink(false, callbackUrl, celo.id);
+      const link = await sdk?.generateFVLink(
+        false,
+        callbackUrl.toString(),
+        celo.id,
+      );
       window.location.href = link;
     } catch (error) {
       console.error("Error generating GoodDollar link:", error);
