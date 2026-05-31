@@ -43,7 +43,11 @@ export const getGoodDollarChainIds = (): string[] =>
 export const isGoodDollarWhitelisted = async (
   user: string,
 ): Promise<boolean> => {
-  if (BYPASS_GOOD_DOLLAR_WHITELIST) return true;
+  if (BYPASS_GOOD_DOLLAR_WHITELIST) {
+    console.info("[good-dollar] whitelist bypass enabled", { user });
+    return true;
+  }
+
   return fetchGooddollarWhitelisted(user);
 };
 
@@ -52,6 +56,12 @@ export async function validateUserOnChain(
   user: string,
   isWhitelisted: boolean,
 ): Promise<ValidationResult> {
+  console.info("[good-dollar] validateUserOnChain start", {
+    chainId,
+    user,
+    isWhitelisted,
+  });
+
   if (!GOOD_DOLLAR_KEEPER_PRIVATE_KEY) {
     return {
       chainId: String(chainId),
@@ -118,6 +128,10 @@ export async function validateUserOnChain(
     })) as boolean;
 
     if (isAlreadyValid) {
+      console.info("[good-dollar] validateUserOnChain already-valid", {
+        chainId,
+        user,
+      });
       return {
         chainId: String(chainId),
         status: "already-valid",
@@ -135,6 +149,12 @@ export async function validateUserOnChain(
 
     await client.waitForTransactionReceipt({ hash });
 
+    console.info("[good-dollar] validateUserOnChain success", {
+      chainId,
+      user,
+      transactionHash: hash,
+    });
+
     return {
       chainId: String(chainId),
       status: "success",
@@ -143,6 +163,7 @@ export async function validateUserOnChain(
   } catch (error) {
     console.error("[good-dollar] validateUserOnChain error", {
       chainId,
+      user,
       error,
     });
     return {

@@ -1,6 +1,12 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { contractEnv, IdentitySDK } from "@goodsdks/citizen-sdk";
-import { createPublicClient, http, createWalletClient, custom } from "viem";
+import {
+  createPublicClient,
+  http,
+  createWalletClient,
+  custom,
+  zeroAddress,
+} from "viem";
 import { Address as AddressType } from "viem";
 import { celo } from "viem/chains";
 
@@ -25,8 +31,8 @@ export async function fetchGooddollarWhitelisted(
       (process.env.NEXT_PUBLIC_CHEAT_GOODDOLLAR_ENV as contractEnv) ??
       "production",
   });
-  const { isWhitelisted } = await celoIdentitySDK!.getWhitelistedRoot(
+  const { root } = await celoIdentitySDK!.getWhitelistedRoot(
     account as AddressType,
   );
-  return isWhitelisted;
+  return root !== zeroAddress;
 }

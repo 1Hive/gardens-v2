@@ -31,7 +31,16 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   try {
+    console.info("[good-dollar][write-validity][chain] request", {
+      chainId,
+      user,
+    });
     const isWhitelisted = await isGoodDollarWhitelisted(user);
+    console.info("[good-dollar][write-validity][chain] whitelist", {
+      chainId,
+      user,
+      isWhitelisted,
+    });
     if (!isWhitelisted) {
       return NextResponse.json(
         { error: "User is not whitelisted in GoodDollar" },
@@ -40,6 +49,11 @@ export async function POST(req: Request, { params }: Params) {
     }
 
     const result = await validateUserOnChain(chainId, user, isWhitelisted);
+    console.info("[good-dollar][write-validity][chain] result", {
+      chainId,
+      user,
+      result,
+    });
 
     if (result.status === "success") {
       return NextResponse.json({
@@ -67,7 +81,11 @@ export async function POST(req: Request, { params }: Params) {
       { status: 500 },
     );
   } catch (error) {
-    console.error("Error validating user", error);
+    console.error("[good-dollar][write-validity][chain] error", {
+      chainId,
+      user,
+      error,
+    });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
