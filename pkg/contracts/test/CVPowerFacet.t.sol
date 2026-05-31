@@ -189,11 +189,7 @@ contract CVPowerFacetTest is Test {
         registry.setActivated(member, true);
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                CVStrategyBaseFacet.OnlyRegistryCommunity.selector,
-                address(this),
-                address(registry)
-            )
+            abi.encodeWithSelector(CVStrategyBaseFacet.OnlyRegistryCommunity.selector, address(this), address(registry))
         );
         facet.increasePower(member, 5);
 
@@ -259,6 +255,28 @@ contract CVPowerFacetTest is Test {
     function test_deactivatePoints_registry_only() public {
         registry.setMemberPower(member, 3);
         facet.setTotalPointsActivated(3);
+
+        vm.prank(address(registry));
+        facet.deactivatePoints(member);
+
+        assertEq(facet.totalPointsActivated(), 0);
+        assertEq(registry.lastDeactivated(), address(0));
+    }
+
+    function test_deactivatePoints_saturates_when_member_power_exceeds_total() public {
+        registry.setMemberPower(member, 10);
+        facet.setTotalPointsActivated(4);
+
+        vm.prank(member);
+        facet.deactivatePoints();
+
+        assertEq(facet.totalPointsActivated(), 0);
+        assertEq(registry.lastDeactivated(), member);
+    }
+
+    function test_deactivatePointsFromRegistry_saturates_when_member_power_exceeds_total() public {
+        registry.setMemberPower(member, 10);
+        facet.setTotalPointsActivated(4);
 
         vm.prank(address(registry));
         facet.deactivatePoints(member);

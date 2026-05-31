@@ -189,7 +189,8 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
     ) internal {
         if (
             address(_arbitrableConfig.arbitrator) != address(0)
-                && !IRegistryFactory(registryCommunity.registryFactory()).isContractRegistered(address(_arbitrableConfig.arbitrator))
+                && !IRegistryFactory(registryCommunity.registryFactory())
+                    .isContractRegistered(address(_arbitrableConfig.arbitrator))
         ) {
             revert ArbitratorNotAllowed(address(_arbitrableConfig.arbitrator));
         }
@@ -322,11 +323,19 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
     }
 
     function _deactivatePoints(address _member) internal {
-        totalPointsActivated -= votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
+        _decreaseTotalPointsActivated(votingPowerRegistry.getMemberPowerInStrategy(_member, address(this)));
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
         // remove support from all proposals
         _withdraw(_member);
         emit PointsDeactivated(_member);
+    }
+
+    function _decreaseTotalPointsActivated(uint256 points) internal {
+        if (points > totalPointsActivated) {
+            totalPointsActivated = 0;
+        } else {
+            totalPointsActivated -= points;
+        }
     }
 
     function _withdraw(address _member) internal {

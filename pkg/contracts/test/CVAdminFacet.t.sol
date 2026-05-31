@@ -16,7 +16,9 @@ import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol"
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
-import {ISuperfluidPool} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
+import {
+    ISuperfluidPool
+} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
 import {LibDiamond} from "../src/diamonds/libraries/LibDiamond.sol";
@@ -110,14 +112,18 @@ contract MockSuperfluidHost {
         return agreement;
     }
 
-    function callAgreement(address agreementClass, bytes calldata data, bytes calldata) external returns (bytes memory) {
+    function callAgreement(address agreementClass, bytes calldata data, bytes calldata)
+        external
+        returns (bytes memory)
+    {
         if (agreementClass == agreement) {
             bytes4 selector;
             assembly {
                 selector := calldataload(data.offset)
             }
             if (selector == bytes4(keccak256("distributeFlow(address,address,address,int96,bytes)"))) {
-                (, , address pool, int96 requestedFlowRate,) = abi.decode(data[4:], (address, address, address, int96, bytes));
+                (,, address pool, int96 requestedFlowRate,) =
+                    abi.decode(data[4:], (address, address, address, int96, bytes));
                 MockGDAAgreement(agreement).setFlowRate(pool, requestedFlowRate);
             }
         }
@@ -400,9 +406,37 @@ contract CVAdminFacetTest is Test {
         assertTrue(registry.hasRole(allowlistRole, add[0]));
         assertFalse(registry.hasRole(allowlistRole, address(0)));
         assertEq(facet.currentArbitrableConfigVersion(), 1);
-        (uint256 maxRatio, , , ) = facet.cvParams();
+        (uint256 maxRatio,,,) = facet.cvParams();
         assertEq(maxRatio, 1);
         assertEq(sybil.lastModifiedThreshold(), 5);
+    }
+
+    function test_setPoolParams_removeFromAllowlist_saturates_when_member_power_exceeds_total() public {
+        factoryAllowlist.setAllowed(address(arbitrator), true);
+        address[] memory add = new address[](0);
+        address[] memory remove = new address[](1);
+        remove[0] = member;
+
+        bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", uint256(1)));
+        registry.grantRole(allowlistRole, member);
+        registry.setMemberPower(member, 10);
+        facet.setTotalPointsActivated(4);
+
+        ArbitrableConfig memory arb = ArbitrableConfig({
+            arbitrator: IArbitrator(address(arbitrator)),
+            tribunalSafe: address(0xBEEF),
+            submitterCollateralAmount: 1,
+            challengerCollateralAmount: 1,
+            defaultRuling: 1,
+            defaultRulingTimeout: 10
+        });
+        CVParams memory params = CVParams({maxRatio: 1, weight: 2, decay: 3, minThresholdPoints: 4});
+
+        vm.prank(councilSafe);
+        facet.setPoolParams(arb, params, 5, add, remove, address(0));
+
+        assertEq(facet.totalPointsActivated(), 0);
+        assertFalse(registry.hasRole(allowlistRole, member));
     }
 
     function test_setPoolParams_revertsIfArbitratorNotAllowed() public {
@@ -597,7 +631,9 @@ contract CVAdminFacetTest is Test {
 
     function test_setVotingPowerRegistry_revertsIfNotAllowed() public {
         vm.prank(councilSafe);
-        vm.expectRevert(abi.encodeWithSelector(CVAdminFacet.VotingPowerRegistryNotAllowed.selector, address(customRegistry)));
+        vm.expectRevert(
+            abi.encodeWithSelector(CVAdminFacet.VotingPowerRegistryNotAllowed.selector, address(customRegistry))
+        );
         facet.setVotingPowerRegistry(address(customRegistry));
     }
 

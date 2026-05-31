@@ -202,7 +202,6 @@ export function useContractWriteWithConfirmations<
             (props as any)?.value ??
             (txResult.variables as any)?.value,
           account: accountForSimulation as Address | undefined,
-          chainId: resolvedChaindId,
         });
         toast.success("Simulation successful", { toastId: simulationToastId });
       } catch (error) {
