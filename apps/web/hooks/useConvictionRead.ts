@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Address, useContractRead } from "wagmi";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Address } from "wagmi";
 import {
   CVProposal,
   CVStrategy,
@@ -9,6 +9,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { useChainFromPath } from "./useChainFromPath";
 import { useHasContractCode } from "./useHasContractCode";
+import { usePreferredReadClient } from "./usePreferredReadClient";
 import { useResolvedChainId } from "./useResolvedChainId";
 import { cvStrategyABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
@@ -43,6 +44,11 @@ export const useConvictionRead = ({
 }) => {
   const chain = useChainFromPath();
   const resolvedChainId = useResolvedChainId(chainId);
+  const readClient = usePreferredReadClient(resolvedChainId);
+  const [updatedConviction, setUpdatedConviction] = useState<bigint>();
+  const [thresholdFromContract, setThresholdFromContract] = useState<bigint>();
+  const [errorConviction, setErrorConviction] = useState<unknown>();
+  const [thresholdReadError, setThresholdReadError] = useState<unknown>();
 
   const cvStrategyContract = {
     address: proposalData?.strategy.id as Address,
@@ -68,42 +74,87 @@ export const useConvictionRead = ({
     });
   }
 
-  const {
-    data: updatedConviction,
-    error: errorConviction,
-    refetch: triggerConvictionRefetch,
-  } = useContractRead({
-    ...cvStrategyContract,
-    chainId: resolvedChainId,
-    functionName: "calculateProposalConviction",
-    args: [BigInt(proposalData?.proposalNumber ?? 0)],
-    enabled: shouldReadConviction,
-    watch: true,
-  });
-
-  if (errorConviction) {
-    logOnce("error", "Error reading conviction", errorConviction);
-  }
+  const proposalNumber = BigInt(proposalData?.proposalNumber ?? 0);
+  const requestedAmount = BigInt(proposalData?.requestedAmount ?? 0);
   const poolType = PoolTypes[strategyConfig?.proposalType];
   const isStreamingPool = poolType === "streaming";
-  const requestedAmount = BigInt(proposalData?.requestedAmount ?? 0);
   const hasRequestedAmount = requestedAmount > 0n;
   const shouldReadThreshold = shouldReadConviction && poolType !== "signaling";
   const shouldReadThresholdFromContract =
     shouldReadThreshold && (hasRequestedAmount || isStreamingPool);
 
-  const {
-    data: thresholdFromContract,
-    error: thresholdReadError,
-    refetch: triggerThresholdRefetch,
-  } = useContractRead({
-    ...cvStrategyContract,
-    chainId: resolvedChainId,
-    functionName: "calculateThreshold",
-    args: [requestedAmount],
-    enabled: shouldReadThresholdFromContract,
-    watch: true,
-  });
+  const readConvictionData = useCallback(async () => {
+    if (!shouldReadConviction || !readClient || !cvStrategyContract.address) {
+      setUpdatedConviction(undefined);
+      setThresholdFromContract(undefined);
+      return;
+    }
+
+    try {
+      const nextConviction = await readClient.readContract({
+        ...cvStrategyContract,
+        functionName: "calculateProposalConviction",
+        args: [proposalNumber],
+      });
+      setUpdatedConviction(nextConviction as bigint);
+      setErrorConviction(undefined);
+    } catch (error) {
+      setUpdatedConviction(undefined);
+      setErrorConviction(error);
+    }
+
+    if (!shouldReadThresholdFromContract) {
+      setThresholdFromContract(undefined);
+      setThresholdReadError(undefined);
+      return;
+    }
+
+    try {
+      const nextThreshold = await readClient.readContract({
+        ...cvStrategyContract,
+        functionName: "calculateThreshold",
+        args: [requestedAmount],
+      });
+      setThresholdFromContract(nextThreshold as bigint);
+      setThresholdReadError(undefined);
+    } catch (error) {
+      setThresholdFromContract(undefined);
+      setThresholdReadError(error);
+    }
+  }, [
+    cvStrategyContract.address,
+    proposalNumber,
+    readClient,
+    requestedAmount,
+    shouldReadConviction,
+    shouldReadThresholdFromContract,
+  ]);
+
+  useEffect(() => {
+    if (!shouldReadConviction || !readClient) {
+      setUpdatedConviction(undefined);
+      setThresholdFromContract(undefined);
+      setErrorConviction(undefined);
+      setThresholdReadError(undefined);
+      return;
+    }
+
+    void readConvictionData();
+
+    const unwatch = readClient.watchBlockNumber({
+      onBlockNumber: () => {
+        void readConvictionData();
+      },
+    });
+
+    return () => {
+      unwatch();
+    };
+  }, [readClient, readConvictionData, shouldReadConviction]);
+
+  if (errorConviction) {
+    logOnce("error", "Error reading conviction", errorConviction);
+  }
 
   const resolvedThreshold = useMemo(() => {
     if (!shouldReadThreshold) {
@@ -118,7 +169,7 @@ export const useConvictionRead = ({
   ]);
 
   if (
-    thresholdReadError &&
+    thresholdReadError instanceof Error &&
     thresholdReadError.message.includes("AmountOverMaxRatio") === false
   ) {
     logOnce(
@@ -237,10 +288,7 @@ export const useConvictionRead = ({
         updatedConviction,
         timeToPass,
         triggerConvictionRefetch: () => {
-          void triggerConvictionRefetch();
-          if (shouldReadThresholdFromContract) {
-            void triggerThresholdRefetch();
-          }
+          void readConvictionData();
         },
       }
     : {
