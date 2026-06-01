@@ -1,4 +1,4 @@
-import { FC, Fragment, useMemo, useState } from "react";
+import { FC, Fragment, useEffect, useMemo, useState } from "react";
 // @ts-ignore - no types available
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { blo } from "blo";
@@ -36,6 +36,7 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1, useIpfsFetch } from "@/hooks/useIpfsFetch";
+import { usePreferredReadClient } from "@/hooks/usePreferredReadClient";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { safeABI } from "@/src/customAbis";
 import {
@@ -91,6 +92,7 @@ export const DisputeModal: FC<Props> = ({
   const { id: chainId, safePrefix } = useChainFromPath()!;
   const [rulingLoading, setisRulingLoading] = useState<number | false>(false);
   const [error, setError] = useState("");
+  const readClient = usePreferredReadClient(chainId);
 
   const arbitrationConfig = proposalData.arbitrableConfig;
 
@@ -108,14 +110,46 @@ export const DisputeModal: FC<Props> = ({
     enabled: proposalData != null,
   });
 
-  const { data: arbitrationCost } = useContractRead({
-    chainId,
-    abi: iArbitratorABI,
-    functionName: "arbitrationCost",
-    address: arbitrationConfig?.arbitrator as Address,
-    enabled: !!arbitrationConfig?.arbitrator,
-    args: ["0x0"],
-  });
+  const [arbitrationCost, setArbitrationCost] = useState<bigint>();
+
+  useEffect(() => {
+    if (!arbitrationConfig?.arbitrator) {
+      setArbitrationCost(undefined);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchArbitrationCost = async () => {
+      try {
+        const nextArbitrationCost = await readClient.readContract({
+          abi: iArbitratorABI,
+          functionName: "arbitrationCost",
+          address: arbitrationConfig.arbitrator as Address,
+          args: ["0x0"],
+        });
+
+        if (!cancelled) {
+          setArbitrationCost(nextArbitrationCost as bigint);
+        }
+      } catch (caughtError) {
+        if (!cancelled) {
+          setArbitrationCost(undefined);
+          console.error("Failed to load arbitration cost", {
+            arbitrator: arbitrationConfig.arbitrator,
+            chainId,
+            error: caughtError,
+          });
+        }
+      }
+    };
+
+    void fetchArbitrationCost();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [arbitrationConfig?.arbitrator, chainId, readClient]);
 
   const { data: disputeCooldown } = useContractRead({
     chainId,
@@ -204,14 +238,18 @@ export const DisputeModal: FC<Props> = ({
   async function handleSubmit() {
     if (!reason) {
       setError("The dispute reason is required.");
+    } else if (totalStake == null) {
+      setError("The dispute stake is still loading.");
     } else {
       setIsDisputeCreateLoading(true);
       const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
       if (!reasonHash) {
+        setIsDisputeCreateLoading(false);
         return;
       }
       await writeDisputeProposalAsync({
         args: [BigInt(proposalData.proposalNumber), reasonHash, "0x0"],
+        value: totalStake,
       });
     }
   }
@@ -487,6 +525,7 @@ export const DisputeModal: FC<Props> = ({
                 missmatchUrl ||
                 !isMemberCommunity ||
                 !isEnoughBalance ||
+                totalStake == null ||
                 isCooldown
               }
               tooltip={tooltipMessage}

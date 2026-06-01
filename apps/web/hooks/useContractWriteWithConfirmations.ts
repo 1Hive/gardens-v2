@@ -194,26 +194,32 @@ export function useContractWriteWithConfirmations<
         throw new Error("Wallet client is not available");
       }
 
-      const writeConfig = {
-        ...propsWithChainId,
-        ...((overrides ?? {}) as Record<string, unknown>),
-      } as Record<string, unknown>;
+      const overrideConfig = (overrides ?? {}) as Record<string, unknown>;
+      const variableConfig = (txResult.variables ?? {}) as Record<
+        string,
+        unknown
+      >;
+      const propConfig = propsWithChainId as Record<string, unknown>;
+      const getWriteValue = (key: string) =>
+        overrideConfig[key] ?? variableConfig[key] ?? propConfig[key];
       const accountForWrite =
-        writeConfig.account ?? (walletClient as any).account ?? connectedAddress;
+        getWriteValue("account") ??
+        (walletClient as any).account ??
+        connectedAddress;
       const request = {
-        abi: writeConfig.abi,
-        address: writeConfig.address,
-        functionName: writeConfig.functionName,
-        args: writeConfig.args,
+        abi: getWriteValue("abi"),
+        address: getWriteValue("address"),
+        functionName: getWriteValue("functionName"),
+        args: getWriteValue("args"),
         account: accountForWrite,
-        accessList: writeConfig.accessList,
-        dataSuffix: writeConfig.dataSuffix,
-        gas: writeConfig.gas,
-        gasPrice: writeConfig.gasPrice,
-        maxFeePerGas: writeConfig.maxFeePerGas,
-        maxPriorityFeePerGas: writeConfig.maxPriorityFeePerGas,
-        nonce: writeConfig.nonce,
-        value: writeConfig.value,
+        accessList: getWriteValue("accessList"),
+        dataSuffix: getWriteValue("dataSuffix"),
+        gas: getWriteValue("gas"),
+        gasPrice: getWriteValue("gasPrice"),
+        maxFeePerGas: getWriteValue("maxFeePerGas"),
+        maxPriorityFeePerGas: getWriteValue("maxPriorityFeePerGas"),
+        nonce: getWriteValue("nonce"),
+        value: getWriteValue("value"),
         chain: resolvedChaindId ? { id: resolvedChaindId } : null,
       };
 
@@ -261,7 +267,7 @@ export function useContractWriteWithConfirmations<
       props,
       propsWithChainId,
       resolvedChaindId,
-      txResult.writeAsync,
+      txResult.variables,
       walletClient,
       connectedAddress,
     ],
