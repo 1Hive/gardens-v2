@@ -11,6 +11,7 @@ interface DataTableProps {
   openModal: boolean;
   setOpenModal: (open: boolean) => void;
   withModal?: boolean;
+  emptyMessage?: string;
 }
 
 interface TableColumn {
@@ -27,6 +28,7 @@ export const DataTable: React.FC<DataTableProps> = ({
   openModal,
   setOpenModal,
   withModal = true,
+  emptyMessage,
 }) => {
   const content = (
     <div
@@ -67,6 +69,15 @@ export const DataTable: React.FC<DataTableProps> = ({
                 ))}
               </tr>
             ))}
+            {data?.length === 0 && emptyMessage && (
+              <tr>
+                <td className="py-6 text-center" colSpan={columns.length}>
+                  <p className="text-sm text-neutral-soft-content">
+                    {emptyMessage}
+                  </p>
+                </td>
+              </tr>
+            )}
           </tbody>
           {!withModal && footer != null && (
             <tfoot className="border-t-[1px] border-neutral-soft-content/50 mt-2">

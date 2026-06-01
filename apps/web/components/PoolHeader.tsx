@@ -1058,7 +1058,7 @@ export default function PoolHeader({
                   tooltip={config.info}
                   className="w-full"
                 >
-                  <p className="subtitle">{config.value}</p>
+                  <div className="subtitle">{config.value}</div>
                 </Statistic>
               </div>
             ))}
