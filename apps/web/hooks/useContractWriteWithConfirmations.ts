@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getDataSuffix, submitReferral } from "@divvi/referral-sdk";
-import { WriteContractMode } from "@wagmi/core";
+import { WriteContractMode, WriteContractResult } from "@wagmi/core";
 import { toast } from "react-toastify";
 import { Abi, Address, TransactionReceipt, isAddress } from "viem";
 import { celo } from "viem/chains";
@@ -12,6 +12,7 @@ import {
   UseContractWriteConfig,
   usePublicClient,
   useWaitForTransaction,
+  useWalletClient,
 } from "wagmi";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useTransactionNotification } from "./useTransactionNotification";
@@ -35,6 +36,20 @@ export type ComputedStatus =
 
 const isRpcTransactionHash = (hash?: string): hash is `0x${string}` =>
   /^0x[a-fA-F0-9]{64}$/.test(hash ?? "");
+
+const shouldRetryWithWalletClient = (error: unknown) => {
+  const transportError = [
+    error instanceof Error ? error.message : undefined,
+    (error as { cause?: { message?: string } })?.cause?.message,
+    (error as { details?: string })?.details,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return /HTTP request failed|Failed to fetch|fetch failed|NetworkError|Load failed/i.test(
+    transportError,
+  );
+};
 
 // Divvi configuration constants
 const DIVVI_CONSUMER =
@@ -95,7 +110,13 @@ export function useContractWriteWithConfirmations<
     chainIdFromWallet
   );
   const publicClient = usePublicClient({ chainId: resolvedChaindId });
+  const { data: walletClient } = useWalletClient({ chainId: resolvedChaindId });
   const forceSimulate = useFlag("showAsCouncilSafe");
+  const [directWriteResult, setDirectWriteResult] = useState<{
+    data?: WriteContractResult;
+    error?: Error | null;
+    status: "idle" | "loading" | "success" | "error";
+  }>({ status: "idle" });
 
   const councilSafeFromFlag = useMemo(() => {
     const queryVal = queryParams?.flag_showAsCouncilSafe;
@@ -159,6 +180,74 @@ export function useContractWriteWithConfirmations<
 
   const simulationToastId = `${toastId}_sim`;
 
+  const writeWithWalletClientAsync = useCallback(
+    async (
+      overrides?: Parameters<
+        NonNullable<typeof txResult.writeAsync>
+      >[0] extends undefined ?
+        undefined
+      : Parameters<NonNullable<typeof txResult.writeAsync>>[0],
+    ) => {
+      if (!walletClient) {
+        throw new Error("Wallet client is not available");
+      }
+
+      const writeConfig = {
+        ...propsWithChainId,
+        ...((overrides ?? {}) as Record<string, unknown>),
+      } as Record<string, unknown>;
+      const request = {
+        abi: writeConfig.abi,
+        address: writeConfig.address,
+        functionName: writeConfig.functionName,
+        args: writeConfig.args,
+        account: writeConfig.account,
+        accessList: writeConfig.accessList,
+        dataSuffix: writeConfig.dataSuffix,
+        gas: writeConfig.gas,
+        gasPrice: writeConfig.gasPrice,
+        maxFeePerGas: writeConfig.maxFeePerGas,
+        maxPriorityFeePerGas: writeConfig.maxPriorityFeePerGas,
+        nonce: writeConfig.nonce,
+        value: writeConfig.value,
+        chain: resolvedChaindId ? { id: resolvedChaindId } : null,
+      };
+
+      setDirectWriteResult({ status: "loading" });
+
+      try {
+        const hash = await (walletClient as any).writeContract(request);
+        const data = { hash } as WriteContractResult;
+        setDirectWriteResult({ data, status: "success" });
+        props.onSuccess?.(data, overrides as any, undefined as any);
+        props.onSettled?.(data, null, overrides as any, undefined as any);
+        return data;
+      } catch (error) {
+        const normalizedError =
+          error instanceof Error ? error : new Error(String(error));
+        setDirectWriteResult({
+          error: normalizedError,
+          status: "error",
+        });
+        props.onError?.(normalizedError, overrides as any, undefined as any);
+        props.onSettled?.(
+          undefined,
+          normalizedError,
+          overrides as any,
+          undefined as any,
+        );
+        throw normalizedError;
+      }
+    },
+    [
+      props,
+      propsWithChainId,
+      resolvedChaindId,
+      txResult.writeAsync,
+      walletClient,
+    ],
+  );
+
   const simulateAndWriteAsync = useCallback(
     async (
       overrides?: Parameters<
@@ -169,7 +258,20 @@ export function useContractWriteWithConfirmations<
     ) => {
       const isMockConnector = connector?.id === "mock";
       if (!isMockConnector && !forceSimulate) {
-        return txResult.writeAsync?.(overrides as any);
+        setDirectWriteResult({ status: "idle" });
+
+        try {
+          return await txResult.writeAsync?.(overrides as any);
+        } catch (error) {
+          if (shouldRetryWithWalletClient(error)) {
+            console.warn(
+              `Retrying transaction [${props.contractName} -> ${props.functionName}] with wallet client after public RPC preflight failed`,
+              error,
+            );
+            return writeWithWalletClientAsync(overrides);
+          }
+          throw error;
+        }
       }
       // If we can't simulate, fall back to normal write
       if (
@@ -233,6 +335,7 @@ export function useContractWriteWithConfirmations<
       txResult.writeAsync,
       txResult.variables,
       simulationToastId,
+      writeWithWalletClientAsync,
     ],
   );
 
@@ -251,7 +354,7 @@ export function useContractWriteWithConfirmations<
     props.onError?.(...params);
   };
 
-  const rawTransactionHash = txResult.data?.hash;
+  const rawTransactionHash = directWriteResult.data?.hash ?? txResult.data?.hash;
   const transactionHash =
     isRpcTransactionHash(rawTransactionHash) ? rawTransactionHash : undefined;
   const safeTransactionHash =
@@ -268,15 +371,23 @@ export function useContractWriteWithConfirmations<
   });
 
   const computedStatus = useMemo(() => {
-    if (txResult.status === "idle") {
+    if (directWriteResult.status === "loading") {
+      return "waiting";
+    }
+
+    if (directWriteResult.status === "error") {
+      return "error";
+    }
+
+    if (txResult.status === "idle" && directWriteResult.status === "idle") {
       return undefined;
     }
 
     if (txResult.status === "error") {
-      if (txResult.error) {
+      if (directWriteResult.data == null && txResult.error) {
         logError(txResult.error, txResult.variables, "write tx");
+        return "error";
       }
-      return "error";
     }
 
     if (transactionHash == null) {
@@ -301,6 +412,8 @@ export function useContractWriteWithConfirmations<
 
     return txWaitResult.status;
   }, [
+    directWriteResult.data,
+    directWriteResult.status,
     transactionHash,
     txResult.error,
     txResult.status,
@@ -317,13 +430,13 @@ export function useContractWriteWithConfirmations<
 
   useTransactionNotification({
     toastId,
-    transactionData: txResult.data,
+    transactionData: directWriteResult.data ?? txResult.data,
     transactionHash,
     safeTransactionHash,
     safeAddress: connectedAddress,
     targetAddress: props.address,
     transactionStatus: computedStatus,
-    transactionError: txResult.error,
+    transactionError: directWriteResult.error ?? txResult.error,
     walletApprovalLink,
     enabled: props.showNotification ?? true, // default to true
     fallbackErrorMessage: props.fallbackErrorMessage,
@@ -356,11 +469,16 @@ export function useContractWriteWithConfirmations<
   return {
     ...txResult,
     ...txWaitResult,
+    data: directWriteResult.data ?? txResult.data,
+    error: directWriteResult.error ?? txResult.error,
     write: simulateAndWrite,
     writeAsync: simulateAndWriteAsync,
-    isLoading: txResult.isLoading || txWaitResult.isLoading,
+    isLoading:
+      directWriteResult.status === "loading" ||
+      txResult.isLoading ||
+      txWaitResult.isLoading,
     transactionStatus: computedStatus as ComputedStatus | undefined,
-    transactionData: txResult.data,
+    transactionData: directWriteResult.data ?? txResult.data,
     confirmationsStatus: txWaitResult.status,
     confirmed: !!txWaitResult.isSuccess,
   };
