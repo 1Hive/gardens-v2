@@ -51,6 +51,8 @@ const shouldRetryWithWalletClient = (error: unknown) => {
   );
 };
 
+const DIRECT_WALLET_FALLBACK_GAS_LIMIT = 1_500_000n;
+
 // Divvi configuration constants
 const DIVVI_CONSUMER =
   process.env.NEXT_PUBLIC_DIVVI_CONSUMER ??
@@ -196,12 +198,14 @@ export function useContractWriteWithConfirmations<
         ...propsWithChainId,
         ...((overrides ?? {}) as Record<string, unknown>),
       } as Record<string, unknown>;
+      const accountForWrite =
+        writeConfig.account ?? (walletClient as any).account ?? connectedAddress;
       const request = {
         abi: writeConfig.abi,
         address: writeConfig.address,
         functionName: writeConfig.functionName,
         args: writeConfig.args,
-        account: writeConfig.account,
+        account: accountForWrite,
         accessList: writeConfig.accessList,
         dataSuffix: writeConfig.dataSuffix,
         gas: writeConfig.gas,
@@ -216,6 +220,20 @@ export function useContractWriteWithConfirmations<
       setDirectWriteResult({ status: "loading" });
 
       try {
+        if (request.gas == null) {
+          try {
+            request.gas = await (walletClient as any).estimateContractGas(
+              request,
+            );
+          } catch (error) {
+            console.warn(
+              `Using fallback gas limit for transaction [${props.contractName} -> ${props.functionName}] after wallet gas estimation failed`,
+              error,
+            );
+            request.gas = DIRECT_WALLET_FALLBACK_GAS_LIMIT;
+          }
+        }
+
         const hash = await (walletClient as any).writeContract(request);
         const data = { hash } as WriteContractResult;
         setDirectWriteResult({ data, status: "success" });
@@ -245,6 +263,7 @@ export function useContractWriteWithConfirmations<
       resolvedChaindId,
       txResult.writeAsync,
       walletClient,
+      connectedAddress,
     ],
   );
 
