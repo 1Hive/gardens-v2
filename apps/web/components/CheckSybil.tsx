@@ -117,7 +117,7 @@ export function CheckSybil({
 
   const shouldShowGoodDollarActivation =
     isWalletVerified === true &&
-    (isGoodDollarVerifiedInGardens === true || forceIsVerified);
+    (isGoodDollarVerifiedInGardens === true || forceIsVerified === true);
   const shouldShowGoodDollarVerificationCta =
     !isWalletVerified && !isGoodDollarCallback;
 
