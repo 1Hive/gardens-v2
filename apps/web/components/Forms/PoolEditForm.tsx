@@ -90,6 +90,7 @@ type Props = {
   strategy: getPoolDataQuery["cvstrategies"][0];
   token?: Pick<TokenGarden, "decimals" | "symbol">;
   initValues: FormInputs | undefined;
+  isOpen: boolean;
   proposalType: string;
   pointSystemType: number;
   proposalOnDispute: boolean;
@@ -177,6 +178,7 @@ export default function PoolEditForm({
   token,
   strategy,
   initValues,
+  isOpen,
   proposalType,
   setModalOpen,
   readOnly = false,
@@ -267,12 +269,6 @@ export default function PoolEditForm({
     defaultValues: initialFormValues,
   });
 
-  useEffect(() => {
-    if (!initialFormValues) return;
-
-    reset(initialFormValues);
-  }, [initialFormValues, reset]);
-
   const sybilResistanceValue = watch("sybilResistanceValue");
 
   const derivedType =
@@ -312,6 +308,18 @@ export default function PoolEditForm({
 
   const [loading, setLoading] = useState(false);
   const { publish } = usePubSubContext();
+
+  useEffect(() => {
+    if (!initialFormValues) return;
+
+    setShowPreview(false);
+    setPreviewData(undefined);
+    setLoading(false);
+
+    if (isOpen) {
+      reset(initialFormValues);
+    }
+  }, [initialFormValues, isOpen, reset]);
 
   const formRowTypes: Record<string, any> = {
     spendingLimit: {
@@ -399,6 +407,7 @@ export default function PoolEditForm({
       setLoading(false);
     },
     onSuccess: () => {
+      setLoading(false);
       setModalOpen(false);
     },
     abi: cvStrategySetPoolParamsV2Abi,
