@@ -153,6 +153,7 @@ const TOTAL_STREAMED_SUP_OVERRIDES_BY_CAMPAIGN: Record<string, number> = {
 const DEFAULT_TARGET_STREAM_SUP = 847_000;
 const TARGET_STREAM_SUP_BY_CAMPAIGN: Record<string, number> = {
   "510": 519_000,
+  "607": 510_000,
 };
 
 const fetchSuperfluidTotals = async (

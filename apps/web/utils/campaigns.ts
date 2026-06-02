@@ -18,6 +18,7 @@ export const CAMPAIGNS = {
   "1": {
     id: 7859,
     name: "Superfluid Ecosystem Rewards Season 4",
+    tokenAllocated: 847_000,
     description:
       "Earn SUP rewards by staking governance tokens, adding funds to pools, and following Gardens on Farcaster.",
     tokenSymbol: "SUP",
@@ -29,6 +30,7 @@ export const CAMPAIGNS = {
   "2": {
     id: 7856,
     name: "GoodDollar on Gardens Season 4",
+    tokenAllocated: 837_370,
     description:
       "Earn SUP tokens by adding $G to funding pools and staking in communities that allocate G$ in pools.",
     tokenSymbol: "SUP",
@@ -40,6 +42,7 @@ export const CAMPAIGNS = {
   "3": {
     id: 510,
     name: "Superfluid Ecosystem Rewards Season 5",
+    tokenAllocated: 519_000,
     description:
       "Earn SUP rewards by staking governance tokens, adding funds to pools, and following Gardens on Farcaster.",
     tokenSymbol: "SUP",
@@ -51,6 +54,7 @@ export const CAMPAIGNS = {
   "4": {
     id: 607,
     name: "Superfluid Ecosystem Rewards Season 6",
+    tokenAllocated: 510_000,
     description:
       "Earn SUP rewards by staking governance tokens, adding funds to pools, following Gardens on Farcaster, and earning triple points in Streaming pools.",
     tokenSymbol: "SUP",
