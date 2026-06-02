@@ -514,7 +514,7 @@ export default function ClientPage({ params }: ClientPageProps) {
   const resolvedMetadataHash =
     proposalData?.metadataHash ?? onchainMetadataHash ?? undefined;
   const hasResolvedMetadataHash =
-    resolvedMetadataHash != null && resolvedMetadataHash !== "";
+    resolvedMetadataHash != null && resolvedMetadataHash.length > 0;
   const { data: ipfsResult, fetching: isIpfsMetadataFetching } =
     useMetadataIpfsFetch({
       hash: resolvedMetadataHash,
