@@ -159,9 +159,10 @@ const writeCachedCVStrategyAddress = (
 
   try {
     const storage = readCVStrategyStorage() ?? {};
+    const currentChainStorage = storage[String(chainId)];
     const chainStorage =
-      storage[String(chainId)] && isObjectRecord(storage[String(chainId)]) ?
-        storage[String(chainId)]
+      currentChainStorage != null && isObjectRecord(currentChainStorage) ?
+        currentChainStorage
       : {};
     chainStorage[address.toLowerCase()] = entry;
     storage[String(chainId)] = chainStorage;
