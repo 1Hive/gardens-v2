@@ -447,7 +447,7 @@ export default function ClientPage({ params }: ClientPageProps) {
         registryCommunity: data?.registryCommunity,
       }
     : undefined;
-  const proposalSupporters = supportersData?.members;
+  const proposalSupporters = supportersData?.members ?? [];
   const activatedPointsByMember = useMemo(() => {
     const activatedPoints = new Map<string, bigint>();
     membersStrategyData?.memberStrategies.forEach((memberStrategy) => {
@@ -467,24 +467,22 @@ export default function ClientPage({ params }: ClientPageProps) {
     proposalData?.strategy?.totalEffectiveActivePoints;
 
   const filteredAndSortedProposalSupporters: ProposalSupporter[] =
-    proposalSupporters ?
-      proposalSupporters
-        .filter((item) => item.stakes && item.stakes.length > 0)
-        .map((item) => ({
-          id: item.id,
-          stakes: item.stakes?.map((stake) => ({ amount: stake.amount })) ?? [],
-          activatedPoints: activatedPointsByMember.get(item.id.toLowerCase()),
-        }))
-        .sort((a, b) => {
-          const stakeA = getSupporterStakeAmount(a);
-          const stakeB = getSupporterStakeAmount(b);
-          return (
-            stakeA === stakeB ? 0
-            : stakeA < stakeB ? 1
-            : -1
-          );
-        })
-    : [];
+    proposalSupporters
+      .filter((item) => item.stakes && item.stakes.length > 0)
+      .map((item) => ({
+        id: item.id,
+        stakes: item.stakes?.map((stake) => ({ amount: stake.amount })) ?? [],
+        activatedPoints: activatedPointsByMember.get(item.id.toLowerCase()),
+      }))
+      .sort((a, b) => {
+        const stakeA = getSupporterStakeAmount(a);
+        const stakeB = getSupporterStakeAmount(b);
+        return (
+          stakeA === stakeB ? 0
+          : stakeA < stakeB ? 1
+          : -1
+        );
+      });
   //
 
   const proposalIdNumber =
@@ -741,13 +739,14 @@ export default function ClientPage({ params }: ClientPageProps) {
     enabled: proposalData?.proposalNumber != null && proposalData != null,
   });
 
+  const isProposalCoreReady =
+    proposalData != null &&
+    proposalIdNumber != null &&
+    strategyAddress != null;
+
   const isAwaitingProposal =
     !!pendingProposalParam &&
-    (!proposalData ||
-      !supportersData ||
-      proposalIdNumber == null ||
-      updatedConviction == null ||
-      strategyAddress == null);
+    !isProposalCoreReady;
 
   useEffect(() => {
     if (fetching || !isAwaitingProposal) return;
@@ -1086,13 +1085,7 @@ export default function ClientPage({ params }: ClientPageProps) {
     );
   }
 
-  if (
-    !proposalData ||
-    !supportersData ||
-    proposalIdNumber == null ||
-    updatedConviction == null ||
-    strategyAddress == null
-  ) {
+  if (!isProposalCoreReady) {
     return (
       <div className="col-span-12 flex min-h-[40vh] items-center justify-center">
         <LoadingSpinner />

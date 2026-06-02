@@ -12,18 +12,19 @@ type SupportedPlatform =
 
 type SupportedCoinId = "ethereum" | "matic-network" | "celo" | "xdai";
 type PriceCacheEntry = { value: number; expiresAt: number; symbol?: string };
-
+const coingeckoBaseUrl =
+  process.env.COINGECKO_API_BASE ?? "https://api.coingecko.com/api/v3";
 const getBaseUrl = () => {
-  if (process.env.COINGECKO_API_BASE) return process.env.COINGECKO_API_BASE;
+  if (process.env.COINGECKO_API_BASE) {
+    return coingeckoBaseUrl;
+  }
   const apiKey = process.env.COINGECKO_API_KEY?.toLowerCase() ?? "";
   const isDemo = apiKey.startsWith("demo");
   if (isDemo) {
-    return "https://api.coingecko.com/api/v3";
+    return coingeckoBaseUrl;
   }
   const usePro = process.env.COINGECKO_USE_PRO?.toLowerCase() === "true";
-  return usePro ?
-      "https://pro-api.coingecko.com/api/v3"
-    : "https://api.coingecko.com/api/v3";
+  return usePro ? "https://pro-api.coingecko.com/api/v3" : coingeckoBaseUrl;
 };
 
 const PLATFORM_BY_CHAIN: Record<number, SupportedPlatform> = {
@@ -54,8 +55,7 @@ const COINGECKO_TOKEN_PRICE_URL = (
   baseUrl: string,
 ) => `${baseUrl}/simple/token_price/${platform}`;
 
-const COINGECKO_COIN_PRICE_URL = (baseUrl: string) =>
-  `${baseUrl}/simple/price`;
+const COINGECKO_COIN_PRICE_URL = (baseUrl: string) => `${baseUrl}/simple/price`;
 const COINGECKO_PRICE_CACHE_NAME =
   process.env.COINGECKO_PRICE_CACHE_NAME ?? "token-prices";
 const COINGECKO_PRICE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -383,7 +383,10 @@ async function fetchTokenUsdPrice({
   address: string;
   symbol?: string;
 }): Promise<number> {
-  const override = getOverridePrice(getTokenOverrideKey(chainId, address), symbol);
+  const override = getOverridePrice(
+    getTokenOverrideKey(chainId, address),
+    symbol,
+  );
   if (override != null) return override;
 
   const platform = PLATFORM_BY_CHAIN[chainId];
@@ -445,7 +448,9 @@ async function fetchGasTokenUsdPrice({
 
   const coinId = GAS_TOKEN_COIN_ID_BY_CHAIN[chainId];
   if (!coinId) {
-    throw new Error(`Unsupported chainId for Coingecko gas token price: ${chainId}`);
+    throw new Error(
+      `Unsupported chainId for Coingecko gas token price: ${chainId}`,
+    );
   }
 
   const url = new URL(COINGECKO_COIN_PRICE_URL(getBaseUrl()));

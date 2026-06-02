@@ -249,10 +249,10 @@ export default function CampaignsPage() {
                       <div className="flex justify-between text-sm mb-2">
                         <span className="">Claimed</span>
                         <span className="font-medium">
-                        {formatNumber(totalStreamedSup)}{" "}
-                        /{" "}
-                        {formatNumber(targetStreamSup ?? 0)}{" "}
-                        {c.tokenSymbol}
+                          {formatNumber(totalStreamedSup)}{" "}
+                          /{" "}
+                          {formatNumber(targetStreamSup ?? 0)}{" "}
+                          {c.tokenSymbol}
                         </span>
                       </div>
                     </Skeleton>
