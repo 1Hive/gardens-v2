@@ -72,7 +72,34 @@ const getStoredCVStrategyEntry = (
   storage: CVStrategyCacheStorage,
   chainId: number,
   address: Address,
-) => storage[String(chainId)]?.[address.toLowerCase()];
+) => {
+  const chainStorage = storage[String(chainId)];
+  if (typeof chainStorage !== "object" || chainStorage == null) {
+    return undefined;
+  }
+
+  return chainStorage[address.toLowerCase()];
+};
+
+const isValidCVStrategyCacheEntry = (
+  value: unknown,
+): value is CVStrategyCacheEntry => {
+  if (typeof value !== "object" || value == null || !("isCVStrategy" in value)) {
+    return false;
+  }
+
+  if (value.isCVStrategy === false) {
+    return Object.keys(value).length === 1;
+  }
+
+  return (
+    value.isCVStrategy === true &&
+    "registryCommunity" in value &&
+    typeof value.registryCommunity === "string" &&
+    isAddress(value.registryCommunity) &&
+    value.registryCommunity.toLowerCase() !== ZERO_ADDRESS
+  );
+};
 
 const readCachedCVStrategyAddress = (
   chainId: number,
@@ -82,30 +109,13 @@ const readCachedCVStrategyAddress = (
   const memoryEntry = cvStrategyAddressCache.get(cacheKey);
   if (memoryEntry) return memoryEntry;
 
-  try {
-    const storage = readCVStrategyStorage();
-    const parsed =
-      storage ? getStoredCVStrategyEntry(storage, chainId, address) : undefined;
-    if (!parsed) return undefined;
+  const storage = readCVStrategyStorage();
+  const parsed =
+    storage ? getStoredCVStrategyEntry(storage, chainId, address) : undefined;
+  if (!isValidCVStrategyCacheEntry(parsed)) return undefined;
 
-    if (
-      parsed.isCVStrategy === true &&
-      isAddress(parsed.registryCommunity) &&
-      parsed.registryCommunity.toLowerCase() !== ZERO_ADDRESS
-    ) {
-      cvStrategyAddressCache.set(cacheKey, parsed);
-      return parsed;
-    }
-
-    if (parsed.isCVStrategy === false) {
-      cvStrategyAddressCache.set(cacheKey, parsed);
-      return parsed;
-    }
-  } catch {
-    window.localStorage.removeItem(CV_STRATEGY_ADDRESS_STORAGE_KEY);
-  }
-
-  return undefined;
+  cvStrategyAddressCache.set(cacheKey, parsed);
+  return parsed;
 };
 
 const writeCachedCVStrategyAddress = (
