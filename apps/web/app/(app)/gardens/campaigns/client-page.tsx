@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/Skeleton";
 import { fetchSuperfluidLeaderboard } from "@/types";
 import { CAMPAIGNS, CampaignId, isCampaignActive } from "@/utils/campaigns";
 import { logOnce } from "@/utils/log";
-import { formatKNumber, formatNumber, timeAgo } from "@/utils/time";
+import { formatKNumber, timeAgo } from "@/utils/time";
 
 type CampaignStats = {
   totalStreamedSup: number;
