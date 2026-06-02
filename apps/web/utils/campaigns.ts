@@ -76,6 +76,10 @@ const MONTHS_BY_NAME: Record<string, number> = {
   dec: 11,
 };
 
+/**
+ * Parses campaign end dates so date-only strings remain active through the end
+ * of the listed UTC day. Other formats fall back to the platform Date parser.
+ */
 function parseCampaignEndDate(endDate: string) {
   const trimmedEndDate = endDate.trim();
   const dateOnlyMatch = trimmedEndDate.match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
