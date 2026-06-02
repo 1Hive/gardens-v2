@@ -15,9 +15,7 @@ export function parseTimeUnit(value: number, from: TimeUnit, to: TimeUnit) {
 }
 
 export function formatNumber(num: number) {
-  if (num >= 1_000_000) return (num / 1_000_000).toFixed(2) + "M";
-  if (num >= 1_000) return (num / 1_000).toFixed(0) + "K";
-  return num.toString();
+  return `${Number((num / 1_000).toFixed(1)).toString()}K`;
 }
 
 export function timeAgo(dateString: string | undefined): string {
