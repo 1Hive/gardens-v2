@@ -513,17 +513,19 @@ export default function ClientPage({ params }: ClientPageProps) {
   });
   const resolvedMetadataHash =
     proposalData?.metadataHash ?? onchainMetadataHash ?? undefined;
+  const hasResolvedMetadataHash =
+    resolvedMetadataHash != null && resolvedMetadataHash !== "";
   const { data: ipfsResult, fetching: isIpfsMetadataFetching } =
     useMetadataIpfsFetch({
       hash: resolvedMetadataHash,
-      enabled: resolvedMetadataHash != null && proposalData?.metadata == null,
+      enabled: hasResolvedMetadataHash && proposalData?.metadata == null,
     });
   const isMetadataLoading =
     proposalData != null &&
     proposalData.metadata == null &&
     ((shouldReadOnchainMetadataHash &&
       (isOnchainMetadataHashLoading || !isOnchainMetadataHashFetched)) ||
-      (resolvedMetadataHash != null && isIpfsMetadataFetching === true));
+      (hasResolvedMetadataHash && isIpfsMetadataFetching));
   const path = usePathname();
   const metadata: MetadataV1 | null =
     proposalData ?
