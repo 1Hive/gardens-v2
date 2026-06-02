@@ -48,13 +48,13 @@ const pendingCVStrategyChecks = new Map<
 >();
 let didCleanupLegacyCVStrategyStorage = false;
 
-type CVStrategyCacheStorage = Record<
-  string,
-  Record<string, CVStrategyCacheEntry>
->;
+type CVStrategyCacheStorage = Record<string, Record<string, unknown>>;
 
 const getCVStrategyCacheKey = (chainId: number, address: Address) =>
   `${chainId}.${address.toLowerCase()}`;
+
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value != null && !Array.isArray(value);
 
 const isValidCVStrategyCacheEntry = (
   value: unknown,
@@ -84,17 +84,11 @@ const isValidCVStrategyCacheEntry = (
 const isCVStrategyCacheStorage = (
   value: unknown,
 ): value is CVStrategyCacheStorage => {
-  if (typeof value !== "object" || value == null || Array.isArray(value)) {
+  if (!isObjectRecord(value)) {
     return false;
   }
 
-  return Object.values(value).every(
-    (chainStorage) =>
-      typeof chainStorage === "object" &&
-      chainStorage != null &&
-      !Array.isArray(chainStorage) &&
-      Object.values(chainStorage).every(isValidCVStrategyCacheEntry),
-  );
+  return Object.values(value).every(isObjectRecord);
 };
 
 const readCVStrategyStorage = (): CVStrategyCacheStorage | undefined => {
@@ -118,7 +112,12 @@ const readCVStrategyStorage = (): CVStrategyCacheStorage | undefined => {
     if (!cachedValue) return undefined;
 
     const parsed = JSON.parse(cachedValue) as unknown;
-    return isCVStrategyCacheStorage(parsed) ? parsed : undefined;
+    if (!isCVStrategyCacheStorage(parsed)) {
+      window.localStorage.removeItem(CV_STRATEGY_ADDRESS_STORAGE_KEY);
+      return undefined;
+    }
+
+    return parsed;
   } catch {
     window.localStorage.removeItem(CV_STRATEGY_ADDRESS_STORAGE_KEY);
     return undefined;
@@ -160,7 +159,10 @@ const writeCachedCVStrategyAddress = (
 
   try {
     const storage = readCVStrategyStorage() ?? {};
-    const chainStorage = storage[String(chainId)] ?? {};
+    const chainStorage =
+      storage[String(chainId)] && isObjectRecord(storage[String(chainId)]) ?
+        storage[String(chainId)]
+      : {};
     chainStorage[address.toLowerCase()] = entry;
     storage[String(chainId)] = chainStorage;
     window.localStorage.setItem(
