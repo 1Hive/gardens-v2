@@ -53,40 +53,6 @@ type CVStrategyCacheStorage = Record<
 const getCVStrategyCacheKey = (chainId: number, address: Address) =>
   `${chainId}.${address.toLowerCase()}`;
 
-const readCVStrategyStorage = (): CVStrategyCacheStorage | undefined => {
-  try {
-    const cachedValue = window.localStorage.getItem(
-      CV_STRATEGY_ADDRESS_STORAGE_KEY,
-    );
-    if (!cachedValue) return undefined;
-
-    const parsed = JSON.parse(cachedValue) as CVStrategyCacheStorage;
-    return (
-      typeof parsed === "object" &&
-      parsed != null &&
-      !Array.isArray(parsed)
-    ) ?
-        parsed
-      : undefined;
-  } catch {
-    window.localStorage.removeItem(CV_STRATEGY_ADDRESS_STORAGE_KEY);
-    return undefined;
-  }
-};
-
-const getStoredCVStrategyEntry = (
-  storage: CVStrategyCacheStorage,
-  chainId: number,
-  address: Address,
-) => {
-  const chainStorage = storage[String(chainId)];
-  if (typeof chainStorage !== "object" || chainStorage == null) {
-    return undefined;
-  }
-
-  return chainStorage[address.toLowerCase()];
-};
-
 const isValidCVStrategyCacheEntry = (
   value: unknown,
 ): value is CVStrategyCacheEntry => {
@@ -112,6 +78,43 @@ const isValidCVStrategyCacheEntry = (
   );
 };
 
+const isCVStrategyCacheStorage = (
+  value: unknown,
+): value is CVStrategyCacheStorage => {
+  if (typeof value !== "object" || value == null || Array.isArray(value)) {
+    return false;
+  }
+
+  return Object.values(value).every(
+    (chainStorage) =>
+      typeof chainStorage === "object" &&
+      chainStorage != null &&
+      !Array.isArray(chainStorage) &&
+      Object.values(chainStorage).every(isValidCVStrategyCacheEntry),
+  );
+};
+
+const readCVStrategyStorage = (): CVStrategyCacheStorage | undefined => {
+  try {
+    const cachedValue = window.localStorage.getItem(
+      CV_STRATEGY_ADDRESS_STORAGE_KEY,
+    );
+    if (!cachedValue) return undefined;
+
+    const parsed = JSON.parse(cachedValue) as unknown;
+    return isCVStrategyCacheStorage(parsed) ? parsed : undefined;
+  } catch {
+    window.localStorage.removeItem(CV_STRATEGY_ADDRESS_STORAGE_KEY);
+    return undefined;
+  }
+};
+
+const getStoredCVStrategyEntry = (
+  storage: CVStrategyCacheStorage | undefined,
+  chainId: number,
+  address: Address,
+) => storage?.[String(chainId)]?.[address.toLowerCase()];
+
 const readCachedCVStrategyAddress = (
   chainId: number,
   address: Address,
@@ -120,9 +123,11 @@ const readCachedCVStrategyAddress = (
   const memoryEntry = cvStrategyAddressCache.get(cacheKey);
   if (memoryEntry) return memoryEntry;
 
-  const storage = readCVStrategyStorage();
-  const parsed =
-    storage ? getStoredCVStrategyEntry(storage, chainId, address) : undefined;
+  const parsed = getStoredCVStrategyEntry(
+    readCVStrategyStorage(),
+    chainId,
+    address,
+  );
   if (!isValidCVStrategyCacheEntry(parsed)) return undefined;
 
   cvStrategyAddressCache.set(cacheKey, parsed);
