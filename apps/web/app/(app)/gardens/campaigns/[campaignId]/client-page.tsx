@@ -480,9 +480,7 @@ export default function GardensGrowthInitiativePage({
                 <div className="flex items-center gap-2 text-sm">
                   <CurrencyDollarIcon className="h-6 w-6 " />
                   <span className="font-semibold">
-                    {superfluidStreamsData?.targetStreamSup != null ?
-                      `${formatNumber(superfluidStreamsData.targetStreamSup)} SUP allocated`
-                    : "SUP allocated"}
+                    {formatNumber(targetStreamSup)} SUP allocated
                   </span>
                 </div>
               </div>
