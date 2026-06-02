@@ -643,7 +643,7 @@ export default function GardensGrowthInitiativePage({
                           </div>
                           <div className="flex items-baseline gap-1">
                             <p className="font-bold text-xl">
-                              {walletPoints?.totalPoints ?? 0}
+                              {Math.ceil(walletPoints?.totalPoints ?? 0)}
                             </p>
                             <p className="text-xs ">Pts.</p>
                           </div>
