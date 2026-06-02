@@ -15,7 +15,13 @@ export function parseTimeUnit(value: number, from: TimeUnit, to: TimeUnit) {
 }
 
 export function formatNumber(num: number) {
-  return `${Number((num / 1_000).toFixed(1)).toString()}K`;
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(2) + "M";
+  if (num >= 1_000) return (num / 1_000).toFixed(0) + "K";
+  return num.toString();
+}
+
+export function formatKNumber(num: number) {
+  return `${parseFloat((num / 1_000).toFixed(1))}K`;
 }
 
 export function timeAgo(dateString: string | undefined): string {

@@ -27,7 +27,7 @@ import {
 import { CAMPAIGNS, CampaignId, isCampaignActive } from "@/utils/campaigns";
 import { logOnce } from "@/utils/log";
 import { shortenAddress } from "@/utils/text";
-import { formatNumber, timeAgo } from "@/utils/time";
+import { formatKNumber, formatNumber, timeAgo } from "@/utils/time";
 
 export type ParticipationStep = {
   title: string;
@@ -643,7 +643,7 @@ export default function GardensGrowthInitiativePage({
                           </div>
                           <div className="flex items-baseline gap-1">
                             <p className="font-bold text-xl">
-                              {formatNumber(walletPoints?.totalPoints ?? 0)}
+                              {formatKNumber(walletPoints?.totalPoints ?? 0)}
                             </p>
                             <p className="text-xs ">Pts.</p>
                           </div>
@@ -673,10 +673,10 @@ export default function GardensGrowthInitiativePage({
                     <div className="flex justify-between mb-2">
                       <span className="">Tokens Claimed</span>
                       <span className="font-medium">
-                        {formatNumber(
+                        {formatKNumber(
                           superfluidStreamsData?.totalStreamedSup ?? 0,
                         )}{" "}
-                        / {formatNumber(targetStreamSup)} SUP
+                        / {formatKNumber(targetStreamSup)} SUP
                       </span>
                     </div>
 

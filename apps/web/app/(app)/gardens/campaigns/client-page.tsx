@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/Skeleton";
 import { fetchSuperfluidLeaderboard } from "@/types";
 import { CAMPAIGNS, CampaignId, isCampaignActive } from "@/utils/campaigns";
 import { logOnce } from "@/utils/log";
-import { formatNumber, timeAgo } from "@/utils/time";
+import { formatKNumber, formatNumber, timeAgo } from "@/utils/time";
 
 type CampaignStats = {
   totalStreamedSup: number;
@@ -250,9 +250,9 @@ export default function CampaignsPage() {
                       <div className="flex justify-between text-sm mb-2">
                         <span className="">Claimed</span>
                         <span className="font-medium">
-                          {formatNumber(totalStreamedSup)}{" "}
+                          {formatKNumber(totalStreamedSup)}{" "}
                           /{" "}
-                          {formatNumber(targetStreamSup ?? 0)}{" "}
+                          {formatKNumber(targetStreamSup ?? 0)}{" "}
                           {c.tokenSymbol}
                         </span>
                       </div>
