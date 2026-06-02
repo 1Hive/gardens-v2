@@ -6,6 +6,7 @@ import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol
 import {RegistryCommunity} from "../RegistryCommunity/RegistryCommunity.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IArbitrator} from "../interfaces/IArbitrator.sol";
 import {IArbitrable} from "../interfaces/IArbitrable.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
@@ -786,6 +787,37 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         sybilScorer.addStrategy(address(this), threshold, address(registryCommunity.councilSafe()));
     }
 
+    function _scaleTokenAmount(uint256 amount, uint8 fromDecimals, uint8 toDecimals) internal pure returns (uint256) {
+        if (amount == 0 || fromDecimals == toDecimals) {
+            return amount;
+        }
+        if (fromDecimals < toDecimals) {
+            return amount * (10 ** (toDecimals - fromDecimals));
+        }
+        return amount / (10 ** (fromDecimals - toDecimals));
+    }
+
+    function _tokenDecimals(address token) internal view returns (uint8) {
+        try IERC20Metadata(token).decimals() returns (uint8 decimals_) {
+            return decimals_;
+        } catch {
+            return 18;
+        }
+    }
+
+    function _fromSuperTokenAmount(uint256 superTokenAmount, address poolToken, ISuperToken sourceSuperToken)
+        internal
+        view
+        returns (uint256)
+    {
+        if (superTokenAmount == 0 || address(sourceSuperToken) == address(0) || poolToken == address(sourceSuperToken))
+        {
+            return superTokenAmount;
+        }
+
+        return _scaleTokenAmount(superTokenAmount, _tokenDecimals(address(sourceSuperToken)), _tokenDecimals(poolToken));
+    }
+
     // Sig: 0x4ab4ba42
     /// @notice Getter for the 'poolAmount'.
     /// @return The balance of the pool
@@ -798,14 +830,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         }
 
         uint256 sf = address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
-
-        uint8 d = ERC20(token).decimals();
-        if (d < 18) {
-            sf /= 10 ** (18 - d); // downscale 18 -> d
-        } else if (d > 18) {
-            sf *= 10 ** (d - 18); // upscale 18 -> d  (unlikely)
-        }
-        return base + sf;
+        return base + _fromSuperTokenAmount(sf, token, superfluidToken);
     }
 
     // Stub - delegates to CVPauseFacet

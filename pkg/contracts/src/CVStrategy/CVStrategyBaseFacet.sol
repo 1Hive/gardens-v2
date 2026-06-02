@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {RegistryCommunity} from "../RegistryCommunity/RegistryCommunity.sol";
 import {ICollateralVault} from "../interfaces/ICollateralVault.sol";
 import {ISybilScorer} from "../ISybilScorer.sol";
@@ -263,7 +264,10 @@ abstract contract CVStrategyBaseFacet {
             return;
         }
         address controller = LibPauseStorage.layout().pauseController;
-        if (controller != address(0) && controller.code.length != 0 && IPauseController(controller).isPaused(address(this))) {
+        if (
+            controller != address(0) && controller.code.length != 0
+                && IPauseController(controller).isPaused(address(this))
+        ) {
             revert StrategyPaused(controller);
         }
     }
@@ -440,8 +444,8 @@ abstract contract CVStrategyBaseFacet {
         if (address(registryCommunity) == address(0)) {
             return true;
         }
-        (bool ok, bytes memory data) =
-            address(registryCommunity).staticcall(abi.encodeWithSelector(registryCommunity.enabledStrategies.selector, address(this)));
+        (bool ok, bytes memory data) = address(registryCommunity)
+            .staticcall(abi.encodeWithSelector(registryCommunity.enabledStrategies.selector, address(this)));
         if (!ok || data.length < 32) {
             // Compatibility fallback for lightweight test doubles that don't expose enabledStrategies().
             return true;
@@ -465,6 +469,54 @@ abstract contract CVStrategyBaseFacet {
         }
     }
 
+    function _scaleTokenAmount(uint256 amount, uint8 fromDecimals, uint8 toDecimals) internal pure returns (uint256) {
+        if (amount == 0 || fromDecimals == toDecimals) {
+            return amount;
+        }
+        if (fromDecimals < toDecimals) {
+            return amount * (10 ** (toDecimals - fromDecimals));
+        }
+        return amount / (10 ** (fromDecimals - toDecimals));
+    }
+
+    function _tokenDecimals(address token) internal view returns (uint8) {
+        try IERC20Metadata(token).decimals() returns (uint8 decimals_) {
+            return decimals_;
+        } catch {
+            return 18;
+        }
+    }
+
+    function _toSuperTokenAmount(uint256 poolTokenAmount, address poolToken, ISuperToken targetSuperToken)
+        internal
+        view
+        returns (uint256)
+    {
+        if (poolTokenAmount == 0 || address(targetSuperToken) == address(0) || poolToken == address(targetSuperToken)) {
+            return poolTokenAmount;
+        }
+
+        return _scaleTokenAmount(poolTokenAmount, _tokenDecimals(poolToken), _tokenDecimals(address(targetSuperToken)));
+    }
+
+    function _fromSuperTokenAmount(uint256 superTokenAmount, address poolToken, ISuperToken sourceSuperToken)
+        internal
+        view
+        returns (uint256)
+    {
+        if (superTokenAmount == 0 || address(sourceSuperToken) == address(0) || poolToken == address(sourceSuperToken))
+        {
+            return superTokenAmount;
+        }
+
+        return _scaleTokenAmount(superTokenAmount, _tokenDecimals(address(sourceSuperToken)), _tokenDecimals(poolToken));
+    }
+
+    function _streamingRatePerSecondInSuperTokenUnits() internal view returns (uint256) {
+        address token = allo.getPool(poolId).token;
+        return _toSuperTokenAmount(streamingRatePerSecond, token, superfluidToken);
+    }
+
     /// @notice Getter for the 'poolAmount'.
     /// @return The balance of the pool
     function getPoolAmount() public view virtual returns (uint256) {
@@ -480,13 +532,6 @@ abstract contract CVStrategyBaseFacet {
         }
 
         uint256 sf = address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
-
-        uint8 d = ERC20(token).decimals();
-        if (d < 18) {
-            sf /= 10 ** (18 - d); // downscale 18 -> d
-        } else if (d > 18) {
-            sf *= 10 ** (d - 18); // upscale 18 -> d  (unlikely)
-        }
-        return base + sf;
+        return base + _fromSuperTokenAmount(sf, token, superfluidToken);
     }
 }
