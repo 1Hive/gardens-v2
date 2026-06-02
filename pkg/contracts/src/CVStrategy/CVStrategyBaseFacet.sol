@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {RegistryCommunity} from "../RegistryCommunity/RegistryCommunity.sol";
 import {ICollateralVault} from "../interfaces/ICollateralVault.sol";
 import {ISybilScorer} from "../ISybilScorer.sol";
@@ -15,6 +14,7 @@ import {LibDiamond} from "@src/diamonds/libraries/LibDiamond.sol";
 import {IPauseController} from "../interfaces/IPauseController.sol";
 import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
 import {LibPauseStorage} from "../pausing/LibPauseStorage.sol";
+import {DecimalScalingUtils} from "./DecimalScalingUtils.sol";
 
 interface IOwnableLike {
     function owner() external view returns (address);
@@ -469,34 +469,12 @@ abstract contract CVStrategyBaseFacet {
         }
     }
 
-    function _scaleTokenAmount(uint256 amount, uint8 fromDecimals, uint8 toDecimals) internal pure returns (uint256) {
-        if (amount == 0 || fromDecimals == toDecimals) {
-            return amount;
-        }
-        if (fromDecimals < toDecimals) {
-            return amount * (10 ** (toDecimals - fromDecimals));
-        }
-        return amount / (10 ** (fromDecimals - toDecimals));
-    }
-
-    function _tokenDecimals(address token) internal view returns (uint8) {
-        try IERC20Metadata(token).decimals() returns (uint8 decimals_) {
-            return decimals_;
-        } catch {
-            return 18;
-        }
-    }
-
     function _toSuperTokenAmount(uint256 poolTokenAmount, address poolToken, ISuperToken targetSuperToken)
         internal
         view
         returns (uint256)
     {
-        if (poolTokenAmount == 0 || address(targetSuperToken) == address(0) || poolToken == address(targetSuperToken)) {
-            return poolTokenAmount;
-        }
-
-        return _scaleTokenAmount(poolTokenAmount, _tokenDecimals(poolToken), _tokenDecimals(address(targetSuperToken)));
+        return DecimalScalingUtils.toSuperTokenAmount(poolTokenAmount, poolToken, targetSuperToken);
     }
 
     function _fromSuperTokenAmount(uint256 superTokenAmount, address poolToken, ISuperToken sourceSuperToken)
@@ -504,12 +482,7 @@ abstract contract CVStrategyBaseFacet {
         view
         returns (uint256)
     {
-        if (superTokenAmount == 0 || address(sourceSuperToken) == address(0) || poolToken == address(sourceSuperToken))
-        {
-            return superTokenAmount;
-        }
-
-        return _scaleTokenAmount(superTokenAmount, _tokenDecimals(address(sourceSuperToken)), _tokenDecimals(poolToken));
+        return DecimalScalingUtils.fromSuperTokenAmount(superTokenAmount, poolToken, sourceSuperToken);
     }
 
     function _streamingRatePerSecondInSuperTokenUnits() internal view returns (uint256) {

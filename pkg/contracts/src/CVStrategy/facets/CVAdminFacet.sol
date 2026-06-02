@@ -290,6 +290,7 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
             return;
         }
 
+        // Approval is denominated in underlying pool-token units; upgradeAmount is denominated in SuperToken units.
         if (!IERC20(poolToken).approve(address(nextToken), unwrappedBalance)) {
             revert ApproveFailed(poolToken, address(nextToken), unwrappedBalance);
         }

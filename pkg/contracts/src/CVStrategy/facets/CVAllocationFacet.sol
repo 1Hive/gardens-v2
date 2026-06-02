@@ -2,14 +2,12 @@
 pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ProposalType, ProposalStatus, ProposalSupport, Proposal} from "../ICVStrategy.sol";
 import {ConvictionsUtils} from "../ConvictionsUtils.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
-
 
 /**
  * @title CVAllocationFacet
@@ -302,26 +300,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     }
 
     function getPoolAmount() public view override returns (uint256) {
-        address token = allo.getPool(poolId).token;
-
-        if (token == NATIVE_TOKEN) {
-            return address(this).balance;
-        }
-
-        uint256 base = IERC20(token).balanceOf(address(this));
-        if (token == address(superfluidToken)) {
-            return base;
-        }
-
-        uint256 sf = address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
-
-        uint8 d = IERC20Metadata(token).decimals();
-        if (d < 18) {
-            sf /= 10 ** (18 - d); // downscale 18 -> d
-        } else if (d > 18) {
-            sf *= 10 ** (d - 18); // upscale 18 -> d  (unlikely)
-        }
-        return base + sf;
+        return super.getPoolAmount();
     }
 
     function _transferAmount(address _token, address _to, uint256 _amount) internal {
