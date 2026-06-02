@@ -100,14 +100,13 @@ const isCVStrategyCacheStorage = (
 const readCVStrategyStorage = (): CVStrategyCacheStorage | undefined => {
   try {
     if (!didCleanupLegacyCVStrategyStorage) {
-      const legacyKeys: string[] = [];
-
-      for (let index = 0; index < window.localStorage.length; index += 1) {
-        const key = window.localStorage.key(index);
-        if (key?.startsWith(LEGACY_CV_STRATEGY_ADDRESS_STORAGE_PREFIX)) {
-          legacyKeys.push(key);
-        }
-      }
+      const legacyKeys = Array.from(
+        { length: window.localStorage.length },
+        (_, index) => window.localStorage.key(index),
+      ).filter(
+        (key): key is string =>
+          key?.startsWith(LEGACY_CV_STRATEGY_ADDRESS_STORAGE_PREFIX) ?? false,
+      );
 
       legacyKeys.forEach((key) => window.localStorage.removeItem(key));
       didCleanupLegacyCVStrategyStorage = true;
