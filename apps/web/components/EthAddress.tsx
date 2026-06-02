@@ -37,16 +37,98 @@ type CVStrategyCacheEntry =
       isCVStrategy: false;
     };
 
-const CV_STRATEGY_ADDRESS_CACHE_PREFIX = "gardens.cvStrategyAddress.v1";
+const CV_STRATEGY_ADDRESS_STORAGE_KEY = "gardens.cvStrategyAddress";
+const LEGACY_CV_STRATEGY_ADDRESS_STORAGE_PREFIX =
+  "gardens.cvStrategyAddress.v";
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const cvStrategyAddressCache = new Map<string, CVStrategyCacheEntry>();
 const pendingCVStrategyChecks = new Map<
   string,
   Promise<CVStrategyCacheEntry>
 >();
+let didCleanupLegacyCVStrategyStorage = false;
+
+type CVStrategyCacheStorage = Record<string, Record<string, unknown>>;
 
 const getCVStrategyCacheKey = (chainId: number, address: Address) =>
-  `${CV_STRATEGY_ADDRESS_CACHE_PREFIX}.${chainId}.${address.toLowerCase()}`;
+  `${chainId}.${address.toLowerCase()}`;
+
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value != null && !Array.isArray(value);
+
+const isValidCVStrategyCacheEntry = (
+  value: unknown,
+): value is CVStrategyCacheEntry => {
+  if (
+    typeof value !== "object" ||
+    value == null ||
+    Array.isArray(value) ||
+    !("isCVStrategy" in value)
+  ) {
+    return false;
+  }
+
+  if (value.isCVStrategy === false) {
+    return true;
+  }
+
+  return (
+    value.isCVStrategy === true &&
+    "registryCommunity" in value &&
+    typeof value.registryCommunity === "string" &&
+    isAddress(value.registryCommunity) &&
+    value.registryCommunity.toLowerCase() !== ZERO_ADDRESS
+  );
+};
+
+const isCVStrategyCacheStorage = (
+  value: unknown,
+): value is CVStrategyCacheStorage => {
+  if (!isObjectRecord(value)) {
+    return false;
+  }
+
+  return Object.values(value).every(isObjectRecord);
+};
+
+const readCVStrategyStorage = (): CVStrategyCacheStorage | undefined => {
+  try {
+    if (!didCleanupLegacyCVStrategyStorage) {
+      const legacyKeys = Array.from(
+        { length: window.localStorage.length },
+        (_, index) => window.localStorage.key(index),
+      ).filter(
+        (key): key is string =>
+          key?.startsWith(LEGACY_CV_STRATEGY_ADDRESS_STORAGE_PREFIX) ?? false,
+      );
+
+      legacyKeys.forEach((key) => window.localStorage.removeItem(key));
+      didCleanupLegacyCVStrategyStorage = true;
+    }
+
+    const cachedValue = window.localStorage.getItem(
+      CV_STRATEGY_ADDRESS_STORAGE_KEY,
+    );
+    if (!cachedValue) return undefined;
+
+    const parsed = JSON.parse(cachedValue) as unknown;
+    if (!isCVStrategyCacheStorage(parsed)) {
+      window.localStorage.removeItem(CV_STRATEGY_ADDRESS_STORAGE_KEY);
+      return undefined;
+    }
+
+    return parsed;
+  } catch {
+    window.localStorage.removeItem(CV_STRATEGY_ADDRESS_STORAGE_KEY);
+    return undefined;
+  }
+};
+
+const getStoredCVStrategyEntry = (
+  storage: CVStrategyCacheStorage | undefined,
+  chainId: number,
+  address: Address,
+) => storage?.[String(chainId)]?.[address.toLowerCase()];
 
 const readCachedCVStrategyAddress = (
   chainId: number,
@@ -56,29 +138,15 @@ const readCachedCVStrategyAddress = (
   const memoryEntry = cvStrategyAddressCache.get(cacheKey);
   if (memoryEntry) return memoryEntry;
 
-  try {
-    const cachedValue = window.localStorage.getItem(cacheKey);
-    if (!cachedValue) return undefined;
+  const parsed = getStoredCVStrategyEntry(
+    readCVStrategyStorage(),
+    chainId,
+    address,
+  );
+  if (!isValidCVStrategyCacheEntry(parsed)) return undefined;
 
-    const parsed = JSON.parse(cachedValue) as CVStrategyCacheEntry;
-    if (
-      parsed.isCVStrategy === true &&
-      isAddress(parsed.registryCommunity) &&
-      parsed.registryCommunity.toLowerCase() !== ZERO_ADDRESS
-    ) {
-      cvStrategyAddressCache.set(cacheKey, parsed);
-      return parsed;
-    }
-
-    if (parsed.isCVStrategy === false) {
-      cvStrategyAddressCache.set(cacheKey, parsed);
-      return parsed;
-    }
-  } catch {
-    window.localStorage.removeItem(cacheKey);
-  }
-
-  return undefined;
+  cvStrategyAddressCache.set(cacheKey, parsed);
+  return parsed;
 };
 
 const writeCachedCVStrategyAddress = (
@@ -90,7 +158,18 @@ const writeCachedCVStrategyAddress = (
   cvStrategyAddressCache.set(cacheKey, entry);
 
   try {
-    window.localStorage.setItem(cacheKey, JSON.stringify(entry));
+    const storage = readCVStrategyStorage() ?? {};
+    const currentChainStorage = storage[String(chainId)];
+    const chainStorage =
+      isObjectRecord(currentChainStorage) ?
+        currentChainStorage
+      : {};
+    chainStorage[address.toLowerCase()] = entry;
+    storage[String(chainId)] = chainStorage;
+    window.localStorage.setItem(
+      CV_STRATEGY_ADDRESS_STORAGE_KEY,
+      JSON.stringify(storage),
+    );
   } catch {
     // localStorage can be unavailable or full; memory cache still dedupes this session.
   }
