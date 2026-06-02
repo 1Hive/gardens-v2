@@ -49,15 +49,15 @@ export const CAMPAIGNS = {
     leaderboardEndpoint: "/api/superfluid-points/leaderboard?campaignId=510",
   },
   "4": {
-    id: 511,
+    id: 607,
     name: "Superfluid Ecosystem Rewards Season 6",
     description:
       "Earn SUP rewards by staking governance tokens, adding funds to pools, following Gardens on Farcaster, and earning triple points in Streaming pools.",
     tokenSymbol: "SUP",
-    endDate: "28 Jun 2026",
+    endDate: "31 Aug 2026",
     banner: SuperBanner,
     logo: SuperLogo,
-    leaderboardEndpoint: "/api/superfluid-points/leaderboard?campaignId=511",
+    leaderboardEndpoint: "/api/superfluid-points/leaderboard?campaignId=607",
   },
 } as const;
 

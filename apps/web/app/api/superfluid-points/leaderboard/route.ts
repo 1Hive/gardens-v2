@@ -146,6 +146,7 @@ const TOTAL_STREAMED_SUP_FALLBACK = 3_578;
 const TOTAL_STREAMED_SUP_BY_CAMPAIGN: Record<string, number> = {
   "510": 483_000,
   "511": 0,
+  "607": 0,
 };
 const DEFAULT_TARGET_STREAM_SUP = 847_000;
 const TARGET_STREAM_SUP_BY_CAMPAIGN: Record<string, number> = {

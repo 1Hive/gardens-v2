@@ -346,6 +346,7 @@ const NOTION_DATA_SOURCE_ID = process.env.NOTION_DATA_SOURCE_ID?.trim() ?? null;
 const NOTION_DATA_SOURCE_ID_BY_CAMPAIGN: Record<string, string> = {
   "510": "318d6929-d014-8009-9e92-000b335dc6ea",
   "511": "36bd6929-d014-808c-8fc2-000b77b14155",
+  "607": "36bd6929-d014-808c-8fc2-000b77b14155",
 };
 let notionDataSourceId: string | null = NOTION_DATA_SOURCE_ID;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -731,6 +732,10 @@ const CAMPAIGN_INTERVALS_BY_CAMPAIGN: Record<
   "511": {
     startTimestamp: 1779580800, // May 24, 2026 00:00:00 UTC
     endTimestamp: 1782604800, // June 28, 2026 00:00:00 UTC
+  },
+  "607": {
+    startTimestamp: 1780358400, // June 2, 2026 00:00:00 UTC
+    endTimestamp: 1788220800, // September 1, 2026 00:00:00 UTC
   },
 };
 let currentCampaignStartMS = DEFAULT_CAMPAIGN_START_MS;
