@@ -149,7 +149,6 @@ const TOTAL_STREAMED_SUP_FALLBACK = 3_578;
 // once campaign-specific subgraph totals are reliable.
 const TOTAL_STREAMED_SUP_OVERRIDES_BY_CAMPAIGN: Record<string, number> = {
   "510": 483_000,
-  "607": 0,
   "511": 0,
 };
 const DEFAULT_TARGET_STREAM_SUP = 847_000;
