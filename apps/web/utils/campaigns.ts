@@ -49,23 +49,68 @@ export const CAMPAIGNS = {
     leaderboardEndpoint: "/api/superfluid-points/leaderboard?campaignId=510",
   },
   "4": {
-    id: 511,
+    id: 607,
     name: "Superfluid Ecosystem Rewards Season 6",
     description:
       "Earn SUP rewards by staking governance tokens, adding funds to pools, following Gardens on Farcaster, and earning triple points in Streaming pools.",
     tokenSymbol: "SUP",
-    endDate: "28 Jun 2026",
+    endDate: "31 Aug 2026",
     banner: SuperBanner,
     logo: SuperLogo,
-    leaderboardEndpoint: "/api/superfluid-points/leaderboard?campaignId=511",
+    leaderboardEndpoint: "/api/superfluid-points/leaderboard?campaignId=607",
   },
 } as const;
+
+const MONTHS_BY_NAME: Record<string, number> = {
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  may: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  oct: 9,
+  nov: 10,
+  dec: 11,
+};
+
+/**
+ * Parses campaign end dates so date-only strings remain active through the end
+ * of the listed UTC day. Other formats fall back to the platform Date parser.
+ */
+function parseCampaignEndDate(endDate: string) {
+  const trimmedEndDate = endDate.trim();
+  const dateOnlyMatch = trimmedEndDate.match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
+
+  if (dateOnlyMatch) {
+    const [, dayValue, monthValue, yearValue] = dateOnlyMatch;
+    const monthIndex = MONTHS_BY_NAME[monthValue.toLowerCase()];
+
+    if (monthIndex === undefined) {
+      return Number.NaN;
+    }
+
+    return Date.UTC(
+      Number(yearValue),
+      monthIndex,
+      Number(dayValue),
+      23,
+      59,
+      59,
+      999,
+    );
+  }
+
+  return Date.parse(trimmedEndDate);
+}
 
 export function isCampaignActive(
   endDate: string,
   referenceTimestamp = Date.now(),
 ) {
-  const endDateTimestamp = Date.parse(endDate);
+  const endDateTimestamp = parseCampaignEndDate(endDate);
 
   if (Number.isNaN(endDateTimestamp)) {
     return false;
