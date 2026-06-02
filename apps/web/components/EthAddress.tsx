@@ -61,7 +61,13 @@ const readCVStrategyStorage = (): CVStrategyCacheStorage | undefined => {
     if (!cachedValue) return undefined;
 
     const parsed = JSON.parse(cachedValue) as CVStrategyCacheStorage;
-    return typeof parsed === "object" && parsed != null ? parsed : undefined;
+    return (
+      typeof parsed === "object" &&
+      parsed != null &&
+      !Array.isArray(parsed)
+    ) ?
+        parsed
+      : undefined;
   } catch {
     window.localStorage.removeItem(CV_STRATEGY_ADDRESS_STORAGE_KEY);
     return undefined;
@@ -84,12 +90,17 @@ const getStoredCVStrategyEntry = (
 const isValidCVStrategyCacheEntry = (
   value: unknown,
 ): value is CVStrategyCacheEntry => {
-  if (typeof value !== "object" || value == null || !("isCVStrategy" in value)) {
+  if (
+    typeof value !== "object" ||
+    value == null ||
+    Array.isArray(value) ||
+    !("isCVStrategy" in value)
+  ) {
     return false;
   }
 
   if (value.isCVStrategy === false) {
-    return Object.keys(value).length === 1;
+    return true;
   }
 
   return (
