@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getDataSuffix, submitReferral } from "@divvi/referral-sdk";
-import { WriteContractMode } from "@wagmi/core";
+import { WriteContractMode, WriteContractResult } from "@wagmi/core";
 import { toast } from "react-toastify";
 import { Abi, Address, TransactionReceipt, isAddress } from "viem";
 import { celo } from "viem/chains";
@@ -12,6 +12,7 @@ import {
   UseContractWriteConfig,
   usePublicClient,
   useWaitForTransaction,
+  useWalletClient,
 } from "wagmi";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useTransactionNotification } from "./useTransactionNotification";
@@ -19,6 +20,12 @@ import { chainConfigMap } from "@/configs/chains";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useFlag } from "@/hooks/useFlag";
 import { abiWithErrors } from "@/utils/abi";
+import {
+  getWalletConnectDeepLinkChoice,
+  isMobileBrowser,
+  WALLETCONNECT_CONNECTOR_IDS,
+  WalletConnectDeepLinkChoice,
+} from "@/utils/walletConnectMobile";
 
 export type ComputedStatus =
   | "loading"
@@ -29,6 +36,22 @@ export type ComputedStatus =
 
 const isRpcTransactionHash = (hash?: string): hash is `0x${string}` =>
   /^0x[a-fA-F0-9]{64}$/.test(hash ?? "");
+
+const shouldRetryWithWalletClient = (error: unknown) => {
+  const transportError = [
+    error instanceof Error ? error.message : undefined,
+    (error as { cause?: { message?: string } })?.cause?.message,
+    (error as { details?: string })?.details,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return /HTTP request failed|Failed to fetch|fetch failed|NetworkError|Load failed/i.test(
+    transportError,
+  );
+};
+
+const DIRECT_WALLET_FALLBACK_GAS_LIMIT = 1_500_000n;
 
 // Divvi configuration constants
 const DIVVI_CONSUMER =
@@ -41,6 +64,20 @@ const DIVVI_PROVIDERS = process.env.NEXT_PUBLIC_DIVVI_PROVIDERS?.split(",") ?? [
 
 const IS_E2E =
   process.env.NEXT_PUBLIC_E2E === "true" || process.env.E2E === "true";
+
+const getWalletConnectApprovalLink = (
+  connectorId?: string,
+): WalletConnectDeepLinkChoice | undefined => {
+  if (
+    !connectorId ||
+    !WALLETCONNECT_CONNECTOR_IDS.has(connectorId) ||
+    !isMobileBrowser()
+  ) {
+    return undefined;
+  }
+
+  return getWalletConnectDeepLinkChoice();
+};
 
 /**
  * this hook is used to write to a contract and wait for confirmations.
@@ -75,7 +112,13 @@ export function useContractWriteWithConfirmations<
     chainIdFromWallet
   );
   const publicClient = usePublicClient({ chainId: resolvedChaindId });
+  const { data: walletClient } = useWalletClient({ chainId: resolvedChaindId });
   const forceSimulate = useFlag("showAsCouncilSafe");
+  const [directWriteResult, setDirectWriteResult] = useState<{
+    data?: WriteContractResult;
+    error?: Error | null;
+    status: "idle" | "loading" | "success" | "error";
+  }>({ status: "idle" });
 
   const councilSafeFromFlag = useMemo(() => {
     const queryVal = queryParams?.flag_showAsCouncilSafe;
@@ -139,6 +182,97 @@ export function useContractWriteWithConfirmations<
 
   const simulationToastId = `${toastId}_sim`;
 
+  const writeWithWalletClientAsync = useCallback(
+    async (
+      overrides?: Parameters<
+        NonNullable<typeof txResult.writeAsync>
+      >[0] extends undefined ?
+        undefined
+      : Parameters<NonNullable<typeof txResult.writeAsync>>[0],
+    ) => {
+      if (!walletClient) {
+        throw new Error("Wallet client is not available");
+      }
+
+      const overrideConfig = (overrides ?? {}) as Record<string, unknown>;
+      const variableConfig = (txResult.variables ?? {}) as Record<
+        string,
+        unknown
+      >;
+      const propConfig = propsWithChainId as Record<string, unknown>;
+      const getWriteValue = (key: string) =>
+        overrideConfig[key] ?? variableConfig[key] ?? propConfig[key];
+      const accountForWrite =
+        getWriteValue("account") ??
+        (walletClient as any).account ??
+        connectedAddress;
+      const request = {
+        abi: getWriteValue("abi"),
+        address: getWriteValue("address"),
+        functionName: getWriteValue("functionName"),
+        args: getWriteValue("args"),
+        account: accountForWrite,
+        accessList: getWriteValue("accessList"),
+        dataSuffix: getWriteValue("dataSuffix"),
+        gas: getWriteValue("gas"),
+        gasPrice: getWriteValue("gasPrice"),
+        maxFeePerGas: getWriteValue("maxFeePerGas"),
+        maxPriorityFeePerGas: getWriteValue("maxPriorityFeePerGas"),
+        nonce: getWriteValue("nonce"),
+        value: getWriteValue("value"),
+        chain: resolvedChaindId ? { id: resolvedChaindId } : null,
+      };
+
+      setDirectWriteResult({ status: "loading" });
+
+      try {
+        if (request.gas == null) {
+          try {
+            request.gas = await (walletClient as any).estimateContractGas(
+              request,
+            );
+          } catch (error) {
+            console.warn(
+              `Using fallback gas limit for transaction [${props.contractName} -> ${props.functionName}] after wallet gas estimation failed`,
+              error,
+            );
+            request.gas = DIRECT_WALLET_FALLBACK_GAS_LIMIT;
+          }
+        }
+
+        const hash = await (walletClient as any).writeContract(request);
+        const data = { hash } as WriteContractResult;
+        setDirectWriteResult({ data, status: "success" });
+        props.onSuccess?.(data, overrides as any, undefined as any);
+        props.onSettled?.(data, null, overrides as any, undefined as any);
+        return data;
+      } catch (error) {
+        const normalizedError =
+          error instanceof Error ? error : new Error(String(error));
+        setDirectWriteResult({
+          error: normalizedError,
+          status: "error",
+        });
+        props.onError?.(normalizedError, overrides as any, undefined as any);
+        props.onSettled?.(
+          undefined,
+          normalizedError,
+          overrides as any,
+          undefined as any,
+        );
+        throw normalizedError;
+      }
+    },
+    [
+      props,
+      propsWithChainId,
+      resolvedChaindId,
+      txResult.variables,
+      walletClient,
+      connectedAddress,
+    ],
+  );
+
   const simulateAndWriteAsync = useCallback(
     async (
       overrides?: Parameters<
@@ -149,7 +283,20 @@ export function useContractWriteWithConfirmations<
     ) => {
       const isMockConnector = connector?.id === "mock";
       if (!isMockConnector && !forceSimulate) {
-        return txResult.writeAsync?.(overrides as any);
+        setDirectWriteResult({ status: "idle" });
+
+        try {
+          return await txResult.writeAsync?.(overrides as any);
+        } catch (error) {
+          if (shouldRetryWithWalletClient(error)) {
+            console.warn(
+              `Retrying transaction [${props.contractName} -> ${props.functionName}] with wallet client after public RPC preflight failed`,
+              error,
+            );
+            return writeWithWalletClientAsync(overrides);
+          }
+          throw error;
+        }
       }
       // If we can't simulate, fall back to normal write
       if (
@@ -182,7 +329,6 @@ export function useContractWriteWithConfirmations<
             (props as any)?.value ??
             (txResult.variables as any)?.value,
           account: accountForSimulation as Address | undefined,
-          chainId: resolvedChaindId,
         });
         toast.success("Simulation successful", { toastId: simulationToastId });
       } catch (error) {
@@ -214,6 +360,7 @@ export function useContractWriteWithConfirmations<
       txResult.writeAsync,
       txResult.variables,
       simulationToastId,
+      writeWithWalletClientAsync,
     ],
   );
 
@@ -232,10 +379,9 @@ export function useContractWriteWithConfirmations<
     props.onError?.(...params);
   };
 
-  const rawTransactionHash = txResult.data?.hash;
-  const transactionHash = isRpcTransactionHash(rawTransactionHash) ?
-      rawTransactionHash
-    : undefined;
+  const rawTransactionHash = directWriteResult.data?.hash ?? txResult.data?.hash;
+  const transactionHash =
+    isRpcTransactionHash(rawTransactionHash) ? rawTransactionHash : undefined;
   const safeTransactionHash =
     rawTransactionHash != null && transactionHash == null ?
       rawTransactionHash
@@ -250,15 +396,23 @@ export function useContractWriteWithConfirmations<
   });
 
   const computedStatus = useMemo(() => {
-    if (txResult.status === "idle") {
+    if (directWriteResult.status === "loading") {
+      return "waiting";
+    }
+
+    if (directWriteResult.status === "error") {
+      return "error";
+    }
+
+    if (txResult.status === "idle" && directWriteResult.status === "idle") {
       return undefined;
     }
 
     if (txResult.status === "error") {
-      if (txResult.error) {
+      if (directWriteResult.data == null && txResult.error) {
         logError(txResult.error, txResult.variables, "write tx");
+        return "error";
       }
-      return "error";
     }
 
     if (transactionHash == null) {
@@ -283,22 +437,32 @@ export function useContractWriteWithConfirmations<
 
     return txWaitResult.status;
   }, [
+    directWriteResult.data,
+    directWriteResult.status,
     transactionHash,
     txResult.error,
     txResult.status,
     txResult.variables,
     txWaitResult.status,
   ]);
+  const walletApprovalLink = useMemo(
+    () =>
+      computedStatus === "waiting" ?
+        getWalletConnectApprovalLink(connector?.id)
+      : undefined,
+    [computedStatus, connector?.id],
+  );
 
   useTransactionNotification({
     toastId,
-    transactionData: txResult.data,
+    transactionData: directWriteResult.data ?? txResult.data,
     transactionHash,
     safeTransactionHash,
     safeAddress: connectedAddress,
     targetAddress: props.address,
     transactionStatus: computedStatus,
-    transactionError: txResult.error,
+    transactionError: directWriteResult.error ?? txResult.error,
+    walletApprovalLink,
     enabled: props.showNotification ?? true, // default to true
     fallbackErrorMessage: props.fallbackErrorMessage,
     contractName: props.contractName,
@@ -330,11 +494,16 @@ export function useContractWriteWithConfirmations<
   return {
     ...txResult,
     ...txWaitResult,
+    data: directWriteResult.data ?? txResult.data,
+    error: directWriteResult.error ?? txResult.error,
     write: simulateAndWrite,
     writeAsync: simulateAndWriteAsync,
-    isLoading: txResult.isLoading || txWaitResult.isLoading,
+    isLoading:
+      directWriteResult.status === "loading" ||
+      txResult.isLoading ||
+      txWaitResult.isLoading,
     transactionStatus: computedStatus as ComputedStatus | undefined,
-    transactionData: txResult.data,
+    transactionData: directWriteResult.data ?? txResult.data,
     confirmationsStatus: txWaitResult.status,
     confirmed: !!txWaitResult.isSuccess,
   };

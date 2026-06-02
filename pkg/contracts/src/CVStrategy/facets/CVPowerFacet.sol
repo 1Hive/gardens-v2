@@ -128,7 +128,7 @@ contract CVPowerFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
 
     function _deactivatePoints(address _member) internal {
-        totalPointsActivated -= votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
+        _decreaseTotalPointsActivated(votingPowerRegistry.getMemberPowerInStrategy(_member, address(this)));
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
 
         CVSyncPowerStorage.Layout storage syncLayout = CVSyncPowerStorage.layout();
@@ -141,12 +141,20 @@ contract CVPowerFacet is CVStrategyBaseFacet {
     }
 
     function _deactivatePointsFromRegistry(address _member) internal {
-        totalPointsActivated -= votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
+        _decreaseTotalPointsActivated(votingPowerRegistry.getMemberPowerInStrategy(_member, address(this)));
 
         bool hadStakeToWithdraw = totalVoterStakePct[_member] != 0 || voterStakedProposals[_member].length != 0;
         if (hadStakeToWithdraw) {
             _withdraw(_member);
             emit PointsDeactivated(_member);
+        }
+    }
+
+    function _decreaseTotalPointsActivated(uint256 points) internal {
+        if (points > totalPointsActivated) {
+            totalPointsActivated = 0;
+        } else {
+            totalPointsActivated -= points;
         }
     }
 

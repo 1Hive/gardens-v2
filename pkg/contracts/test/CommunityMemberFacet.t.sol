@@ -80,6 +80,11 @@ contract CommunityMemberFacetHarness is CommunityMemberFacet {
         strategiesByMember[member].push(strategy);
     }
 
+    function setStrategyPower(address member, address strategy, bool activated, uint256 power) external {
+        memberActivatedInStrategies[member][strategy] = activated;
+        memberPowerInStrategy[member][strategy] = power;
+    }
+
     function grantCouncil(address member) external {
         _grantRole(COUNCIL_MEMBER, member);
     }
@@ -96,9 +101,11 @@ contract CommunityMemberFacetTest is Test {
     function setUp() public {
         CommunityMemberFacetHarness impl = new CommunityMemberFacetHarness();
         facet = CommunityMemberFacetHarness(
-            payable(
-                address(new ERC1967Proxy(address(impl), abi.encodeWithSelector(impl.initializeHarness.selector, address(this))))
-            )
+            payable(address(
+                    new ERC1967Proxy(
+                        address(impl), abi.encodeWithSelector(impl.initializeHarness.selector, address(this))
+                    )
+                ))
         );
 
         token = new TERC20("Token", "TOK", 18);
@@ -176,6 +183,23 @@ contract CommunityMemberFacetTest is Test {
         assertEq(strategy.lastMember(), member);
         assertEq(token.balanceOf(member), 123);
         assertEq(facet.totalMembers(), 0);
+    }
+
+    function test_unregisterMember_clears_strategy_activation_and_power() public {
+        MockStrategyDeactivate strategy = new MockStrategyDeactivate();
+        facet.setMember(member, true, 123);
+        facet.setTotalMembers(1);
+        facet.addStrategyForMember(member, address(strategy));
+        facet.setStrategyPower(member, address(strategy), true, 123);
+
+        token.mint(address(facet), 123);
+
+        vm.prank(member);
+        facet.unregisterMember();
+
+        assertFalse(facet.memberActivatedInStrategies(member, address(strategy)));
+        assertEq(facet.memberPowerInStrategy(member, address(strategy)), 0);
+        assertEq(strategy.lastMember(), member);
     }
 
     function test_kickMember_reverts_when_not_council() public {

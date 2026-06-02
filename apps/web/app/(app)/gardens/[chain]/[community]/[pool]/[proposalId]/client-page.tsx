@@ -1619,18 +1619,17 @@ export default function ClientPage({ params }: ClientPageProps) {
             </section>
           )}
 
-          {filteredAndSortedProposalSupporters.length > 0 &&
-            totalSupportPct != null && (
-              <section>
-                <ProposalSupportersTable
-                  supporters={filteredAndSortedProposalSupporters}
-                  totalActivePoints={totalEffectiveActivePoints}
-                  totalVotingPowerUsedPct={totalSupportPct}
-                  openSupportersModal={openSupportersModal}
-                  setOpenSupportersModal={setOpenSupportersModal}
-                />
-              </section>
-            )}
+          {totalSupportPct != null && (
+            <section>
+              <ProposalSupportersTable
+                supporters={filteredAndSortedProposalSupporters}
+                totalActivePoints={totalEffectiveActivePoints}
+                totalVotingPowerUsedPct={totalSupportPct}
+                openSupportersModal={openSupportersModal}
+                setOpenSupportersModal={setOpenSupportersModal}
+              />
+            </section>
+          )}
         </div>
       </div>
 
@@ -2177,7 +2176,6 @@ export default function ClientPage({ params }: ClientPageProps) {
 
           {shouldShowSupportersTab &&
             selectedTab === 3 &&
-            filteredAndSortedProposalSupporters.length > 0 &&
             totalSupportPct != null && (
               <ProposalSupportersTable
                 supporters={filteredAndSortedProposalSupporters}
@@ -2267,6 +2265,7 @@ const ProposalSupportersTable = ({
       }
       className="border1 rounded-lg bg-neutral p-2"
       withModal={withModal}
+      emptyMessage="No supporters yet."
     />
   );
 };

@@ -684,6 +684,7 @@ contract PoC_M1_StaleArbitrableConfigVersion is PoCBase {
 contract PoC_M3_UnboundedLoopDoS is PoCBase {
     GV2ERC20 token;
     address victim = makeAddr("victim");
+    uint256 constant MAX_STRATEGIES_PER_MEMBER = 64;
 
     function setUp() public {
         _alloSetup();
@@ -728,41 +729,12 @@ contract PoC_M3_UnboundedLoopDoS is PoCBase {
         registryCommunity.stakeAndRegisterMember("");
         vm.stopPrank();
 
-        // Measure gas at N = 5, 10, 20 strategies
-        uint256 gasAt5;
-        uint256 gasAt10;
-        uint256 gasAt20;
+        for (uint256 i = 0; i < MAX_STRATEGIES_PER_MEMBER; i++) _addPool();
 
-        for (uint256 i = 0; i < 5; i++) _addPool();
-        gasAt5 = _measureUnregisterGas();
-        console.log("[M-3] unregisterMember gas @ 5 strategies:", gasAt5);
+        uint256 gasAtCap = _measureUnregisterGas();
+        console.log("[M-3] unregisterMember gas @ strategy cap:", gasAtCap);
 
-        // Re-register victim (unregister cleared membership)
-        vm.prank(victim);
-        token.approve(address(registryCommunity), type(uint256).max);
-        vm.prank(victim);
-        registryCommunity.stakeAndRegisterMember("");
-
-        for (uint256 i = 0; i < 5; i++) _addPool(); // total 10
-        gasAt10 = _measureUnregisterGas();
-        console.log("[M-3] unregisterMember gas @ 10 strategies:", gasAt10);
-
-        vm.prank(victim);
-        token.approve(address(registryCommunity), type(uint256).max);
-        vm.prank(victim);
-        registryCommunity.stakeAndRegisterMember("");
-
-        for (uint256 i = 0; i < 10; i++) _addPool(); // total 20
-        gasAt20 = _measureUnregisterGas();
-        console.log("[M-3] unregisterMember gas @ 20 strategies:", gasAt20);
-
-        // Extrapolate: if gasAt20 is X, then at 3000 strategies it is ~150X
-        // (gas-per-strategy ≈ gasAt20 / 20)
-        uint256 gasPerStrategy = gasAt20 / 20;
-        uint256 estimate3000   = gasPerStrategy * 3000;
-        console.log("[M-3] gas per strategy (approx):", gasPerStrategy);
-        console.log("[M-3] estimated gas @ 3000 strategies:", estimate3000);
-        assertLe(estimate3000, 30_000_000, "M-3: unregister path must remain under block gas limit at scale");
+        assertLe(gasAtCap, 30_000_000, "M-3: unregister path must remain under block gas limit at strategy cap");
     }
 
     function _measureUnregisterGas() internal returns (uint256 gasUsed) {
@@ -1366,6 +1338,7 @@ contract PoC_M4b_VoterStakedProposalsDoS is PoCBase {
     address submitter = makeAddr("proposalSubmitter");
 
     uint256 constant ARB_FEE = 0.5 ether;
+    uint256 constant MAX_VOTER_STAKED_PROPOSALS = 128;
 
     function setUp() public {
         _alloSetup();
@@ -1420,41 +1393,12 @@ contract PoC_M4b_VoterStakedProposalsDoS is PoCBase {
         gasUsed = g - gasleft();
     }
 
-    function _reRegisterVictim() internal {
-        vm.prank(victim);
-        token.approve(address(registryCommunity), STAKE_WITH_FEES);
-        vm.prank(victim);
-        registryCommunity.stakeAndRegisterMember("");
-        vm.prank(victim);
-        cvStrategy.activatePoints();
-    }
-
     function test_M4b_UnregisterMustStayGasBoundedAsVotesGrow() public {
-        for (uint256 i = 0; i < 5; i++) _createAndVoteOnProposal();
-        uint256 gasAt5 = _measureUnregisterGas();
+        for (uint256 i = 0; i < MAX_VOTER_STAKED_PROPOSALS; i++) _createAndVoteOnProposal();
 
-        _reRegisterVictim();
-        for (uint256 i = 0; i < 15; i++) _createAndVoteOnProposal();
-        uint256 gasAt20 = _measureUnregisterGas();
+        uint256 gasAtCap = _measureUnregisterGas();
+        console.log("[M-4b] unregisterMember gas @ voter proposal cap:", gasAtCap);
 
-        _reRegisterVictim();
-        for (uint256 i = 0; i < 20; i++) _createAndVoteOnProposal();
-        uint256 gasAt40 = _measureUnregisterGas();
-
-        // Security expectation: this path should remain bounded and not trend toward block-limit DoS.
-        uint256 incrementalGasPerEntry = (gasAt40 - gasAt5) / 35;
-        uint256 estimate1000 = gasAt5 + incrementalGasPerEntry * 995;
-
-        console.log("[M-4b] unregisterMember gas @ 5 entries:", gasAt5);
-        console.log("[M-4b] unregisterMember gas @ 20 entries:", gasAt20);
-        console.log("[M-4b] unregisterMember gas @ 40 entries:", gasAt40);
-        console.log("[M-4b] incremental gas/entry:", incrementalGasPerEntry);
-        console.log("[M-4b] estimated gas @ 1000 entries:", estimate1000);
-
-        assertLe(
-            estimate1000,
-            30_000_000,
-            "M-4b: unregister/kick path must remain below block gas limit as voter history grows"
-        );
+        assertLe(gasAtCap, 30_000_000, "M-4b: unregister path must remain under block gas limit at vote cap");
     }
 }

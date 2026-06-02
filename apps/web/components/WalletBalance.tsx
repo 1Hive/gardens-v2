@@ -1,10 +1,12 @@
-import { FC, useEffect } from "react";
+import { FC, useEffect, useState } from "react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
-import { formatEther } from "viem";
+import { formatEther, formatUnits } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
 import { DisplayNumber } from "./DisplayNumber";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useHasContractCode } from "@/hooks/useHasContractCode";
+import { usePreferredReadClient } from "@/hooks/usePreferredReadClient";
+import { erc20ABI } from "@/src/generated";
 import { logOnce } from "@/utils/log";
 import { roundToSignificant } from "@/utils/numbers";
 
@@ -14,6 +16,12 @@ type Props = {
   askedAmount: bigint;
   tooltip?: string;
   setIsEnoughBalance: (isEnoughBalance: boolean) => void;
+};
+
+type BalanceData = {
+  formatted: string;
+  symbol?: string;
+  value: bigint;
 };
 
 /**
@@ -33,6 +41,8 @@ export const WalletBalance: FC<Props> = ({
 }) => {
   const { address, isDisconnected } = useAccount();
   const chainId = useChainIdFromPath();
+  const readClient = usePreferredReadClient(chainId);
+  const [fallbackBalance, setFallbackBalance] = useState<BalanceData>();
   const isNativeToken = token === "native";
   const { hasContractCode } = useHasContractCode({
     address: isNativeToken ? undefined : token,
@@ -48,9 +58,10 @@ export const WalletBalance: FC<Props> = ({
     chainId,
     enabled: isNativeToken || hasContractCode,
   });
+  const balanceData = data ?? fallbackBalance;
 
   useEffect(() => {
-    if (isDisconnected || data) {
+    if (isDisconnected || balanceData != null) {
       return;
     }
 
@@ -67,8 +78,8 @@ export const WalletBalance: FC<Props> = ({
     });
   }, [
     address,
+    balanceData,
     chainId,
-    data,
     hasContractCode,
     isDisconnected,
     isFetching,
@@ -78,7 +89,98 @@ export const WalletBalance: FC<Props> = ({
     token,
   ]);
 
-  const balance = data && data.value;
+  useEffect(() => {
+    if (
+      isDisconnected ||
+      data != null ||
+      address == null ||
+      (!isNativeToken && !hasContractCode)
+    ) {
+      if (data != null) {
+        setFallbackBalance(undefined);
+      }
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchBalance = async () => {
+      try {
+        if (isNativeToken) {
+          const value = await readClient.getBalance({ address });
+
+          if (!cancelled) {
+            setFallbackBalance({
+              value,
+              formatted: formatEther(value),
+              symbol: readClient.chain?.nativeCurrency.symbol,
+            });
+          }
+
+          return;
+        }
+
+        const tokenAddress = token as Address;
+        const [value, decimals, symbol] = await Promise.all([
+          readClient.readContract({
+            abi: erc20ABI,
+            address: tokenAddress,
+            functionName: "balanceOf",
+            args: [address],
+          }),
+          readClient.readContract({
+            abi: erc20ABI,
+            address: tokenAddress,
+            functionName: "decimals",
+          }),
+          readClient.readContract({
+            abi: erc20ABI,
+            address: tokenAddress,
+            functionName: "symbol",
+          }),
+        ]);
+
+        if (!cancelled) {
+          setFallbackBalance({
+            value: value as bigint,
+            formatted: formatUnits(value as bigint, Number(decimals)),
+            symbol: symbol as string,
+          });
+        }
+      } catch (caughtError) {
+        if (!cancelled) {
+          setFallbackBalance(undefined);
+          console.error("Failed to load wallet balance", {
+            address,
+            chainId,
+            token,
+            error: caughtError,
+          });
+        }
+      }
+    };
+
+    void fetchBalance();
+    const intervalId = window.setInterval(() => {
+      void fetchBalance();
+    }, 15_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [
+    address,
+    chainId,
+    data,
+    hasContractCode,
+    isDisconnected,
+    isNativeToken,
+    readClient,
+    token,
+  ]);
+
+  const balance = balanceData?.value;
   const askedFormated = (+formatEther(askedAmount)).toFixed(4);
   const isEnoughBalance = balance != null && balance >= askedAmount;
 
@@ -88,7 +190,7 @@ export const WalletBalance: FC<Props> = ({
 
   return (
     <div>
-      {!data ?
+      {balanceData == null ?
         isDisconnected ?
           <div />
         : !isNativeToken && !hasContractCode ?
@@ -107,7 +209,7 @@ export const WalletBalance: FC<Props> = ({
                 valueClassName="font-semibold"
                 disableTooltip={true}
                 compact={true}
-                tokenSymbol={data?.symbol}
+                tokenSymbol={balanceData.symbol}
               />
               <InformationCircleIcon
                 className="ml-2 stroke-2"
@@ -124,17 +226,17 @@ export const WalletBalance: FC<Props> = ({
                   "text-primary-content dark:text-primary-content"
                 : "text-danger-content dark:text-danger-content"
               } `}
-              data-tip={`${isEnoughBalance ? `${formatEther(data?.value ?? 0n)}` : "Insufficient balance"}`}
+              data-tip={`${isEnoughBalance ? `${formatEther(balanceData.value)}` : "Insufficient balance"}`}
             >
               <DisplayNumber
-                number={roundToSignificant(+(data?.formatted || 0), 4)}
+                number={roundToSignificant(+(balanceData.formatted || 0), 4)}
                 valueClassName={`font-semibold ${
                   isEnoughBalance ?
                     "text-primary-content dark:text-primary-content"
                   : "text-danger-content dark:text-danger-content"
                 }`}
                 disableTooltip={true}
-                tokenSymbol={data?.symbol}
+                tokenSymbol={balanceData.symbol}
               />
             </div>
           </div>

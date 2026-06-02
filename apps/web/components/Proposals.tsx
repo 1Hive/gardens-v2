@@ -143,6 +143,11 @@ export function Proposals({
   const [showManageSupportTooltip, setShowManageSupportTooltip] =
     useState(false);
   const proposalCardRefs = useRef<Map<string, ProposalHandle>>(new Map());
+  const [liveConvictions, setLiveConvictions] = useState<
+    Record<string, bigint>
+  >({});
+  const pendingConvictionsRef = useRef<Record<string, bigint>>({});
+  const convictionFlushFrameRef = useRef<number | null>(null);
 
   // Hooks
   const { address: wallet } = useAccount();
@@ -163,6 +168,48 @@ export function Proposals({
     },
     [],
   );
+
+  const flushPendingConvictions = useCallback(() => {
+    convictionFlushFrameRef.current = null;
+    const pendingUpdates = pendingConvictionsRef.current;
+    pendingConvictionsRef.current = {};
+    const pendingEntries = Object.entries(pendingUpdates);
+
+    if (pendingEntries.length === 0) return;
+
+    setLiveConvictions((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      for (const [id, conviction] of pendingEntries) {
+        if (next[id] === conviction) continue;
+        next[id] = conviction;
+        changed = true;
+      }
+
+      return changed ? next : prev;
+    });
+  }, []);
+
+  const scheduleConvictionFlush = useCallback(() => {
+    if (convictionFlushFrameRef.current != null) return;
+    convictionFlushFrameRef.current = requestAnimationFrame(flushPendingConvictions);
+  }, [flushPendingConvictions]);
+
+  const handleConvictionUpdate = useCallback(
+    (id: string, conviction: bigint) => {
+      pendingConvictionsRef.current[id] = conviction;
+      scheduleConvictionFlush();
+    },
+    [scheduleConvictionFlush],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (convictionFlushFrameRef.current == null) return;
+      cancelAnimationFrame(convictionFlushFrameRef.current);
+    };
+  }, []);
 
   // Queries
   const { data: memberData, error } = useSubgraphQuery<isMemberQuery>({
@@ -718,7 +765,7 @@ export function Proposals({
     sortBy: sortBy,
     setSortBy: setSortBy,
     filtered: filteredAndSorted,
-  } = useProposalFilter(sortedProposals);
+  } = useProposalFilter(sortedProposals, liveConvictions);
   const selectedFilterTitle =
     filter == null || filter === "all" ?
       "All Proposals"
@@ -885,6 +932,7 @@ export function Proposals({
                   communityToken={strategy.registryCommunity.garden}
                   isPoolEnabled={strategy.isEnabled}
                   minThGtTotalEffPoints={minThGtTotalEffPoints}
+                  onConvictionUpdate={handleConvictionUpdate}
                 />
               </Fragment>
             ))}
@@ -983,8 +1031,9 @@ export function useProposalFilter<
     stakedAmount?: string | number;
     requestedAmount?: string | number;
     convictionLast?: string | number;
+    id: string;
   },
->(proposals: T[]) {
+>(proposals: T[], liveConvictions?: Record<string, bigint>) {
   const toSortableBigInt = (value?: string | number) => {
     if (typeof value === "number") return BigInt(value);
     if (typeof value === "string") {
@@ -1049,19 +1098,25 @@ export function useProposalFilter<
         return list.sort((a, b) => Number(a.createdAt) - Number(b.createdAt));
 
       case "mostSupported":
-        return list.sort(
-          (a, b) => Number(b.stakedAmount) - Number(a.stakedAmount),
-        );
+        return list.sort((a, b) => {
+          const aStaked = toSortableBigInt(a.stakedAmount);
+          const bStaked = toSortableBigInt(b.stakedAmount);
+          return aStaked < bStaked ? 1 : aStaked > bStaked ? -1 : 0;
+        });
 
       case "mostRequested":
-        return list.sort(
-          (a, b) => Number(b.requestedAmount) - Number(a.requestedAmount),
-        );
+        return list.sort((a, b) => {
+          const aRequested = toSortableBigInt(a.requestedAmount);
+          const bRequested = toSortableBigInt(b.requestedAmount);
+          return aRequested < bRequested ? 1 : aRequested > bRequested ? -1 : 0;
+        });
 
       case "mostConviction":
         return list.sort((a, b) => {
-          const aConviction = toSortableBigInt(a.convictionLast);
-          const bConviction = toSortableBigInt(b.convictionLast);
+          const aConviction =
+            liveConvictions?.[a.id] ?? toSortableBigInt(a.convictionLast);
+          const bConviction =
+            liveConvictions?.[b.id] ?? toSortableBigInt(b.convictionLast);
 
           return (
             aConviction < bConviction ? 1
@@ -1073,7 +1128,7 @@ export function useProposalFilter<
       default:
         return list;
     }
-  }, [filteredProposals, sortBy]);
+  }, [filteredProposals, sortBy, liveConvictions]);
 
   // Wrapped setters with loading state
   const setFilterWithLoading = (newFilter: FilterType) => {
@@ -1147,8 +1202,8 @@ function ProposalFiltersUI({
       },
     ];
 
-    // Remove "Requested Amount" option when poolType is a signaling pool
-    return +poolType === 0 ?
+    // Only funding pools support sorting by requested amount.
+    return PoolTypes[poolType] !== "funding" ?
         options.filter((opt) => opt.key !== "mostRequested")
       : options;
   }, [poolType]);

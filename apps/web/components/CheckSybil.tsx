@@ -27,7 +27,6 @@ import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useGoodDollarSdk } from "@/hooks/useGoodDollar";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
@@ -58,14 +57,12 @@ export function CheckSybil({
   const [isModalOpened, setIsModalOpen] = useState(false);
   const [score, setScore] = useState<number>(0);
   const [isSubmiting, setIsSubmiting] = useState<boolean>(false);
-  const { data: walletClient, refetch: refetchWalletClient } = useWalletClient({
-    chainId: celo.id,
-  });
+  const { data: walletClient, refetch: refetchWalletClient } =
+    useWalletClient();
   const [forceIsVerified, setForceIsVerified] = useState(false);
   const publicClient = usePublicClient({ chainId: celo.id });
   const chainFromPath = useChainFromPath();
   const { publish } = usePubSubContext();
-  const { switchNetworkAsync } = useAppSwitchNetwork();
   const searchParams = useCollectQueryParams();
   const [isGoodDollarVerifying, setIsGoodDollarVerifying] = useState(false);
   const { isWalletVerified, refetch: refetchGoodDollar } = useGoodDollarSdk({
@@ -77,8 +74,6 @@ export function CheckSybil({
 
   const isGoodDollarCallback =
     searchParams[QUERY_PARAMS.poolPage.goodDollar] === "true";
-  const isGoodDollarSuccess =
-    searchParams[QUERY_PARAMS.poolPage.goodDollarVerified] === "dHJ1ZQ=="; // base64 of 'true'
 
   useEffect(() => {
     if (triggerClose) {
@@ -119,6 +114,12 @@ export function CheckSybil({
     enabled:
       !!walletAddr && strategy.sybil?.type === "GoodDollar" && enableCheck,
   });
+
+  const shouldShowGoodDollarActivation =
+    isWalletVerified &&
+    ((isGoodDollarVerifiedInGardens ?? false) || forceIsVerified);
+  const shouldShowGoodDollarVerificationCta =
+    !isWalletVerified && !isGoodDollarCallback;
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
@@ -369,50 +370,38 @@ export function CheckSybil({
   };
 
   const handleGoodDollarVerification = async () => {
-    if (!walletClient) {
-      toast.error("Wallet not connected");
-      console.error("WalletClient not found");
-      return;
-    }
     setIsGoodDollarVerifying(true);
 
-    if (walletClient.chain?.id !== celo.id) {
-      await switchNetworkAsync?.(celo.id);
-    }
-    const { data: raw } = await refetchWalletClient();
-    if (!raw) {
-      toast.error("Celo client not found");
-      console.error("Celo client not found");
-      return;
-    }
-
-    const celoClient = {
-      ...raw,
-      chain: celo,
-    } as typeof raw;
-
     try {
+      const { data: refetchedWalletClient } = await refetchWalletClient();
+      const connectedWalletClient = refetchedWalletClient ?? walletClient;
+
+      if (!connectedWalletClient?.account?.address) {
+        toast.error("Wallet not connected");
+        console.error("Wallet client not found");
+        return;
+      }
+
       const sdk = new IdentitySDK({
-        account: celoClient?.account.address as `0x${string}`,
+        account: connectedWalletClient.account.address as `0x${string}`,
         publicClient,
-        walletClient: celoClient,
+        walletClient: connectedWalletClient,
         env:
           (process.env.NEXT_PUBLIC_CHEAT_GOODDOLLAR_ENV as contractEnv) ??
           "production",
       });
-      const callbackUrl = `${window.location.href}?${QUERY_PARAMS.poolPage.goodDollar}=true`;
-      const link = await sdk?.generateFVLink(false, callbackUrl, celo.id);
-
-      if (walletClient.chain?.id !== celo.id) {
-        await switchNetworkAsync(chainFromPath?.id);
-      }
+      const callbackUrl = new URL(window.location.href);
+      callbackUrl.searchParams.set(QUERY_PARAMS.poolPage.goodDollar, "true");
+      const link = await sdk?.generateFVLink(
+        false,
+        callbackUrl.toString(),
+        celo.id,
+      );
       window.location.href = link;
     } catch (error) {
       console.error("Error generating GoodDollar link:", error);
+    } finally {
       setIsGoodDollarVerifying(false);
-      if (walletClient.chain?.id !== celo.id) {
-        await switchNetworkAsync(chainFromPath?.id);
-      }
     }
   };
 
@@ -447,10 +436,7 @@ export function CheckSybil({
             isWalletVerified == null ?
               <LoadingSpinner className="w-12 h-12" />
             : <>
-                {(
-                  (!isWalletVerified && !isGoodDollarCallback) ||
-                  !isGoodDollarSuccess
-                ) ?
+                {shouldShowGoodDollarVerificationCta ?
                   <>
                     <p className="text-left">
                       Please confirm you&apos;re a unique human with a secure,
@@ -466,11 +452,7 @@ export function CheckSybil({
                       </Button>
                     </div>
                   </>
-                : (
-                  (isWalletVerified &&
-                    (isGoodDollarVerifiedInGardens ?? false)) ||
-                  forceIsVerified
-                ) ?
+                : shouldShowGoodDollarActivation ?
                   <>
                     <p className="text-left">
                       Sign to activate your governance in the pool.

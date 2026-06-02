@@ -14,9 +14,9 @@ import {
   PowerIcon,
   ArrowsRightLeftIcon,
 } from "@heroicons/react/24/solid";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { blo } from "blo";
 import cn from "classnames";
+import { useIsMounted, useModal } from "connectkit";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { isAddress } from "viem";
@@ -25,10 +25,10 @@ import {
   Address,
   useAccount,
   useBalance,
-  useConnect,
   useDisconnect,
   useEnsAvatar,
   useEnsName,
+  useNetwork,
 } from "wagmi";
 import { getCommunityNameDocument } from "#/subgraph/.graphclient";
 import TooltipIfOverflow from "./TooltipIfOverflow";
@@ -43,164 +43,159 @@ import { useExplorerPreference } from "@/hooks/useExplorerPreference";
 import { useHasContractCode } from "@/hooks/useHasContractCode";
 import { useOwnerOfNFT } from "@/hooks/useOwnerOfNFT";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import {
-  AUTOCONNECT_RESET_EVENT,
-  SKIP_AUTOCONNECT_STORAGE_KEY,
-  WALLETCONNECT_RESET_EVENT,
-} from "@/providers/Providers";
 import { formatAddress } from "@/utils/formatAddress";
+import {
+  clearWalletConnectSessionStorage,
+  WALLETCONNECT_CONNECTOR_IDS,
+} from "@/utils/walletConnectMobile";
 
-const WALLETCONNECT_STORAGE_KEY_PREFIXES = [
-  "wc@",
-  "wc_",
-  "walletconnect",
-  "wallet_connect",
-  "WALLETCONNECT_DEEPLINK_CHOICE",
-];
-const WALLETCONNECT_STORAGE_KEYS = ["wc_storage_version"];
-const DISCONNECT_RESET_STORAGE_KEY_PREFIXES = [
-  ...WALLETCONNECT_STORAGE_KEY_PREFIXES,
-  "wagmi",
-  "rk-",
-];
-const DISCONNECT_RESET_STORAGE_KEY_SUBSTRINGS = ["recentWalletIds"];
-
-type WalletConnectProviderLike = {
-  disconnect?: () => Promise<void> | void;
-  session?: unknown;
-  modal?: {
-    closeModal?: () => void;
-  };
+const getWalletDisplayName = (name?: string) => {
+  if (!name) return "Wallet";
+  return name;
 };
 
-const clearDisconnectPersistence = (storage: Storage) => {
-  const keysToRemove: string[] = [];
-
-  for (let i = 0; i < storage.length; i += 1) {
-    const key = storage.key(i);
-    if (!key) {
-      continue;
-    }
-    const normalizedKey = key.toLowerCase();
-
-    if (
-      DISCONNECT_RESET_STORAGE_KEY_PREFIXES.some((prefix) =>
-        normalizedKey.startsWith(prefix.toLowerCase()),
-      ) ||
-      WALLETCONNECT_STORAGE_KEYS.some(
-        (storageKey) => normalizedKey === storageKey.toLowerCase(),
-      ) ||
-      DISCONNECT_RESET_STORAGE_KEY_SUBSTRINGS.some((fragment) =>
-        normalizedKey.includes(fragment.toLowerCase()),
-      )
-    ) {
-      keysToRemove.push(key);
-    }
-  }
-
-  keysToRemove.forEach((key) => storage.removeItem(key));
-};
-
-const WALLETCONNECT_INDEXED_DB_NAME_FRAGMENTS = [
-  "walletconnect",
-  "wallet_connect",
-  "wc@",
-  "wc_",
-];
-const WALLETCONNECT_INDEXED_DB_NAMES = ["WALLET_CONNECT_V2_INDEXED_DB"];
-const WALLETCONNECT_INDEXED_DB_STORE_NAMES = ["keyvaluestorage"];
-
-const clearIndexedDbObjectStore = async (
-  databaseName: string,
-  storeName: string,
-) =>
-  new Promise<void>((resolve) => {
-    let settled = false;
-    const settle = () => {
-      if (!settled) {
-        settled = true;
-        resolve();
-      }
-    };
-    const request = window.indexedDB.open(databaseName);
-
-    request.onupgradeneeded = () => {
-      request.transaction?.abort();
-      settle();
-    };
-    request.onerror = () => settle();
-    request.onsuccess = () => {
-      const database = request.result;
-
-      if (!database.objectStoreNames.contains(storeName)) {
-        database.close();
-        settle();
-        return;
-      }
-
-      const transaction = database.transaction(storeName, "readwrite");
-      transaction.objectStore(storeName).clear();
-      transaction.oncomplete = () => {
-        database.close();
-        settle();
-      };
-      transaction.onerror = () => {
-        database.close();
-        settle();
-      };
-      transaction.onabort = () => {
-        database.close();
-        settle();
-      };
-    };
-  });
-
-const clearWalletConnectIndexedDb = async () => {
-  if (typeof window === "undefined" || !("indexedDB" in window)) {
+const disconnectWalletConnectProviderSession = async (
+  connector: ReturnType<typeof useAccount>["connector"],
+) => {
+  if (!connector || !WALLETCONNECT_CONNECTOR_IDS.has(connector.id)) {
     return;
   }
 
-  await Promise.all(
-    WALLETCONNECT_INDEXED_DB_NAMES.flatMap((databaseName) =>
-      WALLETCONNECT_INDEXED_DB_STORE_NAMES.map((storeName) =>
-        clearIndexedDbObjectStore(databaseName, storeName),
-      ),
-    ),
+  try {
+    const provider = await connector.getProvider();
+    if (provider?.session) {
+      await provider.disconnect();
+    }
+  } catch (error) {
+    console.info(
+      "[walletconnect-debug] failed to disconnect provider session",
+      {
+        connector: {
+          id: connector.id,
+          name: connector.name,
+        },
+        error,
+      },
+    );
+  }
+};
+
+const hasProviderInfoMatching = (
+  provider: any,
+  matcher: (value: string) => boolean,
+) => {
+  const providerInfo = [
+    provider?.info?.name,
+    provider?.info?.rdns,
+    provider?.selectedProvider?.info?.name,
+    provider?.selectedProvider?.info?.rdns,
+    ...(Array.isArray(provider?.providers) ?
+      provider.providers.flatMap((nestedProvider: any) => [
+        nestedProvider?.info?.name,
+        nestedProvider?.info?.rdns,
+      ])
+    : []),
+  ];
+
+  return providerInfo.some(
+    (value) => typeof value === "string" && matcher(value.toLowerCase()),
   );
+};
 
-  const indexedDbWithDatabases = window.indexedDB as IDBFactory & {
-    databases?: () => Promise<Array<{ name?: string }>>;
-  };
-
-  if (indexedDbWithDatabases.databases == null) {
-    return;
+const getWalletDisplayNameFromProvider = (provider: any) => {
+  if (
+    provider?.isRabby === true ||
+    provider?.selectedProvider?.isRabby === true ||
+    (Array.isArray(provider?.providers) &&
+      provider.providers.some(
+        (nestedProvider: any) => nestedProvider?.isRabby === true,
+      ))
+  ) {
+    return "Rabby Wallet";
   }
 
-  const databases = await indexedDbWithDatabases.databases();
-  await Promise.all(
-    databases.map(async ({ name }) => {
-      if (
-        !name ||
-        !WALLETCONNECT_INDEXED_DB_NAME_FRAGMENTS.some((fragment) =>
-          name.toLowerCase().includes(fragment),
-        )
-      ) {
-        return;
-      }
+  if (
+    provider?.isCoinbaseWallet === true ||
+    provider?.selectedProvider?.isCoinbaseWallet === true ||
+    (Array.isArray(provider?.providers) &&
+      provider.providers.some(
+        (nestedProvider: any) => nestedProvider?.isCoinbaseWallet === true,
+      )) ||
+    hasProviderInfoMatching(provider, (value) => value.includes("coinbase"))
+  ) {
+    return "Coinbase Wallet";
+  }
 
-      await new Promise<void>((resolve) => {
-        const request = window.indexedDB.deleteDatabase(name);
-        request.onsuccess = () => resolve();
-        request.onerror = () => resolve();
-        request.onblocked = () => resolve();
-      });
-    }),
-  );
+  if (
+    provider?.isBraveWallet === true ||
+    provider?.selectedProvider?.isBraveWallet === true ||
+    (Array.isArray(provider?.providers) &&
+      provider.providers.some(
+        (nestedProvider: any) => nestedProvider?.isBraveWallet === true,
+      )) ||
+    hasProviderInfoMatching(provider, (value) => value.includes("brave"))
+  ) {
+    return "Brave Wallet";
+  }
+
+  if (
+    provider?.isFrame === true ||
+    provider?.selectedProvider?.isFrame === true ||
+    (Array.isArray(provider?.providers) &&
+      provider.providers.some(
+        (nestedProvider: any) => nestedProvider?.isFrame === true,
+      )) ||
+    hasProviderInfoMatching(provider, (value) => value.includes("frame"))
+  ) {
+    return "Frame";
+  }
+
+  if (
+    provider?.isMetaMask === true ||
+    provider?.selectedProvider?.isMetaMask === true ||
+    (Array.isArray(provider?.providers) &&
+      provider.providers.some(
+        (nestedProvider: any) => nestedProvider?.isMetaMask === true,
+      )) ||
+    hasProviderInfoMatching(provider, (value) => value.includes("metamask"))
+  ) {
+    return "MetaMask";
+  }
+
+  return undefined;
+};
+
+const getProviderDebugMetadata = (provider: any) => {
+  if (!provider) {
+    return null;
+  }
+
+  return {
+    info: provider.info,
+    selectedProviderInfo: provider.selectedProvider?.info,
+    providers:
+      Array.isArray(provider.providers) ?
+        provider.providers.map((nestedProvider: any) => ({
+          info: nestedProvider?.info,
+          isRabby: nestedProvider?.isRabby,
+          isMetaMask: nestedProvider?.isMetaMask,
+          isCoinbaseWallet: nestedProvider?.isCoinbaseWallet,
+        }))
+      : undefined,
+    isRabby: provider.isRabby,
+    isMetaMask: provider.isMetaMask,
+    isCoinbaseWallet: provider.isCoinbaseWallet,
+    isFrame: provider.isFrame,
+    isBraveWallet: provider.isBraveWallet,
+  };
 };
 
 export function ConnectWallet() {
   const path = usePathname();
   const account = useAccount();
+  const { chain } = useNetwork();
+  const isMounted = useIsMounted();
+  const { setOpen: setConnectModalOpen } = useModal();
   const chainFromPath = useChainFromPath();
   const urlChainId = chainFromPath?.id;
   const pathSegments = useMemo(
@@ -225,7 +220,6 @@ export function ConnectWallet() {
   const { switchNetwork } = useAppSwitchNetwork();
   const { explorerPreference, setExplorerPreference } = useExplorerPreference();
   const { disconnectAsync } = useDisconnect();
-  const { connectors } = useConnect();
   const { isOwner: isFirstHolder } = useOwnerOfNFT({
     nft: "FirstHolder",
     chains: [optimism, arbitrum, base, mainnet],
@@ -265,78 +259,84 @@ export function ConnectWallet() {
   );
 
   const [selectedNFTIndex, setSelectedNFTIndex] = useState(0);
-
-  useEffect(() => {
-    if (!account.isConnected || account.connector?.id !== "walletConnect") {
-      return;
-    }
-
-    type WalletConnectProviderWithModal = {
-      modal?: {
-        closeModal?: () => void;
-      };
-    };
-
-    void account.connector
-      .getProvider()
-      .then((provider) => {
-        (provider as WalletConnectProviderWithModal).modal?.closeModal?.();
-      })
-      .catch(() => {
-        // Ignore provider access failures. This only cleans up a stale QR modal.
-      });
-  }, [account.connector, account.isConnected]);
-
-  useEffect(() => {
-    if (!account.isConnected || typeof window === "undefined") {
-      return;
-    }
-
-    if (window.localStorage.getItem(SKIP_AUTOCONNECT_STORAGE_KEY) !== "true") {
-      return;
-    }
-
-    window.localStorage.removeItem(SKIP_AUTOCONNECT_STORAGE_KEY);
-  }, [account.isConnected]);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [providerWalletDisplayName, setProviderWalletDisplayName] = useState<
+    string | null
+  >(null);
 
   const handleDisconnect = useCallback(async () => {
     const connector = account.connector;
-    const isWalletConnectConnector = connector?.id === "walletConnect";
-    let provider: WalletConnectProviderLike | null = null;
+    const isWalletConnect =
+      connector != null && WALLETCONNECT_CONNECTOR_IDS.has(connector.id);
 
     try {
-      if (isWalletConnectConnector) {
-        provider =
-          (await connector.getProvider()) as WalletConnectProviderLike | null;
-
-        provider?.modal?.closeModal?.();
-      }
-    } catch {
-      // Ignore provider-level disconnect failures and still clear local state.
-    } finally {
+      setIsDisconnecting(true);
+      await disconnectWalletConnectProviderSession(connector);
       await disconnectAsync();
-
-      if (isWalletConnectConnector && provider?.session) {
-        try {
-          await provider.disconnect?.();
-        } catch {
-          // Ignore late WalletConnect provider disconnect failures after wagmi disconnect.
-        }
+    } finally {
+      if (isWalletConnect) {
+        const removedKeys = clearWalletConnectSessionStorage();
+        console.info("[walletconnect-debug] cleared storage on disconnect", {
+          connector: {
+            id: connector?.id,
+            name: connector?.name,
+          },
+          removedKeys,
+        });
       }
-
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(SKIP_AUTOCONNECT_STORAGE_KEY, "true");
-        clearDisconnectPersistence(window.localStorage);
-        clearDisconnectPersistence(window.sessionStorage);
-        await clearWalletConnectIndexedDb();
-        window.dispatchEvent(new Event(AUTOCONNECT_RESET_EVENT));
-        window.dispatchEvent(new Event(WALLETCONNECT_RESET_EVENT));
-      }
+      setIsDisconnecting(false);
     }
   }, [account.connector, disconnectAsync]);
 
-  const wallet = connectors[0].name;
+  const wallet =
+    providerWalletDisplayName ?? getWalletDisplayName(account.connector?.name);
   const isMockConnection = account.connector?.id === "mock";
+
+  useEffect(() => {
+    if (!account.isConnected || !account.connector) {
+      setProviderWalletDisplayName(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    account.connector
+      .getProvider()
+      .then((provider) => {
+        if (cancelled) {
+          return;
+        }
+
+        setProviderWalletDisplayName(
+          getWalletDisplayNameFromProvider(provider) ?? null,
+        );
+
+        console.info("[wallet-debug] connected wallet metadata", {
+          connector: {
+            id: account.connector?.id,
+            name: account.connector?.name,
+            ready: account.connector?.ready,
+          },
+          provider: getProviderDebugMetadata(provider),
+        });
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.info("[wallet-debug] failed to inspect wallet provider", {
+            connector: {
+              id: account.connector?.id,
+              name: account.connector?.name,
+            },
+            error,
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [account.connector, account.isConnected]);
+
   const { hasContractCode: hasGardenTokenContract } = useHasContractCode({
     address: tokenUrlAddress,
     chainId: urlChainId,
@@ -368,279 +368,243 @@ export function ConnectWallet() {
     cacheTime: 30_000,
   });
 
-  const handleOpenConnectModal = useCallback(
-    (openConnectModal?: (() => void) | undefined) => {
-      openConnectModal?.();
-    },
-    [],
-  );
+  const handleOpenConnectModal = useCallback(() => {
+    setConnectModalOpen(true);
+  }, [setConnectModalOpen]);
+
+  const connected =
+    isMounted &&
+    account.isConnected &&
+    account.address != null &&
+    chain != null;
+  const walletAddress = account.address;
+  const isWrongNetwork =
+    chain?.id != urlChainId && urlChainId != null && !isNaN(urlChainId);
+
+  if (!connected || walletAddress == null || chain == null) {
+    return (
+      <Button onClick={handleOpenConnectModal} testId="connectButton">
+        <Image
+          src={walletIcon}
+          alt="wallet"
+          height={20}
+          width={20}
+          loading="lazy"
+        />
+        <span className="hidden sm:block text-white">Connect wallet</span>
+      </Button>
+    );
+  }
 
   return (
-    <ConnectButton.Custom>
-      {({ account: acc, chain, openConnectModal, mounted }) => {
-        const ready = mounted;
-        const connected = ready && !!acc && !!chain;
-        const isWrongNetwork =
-          chain?.id != urlChainId && urlChainId != null && !isNaN(urlChainId);
-
-        return (
-          <>
-            {(() => {
-              //button to connect wallet
-              if (!connected) {
-                return (
-                  <Button
-                    onClick={() => handleOpenConnectModal(openConnectModal)}
-                    testId="connectButton"
-                  >
-                    <Image
-                      src={walletIcon}
-                      alt="wallet"
-                      height={20}
-                      width={20}
-                      loading="lazy"
-                    />
-                    <span className="hidden sm:block text-white">
-                      Connect wallet
-                    </span>
-                  </Button>
-                );
-              }
-
-              //Is CONNECTED to a supported chains with condition => urlChainId(urlChain) === chainId(wallet)
-              //Dropdown menu with wallet, balance, switch network and disconnect buttons
-              return (
-                <Menu as="div" className="flex gap-2 relative">
-                  {({ open }) => (
-                    <>
-                      <Menu.Button>
-                        <div
-                          className={`flex w-fit cursor-pointer items-center gap-4 rounded-2xl pl-4 py-2 hover:opacity-85 pr-2 
+    <Menu as="div" className="flex gap-2 relative">
+      {({ open }) => (
+        <>
+          <Menu.Button>
+            <div
+              className={`flex w-fit cursor-pointer items-center gap-4 rounded-2xl pl-4 py-2 hover:opacity-85 pr-2 
                              ${cn({ "bg-danger-soft dark:bg-danger-soft-dark": urlChainId != null && urlChainId !== chain.id }, { "bg-primary": urlChainId == null || urlChainId === chain.id })}      
                           `}
-                        >
-                          {isWrongNetwork ?
-                            <ExclamationTriangleIcon className="w-6 text-danger-content dark:text-danger-content" />
-                          : <Image
-                              alt="Wallet Avatar"
-                              src={
-                                avatarUrl && isSafeAvatarUrl(avatarUrl) ?
-                                  avatarUrl
-                                : `${blo(acc.address as Address)}`
-                              }
-                              className="rounded-full"
-                              width={34}
-                              height={34}
-                              loading="lazy"
-                            />
-                          }
-                          <div className="hidden sm:flex flex-col">
-                            <h5
-                              className={cn(
-                                "text-left",
-                                "tooltip tooltip-bottom",
-                                {
-                                  "text-warning-content dark:text-warning-content":
-                                    isMockConnection,
-                                },
-                              )}
-                              data-tip={
-                                isMockConnection ? "Simulated wallet" : (
-                                  undefined
-                                )
-                              }
-                              data-testid="accounts"
-                            >
-                              {ensName ?? formatAddress(acc.address)}
-                            </h5>
-                            <div className="flex items-center">
-                              {(
-                                urlChainId == null ||
-                                isNaN(urlChainId!) ||
-                                chain.id === urlChainId
-                              ) ?
-                                <>
-                                  <ChainIcon chain={chain.id} height={14} />
-                                  <p className="text-xs ml-1">{chain.name}</p>
-                                </>
-                              : <p
-                                  className="text-xs text-danger-content dark:text-danger-content"
-                                  data-testid="wrong-network"
-                                >
-                                  Switch To {chainFromPath?.name ?? ""} Network
-                                </p>
-                              }
-                            </div>
-                          </div>
-                          <ChevronUpIcon
-                            className={`h-3 w-3 font-bold text-neutral-content dark:text-neutral-inverted-content transition-transform duration-200 ease-in-out ${cn(
-                              {
-                                "rotate-180": !open,
-                              },
-                            )} `}
-                            aria-hidden="true"
-                          />
-                        </div>
-                      </Menu.Button>
-                      <Transition
-                        as={Fragment}
-                        enter="transition ease-out duration-200"
-                        enterFrom="transform opacity-0 scale-95"
-                        enterTo="transform opacity-100 scale-100"
-                        leave="transition ease-in duration-200"
-                        leaveFrom="transform opacity-100 scale-100"
-                        leaveTo="transform opacity-0 scale-95"
-                      >
-                        <Menu.Items className="border1 bg-neutral rounded-3xl absolute right-0 top-16 z-10 focus:outline-none">
-                          {nfts.map(({ title, image }, i) => (
-                            <div
-                              key={title}
-                              className={`relative w-full ${selectedNFTIndex !== i ? "hidden" : ""}`}
-                            >
-                              <Image
-                                src={image}
-                                width={300}
-                                height={300}
-                                alt={title}
-                                className="rounded-t-[18px] w-[300px] h-[300px]"
-                                title={title}
-                              />
-                            </div>
-                          ))}
-
-                          {nfts.length > 1 && (
-                            <div className="flex w-full justify-center gap-2 py-2">
-                              {nfts.map(({ title }, i) => (
-                                <span
-                                  key={title}
-                                  className={`cursor-pointer w-3 h-3 bg-gray-600 rounded-full inline-block mx-1 ${selectedNFTIndex !== i ? "opacity-25" : ""}`}
-                                  aria-label="View Protopian NFT"
-                                  onClick={() => setSelectedNFTIndex(i)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                      setSelectedNFTIndex(i);
-                                    }
-                                  }}
-                                >
-                                  <span className="sr-only">View {title}</span>
-                                </span>
-                              ))}
-                            </div>
-                          )}
-
-                          <div className="flex flex-col gap-4 rounded-lg p-4 min-w-[300px]">
-                            {/* wallet and token balance info */}
-                            <Menu.Item as="div" className="flex flex-col gap-2">
-                              <div className="flex justify-between py-1">
-                                <p className="subtitle2">Wallet</p>{" "}
-                                <p className="subtitle2">{wallet}</p>
-                              </div>
-                              <div className="flex justify-between py-1">
-                                <p className="subtitle2">Balance</p>
-                                {token ?
-                                  <DisplayNumber
-                                    number={(token.formatted ?? 0).toString()}
-                                    tokenSymbol={token.symbol}
-                                  />
-                                : <span className="subtitle2 text-neutral-soft-content">
-                                    Unavailable
-                                  </span>
-                                }
-                              </div>
-                              <div className="flex items-center justify-between gap-3 py-1">
-                                <p className="subtitle2">Explorer</p>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <span
-                                    className={cn("text-xs", {
-                                      "font-semibold text-neutral-content":
-                                        explorerPreference === "etherscan",
-                                      "text-neutral-soft-content":
-                                        explorerPreference !== "etherscan",
-                                    })}
-                                  >
-                                    Etherscan
-                                  </span>
-                                  <input
-                                    type="checkbox"
-                                    className="toggle toggle-sm [--tglbg:theme(colors.primary)] checked:[--tglbg:theme(colors.primary)]"
-                                    aria-label="Toggle preferred block explorer"
-                                    checked={
-                                      explorerPreference === "blockscout"
-                                    }
-                                    onChange={(event) => {
-                                      setExplorerPreference(
-                                        event.target.checked ?
-                                          "blockscout"
-                                        : "etherscan",
-                                      );
-                                    }}
-                                  />
-                                  <span
-                                    className={cn("text-xs", {
-                                      "font-semibold text-neutral-content":
-                                        explorerPreference === "blockscout",
-                                      "text-neutral-soft-content":
-                                        explorerPreference !== "blockscout",
-                                    })}
-                                  >
-                                    Blockscout
-                                  </span>
-                                </label>
-                              </div>
-                            </Menu.Item>
-
-                            {/* Switch network and Disconnect buttons */}
-                            <Menu.Item as="div" className="flex flex-col gap-2">
-                              {isWrongNetwork && (
-                                <Button
-                                  className="w-full"
-                                  onClick={() => {
-                                    if (urlChainId != null) {
-                                      switchNetwork(urlChainId);
-                                    }
-                                  }}
-                                  icon={
-                                    <ArrowsRightLeftIcon
-                                      className="h-5 w-5"
-                                      strokeWidth={10}
-                                    />
-                                  }
-                                  testId="switch-network-button"
-                                >
-                                  <TooltipIfOverflow>
-                                    {`Switch to ${chainFromPath?.name ?? ""}`}
-                                  </TooltipIfOverflow>
-                                </Button>
-                              )}
-
-                              <Button
-                                onClick={() => {
-                                  void handleDisconnect();
-                                }}
-                                btnStyle="filled"
-                                color="danger"
-                                className="w-full"
-                                icon={
-                                  <PowerIcon
-                                    className="h-5 w-5"
-                                    strokeWidth={10}
-                                  />
-                                }
-                              >
-                                Disconnect
-                              </Button>
-                            </Menu.Item>
-                          </div>
-                        </Menu.Items>
-                      </Transition>
+            >
+              {isWrongNetwork ?
+                <ExclamationTriangleIcon className="w-6 text-danger-content dark:text-danger-content" />
+              : <Image
+                  alt="Wallet Avatar"
+                  src={
+                    avatarUrl && isSafeAvatarUrl(avatarUrl) ? avatarUrl : (
+                      `${blo(walletAddress as Address)}`
+                    )
+                  }
+                  className="rounded-full"
+                  width={34}
+                  height={34}
+                  loading="lazy"
+                />
+              }
+              <div className="hidden sm:flex flex-col">
+                <h5
+                  className={cn("text-left", "tooltip tooltip-bottom", {
+                    "text-warning-content dark:text-warning-content":
+                      isMockConnection,
+                  })}
+                  data-tip={isMockConnection ? "Simulated wallet" : undefined}
+                  data-testid="accounts"
+                >
+                  {ensName ?? formatAddress(walletAddress)}
+                </h5>
+                <div className="flex items-center">
+                  {(
+                    urlChainId == null ||
+                    isNaN(urlChainId!) ||
+                    chain.id === urlChainId
+                  ) ?
+                    <>
+                      <ChainIcon chain={chain.id} height={14} />
+                      <p className="text-xs ml-1">{chain.name}</p>
                     </>
+                  : <p
+                      className="text-xs text-danger-content dark:text-danger-content"
+                      data-testid="wrong-network"
+                    >
+                      Switch To {chainFromPath?.name ?? ""} Network
+                    </p>
+                  }
+                </div>
+              </div>
+              <ChevronUpIcon
+                className={`h-3 w-3 font-bold text-neutral-content dark:text-neutral-inverted-content transition-transform duration-200 ease-in-out ${cn(
+                  {
+                    "rotate-180": !open,
+                  },
+                )} `}
+                aria-hidden="true"
+              />
+            </div>
+          </Menu.Button>
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-200"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-200"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
+          >
+            <Menu.Items className="border1 bg-neutral rounded-3xl absolute right-0 top-16 z-10 focus:outline-none">
+              {nfts.map(({ title, image }, i) => (
+                <div
+                  key={title}
+                  className={`relative w-full ${selectedNFTIndex !== i ? "hidden" : ""}`}
+                >
+                  <Image
+                    src={image}
+                    width={300}
+                    height={300}
+                    alt={title}
+                    className="rounded-t-[18px] w-[300px] h-[300px]"
+                    title={title}
+                  />
+                </div>
+              ))}
+
+              {nfts.length > 1 && (
+                <div className="flex w-full justify-center gap-2 py-2">
+                  {nfts.map(({ title }, i) => (
+                    <span
+                      key={title}
+                      className={`cursor-pointer w-3 h-3 bg-gray-600 rounded-full inline-block mx-1 ${selectedNFTIndex !== i ? "opacity-25" : ""}`}
+                      aria-label="View Protopian NFT"
+                      onClick={() => setSelectedNFTIndex(i)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          setSelectedNFTIndex(i);
+                        }
+                      }}
+                    >
+                      <span className="sr-only">View {title}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-4 rounded-lg p-4 min-w-[300px]">
+                {/* wallet and token balance info */}
+                <Menu.Item as="div" className="flex flex-col gap-2">
+                  <div className="flex w-full items-start justify-between gap-3 py-1">
+                    <p className="subtitle2">Wallet</p>
+                    <p className="subtitle2 min-w-0 break-words text-right w-fit">
+                      {wallet}
+                    </p>
+                  </div>
+                  {token && (
+                    <div className="flex justify-between py-1">
+                      <p className="subtitle2">Balance</p>
+                      <DisplayNumber
+                        number={(token.formatted ?? 0).toString()}
+                        tokenSymbol={token.symbol}
+                      />
+                    </div>
                   )}
-                </Menu>
-              );
-            })()}
-          </>
-        );
-      }}
-    </ConnectButton.Custom>
+                  <div className="flex items-center justify-between gap-3 py-1">
+                    <p className="subtitle2">Explorer</p>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <span
+                        className={cn("text-xs", {
+                          "font-semibold text-neutral-content":
+                            explorerPreference === "etherscan",
+                          "text-neutral-soft-content":
+                            explorerPreference !== "etherscan",
+                        })}
+                      >
+                        Etherscan
+                      </span>
+                      <input
+                        type="checkbox"
+                        className="toggle toggle-sm [--tglbg:theme(colors.primary)] checked:[--tglbg:theme(colors.primary)]"
+                        aria-label="Toggle preferred block explorer"
+                        checked={explorerPreference === "blockscout"}
+                        onChange={(event) => {
+                          setExplorerPreference(
+                            event.target.checked ? "blockscout" : "etherscan",
+                          );
+                        }}
+                      />
+                      <span
+                        className={cn("text-xs", {
+                          "font-semibold text-neutral-content":
+                            explorerPreference === "blockscout",
+                          "text-neutral-soft-content":
+                            explorerPreference !== "blockscout",
+                        })}
+                      >
+                        Blockscout
+                      </span>
+                    </label>
+                  </div>
+                </Menu.Item>
+
+                {/* Switch network and Disconnect buttons */}
+                <Menu.Item as="div" className="flex flex-col gap-2">
+                  {isWrongNetwork && (
+                    <Button
+                      className="w-full"
+                      onClick={() => {
+                        if (urlChainId != null) {
+                          switchNetwork(urlChainId);
+                        }
+                      }}
+                      icon={
+                        <ArrowsRightLeftIcon
+                          className="h-5 w-5"
+                          strokeWidth={10}
+                        />
+                      }
+                      testId="switch-network-button"
+                    >
+                      <TooltipIfOverflow>
+                        {`Switch to ${chainFromPath?.name ?? ""}`}
+                      </TooltipIfOverflow>
+                    </Button>
+                  )}
+
+                  <Button
+                    onClick={() => {
+                      void handleDisconnect();
+                    }}
+                    btnStyle="filled"
+                    color="danger"
+                    disabled={isDisconnecting}
+                    className="w-full"
+                    icon={<PowerIcon className="h-5 w-5" strokeWidth={10} />}
+                  >
+                    {isDisconnecting ? "Disconnecting..." : "Disconnect"}
+                  </Button>
+                </Menu.Item>
+              </div>
+            </Menu.Items>
+          </Transition>
+        </>
+      )}
+    </Menu>
   );
 }

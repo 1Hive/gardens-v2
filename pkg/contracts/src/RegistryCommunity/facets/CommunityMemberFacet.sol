@@ -63,9 +63,9 @@ contract CommunityMemberFacet is CommunityBaseFacet {
     // Sig: 0x28c309e9
     function getStakeAmountWithFees() public view returns (uint256) {
         uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
-        uint256 gardensFeeAmount = (
-            registerStakeAmount * IRegistryFactory(registryFactory).getProtocolFee(address(this))
-        ) / (100 * PRECISION_SCALE);
+        uint256 gardensFeeAmount =
+            (registerStakeAmount * IRegistryFactory(registryFactory).getProtocolFee(address(this)))
+                / (100 * PRECISION_SCALE);
 
         return registerStakeAmount + communityFeeAmount + gardensFeeAmount;
     }
@@ -123,7 +123,9 @@ contract CommunityMemberFacet is CommunityBaseFacet {
         if (totalMembers > 0) {
             totalMembers -= 1;
         }
-        deactivateAllStrategies(_member, memberStrategies, false);
+        // The per-member strategy list is capped, so unregister can clear activation
+        // mappings without reopening the historical unbounded-loop gas risk.
+        deactivateAllStrategies(_member, memberStrategies, true);
         gardenToken.safeTransfer(_member, member.stakedAmount);
         emit MemberUnregistered(_member, member.stakedAmount);
     }
@@ -152,7 +154,9 @@ contract CommunityMemberFacet is CommunityBaseFacet {
     /*|              INTERNAL HELPERS              |*/
     /*|--------------------------------------------|*/
 
-    function deactivateAllStrategies(address _member, address[] memory memberStrategies, bool clearPowerMapping) internal {
+    function deactivateAllStrategies(address _member, address[] memory memberStrategies, bool clearPowerMapping)
+        internal
+    {
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             address strategy = memberStrategies[i];
             CVStrategy(payable(strategy)).deactivatePoints(_member);

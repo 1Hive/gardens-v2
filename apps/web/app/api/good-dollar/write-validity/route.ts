@@ -21,7 +21,12 @@ export async function POST(req: Request) {
     );
   }
 
+  console.info("[good-dollar][write-validity][all] request", { user });
   const isWhitelisted = await isGoodDollarWhitelisted(user);
+  console.info("[good-dollar][write-validity][all] whitelist", {
+    user,
+    isWhitelisted,
+  });
   if (!isWhitelisted) {
     return NextResponse.json(
       { error: "User is not whitelisted in GoodDollar" },
@@ -46,6 +51,18 @@ export async function POST(req: Request) {
 
   const status =
     successCount > 0 || alreadyValidCount > 0 ? 200 : errorCount > 0 ? 500 : 400;
+
+  console.info("[good-dollar][write-validity][all] result", {
+    user,
+    chainIds,
+    summary: {
+      success: successCount,
+      alreadyValid: alreadyValidCount,
+      skipped: skippedCount,
+      errors: errorCount,
+    },
+    results,
+  });
 
   return NextResponse.json(
     {

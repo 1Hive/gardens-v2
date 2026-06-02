@@ -1,19 +1,9 @@
-import { Address } from "viem";
+import { Address, createPublicClient, http } from "viem";
 import { base } from "viem/chains";
+import { chainConfigMap } from "@/configs/chains";
 
-const MARKEE_SUBGRAPH_ID = "8kMCKUHSY7o6sQbsvufeLVo8PifxrsnagjVTMGcs6KdF";
-const SUBGRAPH_GATEWAY_KEY = process.env.NEXT_PUBLIC_SUBGRAPH_KEY;
-const MARKEE_STUDIO_URL =
-  "https://api.studio.thegraph.com/query/1742437/markee-base/version/latest";
-const MARKEE_GATEWAY_URL =
-  SUBGRAPH_GATEWAY_KEY ?
-    `https://gateway.thegraph.com/api/${SUBGRAPH_GATEWAY_KEY}/subgraphs/id/${MARKEE_SUBGRAPH_ID}`
-  : undefined;
-
-export const MARKEE_SUBGRAPH_URL = MARKEE_GATEWAY_URL ?? MARKEE_STUDIO_URL;
-
-export const GARDENS_STRATEGY =
-  "0x346419315740F085Ba14cA7239D82105a9a2BDBE" as Address;
+export const GARDENS_LEADERBOARD =
+  "0x2768BC6e90266248BD8bCF5401C36D8049CdF671" as Address;
 
 export const MarkeeNetwork = base;
 
@@ -25,89 +15,141 @@ export type MarkeeEntry = {
   totalFundsAdded: string;
 };
 
-type MarkeeSubgraphResponse = {
-  data?: {
-    topDawgPartnerStrategy?: {
-      minimumPrice?: string;
-      markees?: MarkeeEntry[];
-    } | null;
-  };
-  errors?: unknown;
-};
+const LEADERBOARD_ABI = [
+  {
+    inputs: [{ name: "limit", type: "uint256" }],
+    name: "getTopMarkees",
+    outputs: [
+      { name: "topAddresses", type: "address[]" },
+      { name: "topFunds", type: "uint256[]" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "minimumPrice",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
 
-async function postMarkeeQuery(query: string): Promise<MarkeeSubgraphResponse> {
-  const urls = [MARKEE_GATEWAY_URL, MARKEE_STUDIO_URL].filter(
-    (url): url is string => Boolean(url),
-  );
-  let lastError: Error | undefined;
-  for (const url of urls) {
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
-      });
-      if (!response.ok) {
-        throw new Error(
-          `Subgraph request failed with ${response.status} at ${url}`,
-        );
-      }
-      const result = (await response.json()) as MarkeeSubgraphResponse;
-      if (result.errors) {
-        throw new Error(
-          `Subgraph returned GraphQL errors at ${url}: ${JSON.stringify(result.errors)}`,
-        );
-      }
-      return result;
-    } catch (error) {
-      lastError = error as Error;
-    }
+const MARKEE_READ_ABI = [
+  {
+    inputs: [],
+    name: "message",
+    outputs: [{ name: "", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "name",
+    outputs: [{ name: "", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "totalFundsAdded",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+const rpc = chainConfigMap[MarkeeNetwork.id].rpcUrl;
+const client = createPublicClient({ chain: base, transport: http(rpc) });
+
+export async function fetchMarkeeSignData(leaderboardAddress: Address) {
+  const [addresses, funds] = await client.readContract({
+    address: leaderboardAddress,
+    abi: LEADERBOARD_ABI,
+    functionName: "getTopMarkees",
+    args: [1n],
+  });
+
+  const minimumPrice = await client.readContract({
+    address: leaderboardAddress,
+    abi: LEADERBOARD_ABI,
+    functionName: "minimumPrice",
+  });
+
+  if (!addresses[0]) {
+    return { minimumPrice: minimumPrice.toString(), markees: [] };
   }
-  throw lastError ?? new Error("Failed to query Markee subgraph");
+
+  const topAddr = addresses[0];
+  const results = await client.multicall({
+    contracts: [
+      { address: topAddr, abi: MARKEE_READ_ABI, functionName: "message" },
+      { address: topAddr, abi: MARKEE_READ_ABI, functionName: "name" },
+    ],
+    allowFailure: true,
+  });
+
+  const message = results[0].status === "success" ? results[0].result : "";
+  const name = results[1].status === "success" ? results[1].result : "";
+
+  return {
+    minimumPrice: minimumPrice.toString(),
+    markees: [
+      {
+        id: topAddr.toLowerCase(),
+        address: topAddr.toLowerCase(),
+        message,
+        name,
+        totalFundsAdded: (funds[0] ?? 0n).toString(),
+      },
+    ] as MarkeeEntry[],
+  };
 }
 
-export async function fetchMarkeeSignData(strategyAddress: Address) {
-  const strategyId = strategyAddress.toLowerCase();
-  const result = await postMarkeeQuery(`{
-    topDawgPartnerStrategy(id: "${strategyId}") {
-      minimumPrice
-      markees(first: 1, orderBy: totalFundsAdded, orderDirection: desc) {
-        id
-        address
-        message
-        name
-        totalFundsAdded
-      }
-    }
-  }`);
-  return result.data?.topDawgPartnerStrategy ?? null;
-}
+export async function fetchMarkeeLeaderboard(leaderboardAddress: Address) {
+  const [addresses, funds] = await client.readContract({
+    address: leaderboardAddress,
+    abi: LEADERBOARD_ABI,
+    functionName: "getTopMarkees",
+    args: [10n],
+  });
 
-export async function fetchMarkeeLeaderboard(strategyAddress: Address) {
-  const strategyId = strategyAddress.toLowerCase();
-  const result = await postMarkeeQuery(`{
-    topDawgPartnerStrategy(id: "${strategyId}") {
-      markees(first: 10, orderBy: totalFundsAdded, orderDirection: desc) {
-        id
-        address
-        message
-        name
-        totalFundsAdded
-      }
-    }
-  }`);
-  return result.data?.topDawgPartnerStrategy?.markees ?? [];
+  if (!addresses.length) return [];
+
+  const markeeCalls = addresses.flatMap((addr) => [
+    { address: addr, abi: MARKEE_READ_ABI, functionName: "message" as const },
+    { address: addr, abi: MARKEE_READ_ABI, functionName: "name" as const },
+  ]);
+
+  const results = await client.multicall({
+    contracts: markeeCalls,
+    allowFailure: true,
+  });
+
+  return addresses
+    .map((addr, i) => ({
+      id: addr.toLowerCase(),
+      address: addr.toLowerCase(),
+      message:
+        results[i * 2].status === "success" ? results[i * 2].result ?? "" : "",
+      name:
+        results[i * 2 + 1].status === "success" ?
+          results[i * 2 + 1].result ?? ""
+        : "",
+      totalFundsAdded: (funds[i] ?? 0n).toString(),
+    }))
+    .filter((entry) => entry.message.trim() !== "");
 }
 
 // ─── View Tracking ────────────────────────────────────────────────────────────
 // Centralized on markee.xyz. Views are keyed by individual markee contract
-// address (markee.address), not the strategy address — matching markee.xyz.
+// address (markee.address), not the leaderboard address — matching markee.xyz.
 
 const MARKEE_VIEWS_URL = "https://www.markee.xyz/api/views";
 
 /**
  * Record a view for an individual markee contract address + current message.
- * Pass markee.address (the individual markee contract), not the strategy address.
+ * Pass markee.address (the individual markee contract), not the leaderboard address.
  * Fire-and-forget safe — errors are swallowed by the caller.
  */
 export async function recordMarkeeView(

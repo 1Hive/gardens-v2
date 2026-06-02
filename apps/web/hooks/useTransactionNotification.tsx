@@ -18,6 +18,10 @@ type UseTransactionNotificationArgs = {
   enabled?: boolean;
   fallbackErrorMessage?: string;
   contractName?: React.ReactNode;
+  walletApprovalLink?: {
+    href: string;
+    label: string;
+  };
   chainId?: number;
   confirmations?: number;
   watchTransaction?: boolean;
@@ -35,6 +39,7 @@ export const useTransactionNotification = ({
   enabled = true,
   fallbackErrorMessage,
   contractName,
+  walletApprovalLink,
   chainId,
   confirmations,
   watchTransaction = true,
@@ -62,6 +67,7 @@ export const useTransactionNotification = ({
       transactionError,
       fallbackErrorMessage,
       enabled,
+      walletApprovalLink,
       chainId: chainId ?? chainFromPath?.id,
       confirmations,
       watchTransaction,
@@ -75,6 +81,7 @@ export const useTransactionNotification = ({
     targetAddress,
     transactionError,
     contractName,
+    walletApprovalLink,
     enabled,
     fallbackErrorMessage,
     chainId,

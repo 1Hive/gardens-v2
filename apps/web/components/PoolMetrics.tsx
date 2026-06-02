@@ -837,7 +837,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 <div className="flex justify-between gap-3 items-center">
                   <p className="subtitle2">Incoming Stream:</p>
                   <div className="flex items-center gap-1">
-                    <p className="flex items-center whitespace-nowrap tooltip">
+                    <div className="flex items-center whitespace-nowrap tooltip">
                       <div
                         data-tip={`${currentFlowPerMonth} ${poolToken.symbol}/mo`}
                         className="tooltip"
@@ -846,7 +846,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       </div>{" "}
                       {poolToken.symbol}
                       /mo
-                    </p>
+                    </div>
                     {configuredFlowPerMonth != null && (
                       <p className="text-xs text-neutral-soft-content whitespace-nowrap">
                         target {roundToSignificant(configuredFlowPerMonth, 3)}{" "}

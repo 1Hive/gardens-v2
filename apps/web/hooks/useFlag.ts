@@ -22,10 +22,40 @@ export type CheatName = (typeof cheats)[number];
 
 const getStorageKey = (flag: CheatName) => `flag_${flag}`;
 
+const getGlobalFlagCommandName = (flag: CheatName, enabled: boolean) =>
+  `flag_${flag}${enabled ? "Disable" : "Enable"}`;
+
+const setFlagStorageValue = (flag: CheatName, enabled: boolean) => {
+  const key = getStorageKey(flag);
+  const newValue = enabled ? "true" : "false";
+  window.localStorage.setItem(key, newValue);
+  // Native storage events do not fire in the same tab, so dispatch one for immediate UI updates.
+  window.dispatchEvent(new StorageEvent("storage", { key, newValue }));
+};
+
+const syncGlobalFlagCommands = () => {
+  const windowWithFlagCommands = window as unknown as Record<string, unknown>;
+
+  cheats.forEach((flag) => {
+    const isEnabled = window.localStorage.getItem(getStorageKey(flag)) === "true";
+    const enableCommandName = getGlobalFlagCommandName(flag, false);
+    const disableCommandName = getGlobalFlagCommandName(flag, true);
+    delete windowWithFlagCommands[enableCommandName];
+    delete windowWithFlagCommands[disableCommandName];
+
+    const commandName = getGlobalFlagCommandName(flag, isEnabled);
+    windowWithFlagCommands[commandName] = () => {
+      setFlagStorageValue(flag, !isEnabled);
+      syncGlobalFlagCommands();
+    };
+  });
+};
+
 const setAllFlags = (enabled: boolean) => {
   cheats.forEach((flag) => {
-    window.localStorage.setItem(getStorageKey(flag), enabled ? "true" : "false");
+    setFlagStorageValue(flag, enabled);
   });
+  syncGlobalFlagCommands();
 };
 
 // Cannot use dynamic key resolving since its resolve at build time
@@ -88,11 +118,13 @@ export const useFlag = (
         console.info("🚩Flags commands:");
         cheats.forEach((c) => {
           const isEnabled = localStorage.getItem(getStorageKey(c)) === "true";
-          console.info(`localStorage.setItem("${getStorageKey(c)}", ${!isEnabled})`);
+          console.info(`window.${getGlobalFlagCommandName(c, isEnabled)}()`);
         });
         console.info('useFlags(true) // enable all');
         console.info('useFlags(false) // disable all');
       };
+
+      syncGlobalFlagCommands();
     }
   }, []);
 

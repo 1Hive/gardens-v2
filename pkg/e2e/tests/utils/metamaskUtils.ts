@@ -422,7 +422,16 @@ export async function confirmTransaction({
     'button:has-text("Next")',
     'button:has-text("Continue")',
   ];
-  const transactionButtonSelectors = [...confirmSelectors, ...nextSelectors];
+  const gasWarningBypassSelectors = [
+    'button:has-text("I want to proceed anyway")',
+    'a:has-text("I want to proceed anyway")',
+    'text="I want to proceed anyway"',
+  ];
+  const transactionButtonSelectors = [
+    ...confirmSelectors,
+    ...nextSelectors,
+    ...gasWarningBypassSelectors,
+  ];
   const findExtensionPages = () =>
     metamask.page
       .context()
@@ -492,6 +501,52 @@ export async function confirmTransaction({
     }
 
     await scrollConfirmView();
+
+    let bypassedGasWarning = false;
+    for (const selector of gasWarningBypassSelectors) {
+      const button = notificationPage.locator(selector).first();
+      const visible = await button.isVisible().catch(() => false);
+      if (!visible) {
+        continue;
+      }
+
+      const enabled = await button.isEnabled().catch(() => true);
+      if (!enabled) {
+        continue;
+      }
+
+      await button.scrollIntoViewIfNeeded().catch(() => {});
+      try {
+        await button.click({ timeout: 5000 });
+        await sleep(1000);
+        bypassedGasWarning = true;
+        break;
+      } catch {
+        if (await isTransactionClosed()) {
+          clicked = true;
+          break;
+        }
+        try {
+          await button.click({ timeout: 5000, force: true });
+          await sleep(1000);
+          bypassedGasWarning = true;
+          break;
+        } catch {
+          if (await isTransactionClosed()) {
+            clicked = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if (clicked) {
+      break;
+    }
+
+    if (bypassedGasWarning) {
+      continue;
+    }
 
     for (const selector of confirmSelectors) {
       const button = notificationPage.locator(selector).first();
@@ -585,7 +640,12 @@ export async function confirmTransaction({
 
 export async function connectWallet(page: Page, metamask: MetaMask) {
   await page.getByTestId("connectButton").click();
-  await page.getByTestId("rk-wallet-option-injected").click();
+  // Use .first() to guard against duplicate "MetaMask" buttons that can
+  // appear behind the wallet modal from other page elements.
+  await page
+    .getByRole("button", { name: "MetaMask", exact: true })
+    .first()
+    .click();
   const maxConnectAttempts = 3;
   let lastError: unknown;
 

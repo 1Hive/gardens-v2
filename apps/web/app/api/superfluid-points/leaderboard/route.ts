@@ -143,9 +143,12 @@ const SUPERFLUID_POOL_TOTALS_QUERY = gql`
   }
 `;
 const TOTAL_STREAMED_SUP_FALLBACK = 3_578;
-const TOTAL_STREAMED_SUP_BY_CAMPAIGN: Record<string, number> = {
+// Temporary manual totals used for campaigns whose streamed SUP cannot yet be
+// sourced reliably from the subgraph endpoint. Remove/update these overrides
+// once campaign-specific subgraph totals are reliable.
+const TOTAL_STREAMED_SUP_OVERRIDES_BY_CAMPAIGN: Record<string, number> = {
   "510": 483_000,
-  "607": 0,
+  "511": 0,
 };
 const DEFAULT_TARGET_STREAM_SUP = 847_000;
 const TARGET_STREAM_SUP_BY_CAMPAIGN: Record<string, number> = {
@@ -206,7 +209,9 @@ const getTotalStreamedSup = async (
   gardensGdaId?: string,
 ) => {
   const campaignOverride =
-    campaignId ? TOTAL_STREAMED_SUP_BY_CAMPAIGN[campaignId] : undefined;
+    campaignId ?
+      TOTAL_STREAMED_SUP_OVERRIDES_BY_CAMPAIGN[campaignId]
+    : undefined;
   if (campaignOverride !== undefined) {
     return campaignOverride;
   }
