@@ -61,11 +61,52 @@ export const CAMPAIGNS = {
   },
 } as const;
 
+const MONTHS_BY_NAME: Record<string, number> = {
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  may: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  oct: 9,
+  nov: 10,
+  dec: 11,
+};
+
+function parseCampaignEndDate(endDate: string) {
+  const trimmedEndDate = endDate.trim();
+  const dateOnlyMatch = trimmedEndDate.match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
+
+  if (dateOnlyMatch) {
+    const [, dayValue, monthValue, yearValue] = dateOnlyMatch;
+    const monthIndex = MONTHS_BY_NAME[monthValue.toLowerCase()];
+
+    if (monthIndex === undefined) {
+      return Number.NaN;
+    }
+
+    return Date.UTC(
+      Number(yearValue),
+      monthIndex,
+      Number(dayValue),
+      23,
+      59,
+      59,
+      999,
+    );
+  }
+
+  return Date.parse(trimmedEndDate);
+}
+
 export function isCampaignActive(
   endDate: string,
   referenceTimestamp = Date.now(),
 ) {
-  const endDateTimestamp = Date.parse(endDate);
+  const endDateTimestamp = parseCampaignEndDate(endDate);
 
   if (Number.isNaN(endDateTimestamp)) {
     return false;
