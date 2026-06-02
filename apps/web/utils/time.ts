@@ -20,6 +20,10 @@ export function formatNumber(num: number) {
   return num.toString();
 }
 
+export function formatKNumber(num: number) {
+  return `${parseFloat((num / 1_000).toFixed(1))}K`;
+}
+
 export function timeAgo(dateString: string | undefined): string {
   if (!dateString) return "Unknown";
 
