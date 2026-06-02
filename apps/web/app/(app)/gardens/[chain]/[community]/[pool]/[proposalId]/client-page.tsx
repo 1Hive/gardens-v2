@@ -516,14 +516,14 @@ export default function ClientPage({ params }: ClientPageProps) {
   const { data: ipfsResult, fetching: isIpfsMetadataFetching } =
     useMetadataIpfsFetch({
       hash: resolvedMetadataHash,
-      enabled: !!resolvedMetadataHash && !proposalData?.metadata,
+      enabled: resolvedMetadataHash != null && proposalData?.metadata == null,
     });
   const isMetadataLoading =
-    !!proposalData &&
-    !proposalData.metadata &&
+    proposalData != null &&
+    proposalData.metadata == null &&
     ((shouldReadOnchainMetadataHash &&
       (isOnchainMetadataHashLoading || !isOnchainMetadataHashFetched)) ||
-      (!!resolvedMetadataHash && isIpfsMetadataFetching));
+      (resolvedMetadataHash != null && isIpfsMetadataFetching === true));
   const path = usePathname();
   const metadata: MetadataV1 | null =
     proposalData ?
@@ -728,7 +728,6 @@ export default function ClientPage({ params }: ClientPageProps) {
     isThresholdBelowDisplayPrecision,
     hasReachedThreshold,
     totalSupportPct,
-    updatedConviction,
     timeToPass,
     triggerConvictionRefetch,
   } = useConvictionRead({

@@ -116,8 +116,8 @@ export function CheckSybil({
   });
 
   const shouldShowGoodDollarActivation =
-    isWalletVerified &&
-    ((isGoodDollarVerifiedInGardens ?? false) || forceIsVerified);
+    isWalletVerified === true &&
+    (isGoodDollarVerifiedInGardens === true || forceIsVerified);
   const shouldShowGoodDollarVerificationCta =
     !isWalletVerified && !isGoodDollarCallback;
 
@@ -452,7 +452,7 @@ export function CheckSybil({
                       </Button>
                     </div>
                   </>
-                : shouldShowGoodDollarActivation ?
+                : shouldShowGoodDollarActivation === true ?
                   <>
                     <p className="text-left">
                       Sign to activate your governance in the pool.
