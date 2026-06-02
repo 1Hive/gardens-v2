@@ -38,12 +38,15 @@ type CVStrategyCacheEntry =
     };
 
 const CV_STRATEGY_ADDRESS_STORAGE_KEY = "gardens.cvStrategyAddress";
+const LEGACY_CV_STRATEGY_ADDRESS_STORAGE_PREFIX =
+  "gardens.cvStrategyAddress.v";
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const cvStrategyAddressCache = new Map<string, CVStrategyCacheEntry>();
 const pendingCVStrategyChecks = new Map<
   string,
   Promise<CVStrategyCacheEntry>
 >();
+let didCleanupLegacyCVStrategyStorage = false;
 
 type CVStrategyCacheStorage = Record<
   string,
@@ -96,6 +99,20 @@ const isCVStrategyCacheStorage = (
 
 const readCVStrategyStorage = (): CVStrategyCacheStorage | undefined => {
   try {
+    if (!didCleanupLegacyCVStrategyStorage) {
+      const legacyKeys: string[] = [];
+
+      for (let index = 0; index < window.localStorage.length; index += 1) {
+        const key = window.localStorage.key(index);
+        if (key?.startsWith(LEGACY_CV_STRATEGY_ADDRESS_STORAGE_PREFIX)) {
+          legacyKeys.push(key);
+        }
+      }
+
+      legacyKeys.forEach((key) => window.localStorage.removeItem(key));
+      didCleanupLegacyCVStrategyStorage = true;
+    }
+
     const cachedValue = window.localStorage.getItem(
       CV_STRATEGY_ADDRESS_STORAGE_KEY,
     );
