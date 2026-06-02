@@ -351,7 +351,8 @@ export default function GardensGrowthInitiativePage({
   });
 
   const wallets = superfluidStreamsData?.snapshot?.wallets ?? [];
-  const targetStreamSup = superfluidStreamsData?.targetStreamSup ?? 847_000;
+  const targetStreamSup =
+    superfluidStreamsData?.targetStreamSup ?? campaigns?.tokenAllocated ?? 0;
 
   const connectedDisplayName = useMemo(() => {
     if (!connectedAccount) return null;
@@ -479,9 +480,7 @@ export default function GardensGrowthInitiativePage({
                 <div className="flex items-center gap-2 text-sm">
                   <CurrencyDollarIcon className="h-6 w-6 " />
                   <span className="font-semibold">
-                    {superfluidStreamsData?.targetStreamSup != null ?
-                      `${formatNumber(superfluidStreamsData.targetStreamSup)} SUP allocated`
-                    : "SUP allocated"}
+                    {formatNumber(targetStreamSup)} SUP allocated
                   </span>
                 </div>
               </div>
@@ -698,8 +697,7 @@ export default function GardensGrowthInitiativePage({
                       <div className="flex items-center gap-2">
                         <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
                         <span className="text-neutral-soft-content text-sm">
-                          {superfluidStreamsData?.snapshot?.wallets.length}{" "}
-                          participants
+                          {wallets.length} participants
                         </span>
                       </div>
                       <div>
