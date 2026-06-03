@@ -84,7 +84,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         if (shouldStartStream) {
             uint256 clampedConviction =
                 totalEligibleConviction > maxConviction ? maxConviction : totalEligibleConviction;
-            requestedFlowRate = (streamingRatePerSecond * clampedConviction) / maxConviction;
+            requestedFlowRate = (_streamingRatePerSecondInSuperTokenUnits() * clampedConviction) / maxConviction;
         }
 
         uint128 streamingUnitBudget = _streamingUnitBudget(requestedFlowRate);
@@ -247,13 +247,18 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             return;
         }
 
+        uint256 upgradeAmount = _toSuperTokenAmount(unwrappedBalance, poolToken, superfluidToken);
+        if (upgradeAmount == 0) {
+            return;
+        }
+
         // Approve supertoken to spend the underlying tokens
         if (!IERC20(poolToken).approve(address(superfluidToken), unwrappedBalance)) {
             revert ApproveFailed(poolToken, address(superfluidToken), unwrappedBalance);
         }
 
-        // Wrap tokens to supertokens
-        superfluidToken.upgrade(unwrappedBalance);
+        // Wrap tokens to supertokens. SuperToken upgrade amounts are denominated in the SuperToken's decimals.
+        superfluidToken.upgrade(upgradeAmount);
     }
 
     /**

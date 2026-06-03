@@ -152,6 +152,8 @@ contract MockSuperToken {
     mapping(address => uint256) public balances;
     uint256 public lastDowngradeAmount;
     uint256 public lastUpgradeAmount;
+    uint256 public lastUnderlyingUpgradeAmount;
+    uint8 public decimals = 18;
 
     constructor(address host_, address underlyingToken_) {
         host = host_;
@@ -174,15 +176,31 @@ contract MockSuperToken {
         balances[account] = amount;
     }
 
+    function setDecimals(uint8 decimals_) external {
+        decimals = decimals_;
+    }
+
+    function _toUnderlyingAmount(uint256 superTokenAmount) internal view returns (uint256) {
+        uint8 underlyingDecimals = MockERC20(underlyingToken).decimals();
+        if (decimals == underlyingDecimals) {
+            return superTokenAmount;
+        }
+        if (decimals > underlyingDecimals) {
+            return superTokenAmount / (10 ** (decimals - underlyingDecimals));
+        }
+        return superTokenAmount * (10 ** (underlyingDecimals - decimals));
+    }
+
     function downgrade(uint256 amount) external {
         balances[msg.sender] -= amount;
         lastDowngradeAmount = amount;
-        MockERC20(underlyingToken).mint(msg.sender, amount);
+        MockERC20(underlyingToken).mint(msg.sender, _toUnderlyingAmount(amount));
     }
 
     function upgrade(uint256 amount) external {
         lastUpgradeAmount = amount;
-        MockERC20(underlyingToken).burnFrom(msg.sender, amount);
+        lastUnderlyingUpgradeAmount = _toUnderlyingAmount(amount);
+        MockERC20(underlyingToken).burnFrom(msg.sender, lastUnderlyingUpgradeAmount);
         balances[msg.sender] += amount;
     }
 
@@ -198,6 +216,11 @@ contract MockSuperToken {
 contract MockERC20 {
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
+    uint8 public decimals = 18;
+
+    function setDecimals(uint8 decimals_) external {
+        decimals = decimals_;
+    }
 
     function mint(address account, uint256 amount) external {
         balanceOf[account] += amount;
@@ -538,6 +561,78 @@ contract CVAdminFacetTest is Test {
         assertEq(newToken.balanceOf(address(facet)), 25 ether);
         assertEq(newToken.lastUpgradeAmount(), 25 ether);
         assertEq(underlyingToken.balanceOf(address(facet)), 0);
+        assertEq(address(facet.superfluidToken()), address(newToken));
+    }
+
+    function test_setPoolParams_streaming_migrates_six_decimal_underlying_to_eighteen_decimal_super_token() public {
+        factoryAllowlist.setAllowed(address(arbitrator), true);
+        underlyingToken.setDecimals(6);
+        MockGDAAgreement gdaAgreement = new MockGDAAgreement();
+        MockSuperfluidHost host = new MockSuperfluidHost(address(gdaAgreement));
+        MockSuperToken oldToken = new MockSuperToken(address(host), address(underlyingToken));
+        MockSuperToken newToken = new MockSuperToken(address(host), address(underlyingToken));
+
+        allo.setPoolToken(1, address(underlyingToken));
+        facet.setProposalType(ProposalType.Streaming);
+        facet.setSuperfluidToken(address(oldToken));
+        facet.setProposalStatus(1, ProposalStatus.Rejected);
+        oldToken.setBalance(address(facet), 25 ether);
+
+        ArbitrableConfig memory arb = ArbitrableConfig({
+            arbitrator: IArbitrator(address(arbitrator)),
+            tribunalSafe: address(0xBEEF),
+            submitterCollateralAmount: 1,
+            challengerCollateralAmount: 1,
+            defaultRuling: 1,
+            defaultRulingTimeout: 10
+        });
+        CVParams memory params = CVParams({maxRatio: 0, weight: 0, decay: 0, minThresholdPoints: 0});
+
+        vm.prank(councilSafe);
+        facet.setPoolParams(arb, params, 0, new address[](0), new address[](0), address(newToken), 0);
+
+        assertEq(oldToken.balanceOf(address(facet)), 0);
+        assertEq(oldToken.lastDowngradeAmount(), 25 ether);
+        assertEq(newToken.balanceOf(address(facet)), 25 ether);
+        assertEq(newToken.lastUpgradeAmount(), 25 ether);
+        assertEq(newToken.lastUnderlyingUpgradeAmount(), 25_000_000);
+        assertEq(underlyingToken.balanceOf(address(facet)), 0);
+        assertEq(address(facet.superfluidToken()), address(newToken));
+    }
+
+    function test_setPoolParams_streaming_skips_upgrade_when_scaled_migration_amount_rounds_to_zero() public {
+        factoryAllowlist.setAllowed(address(arbitrator), true);
+        underlyingToken.setDecimals(20);
+        MockGDAAgreement gdaAgreement = new MockGDAAgreement();
+        MockSuperfluidHost host = new MockSuperfluidHost(address(gdaAgreement));
+        MockSuperToken oldToken = new MockSuperToken(address(host), address(underlyingToken));
+        MockSuperToken newToken = new MockSuperToken(address(host), address(underlyingToken));
+        oldToken.setDecimals(20);
+
+        allo.setPoolToken(1, address(underlyingToken));
+        facet.setProposalType(ProposalType.Streaming);
+        facet.setSuperfluidToken(address(oldToken));
+        facet.setProposalStatus(1, ProposalStatus.Rejected);
+        oldToken.setBalance(address(facet), 1);
+
+        ArbitrableConfig memory arb = ArbitrableConfig({
+            arbitrator: IArbitrator(address(arbitrator)),
+            tribunalSafe: address(0xBEEF),
+            submitterCollateralAmount: 1,
+            challengerCollateralAmount: 1,
+            defaultRuling: 1,
+            defaultRulingTimeout: 10
+        });
+        CVParams memory params = CVParams({maxRatio: 0, weight: 0, decay: 0, minThresholdPoints: 0});
+
+        vm.prank(councilSafe);
+        facet.setPoolParams(arb, params, 0, new address[](0), new address[](0), address(newToken), 0);
+
+        assertEq(oldToken.balanceOf(address(facet)), 0);
+        assertEq(oldToken.lastDowngradeAmount(), 1);
+        assertEq(newToken.balanceOf(address(facet)), 0);
+        assertEq(newToken.lastUpgradeAmount(), 0);
+        assertEq(underlyingToken.balanceOf(address(facet)), 1);
         assertEq(address(facet.superfluidToken()), address(newToken));
     }
 

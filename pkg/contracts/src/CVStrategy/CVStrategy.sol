@@ -36,6 +36,7 @@ import {
 import {ConvictionsUtils} from "./ConvictionsUtils.sol";
 import {PowerManagementUtils} from "./PowerManagementUtils.sol";
 import {CVStreamingBase} from "./CVStreamingStorage.sol";
+import {DecimalScalingUtils} from "./DecimalScalingUtils.sol";
 
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
@@ -798,14 +799,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         }
 
         uint256 sf = address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
-
-        uint8 d = ERC20(token).decimals();
-        if (d < 18) {
-            sf /= 10 ** (18 - d); // downscale 18 -> d
-        } else if (d > 18) {
-            sf *= 10 ** (d - 18); // upscale 18 -> d  (unlikely)
-        }
-        return base + sf;
+        return base + DecimalScalingUtils.fromSuperTokenAmount(sf, token, superfluidToken);
     }
 
     // Stub - delegates to CVPauseFacet
