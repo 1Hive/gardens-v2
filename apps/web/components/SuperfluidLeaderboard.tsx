@@ -77,7 +77,7 @@ function getActivities(entry: WalletEntry): ActivityWithPoints[] {
     activities.push({ label: "Farcaster", points: entry.farcasterPoints });
   if (entry.superfluidActivityPoints >= 1)
     activities.push({
-      label: "Superfluid Activity",
+      label: "bonus x3",
       points: entry.superfluidActivityPoints,
     });
   return activities;

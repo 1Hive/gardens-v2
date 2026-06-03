@@ -993,6 +993,7 @@ export default function PoolHeader({
                   strategy={strategy}
                   pointSystemType={pointSystemType}
                   token={poolToken}
+                  isOpen={isOpenModal}
                   proposalType={proposalType}
                   proposalOnDispute={proposalOnDispute}
                   initValues={{

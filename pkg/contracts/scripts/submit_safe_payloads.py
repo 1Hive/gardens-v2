@@ -229,7 +229,10 @@ def _submit_multisig_batch(
         safe_tx["nonce"],
     )
 
-    signature = acct.signHash(safe_tx_hash).signature.hex()
+    if hasattr(acct, "signHash"):
+        signature = acct.signHash(safe_tx_hash).signature.hex()
+    else:
+        signature = acct.unsafe_sign_hash(safe_tx_hash).signature.hex()
     safe_tx_hash_hex = "0x" + safe_tx_hash.hex()
 
     request_payload = {

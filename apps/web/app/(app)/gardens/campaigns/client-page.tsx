@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/Skeleton";
 import { fetchSuperfluidLeaderboard } from "@/types";
 import { CAMPAIGNS, CampaignId, isCampaignActive } from "@/utils/campaigns";
 import { logOnce } from "@/utils/log";
-import { formatNumber, timeAgo } from "@/utils/time";
+import { formatKNumber, timeAgo } from "@/utils/time";
 
 type CampaignStats = {
   totalStreamedSup: number;
@@ -180,7 +180,8 @@ export default function CampaignsPage() {
         : displayedCampaigns.map((c) => {
             const isEndedCampaign = !isCampaignActive(c.endDate, now);
             const totalStreamedSup = statsByCampaign[c.slug]?.totalStreamedSup ?? 0;
-            const targetStreamSup = statsByCampaign[c.slug]?.targetStreamSup;
+            const targetStreamSup =
+              statsByCampaign[c.slug]?.targetStreamSup ?? c.tokenAllocated;
             const progressPercentage =
               targetStreamSup && targetStreamSup > 0 ?
                 Math.min(100, (totalStreamedSup / targetStreamSup) * 100)
@@ -249,10 +250,10 @@ export default function CampaignsPage() {
                       <div className="flex justify-between text-sm mb-2">
                         <span className="">Claimed</span>
                         <span className="font-medium">
-                        {formatNumber(totalStreamedSup)}{" "}
-                        /{" "}
-                        {formatNumber(targetStreamSup ?? 0)}{" "}
-                        {c.tokenSymbol}
+                          {formatKNumber(totalStreamedSup)}{" "}
+                          /{" "}
+                          {formatKNumber(targetStreamSup ?? 0)}{" "}
+                          {c.tokenSymbol}
                         </span>
                       </div>
                     </Skeleton>
@@ -273,7 +274,7 @@ export default function CampaignsPage() {
                         <div className="flex items-center gap-2">
                           <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
                           <span className="text-neutral-soft-content text-sm">
-                            {statsByCampaign[c.slug]?.walletCount} participants
+                            {statsByCampaign[c.slug]?.walletCount ?? 0} participants
                           </span>
                         </div>
                         <div>

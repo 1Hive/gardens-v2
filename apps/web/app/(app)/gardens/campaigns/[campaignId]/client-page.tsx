@@ -27,7 +27,7 @@ import {
 import { CAMPAIGNS, CampaignId, isCampaignActive } from "@/utils/campaigns";
 import { logOnce } from "@/utils/log";
 import { shortenAddress } from "@/utils/text";
-import { formatNumber, timeAgo } from "@/utils/time";
+import { formatKNumber, formatNumber, timeAgo } from "@/utils/time";
 
 export type ParticipationStep = {
   title: string;
@@ -224,6 +224,65 @@ export const PARTICIPATION_BY_CAMPAIGN: Record<string, ParticipationStep[]> = {
       pointsInfo: "Points split based on stake size",
     },
   ],
+  "4": [
+    {
+      title: "Follow Gardens on Farcaster",
+      description: (
+        <>
+          Stay connected with the Gardens community.{" "}
+          <Link
+            href="https://farcaster.xyz/gardens"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Follow Gardens on Farcaster
+          </Link>
+          .
+        </>
+      ),
+      icon: <ChatBubbleLeftRightIcon className="h-5 w-5" />,
+      activities: ["Farcaster Follow"],
+      pointsInfo: "1 point",
+    },
+    {
+      title: "Add Funds into a Funding Pool",
+      description: (
+        <>
+          Stream funds or make a one-time transfer in{" "}
+          <Link
+            href="https://docs.superfluid.org/docs/concepts/overview/super-tokens#pure-super-tokens"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Pure Super Token
+          </Link>{" "}
+          into a funding pool.{" "}
+        </>
+      ),
+      icon: <ArrowTrendingUpIcon className="h-5 w-5" />,
+      activities: ["Add Funds"],
+      pointsInfo: "1 point per $1 added (minimum $10)",
+    },
+    {
+      title: "Join a Community & Increase Your Stake",
+      description: "Become an active member and increase your stake.",
+      icon: <UsersIcon className="h-5 w-5" />,
+      activities: ["Stake & Governance"],
+      pointsInfo:
+        "Matching points split between the community for adding funds - 1 point per $1 added (min $10)",
+    },
+    {
+      title: "3x Bonus in Streaming Pools",
+      description:
+        "Streaming pools earn triple points for adding funds and governance tokens staked",
+      icon: <CurrencyDollarIcon className="h-5 w-5" />,
+      activities: ["Streaming Pool"],
+      pointsInfo: "x3 points multiplier",
+      highlighted: true,
+    },
+  ],
 };
 
 function getWalletRankAndPoints(
@@ -270,7 +329,8 @@ export default function GardensGrowthInitiativePage({
 
   const campaigns = CAMPAIGNS[campaignId];
   const isEndedCampaign = !isCampaignActive(campaigns?.endDate ?? "");
-  const showSuperfluidClaimLink = campaignId === "1" || campaignId === "3";
+  const showSuperfluidClaimLink =
+    campaignId === "1" || campaignId === "3" || campaignId === "4";
 
   const howToParticipate = PARTICIPATION_BY_CAMPAIGN[campaignId] ?? [];
 
@@ -291,7 +351,8 @@ export default function GardensGrowthInitiativePage({
   });
 
   const wallets = superfluidStreamsData?.snapshot?.wallets ?? [];
-  const targetStreamSup = superfluidStreamsData?.targetStreamSup ?? 847_000;
+  const targetStreamSup =
+    superfluidStreamsData?.targetStreamSup ?? campaigns?.tokenAllocated ?? 0;
 
   const connectedDisplayName = useMemo(() => {
     if (!connectedAccount) return null;
@@ -419,9 +480,7 @@ export default function GardensGrowthInitiativePage({
                 <div className="flex items-center gap-2 text-sm">
                   <CurrencyDollarIcon className="h-6 w-6 " />
                   <span className="font-semibold">
-                    {superfluidStreamsData?.targetStreamSup != null ?
-                      `${formatNumber(superfluidStreamsData.targetStreamSup)} SUP allocated`
-                    : "SUP allocated"}
+                    {formatNumber(targetStreamSup)} SUP allocated
                   </span>
                 </div>
               </div>
@@ -584,7 +643,7 @@ export default function GardensGrowthInitiativePage({
                           </div>
                           <div className="flex items-baseline gap-1">
                             <p className="font-bold text-xl">
-                              {walletPoints?.totalPoints ?? 0}
+                              {formatKNumber(walletPoints?.totalPoints ?? 0)}
                             </p>
                             <p className="text-xs ">Pts.</p>
                           </div>
@@ -614,10 +673,10 @@ export default function GardensGrowthInitiativePage({
                     <div className="flex justify-between mb-2">
                       <span className="">Tokens Claimed</span>
                       <span className="font-medium">
-                        {formatNumber(
+                        {formatKNumber(
                           superfluidStreamsData?.totalStreamedSup ?? 0,
                         )}{" "}
-                        / {formatNumber(targetStreamSup)} SUP
+                        / {formatKNumber(targetStreamSup)} SUP
                       </span>
                     </div>
 
@@ -638,8 +697,7 @@ export default function GardensGrowthInitiativePage({
                       <div className="flex items-center gap-2">
                         <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
                         <span className="text-neutral-soft-content text-sm">
-                          {superfluidStreamsData?.snapshot?.wallets.length}{" "}
-                          participants
+                          {wallets.length} participants
                         </span>
                       </div>
                       <div>

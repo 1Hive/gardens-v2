@@ -1,0 +1,112 @@
+{
+  "safe": "0x9a17De1f0caD0c592F656410997E4B685d339029",
+  "create2Factory": "0x4e59b44847b379578588920cA78FbF26c0B4956C",
+  "saltVersion": "98eb746",
+  "chains": {
+    "arbitrum": {
+      "chainId": 42161,
+      "sourceNetworkName": "arbitrum",
+      "payload": "pkg/contracts/transaction-builder/arbitrum-payload.json",
+      "newContracts": {
+        "CVStrategy": "0x37865C207ab8342de338f0d4C5bBBfd2a53bC983",
+        "CVAdminFacet": "0xF080Ff2f12A737dC5f24c1adDf534246b54cF087",
+        "CVAllocationFacet": "0xC6062A6dB2d5751627F91a11e40205db4DaC8515",
+        "CVStreamingFacet": "0xDe14A0EAd4E896324bc6fCCc7216eDa8993a72c1"
+      },
+      "txCount": 132,
+      "strategyProxyCount": 63,
+      "registryFactory": "0xc1c2E092b7DbC8413E1aC02e92C161b0BDA783f6",
+      "strategyInit": "0x0DDc35193a09ECaC8242662e3Aa3B944Abf5f0b3"
+    },
+    "optimism": {
+      "chainId": 10,
+      "sourceNetworkName": "optimism",
+      "payload": "pkg/contracts/transaction-builder/optimism-payload.json",
+      "newContracts": {
+        "CVStrategy": "0x37865C207ab8342de338f0d4C5bBBfd2a53bC983",
+        "CVAdminFacet": "0xF080Ff2f12A737dC5f24c1adDf534246b54cF087",
+        "CVAllocationFacet": "0xC6062A6dB2d5751627F91a11e40205db4DaC8515",
+        "CVStreamingFacet": "0xDe14A0EAd4E896324bc6fCCc7216eDa8993a72c1"
+      },
+      "txCount": 176,
+      "strategyProxyCount": 85,
+      "registryFactory": "0x1FAC47Cf25f1ca9F20ba366099D26b28401F5715",
+      "strategyInit": "0x638Aa6b8a9336C71FA0467272e37718e096dB22e"
+    },
+    "polygon": {
+      "chainId": 137,
+      "sourceNetworkName": "polygon",
+      "payload": "pkg/contracts/transaction-builder/polygon-payload.json",
+      "newContracts": {
+        "CVStrategy": "0x37865C207ab8342de338f0d4C5bBBfd2a53bC983",
+        "CVAdminFacet": "0xF080Ff2f12A737dC5f24c1adDf534246b54cF087",
+        "CVAllocationFacet": "0xC6062A6dB2d5751627F91a11e40205db4DaC8515",
+        "CVStreamingFacet": "0xDe14A0EAd4E896324bc6fCCc7216eDa8993a72c1"
+      },
+      "txCount": 48,
+      "strategyProxyCount": 21,
+      "registryFactory": "0x57a9835B204DbCc101Dbf981625A3625e8043B9c",
+      "strategyInit": "0x2315EE63C0972E93bb3248A77980A69DE11BF325"
+    },
+    "gnosis": {
+      "chainId": 100,
+      "sourceNetworkName": "gnosis",
+      "payload": "pkg/contracts/transaction-builder/gnosis-payload.json",
+      "newContracts": {
+        "CVStrategy": "0x37865C207ab8342de338f0d4C5bBBfd2a53bC983",
+        "CVAdminFacet": "0xF080Ff2f12A737dC5f24c1adDf534246b54cF087",
+        "CVAllocationFacet": "0xC6062A6dB2d5751627F91a11e40205db4DaC8515",
+        "CVStreamingFacet": "0xDe14A0EAd4E896324bc6fCCc7216eDa8993a72c1"
+      },
+      "txCount": 158,
+      "strategyProxyCount": 76,
+      "registryFactory": "0x08Df82f74D1f56F650E98da2dd4240F1A31711bc",
+      "strategyInit": "0x71253aB7Eb2B7B83BD43984eBe534Ab6AdB31e7b"
+    },
+    "base": {
+      "chainId": 8453,
+      "sourceNetworkName": "base",
+      "payload": "pkg/contracts/transaction-builder/base-payload.json",
+      "newContracts": {
+        "CVStrategy": "0x37865C207ab8342de338f0d4C5bBBfd2a53bC983",
+        "CVAdminFacet": "0xF080Ff2f12A737dC5f24c1adDf534246b54cF087",
+        "CVAllocationFacet": "0xC6062A6dB2d5751627F91a11e40205db4DaC8515",
+        "CVStreamingFacet": "0xDe14A0EAd4E896324bc6fCCc7216eDa8993a72c1"
+      },
+      "txCount": 52,
+      "strategyProxyCount": 23,
+      "registryFactory": "0xc93830dd463516ED5f28f6cd4F837173B87FF389",
+      "strategyInit": "0xb9DBc6a79Ed8B991732b7FB3fab4efF55397F853"
+    },
+    "celo": {
+      "chainId": 42220,
+      "sourceNetworkName": "celo",
+      "payload": "pkg/contracts/transaction-builder/celo-payload.json",
+      "newContracts": {
+        "CVStrategy": "0x37865C207ab8342de338f0d4C5bBBfd2a53bC983",
+        "CVAdminFacet": "0xF080Ff2f12A737dC5f24c1adDf534246b54cF087",
+        "CVAllocationFacet": "0xC6062A6dB2d5751627F91a11e40205db4DaC8515",
+        "CVStreamingFacet": "0xDe14A0EAd4E896324bc6fCCc7216eDa8993a72c1"
+      },
+      "txCount": 156,
+      "strategyProxyCount": 75,
+      "registryFactory": "0xA71023bc64c9711C2037ab491DE80fd74504bd55",
+      "strategyInit": "0xD6E4b0e094C5aE63cDd3f6e622ed22030A3a908B"
+    },
+    "mainnet": {
+      "chainId": 1,
+      "sourceNetworkName": "ethereum",
+      "payload": "pkg/contracts/transaction-builder/mainnet-payload.json",
+      "newContracts": {
+        "CVStrategy": "0x37865C207ab8342de338f0d4C5bBBfd2a53bC983",
+        "CVAdminFacet": "0xF080Ff2f12A737dC5f24c1adDf534246b54cF087",
+        "CVAllocationFacet": "0xC6062A6dB2d5751627F91a11e40205db4DaC8515",
+        "CVStreamingFacet": "0xDe14A0EAd4E896324bc6fCCc7216eDa8993a72c1"
+      },
+      "txCount": 12,
+      "strategyProxyCount": 3,
+      "registryFactory": "0x7D26c5B083B85B848645fcBd18Fe01168989333b",
+      "strategyInit": "0x311eCe7Fc8111897C8E72738159adC0bDa6f3a7e"
+    }
+  }
+}

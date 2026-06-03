@@ -616,13 +616,13 @@ function CommunityEditModal({
                   <p>
                     {`The fields below can only be changed when the community doesn't have members. This community currently has ${communityMembersCount} member${communityMembersCount === 1 ? "" : "s"}, so these fields are disabled.`}
                   </p>
-                  {!watchedKickEnabled && (
+                  {watchedKickEnabled === false && (
                     <p>
                       Ask current members to leave the community before you can
                       change these fields.
                     </p>
                   )}
-                  {watchedKickEnabled && (
+                  {watchedKickEnabled === true && (
                     <p>
                       With kick enabled, members can be removed from the
                       Community Staking Leaderboard modal, and their staked

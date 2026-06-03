@@ -134,6 +134,7 @@ const SUPERFLUID_CHAIN_ID = 8453;
 const DEFAULT_GARDENS_GDA_ID = "0x5f86aeb40ea66373c7ce337f777c37951fdaaeea";
 const GARDENS_GDA_ID_BY_CAMPAIGN: Record<string, string | undefined> = {
   "510": "0x9E3889A48dee1c55e67A5828b1766157ADE564b6",
+  "607": "0x7A93cfa2420C8823a6564567F86DB3D1f4Ef1d40",
 };
 const SUPERFLUID_POOL_TOTALS_QUERY = gql`
   query poolTotals($id: ID!) {
@@ -147,12 +148,13 @@ const TOTAL_STREAMED_SUP_FALLBACK = 3_578;
 // sourced reliably from the subgraph endpoint. Remove/update these overrides
 // once campaign-specific subgraph totals are reliable.
 const TOTAL_STREAMED_SUP_OVERRIDES_BY_CAMPAIGN: Record<string, number> = {
-  "510": 485_000,
+  "510": 483_000,
   "511": 0,
 };
 const DEFAULT_TARGET_STREAM_SUP = 847_000;
 const TARGET_STREAM_SUP_BY_CAMPAIGN: Record<string, number> = {
   "510": 519_000,
+  "607": 510_000,
 };
 
 const fetchSuperfluidTotals = async (

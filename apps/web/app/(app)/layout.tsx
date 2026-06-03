@@ -15,7 +15,7 @@ import { Button, ConnectWallet, ThemeButton } from "@/components";
 import Footer from "@/components/Footer";
 import { useIsPaused } from "@/hooks/useIsPaused";
 
-const CAMPAIGN_BADGE_STORAGE_KEY = "gardensCampaignsBadgeSeen-1";
+const CAMPAIGN_BADGE_STORAGE_KEY = "gardensCampaignsBadgeSeen-2";
 
 export function HeadphoneIcon() {
   return (
