@@ -1,0 +1,81 @@
+=== base (8453) ===
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  Factory 0x3B3333665DE09494C2491171c06A6A161F319032
+  Factory implementation 0xBeA8F6b36C03ce147C80a7DE691bba74C0384EF2
+  Superfluid host 0x4C073B3baB6d8826b8C5b229f3cfdC1eC6E47E74
+  Escrow implementation 0x0FAac116E79Fa0deB285BB891deFd8b33B575663
+  Escrows 0
+  Existing escrow upgrades 0
+  Deploy only false
+  Safe payload true
+  Safe payload written /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/base-streaming-escrow-upgrade-payload.json
+  Existing escrows checked 0
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 8453
+
+Estimated gas price: 0.011 gwei
+
+Estimated total gas used for script: 5634189
+
+Estimated amount required: 0.000061976079 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+##
+Start verification for (2) contracts
+Start verifying contract `0x89A8e79AC6A24Ed20682222EEB3ed1C41d38d8F8` deployed on base
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x89A8e79AC6A24Ed20682222EEB3ed1C41d38d8F8.
+Warning: Could not detect deployment: Unable to locate ContractCode at 0x89a8e79ac6a24ed20682222eeb3ed1c41d38d8f8; waiting 5 seconds before trying again (4 tries remaining)
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x89A8e79AC6A24Ed20682222EEB3ed1C41d38d8F8.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `z4xrruw1dbgysf2xiytsg8lm27szhhpfxqvujwbmajc4mvadcl`
+	URL: https://basescan.org/address/0x89a8e79ac6a24ed20682222eeb3ed1c41d38d8f8
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0x0FAac116E79Fa0deB285BB891deFd8b33B575663` deployed on base
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] 0x0FAac116E79Fa0deB285BB891deFd8b33B575663.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `czj2l4qvg2xwf6ggerqydmkh2yztfydd2m8h6ez4hns48ebpwq`
+	URL: https://basescan.org/address/0x0faac116e79fa0deb285bb891defd8b33b575663
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+All (2) contracts were verified!
+
+Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/DeployOrUpgradeStreamingEscrows.s.sol/8453/run-latest.json
+
+Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/cache/DeployOrUpgradeStreamingEscrows.s.sol/8453/run-latest.json
+

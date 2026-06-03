@@ -1,0 +1,84 @@
+=== gnosis (100) ===
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  Factory 0x7472b2197b38233A97d0134d62cCD38aa4b93112
+  Factory implementation 0x733C92472a36a8AB7b334edF9451A84a760aFe62
+  Superfluid host 0x2dFe937cD98Ab92e59cF3139138f18c823a4efE7
+  Escrow implementation 0x249C0d25b0Fec33Deb2030d97dcb31305248b4f8
+  Escrows 0
+  Existing escrow upgrades 0
+  Deploy only false
+  Safe payload true
+  Safe payload written /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/gnosis-streaming-escrow-upgrade-payload.json
+  Existing escrows checked 0
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 100
+
+Estimated gas price: 0.820120902 gwei
+
+Estimated total gas used for script: 5634189
+
+Estimated amount required: 0.004620716164718478 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+##
+Start verification for (2) contracts
+Start verifying contract `0x67c3218CaeeA0FE875488A686d0511CB9c744E1b` deployed on xdai
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x67c3218CaeeA0FE875488A686d0511CB9c744E1b.
+Warning: Could not detect deployment: Unable to locate ContractCode at 0x67c3218caeea0fe875488a686d0511cb9c744e1b; waiting 5 seconds before trying again (4 tries remaining)
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x67c3218CaeeA0FE875488A686d0511CB9c744E1b.
+Warning: Could not detect deployment: Unable to locate ContractCode at 0x67c3218caeea0fe875488a686d0511cb9c744e1b; waiting 5 seconds before trying again (3 tries remaining)
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x67c3218CaeeA0FE875488A686d0511CB9c744E1b.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `whgcpkctk9naevgxjeqvzglwzgehwpngkdd4cja6nwt7vkhs1b`
+	URL: https://gnosisscan.io/address/0x67c3218caeea0fe875488a686d0511cb9c744e1b
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0x249C0d25b0Fec33Deb2030d97dcb31305248b4f8` deployed on xdai
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] 0x249C0d25b0Fec33Deb2030d97dcb31305248b4f8.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `3ymzjevjd8guxwlypricu1uky4pe2epdgulqumwzyix2quyvmn`
+	URL: https://gnosisscan.io/address/0x249c0d25b0fec33deb2030d97dcb31305248b4f8
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+All (2) contracts were verified!
+
+Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/DeployOrUpgradeStreamingEscrows.s.sol/100/run-latest.json
+
+Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/cache/DeployOrUpgradeStreamingEscrows.s.sol/100/run-latest.json
+

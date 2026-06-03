@@ -1,0 +1,78 @@
+=== ethereum (1) ===
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  Factory 0x87ad877E190a18fA4Da4F4CaBFd5C137353f5f57
+  Factory implementation 0x099381D60A03ECe682F9b90af60238630D2D95e9
+  Superfluid host 0x4E583d9390082B65Bef884b629DFA426114CED6d
+  Escrow implementation 0xC9D4e0DACd937364793278180551E59d93CD43f9
+  Escrows 0
+  Existing escrow upgrades 0
+  Deploy only false
+  Safe payload true
+  Safe payload written /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/ethereum-streaming-escrow-upgrade-payload.json
+  Existing escrows checked 0
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 1
+
+Estimated gas price: 0.854729106 gwei
+
+Estimated total gas used for script: 5634189
+
+Estimated amount required: 0.004815705327005034 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+##
+Start verification for (2) contracts
+Start verifying contract `0xFEbb95EAf730754f325BcA7d0b083dd10d5000f0` deployed on mainnet
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0xFEbb95EAf730754f325BcA7d0b083dd10d5000f0.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `hjcenxfbgzqretqgbbypa5p9pd5s27qujtui8humlp4uqc8jdi`
+	URL: https://etherscan.io/address/0xfebb95eaf730754f325bca7d0b083dd10d5000f0
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0xC9D4e0DACd937364793278180551E59d93CD43f9` deployed on mainnet
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] 0xC9D4e0DACd937364793278180551E59d93CD43f9.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `h1tcauxxj3r38b8rskqriiralgfpnpje91jppvszw9eblqktcu`
+	URL: https://etherscan.io/address/0xc9d4e0dacd937364793278180551e59d93cd43f9
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+All (2) contracts were verified!
+
+Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/DeployOrUpgradeStreamingEscrows.s.sol/1/run-latest.json
+
+Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/cache/DeployOrUpgradeStreamingEscrows.s.sol/1/run-latest.json
+

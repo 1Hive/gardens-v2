@@ -42,6 +42,7 @@ cast wallet import <ACCOUNT_NAME> --interactive
 ```
 
 This will prompt locally for:
+
 - the private key
 - the keystore password
 
@@ -70,6 +71,13 @@ Do not ask the user to paste raw private keys or keystore passwords into chat.
 - If a function requires an IPFS metadata pointer or `ipfsHash`, prepare the metadata payload first, upload it to IPFS, and only then encode the write using the resulting hash or pointer.
 - In the hosted Gardens app, the frontend IPFS upload route is `https://app.gardens.fund/api/ipfs`. Inside the app code this appears as the relative route `/api/ipfs`.
 - If execution depends on missing local prerequisites such as Foundry or a keystore, help the user establish them first instead of silently falling back to an incomplete execution plan.
+
+## Gardens Safe Payload Submission Notes
+
+- For Gardens owner Safe Transaction Service submissions, `0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD` is a proposer/delegate, not a Safe owner. Do not reject it just because it is absent from `getOwners()`.
+- This proposer is backed locally by `~/.foundry/keystores/pkGarden` in the contracts workspace flow.
+- The local `pkGarden` keystore may decrypt with the same password env used for `PK_DEPLOYER_PW` in this workspace.
+- Use `--skip-pending` unless the user explicitly wants to replace an existing queued nonce.
 
 ## Address Source
 
@@ -207,6 +215,7 @@ Use either a named Foundry account or a direct keystore path.
 Prefer prompting for the password locally at runtime or using `--password-file` rather than pasting the password into chat.
 
 Before suggesting or running a keystore-backed send:
+
 - check whether the named account already exists with `cast wallet list`
 - if it does not exist, guide the user through `cast wallet import <ACCOUNT_NAME> --interactive` or run it directly if the agent can use the terminal interactively
 - if Foundry itself is missing, install it first instead of presenting a broken `cast send` command

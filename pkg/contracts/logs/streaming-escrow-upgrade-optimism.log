@@ -1,0 +1,82 @@
+=== optimism (10) ===
+gas_price=1400478
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  Factory 0x71520D667f5ab45F68c4E8455FfA1F9a7F792eAc
+  Factory implementation 0x733C92472a36a8AB7b334edF9451A84a760aFe62
+  Superfluid host 0x567c4B141ED61923967cA25Ef4906C8781069a10
+  Escrow implementation 0x3F56e0E9e641EbA6CE880a5c0BB3a403e81B1F5C
+  Escrows 6
+  Existing escrow upgrades 6
+  Deploy only false
+  Safe payload true
+  Safe payload written /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/optimism-streaming-escrow-upgrade-payload.json
+  Existing escrows checked 6
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 10
+
+Estimated gas price: 0.001400478 gwei
+
+Estimated total gas used for script: 5634189
+
+Estimated amount required: 0.000007890557742342 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+##
+Start verification for (2) contracts
+Start verifying contract `0x6D601A0CF2F375B24B5e7299b31253173DD4b1b6` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x6D601A0CF2F375B24B5e7299b31253173DD4b1b6.
+Warning: Could not detect deployment: Unable to locate ContractCode at 0x6d601a0cf2f375b24b5e7299b31253173dd4b1b6; waiting 5 seconds before trying again (4 tries remaining)
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x6D601A0CF2F375B24B5e7299b31253173DD4b1b6.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `91yryfy1wniwd6vbn66gka6nbmzpzansuu8pbc2jrzemr165xw`
+	URL: https://optimistic.etherscan.io/address/0x6d601a0cf2f375b24b5e7299b31253173dd4b1b6
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0x3F56e0E9e641EbA6CE880a5c0BB3a403e81B1F5C` deployed on optimism
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] 0x3F56e0E9e641EbA6CE880a5c0BB3a403e81B1F5C.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `u4lrgzuaqcga1jrrbjxyab5mgmvjwafwhwfj63m9urlpdgyum1`
+	URL: https://optimistic.etherscan.io/address/0x3f56e0e9e641eba6ce880a5c0bb3a403e81b1f5c
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+All (2) contracts were verified!
+
+Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/DeployOrUpgradeStreamingEscrows.s.sol/10/run-latest.json
+
+Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/cache/DeployOrUpgradeStreamingEscrows.s.sol/10/run-latest.json
+

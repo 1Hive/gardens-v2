@@ -1,0 +1,16 @@
+=== regenerate base (8453) impl=0x0faac116e79fa0deb285bb891defd8b33b575663 ===
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  Factory 0x3B3333665DE09494C2491171c06A6A161F319032
+  Factory implementation 0xBeA8F6b36C03ce147C80a7DE691bba74C0384EF2
+  Superfluid host 0x4C073B3baB6d8826b8C5b229f3cfdC1eC6E47E74
+  Escrow implementation 0x0FAac116E79Fa0deB285BB891deFd8b33B575663
+  Escrows 0
+  Existing escrow upgrades 0
+  Deploy only false
+  Upgrade factory false
+  Safe payload true
+  Safe payload written /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/base-streaming-escrow-upgrade-payload.json
+  Existing escrows checked 0

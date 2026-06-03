@@ -435,6 +435,51 @@ tasks:
       - task: rehearse-upgrade-gnosis
       - task: rehearse-upgrade-base
       - task: rehearse-upgrade-celo
+  rehearse-safe-payload-chain:
+    desc: Apply a Safe Transaction Builder payload on a local Anvil fork for CHAIN, then smoke test the fork
+    vars:
+      CHAIN: celo
+    cmds:
+      - cmd: |
+          CHAIN="${CHAIN:-{{.CHAIN}}}" bash ./scripts/rehearse-safe-payload.sh "${CHAIN:-{{.CHAIN}}}"
+  rehearse-safe-payload-ethereum:
+    desc: Rehearse Safe payload on ethereum
+    cmds:
+      - cmd: CHAIN=ethereum task rehearse-safe-payload-chain
+  rehearse-safe-payload-arbitrum:
+    desc: Rehearse Safe payload on arbitrum
+    cmds:
+      - cmd: CHAIN=arbitrum task rehearse-safe-payload-chain
+  rehearse-safe-payload-optimism:
+    desc: Rehearse Safe payload on optimism
+    cmds:
+      - cmd: CHAIN=optimism task rehearse-safe-payload-chain
+  rehearse-safe-payload-polygon:
+    desc: Rehearse Safe payload on polygon
+    cmds:
+      - cmd: CHAIN=polygon task rehearse-safe-payload-chain
+  rehearse-safe-payload-gnosis:
+    desc: Rehearse Safe payload on gnosis
+    cmds:
+      - cmd: CHAIN=gnosis task rehearse-safe-payload-chain
+  rehearse-safe-payload-base:
+    desc: Rehearse Safe payload on base
+    cmds:
+      - cmd: CHAIN=base task rehearse-safe-payload-chain
+  rehearse-safe-payload-celo:
+    desc: Rehearse Safe payload on celo
+    cmds:
+      - cmd: CHAIN=celo task rehearse-safe-payload-chain
+  rehearse-safe-payload-all-mainnets:
+    desc: Rehearse Safe payloads on ethereum, arbitrum, optimism, polygon, gnosis, base, celo
+    cmds:
+      - task: rehearse-safe-payload-ethereum
+      - task: rehearse-safe-payload-arbitrum
+      - task: rehearse-safe-payload-optimism
+      - task: rehearse-safe-payload-polygon
+      - task: rehearse-safe-payload-gnosis
+      - task: rehearse-safe-payload-base
+      - task: rehearse-safe-payload-celo
   cast1:
     desc: Cast1
     cmds:

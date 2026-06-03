@@ -1,0 +1,16 @@
+=== regenerate arbitrum (42161) impl=0x431707821d3972d357f11cdb1dcb2a805165b495 ===
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  Factory 0xbe52a852eAF824cd221AA55c3Ee054f6c8c712Df
+  Factory implementation 0x94491f1108c84a38cf6f060e90b01B5D0ea30e89
+  Superfluid host 0xCf8Acb4eF033efF16E8080aed4c7D5B9285D2192
+  Escrow implementation 0x431707821D3972d357f11CdB1dcB2a805165b495
+  Escrows 0
+  Existing escrow upgrades 0
+  Deploy only false
+  Upgrade factory false
+  Safe payload true
+  Safe payload written /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/arbitrum-streaming-escrow-upgrade-payload.json
+  Existing escrows checked 0

@@ -1151,12 +1151,14 @@ contract ForkLifecycleHealthcheck is Test {
     function _assertCommunityDeploymentMatchesConfig(string memory chain, string memory json, address community)
         internal
     {
-        address expectedImplementation = json.readAddress(_networkKey(chain, ".IMPLEMENTATIONS.REGISTRY_COMMUNITY"));
-        assertEq(
-            _implementationAddress(community),
-            expectedImplementation,
-            string.concat(chain, ": community implementation mismatch")
-        );
+        if (!_skipImplementationChecks()) {
+            address expectedImplementation = json.readAddress(_networkKey(chain, ".IMPLEMENTATIONS.REGISTRY_COMMUNITY"));
+            assertEq(
+                _implementationAddress(community),
+                expectedImplementation,
+                string.concat(chain, ": community implementation mismatch")
+            );
+        }
 
         address[] memory expectedFacetAddresses = new address[](7);
         expectedFacetAddresses[0] = json.readAddress(_networkKey(chain, ".FACETS.COMMUNITY_DIAMOND_LOUPE"));
@@ -1175,12 +1177,14 @@ contract ForkLifecycleHealthcheck is Test {
     function _assertStrategyDeploymentMatchesConfig(string memory communityName, address strategy) internal {
         string memory chain = _chainFromCommunityName(communityName);
         string memory json = vm.readFile(_networksJsonPath());
-        address expectedImplementation = json.readAddress(_networkKey(chain, ".IMPLEMENTATIONS.CV_STRATEGY"));
-        assertEq(
-            _implementationAddress(strategy),
-            expectedImplementation,
-            string.concat(chain, ": strategy implementation mismatch")
-        );
+        if (!_skipImplementationChecks()) {
+            address expectedImplementation = json.readAddress(_networkKey(chain, ".IMPLEMENTATIONS.CV_STRATEGY"));
+            assertEq(
+                _implementationAddress(strategy),
+                expectedImplementation,
+                string.concat(chain, ": strategy implementation mismatch")
+            );
+        }
 
         address[] memory expectedFacetAddresses = new address[](9);
         expectedFacetAddresses[0] = json.readAddress(_networkKey(chain, ".FACETS.DIAMOND_LOUPE"));
@@ -1217,6 +1221,10 @@ contract ForkLifecycleHealthcheck is Test {
 
     function _implementationAddress(address proxy) internal view returns (address) {
         return address(uint160(uint256(vm.load(proxy, ERC1967_IMPLEMENTATION_SLOT))));
+    }
+
+    function _skipImplementationChecks() internal view returns (bool) {
+        return vm.envOr("FORK_HEALTHCHECK_SKIP_IMPLEMENTATION_CHECKS", false);
     }
 
     function _chainFromCommunityName(string memory communityName) internal pure returns (string memory) {

@@ -1,0 +1,16 @@
+=== regenerate celo (42220) impl=0x7a7f66d4f6f388434cf754ff1cf306e87c412977 ===
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  Factory 0xA2e7637A6Ffd7576b7352ec7A34b9EE38E7E7E6C
+  Factory implementation 0xb9792C4274d3f4Eb9021636B2015a825651EE15B
+  Superfluid host 0xA4Ff07cF81C02CFD356184879D953970cA957585
+  Escrow implementation 0x7A7f66D4F6f388434cF754FF1CF306e87C412977
+  Escrows 17
+  Existing escrow upgrades 17
+  Deploy only false
+  Upgrade factory false
+  Safe payload true
+  Safe payload written /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/celo-streaming-escrow-upgrade-payload.json
+  Existing escrows checked 17

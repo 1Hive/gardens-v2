@@ -28,6 +28,9 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
     address internal requestedEscrowImplementation;
     bool internal deployImplementationOnly;
     bool internal generateSafePayload;
+    bool internal activeDeployOnly;
+    bool internal activeSafePayload;
+    bool internal activeUpgradeFactory;
 
     function run(string memory network, address _newEscrowImplementation, bool implementationOnly, bool safePayload)
         public
@@ -51,10 +54,11 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
     }
 
     function runCurrentNetwork(string memory networkJson) public override {
-        bool deployOnly = deployImplementationOnly || vm.envOr("DEPLOY_ONLY", false);
+        activeDeployOnly = deployImplementationOnly || vm.envOr("DEPLOY_ONLY", false);
+        activeUpgradeFactory = vm.envOr("UPGRADE_FACTORY", true);
         bool safePayloadRequested = generateSafePayload || vm.envOr("SAFE_PAYLOAD", false);
         bool directBroadcast = networkJson.readBool(getKeyNetwork(".no-safe"));
-        bool safePayload = safePayloadRequested && !directBroadcast;
+        activeSafePayload = safePayloadRequested && !directBroadcast;
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
         require(proxyOwner != address(0), "PROXY_OWNER is zero");
 
@@ -69,7 +73,7 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
             console2.log("SAFE_PAYLOAD ignored on no-safe network", CURRENT_NETWORK);
         }
 
-        if (safePayload) {
+        if (activeSafePayload) {
             address safeOwner = ProxyOwner(proxyOwner).mainOwner();
             payloadWriter = _initPayloadWriter(safeOwner, networkJson);
         }
@@ -108,7 +112,7 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
             console2.log("Escrow implementation", initialEscrowImplementation);
         } else {
             factory = StreamingEscrowFactory(factoryProxy);
-            if (!safePayload && !deployOnly) {
+            if (!activeSafePayload && !activeDeployOnly) {
                 address currentOwner = factory.owner();
                 require(
                     currentOwner == SENDER,
@@ -116,30 +120,38 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
                 );
             }
             currentFactoryImplementation = _implementationOf(factoryProxy);
-            targetFactoryImplementation = _resolveFactoryImplementation(currentFactoryImplementation);
-            if (_codehash(currentFactoryImplementation) != _codehash(targetFactoryImplementation)) {
-                if (safePayload) {
-                    payloadWriter = _appendTransaction(
-                        payloadWriter,
-                        _createUpgradeToTransactionJson(factoryProxy, targetFactoryImplementation)
-                    );
-                } else if (!deployOnly) {
-                    factory.upgradeTo(targetFactoryImplementation);
+            if (activeUpgradeFactory) {
+                targetFactoryImplementation = _resolveFactoryImplementation(currentFactoryImplementation);
+                if (_codehash(currentFactoryImplementation) != _codehash(targetFactoryImplementation)) {
+                    if (activeSafePayload) {
+                        payloadWriter = _appendTransaction(
+                            payloadWriter, _createUpgradeToTransactionJson(factoryProxy, targetFactoryImplementation)
+                        );
+                    } else if (!activeDeployOnly) {
+                        factory.upgradeTo(targetFactoryImplementation);
+                    }
                 }
+            } else {
+                targetFactoryImplementation = currentFactoryImplementation;
             }
         }
 
         address targetEscrowImplementation = _resolveEscrowImplementation(factory.escrowImplementation());
         if (_codehash(factory.escrowImplementation()) != _codehash(targetEscrowImplementation)) {
-            if (safePayload) {
+            if (activeSafePayload) {
                 payloadWriter = _appendTransaction(
                     payloadWriter,
                     _createSetEscrowImplementationTransactionJson(factoryProxy, targetEscrowImplementation)
                 );
-            } else if (!deployOnly) {
+            } else if (!activeDeployOnly) {
                 factory.setEscrowImplementation(targetEscrowImplementation);
             }
         }
+
+        uint256 total;
+        uint256 escrowUpgradeCount;
+        (payloadWriter, total, escrowUpgradeCount) =
+            _upgradeExistingEscrows(factory, targetEscrowImplementation, payloadWriter);
 
         if (factoryProxy != address(0) && targetFactoryImplementation == address(0)) {
             targetFactoryImplementation = _implementationOf(factoryProxy);
@@ -149,16 +161,17 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
         _writeNetworkAddress(".IMPLEMENTATIONS.STREAMING_ESCROW", targetEscrowImplementation);
         _writeNetworkAddress(".ENVS.STREAMING_ESCROW_FACTORY", factoryProxy);
 
-        uint256 total = factory.escrowsLength();
         console2.log("Factory", factoryProxy);
         console2.log("Factory implementation", _implementationOf(factoryProxy));
         console2.log("Superfluid host", configuredHost);
         console2.log("Escrow implementation", targetEscrowImplementation);
         console2.log("Escrows", total);
-        console2.log("Deploy only", deployOnly);
-        console2.log("Safe payload", safePayload);
+        console2.log("Existing escrow upgrades", escrowUpgradeCount);
+        console2.log("Deploy only", activeDeployOnly);
+        console2.log("Upgrade factory", activeUpgradeFactory);
+        console2.log("Safe payload", activeSafePayload);
 
-        if (safePayload) {
+        if (activeSafePayload) {
             if (payloadWriter.hasEntries) {
                 _finalizePayloadWriter(payloadWriter);
                 console2.log("Safe payload written", payloadWriter.path);
@@ -168,11 +181,36 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
             }
         }
 
-        // NOTE: Existing escrow proxies are intentionally NOT upgraded here.
-        // This keeps current storage/layout untouched for already-deployed escrows.
-        // The factory template above is still updated, so only newly deployed escrows use the new implementation.
-        console2.log("Existing escrow upgrades disabled");
-        console2.log("Existing escrows left untouched", total);
+        console2.log("Existing escrows checked", total);
+    }
+
+    function _upgradeExistingEscrows(
+        StreamingEscrowFactory factory,
+        address targetEscrowImplementation,
+        JsonWriter memory payloadWriter
+    ) internal returns (JsonWriter memory writer, uint256 total, uint256 upgradeCount) {
+        writer = payloadWriter;
+        total = factory.escrowsLength();
+
+        for (uint256 i = 0; i < total; i++) {
+            address escrow = factory.escrows(i);
+            if (escrow.code.length == 0) {
+                console2.log("Skipping escrow with no code", escrow);
+                continue;
+            }
+
+            address currentEscrowImplementation = _implementationOf(escrow);
+            if (_codehash(currentEscrowImplementation) == _codehash(targetEscrowImplementation)) {
+                continue;
+            }
+
+            upgradeCount++;
+            if (activeSafePayload) {
+                writer = _appendTransaction(writer, _createUpgradeToTransactionJson(escrow, targetEscrowImplementation));
+            } else if (!activeDeployOnly) {
+                IStreamingEscrowUUPS(escrow).upgradeTo(targetEscrowImplementation);
+            }
+        }
     }
 
     function _initPayloadWriter(address safeOwner, string memory networkJson)
@@ -257,9 +295,7 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
                 '{"to":"',
                 _addressToString(factoryProxy),
                 '","value":"0","data":"',
-                _bytesToHexString(
-                    abi.encodeWithSignature("setEscrowImplementation(address)", newEscrowImplementation)
-                ),
+                _bytesToHexString(abi.encodeWithSignature("setEscrowImplementation(address)", newEscrowImplementation)),
                 '","operation":0,"contractMethod":{"inputs":[{"internalType":"address","name":"implementation","type":"address"}],"name":"setEscrowImplementation","payable":false},"contractInputsValues":{"implementation":"',
                 _addressToString(newEscrowImplementation),
                 '"}}'
@@ -282,7 +318,10 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
 
     function _resolveFactoryImplementation(address currentFactoryImplementation) internal returns (address) {
         address candidate = address(new StreamingEscrowFactory());
-        if (currentFactoryImplementation != address(0) && _codehash(candidate) == _codehash(currentFactoryImplementation)) {
+        if (
+            currentFactoryImplementation != address(0)
+                && _codehash(candidate) == _codehash(currentFactoryImplementation)
+        ) {
             return currentFactoryImplementation;
         }
         return candidate;
@@ -294,7 +333,8 @@ contract DeployOrUpgradeStreamingEscrows is BaseMultiChain {
         }
 
         address candidate = address(new StreamingEscrow());
-        if (currentEscrowImplementation != address(0) && _codehash(candidate) == _codehash(currentEscrowImplementation)) {
+        if (currentEscrowImplementation != address(0) && _codehash(candidate) == _codehash(currentEscrowImplementation))
+        {
             return currentEscrowImplementation;
         }
         return candidate;

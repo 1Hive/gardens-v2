@@ -1,0 +1,101 @@
+=== polygon (137) ===
+gas_price=385383547620
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  Factory 0x856a184C5547A0945F66D0583d4C223813bE1651
+  Factory implementation 0x8a80267502b59EF3AE6704a8459a8A4fcA796C8d
+  Superfluid host 0x3E14dC1b13c488a8d5D310918780c983bD5982E7
+  Escrow implementation 0xfa38616839F195A9A2a5f89D22780930ae45A467
+  Escrows 0
+  Existing escrow upgrades 0
+  Deploy only false
+  Safe payload true
+  Safe payload written /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/polygon-streaming-escrow-upgrade-payload.json
+  Existing escrows checked 0
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 137
+
+Estimated gas price: 385.38354762 gwei
+
+Estimated total gas used for script: 5634189
+
+Estimated amount required: 2.17132374478158018 POL
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+##
+Start verification for (2) contracts
+Start verifying contract `0x8b087BB24E3f0EDe275C758423F16F6D429Ba912` deployed on polygon
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x8b087BB24E3f0EDe275C758423F16F6D429Ba912.
+Warning: Could not detect deployment: Unable to locate ContractCode at 0x8b087bb24e3f0ede275c758423f16f6d429ba912; waiting 5 seconds before trying again (4 tries remaining)
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x8b087BB24E3f0EDe275C758423F16F6D429Ba912.
+Warning: Could not detect deployment: Unable to locate ContractCode at 0x8b087bb24e3f0ede275c758423f16f6d429ba912; waiting 5 seconds before trying again (3 tries remaining)
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x8b087BB24E3f0EDe275C758423F16F6D429Ba912.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `cbut1navytxygt4zjlecgkdxxc8eulwyfvz3m899hupdautu9k`
+	URL: https://polygonscan.com/address/0x8b087bb24e3f0ede275c758423f16f6d429ba912
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (6 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (5 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (4 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (3 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0xfa38616839F195A9A2a5f89D22780930ae45A467` deployed on polygon
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] 0xfa38616839F195A9A2a5f89D22780930ae45A467.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `pw3izizek9enx2zxe7jcfnscrrdbkgiyfmnme9qch63hnp48iu`
+	URL: https://polygonscan.com/address/0xfa38616839f195a9a2a5f89d22780930ae45a467
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+All (2) contracts were verified!
+
+Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/DeployOrUpgradeStreamingEscrows.s.sol/137/run-latest.json
+
+Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/cache/DeployOrUpgradeStreamingEscrows.s.sol/137/run-latest.json
+

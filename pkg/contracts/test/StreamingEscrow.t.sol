@@ -438,6 +438,19 @@ contract StreamingEscrowTest is Test {
         assertEq(token.balanceOf(beneficiary), 70);
     }
 
+    function test_syncOutflow_does_not_drain_excess_when_disputed() public {
+        pool.setMemberFlowRate(address(escrow), 10);
+        forwarder.setDeposit(30);
+        token.mint(address(escrow), 100);
+        escrow.setDisputed(true);
+
+        vm.prank(other);
+        escrow.syncOutflow();
+
+        assertEq(token.balanceOf(address(escrow)), 100);
+        assertEq(token.balanceOf(beneficiary), 0);
+    }
+
     function test_setBeneficiary_updates_flow_when_not_disputed() public {
         pool.setMemberFlowRate(address(escrow), 123);
         uint256 start = host.callAgreementCount();
@@ -573,9 +586,7 @@ contract StreamingEscrowTest is Test {
         token.mint(address(escrow), 55);
         token.setTransferShouldSucceed(false);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(StreamingEscrow.SuperTokenTransferFailed.selector, beneficiary, 55)
-        );
+        vm.expectRevert(abi.encodeWithSelector(StreamingEscrow.SuperTokenTransferFailed.selector, beneficiary, 55));
         escrow.drainToBeneficiary();
     }
 
@@ -585,9 +596,7 @@ contract StreamingEscrowTest is Test {
         token.mint(address(escrow), 100);
         token.setTransferShouldSucceed(false);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(StreamingEscrow.SuperTokenTransferFailed.selector, beneficiary, 70)
-        );
+        vm.expectRevert(abi.encodeWithSelector(StreamingEscrow.SuperTokenTransferFailed.selector, beneficiary, 70));
         escrow.claim();
     }
 
@@ -674,5 +683,4 @@ contract StreamingEscrowTest is Test {
         escrow.exposedSetOutflow(1, address(0));
         assertEq(token.flowCallCount(), 0);
     }
-
 }

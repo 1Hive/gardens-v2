@@ -1,0 +1,79 @@
+=== arbitrum (42161) ===
+gas_price=28842800
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  Factory 0xbe52a852eAF824cd221AA55c3Ee054f6c8c712Df
+  Factory implementation 0x94491f1108c84a38cf6f060e90b01B5D0ea30e89
+  Superfluid host 0xCf8Acb4eF033efF16E8080aed4c7D5B9285D2192
+  Escrow implementation 0x431707821D3972d357f11CdB1dcB2a805165b495
+  Escrows 0
+  Existing escrow upgrades 0
+  Deploy only false
+  Safe payload true
+  Safe payload written /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/arbitrum-streaming-escrow-upgrade-payload.json
+  Existing escrows checked 0
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 42161
+
+Estimated gas price: 0.0288428 gwei
+
+Estimated total gas used for script: 5801194
+
+Estimated amount required: 0.0001673226783032 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+##
+Start verification for (2) contracts
+Start verifying contract `0x6C59b016146E4bcA6521ceb5604ecDdc2D5f4add` deployed on arbitrum
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrowFactory.sol:StreamingEscrowFactory] 0x6C59b016146E4bcA6521ceb5604ecDdc2D5f4add.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `j7kgxezbe3dk9nh2scdbwacgjk68ctae2xybafumuutdxae4n9`
+	URL: https://arbiscan.io/address/0x6c59b016146e4bca6521ceb5604ecddc2d5f4add
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0x431707821D3972d357f11CdB1dcB2a805165b495` deployed on arbitrum
+EVM version: prague
+Compiler version: 0.8.23
+Optimizations:    0
+
+Submitting verification for [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] 0x431707821D3972d357f11CdB1dcB2a805165b495.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `yzdiy9w4wb8szctyjcf6tmigh2hqja63l4ua2jzqhviie2wgkz`
+	URL: https://arbiscan.io/address/0x431707821d3972d357f11cdb1dcb2a805165b495
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+All (2) contracts were verified!
+
+Transactions saved to: /home/corantin/Documents/GitHub/gardens-v2/broadcast/DeployOrUpgradeStreamingEscrows.s.sol/42161/run-latest.json
+
+Sensitive values saved to: /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/cache/DeployOrUpgradeStreamingEscrows.s.sol/42161/run-latest.json
+

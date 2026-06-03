@@ -1,0 +1,16 @@
+=== regenerate optimism (10) impl=0x3f56e0e9e641eba6ce880a5c0bb3a403e81b1f5c ===
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  Factory 0x71520D667f5ab45F68c4E8455FfA1F9a7F792eAc
+  Factory implementation 0x733C92472a36a8AB7b334edF9451A84a760aFe62
+  Superfluid host 0x567c4B141ED61923967cA25Ef4906C8781069a10
+  Escrow implementation 0x3F56e0E9e641EbA6CE880a5c0BB3a403e81B1F5C
+  Escrows 6
+  Existing escrow upgrades 6
+  Deploy only false
+  Upgrade factory false
+  Safe payload true
+  Safe payload written /home/corantin/Documents/GitHub/gardens-v2/pkg/contracts/transaction-builder/optimism-streaming-escrow-upgrade-payload.json
+  Existing escrows checked 6
