@@ -123,6 +123,54 @@ describe("rebalance decision", () => {
     });
   });
 
+  it("runs when an escrow outflow is closed while the GDA member flow is active", () => {
+    expect(
+      evaluateRebalanceDecision(
+        baseInput({
+          currentTotalFlowRate: 1_000n,
+          proposals: [
+            {
+              status: ACTIVE_STATUS,
+              conviction: 15_000n,
+              currentUnits: 1_000n,
+              currentFlowRate: 1_000n,
+              currentOutflowRate: 0n,
+              escrowDisputed: false,
+              hasEscrow: true,
+            },
+          ],
+        }),
+      ),
+    ).toEqual({
+      shouldRun: true,
+      reason: "escrow_outflow_drift_50bps",
+    });
+  });
+
+  it("runs when a disputed escrow still has an outgoing beneficiary flow", () => {
+    expect(
+      evaluateRebalanceDecision(
+        baseInput({
+          currentTotalFlowRate: 1_000n,
+          proposals: [
+            {
+              status: DISPUTED_STATUS,
+              conviction: 15_000n,
+              currentUnits: 1_000n,
+              currentFlowRate: 1_000n,
+              currentOutflowRate: 1_000n,
+              escrowDisputed: true,
+              hasEscrow: true,
+            },
+          ],
+        }),
+      ),
+    ).toEqual({
+      shouldRun: true,
+      reason: "escrow_outflow_drift_50bps",
+    });
+  });
+
   it("skips when all active proposals are below threshold and flow is already stopped", () => {
     expect(
       evaluateRebalanceDecision(

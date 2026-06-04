@@ -21,6 +21,8 @@ export type RebalanceDecisionInput = {
     conviction: bigint;
     currentUnits: bigint;
     currentFlowRate: bigint;
+    currentOutflowRate?: bigint;
+    escrowDisputed?: boolean;
     hasEscrow: boolean;
   }>;
 };
@@ -170,6 +172,24 @@ export function evaluateRebalanceDecision({
       });
     },
   );
+
+  const hasSignificantEscrowOutflowDrift = activeProposals.some((proposal) => {
+    if (proposal.currentOutflowRate == null) return false;
+    const targetOutflowRate =
+      proposal.escrowDisputed === true ? 0n : proposal.currentFlowRate;
+    return isSignificantRateChange({
+      current: proposal.currentOutflowRate,
+      target: targetOutflowRate,
+      thresholdBps,
+    });
+  });
+
+  if (hasSignificantEscrowOutflowDrift) {
+    return {
+      shouldRun: true,
+      reason: `escrow_outflow_drift_${thresholdBps}bps`,
+    };
+  }
 
   if (hasSignificantPoolRateChange || hasSignificantProposalRateChange) {
     return {

@@ -124,6 +124,15 @@ const SUPERFLUID_POOL_ABI = parseAbi([
   "function getMemberFlowRate(address memberAddr) view returns (int96)",
 ]);
 
+const STREAMING_ESCROW_ABI = parseAbi([
+  "function beneficiary() view returns (address)",
+  "function disputed() view returns (bool)",
+]);
+
+const CFA_FORWARDER_ABI = parseAbi([
+  "function getFlowrate(address token, address sender, address receiver) view returns (int96)",
+]);
+
 const STRATEGY_PAGE_SIZE = 500;
 const STREAMING_PROPOSAL_TYPE = 2;
 const USD_PRECISION = 6;
@@ -131,6 +140,8 @@ const USD_PRECISION_MULTIPLIER = 10 ** USD_PRECISION;
 const WEI_PER_NATIVE_TOKEN = 10n ** 18n;
 const REBALANCE_KEEPER_EXCLUDED_CHAIN_IDS = new Set<number>([421614]);
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+const CFA_V1_FORWARDER =
+  "0xcfA132E353cB4E398080B9700609bb008eceB125" as Address;
 const GARDENS_APP_BASE_URL = "https://app.gardens.fund";
 const PROPOSAL_MULTICALL_CHUNK_SIZE = 75;
 
@@ -206,9 +217,7 @@ const normalizeTimestamp = (timestamp: string | number | null | undefined) => {
   return raw === "" ? null : raw;
 };
 
-const timestampToDateTime = (
-  timestamp: string | number | null | undefined,
-) => {
+const timestampToDateTime = (timestamp: string | number | null | undefined) => {
   const normalized = normalizeTimestamp(timestamp);
   if (normalized == null) return null;
 
@@ -227,9 +236,9 @@ const buildGardenUri = ({
   communityAddress: Address | null;
   strategyAddress: Address;
 }) =>
-  communityAddress == null ?
-    null
-  : `${GARDENS_APP_BASE_URL}/gardens/${chainId}/${communityAddress}/${strategyAddress}`;
+  communityAddress == null ? null : (
+    `${GARDENS_APP_BASE_URL}/gardens/${chainId}/${communityAddress}/${strategyAddress}`
+  );
 
 const readBigintEnv = (key: string, fallback: bigint) => {
   const raw = process.env[key];
@@ -283,7 +292,12 @@ async function multicallInChunks({
   publicClient: PublicClient;
   contracts: Array<{
     address: Address;
-    abi: typeof REBALANCE_KEEPER_ABI | typeof SUPER_TOKEN_ABI | typeof SUPERFLUID_POOL_ABI;
+    abi:
+      | typeof REBALANCE_KEEPER_ABI
+      | typeof SUPER_TOKEN_ABI
+      | typeof SUPERFLUID_POOL_ABI
+      | typeof STREAMING_ESCROW_ABI
+      | typeof CFA_FORWARDER_ABI;
     functionName: string;
     args?: readonly unknown[];
   }>;
@@ -513,6 +527,52 @@ async function shouldRunRebalance({
       ]),
     });
 
+    const escrowStateResults = await multicallInChunks({
+      publicClient,
+      contracts: proposalSnapshots.flatMap((proposal) => [
+        {
+          address: proposal.escrow,
+          abi: STREAMING_ESCROW_ABI,
+          functionName: "beneficiary",
+        },
+        {
+          address: proposal.escrow,
+          abi: STREAMING_ESCROW_ABI,
+          functionName: "disputed",
+        },
+      ]),
+    });
+
+    const escrowOutflowContracts = proposalSnapshots.flatMap(
+      (proposal, index) => {
+        const beneficiaryResult = escrowStateResults[index * 2];
+        const beneficiary =
+          (
+            beneficiaryResult?.status === "success" &&
+            beneficiaryResult.result != null &&
+            isAddress(String(beneficiaryResult.result))
+          ) ?
+            (beneficiaryResult.result as Address)
+          : null;
+
+        return beneficiary == null || beneficiary === ZERO_ADDRESS ?
+            []
+          : [
+              {
+                address: CFA_V1_FORWARDER,
+                abi: CFA_FORWARDER_ABI,
+                functionName: "getFlowrate",
+                args: [superTokenAddress, proposal.escrow, beneficiary],
+              },
+            ];
+      },
+    );
+    const escrowOutflowResults = await multicallInChunks({
+      publicClient,
+      contracts: escrowOutflowContracts,
+    });
+    let escrowOutflowResultIndex = 0;
+
     return safeEvaluateRebalanceDecision(
       {
         // Candidate discovery already filters enabled strategies. The internal
@@ -528,15 +588,36 @@ async function shouldRunRebalance({
         currentTotalFlowRate,
         hasStreamingConfig: true,
         thresholdBps,
-        proposals: proposalSnapshots.map((proposal, index) => ({
-          status: proposal.status,
-          conviction: proposal.conviction,
-          currentUnits:
-            optionalMulticallBigInt(memberResults[index * 2]) ?? 0n,
-          currentFlowRate:
-            optionalMulticallBigInt(memberResults[index * 2 + 1]) ?? 0n,
-          hasEscrow: true,
-        })),
+        proposals: proposalSnapshots.map((proposal, index) => {
+          const beneficiaryResult = escrowStateResults[index * 2];
+          const disputedResult = escrowStateResults[index * 2 + 1];
+          const hasReadableBeneficiary =
+            beneficiaryResult?.status === "success" &&
+            beneficiaryResult.result != null &&
+            isAddress(String(beneficiaryResult.result)) &&
+            beneficiaryResult.result !== ZERO_ADDRESS;
+          const currentOutflowRate =
+            hasReadableBeneficiary ?
+              optionalMulticallBigInt(
+                escrowOutflowResults[escrowOutflowResultIndex++],
+              ) ?? 0n
+            : undefined;
+
+          return {
+            status: proposal.status,
+            conviction: proposal.conviction,
+            currentUnits:
+              optionalMulticallBigInt(memberResults[index * 2]) ?? 0n,
+            currentFlowRate:
+              optionalMulticallBigInt(memberResults[index * 2 + 1]) ?? 0n,
+            currentOutflowRate,
+            escrowDisputed:
+              disputedResult?.status === "success" ?
+                Boolean(disputedResult.result)
+              : undefined,
+            hasEscrow: true,
+          };
+        }),
       },
       (error) => {
         console.warn("rebalance-keeper: decision failed, rebalancing safely", {
@@ -547,10 +628,13 @@ async function shouldRunRebalance({
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "unknown_error";
-    console.warn("rebalance-keeper: preflight failed, falling back to simulate", {
-      strategy,
-      error: message,
-    });
+    console.warn(
+      "rebalance-keeper: preflight failed, falling back to simulate",
+      {
+        strategy,
+        error: message,
+      },
+    );
     return { shouldRun: true, reason: "preflight_failed", error: message };
   }
 }
@@ -654,8 +738,10 @@ async function fetchStrategyCandidates(
       ) {
         const address = strategy.id.toLowerCase() as Address;
         const communityAddress =
-          strategy.registryCommunity?.id != null &&
-          isAddress(strategy.registryCommunity.id) ?
+          (
+            strategy.registryCommunity?.id != null &&
+            isAddress(strategy.registryCommunity.id)
+          ) ?
             (strategy.registryCommunity.id.toLowerCase() as Address)
           : null;
         selected.set(address, {
@@ -666,7 +752,9 @@ async function fetchStrategyCandidates(
             strategy.registryCommunity?.communityName,
           ),
           lastRebalanceAt: normalizeTimestamp(strategy.stream?.updatedAt),
-          lastRebalanceDateTime: timestampToDateTime(strategy.stream?.updatedAt),
+          lastRebalanceDateTime: timestampToDateTime(
+            strategy.stream?.updatedAt,
+          ),
         });
       }
     }
