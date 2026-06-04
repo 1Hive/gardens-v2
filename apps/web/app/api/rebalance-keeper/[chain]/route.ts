@@ -629,7 +629,7 @@ async function shouldRunRebalance({
           "rebalance-keeper: preflight failed, falling back to simulate",
           {
             strategy,
-            error: message,
+            error: error instanceof Error ? error.message : "unknown_error",
           },
         );
       },
