@@ -16,6 +16,7 @@ import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IStrategy} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {LibDiamond} from "../src/diamonds/libraries/LibDiamond.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 
@@ -60,7 +61,7 @@ contract MockHost {
                 selector := calldataload(data.offset)
             }
             if (selector == bytes4(keccak256("distributeFlow(address,address,address,int96,bytes)"))) {
-                (, , address pool, int96 requestedFlowRate,) =
+                (,, address pool, int96 requestedFlowRate,) =
                     abi.decode(data[4:], (address, address, address, int96, bytes));
                 uint128 totalUnits = MockSuperfluidPool(pool).getTotalUnits();
                 int96 actualFlowRate = requestedFlowRate;
@@ -78,6 +79,7 @@ contract MockHost {
 contract MockERC20 is IERC20 {
     mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
+    uint8 private _decimals = 18;
 
     function balanceOf(address account) external view override returns (uint256) {
         return _balances[account];
@@ -109,8 +111,12 @@ contract MockERC20 is IERC20 {
         return 0;
     }
 
-    function decimals() external pure returns (uint8) {
-        return 18;
+    function decimals() external view returns (uint8) {
+        return _decimals;
+    }
+
+    function setDecimals(uint8 decimals_) external {
+        _decimals = decimals_;
     }
 
     function mint(address to, uint256 amount) external {
@@ -128,6 +134,7 @@ contract MockSuperToken {
     mapping(address => uint256) public balances;
     uint256 public upgradeCallCount;
     uint256 public lastUpgradeAmount;
+    uint256 public lastUnderlyingUpgradeAmount;
     int96 public gdaFlowRate;
     int96 public lastDistributedFlowRate;
     bool public transferShouldSucceed = true;
@@ -171,11 +178,21 @@ contract MockSuperToken {
     }
 
     function upgrade(uint256 amount) external {
+        uint8 underlyingDecimals = IERC20Metadata(underlyingToken).decimals();
+        uint8 superDecimals = this.decimals();
+        uint256 underlyingAmount = amount;
+        if (superDecimals > underlyingDecimals) {
+            underlyingAmount = amount / (10 ** (superDecimals - underlyingDecimals));
+        } else if (superDecimals < underlyingDecimals) {
+            underlyingAmount = amount * (10 ** (underlyingDecimals - superDecimals));
+        }
+
         // Transfer underlying tokens from sender
-        IERC20(underlyingToken).transferFrom(msg.sender, address(this), amount);
+        IERC20(underlyingToken).transferFrom(msg.sender, address(this), underlyingAmount);
 
         upgradeCallCount++;
         lastUpgradeAmount = amount;
+        lastUnderlyingUpgradeAmount = underlyingAmount;
         balances[msg.sender] += amount;
     }
 
@@ -414,6 +431,10 @@ contract CVStreamingFacetHarness is CVStreamingFacet {
 
     function exposedToInt96StreamingRate(uint256 flowRate) external pure returns (int96) {
         return _toInt96StreamingRate(flowRate);
+    }
+
+    function exposedStreamingRatePerSecondInSuperTokenUnits() external view returns (uint256) {
+        return _streamingRatePerSecondInSuperTokenUnits();
     }
 
     function setStreamingEscrowExternal(uint256 proposalId, address escrow) external {
@@ -681,6 +702,40 @@ contract CVStreamingFacetTest is Test {
         assertEq(superToken.balanceOf(address(facet)), 1_025 ether);
     }
 
+    function test_wrapIfNeeded_scales_six_decimal_underlying_to_eighteen_decimal_supertoken() public {
+        token.setDecimals(6);
+        token.setBalance(address(facet), 23_018_453);
+
+        facet.setSkipWrap(false);
+        facet.exposedWrapIfNeeded();
+
+        assertEq(superToken.upgradeCallCount(), 1);
+        assertEq(superToken.lastUpgradeAmount(), 23_018_453 * 1e12);
+        assertEq(superToken.lastUnderlyingUpgradeAmount(), 23_018_453);
+        assertEq(superToken.balanceOf(address(facet)), 23_018_453 * 1e12);
+        assertEq(token.balanceOf(address(facet)), 0);
+    }
+
+    function test_rebalance_scales_pool_token_rate_to_supertoken_flow_rate() public {
+        token.setDecimals(6);
+        token.setBalance(address(facet), 23_018_453);
+        facet.setSkipWrap(false);
+        facet.useRealShouldStartStream();
+        facet.setupStreamingRatePerSecond(19);
+        facet.setupTotalPointsActivated(1 ether);
+        facet.setupCVParams(9_082_183);
+        facet.setupThresholdParams(3_656_188, 133_677, 0);
+        facet.setupProposal(1, ProposalStatus.Active, 1 ether, 0, block.number - 10);
+        facet.setStreamingEscrowExternal(1, escrow1);
+
+        facet.rebalance();
+
+        assertEq(facet.exposedStreamingRatePerSecondInSuperTokenUnits(), 19 * 1e12);
+        assertEq(superToken.lastUpgradeAmount(), 23_018_453 * 1e12);
+        assertGt(gdaAgreement.flowRate(), 0);
+        assertLe(uint256(uint96(gdaAgreement.flowRate())), 19 * 1e12);
+    }
+
     /*//////////////////////////////////////////////////////////////
                 SHOULD START STREAM TESTS
     //////////////////////////////////////////////////////////////*/
@@ -719,9 +774,7 @@ contract CVStreamingFacetTest is Test {
 
         assertEq(facet.exposedScaledUnitsForStreaming(0, 1, 1), 0);
         assertEq(facet.exposedScaledUnitsForStreaming(1, 2, 1), 1);
-        assertEq(
-            facet.exposedScaledUnitsForStreaming(type(uint128).max, 1, type(uint128).max), type(uint128).max
-        );
+        assertEq(facet.exposedScaledUnitsForStreaming(type(uint128).max, 1, type(uint128).max), type(uint128).max);
 
         assertEq(facet.exposedLegacyScaledUnits(type(uint256).max), type(uint128).max);
         assertEq(facet.exposedToInt96StreamingRate(uint256(uint96(type(int96).max))), type(int96).max);
@@ -797,6 +850,14 @@ contract CVStreamingFacetTest is Test {
         assertGt(gdaPool.memberUnits(escrow1), 0);
     }
 
+    function test_getPoolAmount_scales_six_decimal_pool_token_and_eighteen_decimal_super_token() public {
+        token.setDecimals(6);
+        token.setBalance(address(facet), 1_000_000);
+        superToken.mint(address(facet), 1 ether);
+
+        assertEq(facet.getPoolAmount(), 2_000_000);
+    }
+
     function test_rebalance_pureSuperTokenPool_keeps_zero_requested_streaming_proposal_eligible() public {
         uint256 realPoolBalance = 100 ether;
         uint256 requestedAmount = 100 ether;
@@ -805,13 +866,7 @@ contract CVStreamingFacetTest is Test {
         superToken.mint(address(facet), realPoolBalance);
 
         uint256 thresholdIfDoubleCounted = ConvictionsUtils.calculateThreshold(
-            requestedAmount,
-            realPoolBalance * 2,
-            1_000 * D,
-            DECAY,
-            1_000_000,
-            9_000_000,
-            0
+            requestedAmount, realPoolBalance * 2, 1_000 * D, DECAY, 1_000_000, 9_000_000, 0
         );
 
         facet.setupProposal(1, ProposalStatus.Active, 0, thresholdIfDoubleCounted + 1, block.number);
@@ -969,13 +1024,7 @@ contract CVStreamingFacetTest is Test {
 
         uint256 requestedAmount = 1;
         uint256 threshold = ConvictionsUtils.calculateThreshold(
-            requestedAmount,
-            10 ether,
-            300 ether,
-            9_999_959,
-            133_677,
-            3_656_188,
-            30 ether
+            requestedAmount, 10 ether, 300 ether, 9_999_959, 133_677, 3_656_188, 30 ether
         );
         facet.setupProposal(1, ProposalStatus.Active, 0, threshold - 1, block.number);
         facet.setupProposal(2, ProposalStatus.Active, 0, threshold + 1, block.number);

@@ -285,11 +285,17 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
             return;
         }
 
+        uint256 upgradeAmount = _toSuperTokenAmount(unwrappedBalance, poolToken, nextToken);
+        if (upgradeAmount == 0) {
+            return;
+        }
+
+        // Approval is denominated in underlying pool-token units; upgradeAmount is denominated in SuperToken units.
         if (!IERC20(poolToken).approve(address(nextToken), unwrappedBalance)) {
             revert ApproveFailed(poolToken, address(nextToken), unwrappedBalance);
         }
 
-        nextToken.upgrade(unwrappedBalance);
+        nextToken.upgrade(upgradeAmount);
     }
 
     function _addToAllowList(address[] memory members) internal {

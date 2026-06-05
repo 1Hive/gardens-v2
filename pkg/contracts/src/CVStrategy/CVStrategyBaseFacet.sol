@@ -14,6 +14,7 @@ import {LibDiamond} from "@src/diamonds/libraries/LibDiamond.sol";
 import {IPauseController} from "../interfaces/IPauseController.sol";
 import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
 import {LibPauseStorage} from "../pausing/LibPauseStorage.sol";
+import {DecimalScalingUtils} from "./DecimalScalingUtils.sol";
 
 interface IOwnableLike {
     function owner() external view returns (address);
@@ -263,7 +264,10 @@ abstract contract CVStrategyBaseFacet {
             return;
         }
         address controller = LibPauseStorage.layout().pauseController;
-        if (controller != address(0) && controller.code.length != 0 && IPauseController(controller).isPaused(address(this))) {
+        if (
+            controller != address(0) && controller.code.length != 0
+                && IPauseController(controller).isPaused(address(this))
+        ) {
             revert StrategyPaused(controller);
         }
     }
@@ -440,8 +444,8 @@ abstract contract CVStrategyBaseFacet {
         if (address(registryCommunity) == address(0)) {
             return true;
         }
-        (bool ok, bytes memory data) =
-            address(registryCommunity).staticcall(abi.encodeWithSelector(registryCommunity.enabledStrategies.selector, address(this)));
+        (bool ok, bytes memory data) = address(registryCommunity)
+            .staticcall(abi.encodeWithSelector(registryCommunity.enabledStrategies.selector, address(this)));
         if (!ok || data.length < 32) {
             // Compatibility fallback for lightweight test doubles that don't expose enabledStrategies().
             return true;
@@ -465,6 +469,27 @@ abstract contract CVStrategyBaseFacet {
         }
     }
 
+    function _toSuperTokenAmount(uint256 poolTokenAmount, address poolToken, ISuperToken targetSuperToken)
+        internal
+        view
+        returns (uint256)
+    {
+        return DecimalScalingUtils.toSuperTokenAmount(poolTokenAmount, poolToken, targetSuperToken);
+    }
+
+    function _fromSuperTokenAmount(uint256 superTokenAmount, address poolToken, ISuperToken sourceSuperToken)
+        internal
+        view
+        returns (uint256)
+    {
+        return DecimalScalingUtils.fromSuperTokenAmount(superTokenAmount, poolToken, sourceSuperToken);
+    }
+
+    function _streamingRatePerSecondInSuperTokenUnits() internal view returns (uint256) {
+        address token = allo.getPool(poolId).token;
+        return _toSuperTokenAmount(streamingRatePerSecond, token, superfluidToken);
+    }
+
     /// @notice Getter for the 'poolAmount'.
     /// @return The balance of the pool
     function getPoolAmount() public view virtual returns (uint256) {
@@ -480,13 +505,6 @@ abstract contract CVStrategyBaseFacet {
         }
 
         uint256 sf = address(superfluidToken) == address(0) ? 0 : superfluidToken.balanceOf(address(this));
-
-        uint8 d = ERC20(token).decimals();
-        if (d < 18) {
-            sf /= 10 ** (18 - d); // downscale 18 -> d
-        } else if (d > 18) {
-            sf *= 10 ** (d - 18); // upscale 18 -> d  (unlikely)
-        }
-        return base + sf;
+        return base + _fromSuperTokenAmount(sf, token, superfluidToken);
     }
 }

@@ -4,7 +4,14 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 
 import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol";
-import {Proposal, ProposalStatus, ProposalType, ProposalSupport, CVParams, ArbitrableConfig} from "../src/CVStrategy/ICVStrategy.sol";
+import {
+    Proposal,
+    ProposalStatus,
+    ProposalType,
+    ProposalSupport,
+    CVParams,
+    ArbitrableConfig
+} from "../src/CVStrategy/ICVStrategy.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {ICollateralVault} from "../src/interfaces/ICollateralVault.sol";
@@ -91,6 +98,7 @@ contract RevertingReceiver {
 contract MockSuperToken {
     TERC20 public underlying;
     uint256 public balance;
+    uint8 public decimals = 18;
 
     constructor(TERC20 underlying_) {
         underlying = underlying_;
@@ -98,6 +106,10 @@ contract MockSuperToken {
 
     function setBalance(uint256 amount) external {
         balance = amount;
+    }
+
+    function setDecimals(uint8 decimals_) external {
+        decimals = decimals_;
     }
 
     function balanceOf(address) external view returns (uint256) {
@@ -266,11 +278,7 @@ contract CVAllocationFacetTest is Test {
 
         vm.prank(address(allo));
         vm.expectRevert(
-            abi.encodeWithSelector(
-                CVAllocationFacet.ProposalInvalidForAllocation.selector,
-                1,
-                ProposalStatus.Cancelled
-            )
+            abi.encodeWithSelector(CVAllocationFacet.ProposalInvalidForAllocation.selector, 1, ProposalStatus.Cancelled)
         );
         facet.allocate(abi.encode(_support(1, 1)), member);
     }
@@ -392,7 +400,9 @@ contract CVAllocationFacetTest is Test {
         facet.setProposal(1, ProposalStatus.Cancelled, 1, facet.nativeToken(), beneficiary, member, 0, 0, 0);
 
         vm.prank(address(allo));
-        vm.expectRevert(abi.encodeWithSelector(CVAllocationFacet.ProposalNotActive.selector, 1, uint8(ProposalStatus.Cancelled)));
+        vm.expectRevert(
+            abi.encodeWithSelector(CVAllocationFacet.ProposalNotActive.selector, 1, uint8(ProposalStatus.Cancelled))
+        );
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
     }
 
@@ -403,9 +413,7 @@ contract CVAllocationFacetTest is Test {
         facet.setProposal(1, ProposalStatus.Active, 2 ether, facet.nativeToken(), beneficiary, member, 0, 0, 0);
 
         vm.prank(address(allo));
-        vm.expectRevert(
-            abi.encodeWithSelector(CVAllocationFacet.PoolAmountNotEnough.selector, 1, 2 ether, 1 ether)
-        );
+        vm.expectRevert(abi.encodeWithSelector(CVAllocationFacet.PoolAmountNotEnough.selector, 1, 2 ether, 1 ether));
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
     }
 
@@ -430,11 +438,11 @@ contract CVAllocationFacetTest is Test {
         facet.setProposalType(ProposalType.Funding);
         facet.setCvParams(CVParams({maxRatio: 10_000_000, weight: 1, decay: 1, minThresholdPoints: 1}));
         facet.setTotalPointsActivated(1);
-        facet.setProposal(1, ProposalStatus.Active, 1 ether, facet.nativeToken(), beneficiary, member, block.number, 0, 0);
-
-        uint256 threshold = ConvictionsUtils.calculateThreshold(
-            1 ether, 10 ether, 1, 1, 1, 10_000_000, 1
+        facet.setProposal(
+            1, ProposalStatus.Active, 1 ether, facet.nativeToken(), beneficiary, member, block.number, 0, 0
         );
+
+        uint256 threshold = ConvictionsUtils.calculateThreshold(1 ether, 10 ether, 1, 1, 1, 10_000_000, 1);
         vm.prank(address(allo));
         vm.expectRevert(
             abi.encodeWithSelector(CVAllocationFacet.ConvictionUnderMinimumThreshold.selector, 0, threshold, 1 ether)
@@ -447,14 +455,17 @@ contract CVAllocationFacetTest is Test {
         vm.deal(address(facet), 1 ether);
         facet.setProposalType(ProposalType.Funding);
         facet.setCvParams(CVParams({maxRatio: 10_000_000, weight: 0, decay: 0, minThresholdPoints: 0}));
-        facet.setArbitrableConfig(1, ArbitrableConfig({
-            arbitrator: IArbitrator(address(0)),
-            tribunalSafe: address(0),
-            submitterCollateralAmount: 1,
-            challengerCollateralAmount: 1,
-            defaultRuling: 0,
-            defaultRulingTimeout: 0
-        }));
+        facet.setArbitrableConfig(
+            1,
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(0)),
+                tribunalSafe: address(0),
+                submitterCollateralAmount: 1,
+                challengerCollateralAmount: 1,
+                defaultRuling: 0,
+                defaultRulingTimeout: 0
+            })
+        );
         facet.setProposal(1, ProposalStatus.Active, 0, facet.nativeToken(), beneficiary, member, 0, 0, 1);
 
         vm.prank(address(allo));
@@ -467,14 +478,17 @@ contract CVAllocationFacetTest is Test {
         allo.setPoolToken(1, facet.nativeToken());
         facet.setProposalType(ProposalType.Funding);
         facet.setCvParams(CVParams({maxRatio: 10_000_000, weight: 0, decay: 0, minThresholdPoints: 0}));
-        facet.setArbitrableConfig(1, ArbitrableConfig({
-            arbitrator: IArbitrator(address(0)),
-            tribunalSafe: address(0),
-            submitterCollateralAmount: 1,
-            challengerCollateralAmount: 1,
-            defaultRuling: 0,
-            defaultRulingTimeout: 0
-        }));
+        facet.setArbitrableConfig(
+            1,
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(0)),
+                tribunalSafe: address(0),
+                submitterCollateralAmount: 1,
+                challengerCollateralAmount: 1,
+                defaultRuling: 0,
+                defaultRulingTimeout: 0
+            })
+        );
         facet.setProposal(1, ProposalStatus.Active, 0, facet.nativeToken(), beneficiary, member, 0, 0, 1);
 
         vm.prank(address(allo));
@@ -497,13 +511,20 @@ contract CVAllocationFacetTest is Test {
         uint256 threshold = ConvictionsUtils.calculateThreshold(
             requestedAmount, poolAmount, totalPointsActivated, decay, weight, maxRatio, minThresholdPoints
         );
-        facet.setCvParams(CVParams({maxRatio: maxRatio, weight: weight, decay: decay, minThresholdPoints: minThresholdPoints}));
+        facet.setCvParams(
+            CVParams({maxRatio: maxRatio, weight: weight, decay: decay, minThresholdPoints: minThresholdPoints})
+        );
         facet.setTotalPointsActivated(totalPointsActivated);
-        facet.setProposal(1, ProposalStatus.Active, requestedAmount, facet.nativeToken(), beneficiary, member, block.number - 1, 1, 0);
+        facet.setProposal(
+            1, ProposalStatus.Active, requestedAmount, facet.nativeToken(), beneficiary, member, block.number - 1, 1, 0
+        );
         facet.setProposalStakedAmount(1, 0);
 
-        vm.prank(address(allo)); vm.expectRevert(
-            abi.encodeWithSelector(CVAllocationFacet.ConvictionUnderMinimumThreshold.selector, minThresholdPoints, threshold, 1 ether)
+        vm.prank(address(allo));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVAllocationFacet.ConvictionUnderMinimumThreshold.selector, minThresholdPoints, threshold, 1 ether
+            )
         );
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
     }
@@ -521,6 +542,20 @@ contract CVAllocationFacetTest is Test {
         token6.mint(address(facet), 1_000_000);
         MockSuperToken superToken = new MockSuperToken(token6);
         superToken.setBalance(1 ether);
+
+        facet.setSuperfluidToken(address(superToken));
+        allo.setPoolToken(1, address(token6));
+
+        uint256 poolAmount = facet.exposedGetPoolAmount();
+        assertEq(poolAmount, 2_000_000);
+    }
+
+    function test_getPoolAmount_uses_super_token_decimals() public {
+        TERC20 token6 = new TERC20("USDC", "USDC", 6);
+        token6.mint(address(facet), 1_000_000);
+        MockSuperToken superToken = new MockSuperToken(token6);
+        superToken.setDecimals(8);
+        superToken.setBalance(100_000_000);
 
         facet.setSuperfluidToken(address(superToken));
         allo.setPoolToken(1, address(token6));
