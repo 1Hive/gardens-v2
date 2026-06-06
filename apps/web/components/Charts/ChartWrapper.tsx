@@ -1,4 +1,5 @@
 import { Fragment, ReactNode } from "react";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
   ArrowDownRightIcon,
   ArrowUpRightIcon,
@@ -40,6 +41,12 @@ export const ChartWrapper = ({
   const iconClassname = `h-3 w-3 ${growthClassname}`;
   const { isDarkTheme } = useTheme();
   const chartColors = getChartColors(isDarkTheme);
+  const isThresholdTooHigh =
+    (typeof threshold === "number" && threshold >= 100) ||
+    isThresholdOutOfReach;
+  const hasThresholdWarningMessage =
+    proposalStatus !== "disputed" &&
+    (message === "Threshold over 100%." || message === "Threshold out of reach.");
   const legend = [
     {
       name: "Support",
@@ -66,9 +73,7 @@ export const ChartWrapper = ({
           "The minimum level of conviction required for a proposal to stream."
         : "The minimum level of conviction required for a proposal to pass.",
       value:
-        typeof threshold === "number" && threshold >= 100 ?
-          "Threshold over 100%"
-        : isThresholdOutOfReach ? "Threshold out of reach"
+        isThresholdTooHigh ? "too high"
         : isThresholdBelowDisplayPrecision ? "< 0.01 VP"
         : threshold ?? 0,
     },
@@ -127,11 +132,17 @@ export const ChartWrapper = ({
               </p>
             </>
           )}
-          <p className="text-sm sm:text-[16px]">
-            {proposalStatus === "disputed" ?
-              "Proposal is awaiting dispute resolution."
-            : message}
-          </p>
+          {hasThresholdWarningMessage ?
+            <p className="flex items-center gap-1 text-sm sm:text-[16px] text-secondary-content">
+              <ExclamationTriangleIcon className="w-5 h-5 text-secondary-content" />
+              <span>{message}</span>
+            </p>
+          : <p className="text-sm sm:text-[16px]">
+              {proposalStatus === "disputed" ?
+                "Proposal is awaiting dispute resolution."
+              : message}
+            </p>
+          }
         </div>
       </div>
     </>

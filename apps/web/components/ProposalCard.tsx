@@ -719,7 +719,8 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           {!isSignalingType && hasThreshold && (
                             <li>
                               <span className="text-xs text-neutral-soft-content">
-                                threshold: {thresholdPct} VP
+                                threshold:{" "}
+                                {impossibleToPass ? "too high" : `${thresholdPct} VP`}
                               </span>
                             </li>
                           )}
