@@ -45,6 +45,8 @@ type WalletActivity = {
   type: "fund" | "stream" | "governance" | "farcaster";
   amountUsd: number;
   points: number;
+  eligible: boolean;
+  excludedReason?: string;
   poolAddress: string | null;
   poolName?: string | null;
   communityId?: string | null;
@@ -115,8 +117,12 @@ const formatWalletActivityBreakdown = (activities: WalletActivity[]) => {
           `   - Pool: ${activity.poolName ?? "n/a"}`,
           `   - Community: ${activity.communityName ?? activity.communityId ?? "n/a"}`,
           `   - Token: ${activity.token}`,
+          `   - Counted: ${activity.eligible ? "yes" : "no"}`,
           `   - Bonus: ${activity.bonusApplied ? "x3" : "none"}`,
         ];
+        if (activity.excludedReason) {
+          details.push(`   - Reason: ${activity.excludedReason}`);
+        }
         if (activity.type === "farcaster") {
           details.push(
             `   - Source: follows @${FARCASTER_GARDENS_USERNAME}`,
@@ -156,6 +162,7 @@ const buildWalletActivitiesWithFarcaster = ({
       communityName: null,
       farcasterUsername,
       token: "n/a",
+      eligible: true,
       bonusApplied: false,
     } satisfies WalletActivity,
   ];
@@ -2608,9 +2615,9 @@ const calculateStreamUsdBySender = ({
       totalUsdAll += usdTotal;
       if (usdTotal >= 10) {
         totalUsd += usdTotal;
-        if (isValidAddr(sender)) {
-          usdBySender.set(sender, usdTotal);
-        }
+      }
+      if (isValidAddr(sender)) {
+        usdBySender.set(sender, usdTotal);
       }
     }
   }
@@ -2650,6 +2657,8 @@ const accumulateFundingPoints = async ({
     communityName?: string | null;
     chainId: ChainId;
     bonusApplied: boolean;
+    eligible: boolean;
+    excludedReason?: string;
   }) => void;
   chainId: ChainId;
 }) => {
@@ -2675,14 +2684,16 @@ const accumulateFundingPoints = async ({
     if (!value || !from || !isValidAddr(from)) continue;
     const amount = Number(formatUnits(value as bigint, tokenDecimals));
     const usd = amount * priceUsd;
-    if (usd < 10) continue;
     const key = toLower(from);
-    const prev = userTotals.get(key) ?? { fundUsd: 0, streamUsd: 0 };
-    const delta = usd * multiplier;
-    userTotals.set(key, {
-      ...prev,
-      fundUsd: prev.fundUsd + delta,
-    });
+    const isEligible = usd >= 10;
+    const delta = isEligible ? usd * multiplier : 0;
+    if (isEligible) {
+      const prev = userTotals.get(key) ?? { fundUsd: 0, streamUsd: 0 };
+      userTotals.set(key, {
+        ...prev,
+        fundUsd: prev.fundUsd + delta,
+      });
+    }
     if (recordActivity) {
       recordActivity({
         from: key,
@@ -2694,6 +2705,8 @@ const accumulateFundingPoints = async ({
         communityName: null,
         chainId,
         bonusApplied: multiplier > 1,
+        eligible: isEligible,
+        excludedReason: isEligible ? undefined : "Below $10 threshold",
       });
     }
   }
@@ -3090,7 +3103,7 @@ const processChain = async ({
         priceUsd,
         userTotals,
         multiplier: activityMultiplier,
-        recordActivity: ({ from, usd, points }) => {
+        recordActivity: ({ from, usd, points, eligible, excludedReason }) => {
           const list = walletActivities.get(from) ?? [];
           list.push({
             type: "fund",
@@ -3102,6 +3115,8 @@ const processChain = async ({
             communityName: community?.communityName ?? null,
             token: toLower(underlyingToken),
             chainId,
+            eligible,
+            excludedReason,
             bonusApplied: activityMultiplier > 1,
           });
           walletActivities.set(from, list);
@@ -3140,17 +3155,19 @@ const processChain = async ({
       streamUsdTotalPoints = totalUsd;
       streamUsdTotalAll = totalUsdAll;
       for (const [sender, usd] of streamUsdBySender.entries()) {
-        if (usd < 10) continue;
         const key = toLower(sender);
-        const streamUsd = applyPoolActivityMultiplier(
-          usd,
-          pool.config?.proposalType,
-        );
-        const prev = userTotals.get(key) ?? { fundUsd: 0, streamUsd: 0 };
-        userTotals.set(key, {
-          ...prev,
-          streamUsd: prev.streamUsd + streamUsd,
-        });
+        const isEligible = usd >= 10;
+        const streamUsd =
+          isEligible ?
+            applyPoolActivityMultiplier(usd, pool.config?.proposalType)
+          : 0;
+        if (isEligible) {
+          const prev = userTotals.get(key) ?? { fundUsd: 0, streamUsd: 0 };
+          userTotals.set(key, {
+            ...prev,
+            streamUsd: prev.streamUsd + streamUsd,
+          });
+        }
         const list = walletActivities.get(key) ?? [];
         list.push({
           type: "stream",
@@ -3162,13 +3179,15 @@ const processChain = async ({
           communityName: community?.communityName ?? null,
           token: toLower(underlyingToken),
           chainId,
+          eligible: isEligible,
+          excludedReason: isEligible ? undefined : "Below $10 threshold",
           bonusApplied: activityMultiplier > 1,
         });
         walletActivities.set(key, list);
       }
       if (flowUpdates.length > 0 && streamUsdTotalPoints === 0) {
         console.log(
-          "[superfluid-points] stream total below threshold, skipping pool entry",
+          "[superfluid-points] stream total below threshold, recording debug activity only",
           {
             chainId,
             poolAddress,
@@ -3310,6 +3329,7 @@ const processChain = async ({
         sharePercent: share * 100,
         token: "aggregate",
         chainId,
+        eligible: true,
         bonusApplied: entry.bonusApplied,
       });
       walletActivities.set(key, list);
@@ -3833,7 +3853,7 @@ export async function GET(req: Request) {
       farcasterPointsByWallet.set(addr, 1);
     }
 
-    const walletPointTargets: Array<{
+    type WalletPointTarget = {
       address: string;
       fundPoints: number;
       streamPoints: number;
@@ -3842,7 +3862,9 @@ export async function GET(req: Request) {
       totalPoints: number;
       fundUsd: number;
       streamUsd: number;
-    }> = [];
+    };
+    const walletPointTargets: WalletPointTarget[] = [];
+    const walletPointTargetsByAddress = new Map<string, WalletPointTarget>();
 
     for (const address of scopedAddresses) {
       if (EXCLUDED_WALLETS.has(address)) continue;
@@ -3857,7 +3879,7 @@ export async function GET(req: Request) {
       const totalPoints = pointTarget.totalPoints;
       if (totalPoints <= 0) continue;
 
-      walletPointTargets.push({
+      const walletTarget: WalletPointTarget = {
         address,
         fundPoints: pointTarget.fundPoints,
         streamPoints: pointTarget.streamPoints,
@@ -3866,6 +3888,54 @@ export async function GET(req: Request) {
         totalPoints,
         fundUsd: value.fundUsd,
         streamUsd: value.streamUsd,
+      };
+      walletPointTargets.push(walletTarget);
+      walletPointTargetsByAddress.set(address, walletTarget);
+    }
+
+    for (const address of scopedAddresses) {
+      if (EXCLUDED_WALLETS.has(address)) continue;
+      const wallet = walletPointTargetsByAddress.get(address);
+      const value = totals.get(address) ?? { fundUsd: 0, streamUsd: 0 };
+      const farcasterPoints =
+        wallet?.farcasterPoints ?? farcasterPointsByWallet.get(address) ?? 0;
+      const farcasterUsername = farcasterUsernameByWallet.get(address) ?? null;
+      const activities = buildWalletActivitiesWithFarcaster({
+        activities: walletActivitiesByWallet.get(address) ?? [],
+        farcasterPoints,
+        farcasterUsername,
+      });
+      if (!wallet && activities.length === 0) continue;
+      const breakdown = formatWalletActivityBreakdown(activities);
+      const fundPoints = wallet?.fundPoints ?? 0;
+      const streamPoints = wallet?.streamPoints ?? 0;
+      const governanceStakePoints = wallet?.governanceStakePoints ?? 0;
+      const totalPoints = wallet?.totalPoints ?? 0;
+      walletBreakdown.push({
+        address,
+        fundUsd: wallet?.fundUsd ?? value.fundUsd,
+        streamUsd: wallet?.streamUsd ?? value.streamUsd,
+        fundPoints,
+        streamPoints,
+        governanceStakePoints,
+        farcasterPoints,
+        totalPoints,
+        farcasterUsername,
+        ensName: ensNameByWallet.get(address) || null,
+        ensAvatar: ensAvatarByWallet.get(address) || null,
+        nativeSuperToken: nativeSuperTokenByWallet.get(address) ?? null,
+        nativeToken: nativeTokenByWallet.get(address) ?? null,
+        activities,
+        breakdown,
+        checksum: [
+          address.toLowerCase(),
+          fundPoints,
+          streamPoints,
+          governanceStakePoints,
+          farcasterPoints,
+          totalPoints,
+          hashString(breakdown),
+        ].join("|"),
       });
     }
 
@@ -3998,45 +4068,11 @@ export async function GET(req: Request) {
         existing: existingTotal,
         target: wallet.totalPoints,
       });
-      const farcasterUsername =
-        farcasterUsernameByWallet.get(wallet.address) ?? null;
-      const activities = buildWalletActivitiesWithFarcaster({
-        activities: walletActivitiesByWallet.get(wallet.address) ?? [],
-        farcasterPoints: wallet.farcasterPoints,
-        farcasterUsername,
-      });
-      const breakdown = formatWalletActivityBreakdown(activities);
-      walletBreakdown.push({
-        address: wallet.address,
-        fundUsd: wallet.fundUsd,
-        streamUsd: wallet.streamUsd,
-        fundPoints: wallet.fundPoints,
-        streamPoints: wallet.streamPoints,
-        governanceStakePoints: wallet.governanceStakePoints,
-        farcasterPoints: wallet.farcasterPoints,
-        totalPoints: wallet.totalPoints,
-        farcasterUsername,
-        ensName: ensNameByWallet.get(wallet.address) || null,
-        ensAvatar: ensAvatarByWallet.get(wallet.address) || null,
-        nativeSuperToken: nativeSuperTokenByWallet.get(wallet.address) ?? null,
-        nativeToken: nativeTokenByWallet.get(wallet.address) ?? null,
-        activities,
-        breakdown,
-        checksum: [
-          wallet.address.toLowerCase(),
-          wallet.fundPoints,
-          wallet.streamPoints,
-          wallet.governanceStakePoints,
-          wallet.farcasterPoints,
-          wallet.totalPoints,
-          hashString(breakdown),
-        ].join("|"),
-      });
     }
 
     // Remove accounts that are no longer in the current target list
     for (const [address, existingByCategory] of existingTotalsByAddress) {
-      if (walletPointTargets.find((w) => w.address === address)) continue;
+      if (walletPointTargetsByAddress.has(address)) continue;
       const targetByCategory: Record<string, number> = {};
       for (const name of eventNames) {
         targetByCategory[name] = 0;
