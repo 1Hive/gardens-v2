@@ -14,6 +14,7 @@ SAFE = '0x9a17De1f0caD0c592F656410997E4B685d339029'
 CREATE2 = '0x4e59b44847b379578588920cA78FbF26c0B4956C'
 ZERO = '0x0000000000000000000000000000000000000000'
 DEFAULT_SALT_VERSION = '98eb746'
+ARBITRUM_STREAMING_DECIMAL_STRATEGY = '0x6f29c8e529df6ce316299e9df90bf3b11a65458b'
 
 ARTIFACTS = {
     'CVStrategy': ROOT/'pkg/contracts/out/CVStrategy.sol/CVStrategy.json',
@@ -89,7 +90,7 @@ def full_strategy_cuts(net, new_addrs):
             hex_selector('setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)'),
             hex_selector('setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address,uint256)'),
             hex_selector('connectSuperfluidGDA(address)'),
-            hex_selector('disconnectSuperfluidGDA()'),
+            hex_selector('disconnectSuperfluidGDA(address)'),
             hex_selector('setVotingPowerRegistry(address)'),
         ]),
         cut(new_addrs['CVAllocationFacet'], [
@@ -117,21 +118,21 @@ def full_strategy_cuts(net, new_addrs):
         ]),
         cut(facets['CV_POWER'], [
             hex_selector('activatePoints()'),
-            hex_selector('increasePower(uint256)'),
-            hex_selector('decreasePower(uint256)'),
+            hex_selector('increasePower(address,uint256)'),
+            hex_selector('decreasePower(address,uint256)'),
             hex_selector('deactivatePoints()'),
             hex_selector('deactivatePoints(address)'),
         ]),
         cut(facets['CV_PROPOSAL'], [
             hex_selector('registerRecipient(bytes,address)'),
-            hex_selector('cancelProposal(bytes,address)'),
-            hex_selector('editProposal(uint256,bytes)'),
+            hex_selector('cancelProposal(uint256)'),
+            hex_selector('editProposal(uint256,(uint256,string),address,uint256)'),
         ]),
         cut(facets['CV_SYNC_POWER'], [
             hex_selector('setAuthorizedSyncCaller(address,bool)'),
             hex_selector('isAuthorizedSyncCaller(address)'),
             hex_selector('syncPower(address)'),
-            hex_selector('batchSyncPower(address[],uint256)'),
+            hex_selector('batchSyncPower(address[])'),
         ]),
         cut(new_addrs['CVStreamingFacet'], [
             hex_selector('rebalance()'),
@@ -148,13 +149,25 @@ def changed_strategy_cuts(new_addrs):
             hex_selector('setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)'),
             hex_selector('setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address,uint256)'),
             hex_selector('connectSuperfluidGDA(address)'),
-            hex_selector('disconnectSuperfluidGDA()'),
+            hex_selector('disconnectSuperfluidGDA(address)'),
             hex_selector('setVotingPowerRegistry(address)'),
         ]),
         cut(new_addrs['CVAllocationFacet'], [
             hex_selector('allocate(bytes,address)'),
             hex_selector('distribute(address[],bytes,address)'),
             hex_selector('getPoolAmount()'),
+        ]),
+        cut(new_addrs['CVPowerFacet'], [
+            hex_selector('activatePoints()'),
+            hex_selector('increasePower(address,uint256)'),
+            hex_selector('decreasePower(address,uint256)'),
+            hex_selector('deactivatePoints()'),
+            hex_selector('deactivatePoints(address)'),
+        ]),
+        cut(new_addrs['CVProposalFacet'], [
+            hex_selector('registerRecipient(bytes,address)'),
+            hex_selector('cancelProposal(uint256)'),
+            hex_selector('editProposal(uint256,(uint256,string),address,uint256)'),
         ]),
         cut(new_addrs['CVStreamingFacet'], [
             hex_selector('rebalance()'),
@@ -165,9 +178,20 @@ def changed_strategy_cuts(new_addrs):
         ]),
     ]
 
+def bundled_transactions(service_name: str) -> list[dict]:
+    if service_name not in {'arbitrum', 'optimism'}:
+        return []
+
+    path = OUT / f'{service_name}-streaming-escrow-upgrade-payload.json'
+    if not path.exists():
+        raise RuntimeError(f'missing bundled streaming escrow payload: {path}')
+
+    payload = json.loads(path.read_text())
+    return payload.get('transactions', [])
+
 def main():
     parser = argparse.ArgumentParser(description='Generate Safe payloads for the CVStrategy decimal-scaling upgrade.')
-    parser.add_argument('--salt-version', default=DEFAULT_SALT_VERSION, help='Stable salt label for deterministic CREATE2 addresses. Defaults to the reviewed source commit used for the submitted payloads.')
+    parser.add_argument('--salt-version', default=DEFAULT_SALT_VERSION, help='Deprecated: kept for manifest compatibility. Payloads use configured implementation/facet addresses from networks.json.')
     args = parser.parse_args()
     salt_version = args.salt_version
     cfg = json.loads(CONFIG.read_text())
@@ -178,24 +202,29 @@ def main():
             continue
         name = net['name']
         service_name = 'mainnet' if name == 'ethereum' else name
-        cv_util = net['IMPLEMENTATIONS']['CV_UTIL_LIB']
-        libraries = {'ConvictionsUtils': cv_util}
-        init_codes = {k: link_bytecode(p, libraries) for k,p in ARTIFACTS.items()}
-        salts = {k: keccak(text=f'gardens-v2-decimal-scaling-upgrade:{salt_version}:{k}') for k in init_codes}
-        new_addrs = {k: create2_addr(init_codes[k], salts[k]) for k in init_codes}
+        new_addrs = {
+            'CVStrategy': to_checksum_address(net['IMPLEMENTATIONS']['CV_STRATEGY']),
+            'CVAdminFacet': to_checksum_address(net['FACETS']['CV_ADMIN']),
+            'CVAllocationFacet': to_checksum_address(net['FACETS']['CV_ALLOCATION']),
+            'CVPowerFacet': to_checksum_address(net['FACETS']['CV_POWER']),
+            'CVProposalFacet': to_checksum_address(net['FACETS']['CV_PROPOSAL']),
+            'CVStreamingFacet': to_checksum_address(net['FACETS']['CV_STREAMING']),
+        }
         full_cuts = full_strategy_cuts(net, new_addrs)
         changed_cuts = changed_strategy_cuts(new_addrs)
         strategy_init = to_checksum_address(net['INITS']['CV_STRATEGY_DIAMOND_INIT'])
         init_calldata = '0x' + selector('init()').hex()
-        txs = []
-        for k in ['CVStrategy','CVAdminFacet','CVAllocationFacet','CVStreamingFacet']:
-            txs.append(tx(CREATE2, deploy_data(init_codes[k], salts[k]), f'CREATE2 deploy {k}'))
+        txs = bundled_transactions(service_name)
         factory = net['PROXIES']['REGISTRY_FACTORY']
         txs.append(tx(factory, call('setStrategyTemplate(address)', ['address'], [new_addrs['CVStrategy']]), 'setStrategyTemplate'))
         txs.append(tx(factory, call('setStrategyFacets((address,uint8,bytes4[])[],address,bytes)', ['(address,uint8,bytes4[])[]','address','bytes'], [full_cuts, strategy_init, bytes.fromhex(init_calldata[2:])]), 'setStrategyFacets'))
         diamond_cut_data = call('diamondCut((address,uint8,bytes4[])[],address,bytes)', ['(address,uint8,bytes4[])[]','address','bytes'], [changed_cuts, ZERO, b''])
         upgrade_data = call('upgradeTo(address)', ['address'], [new_addrs['CVStrategy']])
+        live_strategy_upgrades = []
         for strategy in net['PROXIES'].get('CV_STRATEGIES', []):
+            if service_name != 'arbitrum' or strategy.lower() != ARBITRUM_STREAMING_DECIMAL_STRATEGY:
+                continue
+            live_strategy_upgrades.append(to_checksum_address(strategy))
             txs.append(tx(strategy, upgrade_data, 'upgradeTo'))
             txs.append(tx(strategy, diamond_cut_data, 'diamondCut'))
         payload = {
@@ -204,7 +233,7 @@ def main():
             'createdAt': int(time.time()*1000),
             'meta': {
                 'name': 'CVStrategy decimal scaling upgrade',
-                'description': 'Deploys decimal-scaling CVStrategy implementation/facets, updates RegistryFactory strategy template/facet cuts for new strategies, and upgrades existing CVStrategy proxies.',
+                'description': 'Uses the configured decimal-scaling CVStrategy implementation/facets and updates RegistryFactory strategy template/facet cuts for new strategies. Live strategy upgrades are limited to the eligible Arbitrum streaming pool when present.',
                 'txBuilderVersion': '1.18.0',
                 'createdFromSafeAddress': SAFE,
                 'createdFromOwnerAddress': '0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD',
@@ -218,9 +247,11 @@ def main():
             'chainId': net['chainId'],
             'sourceNetworkName': name,
             'payload': f'pkg/contracts/transaction-builder/{service_name}-payload.json',
-            'newContracts': new_addrs,
+            'configuredContracts': new_addrs,
             'txCount': len(txs),
-            'strategyProxyCount': len(net['PROXIES'].get('CV_STRATEGIES', [])),
+            'bundledStreamingEscrowTxCount': len(bundled_transactions(service_name)),
+            'liveStrategyUpgrades': live_strategy_upgrades,
+            'strategyProxyCount': len(live_strategy_upgrades),
             'registryFactory': to_checksum_address(factory),
             'strategyInit': strategy_init,
         }

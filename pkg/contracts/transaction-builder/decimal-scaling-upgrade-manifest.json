@@ -7,14 +7,20 @@
       "chainId": 42161,
       "sourceNetworkName": "arbitrum",
       "payload": "pkg/contracts/transaction-builder/arbitrum-payload.json",
-      "newContracts": {
-        "CVStrategy": "0x37865C207ab8342de338f0d4C5bBBfd2a53bC983",
-        "CVAdminFacet": "0xF080Ff2f12A737dC5f24c1adDf534246b54cF087",
-        "CVAllocationFacet": "0xC6062A6dB2d5751627F91a11e40205db4DaC8515",
-        "CVStreamingFacet": "0xDe14A0EAd4E896324bc6fCCc7216eDa8993a72c1"
+      "configuredContracts": {
+        "CVStrategy": "0xbd0dbEa2090bf37A0C6E1BA4146971f6E56aea05",
+        "CVAdminFacet": "0xB5Acf9BFe90dAed6f1cB313faF04FbD5FC165C51",
+        "CVAllocationFacet": "0x6719069Ebc94Ef82a7516350fA5f5AC650cF13Bf",
+        "CVPowerFacet": "0xab384C9C123FB8Af2F2213c460E0C0757f72d0d7",
+        "CVProposalFacet": "0x0517091eED9dC11bAEeF2BF132050e3F6a75c567",
+        "CVStreamingFacet": "0xeB0F46cf16dec1898132e896A68c62372F378846"
       },
-      "txCount": 132,
-      "strategyProxyCount": 63,
+      "txCount": 5,
+      "bundledStreamingEscrowTxCount": 1,
+      "liveStrategyUpgrades": [
+        "0x6F29C8E529Df6cE316299E9Df90bF3B11A65458B"
+      ],
+      "strategyProxyCount": 1,
       "registryFactory": "0xc1c2E092b7DbC8413E1aC02e92C161b0BDA783f6",
       "strategyInit": "0x0DDc35193a09ECaC8242662e3Aa3B944Abf5f0b3"
     },
@@ -22,14 +28,18 @@
       "chainId": 10,
       "sourceNetworkName": "optimism",
       "payload": "pkg/contracts/transaction-builder/optimism-payload.json",
-      "newContracts": {
-        "CVStrategy": "0x37865C207ab8342de338f0d4C5bBBfd2a53bC983",
-        "CVAdminFacet": "0xF080Ff2f12A737dC5f24c1adDf534246b54cF087",
-        "CVAllocationFacet": "0xC6062A6dB2d5751627F91a11e40205db4DaC8515",
-        "CVStreamingFacet": "0xDe14A0EAd4E896324bc6fCCc7216eDa8993a72c1"
+      "configuredContracts": {
+        "CVStrategy": "0x7a9104983D94e3747C8B8D4Fedd57A8b1b7712FB",
+        "CVAdminFacet": "0x661b3852A0b58D7020710f35C8E8503958E1cEBB",
+        "CVAllocationFacet": "0xDEeA81807174d7473b9eF89aaf236CCA42B6D336",
+        "CVPowerFacet": "0x28D511148d77726A8d104761B46324234Dacd2F4",
+        "CVProposalFacet": "0x07bB073AEC29F20E5EDF55B7bB2d5f7CDb1d3e51",
+        "CVStreamingFacet": "0x387C58bF137CbfCD79828856a442f486820439B5"
       },
-      "txCount": 176,
-      "strategyProxyCount": 85,
+      "txCount": 9,
+      "bundledStreamingEscrowTxCount": 7,
+      "liveStrategyUpgrades": [],
+      "strategyProxyCount": 0,
       "registryFactory": "0x1FAC47Cf25f1ca9F20ba366099D26b28401F5715",
       "strategyInit": "0x638Aa6b8a9336C71FA0467272e37718e096dB22e"
     },
@@ -37,14 +47,18 @@
       "chainId": 137,
       "sourceNetworkName": "polygon",
       "payload": "pkg/contracts/transaction-builder/polygon-payload.json",
-      "newContracts": {
-        "CVStrategy": "0x37865C207ab8342de338f0d4C5bBBfd2a53bC983",
-        "CVAdminFacet": "0xF080Ff2f12A737dC5f24c1adDf534246b54cF087",
-        "CVAllocationFacet": "0xC6062A6dB2d5751627F91a11e40205db4DaC8515",
-        "CVStreamingFacet": "0xDe14A0EAd4E896324bc6fCCc7216eDa8993a72c1"
+      "configuredContracts": {
+        "CVStrategy": "0xF0C9388A16EE376c58aF3992F945b1192786da5f",
+        "CVAdminFacet": "0x0BC2a8CCB3B3d5F1ccb75D79CFA81245A6e19448",
+        "CVAllocationFacet": "0x97BF6ee2F22A0c4DDA278bEd0387430736190BFC",
+        "CVPowerFacet": "0xEeCB79b2195DBcbFf367B80a3fE4C6477859108F",
+        "CVProposalFacet": "0x70204CE101d082CBaA34c7217F415E4e1AE5b42B",
+        "CVStreamingFacet": "0xD15fa203C27319a69deb96F482A904BaC38e30e5"
       },
-      "txCount": 48,
-      "strategyProxyCount": 21,
+      "txCount": 2,
+      "bundledStreamingEscrowTxCount": 0,
+      "liveStrategyUpgrades": [],
+      "strategyProxyCount": 0,
       "registryFactory": "0x57a9835B204DbCc101Dbf981625A3625e8043B9c",
       "strategyInit": "0x2315EE63C0972E93bb3248A77980A69DE11BF325"
     },
@@ -52,14 +66,18 @@
       "chainId": 100,
       "sourceNetworkName": "gnosis",
       "payload": "pkg/contracts/transaction-builder/gnosis-payload.json",
-      "newContracts": {
-        "CVStrategy": "0x37865C207ab8342de338f0d4C5bBBfd2a53bC983",
-        "CVAdminFacet": "0xF080Ff2f12A737dC5f24c1adDf534246b54cF087",
-        "CVAllocationFacet": "0xC6062A6dB2d5751627F91a11e40205db4DaC8515",
-        "CVStreamingFacet": "0xDe14A0EAd4E896324bc6fCCc7216eDa8993a72c1"
+      "configuredContracts": {
+        "CVStrategy": "0x2Ee091a93A912E54db6ec6fC5B3C8aC79000b264",
+        "CVAdminFacet": "0x14E7F0FeDf0046B456565ebc589256832f936724",
+        "CVAllocationFacet": "0x537b19bf1c46b825eB1B362b64255EC151A932de",
+        "CVPowerFacet": "0xD329fFE359152f81C133F6366Aeaca80101aB222",
+        "CVProposalFacet": "0x4e4a0E87c54484673D84D7FeB3860054beAe351D",
+        "CVStreamingFacet": "0x4DFd0931644BDeb3d58e82C20CdC829101367EA3"
       },
-      "txCount": 158,
-      "strategyProxyCount": 76,
+      "txCount": 2,
+      "bundledStreamingEscrowTxCount": 0,
+      "liveStrategyUpgrades": [],
+      "strategyProxyCount": 0,
       "registryFactory": "0x08Df82f74D1f56F650E98da2dd4240F1A31711bc",
       "strategyInit": "0x71253aB7Eb2B7B83BD43984eBe534Ab6AdB31e7b"
     },
@@ -67,14 +85,18 @@
       "chainId": 8453,
       "sourceNetworkName": "base",
       "payload": "pkg/contracts/transaction-builder/base-payload.json",
-      "newContracts": {
-        "CVStrategy": "0x37865C207ab8342de338f0d4C5bBBfd2a53bC983",
-        "CVAdminFacet": "0xF080Ff2f12A737dC5f24c1adDf534246b54cF087",
-        "CVAllocationFacet": "0xC6062A6dB2d5751627F91a11e40205db4DaC8515",
-        "CVStreamingFacet": "0xDe14A0EAd4E896324bc6fCCc7216eDa8993a72c1"
+      "configuredContracts": {
+        "CVStrategy": "0x8E9391DCB0f2BDfD38eAc6Bd886f191E5ECC7762",
+        "CVAdminFacet": "0xd04315e83e34db1Cfd8D94710FD5f352e3baEc91",
+        "CVAllocationFacet": "0x221EA6A4F762aef74bcB99308c6E2dacB977E568",
+        "CVPowerFacet": "0x8708ea61cD03BB0F8F4C6067CB07b73C83676884",
+        "CVProposalFacet": "0x6e124F9FE78341ff1Bb5C814aC322ad9ac1bA300",
+        "CVStreamingFacet": "0x1Ae8e524D5c3d540179d8cf8d897da6ee9f525DC"
       },
-      "txCount": 52,
-      "strategyProxyCount": 23,
+      "txCount": 2,
+      "bundledStreamingEscrowTxCount": 0,
+      "liveStrategyUpgrades": [],
+      "strategyProxyCount": 0,
       "registryFactory": "0xc93830dd463516ED5f28f6cd4F837173B87FF389",
       "strategyInit": "0xb9DBc6a79Ed8B991732b7FB3fab4efF55397F853"
     },
@@ -82,14 +104,18 @@
       "chainId": 42220,
       "sourceNetworkName": "celo",
       "payload": "pkg/contracts/transaction-builder/celo-payload.json",
-      "newContracts": {
-        "CVStrategy": "0x37865C207ab8342de338f0d4C5bBBfd2a53bC983",
-        "CVAdminFacet": "0xF080Ff2f12A737dC5f24c1adDf534246b54cF087",
-        "CVAllocationFacet": "0xC6062A6dB2d5751627F91a11e40205db4DaC8515",
-        "CVStreamingFacet": "0xDe14A0EAd4E896324bc6fCCc7216eDa8993a72c1"
+      "configuredContracts": {
+        "CVStrategy": "0x63F0c6eC6a2ba8f54e9dDc8C0391fdAa77421d81",
+        "CVAdminFacet": "0x2E9b8Ac7Fb1b22b5222856cdfF64891aa9B4eeD4",
+        "CVAllocationFacet": "0x0C0F125bac5424bfA337cc5c53075b4d02242043",
+        "CVPowerFacet": "0xc1Ea65D6840Fe202463d2E9349faB6B3b5C6D575",
+        "CVProposalFacet": "0xc70b983a69a58F199f7b3a56E6994DfA5983abE6",
+        "CVStreamingFacet": "0xD70b5135a00b6a3C05C274DF4174dB5D000b9BD7"
       },
-      "txCount": 156,
-      "strategyProxyCount": 75,
+      "txCount": 2,
+      "bundledStreamingEscrowTxCount": 0,
+      "liveStrategyUpgrades": [],
+      "strategyProxyCount": 0,
       "registryFactory": "0xA71023bc64c9711C2037ab491DE80fd74504bd55",
       "strategyInit": "0xD6E4b0e094C5aE63cDd3f6e622ed22030A3a908B"
     },
@@ -97,14 +123,18 @@
       "chainId": 1,
       "sourceNetworkName": "ethereum",
       "payload": "pkg/contracts/transaction-builder/mainnet-payload.json",
-      "newContracts": {
-        "CVStrategy": "0x37865C207ab8342de338f0d4C5bBBfd2a53bC983",
-        "CVAdminFacet": "0xF080Ff2f12A737dC5f24c1adDf534246b54cF087",
-        "CVAllocationFacet": "0xC6062A6dB2d5751627F91a11e40205db4DaC8515",
-        "CVStreamingFacet": "0xDe14A0EAd4E896324bc6fCCc7216eDa8993a72c1"
+      "configuredContracts": {
+        "CVStrategy": "0x847c0c99775fbf74F2b7B5Cee251D5219990a5Cc",
+        "CVAdminFacet": "0x5a9D426D53f77adE0cB20FA562f856c1391D0786",
+        "CVAllocationFacet": "0x0AA04ca6F487D4061a784BCFa38364BFc28B4b74",
+        "CVPowerFacet": "0x1fdc6a56d1E442429db84EC78edec44C5adFF459",
+        "CVProposalFacet": "0x9BA6F88Dd9182Cc5f45A9Ceb0191e5d89123a3E9",
+        "CVStreamingFacet": "0x818324Dd8a4d1bCc3378991B3818840a25257C36"
       },
-      "txCount": 12,
-      "strategyProxyCount": 3,
+      "txCount": 2,
+      "bundledStreamingEscrowTxCount": 0,
+      "liveStrategyUpgrades": [],
+      "strategyProxyCount": 0,
       "registryFactory": "0x7D26c5B083B85B848645fcBd18Fe01168989333b",
       "strategyInit": "0x311eCe7Fc8111897C8E72738159adC0bDa6f3a7e"
     }

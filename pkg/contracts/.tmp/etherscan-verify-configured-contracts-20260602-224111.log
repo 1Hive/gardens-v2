@@ -1,0 +1,462 @@
+### arbitrum
+VERIFY arbitrum StreamingEscrow 0x431707821d3972d357f11cdb1dcb2a805165b495
+Start verifying contract `0x431707821D3972d357f11CdB1dcB2a805165b495` deployed on arbitrum
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] "0x431707821D3972d357f11CdB1dcB2a805165b495" is already verified. Skipping verification.
+OK arbitrum StreamingEscrow
+VERIFY arbitrum CVStrategy 0xbd0dbea2090bf37a0c6e1ba4146971f6e56aea05
+Start verifying contract `0xbd0dbEa2090bf37A0C6E1BA4146971f6E56aea05` deployed on arbitrum
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/CVStrategy.sol:CVStrategy] "0xbd0dbEa2090bf37A0C6E1BA4146971f6E56aea05" is already verified. Skipping verification.
+OK arbitrum CVStrategy
+VERIFY arbitrum CV_UTIL_LIB 0x36eac4ca8389e35d66978e94c811f959e5a158f2
+Start verifying contract `0x36EAc4Ca8389E35D66978e94c811F959e5A158f2` deployed on arbitrum
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/ConvictionsUtils.sol:ConvictionsUtils] "0x36EAc4Ca8389E35D66978e94c811F959e5A158f2" is already verified. Skipping verification.
+OK arbitrum CV_UTIL_LIB
+VERIFY arbitrum CVAdminFacet 0xb5acf9bfe90daed6f1cb313faf04fbd5fc165c51
+Start verifying contract `0xB5Acf9BFe90dAed6f1cB313faF04FbD5FC165C51` deployed on arbitrum
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVAdminFacet.sol:CVAdminFacet] "0xB5Acf9BFe90dAed6f1cB313faF04FbD5FC165C51" is already verified. Skipping verification.
+OK arbitrum CVAdminFacet
+VERIFY arbitrum CVPowerFacet 0xab384c9c123fb8af2f2213c460e0c0757f72d0d7
+Start verifying contract `0xab384C9C123FB8Af2F2213c460E0C0757f72d0d7` deployed on arbitrum
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVPowerFacet.sol:CVPowerFacet] "0xab384C9C123FB8Af2F2213c460E0C0757f72d0d7" is already verified. Skipping verification.
+OK arbitrum CVPowerFacet
+VERIFY arbitrum CVStreamingFacet 0xeb0f46cf16dec1898132e896a68c62372f378846
+Start verifying contract `0xeB0F46cf16dec1898132e896A68c62372F378846` deployed on arbitrum
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVStreamingFacet.sol:CVStreamingFacet] "0xeB0F46cf16dec1898132e896A68c62372F378846" is already verified. Skipping verification.
+OK arbitrum CVStreamingFacet
+VERIFY arbitrum CommunityMemberFacet 0x902ee497c57703eac66184c3cc9fb95c9f6319a3
+Start verifying contract `0x902Ee497C57703Eac66184c3CC9Fb95c9f6319A3` deployed on arbitrum
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/RegistryCommunity/facets/CommunityMemberFacet.sol:CommunityMemberFacet] "0x902Ee497C57703Eac66184c3CC9Fb95c9f6319A3" is already verified. Skipping verification.
+OK arbitrum CommunityMemberFacet
+VERIFY arbitrum CVAllocationFacet 0x6719069ebc94ef82a7516350fa5f5ac650cf13bf
+Start verifying contract `0x6719069Ebc94Ef82a7516350fA5f5AC650cF13Bf` deployed on arbitrum
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVAllocationFacet.sol:CVAllocationFacet] "0x6719069Ebc94Ef82a7516350fA5f5AC650cF13Bf" is already verified. Skipping verification.
+OK arbitrum CVAllocationFacet
+
+### optimism
+VERIFY optimism StreamingEscrow 0x3f56e0e9e641eba6ce880a5c0bb3a403e81b1f5c
+Start verifying contract `0x3F56e0E9e641EbA6CE880a5c0BB3a403e81B1F5C` deployed on optimism
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] "0x3F56e0E9e641EbA6CE880a5c0BB3a403e81B1F5C" is already verified. Skipping verification.
+OK optimism StreamingEscrow
+VERIFY optimism CVStrategy 0x7a9104983d94e3747c8b8d4fedd57a8b1b7712fb
+Start verifying contract `0x7a9104983D94e3747C8B8D4Fedd57A8b1b7712FB` deployed on optimism
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/CVStrategy.sol:CVStrategy] "0x7a9104983D94e3747C8B8D4Fedd57A8b1b7712FB" is already verified. Skipping verification.
+OK optimism CVStrategy
+VERIFY optimism CV_UTIL_LIB 0x36eac4ca8389e35d66978e94c811f959e5a158f2
+Start verifying contract `0x36EAc4Ca8389E35D66978e94c811F959e5A158f2` deployed on optimism
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/ConvictionsUtils.sol:ConvictionsUtils] "0x36EAc4Ca8389E35D66978e94c811F959e5A158f2" is already verified. Skipping verification.
+OK optimism CV_UTIL_LIB
+VERIFY optimism CVAdminFacet 0x661b3852a0b58d7020710f35c8e8503958e1cebb
+Start verifying contract `0x661b3852A0b58D7020710f35C8E8503958E1cEBB` deployed on optimism
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVAdminFacet.sol:CVAdminFacet] "0x661b3852A0b58D7020710f35C8E8503958E1cEBB" is already verified. Skipping verification.
+OK optimism CVAdminFacet
+VERIFY optimism CVPowerFacet 0x28d511148d77726a8d104761b46324234dacd2f4
+Start verifying contract `0x28D511148d77726A8d104761B46324234Dacd2F4` deployed on optimism
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVPowerFacet.sol:CVPowerFacet] "0x28D511148d77726A8d104761B46324234Dacd2F4" is already verified. Skipping verification.
+OK optimism CVPowerFacet
+VERIFY optimism CVStreamingFacet 0x387c58bf137cbfcd79828856a442f486820439b5
+Start verifying contract `0x387C58bF137CbfCD79828856a442f486820439B5` deployed on optimism
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVStreamingFacet.sol:CVStreamingFacet] "0x387C58bF137CbfCD79828856a442f486820439B5" is already verified. Skipping verification.
+OK optimism CVStreamingFacet
+VERIFY optimism CommunityMemberFacet 0x1d8f8f53f9f02b97e397249bf6e7020e5a263e9d
+Start verifying contract `0x1d8F8f53f9F02b97e397249BF6e7020E5a263E9D` deployed on optimism
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/RegistryCommunity/facets/CommunityMemberFacet.sol:CommunityMemberFacet] "0x1d8F8f53f9F02b97e397249BF6e7020E5a263E9D" is already verified. Skipping verification.
+OK optimism CommunityMemberFacet
+VERIFY optimism CVAllocationFacet 0xdeea81807174d7473b9ef89aaf236cca42b6d336
+Start verifying contract `0xDEeA81807174d7473b9eF89aaf236CCA42B6D336` deployed on optimism
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVAllocationFacet.sol:CVAllocationFacet] "0xDEeA81807174d7473b9eF89aaf236CCA42B6D336" is already verified. Skipping verification.
+OK optimism CVAllocationFacet
+
+### polygon
+VERIFY polygon StreamingEscrow 0xfa38616839f195a9a2a5f89d22780930ae45a467
+Start verifying contract `0xfa38616839F195A9A2a5f89D22780930ae45A467` deployed on polygon
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] "0xfa38616839F195A9A2a5f89D22780930ae45A467" is already verified. Skipping verification.
+OK polygon StreamingEscrow
+VERIFY polygon CVStrategy 0xf0c9388a16ee376c58af3992f945b1192786da5f
+Start verifying contract `0xF0C9388A16EE376c58aF3992F945b1192786da5f` deployed on polygon
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/CVStrategy.sol:CVStrategy] "0xF0C9388A16EE376c58aF3992F945b1192786da5f" is already verified. Skipping verification.
+OK polygon CVStrategy
+VERIFY polygon CV_UTIL_LIB 0x36eac4ca8389e35d66978e94c811f959e5a158f2
+Start verifying contract `0x36EAc4Ca8389E35D66978e94c811F959e5A158f2` deployed on polygon
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/ConvictionsUtils.sol:ConvictionsUtils] "0x36EAc4Ca8389E35D66978e94c811F959e5A158f2" is already verified. Skipping verification.
+OK polygon CV_UTIL_LIB
+VERIFY polygon CVAdminFacet 0x0bc2a8ccb3b3d5f1ccb75d79cfa81245a6e19448
+Start verifying contract `0x0BC2a8CCB3B3d5F1ccb75D79CFA81245A6e19448` deployed on polygon
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVAdminFacet.sol:CVAdminFacet] "0x0BC2a8CCB3B3d5F1ccb75D79CFA81245A6e19448" is already verified. Skipping verification.
+OK polygon CVAdminFacet
+VERIFY polygon CVPowerFacet 0xeecb79b2195dbcbff367b80a3fe4c6477859108f
+Start verifying contract `0xEeCB79b2195DBcbFf367B80a3fE4C6477859108F` deployed on polygon
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVPowerFacet.sol:CVPowerFacet] "0xEeCB79b2195DBcbFf367B80a3fE4C6477859108F" is already verified. Skipping verification.
+OK polygon CVPowerFacet
+VERIFY polygon CVStreamingFacet 0xd15fa203c27319a69deb96f482a904bac38e30e5
+Start verifying contract `0xD15fa203C27319a69deb96F482A904BaC38e30e5` deployed on polygon
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVStreamingFacet.sol:CVStreamingFacet] "0xD15fa203C27319a69deb96F482A904BaC38e30e5" is already verified. Skipping verification.
+OK polygon CVStreamingFacet
+VERIFY polygon CommunityMemberFacet 0xf210fe9d7721b1b2e2eb49f3997f09275ed1c39e
+Start verifying contract `0xf210Fe9d7721B1B2E2Eb49f3997f09275eD1c39E` deployed on polygon
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/RegistryCommunity/facets/CommunityMemberFacet.sol:CommunityMemberFacet] "0xf210Fe9d7721B1B2E2Eb49f3997f09275eD1c39E" is already verified. Skipping verification.
+OK polygon CommunityMemberFacet
+VERIFY polygon CVAllocationFacet 0x97bf6ee2f22a0c4dda278bed0387430736190bfc
+Start verifying contract `0x97BF6ee2F22A0c4DDA278bEd0387430736190BFC` deployed on polygon
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVAllocationFacet.sol:CVAllocationFacet] "0x97BF6ee2F22A0c4DDA278bEd0387430736190BFC" is already verified. Skipping verification.
+OK polygon CVAllocationFacet
+
+### gnosis
+VERIFY gnosis StreamingEscrow 0x249c0d25b0fec33deb2030d97dcb31305248b4f8
+Start verifying contract `0x249C0d25b0Fec33Deb2030d97dcb31305248b4f8` deployed on xdai
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] "0x249C0d25b0Fec33Deb2030d97dcb31305248b4f8" is already verified. Skipping verification.
+OK gnosis StreamingEscrow
+VERIFY gnosis CVStrategy 0x2ee091a93a912e54db6ec6fc5b3c8ac79000b264
+Start verifying contract `0x2Ee091a93A912E54db6ec6fC5B3C8aC79000b264` deployed on xdai
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/CVStrategy.sol:CVStrategy] "0x2Ee091a93A912E54db6ec6fC5B3C8aC79000b264" is already verified. Skipping verification.
+OK gnosis CVStrategy
+VERIFY gnosis CV_UTIL_LIB 0x36eac4ca8389e35d66978e94c811f959e5a158f2
+Start verifying contract `0x36EAc4Ca8389E35D66978e94c811F959e5A158f2` deployed on xdai
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/ConvictionsUtils.sol:ConvictionsUtils] "0x36EAc4Ca8389E35D66978e94c811F959e5A158f2" is already verified. Skipping verification.
+OK gnosis CV_UTIL_LIB
+VERIFY gnosis CVAdminFacet 0x14e7f0fedf0046b456565ebc589256832f936724
+Start verifying contract `0x14E7F0FeDf0046B456565ebc589256832f936724` deployed on xdai
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVAdminFacet.sol:CVAdminFacet] "0x14E7F0FeDf0046B456565ebc589256832f936724" is already verified. Skipping verification.
+OK gnosis CVAdminFacet
+VERIFY gnosis CVPowerFacet 0xd329ffe359152f81c133f6366aeaca80101ab222
+Start verifying contract `0xD329fFE359152f81C133F6366Aeaca80101aB222` deployed on xdai
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVPowerFacet.sol:CVPowerFacet] "0xD329fFE359152f81C133F6366Aeaca80101aB222" is already verified. Skipping verification.
+OK gnosis CVPowerFacet
+VERIFY gnosis CVStreamingFacet 0x4dfd0931644bdeb3d58e82c20cdc829101367ea3
+Start verifying contract `0x4DFd0931644BDeb3d58e82C20CdC829101367EA3` deployed on xdai
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVStreamingFacet.sol:CVStreamingFacet] "0x4DFd0931644BDeb3d58e82C20CdC829101367EA3" is already verified. Skipping verification.
+OK gnosis CVStreamingFacet
+VERIFY gnosis CommunityMemberFacet 0xc504f4f3a7b29d8a445485966af2d919d09b6476
+Start verifying contract `0xC504F4f3a7B29D8a445485966af2D919D09B6476` deployed on xdai
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/RegistryCommunity/facets/CommunityMemberFacet.sol:CommunityMemberFacet] "0xC504F4f3a7B29D8a445485966af2D919D09B6476" is already verified. Skipping verification.
+OK gnosis CommunityMemberFacet
+VERIFY gnosis CVAllocationFacet 0x537b19bf1c46b825eb1b362b64255ec151a932de
+Start verifying contract `0x537b19bf1c46b825eB1B362b64255EC151A932de` deployed on xdai
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVAllocationFacet.sol:CVAllocationFacet] "0x537b19bf1c46b825eB1B362b64255EC151A932de" is already verified. Skipping verification.
+OK gnosis CVAllocationFacet
+
+### base
+VERIFY base StreamingEscrow 0x0faac116e79fa0deb285bb891defd8b33b575663
+Start verifying contract `0x0FAac116E79Fa0deB285BB891deFd8b33B575663` deployed on base
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] "0x0FAac116E79Fa0deB285BB891deFd8b33B575663" is already verified. Skipping verification.
+OK base StreamingEscrow
+VERIFY base CVStrategy 0x8e9391dcb0f2bdfd38eac6bd886f191e5ecc7762
+Start verifying contract `0x8E9391DCB0f2BDfD38eAc6Bd886f191E5ECC7762` deployed on base
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/CVStrategy.sol:CVStrategy] "0x8E9391DCB0f2BDfD38eAc6Bd886f191E5ECC7762" is already verified. Skipping verification.
+OK base CVStrategy
+VERIFY base CV_UTIL_LIB 0x36eac4ca8389e35d66978e94c811f959e5a158f2
+Start verifying contract `0x36EAc4Ca8389E35D66978e94c811F959e5A158f2` deployed on base
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/ConvictionsUtils.sol:ConvictionsUtils] "0x36EAc4Ca8389E35D66978e94c811F959e5A158f2" is already verified. Skipping verification.
+OK base CV_UTIL_LIB
+VERIFY base CVAdminFacet 0xd04315e83e34db1cfd8d94710fd5f352e3baec91
+Start verifying contract `0xd04315e83e34db1Cfd8D94710FD5f352e3baEc91` deployed on base
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVAdminFacet.sol:CVAdminFacet] "0xd04315e83e34db1Cfd8D94710FD5f352e3baEc91" is already verified. Skipping verification.
+OK base CVAdminFacet
+VERIFY base CVPowerFacet 0x8708ea61cd03bb0f8f4c6067cb07b73c83676884
+Start verifying contract `0x8708ea61cD03BB0F8F4C6067CB07b73C83676884` deployed on base
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVPowerFacet.sol:CVPowerFacet] "0x8708ea61cD03BB0F8F4C6067CB07b73C83676884" is already verified. Skipping verification.
+OK base CVPowerFacet
+VERIFY base CVStreamingFacet 0x1ae8e524d5c3d540179d8cf8d897da6ee9f525dc
+Start verifying contract `0x1Ae8e524D5c3d540179d8cf8d897da6ee9f525DC` deployed on base
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVStreamingFacet.sol:CVStreamingFacet] "0x1Ae8e524D5c3d540179d8cf8d897da6ee9f525DC" is already verified. Skipping verification.
+OK base CVStreamingFacet
+VERIFY base CommunityMemberFacet 0xd433532471c1fcc8ff8b752eddbf34eaa14bc8a1
+Start verifying contract `0xd433532471c1FCc8ff8b752EddbF34eAa14bC8a1` deployed on base
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/RegistryCommunity/facets/CommunityMemberFacet.sol:CommunityMemberFacet] "0xd433532471c1FCc8ff8b752EddbF34eAa14bC8a1" is already verified. Skipping verification.
+OK base CommunityMemberFacet
+VERIFY base CVAllocationFacet 0x221ea6a4f762aef74bcb99308c6e2dacb977e568
+Start verifying contract `0x221EA6A4F762aef74bcB99308c6E2dacB977E568` deployed on base
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVAllocationFacet.sol:CVAllocationFacet] "0x221EA6A4F762aef74bcB99308c6E2dacB977E568" is already verified. Skipping verification.
+OK base CVAllocationFacet
+
+### celo
+VERIFY celo StreamingEscrow 0x7a7f66d4f6f388434cf754ff1cf306e87c412977
+Start verifying contract `0x7A7f66D4F6f388434cF754FF1CF306e87C412977` deployed on celo
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] "0x7A7f66D4F6f388434cF754FF1CF306e87C412977" is already verified. Skipping verification.
+OK celo StreamingEscrow
+VERIFY celo CVStrategy 0x63f0c6ec6a2ba8f54e9ddc8c0391fdaa77421d81
+Start verifying contract `0x63F0c6eC6a2ba8f54e9dDc8C0391fdAa77421d81` deployed on celo
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/CVStrategy.sol:CVStrategy] "0x63F0c6eC6a2ba8f54e9dDc8C0391fdAa77421d81" is already verified. Skipping verification.
+OK celo CVStrategy
+VERIFY celo CV_UTIL_LIB 0x36eac4ca8389e35d66978e94c811f959e5a158f2
+Start verifying contract `0x36EAc4Ca8389E35D66978e94c811F959e5A158f2` deployed on celo
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/ConvictionsUtils.sol:ConvictionsUtils] "0x36EAc4Ca8389E35D66978e94c811F959e5A158f2" is already verified. Skipping verification.
+OK celo CV_UTIL_LIB
+VERIFY celo CVAdminFacet 0x2e9b8ac7fb1b22b5222856cdff64891aa9b4eed4
+Start verifying contract `0x2E9b8Ac7Fb1b22b5222856cdfF64891aa9B4eeD4` deployed on celo
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVAdminFacet.sol:CVAdminFacet] "0x2E9b8Ac7Fb1b22b5222856cdfF64891aa9B4eeD4" is already verified. Skipping verification.
+OK celo CVAdminFacet
+VERIFY celo CVPowerFacet 0xc1ea65d6840fe202463d2e9349fab6b3b5c6d575
+Start verifying contract `0xc1Ea65D6840Fe202463d2E9349faB6B3b5C6D575` deployed on celo
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVPowerFacet.sol:CVPowerFacet] "0xc1Ea65D6840Fe202463d2E9349faB6B3b5C6D575" is already verified. Skipping verification.
+OK celo CVPowerFacet
+VERIFY celo CVStreamingFacet 0xd70b5135a00b6a3c05c274df4174db5d000b9bd7
+Start verifying contract `0xD70b5135a00b6a3C05C274DF4174dB5D000b9BD7` deployed on celo
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVStreamingFacet.sol:CVStreamingFacet] "0xD70b5135a00b6a3C05C274DF4174dB5D000b9BD7" is already verified. Skipping verification.
+OK celo CVStreamingFacet
+VERIFY celo CommunityMemberFacet 0x582b19b00947dc56f3201ffb657b9c09a63a87b4
+Start verifying contract `0x582B19b00947DC56F3201ffB657B9C09A63A87B4` deployed on celo
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/RegistryCommunity/facets/CommunityMemberFacet.sol:CommunityMemberFacet] "0x582B19b00947DC56F3201ffB657B9C09A63A87B4" is already verified. Skipping verification.
+OK celo CommunityMemberFacet
+VERIFY celo CVAllocationFacet 0x0c0f125bac5424bfa337cc5c53075b4d02242043
+Start verifying contract `0x0C0F125bac5424bfA337cc5c53075b4d02242043` deployed on celo
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVAllocationFacet.sol:CVAllocationFacet] "0x0C0F125bac5424bfA337cc5c53075b4d02242043" is already verified. Skipping verification.
+OK celo CVAllocationFacet
+
+### ethereum
+VERIFY ethereum StreamingEscrow 0xc9d4e0dacd937364793278180551e59d93cd43f9
+Start verifying contract `0xC9D4e0DACd937364793278180551E59d93CD43f9` deployed on mainnet
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/StreamingEscrow.sol:StreamingEscrow] "0xC9D4e0DACd937364793278180551E59d93CD43f9" is already verified. Skipping verification.
+OK ethereum StreamingEscrow
+VERIFY ethereum CVStrategy 0x847c0c99775fbf74f2b7b5cee251d5219990a5cc
+Start verifying contract `0x847c0c99775fbf74F2b7B5Cee251D5219990a5Cc` deployed on mainnet
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/CVStrategy.sol:CVStrategy] "0x847c0c99775fbf74F2b7B5Cee251D5219990a5Cc" is already verified. Skipping verification.
+OK ethereum CVStrategy
+VERIFY ethereum CV_UTIL_LIB 0x36eac4ca8389e35d66978e94c811f959e5a158f2
+Start verifying contract `0x36EAc4Ca8389E35D66978e94c811F959e5A158f2` deployed on mainnet
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/ConvictionsUtils.sol:ConvictionsUtils] "0x36EAc4Ca8389E35D66978e94c811F959e5A158f2" is already verified. Skipping verification.
+OK ethereum CV_UTIL_LIB
+VERIFY ethereum CVAdminFacet 0x5a9d426d53f77ade0cb20fa562f856c1391d0786
+Start verifying contract `0x5a9D426D53f77adE0cB20FA562f856c1391D0786` deployed on mainnet
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVAdminFacet.sol:CVAdminFacet] "0x5a9D426D53f77adE0cB20FA562f856c1391D0786" is already verified. Skipping verification.
+OK ethereum CVAdminFacet
+VERIFY ethereum CVPowerFacet 0x1fdc6a56d1e442429db84ec78edec44c5adff459
+Start verifying contract `0x1fdc6a56d1E442429db84EC78edec44C5adFF459` deployed on mainnet
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVPowerFacet.sol:CVPowerFacet] "0x1fdc6a56d1E442429db84EC78edec44C5adFF459" is already verified. Skipping verification.
+OK ethereum CVPowerFacet
+VERIFY ethereum CVStreamingFacet 0x818324dd8a4d1bcc3378991b3818840a25257c36
+Start verifying contract `0x818324Dd8a4d1bCc3378991B3818840a25257C36` deployed on mainnet
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVStreamingFacet.sol:CVStreamingFacet] "0x818324Dd8a4d1bCc3378991B3818840a25257C36" is already verified. Skipping verification.
+OK ethereum CVStreamingFacet
+VERIFY ethereum CommunityMemberFacet 0x6d199bcd8e85c928df16f8b48740a4274a218a04
+Start verifying contract `0x6D199bCD8e85C928DF16F8b48740A4274a218a04` deployed on mainnet
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/RegistryCommunity/facets/CommunityMemberFacet.sol:CommunityMemberFacet] "0x6D199bCD8e85C928DF16F8b48740A4274a218a04" is already verified. Skipping verification.
+OK ethereum CommunityMemberFacet
+VERIFY ethereum CVAllocationFacet 0x0aa04ca6f487d4061a784bcfa38364bfc28b4b74
+Start verifying contract `0x0AA04ca6F487D4061a784BCFa38364BFc28B4b74` deployed on mainnet
+EVM version: prague
+Compiler version: v0.8.23+commit.f704f362
+Optimizations:    0
+
+Contract [pkg/contracts/src/CVStrategy/facets/CVAllocationFacet.sol:CVAllocationFacet] "0x0AA04ca6F487D4061a784BCFa38364BFc28B4b74" is already verified. Skipping verification.
+OK ethereum CVAllocationFacet
+
