@@ -68,6 +68,9 @@ const ConvictionBarChartBase = ({
   const isDarkTheme = resolvedTheme === "darkTheme";
   const chartColors = getChartColors(isDarkTheme);
   const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
+  const isThresholdOverOneHundred = !isSignalingType && thresholdPct >= 100;
+  const isThresholdImpossible =
+    isThresholdOutOfReach || isThresholdOverOneHundred;
   const scenarioMappings: Record<string, ScenarioMapping> = {
     // First check if there are insufficient funds in the pool to pass the proposal.
     hasInsufficientFundsInPool: {
@@ -75,6 +78,18 @@ const ConvictionBarChartBase = ({
       details: [
         {
           message: "Not enough funds in the pool to execute this proposal.",
+          growing: null,
+        },
+      ],
+    },
+    impossibleThreshold: {
+      condition: () => isThresholdImpossible,
+      details: [
+        {
+          message:
+            isThresholdOverOneHundred ?
+              "Threshold over 100%."
+            : "Threshold out of reach.",
           growing: null,
         },
       ],
@@ -297,6 +312,8 @@ const ConvictionBarChartBase = ({
     currentConvictionPct,
     hasInsufficientPoolFunds,
     isSignalingType,
+    isThresholdImpossible,
+    isThresholdOverOneHundred,
     proposalSupportPct,
     proposalType,
     thresholdPct,
@@ -333,7 +350,7 @@ const ConvictionBarChartBase = ({
     : {
         ...markLine,
         data:
-          hasInsufficientPoolFunds ?
+          hasInsufficientPoolFunds || isThresholdImpossible ?
             []
           : [
               {
@@ -354,7 +371,11 @@ const ConvictionBarChartBase = ({
 
   const chartMaxValue =
     defaultChartMaxValue ?
-      Math.max(currentConvictionPct, proposalSupportPct, thresholdPct)
+      Math.max(
+        currentConvictionPct,
+        proposalSupportPct,
+        isThresholdImpossible ? 100 : thresholdPct,
+      )
     : 100;
 
   const option: EChartsOption = {
@@ -455,7 +476,7 @@ const ConvictionBarChartBase = ({
           type: "bar",
           name: "Threshold",
           barWidth: 18,
-          data: [thresholdPct],
+          data: isThresholdImpossible ? [] : [thresholdPct],
           itemStyle: {
             borderRadius: borderRadius,
             color: chartColors.threshold,

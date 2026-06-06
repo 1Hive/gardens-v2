@@ -66,7 +66,9 @@ export const ChartWrapper = ({
           "The minimum level of conviction required for a proposal to stream."
         : "The minimum level of conviction required for a proposal to pass.",
       value:
-        isThresholdOutOfReach ? "Out of reach"
+        typeof threshold === "number" && threshold >= 100 ?
+          "Threshold over 100%"
+        : isThresholdOutOfReach ? "Threshold out of reach"
         : isThresholdBelowDisplayPrecision ? "< 0.01 VP"
         : threshold ?? 0,
     },
