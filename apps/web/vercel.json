@@ -1,5 +1,6 @@
 {
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- .",
+  "buildCommand": "cd ../.. && corepack enable && pnpm turbo run build --filter={apps/web}",
   "crons": [
     {
       "path": "/api/passport-oracles/daily-job/10",
