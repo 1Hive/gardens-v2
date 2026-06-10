@@ -59,6 +59,7 @@ import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import useCheckAllowList from "@/hooks/useCheckAllowList";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { useOnchainProposalStatuses } from "@/hooks/useOnchainProposalStatus";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
@@ -166,6 +167,12 @@ export function Proposals({
   const { address: wallet } = useAccount();
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
+  const onchainProposalStatuses = useOnchainProposalStatuses({
+    strategyAddress: strategy.id as Address,
+    proposals: strategy.proposals,
+    chainId,
+    enabled: !!strategy.id,
+  });
   const allowList = (strategy?.config?.allowlist as Address[]) ?? [];
   const isAllowed = useCheckAllowList(allowList, wallet);
 
@@ -309,10 +316,31 @@ export function Proposals({
       subgraphActivatedPoints: memberActivatedPointsFromSubgraph,
     });
 
-  const [sortedProposals, setSortedProposals] = useState(strategy.proposals);
+  const proposalsWithResolvedStatus = useMemo(
+    () =>
+      strategy.proposals.map((proposal) => {
+        const onchainStatus = onchainProposalStatuses[proposal.id];
+        if (
+          onchainStatus == null ||
+          onchainStatus === Number(proposal.proposalStatus)
+        ) {
+          return proposal;
+        }
+
+        return {
+          ...proposal,
+          proposalStatus: onchainStatus as typeof proposal.proposalStatus,
+        };
+      }),
+    [onchainProposalStatuses, strategy.proposals],
+  );
+
+  const [sortedProposals, setSortedProposals] = useState(
+    proposalsWithResolvedStatus,
+  );
 
   useEffect(() => {
-    const sorted = [...strategy.proposals].sort((a, b) => {
+    const sorted = [...proposalsWithResolvedStatus].sort((a, b) => {
       const aConviction =
         proposalCardRefs.current.get(a.id)?.getProposalConviction()
           ?.conviction ?? 0n;
@@ -329,7 +357,7 @@ export function Proposals({
     });
 
     setSortedProposals(sorted);
-  }, [strategy.proposals]);
+  }, [proposalsWithResolvedStatus]);
 
   // Effects
   useEffect(() => {
@@ -349,7 +377,11 @@ export function Proposals({
         .map((x) => ({ ...x, amount: BigInt(x.amount) })) ?? [];
 
     const totalActiveStaked = stakesFiltered.reduce((acc, curr) => {
-      const proposalStatus = ProposalStatus[curr.proposal.proposalStatus];
+      const proposalStatus =
+        ProposalStatus[
+          onchainProposalStatuses[curr.proposal.id] ??
+            curr.proposal.proposalStatus
+        ];
       const proposalEnded =
         proposalStatus !== "active" && proposalStatus !== "disputed";
 
@@ -382,7 +414,7 @@ export function Proposals({
 
     setInputAllocatedTokens(totalActiveStaked);
     setStakedFilters(memberStakes);
-  }, [memberData?.member?.stakes, strategy.id]);
+  }, [memberData?.member?.stakes, onchainProposalStatuses, strategy.id]);
 
   useEffect(() => {
     if (memberActivatedStrategy === false) {

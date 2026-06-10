@@ -132,6 +132,7 @@ export const ProposalsModalSupport = forwardRef<
       submitter,
       beneficiary,
     } = proposalData;
+    const proposalStatusCode = Number(proposalStatus);
 
     const searchParams = useCollectQueryParams();
     const isNewProposal =
@@ -202,7 +203,7 @@ export const ProposalsModalSupport = forwardRef<
       proposalData.proposalStream ?? proposalData.proposalStreams?.[0];
     const subgraphCurrentFlowRateBn = toBigInt(proposalStream?.currentFlowRate);
 
-    const resolvedProposalStatus = ProposalStatus[proposalStatus];
+    const resolvedProposalStatus = ProposalStatus[proposalStatusCode];
     const alreadyExecuted = resolvedProposalStatus === "executed";
     const isFrozenStreamingProposal =
       isStreamingType &&
@@ -346,7 +347,7 @@ export const ProposalsModalSupport = forwardRef<
                 {isPoolEnabled && (
                   <div className="flex items-center gap-4 ">
                     <Badge
-                      status={proposalStatus}
+                      status={proposalStatusCode}
                       label={streamingStatusLabel}
                       icon={<HandRaisedIcon />}
                     />

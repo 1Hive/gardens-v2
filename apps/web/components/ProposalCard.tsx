@@ -139,6 +139,14 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     ref,
   ) => {
     const chainId = useChainIdFromPath();
+    const {
+      proposalNumber,
+      proposalStatus,
+      requestedAmount,
+      submitter,
+      createdAt,
+      executedAt,
+    } = proposalData;
     const shouldReadOnchainMetadataHash =
       !!proposalData?.strategy?.id &&
       proposalData?.proposalNumber != null &&
@@ -178,14 +186,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
         title: `Proposal #${proposalData.proposalNumber}`,
       };
 
-    const {
-      proposalNumber,
-      proposalStatus,
-      requestedAmount,
-      submitter,
-      createdAt,
-      executedAt,
-    } = proposalData;
+    const proposalStatusCode = Number(proposalStatus);
     const pathname = usePathname();
     const proposalSlug = formatProposalSlug(proposalNumber);
     const searchParams = useCollectQueryParams();
@@ -296,7 +297,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     );
     const lastSnapshotAtBn = toBigInt(proposalStream?.lastSnapshotAt);
     const resolvedProposalStatus =
-      optimisticProposalStatus ?? ProposalStatus[proposalStatus];
+      optimisticProposalStatus ?? ProposalStatus[proposalStatusCode];
     const alreadyExecuted = resolvedProposalStatus === "executed";
     const isFrozenStreamingProposal =
       isStreamingType &&
@@ -566,7 +567,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                   {isPoolEnabled && (
                     <div className="flex items-center gap-4">
                       <Badge
-                        status={proposalStatus}
+                        status={proposalStatusCode}
                         label={streamingStatusLabel}
                         icon={<HandRaisedIcon />}
                       />
@@ -736,7 +737,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           isSignalingType={isSignalingType}
                           proposalNumber={proposalNumber}
                           refreshConviction={triggerConvictionRefetch}
-                          proposalStatus={proposalStatus}
+                          proposalStatus={resolvedProposalStatus}
                           proposalType={PoolTypes[strategyConfig.proposalType]}
                           hasInsufficientPoolFunds={
                             hasInsufficientPoolFundsForRequest

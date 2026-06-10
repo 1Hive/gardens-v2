@@ -50,6 +50,7 @@ import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
 import { MetadataV1, useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { useOnchainProposalStatus } from "@/hooks/useOnchainProposalStatus";
 import { usePoolToken } from "@/hooks/usePoolToken";
 import {
   dismissPendingSubgraphRefreshToast,
@@ -490,6 +491,13 @@ export default function ClientPage({ params }: ClientPageProps) {
       BigInt(proposalData.proposalNumber)
     : undefined;
   const chainId = useChainIdFromPath();
+  const { status: resolvedProposalStatusCode } = useOnchainProposalStatus({
+    strategyAddress: proposalData?.strategy?.id as Address | undefined,
+    proposalNumber: proposalIdNumber,
+    chainId,
+    fallbackStatus: proposalData?.proposalStatus,
+    enabled: proposalData != null,
+  });
   const shouldReadOnchainMetadataHash =
     !!proposalData?.strategy?.id &&
     proposalIdNumber != null &&
@@ -543,6 +551,9 @@ export default function ClientPage({ params }: ClientPageProps) {
     proposalData ?
       {
         ...proposalData,
+        proposalStatus:
+          (resolvedProposalStatusCode ??
+            proposalData.proposalStatus) as ProposalData["proposalStatus"],
         ...metadataForActions,
         metadata: metadataForActions,
       }
@@ -607,7 +618,9 @@ export default function ClientPage({ params }: ClientPageProps) {
       `${superfluidExplorerBaseUrl}/accounts/${resolvedStreamingEscrow.toLowerCase()}?tab=streams`
     : undefined;
   const showEscrow = useFlag("showEscrow");
-  const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
+  const proposalStatusCode =
+    resolvedProposalStatusCode ?? Number(proposalData?.proposalStatus);
+  const proposalStatus = ProposalStatus[proposalStatusCode];
   const shouldShowSupportersTab =
     proposalStatus !== "executed" && proposalStatus !== "cancelled";
 
@@ -1102,7 +1115,7 @@ export default function ClientPage({ params }: ClientPageProps) {
   //   setConvictionRefreshing(false);
 
   // };
-  const status = ProposalStatus[proposalData.proposalStatus];
+  const status = proposalStatus;
   const canOpenDisputeModal =
     status === "active" || status === "disputed" || status === "rejected";
   const streamingStatusLabel =
@@ -1444,7 +1457,7 @@ export default function ClientPage({ params }: ClientPageProps) {
             <div className="flex items-center justify-between">
               <h5>Status</h5>
               <Badge
-                status={proposalData.proposalStatus}
+                status={proposalStatusCode}
                 label={streamingStatusLabel}
               />
             </div>
@@ -2016,7 +2029,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                 <div className="flex items-center justify-between">
                   <h5>Status</h5>
                   <Badge
-                    status={proposalData.proposalStatus}
+                    status={proposalStatusCode}
                     label={streamingStatusLabel}
                   />
                 </div>
