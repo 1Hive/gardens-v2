@@ -60,7 +60,7 @@ import useCheckAllowList from "@/hooks/useCheckAllowList";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI, registryCommunityABI } from "@/src/generated";
+import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { getMemberActivationState } from "@/utils/memberActivation";
@@ -93,6 +93,19 @@ type Stats = {
   info: string;
   symbol: string;
 };
+
+const votingPowerRegistryABI = [
+  {
+    stateMutability: "view",
+    type: "function",
+    inputs: [
+      { name: "_member", internalType: "address", type: "address" },
+      { name: "_strategy", internalType: "address", type: "address" },
+    ],
+    name: "getMemberPowerInStrategy",
+    outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
+  },
+] as const;
 
 interface ProposalsProps {
   strategy: Pick<
@@ -256,18 +269,40 @@ export function Proposals({
   );
 
   // Contract reads
-  const { data: memberPower } = useContractRead({
+  const { data: communityMemberPower } = useContractRead({
     address: communityAddress,
     abi: registryCommunityABI,
     functionName: "memberPowerInStrategy",
-    args: [wallet as Address, strategy.id as Address],
+    args: [strategy.id as Address, wallet as Address],
     chainId: chainId,
     enabled: !!wallet,
+  });
+
+  const { data: votingPowerRegistryAddress } = useContractRead({
+    address: strategy.id as Address,
+    abi: cvStrategyABI,
+    functionName: "votingPowerRegistry",
+    chainId,
+    enabled: !!strategy.id,
+  });
+
+  const {
+    data: votingRegistryMemberPower,
+    refetch: refetchVotingRegistryMemberPower,
+  } = useContractRead({
+    address: votingPowerRegistryAddress as Address,
+    abi: votingPowerRegistryABI,
+    functionName: "getMemberPowerInStrategy",
+    args: [wallet as Address, strategy.id as Address],
+    chainId,
+    enabled: !!wallet && !!strategy.id && !!votingPowerRegistryAddress,
+    watch: true,
   });
 
   // Derived state
   const isMemberCommunity =
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
+  const memberPower = votingRegistryMemberPower ?? communityMemberPower;
   const { memberActivatedStrategy, memberActivatedPoints } =
     getMemberActivationState({
       memberPower,
@@ -498,7 +533,10 @@ export function Proposals({
   const inputHandler = (proposalId: string, value: bigint) => {
     const currentPoints = calculateTotalTokens(proposalId);
 
-    const maxAllowableValue = memberActivatedPoints - currentPoints;
+    const maxAllowableValue =
+      memberActivatedPoints > currentPoints ?
+        memberActivatedPoints - currentPoints
+      : 0n;
     const minValue = (value = bigIntMin(value, maxAllowableValue));
 
     const input = inputs[proposalId];
@@ -540,6 +578,23 @@ export function Proposals({
   const submit = async () => {
     if (!Object.keys(inputs).length) {
       console.error("Inputs not yet computed");
+      return;
+    }
+
+    const latestMemberActivatedPoints =
+      votingPowerRegistryAddress != null ?
+        ((await refetchVotingRegistryMemberPower()).data ??
+          memberActivatedPoints)
+      : memberActivatedPoints;
+    const intendedAllocationTotal = Object.values(inputs).reduce(
+      (acc, input) => acc + input.value,
+      0n,
+    );
+
+    if (intendedAllocationTotal > latestMemberActivatedPoints) {
+      toast.error(
+        "Your allocation is above your current on-chain voting power. Refresh and try again.",
+      );
       return;
     }
 

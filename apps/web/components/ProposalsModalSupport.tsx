@@ -33,6 +33,9 @@ import { PoolTypes, ProposalStatus } from "@/types";
 import { calculatePercentageBigInt, toBigInt } from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
+const SUPPORT_SLIDER_SCALE = 10_000n;
+const SUPPORT_SLIDER_STEP = 100;
+
 export type ProposalCardProps = {
   proposalData: Pick<
     CVProposal,
@@ -176,6 +179,14 @@ export const ProposalsModalSupport = forwardRef<
     const inputValue =
       inputData ?
         calculatePercentageBigInt(inputData.value, memberActivatedPoints)
+      : 0;
+    const sliderValue =
+      inputData && memberActivatedPoints > 0n ?
+        Number(
+          (inputData.value * SUPPORT_SLIDER_SCALE +
+            memberActivatedPoints / 2n) /
+            memberActivatedPoints,
+        )
       : 0;
 
     const poolWeightAllocatedInProposal = (
@@ -436,18 +447,24 @@ export const ProposalsModalSupport = forwardRef<
                           data-testid="input-slider-vote"
                           type="range"
                           min={0}
-                          max={Number(memberActivatedPoints)}
-                          value={
-                            inputData ? Number(inputData.value) : undefined
-                          }
+                          max={Number(SUPPORT_SLIDER_SCALE)}
+                          value={sliderValue}
                           className={
                             "range range-md cursor-pointer bg-neutral-soft [--range-bg:var(--color-grey-200)] dark:[--range-bg:#373737] dark:bg-[#373737] [--range-shdw:var(--color-green-500)] dark:[--range-shdw:#4E9F80] "
                           }
-                          step={Number(memberActivatedPoints) / 100}
+                          step={SUPPORT_SLIDER_STEP}
                           onChange={(e) => {
+                            const nextSliderValue = BigInt(e.target.value);
+                            const nextInputValue =
+                              nextSliderValue >= SUPPORT_SLIDER_SCALE ?
+                                memberActivatedPoints
+                              : (
+                                (memberActivatedPoints * nextSliderValue) /
+                                SUPPORT_SLIDER_SCALE
+                              );
                             inputHandler(
                               proposalData.id,
-                              BigInt(Math.floor(Number(e.target.value))),
+                              nextInputValue,
                             );
                           }}
                         />
