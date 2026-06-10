@@ -108,7 +108,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-primary relative">
+    <div className="relative flex min-h-screen flex-col bg-primary">
       {/* Left Sidebar - Fixed with higher z-index */}
       {/* <aside className="hidden lg:flex fixed top-0 left-0 h-full w-[75px] bg-white border-r border-gray-200 flex-col items-center py-4 gap-4 z-50 justify-between">
         <Link href="/gardens" className="flex items-center gap-3 text-sm">
@@ -267,9 +267,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
       </nav>
 
-      <div className="flex justify-center items-start pt-[79px] min-h-screen">
-        <div className="w-full mx-auto">
-          <div className="min-h-[400px]">
+      <div className="flex flex-1 items-start justify-center pt-[79px]">
+        <div className="mx-auto flex w-full flex-1 flex-col">
+          <div className="min-h-[400px] flex-1">
             {/* Main content */}
             {children}
           </div>
