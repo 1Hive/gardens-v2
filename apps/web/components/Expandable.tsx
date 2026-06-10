@@ -65,8 +65,11 @@ export const ExpandableComponent = ({
                 damping: 15,
                 mass: 0.3,
               }}
-              className="relative"
-              style={{ overflow: showPreview ? "hidden" : "visible" }}
+              className={`relative ${showPreview ? "overflow-hidden" : ""}`}
+              style={{
+                maxHeight: showPreview ? previewHeight : undefined,
+                overflow: showPreview ? "hidden" : "visible",
+              }}
             >
               <div ref={contentRef}>{children}</div>
               {showPreview && needsExpansion && (

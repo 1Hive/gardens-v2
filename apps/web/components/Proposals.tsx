@@ -1330,7 +1330,11 @@ function ProposalFiltersUI({
           </button>
 
           <ul
-            className={`dropdown-content menu bg-primary rounded-md z-50 shadow w-full lg:w-[215px] ${isSortDropdownLocked || disableSort ? "!invisible !opacity-0 !pointer-events-none" : ""}`}
+            className={`dropdown-content menu bg-primary rounded-md z-50 shadow w-full lg:w-[215px] ${
+              isSortDropdownLocked || disableSort ?
+                "hidden"
+              : "hidden group-hover:flex group-focus-within:flex"
+            }`}
           >
             {SORT_OPTIONS.map((option) => {
               const Icon = option.icon;

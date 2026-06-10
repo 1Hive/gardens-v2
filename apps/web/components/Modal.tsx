@@ -71,7 +71,7 @@ export function Modal({
 
   return (
     <dialog
-      className={`modal max-sm:modal-bottom ${className}`}
+      className={`${isOpen ? "" : "hidden"} modal max-sm:modal-bottom ${className}`}
       ref={dialogRef}
     >
       <div

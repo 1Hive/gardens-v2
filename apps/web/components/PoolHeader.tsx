@@ -320,13 +320,13 @@ export default function PoolHeader({
       info: sybilResistanceInfo[sybilResistanceType],
       value:
         sybilResistanceType === "allowList" ?
-          <div className="dropdown dropdown-hover dropdown-center dropdowm-bottom sm:dropdown-right">
+          <div className="dropdown dropdown-hover dropdown-center dropdown-bottom sm:dropdown-right">
             {/* Trigger for the dropdown */}
             <div className="flex items-center gap-2 group">
               <p className="subtitle ml-1">Allowlist</p>
               <ChevronDoubleUpIcon className="w-4 h-4 group-hover:rotate-180 transition-all ease-in-out duration-250" />
             </div>
-            <div className="dropdown-content bg-primary rounded-box shadow z-10 p-2 max-h-[500px] overflow-y-auto w-64">
+            <div className="dropdown-content !absolute !bottom-full !top-auto mb-2 bg-primary rounded-box shadow z-10 p-2 max-h-80 overflow-auto w-64">
               <ul className="menu w-full gap-1">
                 {(allowList ?? []).length > 0 ?
                   (allowList ?? []).map((addr) => (
