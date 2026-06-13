@@ -45,6 +45,11 @@ cache/
 /broadcast/*/1337/
 /broadcast/*/1/
 /broadcast/**/dry-run/
+/broadcast/**/run-[0-9]*.json
+
+# Local contract operation artifacts
+/pkg/contracts/.tmp/
+/pkg/contracts/logs/
 
 # subgraph
 pkg/subgraph/generated
