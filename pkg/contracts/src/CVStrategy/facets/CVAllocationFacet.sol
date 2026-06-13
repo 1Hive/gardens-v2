@@ -2,6 +2,8 @@
 pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
+import {CVStreamingStorage} from "../CVStreamingStorage.sol";
+import {StreamingEscrow} from "../StreamingEscrow.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ProposalType, ProposalStatus, ProposalSupport, Proposal} from "../ICVStrategy.sol";
@@ -47,6 +49,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
     error TooManyAllocations(uint256 provided, uint256 maxAllowed);
     error TooManyVoterStakedProposals(address voter, uint256 current, uint256 maxAllowed);
+    error UpdateMemberUnitsFailed(address member, uint128 units);
 
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
@@ -211,7 +214,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
             }
         }
 
-        if (proposalType == ProposalType.Funding) {
+        if (proposalType == ProposalType.Funding || proposalType == ProposalType.Streaming) {
             if (proposals[proposalId].proposalId != proposalId && proposalId != 0) {
                 revert ProposalNotInList(proposalId);
             }
@@ -254,6 +257,17 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
             }
 
             proposals[proposalId].proposalStatus = ProposalStatus.Executed;
+            _decrementActiveProposalCount();
+            _removeOpenStreamingProposal(proposalId);
+            if (proposalType == ProposalType.Streaming) {
+                address escrow = CVStreamingStorage.layout().proposalEscrow[proposalId];
+                if (escrow != address(0)) {
+                    if (!superfluidGDA.updateMemberUnits(escrow, 0)) {
+                        revert UpdateMemberUnitsFailed(escrow, 0);
+                    }
+                    StreamingEscrow(escrow).drainToStrategy();
+                }
+            }
             _transferAmount(
                 allo.getPool(poolId).token, proposals[proposalId].beneficiary, proposals[proposalId].requestedAmount
             );

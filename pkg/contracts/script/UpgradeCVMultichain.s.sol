@@ -455,11 +455,11 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         bytes memory runtimeCode = implementation.code;
         require(runtimeCode.length > 13444, "strategy implementation code too short");
 
-        address linkedLibrary = _readLinkedAddress(runtimeCode, 6429);
+        address linkedLibrary = _readLinkedAddress(runtimeCode, 6488);
         require(linkedLibrary != address(0), "CV_UTIL_LIB link missing");
-        require(_readLinkedAddress(runtimeCode, 6586) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 8402) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 13424) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 6645) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 8461) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 13571) == linkedLibrary, "CV_UTIL_LIB link mismatch");
         require(linkedLibrary.code.length != 0, "CV_UTIL_LIB has no code");
 
         _writeNetworkAddress(".IMPLEMENTATIONS.CV_UTIL_LIB", linkedLibrary);

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+unset CHAIN
 
 NETWORK=""
 RPC_URL=""
@@ -9,6 +10,7 @@ VERIFIER_URL=""
 COMPILER_VERSION="v0.8.23+commit.f704f362"
 OPTIMIZER_RUNS="0"
 EVM_VERSION="prague"
+VERIFY_COMMAND_TIMEOUT=${VERIFY_COMMAND_TIMEOUT:-300}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -58,10 +60,14 @@ verify_with_retry() {
   local output
 
   while true; do
-    if output="$("$@" 2>&1)"; then
+    if output="$(timeout --foreground "$VERIFY_COMMAND_TIMEOUT" "$@" 2>&1)"; then
       printf '%s\n' "$output"
       sleep 2
       return 0
+    fi
+    local status=$?
+    if [[ "$status" -eq 124 ]]; then
+      output="Command timed out after ${VERIFY_COMMAND_TIMEOUT}s while running ${description}"
     fi
 
     printf '%s\n' "$output" >&2

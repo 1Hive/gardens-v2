@@ -274,6 +274,27 @@ contract CVPowerFacetTest is Test {
         assertEq(registry.lastDeactivated(), member);
     }
 
+    function test_security_unactivatedCustomRegistryMemberCannotZeroActivatedPower() public {
+        address attacker = makeAddr("attacker");
+
+        facet.setSybilScorer(address(0));
+        facet.setPointSystem(PointSystem.Custom);
+        facet.setVotingPowerRegistry(address(externalRegistry));
+        facet.setTotalPointsActivated(4);
+
+        externalRegistry.setMemberPower(attacker, 10);
+        registry.setActivated(attacker, false);
+
+        vm.prank(attacker);
+        facet.deactivatePoints();
+
+        assertEq(
+            facet.totalPointsActivated(),
+            4,
+            "unactivated custom-registry member must not reduce pool activated power"
+        );
+    }
+
     function test_deactivatePointsFromRegistry_saturates_when_member_power_exceeds_total() public {
         registry.setMemberPower(member, 10);
         facet.setTotalPointsActivated(4);

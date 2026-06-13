@@ -17,8 +17,7 @@ import {IArbitrator} from "../../src/interfaces/IArbitrator.sol";
 import {IArbitrable} from "../../src/interfaces/IArbitrable.sol";
 import {CollateralVault} from "../../src/CollateralVault.sol";
 import {RegistryFactory} from "../../src/RegistryFactory/RegistryFactory.sol";
-import {RegistryCommunity, RegistryCommunityInitializeParams} from
-    "../../src/RegistryCommunity/RegistryCommunity.sol";
+import {RegistryCommunity, RegistryCommunityInitializeParams} from "../../src/RegistryCommunity/RegistryCommunity.sol";
 import {
     CVStrategy,
     ProposalType,
@@ -28,6 +27,8 @@ import {
     CreateProposal
 } from "../../src/CVStrategy/CVStrategy.sol";
 import {CVParams, ProposalStatus, ProposalSupport} from "../../src/CVStrategy/ICVStrategy.sol";
+import {ConvictionsUtils} from "../../src/CVStrategy/ConvictionsUtils.sol";
+import {CVProposalFacet} from "../../src/CVStrategy/facets/CVProposalFacet.sol";
 import {GV2ERC20} from "../../script/GV2ERC20.sol";
 import {CVStrategyHelpers} from "../CVStrategyHelpers.sol";
 import {SafeSetup} from "../shared/SafeSetup.sol";
@@ -35,6 +36,18 @@ import {StrategyDiamondConfigurator} from "../helpers/StrategyDiamondConfigurato
 import {CommunityDiamondConfigurator} from "../helpers/CommunityDiamondConfigurator.sol";
 import {PowerManagementUtils} from "../../src/CVStrategy/PowerManagementUtils.sol";
 import {IVotingPowerRegistry} from "../../src/interfaces/IVotingPowerRegistry.sol";
+import {
+    CVStreamingFacetHarness,
+    MockAllo,
+    MockERC20,
+    MockGDAAgreement,
+    MockHost,
+    MockRegistryCommunityStreaming,
+    MockRegistryFactoryStreaming,
+    MockStreamingEscrowSync,
+    MockSuperfluidPool,
+    MockSuperToken
+} from "../CVStreamingFacet.t.sol";
 
 // =============================================================
 //  ATTACK CONTRACTS
@@ -65,9 +78,17 @@ contract MaliciousArbitrator is IArbitrator {
 
     function registerSafe(address) external {}
 
-    function arbitrationCost(bytes calldata) external view returns (uint256) { return arbFee; }
-    function arbitrationCost(bytes calldata, IERC20) external view returns (uint256) { return arbFee; }
-    function currentRuling(uint256) external pure returns (uint256, bool, bool) { return (0, false, false); }
+    function arbitrationCost(bytes calldata) external view returns (uint256) {
+        return arbFee;
+    }
+
+    function arbitrationCost(bytes calldata, IERC20) external view returns (uint256) {
+        return arbFee;
+    }
+
+    function currentRuling(uint256) external pure returns (uint256, bool, bool) {
+        return (0, false, false);
+    }
 
     /// @dev Called by CVDisputeFacet.disputeProposal BEFORE proposal.proposalStatus is updated.
     ///      We read the status here to prove the CEI violation.
@@ -78,7 +99,7 @@ contract MaliciousArbitrator is IArbitrator {
             callbackExecuted = true;
             // Read proposal status right now — should be Disputed if CEI is correct,
             // but will be Active because state update happens AFTER this call returns.
-            (,,,,, ProposalStatus status,,,,,, ) = CVStrategy(payable(target)).getProposal(targetProposal);
+            (,,,,, ProposalStatus status,,,,,,) = CVStrategy(payable(target)).getProposal(targetProposal);
             statusObservedDuringCallback = status;
         }
     }
@@ -101,9 +122,9 @@ contract CallbackToken is IERC20 {
     mapping(address => mapping(address => uint256)) private _allow;
     uint256 private _supply;
 
-    address public hookCommunity;  // RegistryCommunity (passed to callback)
-    address public hookVictim;     // recipient that implements ITokenReceiver
-    uint256 public hookAmount;     // amount passed to re-entry call
+    address public hookCommunity; // RegistryCommunity (passed to callback)
+    address public hookVictim; // recipient that implements ITokenReceiver
+    uint256 public hookAmount; // amount passed to re-entry call
     bool private _hooking;
     uint256 public callbackFired;
 
@@ -114,13 +135,21 @@ contract CallbackToken is IERC20 {
 
     function setHook(address _community, address _victim, uint256 _amount) external {
         hookCommunity = _community;
-        hookVictim    = _victim;
-        hookAmount    = _amount;
+        hookVictim = _victim;
+        hookAmount = _amount;
     }
 
-    function totalSupply() external view returns (uint256) { return _supply; }
-    function balanceOf(address a) external view returns (uint256) { return _bal[a]; }
-    function allowance(address o, address s) external view returns (uint256) { return _allow[o][s]; }
+    function totalSupply() external view returns (uint256) {
+        return _supply;
+    }
+
+    function balanceOf(address a) external view returns (uint256) {
+        return _bal[a];
+    }
+
+    function allowance(address o, address s) external view returns (uint256) {
+        return _allow[o][s];
+    }
 
     function approve(address s, uint256 a) external returns (bool) {
         _allow[msg.sender][s] = a;
@@ -150,9 +179,17 @@ contract CallbackToken is IERC20 {
         return true;
     }
 
-    function decimals() external pure returns (uint8) { return 18; }
-    function name() external pure returns (string memory) { return "CallbackToken"; }
-    function symbol() external pure returns (string memory) { return "CBT"; }
+    function decimals() external pure returns (uint8) {
+        return 18;
+    }
+
+    function name() external pure returns (string memory) {
+        return "CallbackToken";
+    }
+
+    function symbol() external pure returns (string memory) {
+        return "CBT";
+    }
 }
 
 /// @dev [H-2] Malicious community member that re-enters decreasePower via the token callback.
@@ -199,12 +236,12 @@ contract MaliciousRecipient is ITokenReceiver {
 // =============================================================
 
 abstract contract PoCBase is Test, RegistrySetupFull, AlloSetup, CVStrategyHelpers, SafeSetup {
-    uint256 internal constant TOTAL_SUPPLY      = 100_000 ether;
-    uint256 internal constant POOL_AMOUNT       = 10_000 ether;
-    uint256 internal constant MINIMUM_STAKE     = 1 ether;
+    uint256 internal constant TOTAL_SUPPLY = 100_000 ether;
+    uint256 internal constant POOL_AMOUNT = 10_000 ether;
+    uint256 internal constant MINIMUM_STAKE = 1 ether;
     uint256 internal constant COMMUNITY_FEE_PCT = 1;
-    uint256 internal constant PROTOCOL_FEE_PCT  = 1;
-    uint256 internal constant STAKE_WITH_FEES   =
+    uint256 internal constant PROTOCOL_FEE_PCT = 1;
+    uint256 internal constant STAKE_WITH_FEES =
         MINIMUM_STAKE + (MINIMUM_STAKE * (COMMUNITY_FEE_PCT + PROTOCOL_FEE_PCT)) / 100;
 
     address internal factoryOwner = makeAddr("factoryOwner");
@@ -229,27 +266,31 @@ abstract contract PoCBase is Test, RegistrySetupFull, AlloSetup, CVStrategyHelpe
     function _deployArbitrator(uint256 fee) internal {
         vm.prank(factoryOwner);
         safeArbitrator = SafeArbitrator(
-            payable(address(new ERC1967Proxy(
-                address(new SafeArbitrator()),
-                abi.encodeWithSelector(SafeArbitrator.initialize.selector, fee, factoryOwner)
-            )))
+            payable(address(
+                    new ERC1967Proxy(
+                        address(new SafeArbitrator()),
+                        abi.encodeWithSelector(SafeArbitrator.initialize.selector, fee, factoryOwner)
+                    )
+                ))
         );
     }
 
     function _deployFactory(address gardenToken) internal {
         vm.startPrank(factoryOwner);
         registryFactory = RegistryFactory(
-            address(new ERC1967Proxy(
-                address(new RegistryFactory()),
-                abi.encodeWithSelector(
-                    RegistryFactory.initialize.selector,
-                    factoryOwner,
-                    makeAddr("feeReceiver"),
-                    address(new RegistryCommunity()),
-                    address(new CVStrategy()),
-                    address(new CollateralVault())
+            address(
+                new ERC1967Proxy(
+                    address(new RegistryFactory()),
+                    abi.encodeWithSelector(
+                        RegistryFactory.initialize.selector,
+                        factoryOwner,
+                        makeAddr("feeReceiver"),
+                        address(new RegistryCommunity()),
+                        address(new CVStrategy()),
+                        address(new CollateralVault())
+                    )
                 )
-            ))
+            )
         );
 
         // Register facet cuts BEFORE createRegistry() — required by streaming-pool RegistryFactory.
@@ -257,27 +298,23 @@ abstract contract PoCBase is Test, RegistrySetupFull, AlloSetup, CVStrategyHelpe
         // Community facets are applied automatically inside RegistryCommunity.initialize().
         // Strategy facets are applied automatically inside CommunityPoolFacet.createPool().
         communityConfig = new CommunityDiamondConfigurator();
-        diamondConfig   = new StrategyDiamondConfigurator();
+        diamondConfig = new StrategyDiamondConfigurator();
         registryFactory.setCommunityFacets(
-            communityConfig.getFacetCuts(),
-            address(communityConfig.diamondInit()),
-            abi.encodeWithSignature("init()")
+            communityConfig.getFacetCuts(), address(communityConfig.diamondInit()), abi.encodeWithSignature("init()")
         );
         registryFactory.setStrategyFacets(
-            diamondConfig.getFacetCuts(),
-            address(diamondConfig.diamondInit()),
-            abi.encodeWithSignature("init()")
+            diamondConfig.getFacetCuts(), address(diamondConfig.diamondInit()), abi.encodeWithSignature("init()")
         );
         vm.stopPrank();
 
         RegistryCommunityInitializeParams memory p;
-        p._allo               = address(allo());
-        p._gardenToken        = IERC20(gardenToken);
+        p._allo = address(allo());
+        p._gardenToken = IERC20(gardenToken);
         p._registerStakeAmount = MINIMUM_STAKE;
-        p._communityFee       = COMMUNITY_FEE_PCT;
-        p._feeReceiver        = address(this);
-        p._metadata           = meta;
-        p._councilSafe        = payable(address(_councilSafe()));
+        p._communityFee = COMMUNITY_FEE_PCT;
+        p._feeReceiver = address(this);
+        p._metadata = meta;
+        p._councilSafe = payable(address(_councilSafe()));
         // createRegistry() applies community facets automatically via RegistryCommunity.initialize()
         registryCommunity = RegistryCommunity(payable(registryFactory.createRegistry(p)));
 
@@ -306,7 +343,7 @@ abstract contract PoCBase is Test, RegistrySetupFull, AlloSetup, CVStrategyHelpe
             ),
             meta
         );
-        poolId     = _poolId;
+        poolId = _poolId;
         cvStrategy = CVStrategy(payable(_strategy));
     }
 
@@ -319,8 +356,11 @@ abstract contract PoCBase is Test, RegistrySetupFull, AlloSetup, CVStrategyHelpe
 
     function _addStrategyAndActivate(address user) internal {
         vm.prank(pool_admin());
-        safeHelper(address(registryCommunity), 0,
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(cvStrategy)));
+        safeHelper(
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(cvStrategy))
+        );
         vm.prank(user);
         cvStrategy.activatePoints();
     }
@@ -328,8 +368,7 @@ abstract contract PoCBase is Test, RegistrySetupFull, AlloSetup, CVStrategyHelpe
     function _createProposal(address submitter, uint256 amount) internal returns (uint256 proposalId) {
         (,, uint256 collateral,,,) = cvStrategy.getArbitrableConfig();
         vm.deal(submitter, collateral);
-        CreateProposal memory cp =
-            CreateProposal(poolId, submitter, amount, address(NATIVE), meta);
+        CreateProposal memory cp = CreateProposal(poolId, submitter, amount, address(NATIVE), meta);
         vm.prank(submitter);
         proposalId = uint160(allo().registerRecipient{value: collateral}(poolId, abi.encode(cp)));
     }
@@ -361,9 +400,9 @@ contract PoC_H1_DisputeProposalReentrancy is PoCBase {
     GV2ERC20 token;
     address challenger = makeAddr("challenger");
 
-    uint256 constant ARB_FEE        = 0.5 ether;
+    uint256 constant ARB_FEE = 0.5 ether;
     uint256 constant CHALLENGER_COL = 0.01 ether;
-    uint256 constant SUBMITTER_COL  = 0.02 ether;
+    uint256 constant SUBMITTER_COL = 0.02 ether;
 
     function setUp() public {
         _alloSetup();
@@ -378,14 +417,16 @@ contract PoC_H1_DisputeProposalReentrancy is PoCBase {
         _deployArbitrator(ARB_FEE);
         _deployFactory(address(token));
         _registerFactoryContract(address(malArb));
-        _deployStrategy(ArbitrableConfig({
-            arbitrator:                 IArbitrator(address(malArb)),
-            tribunalSafe:               payable(makeAddr("tribunal")),
-            submitterCollateralAmount:  SUBMITTER_COL,
-            challengerCollateralAmount: CHALLENGER_COL,
-            defaultRuling:              1,
-            defaultRulingTimeout:       300
-        }));
+        _deployStrategy(
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(malArb)),
+                tribunalSafe: payable(makeAddr("tribunal")),
+                submitterCollateralAmount: SUBMITTER_COL,
+                challengerCollateralAmount: CHALLENGER_COL,
+                defaultRuling: 1,
+                defaultRulingTimeout: 300
+            })
+        );
 
         // Local user registers + activates
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
@@ -467,18 +508,23 @@ contract PoC_H2_DecreasePowerReentrancy is PoCBase {
         // Give attacker tokens for staking
         callbackToken.mint(address(attacker), TOTAL_SUPPLY / 2);
 
-        _deployStrategy(ArbitrableConfig({
-            arbitrator:                 IArbitrator(address(safeArbitrator)),
-            tribunalSafe:               payable(makeAddr("tribunal")),
-            submitterCollateralAmount:  0.02 ether,
-            challengerCollateralAmount: 0.01 ether,
-            defaultRuling:              1,
-            defaultRulingTimeout:       300
-        }));
+        _deployStrategy(
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(safeArbitrator)),
+                tribunalSafe: payable(makeAddr("tribunal")),
+                submitterCollateralAmount: 0.02 ether,
+                challengerCollateralAmount: 0.01 ether,
+                defaultRuling: 1,
+                defaultRulingTimeout: 300
+            })
+        );
 
         vm.prank(pool_admin());
-        safeHelper(address(registryCommunity), 0,
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(cvStrategy)));
+        safeHelper(
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(cvStrategy))
+        );
     }
 
     function test_H2_ReentrancyAttackMustFail() public {
@@ -490,7 +536,7 @@ contract PoC_H2_DecreasePowerReentrancy is PoCBase {
         attacker.addStake(address(registryCommunity), extraStake);
 
         uint256 stakedBefore = registryCommunity.getMemberStakedAmount(address(attacker));
-        uint256 balBefore    = callbackToken.balanceOf(address(attacker));
+        uint256 balBefore = callbackToken.balanceOf(address(attacker));
         console.log("[H-2] staked before attack:", stakedBefore);
         console.log("[H-2] attacker balance before:", balBefore);
 
@@ -508,8 +554,8 @@ contract PoC_H2_DecreasePowerReentrancy is PoCBase {
 
         // 4. Evaluate post-attack invariants (state should be unchanged after revert).
         uint256 callbacksFired = callbackToken.callbackFired();
-        uint256 balAfter       = callbackToken.balanceOf(address(attacker));
-        uint256 stakedAfter    = registryCommunity.getMemberStakedAmount(address(attacker));
+        uint256 balAfter = callbackToken.balanceOf(address(attacker));
+        uint256 stakedAfter = registryCommunity.getMemberStakedAmount(address(attacker));
         console.log("[H-2] callbacks fired:", callbacksFired);
         console.log("[H-2] stakedAmount DURING re-entry callback:", attacker.secondCallStakedAmount());
         console.log("[H-2] staked before attack:", stakedBefore);
@@ -526,6 +572,291 @@ contract PoC_H2_DecreasePowerReentrancy is PoCBase {
 }
 
 // =============================================================
+//  [GDN-01] Requested amount must not remain editable after first support
+// =============================================================
+
+/// @title PoC_GDN01_AmountEditAfterFirstSupportBlocked
+/// @notice Security regression test: once first support exists, the submitter
+///         must not be able to raise requestedAmount even if convictionLast is zero.
+contract PoC_GDN01_AmountEditAfterFirstSupportBlocked is PoCBase {
+    GV2ERC20 token;
+    address submitter = makeAddr("submitter");
+    address voter = makeAddr("voter");
+
+    uint256 constant INITIAL_REQUEST = 1 ether;
+    uint256 constant INCREASED_REQUEST = 5 ether;
+    uint256 constant SUPPORT = MINIMUM_STAKE;
+    uint256 constant SUBMITTER_COL = 0.02 ether;
+    uint256 constant CHALLENGER_COL = 0.01 ether;
+    uint256 constant ARB_FEE = 0.5 ether;
+
+    function setUp() public {
+        _alloSetup();
+
+        token = new GV2ERC20("Token", "TKN", 18);
+        token.mint(local(), TOTAL_SUPPLY / 4);
+        token.mint(pool_admin(), TOTAL_SUPPLY / 4);
+        token.mint(submitter, TOTAL_SUPPLY / 4);
+        token.mint(voter, TOTAL_SUPPLY / 4);
+
+        _deployArbitrator(ARB_FEE);
+        _deployFactory(address(token));
+        _deployStrategy(
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(safeArbitrator)),
+                tribunalSafe: payable(address(_councilSafe())),
+                submitterCollateralAmount: SUBMITTER_COL,
+                challengerCollateralAmount: CHALLENGER_COL,
+                defaultRuling: 1,
+                defaultRulingTimeout: 300
+            })
+        );
+
+        vm.prank(pool_admin());
+        safeHelper(
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(cvStrategy))
+        );
+
+        _approveAndRegister(submitter);
+        _approveAndRegister(voter);
+        vm.prank(voter);
+        cvStrategy.activatePoints();
+    }
+
+    function test_GDN01_FirstSupportBlocksRequestedAmountEdit() public {
+        uint256 proposalId = _createProposal(submitter, INITIAL_REQUEST);
+
+        _allocateSupport(voter, proposalId, int256(SUPPORT));
+
+        (,,, uint256 requestedBefore, uint256 stakedAfterSupport,,, uint256 convictionAfterSupport,,,,) =
+            cvStrategy.getProposal(proposalId);
+
+        assertEq(requestedBefore, INITIAL_REQUEST, "GDN-01 setup: initial request stored");
+        assertEq(stakedAfterSupport, SUPPORT, "GDN-01 setup: first support is active");
+        assertEq(convictionAfterSupport, 0, "GDN-01: first support leaves convictionLast at zero");
+
+        vm.prank(submitter);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVProposalFacet.CannotEditRequestedAmountWithActiveSupport.selector,
+                proposalId,
+                INITIAL_REQUEST,
+                INCREASED_REQUEST
+            )
+        );
+        cvStrategy.editProposal(proposalId, meta, submitter, INCREASED_REQUEST);
+
+        (,,, uint256 requestedAfter, uint256 stakedAfterEdit,,, uint256 convictionAfterEdit,,,,) =
+            cvStrategy.getProposal(proposalId);
+
+        assertEq(requestedAfter, INITIAL_REQUEST, "GDN-01: requested amount must not change after first support");
+        assertEq(stakedAfterEdit, SUPPORT, "GDN-01: support remained active after edit");
+        assertEq(convictionAfterEdit, 0, "GDN-01: convictionLast can be zero while amount edit is blocked");
+
+        _allocateSupport(voter, proposalId, -int256(SUPPORT));
+
+        (,,, uint256 requestedBeforeSecondEdit, uint256 stakedAfterWithdraw,,,,,,,) = cvStrategy.getProposal(proposalId);
+        assertEq(
+            requestedBeforeSecondEdit, INITIAL_REQUEST, "GDN-01 setup: request is unchanged before withdrawal edit"
+        );
+        assertEq(stakedAfterWithdraw, 0, "GDN-01 setup: all support was withdrawn");
+
+        vm.prank(submitter);
+        cvStrategy.editProposal(proposalId, meta, submitter, INCREASED_REQUEST);
+
+        (,,, uint256 requestedAfterWithdrawEdit, uint256 stakedAfterWithdrawEdit,,,,,,,) =
+            cvStrategy.getProposal(proposalId);
+        assertEq(requestedAfterWithdrawEdit, INCREASED_REQUEST, "GDN-01: amount can change after support is withdrawn");
+        assertEq(stakedAfterWithdrawEdit, 0, "GDN-01: edit after withdrawal does not recreate support");
+    }
+
+    function _allocateSupport(address allocator, uint256 proposalId, int256 support) internal {
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
+        votes[0] = ProposalSupport({proposalId: proposalId, deltaSupport: support});
+
+        vm.prank(allocator);
+        allo().allocate(poolId, abi.encode(votes));
+    }
+}
+
+// =============================================================
+//  [GDN-02] _withdraw must recalculate conviction with old total stake
+// =============================================================
+
+/// @title PoC_GDN02_WithdrawConvictionPreserved
+/// @notice Security regression test: member-callable deactivatePoints() must
+///         preserve conviction accrued from the proposal's old total stake.
+contract PoC_GDN02_WithdrawConvictionPreserved is PoCBase {
+    GV2ERC20 token;
+    address honest = makeAddr("honest");
+    address attacker = makeAddr("attacker");
+    address proposer = makeAddr("proposer");
+
+    uint256 constant HONEST_POWER = 100 ether;
+    uint256 constant ATTACKER_POWER = MINIMUM_STAKE;
+    uint256 constant BLOCKS_ELAPSED = 1000;
+    uint256 constant SUBMITTER_COL = 0.02 ether;
+    uint256 constant CHALLENGER_COL = 0.01 ether;
+    uint256 constant ARB_FEE = 0.5 ether;
+
+    function setUp() public {
+        _alloSetup();
+
+        token = new GV2ERC20("Token", "TKN", 18);
+        token.mint(local(), TOTAL_SUPPLY / 4);
+        token.mint(pool_admin(), TOTAL_SUPPLY / 4);
+        token.mint(honest, TOTAL_SUPPLY / 4);
+        token.mint(attacker, TOTAL_SUPPLY / 8);
+        token.mint(proposer, TOTAL_SUPPLY / 8);
+
+        _deployArbitrator(ARB_FEE);
+        _deployFactory(address(token));
+        _deployStrategy(
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(safeArbitrator)),
+                tribunalSafe: payable(address(_councilSafe())),
+                submitterCollateralAmount: SUBMITTER_COL,
+                challengerCollateralAmount: CHALLENGER_COL,
+                defaultRuling: 1,
+                defaultRulingTimeout: 300
+            })
+        );
+
+        vm.prank(pool_admin());
+        safeHelper(
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(cvStrategy))
+        );
+
+        _approveAndRegister(proposer);
+        _approveAndRegister(attacker);
+        vm.prank(attacker);
+        cvStrategy.activatePoints();
+
+        _approveAndRegister(honest);
+        vm.startPrank(honest);
+        token.approve(address(registryCommunity), HONEST_POWER - MINIMUM_STAKE);
+        registryCommunity.increasePower(HONEST_POWER - MINIMUM_STAKE);
+        cvStrategy.activatePoints();
+        vm.stopPrank();
+    }
+
+    function test_GDN02_DeactivatePointsPreservesConvictionFromOldTotalStake() public {
+        uint256 proposalId = _createProposal(proposer, 1 ether);
+
+        _allocateSupport(honest, proposalId, HONEST_POWER);
+        _allocateSupport(attacker, proposalId, ATTACKER_POWER);
+
+        (,,,, uint256 oldTotalStake,, uint256 blockLastBefore,,,,,) = cvStrategy.getProposal(proposalId);
+        assertEq(oldTotalStake, HONEST_POWER + ATTACKER_POWER, "GDN-02 setup: proposal has full support");
+
+        vm.roll(block.number + BLOCKS_ELAPSED);
+        uint256 blocksElapsed = block.number - blockLastBefore;
+        (,, uint256 decay,) = cvStrategy.cvParams();
+
+        uint256 expectedFullStakeConviction =
+            ConvictionsUtils.calculateConviction(blocksElapsed, 0, oldTotalStake, decay);
+        uint256 vulnerableAttackerStakeConviction =
+            ConvictionsUtils.calculateConviction(blocksElapsed, 0, ATTACKER_POWER, decay);
+
+        vm.prank(attacker);
+        cvStrategy.deactivatePoints();
+
+        (,,,, uint256 stakeAfter,, uint256 blockLastAfter, uint256 convictionAfter,,,,) =
+            cvStrategy.getProposal(proposalId);
+
+        console.log("[GDN-02] old total stake:", oldTotalStake);
+        console.log("[GDN-02] attacker stake:", ATTACKER_POWER);
+        console.log("[GDN-02] expected conviction from old total stake:", expectedFullStakeConviction);
+        console.log("[GDN-02] stored conviction after attacker deactivate:", convictionAfter);
+
+        assertEq(stakeAfter, HONEST_POWER, "GDN-02: only attacker support should be withdrawn");
+        assertEq(blockLastAfter, block.number, "GDN-02: blockLast advanced on attacker withdrawal");
+        assertEq(
+            convictionAfter,
+            expectedFullStakeConviction,
+            "GDN-02: conviction must accrue from the proposal's old total stake"
+        );
+        assertGt(
+            convictionAfter,
+            vulnerableAttackerStakeConviction,
+            "GDN-02: attacker stake alone must not define proposal-wide conviction"
+        );
+    }
+
+    function _allocateSupport(address voter, uint256 proposalId, uint256 support) internal {
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
+        votes[0] = ProposalSupport({proposalId: proposalId, deltaSupport: int256(support)});
+
+        vm.prank(voter);
+        allo().allocate(poolId, abi.encode(votes));
+    }
+}
+
+// =============================================================
+//  [GDN-05] Cancelled proposals must not exhaust proposal creation
+// =============================================================
+
+/// @title PoC_GDN05_CancelledProposalsDoNotExhaustCreation
+/// @notice Security regression test: cancelled proposals must not permanently
+///         consume all proposal creation capacity for a pool.
+contract PoC_GDN05_CancelledProposalsDoNotExhaustCreation is PoCBase {
+    GV2ERC20 token;
+    address attacker = makeAddr("attacker");
+
+    uint256 constant MAX_PROPOSAL_COUNT = 128;
+    uint256 constant SUBMITTER_COL = 0.02 ether;
+    uint256 constant CHALLENGER_COL = 0.01 ether;
+    uint256 constant ARB_FEE = 0.5 ether;
+
+    function setUp() public {
+        _alloSetup();
+
+        token = new GV2ERC20("Token", "TKN", 18);
+        token.mint(local(), TOTAL_SUPPLY / 3);
+        token.mint(pool_admin(), TOTAL_SUPPLY / 3);
+        token.mint(attacker, TOTAL_SUPPLY / 3);
+
+        _deployArbitrator(ARB_FEE);
+        _deployFactory(address(token));
+        _deployStrategy(
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(safeArbitrator)),
+                tribunalSafe: payable(address(_councilSafe())),
+                submitterCollateralAmount: SUBMITTER_COL,
+                challengerCollateralAmount: CHALLENGER_COL,
+                defaultRuling: 1,
+                defaultRulingTimeout: 300
+            })
+        );
+
+        vm.prank(pool_admin());
+        safeHelper(
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(cvStrategy))
+        );
+
+        _approveAndRegister(attacker);
+    }
+
+    function test_GDN05_CancelledProposalsDoNotExhaustCreation() public {
+        for (uint256 i = 0; i < MAX_PROPOSAL_COUNT; i++) {
+            uint256 proposalId = _createProposal(attacker, 1 ether);
+
+            vm.prank(attacker);
+            cvStrategy.cancelProposal(proposalId);
+        }
+
+        uint256 newProposalId = _createProposal(attacker, 1 ether);
+        assertGt(newProposalId, 0, "GDN-05: cancelled proposals must not exhaust future proposal creation");
+    }
+}
+
+// =============================================================
 //  [M-1] Wrong arbitrable config version in rule() ruling==2
 // =============================================================
 
@@ -535,13 +866,13 @@ contract PoC_H2_DecreasePowerReentrancy is PoCBase {
 ///         for the submitter collateral split in the ruling==2 path.
 contract PoC_M1_StaleArbitrableConfigVersion is PoCBase {
     GV2ERC20 token;
-    address submitter  = makeAddr("submitter");
+    address submitter = makeAddr("submitter");
     address challenger = makeAddr("challenger");
 
     uint256 constant ARB_FEE = 2 ether;
     uint256 constant V1_SUBMITTER_COL = 0.02 ether;
-    uint256 constant V2_SUBMITTER_COL = 0.06 ether;  // 3x higher in the upgraded config
-    uint256 constant CHALLENGER_COL   = 0.01 ether;
+    uint256 constant V2_SUBMITTER_COL = 0.06 ether; // 3x higher in the upgraded config
+    uint256 constant CHALLENGER_COL = 0.01 ether;
 
     function setUp() public {
         _alloSetup();
@@ -556,21 +887,26 @@ contract PoC_M1_StaleArbitrableConfigVersion is PoCBase {
         _deployFactory(address(token));
 
         // Deploy pool with v1 config (submitterCollateral = 0.02 ether)
-        _deployStrategy(ArbitrableConfig({
-            arbitrator:                 IArbitrator(address(safeArbitrator)),
-            tribunalSafe:               payable(address(_councilSafe())),
-            submitterCollateralAmount:  V1_SUBMITTER_COL,
-            challengerCollateralAmount: CHALLENGER_COL,
-            defaultRuling:              1,
-            defaultRulingTimeout:       300
-        }));
+        _deployStrategy(
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(safeArbitrator)),
+                tribunalSafe: payable(address(_councilSafe())),
+                submitterCollateralAmount: V1_SUBMITTER_COL,
+                challengerCollateralAmount: CHALLENGER_COL,
+                defaultRuling: 1,
+                defaultRulingTimeout: 300
+            })
+        );
 
         vm.prank(address(cvStrategy));
         safeArbitrator.registerSafe(address(_councilSafe()));
 
         vm.prank(pool_admin());
-        safeHelper(address(registryCommunity), 0,
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(cvStrategy)));
+        safeHelper(
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(cvStrategy))
+        );
 
         _approveAndRegister(submitter);
         vm.prank(submitter);
@@ -628,12 +964,10 @@ contract PoC_M1_StaleArbitrableConfigVersion is PoCBase {
         // but only 0.02 ether was deposited. CollateralVault caps silently.
         // Council and challenger each received LESS than intended (bug is in the amount calc).
         // We demonstrate the version mismatch is real:
-        assertTrue(
-            V2_SUBMITTER_COL != V1_SUBMITTER_COL,
-            "M-1 setup: v1 and v2 collateral differ"
-        );
+        assertTrue(V2_SUBMITTER_COL != V1_SUBMITTER_COL, "M-1 setup: v1 and v2 collateral differ");
         assertEq(
-            cvStrategy.currentArbitrableConfigVersion(), v1Version + 1,
+            cvStrategy.currentArbitrableConfigVersion(),
+            v1Version + 1,
             "M-1: version was incremented between proposal creation and ruling"
         );
         assertEq(
@@ -653,21 +987,26 @@ contract PoC_M1_StaleArbitrableConfigVersion is PoCBase {
         (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPts) = cvStrategy.cvParams();
         CVParams memory currentCvParams = CVParams(maxRatio, weight, decay, minThresholdPts);
         ArbitrableConfig memory newCfg = ArbitrableConfig({
-            arbitrator:                 IArbitrator(address(safeArbitrator)),
-            tribunalSafe:               payable(address(_councilSafe())),
-            submitterCollateralAmount:  V2_SUBMITTER_COL,
+            arbitrator: IArbitrator(address(safeArbitrator)),
+            tribunalSafe: payable(address(_councilSafe())),
+            submitterCollateralAmount: V2_SUBMITTER_COL,
             challengerCollateralAmount: CHALLENGER_COL,
-            defaultRuling:              1,
-            defaultRulingTimeout:       300
+            defaultRuling: 1,
+            defaultRulingTimeout: 300
         });
         vm.prank(pool_admin());
         // Explicit 6-param signature to disambiguate from the 7-param overload
         safeHelper(
-            address(cvStrategy), 0,
+            address(cvStrategy),
+            0,
             abi.encodeWithSignature(
                 "setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)",
-                newCfg, currentCvParams, uint256(0),
-                new address[](0), new address[](0), address(0)
+                newCfg,
+                currentCvParams,
+                uint256(0),
+                new address[](0),
+                new address[](0),
+                address(0)
             )
         );
     }
@@ -703,21 +1042,28 @@ contract PoC_M3_UnboundedLoopDoS is PoCBase {
         (uint256 _poolId, address _strategy) = registryCommunity.createPool(
             NATIVE,
             getParams(
-                address(registryCommunity), ProposalType.Funding, PointSystem.Unlimited,
+                address(registryCommunity),
+                ProposalType.Funding,
+                PointSystem.Unlimited,
                 PointSystemConfig(200 * DECIMALS),
                 ArbitrableConfig(
-                    IArbitrator(address(safeArbitrator)), payable(makeAddr("trib")),
-                    0.02 ether, 0.01 ether, 1, 300
+                    IArbitrator(address(safeArbitrator)), payable(makeAddr("trib")), 0.02 ether, 0.01 ether, 1, 300
                 ),
-                new address[](1), address(0), 0, address(0)
+                new address[](1),
+                address(0),
+                0,
+                address(0)
             ),
             meta
         );
         CVStrategy strat = CVStrategy(payable(_strategy));
 
         vm.prank(pool_admin());
-        safeHelper(address(registryCommunity), 0,
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strat)));
+        safeHelper(
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strat))
+        );
 
         vm.prank(victim);
         strat.activatePoints();
@@ -729,7 +1075,9 @@ contract PoC_M3_UnboundedLoopDoS is PoCBase {
         registryCommunity.stakeAndRegisterMember("");
         vm.stopPrank();
 
-        for (uint256 i = 0; i < MAX_STRATEGIES_PER_MEMBER; i++) _addPool();
+        for (uint256 i = 0; i < MAX_STRATEGIES_PER_MEMBER; i++) {
+            _addPool();
+        }
 
         uint256 gasAtCap = _measureUnregisterGas();
         console.log("[M-3] unregisterMember gas @ strategy cap:", gasAtCap);
@@ -742,6 +1090,86 @@ contract PoC_M3_UnboundedLoopDoS is PoCBase {
         vm.prank(victim);
         registryCommunity.unregisterMember();
         gasUsed = g - gasleft();
+    }
+}
+
+// =============================================================
+//  [M-3b] Block gas limit DoS via historical streaming proposal loops
+// =============================================================
+
+/// @title PoC_M3b_HistoricalStreamingProposalIterationDoS
+/// @notice Security regression test: streaming rebalance must stay callable even
+///         after many proposals have been created and closed. The current code
+///         iterates 1..proposalCounter in three separate passes, so historical
+///         terminal proposals still consume gas forever.
+contract PoC_M3b_HistoricalStreamingProposalIterationDoS is Test {
+    CVStreamingFacetHarness internal facet;
+    MockERC20 internal token;
+    MockSuperToken internal superToken;
+    MockGDAAgreement internal gdaAgreement;
+    MockHost internal host;
+    MockSuperfluidPool internal gdaPool;
+    MockAllo internal allo;
+    MockRegistryCommunityStreaming internal registry;
+    MockRegistryFactoryStreaming internal registryFactory;
+
+    uint256 internal constant HISTORICAL_PROPOSALS = 1_000;
+    uint256 internal constant ETH_BLOCK_GAS_LIMIT = 30_000_000;
+    uint256 internal constant DECAY = 9_940_581;
+    uint256 internal constant D = 10 ** 7;
+
+    function setUp() public {
+        vm.roll(100);
+        vm.warp(1000);
+
+        facet = new CVStreamingFacetHarness();
+        token = new MockERC20();
+        gdaAgreement = new MockGDAAgreement();
+        host = new MockHost(address(gdaAgreement));
+        superToken = new MockSuperToken(address(host), address(token));
+        gdaPool = new MockSuperfluidPool();
+        allo = new MockAllo();
+        registry = new MockRegistryCommunityStreaming();
+        registryFactory = new MockRegistryFactoryStreaming();
+
+        facet.setupAllo(address(allo));
+        facet.setupRegistryCommunity(address(registry));
+        facet.setupPool(1);
+        facet.setupSuperfluidToken(address(superToken));
+        facet.setupSuperfluidGDA(address(gdaPool));
+        facet.setupCVParams(DECAY);
+        facet.setupThresholdParams(9_000_000, 1_000_000, 0);
+        facet.setupStreamingRatePerSecond(1);
+        facet.setupTotalPointsActivated(1_000 * D);
+        facet.setDiamondOwner(address(this));
+        facet.setProxyOwner(address(this));
+        facet.setSkipWrap(true);
+
+        registry.setCouncilSafe(address(0xC011C1));
+        registry.setRegistryFactory(address(registryFactory));
+        allo.setPool(1, address(token));
+    }
+
+    function test_M3b_StreamingRebalanceMustFitBlockGasLimitAfter1000HistoricalProposals() public {
+        _seedClosedStreamingProposalHistory(HISTORICAL_PROPOSALS);
+
+        uint256 gasBefore = gasleft();
+        (bool ok,) = address(facet).call{gas: ETH_BLOCK_GAS_LIMIT}(abi.encodeWithSignature("rebalance()"));
+        uint256 gasUsed = gasBefore - gasleft();
+
+        console.log("[M-3b] historical proposals:", HISTORICAL_PROPOSALS);
+        console.log("[M-3b] rebalance gas stipend:", ETH_BLOCK_GAS_LIMIT);
+        console.log("[M-3b] rebalance call gas consumed:", gasUsed);
+        console.log("[M-3b] rebalance completed under stipend:", ok);
+
+        assertTrue(ok, "M-3b: rebalance must remain callable under block gas limit after 1000 historical proposals");
+    }
+
+    function _seedClosedStreamingProposalHistory(uint256 count) internal {
+        for (uint256 i = 1; i <= count; i++) {
+            facet.setupProposal(i, ProposalStatus.Cancelled, 0, 0, block.number - 1);
+            facet.setStreamingEscrowExternal(i, address(new MockStreamingEscrowSync()));
+        }
     }
 }
 
@@ -804,7 +1232,7 @@ contract MinimalCEIEscrow is IMinimalEscrow {
             ICaptureCallback(externalCallTarget).onExternalCall(address(this));
         }
         beneficiary = _beneficiary; // state updated after external interactions
-        externalCallCount++;  // second _setOutflow
+        externalCallCount++; // second _setOutflow
     }
 }
 
@@ -829,13 +1257,13 @@ contract H1StateObserver is ICaptureCallback {
 ///         triggered during that outflow update sees the already-mutated state.
 contract PoC_H1_StreamingEscrowCEI is Test {
     MinimalCEIEscrow internal escrow;
-    H1StateObserver  internal observer;
+    H1StateObserver internal observer;
 
     address internal oldBenef = makeAddr("oldBeneficiary");
     address internal newBenef = makeAddr("newBeneficiary");
 
     function setUp() public {
-        escrow   = new MinimalCEIEscrow();
+        escrow = new MinimalCEIEscrow();
         observer = new H1StateObserver();
 
         escrow.initialize(oldBenef);
@@ -918,7 +1346,7 @@ contract VulnerableRebalance {
         if (lastRebalanceAt != 0 && block.timestamp < lastRebalanceAt + rebalanceCooldown) {
             revert("cooldown active");
         }
-        lastRebalanceAt = block.timestamp;   // ← state committed BEFORE loops (the bug)
+        lastRebalanceAt = block.timestamp; // ← state committed BEFORE loops (the bug)
 
         // Loop 1: mirrors the "update GDA units per proposal" loop
         for (uint256 i = 1; i <= proposalCounter; i++) {
@@ -958,7 +1386,7 @@ contract VulnerableRebalance {
 contract PoC_H3_RebalancePermissionless is Test {
     VulnerableRebalance internal vulnerable;
 
-    address internal owner    = makeAddr("owner");
+    address internal owner = makeAddr("owner");
     address internal attacker = makeAddr("attacker");
 
     function setUp() public {
@@ -1058,18 +1486,26 @@ contract MockVotingPowerRegistry is IVotingPowerRegistry {
         erc = _erc;
     }
 
-    function setMemberPower(uint256 p) external { memberPower = p; }
-    function setMemberStake(uint256 s) external { memberStake = s; }
+    function setMemberPower(uint256 p) external {
+        memberPower = p;
+    }
+
+    function setMemberStake(uint256 s) external {
+        memberStake = s;
+    }
 
     function getMemberPowerInStrategy(address, address) external view returns (uint256) {
         return memberPower;
     }
+
     function getMemberStakedAmount(address) external view returns (uint256) {
         return memberStake;
     }
+
     function ercAddress() external view returns (address) {
         return erc;
     }
+
     function isMember(address) external pure returns (bool) {
         return true;
     }
@@ -1123,7 +1559,7 @@ contract PoC_M2_PowerManagementArithmetic is Test {
 
     /// @notice Security invariant: capped increase must not underflow when memberPower > cap.
     function test_M2a_IncreasePowerCapped_NoUnderflow() public {
-        uint256 cap         = 50 ether;
+        uint256 cap = 50 ether;
         uint256 memberPower = 100 ether; // ABOVE cap — could happen if cap was lowered
         uint256 amountToStake = 1 ether;
 
@@ -1148,7 +1584,7 @@ contract PoC_M2_PowerManagementArithmetic is Test {
         // totalStake will be memberStake + amountToStake
         // uint256.max ~= 1.157e77; uint256.max / 10^18 ~= 1.157e59
         // Use 1.2e59 to force overflow: 1.2e59 * 10^18 = 1.2e77 > uint256.max
-        uint256 bigStake    = 12e58; // 1.2 * 10^59
+        uint256 bigStake = 12e58; // 1.2 * 10^59
         uint256 amountToStake = 1 ether;
 
         reg.setMemberStake(bigStake);
@@ -1173,7 +1609,7 @@ contract PoC_M2_PowerManagementArithmetic is Test {
         // pointsToDecrease = 1e18 - (3e18 - 1) = UNDERFLOW
         uint256 memberStake = 9 ether;
         uint256 memberPower = 1 ether; // inconsistent: should be 3e18
-        uint256 amountToUnstake = 1;   // 1 wei
+        uint256 amountToUnstake = 1; // 1 wei
 
         reg.setMemberStake(memberStake);
         reg.setMemberPower(memberPower);
@@ -1193,8 +1629,8 @@ contract PoC_M2_PowerManagementArithmetic is Test {
 
     /// @notice Sanity check: normal capped increase works when memberPower < cap
     function test_M2_CappedIncrease_Normal() public {
-        uint256 cap         = 100 ether;
-        uint256 memberPower = 20 ether;  // below cap
+        uint256 cap = 100 ether;
+        uint256 memberPower = 20 ether; // below cap
         uint256 amountToStake = 10 ether;
 
         reg.setMemberPower(memberPower);
@@ -1207,8 +1643,8 @@ contract PoC_M2_PowerManagementArithmetic is Test {
 
     /// @notice Sanity check: capped increase clips at maxAmount correctly
     function test_M2_CappedIncrease_ClipsAtCap() public {
-        uint256 cap         = 25 ether;
-        uint256 memberPower = 20 ether;  // 5 ether below cap
+        uint256 cap = 25 ether;
+        uint256 memberPower = 20 ether; // 5 ether below cap
         uint256 amountToStake = 10 ether; // would exceed cap
 
         reg.setMemberPower(memberPower);
@@ -1246,7 +1682,10 @@ contract ConditionalETHReceiver {
         RegistryCommunity(payable(community)).stakeAndRegisterMember("");
     }
 
-    function challengeProposal(address strategy, uint256 proposalId, uint256 amount) external returns (uint256 disputeId) {
+    function challengeProposal(address strategy, uint256 proposalId, uint256 amount)
+        external
+        returns (uint256 disputeId)
+    {
         disputeId = CVStrategy(payable(strategy)).disputeProposal{value: amount}(proposalId, "poc", "");
     }
 }
@@ -1272,21 +1711,25 @@ contract PoC_M7_PushPaymentChallengerDoS is PoCBase {
 
         _deployArbitrator(ARB_FEE);
         _deployFactory(address(token));
-        _deployStrategy(ArbitrableConfig({
-            arbitrator: IArbitrator(address(safeArbitrator)),
-            tribunalSafe: payable(address(_councilSafe())),
-            submitterCollateralAmount: SUBMITTER_COL,
-            challengerCollateralAmount: CHALLENGER_COL,
-            defaultRuling: 1,
-            defaultRulingTimeout: 300
-        }));
+        _deployStrategy(
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(safeArbitrator)),
+                tribunalSafe: payable(address(_councilSafe())),
+                submitterCollateralAmount: SUBMITTER_COL,
+                challengerCollateralAmount: CHALLENGER_COL,
+                defaultRuling: 1,
+                defaultRulingTimeout: 300
+            })
+        );
 
         vm.prank(address(cvStrategy));
         safeArbitrator.registerSafe(address(_councilSafe()));
 
         vm.prank(pool_admin());
         safeHelper(
-            address(registryCommunity), 0, abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(cvStrategy))
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(cvStrategy))
         );
 
         rejector = new ConditionalETHReceiver(IERC20(address(token)));
@@ -1306,10 +1749,9 @@ contract PoC_M7_PushPaymentChallengerDoS is PoCBase {
     function test_M7_ETHRejectorMustNotLockDisputeResolution() public {
         uint256 proposalId = _createProposal(submitter, 0.5 ether);
 
-        uint256 disputeId =
-            rejector.challengeProposal(address(cvStrategy), proposalId, CHALLENGER_COL + ARB_FEE);
+        uint256 disputeId = rejector.challengeProposal(address(cvStrategy), proposalId, CHALLENGER_COL + ARB_FEE);
 
-        (,,,,, ProposalStatus statusAfterDispute,,,,,, ) = cvStrategy.getProposal(proposalId);
+        (,,,,, ProposalStatus statusAfterDispute,,,,,,) = cvStrategy.getProposal(proposalId);
         assertEq(uint256(statusAfterDispute), uint256(ProposalStatus.Disputed), "M-7 pre: proposal must be disputed");
 
         rejector.setRejectETH(true);
@@ -1318,7 +1760,7 @@ contract PoC_M7_PushPaymentChallengerDoS is PoCBase {
         vm.prank(address(_councilSafe()));
         safeArbitrator.executeRuling(disputeId, 2, address(cvStrategy));
 
-        (,,,,, ProposalStatus statusAfterRuling,,,,,, ) = cvStrategy.getProposal(proposalId);
+        (,,,,, ProposalStatus statusAfterRuling,,,,,,) = cvStrategy.getProposal(proposalId);
         assertTrue(
             uint256(statusAfterRuling) != uint256(ProposalStatus.Disputed),
             "M-7: proposal must not remain permanently Disputed"
@@ -1350,18 +1792,22 @@ contract PoC_M4b_VoterStakedProposalsDoS is PoCBase {
 
         _deployArbitrator(ARB_FEE);
         _deployFactory(address(token));
-        _deployStrategy(ArbitrableConfig({
-            arbitrator: IArbitrator(address(safeArbitrator)),
-            tribunalSafe: payable(address(_councilSafe())),
-            submitterCollateralAmount: 0.02 ether,
-            challengerCollateralAmount: 0.01 ether,
-            defaultRuling: 1,
-            defaultRulingTimeout: 300
-        }));
+        _deployStrategy(
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(safeArbitrator)),
+                tribunalSafe: payable(address(_councilSafe())),
+                submitterCollateralAmount: 0.02 ether,
+                challengerCollateralAmount: 0.01 ether,
+                defaultRuling: 1,
+                defaultRulingTimeout: 300
+            })
+        );
 
         vm.prank(pool_admin());
         safeHelper(
-            address(registryCommunity), 0, abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(cvStrategy))
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(cvStrategy))
         );
 
         _approveAndRegister(victim);
@@ -1394,7 +1840,9 @@ contract PoC_M4b_VoterStakedProposalsDoS is PoCBase {
     }
 
     function test_M4b_UnregisterMustStayGasBoundedAsVotesGrow() public {
-        for (uint256 i = 0; i < MAX_VOTER_STAKED_PROPOSALS; i++) _createAndVoteOnProposal();
+        for (uint256 i = 0; i < MAX_VOTER_STAKED_PROPOSALS; i++) {
+            _createAndVoteOnProposal();
+        }
 
         uint256 gasAtCap = _measureUnregisterGas();
         console.log("[M-4b] unregisterMember gas @ voter proposal cap:", gasAtCap);

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+unset CHAIN
 
 usage() {
   cat <<'USAGE'
@@ -33,6 +34,7 @@ VERIFIER_URL=""
 VERIFY_RPC_MAX_ATTEMPTS=${VERIFY_RPC_MAX_ATTEMPTS:-4}
 VERIFY_RPC_INITIAL_DELAY=${VERIFY_RPC_INITIAL_DELAY:-8}
 VERIFY_RPC_SUCCESS_DELAY=${VERIFY_RPC_SUCCESS_DELAY:-2}
+VERIFY_COMMAND_TIMEOUT=${VERIFY_COMMAND_TIMEOUT:-300}
 STRICT_FACET_MATCH=${STRICT_FACET_MATCH:-true}
 
 while [[ $# -gt 0 ]]; do
@@ -256,10 +258,14 @@ verify_with_retry() {
   local output
 
   while true; do
-    if output="$("$@" 2>&1)"; then
+    if output="$(timeout --foreground "$VERIFY_COMMAND_TIMEOUT" "$@" 2>&1)"; then
       printf '%s\n' "$output"
       sleep "$VERIFY_RPC_SUCCESS_DELAY"
       return 0
+    fi
+    local status=$?
+    if [[ "$status" -eq 124 ]]; then
+      output="Command timed out after ${VERIFY_COMMAND_TIMEOUT}s while running ${description}"
     fi
 
     printf '%s\n' "$output" >&2

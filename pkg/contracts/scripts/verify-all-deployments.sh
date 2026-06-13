@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+unset CHAIN
 
 CONTRACTS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 NETWORKS=()
@@ -7,6 +8,8 @@ SCOPE="all"
 VERIFY_RPC_MAX_ATTEMPTS=${VERIFY_RPC_MAX_ATTEMPTS:-4}
 VERIFY_RPC_INITIAL_DELAY=${VERIFY_RPC_INITIAL_DELAY:-8}
 VERIFY_RPC_SUCCESS_DELAY=${VERIFY_RPC_SUCCESS_DELAY:-2}
+VERIFY_COMMAND_TIMEOUT=${VERIFY_COMMAND_TIMEOUT:-300}
+VERIFY_REPLAY_OFFLINE=${VERIFY_REPLAY_OFFLINE:-true}
 
 is_retryable_rpc_error() {
   grep -Eqi 'rate limit|max calls per sec|429|timeout|temporar|failed to get storage|HTTP error 429|Max retries exceeded' <<< "$1"
@@ -21,18 +24,30 @@ run_with_rpc_retry() {
   local output
 
   while true; do
-    if output="$($@ 2>&1)"; then
+    if [[ "$(type -t "$1" || true)" == "function" ]]; then
+      output="$("$@" 2>&1)"
+      local status=$?
+    else
+      output="$(timeout --foreground "$VERIFY_COMMAND_TIMEOUT" "$@" 2>&1)"
+      local status=$?
+    fi
+
+    if [[ "$status" -eq 0 ]]; then
       printf '%s\n' "$output"
       sleep "$VERIFY_RPC_SUCCESS_DELAY"
       return 0
     fi
 
     printf '%s\n' "$output" >&2
+    if [[ "$status" -eq 124 ]]; then
+      echo "Command timed out after ${VERIFY_COMMAND_TIMEOUT}s while running $description" >&2
+    fi
+
     if [[ "$attempt" -ge "$VERIFY_RPC_MAX_ATTEMPTS" ]]; then
       return 1
     fi
 
-    if is_retryable_rpc_error "$output"; then
+    if [[ "$status" -eq 124 ]] || is_retryable_rpc_error "$output"; then
       echo "Retrying $description after ${delay}s (attempt $((attempt + 1))/${VERIFY_RPC_MAX_ATTEMPTS})..." >&2
       sleep "$delay"
       attempt=$((attempt + 1))
@@ -141,7 +156,19 @@ run_global_scope() {
   done
 
   echo "==> Running global verifier (scope=$only)"
-  "${cmd[@]}"
+  local output
+  local status
+  if output="$(timeout --foreground "$VERIFY_COMMAND_TIMEOUT" "${cmd[@]}" 2>&1)"; then
+    printf '%s\n' "$output"
+    return 0
+  fi
+
+  status=$?
+  printf '%s\n' "$output" >&2
+  if [[ "$status" -eq 124 ]]; then
+    echo "Command timed out after ${VERIFY_COMMAND_TIMEOUT}s while running global verifier" >&2
+  fi
+  return "$status"
 }
 
 run_state_scope() {
@@ -559,6 +586,10 @@ run_upgrade_scope() {
       cmd+=(--legacy)
     fi
 
+    if [[ "$VERIFY_REPLAY_OFFLINE" == "true" ]]; then
+      cmd+=(--offline)
+    fi
+
     if run_with_rpc_retry "$network $scope" env ETH_PASSWORD= DEPLOYER_ADDRESS="$deployer_address" REUSE_CONFIGURED_IMPLEMENTATIONS=true SKIP_PREFLIGHT=true SKIP_NETWORK_WRITES=true "${cmd[@]}"; then
       echo "✅ $network $scope"
       cooldown_after_network
@@ -584,6 +615,10 @@ run_upgrade_scope() {
 
         if needs_legacy "$network"; then
           cmd+=(--legacy)
+        fi
+
+        if [[ "$VERIFY_REPLAY_OFFLINE" == "true" ]]; then
+          cmd+=(--offline)
         fi
 
         if run_with_rpc_retry "$network $scope (alternate RPC)" env ETH_PASSWORD= DEPLOYER_ADDRESS="$deployer_address" REUSE_CONFIGURED_IMPLEMENTATIONS=true SKIP_PREFLIGHT=true SKIP_NETWORK_WRITES=true "${cmd[@]}"; then

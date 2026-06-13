@@ -304,6 +304,12 @@ tasks:
           if [ "${RESUME:-false}" = "true" ]; then
             RESUME_FLAG="--resume"
           fi
+          SKIP_SIMULATION_FLAG=""
+          if [ "${REHEARSE_SKIP_SIMULATION:-false}" = "true" ]; then
+            SKIP_SIMULATION_FLAG="--skip-simulation"
+          fi
+          SCRIPT_VERBOSITY="${REHEARSE_SCRIPT_VERBOSITY:-}"
+          SMOKE_VERBOSITY="${REHEARSE_SMOKE_VERBOSITY:--vvv}"
 
           SIG="run(string)"
           case "${PHASE:-all}" in
@@ -359,7 +365,8 @@ tasks:
               --ffi \
               --broadcast \
               ${RESUME_FLAG} \
-              -vv || {
+              ${SKIP_SIMULATION_FLAG} \
+              ${SCRIPT_VERBOSITY} || {
               kill "${ANVIL_PID}" >/dev/null 2>&1 || true
               exit 1
             }
@@ -374,15 +381,18 @@ tasks:
             --ffi \
             --broadcast \
             ${RESUME_FLAG} \
-            -vvv || {
+            ${SKIP_SIMULATION_FLAG} \
+            ${SCRIPT_VERBOSITY} || {
             kill "${ANVIL_PID}" >/dev/null 2>&1 || true
             exit 1
           }
 
-          FORK_HEALTHCHECK_CHAIN="${CHAIN}" FORK_HEALTHCHECK_RPC_URL="${LOCAL_RPC_URL}" forge test --match-contract ForkLifecycleHealthcheck -vvv || {
-            kill "${ANVIL_PID}" >/dev/null 2>&1 || true
-            exit 1
-          }
+          if [ "${SKIP_SMOKE:-false}" != "true" ]; then
+            NETWORKS_JSON_PATH="${TMP_NETWORKS_JSON}" FORK_HEALTHCHECK_CHAIN="${CHAIN}" FORK_HEALTHCHECK_RPC_URL="${LOCAL_RPC_URL}" forge test --match-contract ForkLifecycleHealthcheck ${SMOKE_VERBOSITY} || {
+              kill "${ANVIL_PID}" >/dev/null 2>&1 || true
+              exit 1
+            }
+          fi
 
           kill "${ANVIL_PID}" >/dev/null 2>&1 || true
   rehearse-upgrade-ethsep:

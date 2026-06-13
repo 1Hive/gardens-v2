@@ -5,6 +5,7 @@ import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
 import {IArbitrator} from "../../interfaces/IArbitrator.sol";
 import {Proposal, ProposalStatus, ArbitrableConfig} from "../ICVStrategy.sol";
 import {CVStreamingStorage, CVStreamingBase} from "../CVStreamingStorage.sol";
+import {StreamingEscrow} from "../StreamingEscrow.sol";
 import {ConvictionsUtils} from "../ConvictionsUtils.sol";
 import {IRegistryFactory} from "../../IRegistryFactory.sol";
 import {ISafe} from "../../interfaces/ISafe.sol";
@@ -69,6 +70,8 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         }
 
         wrapIfNeeded();
+        // TEMPORARY POST-UPGRADE MIGRATION: remove after openStreamingProposalIds is initialized on deployed pools.
+        _runOpenStreamingProposalsPostUpgradeMigration();
 
         uint256 poolAmount = getPoolAmount();
         bool didMeaningfulWork = false;
@@ -97,9 +100,10 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             emit StreamRateUpdated(address(superfluidGDA), actualFlowRate > 0 ? uint256(uint96(actualFlowRate)) : 0);
         }
 
+        uint256[] storage openProposalIds = openStreamingProposalIds;
         // Keep escrow deposits and outflows in sync with the latest GDA member flow rates.
-        for (uint256 i = 1; i <= proposalCounter; i++) {
-            address escrow = streamingEscrow(i);
+        for (uint256 i = 0; i < openProposalIds.length; i++) {
+            address escrow = streamingEscrow(openProposalIds[i]);
             if (escrow == address(0)) {
                 continue;
             }
@@ -124,11 +128,13 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
     }
 
     function _totalEligibleConviction(uint256 poolAmount) internal returns (uint256 totalEligibleConviction) {
+        uint256[] storage openProposalIds = openStreamingProposalIds;
         // First pass: identify eligible conviction and clear non-active proposal units.
-        for (uint256 i = 1; i <= proposalCounter; i++) {
-            Proposal storage proposal = proposals[i];
+        for (uint256 i = 0; i < openProposalIds.length; i++) {
+            uint256 proposalId = openProposalIds[i];
+            Proposal storage proposal = proposals[proposalId];
 
-            address escrow = streamingEscrow(i);
+            address escrow = streamingEscrow(proposalId);
             if (escrow == address(0)) {
                 continue; // Skip if no escrow (shouldn't happen for streaming proposals)
             }
@@ -143,7 +149,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
                 continue;
             }
 
-            uint256 convictionValue = calculateProposalConviction(i);
+            uint256 convictionValue = calculateProposalConviction(proposalId);
             if (_isProposalAboveThreshold(proposal, convictionValue, poolAmount)) {
                 totalEligibleConviction += convictionValue;
             }
@@ -156,12 +162,14 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         uint256 totalEligibleConviction,
         uint128 streamingUnitBudget
     ) internal {
+        uint256[] storage openProposalIds = openStreamingProposalIds;
         // Second pass: update units after the requested flow is known. When a stream is requested,
         // cap total units to the requested flow rate so GDA integer division cannot round it to zero.
-        for (uint256 i = 1; i <= proposalCounter; i++) {
-            Proposal storage proposal = proposals[i];
+        for (uint256 i = 0; i < openProposalIds.length; i++) {
+            uint256 proposalId = openProposalIds[i];
+            Proposal storage proposal = proposals[proposalId];
 
-            address escrow = streamingEscrow(i);
+            address escrow = streamingEscrow(proposalId);
             if (escrow == address(0)) {
                 continue;
             }
@@ -171,7 +179,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
                 continue;
             }
 
-            uint256 convictionValue = calculateProposalConviction(i);
+            uint256 convictionValue = calculateProposalConviction(proposalId);
             uint128 units = 0;
             if (_isProposalAboveThreshold(proposal, convictionValue, poolAmount)) {
                 units = shouldStartStream
@@ -188,7 +196,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
     }
 
     /// @notice Emergency stop stream for a specific escrow
-    /// @dev This sets GDA member units to zero for the escrow and requests an outflow sync.
+    /// @dev This sets GDA member units to zero, stops the escrow outflow, and returns residual funds to the strategy.
     function stopEscrowStream(address escrow) external onlyOwner {
         if (escrow == address(0)) {
             revert StreamingEscrowNotFound(escrow);
@@ -199,13 +207,31 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         }
         emit StreamMemberUnitUpdated(escrow, 0);
 
-        // Best-effort to apply zero units immediately on escrow side.
-        try IStreamingEscrowSync(escrow).syncOutflow() {}
-        catch (bytes memory reason) {
-            emit EscrowSyncFailed(escrow, reason);
-        }
+        StreamingEscrow(escrow).drainToStrategy();
         emit EscrowStreamStopped(escrow, msg.sender);
     }
+
+    // BEGIN TEMPORARY POST-UPGRADE MIGRATION: openStreamingProposalIds
+    // Remove this helper and its call site once all deployed streaming strategies
+    // have openStreamingProposalsInitialized == true. Keep the storage slots in CVStrategyBaseFacet.
+    function _runOpenStreamingProposalsPostUpgradeMigration() internal {
+        if (openStreamingProposalsInitialized) {
+            return;
+        }
+
+        for (uint256 i = 1; i <= proposalCounter; i++) {
+            Proposal storage proposal = proposals[i];
+            if (
+                proposal.proposalId != 0 && !_isTerminalProposalStatus(proposal.proposalStatus)
+                    && streamingEscrow(i) != address(0)
+            ) {
+                _addOpenStreamingProposal(i);
+            }
+        }
+
+        openStreamingProposalsInitialized = true;
+    }
+    // END TEMPORARY POST-UPGRADE MIGRATION: openStreamingProposalIds
 
     function setAuthorizedRebalanceCaller(address _caller, bool _authorized) external {
         onlyCouncilSafe();

@@ -212,6 +212,7 @@ contract StreamingEscrow is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, Su
     }
 
     function drainToStrategy() external onlyStrategy {
+        _setOutflow(0, beneficiary);
         _drainTo(strategy);
     }
 

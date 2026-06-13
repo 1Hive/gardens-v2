@@ -59,7 +59,7 @@ rpc_env_name() {
 verifier_url() {
   case "$1" in
     ethsepolia) echo "https://api.etherscan.io/v2/api?chainid=11155111" ;;
-    arbsepolia) echo "https://api.etherscan.io/v2/api?chainid=421611" ;;
+    arbsepolia) echo "https://api.etherscan.io/v2/api?chainid=421614" ;;
     opsepolia) echo "https://api.etherscan.io/v2/api?chainid=11155420" ;;
     ethereum|mainnet) echo "https://api.etherscan.io/v2/api?chainid=1" ;;
     arbitrum) echo "https://api.etherscan.io/v2/api?chainid=42161" ;;

@@ -304,7 +304,9 @@ contract MockRegistryFactoryStreaming {
 contract MockStreamingEscrowSync {
     uint256 public requiredDeposit;
     uint256 public syncCount;
+    uint256 public drainToStrategyCount;
     bool public revertSync;
+    bool public revertDrainToStrategy;
     bool public revertDepositLookup;
 
     function setRequiredDeposit(uint256 amount) external {
@@ -327,6 +329,17 @@ contract MockStreamingEscrowSync {
 
     function setRevertSync(bool value) external {
         revertSync = value;
+    }
+
+    function drainToStrategy() external {
+        if (revertDrainToStrategy) {
+            revert("drain failed");
+        }
+        drainToStrategyCount++;
+    }
+
+    function setRevertDrainToStrategy(bool value) external {
+        revertDrainToStrategy = value;
     }
 
     function setRevertDepositLookup(bool value) external {
@@ -929,7 +942,7 @@ contract CVStreamingFacetTest is Test {
 
         facet.rebalance();
 
-        assertEq(gdaPool.updateCount(), 4);
+        assertEq(gdaPool.updateCount(), 2);
         assertGt(gdaPool.memberUnits(escrow1), 0);
         assertEq(gdaPool.memberUnits(escrow2), 0);
         assertEq(gdaPool.memberUnits(escrow3), 0);
@@ -1254,6 +1267,7 @@ contract CVStreamingFacetTest is Test {
 
         facet.stopEscrowStream(escrow1);
         assertEq(gdaPool.memberUnits(escrow1), 0);
+        assertEq(MockStreamingEscrowSync(escrow1).drainToStrategyCount(), 1);
     }
 
     function test_stopEscrowStream_reverts_for_zero_address() public {
@@ -1268,12 +1282,14 @@ contract CVStreamingFacetTest is Test {
         facet.stopEscrowStream(escrow1);
     }
 
-    function test_stopEscrowStream_tolerates_sync_failure() public {
+    function test_stopEscrowStream_drains_to_strategy_without_syncing_to_beneficiary() public {
         MockStreamingEscrowSync escrow = new MockStreamingEscrowSync();
         escrow.setRevertSync(true);
 
         facet.stopEscrowStream(address(escrow));
         assertEq(gdaPool.memberUnits(address(escrow)), 0);
+        assertEq(escrow.syncCount(), 0);
+        assertEq(escrow.drainToStrategyCount(), 1);
     }
 
     // Note: Removed unrealistic uint128 max test - causes overflow in conviction calculation

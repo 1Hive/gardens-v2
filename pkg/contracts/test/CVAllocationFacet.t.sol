@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 
 import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol";
+import {CVStreamingStorage} from "../src/CVStrategy/CVStreamingStorage.sol";
 import {
     Proposal,
     ProposalStatus,
@@ -21,6 +22,9 @@ import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
 import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
 import {TERC20} from "./shared/TERC20.sol";
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
+import {
+    ISuperfluidPool
+} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 
 import {MockAlloWithPool, MockCollateralVault} from "./helpers/CVStrategyHelpers.sol";
 
@@ -95,6 +99,30 @@ contract RevertingReceiver {
     }
 }
 
+contract MockSuperfluidPoolAlloc {
+    address public lastMember;
+    uint128 public lastUnits;
+    bool public updateShouldSucceed = true;
+
+    function setUpdateShouldSucceed(bool value) external {
+        updateShouldSucceed = value;
+    }
+
+    function updateMemberUnits(address member, uint128 units) external returns (bool) {
+        lastMember = member;
+        lastUnits = units;
+        return updateShouldSucceed;
+    }
+}
+
+contract MockStreamingEscrowDrain {
+    uint256 public drainToStrategyCount;
+
+    function drainToStrategy() external {
+        drainToStrategyCount++;
+    }
+}
+
 contract MockSuperToken {
     TERC20 public underlying;
     uint256 public balance;
@@ -148,6 +176,14 @@ contract CVAllocationFacetHarness is CVAllocationFacet {
 
     function setSuperfluidToken(address token) external {
         superfluidToken = ISuperToken(token);
+    }
+
+    function setSuperfluidGDA(address gda) external {
+        superfluidGDA = ISuperfluidPool(gda);
+    }
+
+    function setStreamingEscrowExternal(uint256 proposalId, address escrow) external {
+        CVStreamingStorage.layout().proposalEscrow[proposalId] = escrow;
     }
 
     function setProposalType(ProposalType proposalType_) external {
@@ -474,6 +510,36 @@ contract CVAllocationFacetTest is Test {
         assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Executed));
     }
 
+    function test_distribute_streaming_completion_zeroes_units_and_drains_escrow_to_strategy() public {
+        allo.setPoolToken(1, facet.nativeToken());
+        MockSuperfluidPoolAlloc pool = new MockSuperfluidPoolAlloc();
+        MockStreamingEscrowDrain escrow = new MockStreamingEscrowDrain();
+        facet.setSuperfluidGDA(address(pool));
+        facet.setStreamingEscrowExternal(1, address(escrow));
+        facet.setProposalType(ProposalType.Streaming);
+        facet.setCvParams(CVParams({maxRatio: 10_000_000, weight: 0, decay: 0, minThresholdPoints: 0}));
+        facet.setArbitrableConfig(
+            1,
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(0)),
+                tribunalSafe: address(0),
+                submitterCollateralAmount: 1,
+                challengerCollateralAmount: 1,
+                defaultRuling: 0,
+                defaultRulingTimeout: 0
+            })
+        );
+        facet.setProposal(1, ProposalStatus.Active, 0, facet.nativeToken(), beneficiary, member, 0, 0, 1);
+
+        vm.prank(address(allo));
+        facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
+
+        assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Executed));
+        assertEq(pool.lastMember(), address(escrow));
+        assertEq(pool.lastUnits(), 0);
+        assertEq(escrow.drainToStrategyCount(), 1);
+    }
+
     function test_distribute_zero_requested_executes_with_empty_pool() public {
         allo.setPoolToken(1, facet.nativeToken());
         facet.setProposalType(ProposalType.Funding);
@@ -526,6 +592,29 @@ contract CVAllocationFacetTest is Test {
                 CVAllocationFacet.ConvictionUnderMinimumThreshold.selector, minThresholdPoints, threshold, 1 ether
             )
         );
+        facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
+    }
+
+    function test_security_distributeRejectsPositiveConvictionWhenNoActiveGovernancePoints() public {
+        allo.setPoolToken(1, facet.nativeToken());
+        vm.deal(address(facet), 10 ether);
+        facet.setProposalType(ProposalType.Funding);
+        facet.setCvParams(CVParams({maxRatio: 10_000_000, weight: 1, decay: 5_000_000, minThresholdPoints: 0}));
+        facet.setTotalPointsActivated(0);
+        facet.setProposal(
+            1,
+            ProposalStatus.Active,
+            1 ether,
+            facet.nativeToken(),
+            beneficiary,
+            member,
+            block.number,
+            1,
+            0
+        );
+
+        vm.prank(address(allo));
+        vm.expectRevert(abi.encodeWithSelector(CVAllocationFacet.NoActiveGovernancePoints.selector, 1));
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
     }
 

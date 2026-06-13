@@ -10,13 +10,17 @@ import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol"
 import {ICollateralVault} from "../src/interfaces/ICollateralVault.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
-import {ISuperfluidPool} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
+import {
+    ISuperfluidPool
+} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 
 import {MockRegistryCommunity, MockArbitrator, MockCollateralVault} from "./helpers/CVStrategyHelpers.sol";
 
 contract MockStreamingEscrow {
     bool public disputed;
     bool public resolved;
+    uint256 public drainToBeneficiaryCount;
+    uint256 public drainToStrategyCount;
 
     function setDisputed(bool value) external {
         disputed = value;
@@ -24,10 +28,12 @@ contract MockStreamingEscrow {
 
     function drainToStrategy() external {
         resolved = true;
+        drainToStrategyCount++;
     }
 
     function drainToBeneficiary() external {
         resolved = true;
+        drainToBeneficiaryCount++;
     }
 }
 
@@ -242,6 +248,8 @@ contract CVDisputeFacetTest is Test {
 
         facet.rule(4, 0);
         assertFalse(escrow.disputed());
+        assertEq(escrow.drainToBeneficiaryCount(), 0);
+        assertEq(escrow.drainToStrategyCount(), 0);
     }
 
     function test_rule_default_ruling_rejected() public {
@@ -272,6 +280,26 @@ contract CVDisputeFacetTest is Test {
 
         vm.prank(address(arbitrator));
         facet.rule(6, 1);
+    }
+
+    function test_rule_ruling_one_streaming_resumes_without_draining_beneficiary() public {
+        ArbitrableConfig memory config = _config(1 ether, 1, 1000);
+        facet.setArbitrableConfig(1, config);
+        facet.setProposalType(ProposalType.Streaming);
+        facet.setProposal(1, ProposalStatus.Disputed, 1, 0);
+        facet.setDisputeInfo(1, 6, block.timestamp, member);
+        facet.setDisputeId(6, 1);
+        facet.setDisputeCount(1);
+        MockStreamingEscrow escrow = new MockStreamingEscrow();
+        escrow.setDisputed(true);
+        facet.setProposalEscrow(1, address(escrow));
+
+        vm.prank(address(arbitrator));
+        facet.rule(6, 1);
+
+        assertFalse(escrow.disputed());
+        assertEq(escrow.drainToBeneficiaryCount(), 0);
+        assertEq(escrow.drainToStrategyCount(), 0);
     }
 
     function test_rule_ruling_two_transfers_split() public {

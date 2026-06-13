@@ -6,7 +6,7 @@ import {CVStreamingBase} from "../CVStreamingStorage.sol";
 import {IArbitrator} from "../../interfaces/IArbitrator.sol";
 import {IVotingPowerRegistry} from "../../interfaces/IVotingPowerRegistry.sol";
 import {IRegistryFactory} from "../../IRegistryFactory.sol";
-import {Proposal, ArbitrableConfig, CVParams, ProposalType, ProposalStatus} from "../ICVStrategy.sol";
+import {Proposal, ArbitrableConfig, CVParams, ProposalType} from "../ICVStrategy.sol";
 import {LibDiamond} from "../../diamonds/libraries/LibDiamond.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -243,20 +243,21 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
         }
     }
 
-    function _ensureNoUnclosedStreamingProposals() internal view {
+    function _ensureNoUnclosedStreamingProposals() internal {
+        // TEMPORARY POST-UPGRADE MIGRATION: remove after activeProposalCount is initialized on deployed pools.
+        _runActiveProposalCountPostUpgradeMigration();
+        if (activeProposalCount == 0) {
+            return;
+        }
+
         for (uint256 i = 1; i <= proposalCounter; i++) {
             Proposal storage proposal = proposals[i];
-            if (proposal.proposalId == 0) {
-                continue;
-            }
-            if (
-                proposal.proposalStatus != ProposalStatus.Cancelled
-                    && proposal.proposalStatus != ProposalStatus.Rejected
-                    && proposal.proposalStatus != ProposalStatus.Executed
-            ) {
+            if (proposal.proposalId != 0 && !_isTerminalProposalStatus(proposal.proposalStatus)) {
                 revert ProposalActive(i);
             }
         }
+
+        revert ProposalActive(0);
     }
 
     function _migrateStreamingTokenBalance(ISuperToken previousToken, ISuperToken nextToken) internal {

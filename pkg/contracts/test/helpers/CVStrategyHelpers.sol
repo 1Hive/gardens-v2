@@ -259,6 +259,10 @@ contract CVProposalFacetHarness is CVProposalFacet {
         return proposals[proposalId].requestedAmount;
     }
 
+    function setProposalStakedAmount(uint256 proposalId, uint256 amount) external {
+        proposals[proposalId].stakedAmount = amount;
+    }
+
     function getProposalBeneficiary(uint256 proposalId) external view returns (address) {
         return proposals[proposalId].beneficiary;
     }

@@ -1363,6 +1363,10 @@ contract ForkLifecycleHealthcheck is Test {
     }
 
     function _networksJsonPath() internal view returns (string memory) {
+        string memory overridePath = vm.envOr("NETWORKS_JSON_PATH", string(""));
+        if (bytes(overridePath).length != 0) {
+            return overridePath;
+        }
         return string.concat(vm.projectRoot(), "/pkg/contracts/config/networks.json");
     }
 

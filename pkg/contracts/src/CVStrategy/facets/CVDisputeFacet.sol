@@ -40,11 +40,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
     );
     event Ruling(IArbitrator indexed _arbitrator, uint256 indexed _disputeID, uint256 _ruling);
     event CollateralPayoutFailed(
-        uint256 indexed proposalId,
-        address indexed fromUser,
-        address indexed toUser,
-        uint256 amount,
-        bytes reason
+        uint256 indexed proposalId, address indexed fromUser, address indexed toUser, uint256 amount, bytes reason
     );
 
     /*|--------------------------------------------|*/
@@ -138,6 +134,8 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
             }
             if (arbitrableConfig.defaultRuling == 2) {
                 proposal.proposalStatus = ProposalStatus.Rejected;
+                _decrementActiveProposalCount();
+                _removeOpenStreamingProposal(proposalId);
                 _handleStreamingResolution(proposalId, false);
                 _tryWithdrawCollateral(
                     proposalId, proposal.submitter, proposal.submitter, arbitrableConfig.submitterCollateralAmount
@@ -160,6 +158,8 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
             );
         } else if (_ruling == 2) {
             proposal.proposalStatus = ProposalStatus.Rejected;
+            _decrementActiveProposalCount();
+            _removeOpenStreamingProposal(proposalId);
             _handleStreamingResolution(proposalId, false);
             _tryWithdrawCollateral(
                 proposalId,
@@ -169,16 +169,10 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
             );
             uint256 submitterCollateralHalf = arbitrableConfig.submitterCollateralAmount / 2;
             _tryWithdrawCollateralFor(
-                proposalId,
-                proposal.submitter,
-                address(registryCommunity.councilSafe()),
-                submitterCollateralHalf
+                proposalId, proposal.submitter, address(registryCommunity.councilSafe()), submitterCollateralHalf
             );
             _tryWithdrawCollateralFor(
-                proposalId,
-                proposal.submitter,
-                proposal.disputeInfo.challenger,
-                submitterCollateralHalf
+                proposalId, proposal.submitter, proposal.disputeInfo.challenger, submitterCollateralHalf
             );
         }
 
@@ -197,7 +191,6 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
         }
         if (active) {
             StreamingEscrow(escrow).setDisputed(false);
-            StreamingEscrow(escrow).drainToBeneficiary();
         } else {
             if (!superfluidGDA.updateMemberUnits(escrow, 0)) {
                 revert UpdateMemberUnitsFailed(escrow, 0);
@@ -207,13 +200,15 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
     }
 
     function _tryWithdrawCollateral(uint256 proposalId, address fromUser, address toUser, uint256 amount) internal {
-        try collateralVault.withdrawCollateral(proposalId, fromUser, amount) {} catch (bytes memory reason) {
+        try collateralVault.withdrawCollateral(proposalId, fromUser, amount) {}
+        catch (bytes memory reason) {
             emit CollateralPayoutFailed(proposalId, fromUser, toUser, amount, reason);
         }
     }
 
     function _tryWithdrawCollateralFor(uint256 proposalId, address fromUser, address toUser, uint256 amount) internal {
-        try collateralVault.withdrawCollateralFor(proposalId, fromUser, toUser, amount) {} catch (bytes memory reason) {
+        try collateralVault.withdrawCollateralFor(proposalId, fromUser, toUser, amount) {}
+        catch (bytes memory reason) {
             emit CollateralPayoutFailed(proposalId, fromUser, toUser, amount, reason);
         }
     }

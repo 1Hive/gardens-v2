@@ -49,6 +49,8 @@ Out-of-scope:
 * Previously reported vulnerabilities
 * Issues in unused or deprecated contracts
 
+For concrete examples of intended-design, non-production, and duplicate report categories, see [Known Non-Eligible Findings](./security/known-non-eligible-findings.md).
+
 ---
 
 ## Known Vulnerabilities
@@ -58,6 +60,8 @@ Before reporting a new issue, review existing advisories:
 * **GitHub Security Advisories**: [https://github.com/1Hive/gardens-v2/security/advisories](https://github.com/1Hive/gardens-v2/security/advisories)
 
 Duplicate reports are not eligible for rewards.
+
+Researchers should also review [Known Non-Eligible Findings](./security/known-non-eligible-findings.md) before submitting a report.
 
 ---
 

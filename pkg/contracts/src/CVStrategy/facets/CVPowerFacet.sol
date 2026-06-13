@@ -165,10 +165,14 @@ contract CVPowerFacet is CVStrategyBaseFacet {
             Proposal storage proposal = proposals[proposalId];
             if (proposalExists(proposalId)) {
                 uint256 stakedPoints = proposal.voterStakedPoints[_member];
+                if (stakedPoints == 0) {
+                    continue;
+                }
+                uint256 oldStake = proposal.stakedAmount;
                 proposal.voterStakedPoints[_member] = 0;
                 proposal.stakedAmount -= stakedPoints;
                 totalStaked -= stakedPoints;
-                _calculateAndSetConviction(proposal, stakedPoints);
+                _calculateAndSetConviction(proposal, oldStake);
                 emit SupportAdded(_member, proposalId, 0, proposal.stakedAmount, proposal.convictionLast);
             }
         }

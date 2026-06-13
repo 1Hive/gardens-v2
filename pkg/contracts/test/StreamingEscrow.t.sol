@@ -39,12 +39,18 @@ contract MockForwarderFallbackOnly {
 }
 
 contract MockCFA {
+    int96 public flowRate;
+
+    function setFlowRate(int96 _flowRate) external {
+        flowRate = _flowRate;
+    }
+
     function getFlow(ISuperToken, address, address)
         external
-        pure
-        returns (uint256 lastUpdated, int96 flowRate, uint256 deposit, uint256 owedDeposit)
+        view
+        returns (uint256 lastUpdated, int96 currentFlowRate, uint256 deposit, uint256 owedDeposit)
     {
-        return (0, 0, 0, 0);
+        return (0, flowRate, 0, 0);
     }
 }
 
@@ -438,6 +444,17 @@ contract StreamingEscrowTest is Test {
         assertEq(token.balanceOf(beneficiary), 70);
     }
 
+    function test_security_syncOutflowKeepsStrategyDepositBuffer() public {
+        pool.setMemberFlowRate(address(escrow), 10);
+        forwarder.setDeposit(10_000);
+        token.mint(address(escrow), 10_050);
+
+        escrow.syncOutflow();
+
+        assertEq(token.balanceOf(address(escrow)), 10_050, "syncOutflow must preserve the 50 bps deposit buffer");
+        assertEq(token.balanceOf(beneficiary), 0, "deposit buffer must not be paid to beneficiary as excess");
+    }
+
     function test_syncOutflow_does_not_drain_excess_when_disputed() public {
         pool.setMemberFlowRate(address(escrow), 10);
         forwarder.setDeposit(30);
@@ -571,15 +588,19 @@ contract StreamingEscrowTest is Test {
         assertEq(token.balanceOf(beneficiary), 55);
     }
 
-    function test_drainToStrategy_drains_all_including_reserved_deposit() public {
+    function test_drainToStrategy_drains_all_including_reserved_deposit_and_stops_outflow() public {
         pool.setMemberFlowRate(address(escrow), 10);
+        cfa.setFlowRate(10);
         forwarder.setDeposit(30);
         token.mint(address(escrow), 100);
+        uint256 start = host.callAgreementCount();
 
         escrow.drainToStrategy();
 
         assertEq(token.balanceOf(address(escrow)), 0);
         assertEq(token.balanceOf(strategy), 100);
+        assertEq(host.callAgreementCount(), start + 1);
+        assertEq(host.lastAgreement(), address(cfa));
     }
 
     function test_drainToBeneficiary_reverts_on_transfer_failure() public {

@@ -195,7 +195,12 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     uint256 public streamingRatePerSecond; // Streaming pool only
 
     IVotingPowerRegistry public votingPowerRegistry;
-    uint256[46] private __gap;
+    uint256 public activeProposalCount;
+    bool public activeProposalCountInitialized;
+    uint256[] public openStreamingProposalIds;
+    mapping(uint256 => uint256) public openStreamingProposalIndex;
+    bool public openStreamingProposalsInitialized;
+    uint256[41] private __gap;
 
     // Constants (also defined in CVStrategyBaseFacet for facet access)
     uint256 public constant RULING_OPTIONS = 3;

@@ -157,8 +157,9 @@ contract CVProposalFacetTest is Test {
         facet.editProposal(1, Metadata({protocol: 1, pointer: "new"}), beneficiary, 10);
     }
 
-    function test_editProposal_revertWhenConvictionActive() public {
-        facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Active, block.timestamp, 1);
+    function test_editProposal_revertWhenSupportActive() public {
+        facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Active, block.timestamp, 0);
+        facet.setProposalStakedAmount(1, 1);
         vm.prank(member);
         vm.expectRevert(
             abi.encodeWithSelector(CVProposalFacet.CannotEditRequestedAmountWithActiveSupport.selector, 1, 10, 11)

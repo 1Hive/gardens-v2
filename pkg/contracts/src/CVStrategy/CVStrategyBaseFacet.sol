@@ -6,7 +6,15 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {RegistryCommunity} from "../RegistryCommunity/RegistryCommunity.sol";
 import {ICollateralVault} from "../interfaces/ICollateralVault.sol";
 import {ISybilScorer} from "../ISybilScorer.sol";
-import {ProposalType, PointSystem, Proposal, PointSystemConfig, ArbitrableConfig, CVParams} from "./ICVStrategy.sol";
+import {
+    ProposalType,
+    PointSystem,
+    Proposal,
+    ProposalStatus,
+    PointSystemConfig,
+    ArbitrableConfig,
+    CVParams
+} from "./ICVStrategy.sol";
 import {ConvictionsUtils} from "./ConvictionsUtils.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
@@ -205,9 +213,33 @@ abstract contract CVStrategyBaseFacet {
     // slither-disable-next-line uninitialized-state
     IVotingPowerRegistry public votingPowerRegistry;
 
+    // POST-UPGRADE MIGRATION STORAGE:
+    // Keep these slots in the layout even after the lazy migration code below is removed.
+    // A future upgrade can stop using the initializer flags, but must not delete/reorder these variables.
+
+    /// @notice Number of proposals that have not reached a terminal state
+    /// @dev Slot 133+
+    uint256 public activeProposalCount;
+
+    /// @notice Whether activeProposalCount has been initialized for this strategy
+    /// @dev Slot 134+
+    bool public activeProposalCountInitialized;
+
+    /// @notice Streaming proposal ids that have not reached a terminal state
+    /// @dev Slot 135+
+    uint256[] public openStreamingProposalIds;
+
+    /// @notice Index of proposal id in openStreamingProposalIds plus one
+    /// @dev Slot 136+
+    mapping(uint256 => uint256) public openStreamingProposalIndex;
+
+    /// @notice Whether openStreamingProposalIds has been initialized for this strategy
+    /// @dev Slot 137+
+    bool public openStreamingProposalsInitialized;
+
     /// @dev Reserved storage space to allow for layout changes in the future
     /// @dev This gap is at the end of storage to allow adding new variables without shifting slots
-    uint256[46] private __gap;
+    uint256[41] private __gap;
 
     /*|--------------------------------------------|*/
     /*|         SHARED HELPER FUNCTIONS            |*/
@@ -377,6 +409,69 @@ abstract contract CVStrategyBaseFacet {
      */
     function proposalExists(uint256 _proposalID) public view returns (bool) {
         return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
+    }
+
+    function _isTerminalProposalStatus(ProposalStatus status) internal pure returns (bool) {
+        return
+            status == ProposalStatus.Cancelled || status == ProposalStatus.Rejected || status == ProposalStatus.Executed;
+    }
+
+    function _decrementActiveProposalCount() internal {
+        if (!activeProposalCountInitialized) {
+            return;
+        }
+        if (activeProposalCount > 0) {
+            activeProposalCount--;
+        }
+    }
+
+    // BEGIN TEMPORARY POST-UPGRADE MIGRATION: activeProposalCount
+    // Remove this helper and its call sites once all deployed strategies have
+    // activeProposalCountInitialized == true. Keep the storage slots above.
+    function _runActiveProposalCountPostUpgradeMigration() internal {
+        if (activeProposalCountInitialized) {
+            return;
+        }
+
+        uint256 count;
+        for (uint256 i = 1; i <= proposalCounter; i++) {
+            Proposal storage proposal = proposals[i];
+            if (proposal.proposalId != 0 && !_isTerminalProposalStatus(proposal.proposalStatus)) {
+                count++;
+            }
+        }
+
+        activeProposalCount = count;
+        activeProposalCountInitialized = true;
+    }
+    // END TEMPORARY POST-UPGRADE MIGRATION: activeProposalCount
+
+    function _addOpenStreamingProposal(uint256 proposalId) internal {
+        if (openStreamingProposalIndex[proposalId] != 0) {
+            return;
+        }
+
+        openStreamingProposalIds.push(proposalId);
+        openStreamingProposalIndex[proposalId] = openStreamingProposalIds.length;
+    }
+
+    function _removeOpenStreamingProposal(uint256 proposalId) internal {
+        uint256 indexPlusOne = openStreamingProposalIndex[proposalId];
+        if (indexPlusOne == 0) {
+            return;
+        }
+
+        uint256 index = indexPlusOne - 1;
+        uint256 lastIndex = openStreamingProposalIds.length - 1;
+        uint256 lastProposalId = openStreamingProposalIds[lastIndex];
+
+        if (index != lastIndex) {
+            openStreamingProposalIds[index] = lastProposalId;
+            openStreamingProposalIndex[lastProposalId] = index + 1;
+        }
+
+        openStreamingProposalIds.pop();
+        delete openStreamingProposalIndex[proposalId];
     }
 
     /**

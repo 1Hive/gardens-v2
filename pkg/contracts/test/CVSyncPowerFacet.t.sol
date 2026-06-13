@@ -244,6 +244,29 @@ contract CVSyncPowerFacetTest is Test {
         assertEq(facet.totalPointsActivated(), 100);
     }
 
+    function test_security_inactiveBaselineDecreaseDoesNotReduceActivatedPower() public {
+        _authorizeSyncCaller();
+        community.setCachedPower(member, 0);
+        community.setActivated(member, false);
+        registry.setLivePower(member, 100);
+        facet.setTotalPointsActivated(100);
+
+        vm.prank(syncCaller);
+        facet.syncPower(member);
+        assertEq(facet.totalPointsActivated(), 100, "inactive increase should not add activated power");
+
+        registry.setLivePower(member, 0);
+
+        vm.prank(syncCaller);
+        facet.syncPower(member);
+
+        assertEq(
+            facet.totalPointsActivated(),
+            100,
+            "inactive member's stored sync baseline must not subtract activated power"
+        );
+    }
+
     // ─── Sync Power: Decrease ───────────────────────────────────────────
 
     function test_syncPower_decreasesActivatedPoints() public {

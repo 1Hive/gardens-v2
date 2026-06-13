@@ -89,10 +89,13 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
             );
         }
 
-        if (proposalCounter >= MAX_PROPOSAL_COUNT) {
-            revert ProposalLimitReached(proposalCounter, MAX_PROPOSAL_COUNT);
+        // TEMPORARY POST-UPGRADE MIGRATION: remove after activeProposalCount is initialized on deployed pools.
+        _runActiveProposalCountPostUpgradeMigration();
+        if (activeProposalCount >= MAX_PROPOSAL_COUNT) {
+            revert ProposalLimitReached(activeProposalCount, MAX_PROPOSAL_COUNT);
         }
         uint256 proposalId = ++proposalCounter;
+        activeProposalCount++;
         Proposal storage p = proposals[proposalId];
 
         p.proposalId = proposalId;
@@ -124,6 +127,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
             if (!superfluidGDA.updateMemberUnits(address(escrow), 0)) {
                 revert UpdateMemberUnitsFailed(address(escrow), 0);
             }
+            _addOpenStreamingProposal(proposalId);
         }
 
         emit ProposalCreated(poolId, proposalId, proposalEscrow);
@@ -143,6 +147,8 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
         }
 
         proposals[proposalId].proposalStatus = ProposalStatus.Cancelled;
+        _decrementActiveProposalCount();
+        _removeOpenStreamingProposal(proposalId);
 
         collateralVault.withdrawCollateral(
             proposalId,
@@ -157,6 +163,9 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
             address member = escrow == address(0) ? proposals[proposalId].beneficiary : escrow;
             if (!superfluidGDA.updateMemberUnits(member, 0)) {
                 revert UpdateMemberUnitsFailed(member, 0);
+            }
+            if (escrow != address(0)) {
+                StreamingEscrow(escrow).drainToStrategy();
             }
         }
 
@@ -181,7 +190,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
         }
 
         if ((proposal.requestedAmount != _requestedAmount)) {
-            if (proposal.convictionLast != 0) {
+            if (proposal.stakedAmount != 0) {
                 revert CannotEditRequestedAmountWithActiveSupport(
                     _proposalId, proposal.requestedAmount, _requestedAmount
                 );

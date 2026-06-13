@@ -24,6 +24,8 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 
 contract MockCollateralVault {
     function depositCollateral(uint256, address) external payable {}
+
+    function withdrawCollateral(uint256, address, uint256) external {}
 }
 
 contract MockRegistryFactory {
@@ -76,16 +78,36 @@ contract MockGDA {
     }
 }
 
+contract MockCFA {
+    function getFlow(ISuperToken, address, address)
+        external
+        pure
+        returns (uint256 lastUpdated, int96 flowRate, uint256 deposit, uint256 owedDeposit)
+    {
+        return (0, 0, 0, 0);
+    }
+}
+
 contract MockHost {
     address public gda;
+    address public cfa;
     address public lastApp;
 
-    constructor(address _gda) {
+    constructor(address _gda, address _cfa) {
         gda = _gda;
+        cfa = _cfa;
     }
 
-    function getAgreementClass(bytes32) external view returns (address) {
-        return gda;
+    function getAgreementClass(bytes32 agreementType) external view returns (address) {
+        bytes32 gdaKey = keccak256("org.superfluid-finance.agreements.GeneralDistributionAgreement.v1");
+        bytes32 cfaKey = keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1");
+        if (agreementType == gdaKey) {
+            return gda;
+        }
+        if (agreementType == cfaKey) {
+            return cfa;
+        }
+        return address(0);
     }
 
     function callAgreement(ISuperAgreement, bytes calldata, bytes calldata) external pure returns (bytes memory) {
@@ -110,6 +132,9 @@ contract MockPool {
 
 contract MockSuperToken {
     address public host;
+    address public lastFlowReceiver;
+    int96 public lastFlowRate;
+    mapping(address => uint256) public balances;
 
     constructor(address _host) {
         host = _host;
@@ -120,6 +145,26 @@ contract MockSuperToken {
     }
 
     function connectPool(ISuperfluidPool) external pure returns (bool) {
+        return true;
+    }
+
+    function balanceOf(address account) external view returns (uint256) {
+        return balances[account];
+    }
+
+    function mint(address account, uint256 amount) external {
+        balances[account] += amount;
+    }
+
+    function transfer(address to, uint256 amount) external returns (bool) {
+        balances[msg.sender] -= amount;
+        balances[to] += amount;
+        return true;
+    }
+
+    function flow(address receiver, int96 flowRate) external returns (bool) {
+        lastFlowReceiver = receiver;
+        lastFlowRate = flowRate;
         return true;
     }
 }
@@ -167,6 +212,7 @@ contract CVStrategyStreamingEscrowTest is Test {
     MockCollateralVault collateralVault;
 
     MockGDA gda;
+    MockCFA cfa;
     MockHost host;
     MockSuperToken token;
     MockPool pool;
@@ -182,7 +228,8 @@ contract CVStrategyStreamingEscrowTest is Test {
         collateralVault = new MockCollateralVault();
 
         gda = new MockGDA();
-        host = new MockHost(address(gda));
+        cfa = new MockCFA();
+        host = new MockHost(address(gda), address(cfa));
         token = new MockSuperToken(address(host));
         pool = new MockPool();
 
@@ -211,7 +258,14 @@ contract CVStrategyStreamingEscrowTest is Test {
         harness.setVotingPowerRegistry(address(registryCommunity));
         harness.setProposalType(ProposalType.Streaming);
         harness.setArbitrableConfig(
-            ArbitrableConfig({arbitrator: IArbitrator(address(0x1234)), tribunalSafe: address(0), submitterCollateralAmount: 0, challengerCollateralAmount: 0, defaultRuling: 0, defaultRulingTimeout: 0})
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(0x1234)),
+                tribunalSafe: address(0),
+                submitterCollateralAmount: 0,
+                challengerCollateralAmount: 0,
+                defaultRuling: 0,
+                defaultRulingTimeout: 0
+            })
         );
         harness.setCollateralVault(address(collateralVault));
         harness.setSuperfluid(ISuperToken(address(token)), ISuperfluidPool(address(pool)));
@@ -233,6 +287,30 @@ contract CVStrategyStreamingEscrowTest is Test {
         assertTrue(recipient != address(0));
         assertEq(pool.lastMember(), host.lastApp());
         assertTrue(pool.lastMember() != beneficiary);
+    }
+
+    function test_cancelProposal_drains_streaming_escrow_buffer_to_strategy() public {
+        CreateProposal memory proposal = CreateProposal({
+            poolId: 1,
+            beneficiary: beneficiary,
+            amountRequested: 0,
+            requestedToken: address(0),
+            metadata: Metadata({protocol: 1, pointer: "ipfs"})
+        });
+
+        address submitter = address(0xCAFE);
+        harness.registerRecipient(abi.encode(proposal), submitter);
+        address escrow = pool.lastMember();
+        token.mint(escrow, 5 ether);
+
+        vm.prank(submitter);
+        harness.cancelProposal(1);
+
+        assertEq(pool.lastMember(), escrow);
+        assertEq(pool.lastUnits(), 0);
+        assertEq(token.balanceOf(escrow), 0);
+        assertEq(token.balanceOf(address(harness)), 5 ether);
+        assertEq(token.balanceOf(beneficiary), 0);
     }
 
     function test_registerRecipient_revertsWhenFactoryMissing() public {

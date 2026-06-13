@@ -490,6 +490,21 @@ contract HypercertSignalPoolTest is Test {
         assertGt(conv1100, conv100, "Conviction should continue growing");
     }
 
+    function test_security_formerMemberSupportDoesNotRemainInWeights() public {
+        _registerHypercert(1001);
+
+        HypercertSignal[] memory signals = new HypercertSignal[](1);
+        signals[0] = HypercertSignal({hypercertId: 1001, deltaSupport: 50});
+        _allocate(voter1, signals);
+
+        registry.setMember(voter1, false);
+        vm.roll(block.number + 100);
+
+        (, uint256[] memory weights) = pool.getConvictionWeights();
+
+        assertEq(weights[0], 0, "former member support must not keep contributing conviction weight");
+    }
+
     function test_conviction_decaysWithoutSupport() public {
         _registerHypercert(1001);
 

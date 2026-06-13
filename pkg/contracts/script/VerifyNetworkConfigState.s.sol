@@ -47,14 +47,16 @@ contract VerifyNetworkConfigState is Script {
         address expectedStrategyImpl = _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.CV_STRATEGY");
         address expectedCollateralVaultImpl =
             _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.COLLATERAL_VAULT");
+        address configuredStreamingEscrowFactory =
+            _readOptionalAddress(networkJson, networkKey, ".ENVS.STREAMING_ESCROW_FACTORY");
         address expectedStreamingEscrowImpl =
-            _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.STREAMING_ESCROW");
+            _readOptionalAddress(networkJson, networkKey, ".IMPLEMENTATIONS.STREAMING_ESCROW");
 
         require(factory.registryCommunityTemplate() == expectedCommunityImpl, "factory registryCommunityTemplate mismatch");
         require(factory.strategyTemplate() == expectedStrategyImpl, "factory strategyTemplate mismatch");
         require(factory.collateralVaultTemplate() == expectedCollateralVaultImpl, "factory collateralVaultTemplate mismatch");
         require(
-            factory.streamingEscrowFactory() == _readOptionalAddress(networkJson, networkKey, ".ENVS.STREAMING_ESCROW_FACTORY"),
+            factory.streamingEscrowFactory() == configuredStreamingEscrowFactory,
             "factory streamingEscrowFactory mismatch"
         );
         require(
@@ -66,11 +68,13 @@ contract VerifyNetworkConfigState is Script {
         _verifyConfiguredCode(expectedStrategyImpl, "strategy implementation");
         _verifyConfiguredCode(expectedCollateralVaultImpl, "collateral vault implementation");
         _verifyConfiguredCode(_readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.PAUSE_CONTROLLER"), "pause controller implementation");
-        _verifyConfiguredCode(
-            _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.STREAMING_ESCROW_FACTORY"),
-            "streaming escrow factory implementation"
-        );
-        _verifyConfiguredCode(expectedStreamingEscrowImpl, "streaming escrow implementation");
+        if (configuredStreamingEscrowFactory != address(0)) {
+            address expectedStreamingEscrowFactoryImpl =
+                _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.STREAMING_ESCROW_FACTORY");
+            require(expectedStreamingEscrowImpl != address(0), "streaming escrow implementation missing");
+            _verifyConfiguredCode(expectedStreamingEscrowFactoryImpl, "streaming escrow factory implementation");
+            _verifyConfiguredCode(expectedStreamingEscrowImpl, "streaming escrow implementation");
+        }
 
         _verifyFactoryCuts(factory, networkJson, networkKey);
         address[] memory communityProxies =
@@ -78,10 +82,9 @@ contract VerifyNetworkConfigState is Script {
         _verifyProxyFleetAnyImplementation(networkJson, networkKey, ".PROXIES.CV_STRATEGIES", "strategy");
         _verifyExpectedCommunityCutSelectors(factory, communityProxies);
 
-        address streamingEscrowFactory = _readOptionalAddress(networkJson, networkKey, ".ENVS.STREAMING_ESCROW_FACTORY");
-        if (streamingEscrowFactory != address(0)) {
+        if (configuredStreamingEscrowFactory != address(0)) {
             address liveEscrowImplementation =
-                abi.decode(_staticCall(streamingEscrowFactory, abi.encodeWithSignature("escrowImplementation()")), (address));
+                abi.decode(_staticCall(configuredStreamingEscrowFactory, abi.encodeWithSignature("escrowImplementation()")), (address));
             require(liveEscrowImplementation == expectedStreamingEscrowImpl, "streaming escrow implementation mismatch");
         }
     }
