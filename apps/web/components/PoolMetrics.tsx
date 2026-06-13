@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import {
   ArrowPathRoundedSquareIcon,
   ArrowTopRightOnSquareIcon,
@@ -88,7 +88,9 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const { address: accountAddress } = useAccount();
   const [isStreamModalOpened, setIsStreamModalOpened] = useState(false);
   const [isTransferModalOpened, setIsTransferModalOpened] = useState(false);
+  const [isAddFundsMenuOpen, setIsAddFundsMenuOpen] = useState(false);
   const [forceAllBalanceUsage, setForceAllBalanceUsage] = useState(false);
+  const addFundsDropdownRef = useRef<HTMLDivElement>(null);
 
   const showUseSuperTokenBalance = useFlag("showUseSuperTokenBalance");
   const {
@@ -376,6 +378,42 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
         condition: amount <= 0,
       },
     ]);
+  const canOpenAddFundsMenu = !missmatchUrl && isConnected;
+
+  useEffect(() => {
+    if (!isAddFundsMenuOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        addFundsDropdownRef.current &&
+        !addFundsDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsAddFundsMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsAddFundsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isAddFundsMenuOpen]);
+
+  useEffect(() => {
+    if (!canOpenAddFundsMenu) {
+      setIsAddFundsMenuOpen(false);
+    }
+  }, [canOpenAddFundsMenu]);
 
   const {
     tooltipMessage: streamTooltipMessage,
@@ -884,39 +922,41 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               </div>
             )}
           </div>
-          <div
-            className={`z-[9999] w-full dropdown dropdown-hover dropdown-top ${missmatchUrl || !isConnected ? "" : "tooltip"}`}
-          >
+          <div className="relative z-[9999] w-full" ref={addFundsDropdownRef}>
             <Button
-              type="submit"
+              type="button"
               btnStyle="outline"
               color="primary"
-              disabled={missmatchUrl || !isConnected}
+              disabled={!canOpenAddFundsMenu}
               tooltip={
                 missmatchUrl || !isConnected ? tooltipMessage : undefined
               }
               icon={<PlusIcon className="w-5 h-5" />}
               className="!w-full mt-1"
+              onClick={() => setIsAddFundsMenuOpen((isOpen) => !isOpen)}
             >
               Add Funds
             </Button>
-            {!missmatchUrl && isConnected && (
-              <ul className="dropdown-content menu bg-primary rounded-box w-full p-2 shadow fixed z-[9999] left-0 top-full mt-2">
+            {canOpenAddFundsMenu && isAddFundsMenuOpen && (
+              <ul className="menu bg-primary rounded-box w-full p-2 shadow absolute z-[9999] left-0 bottom-full mb-2">
                 <li>
                   <Button
-                    type="submit"
+                    type="button"
                     btnStyle="ghost"
                     color="primary"
                     icon={<BanknotesIcon className="w-5 h-5" />}
                     className="w-full mt-1 xl:!justify-start"
-                    onClick={() => setIsTransferModalOpened(true)}
+                    onClick={() => {
+                      setIsAddFundsMenuOpen(false);
+                      setIsTransferModalOpened(true);
+                    }}
                   >
                     1-time Transfer
                   </Button>
                 </li>
                 <li>
                   <Button
-                    type="submit"
+                    type="button"
                     btnStyle="ghost"
                     color="secondary"
                     disabled={!superToken}
@@ -925,7 +965,10 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                     }
                     icon={<ArrowPathRoundedSquareIcon className="w-5 h-5" />}
                     className="w-full mt-1 xl:!justify-start z-50"
-                    onClick={() => setIsStreamModalOpened(true)}
+                    onClick={() => {
+                      setIsAddFundsMenuOpen(false);
+                      setIsStreamModalOpened(true);
+                    }}
                   >
                     Stream Funds
                   </Button>
