@@ -20,6 +20,7 @@ Gardens v2 is currently deployed on the following networks:
 | Optimism     | ✅ Active | Full support |
 | Base         | ✅ Active | Full support |
 | Celo         | ✅ Active | Full support |
+| Ethereum     | ✅ Active | Full support |
 
 We provide security support for all currently deployed networks.
 
