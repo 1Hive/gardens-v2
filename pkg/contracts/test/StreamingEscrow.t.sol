@@ -433,15 +433,15 @@ contract StreamingEscrowTest is Test {
         escrow.reinitializeV2Migrate();
     }
 
-    function test_syncOutflow_drains_excess_balance_above_deposit() public {
+    function test_syncOutflow_drains_excess_balance_above_buffered_deposit() public {
         pool.setMemberFlowRate(address(escrow), 10);
         forwarder.setDeposit(30);
         token.mint(address(escrow), 100);
 
         escrow.syncOutflow();
 
-        assertEq(token.balanceOf(address(escrow)), 30);
-        assertEq(token.balanceOf(beneficiary), 70);
+        assertEq(token.balanceOf(address(escrow)), 31);
+        assertEq(token.balanceOf(beneficiary), 69);
     }
 
     function test_security_syncOutflowKeepsStrategyDepositBuffer() public {
@@ -547,6 +547,7 @@ contract StreamingEscrowTest is Test {
         forwarder.setDeposit(33);
 
         assertEq(escrow.depositAmount(), 33);
+        assertEq(escrow.reservedDepositAmount(), 34);
     }
 
     function test_depositAmount_falls_back_to_buffer_method() public {
@@ -558,15 +559,15 @@ contract StreamingEscrowTest is Test {
         assertEq(escrow.depositAmount(), 77);
     }
 
-    function test_claim_transfers_balance_minus_deposit() public {
+    function test_claim_transfers_balance_minus_buffered_deposit() public {
         pool.setMemberFlowRate(address(escrow), 10);
         forwarder.setDeposit(30);
         token.mint(address(escrow), 100);
 
         escrow.claim();
 
-        assertEq(token.balanceOf(address(escrow)), 30);
-        assertEq(token.balanceOf(beneficiary), 70);
+        assertEq(token.balanceOf(address(escrow)), 31);
+        assertEq(token.balanceOf(beneficiary), 69);
     }
 
     function test_claim_noop_when_balance_below_or_equal_deposit() public {
@@ -617,7 +618,7 @@ contract StreamingEscrowTest is Test {
         token.mint(address(escrow), 100);
         token.setTransferShouldSucceed(false);
 
-        vm.expectRevert(abi.encodeWithSelector(StreamingEscrow.SuperTokenTransferFailed.selector, beneficiary, 70));
+        vm.expectRevert(abi.encodeWithSelector(StreamingEscrow.SuperTokenTransferFailed.selector, beneficiary, 69));
         escrow.claim();
     }
 

@@ -232,11 +232,11 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                 revert AmountOverMaxRatio(proposals[proposalId].requestedAmount, maxAllowed, poolAmount);
             }
 
-            uint256 convictionLast = updateProposalConviction(proposalId);
+            if (proposals[proposalId].requestedAmount > 0 && totalPointsActivated == 0) {
+                revert NoActiveGovernancePoints(proposalId);
+            }
 
-            // if (proposals[proposalId].requestedAmount > 0 && totalPointsActivated == 0) {
-            //     revert NoActiveGovernancePoints(proposalId);
-            // }
+            uint256 convictionLast = updateProposalConviction(proposalId);
 
             uint256 threshold;
             if (proposals[proposalId].requestedAmount > 0) {

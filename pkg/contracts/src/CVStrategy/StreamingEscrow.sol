@@ -8,6 +8,7 @@ import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/g
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {
     ReentrancyGuardUpgradeable
 } from "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
@@ -23,6 +24,8 @@ interface ICFAv1ForwarderLike {
 contract StreamingEscrow is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, SuperAppBase {
     using SuperTokenV1Library for ISuperToken;
     uint8 public constant CURRENT_STORAGE_SCHEMA_VERSION = 2;
+    uint256 public constant DEPOSIT_BUFFER_BPS = 50;
+    uint256 public constant BPS_DENOMINATOR = 10_000;
 
     /*|--------------------------------------------|*/
     /*|              ERRORS                        |*/
@@ -240,6 +243,14 @@ contract StreamingEscrow is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, Su
         return ICFAv1ForwarderLike(CFA_V1_FORWARDER).getBufferAmountByFlowrate(superToken, flowRate);
     }
 
+    function reservedDepositAmount() public view returns (uint256) {
+        uint256 requiredDeposit = depositAmount();
+        if (requiredDeposit == 0) {
+            return 0;
+        }
+        return requiredDeposit + Math.ceilDiv(requiredDeposit * DEPOSIT_BUFFER_BPS, BPS_DENOMINATOR);
+    }
+
     /*|--------------------------------------------|*/
     /*|              SUPER APP                     |*/
     /*|--------------------------------------------|*/
@@ -290,7 +301,7 @@ contract StreamingEscrow is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, Su
 
     function _drainExcessToBeneficiary() internal {
         uint256 balance = superToken.balanceOf(address(this));
-        uint256 reservedDeposit = depositAmount();
+        uint256 reservedDeposit = reservedDepositAmount();
         if (balance > reservedDeposit) {
             uint256 amount = balance - reservedDeposit;
             if (!superToken.transfer(beneficiary, amount)) {

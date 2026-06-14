@@ -44,12 +44,31 @@ cache/
 /broadcast/*/31337/
 /broadcast/*/1337/
 /broadcast/*/1/
+/broadcast/*/10/
+/broadcast/*/100/
+/broadcast/*/137/
+/broadcast/*/42161/
+/broadcast/*/42220/
+/broadcast/*/8453/
 /broadcast/**/dry-run/
 /broadcast/**/run-[0-9]*.json
 
 # Local contract operation artifacts
 /pkg/contracts/.tmp/
 /pkg/contracts/logs/
+/pkg/contracts/abis/CVAllocationFacet.t.sol/MockStreamingEscrowDrain.json
+/pkg/contracts/abis/CVAllocationFacet.t.sol/MockSuperfluidPoolAlloc.json
+/pkg/contracts/abis/CVStrategyStreamingEscrow.t.sol/MockCFA.json
+/pkg/contracts/abis/DecimalScalingUtils.sol/
+/pkg/contracts/abis/DecimalScalingUtils.t.sol/
+/pkg/contracts/abis/GenerateFacetUpgradePayloads.s.sol/
+/pkg/contracts/abis/SecurityPoC.t.sol/PoC_GDN01_AmountEditAfterFirstSupport.json
+/pkg/contracts/abis/SecurityPoC.t.sol/PoC_GDN01_AmountEditAfterFirstSupportBlocked.json
+/pkg/contracts/abis/SecurityPoC.t.sol/PoC_GDN02_WithdrawConvictionPreserved.json
+/pkg/contracts/abis/SecurityPoC.t.sol/PoC_GDN02_WithdrawConvictionReset.json
+/pkg/contracts/abis/SecurityPoC.t.sol/PoC_GDN05_CancelledProposalsDoNotExhaustCreation.json
+/pkg/contracts/abis/SecurityPoC.t.sol/PoC_GDN05_LifetimeProposalCapExhaustion.json
+/pkg/contracts/abis/SecurityPoC.t.sol/PoC_M3b_HistoricalStreamingProposalIterationDoS.json
 
 # subgraph
 pkg/subgraph/generated
