@@ -151,6 +151,7 @@ export function Proposals({
   const [inputs, setInputs] = useState<{ [key: string]: ProposalInputItem }>(
     {},
   );
+  const inputsRef = useRef<{ [key: string]: ProposalInputItem }>({});
   const [stakedFilters, setStakedFilters] = useState<{
     [key: string]: ProposalInputItem;
   }>({});
@@ -412,9 +413,16 @@ export function Proposals({
       );
     }
 
-    setInputAllocatedTokens(totalActiveStaked);
+    if (!allocationView) {
+      setInputAllocatedTokens(totalActiveStaked);
+    }
     setStakedFilters(memberStakes);
-  }, [memberData?.member?.stakes, onchainProposalStatuses, strategy.id]);
+  }, [
+    allocationView,
+    memberData?.member?.stakes,
+    onchainProposalStatuses,
+    strategy.id,
+  ]);
 
   useEffect(() => {
     if (memberActivatedStrategy === false) {
@@ -487,16 +495,22 @@ export function Proposals({
   useEffect(() => {
     if (sortedProposals == null) return;
 
+    const currentInputs = inputsRef.current;
     const newInputs: { [key: string]: ProposalInputItem } = {};
 
     sortedProposals.forEach(({ id, proposalNumber, proposalStatus }) => {
       const proposalEnded =
         ProposalStatus[proposalStatus] !== "active" &&
         ProposalStatus[proposalStatus] !== "disputed";
+      const currentInput = currentInputs[id];
+      const shouldPreserveDraft =
+        allocationView && !proposalEnded && currentInput != null;
+
       newInputs[id] = {
         proposalId: id,
         value:
-          !proposalEnded && stakedFilters[id] != null ?
+          shouldPreserveDraft ? currentInput.value
+          : !proposalEnded && stakedFilters[id] != null ?
             stakedFilters[id]?.value
           : 0n,
         proposalNumber,
@@ -507,6 +521,7 @@ export function Proposals({
       0n,
     );
 
+    inputsRef.current = newInputs;
     setInputs(newInputs);
     setInputAllocatedTokens(initialActiveAllocation);
     if (process.env.NODE_ENV !== "production") {
@@ -515,6 +530,10 @@ export function Proposals({
         proposalNumber: input.proposalNumber,
         initialValue: input.value.toString(),
         fromStake: stakedFilters[input.proposalId]?.value.toString() ?? "0",
+        fromDraft:
+          allocationView && currentInputs[input.proposalId] != null ?
+            currentInputs[input.proposalId]?.value.toString()
+          : undefined,
         status:
           ProposalStatus[
             sortedProposals.find((p) => p.id === input.proposalId)
@@ -523,7 +542,7 @@ export function Proposals({
       }));
       console.info("[Proposals][InitialInputs]", snapshot);
     }
-  }, [sortedProposals, stakedFilters]);
+  }, [allocationView, sortedProposals, stakedFilters]);
 
   const getProposalsInputsDifferences = (
     inputData: { [key: string]: ProposalInputItem },
@@ -546,11 +565,12 @@ export function Proposals({
   };
 
   const calculateTotalTokens = (exceptProposalId?: string) => {
-    if (!Object.keys(inputs).length) {
+    const currentInputs = inputsRef.current;
+    if (!Object.keys(currentInputs).length) {
       console.error("Inputs not yet computed");
       return 0n;
     }
-    return Object.values(inputs).reduce((acc, curr) => {
+    return Object.values(currentInputs).reduce((acc, curr) => {
       if (
         exceptProposalId !== undefined &&
         exceptProposalId === curr.proposalId
@@ -569,11 +589,20 @@ export function Proposals({
       memberActivatedPoints > currentPoints ?
         memberActivatedPoints - currentPoints
       : 0n;
-    const minValue = (value = bigIntMin(value, maxAllowableValue));
+    const minValue = bigIntMin(value, maxAllowableValue);
 
-    const input = inputs[proposalId];
-    input.value = minValue;
-    setInputs((prev) => ({ ...prev, [proposalId]: input }));
+    const input = inputsRef.current[proposalId];
+    if (input == null) return;
+
+    const nextInputs = {
+      ...inputsRef.current,
+      [proposalId]: {
+        ...input,
+        value: minValue,
+      },
+    };
+    inputsRef.current = nextInputs;
+    setInputs(nextInputs);
     setInputAllocatedTokens(currentPoints + minValue);
   };
 
@@ -608,17 +637,17 @@ export function Proposals({
   });
 
   const submit = async () => {
-    if (!Object.keys(inputs).length) {
+    const currentInputs = inputsRef.current;
+    if (!Object.keys(currentInputs).length) {
       console.error("Inputs not yet computed");
       return;
     }
 
     const latestMemberActivatedPoints =
       votingPowerRegistryAddress != null ?
-        ((await refetchVotingRegistryMemberPower()).data ??
-          memberActivatedPoints)
+        (await refetchVotingRegistryMemberPower()).data ?? memberActivatedPoints
       : memberActivatedPoints;
-    const intendedAllocationTotal = Object.values(inputs).reduce(
+    const intendedAllocationTotal = Object.values(currentInputs).reduce(
       (acc, input) => acc + input.value,
       0n,
     );
@@ -631,12 +660,12 @@ export function Proposals({
     }
 
     const proposalsDifferencesArr = getProposalsInputsDifferences(
-      inputs,
+      currentInputs,
       stakedFilters,
     );
     if (process.env.NODE_ENV !== "production") {
       console.info("[Proposals][Allocate] Current inputs snapshot", {
-        inputs: Object.values(inputs).map((input) => ({
+        inputs: Object.values(currentInputs).map((input) => ({
           proposalId: input.proposalId,
           proposalNumber: input.proposalNumber,
           value: input.value.toString(),
