@@ -70,8 +70,6 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         }
 
         wrapIfNeeded();
-        // TEMPORARY POST-UPGRADE MIGRATION: remove after openStreamingProposalIds is initialized on deployed pools.
-        _runOpenStreamingProposalsPostUpgradeMigration();
 
         uint256 poolAmount = getPoolAmount();
         bool didMeaningfulWork = false;
@@ -210,28 +208,6 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         StreamingEscrow(escrow).drainToStrategy();
         emit EscrowStreamStopped(escrow, msg.sender);
     }
-
-    // BEGIN TEMPORARY POST-UPGRADE MIGRATION: openStreamingProposalIds
-    // Remove this helper and its call site once all deployed streaming strategies
-    // have openStreamingProposalsInitialized == true. Keep the storage slots in CVStrategyBaseFacet.
-    function _runOpenStreamingProposalsPostUpgradeMigration() internal {
-        if (openStreamingProposalsInitialized) {
-            return;
-        }
-
-        for (uint256 i = 1; i <= proposalCounter; i++) {
-            Proposal storage proposal = proposals[i];
-            if (
-                proposal.proposalId != 0 && !_isTerminalProposalStatus(proposal.proposalStatus)
-                    && streamingEscrow(i) != address(0)
-            ) {
-                _addOpenStreamingProposal(i);
-            }
-        }
-
-        openStreamingProposalsInitialized = true;
-    }
-    // END TEMPORARY POST-UPGRADE MIGRATION: openStreamingProposalIds
 
     function setAuthorizedRebalanceCaller(address _caller, bool _authorized) external {
         onlyCouncilSafe();

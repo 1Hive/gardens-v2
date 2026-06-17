@@ -123,7 +123,8 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
 
         if (newPower < oldPower) {
             uint256 decrease = oldPower - newPower;
-            _handlePowerDecrease(_member, decrease, oldPower);
+            uint256 activePower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
+            _handlePowerDecrease(_member, decrease, oldPower, activePower);
             emit MemberPowerRevoked(_member, decrease);
         } else {
             uint256 increase = newPower - oldPower;
@@ -137,7 +138,9 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
 
     /// @dev Handle power decrease — rebalance proposals proportionally
     ///      Mirrors the logic in CVPowerFacet.decreasePower()
-    function _handlePowerDecrease(address _member, uint256 _decrease, uint256 _oldPower) internal {
+    function _handlePowerDecrease(address _member, uint256 _decrease, uint256 _oldPower, uint256 _activePower)
+        internal
+    {
         uint256 voterStake = totalVoterStakePct[_member];
 
         // Calculate unused (unallocated) power
@@ -183,7 +186,11 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
             _pruneVoterProposals(_member);
         }
 
-        totalPointsActivated -= _decrease;
+        uint256 activeDecrease = Math.min(_decrease, _activePower);
+        if (activeDecrease > totalPointsActivated) {
+            activeDecrease = totalPointsActivated;
+        }
+        totalPointsActivated -= activeDecrease;
     }
 
     /// @dev Handle power increase — just add to activated points

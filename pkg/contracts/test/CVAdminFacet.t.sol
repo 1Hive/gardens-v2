@@ -27,6 +27,7 @@ import {MockArbitrator} from "./helpers/CVStrategyHelpers.sol";
 contract MockRegistryCommunityAdmin {
     mapping(bytes32 => mapping(address => bool)) public roles;
     mapping(address => uint256) public power;
+    mapping(address => bool) public activated;
     address public councilSafe;
     address public registryFactory;
 
@@ -54,11 +55,21 @@ contract MockRegistryCommunityAdmin {
         power[member] = amount;
     }
 
+    function setActivated(address member, bool value) external {
+        activated[member] = value;
+    }
+
     function getMemberPowerInStrategy(address member, address) external view returns (uint256) {
         return power[member];
     }
 
-    function deactivateMemberInStrategy(address, address) external {}
+    function memberActivatedInStrategies(address member, address) external view returns (bool) {
+        return activated[member];
+    }
+
+    function deactivateMemberInStrategy(address member, address) external {
+        activated[member] = false;
+    }
 
     // IVotingPowerRegistry compatibility stubs
     function isMember(address member) external view returns (bool) {
@@ -407,6 +418,7 @@ contract CVAdminFacetTest is Test {
         registry.grantRole(allowlistRole, remove[0]);
 
         registry.setMemberPower(remove[0], 2);
+        registry.setActivated(remove[0], true);
         facet.setTotalPointsActivated(5);
         facet.setTotalStaked(10);
         facet.setVoterStake(remove[0], 10);
@@ -443,6 +455,7 @@ contract CVAdminFacetTest is Test {
         bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", uint256(1)));
         registry.grantRole(allowlistRole, member);
         registry.setMemberPower(member, 10);
+        registry.setActivated(member, true);
         facet.setTotalPointsActivated(4);
 
         ArbitrableConfig memory arb = ArbitrableConfig({

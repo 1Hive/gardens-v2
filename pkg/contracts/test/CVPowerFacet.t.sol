@@ -243,6 +243,7 @@ contract CVPowerFacetTest is Test {
 
     function test_deactivatePoints_updates_totals() public {
         registry.setMemberPower(member, 4);
+        registry.setActivated(member, true);
         facet.setTotalPointsActivated(4);
 
         vm.prank(member);
@@ -254,6 +255,7 @@ contract CVPowerFacetTest is Test {
 
     function test_deactivatePoints_registry_only() public {
         registry.setMemberPower(member, 3);
+        registry.setActivated(member, true);
         facet.setTotalPointsActivated(3);
 
         vm.prank(address(registry));
@@ -265,6 +267,7 @@ contract CVPowerFacetTest is Test {
 
     function test_deactivatePoints_saturates_when_member_power_exceeds_total() public {
         registry.setMemberPower(member, 10);
+        registry.setActivated(member, true);
         facet.setTotalPointsActivated(4);
 
         vm.prank(member);
@@ -297,6 +300,7 @@ contract CVPowerFacetTest is Test {
 
     function test_deactivatePointsFromRegistry_saturates_when_member_power_exceeds_total() public {
         registry.setMemberPower(member, 10);
+        registry.setActivated(member, true);
         facet.setTotalPointsActivated(4);
 
         vm.prank(address(registry));
@@ -308,6 +312,7 @@ contract CVPowerFacetTest is Test {
 
     function test_deactivatePoints_withdraws_support() public {
         registry.setMemberPower(member, 5);
+        registry.setActivated(member, true);
         facet.setTotalPointsActivated(5);
         facet.setTotalStaked(5);
         facet.setVoterStake(member, 5);
