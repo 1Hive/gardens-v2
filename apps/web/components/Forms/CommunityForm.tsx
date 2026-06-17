@@ -96,7 +96,7 @@ export const CommunityForm = () => {
   const councilSafe = watch("councilSafe");
   const feeAmount = watch("feeAmount");
   const feeReceiver = watch("feeReceiver");
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
@@ -252,12 +252,13 @@ export const CommunityForm = () => {
         "RegistryFactory",
         "CommunityCreated",
       ).args._registryCommunity;
-      publish({
+      publishAfterIndexed(receipt, {
         topic: "community",
         type: "add",
         function: "createRegistry",
         containerId: getValues("tokenAddress"),
         id: newCommunityAddr,
+        chainId: selectedChainId,
       });
       if (selectedChainId) {
         router.push(

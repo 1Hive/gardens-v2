@@ -135,14 +135,12 @@ export function useSubgraphQuery<
       return;
     }
 
-    const subscriptionId = subscribe(stableNormalizedChangeScope, () => {
-      return refetchFromOutside.call({
-        response,
-        fetching,
-        setResponse,
-        chain: resolvedChainId,
-        mounted,
+    const subscriptionId = subscribe(stableNormalizedChangeScope, (payload) => {
+      console.info("[indexing] single-chain subgraph subscriber received event", {
+        payload,
+        showToast: payload.silent !== true,
       });
+      return refetchFromOutside({ showToast: payload.silent !== true });
     });
     subscritionId.current = subscriptionId;
 

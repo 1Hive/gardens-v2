@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { TransactionReceipt } from "viem";
 import { Address } from "wagmi";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { TransactionProps } from "@/components/TransactionModal";
@@ -23,7 +24,7 @@ export function useHandleRegistration(
       status: "idle",
     }));
 
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
 
   const {
     write: writeRegisterMember,
@@ -38,8 +39,8 @@ export function useHandleRegistration(
     contractName: "Registry Community",
     chainId: urlChainId,
     showNotification: false,
-    onConfirmations: useCallback(() => {
-      publish({
+    onConfirmations: useCallback((receipt: TransactionReceipt) => {
+      publishAfterIndexed(receipt, {
         topic: "member",
         type: "add",
         containerId: communityAddress,
@@ -47,7 +48,7 @@ export function useHandleRegistration(
         id: communityAddress,
         chainId: urlChainId,
       });
-    }, [publish, communityAddress, urlChainId]),
+    }, [publishAfterIndexed, communityAddress, urlChainId]),
   });
 
   useEffect(() => {

@@ -119,7 +119,7 @@ export default function ClientPage({
   const showArchived = useFlag("showArchived");
   const canAccessStreamingPools = useStreamingPoolsAccess(communityAddr);
   const pendingNewCommunityRefetch = useRef<string | null>(null);
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
   const chain = useChainFromPath();
   const [selectedTab, setSelectedTab] = useState(0);
 
@@ -331,8 +331,8 @@ export default function ClientPage({
       abi: registryCommunityABI,
       contractName: "Registry Community",
       functionName: "setArchived",
-      onConfirmations: () => {
-        publish({
+      onConfirmations: (receipt) => {
+        publishAfterIndexed(receipt, {
           topic: "community",
           type: "update",
           id: communityAddr,
@@ -350,8 +350,8 @@ export default function ClientPage({
     abi: registryCommunityABI,
     contractName: "Registry Community",
     functionName: "acceptCouncilSafe",
-    onConfirmations: () => {
-      publish({
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(receipt, {
         topic: "community",
         type: "update",
         id: communityAddr,
@@ -369,13 +369,13 @@ export default function ClientPage({
     abi: registryFactoryABI,
     contractName: "Registry Factory",
     functionName: "delegateProtopian",
-    onConfirmations: () => {
+    onConfirmations: (receipt) => {
       toast.success(
         isDelegatedByMe ?
           "Protopian delegation cleared"
         : "Protopian delegated to community",
       );
-      publish({
+      publishAfterIndexed(receipt, {
         topic: "community",
         type: "update",
         id: communityAddr,
@@ -743,19 +743,21 @@ export default function ClientPage({
                 {registryCommunity.archived && renderArchivedBadge()}
               </div>
 
-              <div className="flex-1 flex-col lg:items-start lg:justify-between sm:gap-4 ">
+              <div className="min-w-0 flex-1 flex-col lg:items-start lg:justify-between sm:gap-4 ">
                 <div
-                  className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
+                  className="flex min-w-0 flex-col gap-4 md:flex-row md:items-start md:justify-between"
                   data-section="community-header-summary"
                 >
                   {/* Community name + Address */}
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 overflow-hidden">
                     <div className="flex min-w-0 items-center gap-3">
                       <div
-                        className="tooltip tooltip-bottom min-w-0 flex-1"
+                        className="tooltip tooltip-bottom block min-w-0 max-w-full flex-1"
                         data-tip={communityName ?? ""}
                       >
-                        <h2 className="truncate">{communityName}</h2>
+                        <h2 className="block max-w-full truncate">
+                          {communityName}
+                        </h2>
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -1079,15 +1081,17 @@ export default function ClientPage({
                     {registryCommunity.archived && renderArchivedBadge()}
                   </div>
 
-                  <div className="flex-1 w-full flex-col gap-4">
+                  <div className="min-w-0 flex-1 w-full flex-col gap-4">
                     {/* Community name + Address */}
-                    <div className="mb-3">
+                    <div className="mb-3 min-w-0 overflow-hidden">
                       <div className="flex min-w-0 items-center gap-3">
                         <div
-                          className="tooltip tooltip-bottom min-w-0 flex-1"
+                          className="tooltip tooltip-bottom block min-w-0 max-w-full flex-1"
                           data-tip={communityName ?? ""}
                         >
-                          <h2 className="truncate">{communityName}</h2>
+                          <h2 className="block max-w-full truncate">
+                            {communityName}
+                          </h2>
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">

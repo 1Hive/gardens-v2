@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useCallback } from "react";
+import { TransactionReceipt } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
 import {
   RegistryCommunity,
@@ -44,7 +45,7 @@ export function RegisterMember({
   const { address: accountAddress } = useAccount();
   const urlChainId = useChainIdFromPath();
   const [isOpenModal, setIsOpenModal] = useState(false);
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
 
   const isMember = useMemo(
     () => memberData?.member?.memberCommunity?.[0]?.isRegistered ?? false,
@@ -80,8 +81,8 @@ export function RegisterMember({
     ...registryContractCallConfig,
     functionName: "unregisterMember",
     fallbackErrorMessage: "Error unregistering member, please report a bug.",
-    onConfirmations: useCallback(() => {
-      publish({
+    onConfirmations: useCallback((receipt: TransactionReceipt) => {
+      publishAfterIndexed(receipt, {
         topic: "member",
         type: "delete",
         containerId: communityAddress,
@@ -89,7 +90,7 @@ export function RegisterMember({
         id: communityAddress,
         chainId: urlChainId,
       });
-    }, [publish, communityAddress, urlChainId]),
+    }, [publishAfterIndexed, communityAddress, urlChainId]),
   });
 
   useErrorDetails(unregisterMemberError, "unregisterMember");

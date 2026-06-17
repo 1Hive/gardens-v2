@@ -150,7 +150,7 @@ export default function PoolHeader({
   communityName,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
   const { id: chainId, safePrefix } = useChainFromPath()!;
   const router = useRouter();
   const path = usePathname();
@@ -445,8 +445,8 @@ export default function PoolHeader({
     functionName: "rejectPool",
     fallbackErrorMessage: "Error rejecting pool, please report a bug.",
     args: [strategy.id as Address],
-    onConfirmations: () => {
-      publish({
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(receipt, {
         topic: "pool",
         function: "rejectPool",
         type: "update",
@@ -470,8 +470,8 @@ export default function PoolHeader({
     functionName: "addStrategyByPoolId",
     fallbackErrorMessage: "Error approving pool, please report a bug.",
     args: [BigInt(poolId)],
-    onConfirmations: () => {
-      publish({
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(receipt, {
         topic: "pool",
         function: "addStrategyByPoolId",
         type: "update",
@@ -488,8 +488,8 @@ export default function PoolHeader({
     functionName: "removeStrategyByPoolId",
     fallbackErrorMessage: "Error disabling pool, please report a bug.",
     args: [BigInt(poolId)],
-    onConfirmations: () => {
-      publish({
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(receipt, {
         topic: "pool",
         function: "removeStrategyByPoolId",
         type: "update",
@@ -507,8 +507,8 @@ export default function PoolHeader({
     contractName: "CV Strategy",
     functionName: "setPoolParams",
     fallbackErrorMessage: "Error enabling stream funding. Please report it.",
-    onConfirmations: () => {
-      publish({
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(receipt, {
         topic: "pool",
         function: "setPoolParams",
         type: "update",

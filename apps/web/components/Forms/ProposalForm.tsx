@@ -110,7 +110,7 @@ export const ProposalForm = ({
     watch,
   } = useForm<FormInputs>({ mode: "onBlur" });
 
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
 
   const { address: connectedWallet } = useAccount();
 
@@ -213,7 +213,7 @@ export const ProposalForm = ({
         "CVStrategy",
         "ProposalCreated",
       ).args.proposalId;
-      publish({
+      publishAfterIndexed(receipt, {
         topic: "proposal",
         type: "update",
         function: "registerRecipient",
