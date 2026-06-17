@@ -74,6 +74,10 @@ contract PowerUtilsHarness {
     ) external returns (uint256) {
         return PowerManagementUtils.decreasePower(reg, member, amount, pointSystem, maxAmount);
     }
+
+    function mul(uint256 a, uint256 b) external pure returns (uint256) {
+        return ConvictionsUtils._mul(a, b);
+    }
 }
 
 contract PowerAndConvictionUtilsTest is Test {
@@ -187,5 +191,20 @@ contract PowerAndConvictionUtilsTest is Test {
         );
 
         assertGt(requestedThreshold, zeroRequestedThreshold);
+    }
+
+    function test_convictionsUtils_calculateThreshold_returnsMaxWhenOverMaxRatio() public pure {
+        uint256 threshold =
+            ConvictionsUtils.calculateThreshold(91 ether, 100 ether, 1, 5_000_000, 1_000_000, 9_000_000, 1);
+
+        assertEq(threshold, type(uint256).max);
+    }
+
+    function test_convictionsUtils_mul_revert_guards() public {
+        vm.expectRevert(ConvictionsUtils.AShouldBeUnderOrEqTwo_128.selector);
+        harness.mul((2 ** 128) + 1, 1);
+
+        vm.expectRevert(ConvictionsUtils.BShouldBeLessTwo_128.selector);
+        harness.mul(1, 2 ** 128);
     }
 }

@@ -452,6 +452,15 @@ contract CVStreamingFacetHarness is CVStreamingFacet {
 
     function setStreamingEscrowExternal(uint256 proposalId, address escrow) external {
         setStreamingEscrow(proposalId, escrow);
+        if (proposals[proposalId].proposalId != 0 && !_isTerminalProposalStatus(proposals[proposalId].proposalStatus)) {
+            _addOpenStreamingProposal(proposalId);
+            openStreamingProposalsInitialized = true;
+        }
+    }
+
+    function addOpenStreamingProposalWithoutEscrow(uint256 proposalId) external {
+        _addOpenStreamingProposal(proposalId);
+        openStreamingProposalsInitialized = true;
     }
 
     function getStreamingEscrowExternal(uint256 proposalId) external view returns (address) {
@@ -647,6 +656,16 @@ contract CVStreamingFacetTest is Test {
         address escrow = address(0xBEEF);
         facet.setStreamingEscrowExternal(1, escrow);
         assertEq(facet.getStreamingEscrowExternal(1), escrow);
+    }
+
+    function test_streaming_storage_getters() public {
+        facet.setCooldown(123);
+        facet.setLastRebalance(456);
+        facet.setStreamingEscrowExternal(1, escrow1);
+
+        assertEq(facet.rebalanceCooldown(), 123);
+        assertEq(facet.lastRebalanceAt(), 456);
+        assertEq(facet.streamingEscrow(1), escrow1);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -956,6 +975,42 @@ contract CVStreamingFacetTest is Test {
         assertEq(gdaPool.updateCount(), 0);
     }
 
+    function test_rebalance_skips_open_proposal_without_escrow() public {
+        facet.setShouldStartStream(true);
+        facet.setupProposal(1, ProposalStatus.Active, 100 ether, 0, block.number - 10);
+        facet.addOpenStreamingProposalWithoutEscrow(1);
+
+        facet.rebalance();
+
+        assertEq(gdaPool.updateCount(), 0);
+    }
+
+    function test_rebalance_zeroes_terminal_open_proposal_units() public {
+        facet.setShouldStartStream(true);
+        facet.setupProposal(1, ProposalStatus.Cancelled, 100 ether, 0, block.number - 10);
+        facet.setStreamingEscrowExternal(1, escrow1);
+        facet.addOpenStreamingProposalWithoutEscrow(1);
+
+        facet.rebalance();
+
+        assertEq(gdaPool.memberUnits(escrow1), 0);
+    }
+
+    function test_rebalance_disabled_returns_false_without_superfluid_config() public {
+        registry.setStrategyEnabled(false);
+        facet.setupSuperfluidToken(address(0));
+
+        facet.rebalance();
+
+        assertEq(facet.getLastRebalance(), 0);
+    }
+
+    function test_auth_factory_zero_address_returns_false() public {
+        registry.setRegistryFactory(address(0));
+
+        assertFalse(facet.isAuthorizedRebalanceCaller(address(0xCA11)));
+    }
+
     function test_rebalance_disabled_pool_sets_flow_to_zero_only() public {
         superToken.mint(address(facet), 1_000 ether);
         facet.setupStreamingRatePerSecond(1_000_000_000);
@@ -1121,6 +1176,19 @@ contract CVStreamingFacetTest is Test {
         facet.rebalance();
 
         assertEq(superToken.balanceOf(address(escrow)), 20 ether);
+        assertEq(escrow.syncCount(), 1);
+    }
+
+    function test_rebalance_skips_top_up_when_strategy_has_no_supertoken_balance() public {
+        MockStreamingEscrowSync escrow = new MockStreamingEscrowSync();
+        escrow.setRequiredDeposit(100 ether);
+
+        facet.setupProposal(1, ProposalStatus.Active, 1 ether, 0, block.number - 5);
+        facet.setStreamingEscrowExternal(1, address(escrow));
+
+        facet.rebalance();
+
+        assertEq(superToken.balanceOf(address(escrow)), 0);
         assertEq(escrow.syncCount(), 1);
     }
 

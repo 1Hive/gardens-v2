@@ -89,6 +89,12 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
     /// @notice Per-voter stakes per hypercert: hypercertId => voter => stakedPoints
     mapping(uint256 => mapping(address => uint256)) public voterStakes;
 
+    /// @notice Voters that have ever allocated support to a hypercert.
+    mapping(uint256 => address[]) internal _hypercertVoters;
+
+    /// @notice Tracks whether a voter is already present in a hypercert voter list.
+    mapping(uint256 => mapping(address => bool)) internal _hypercertVoterTracked;
+
     /// @notice Total points used by each voter across all hypercerts
     mapping(address => uint256) public voterUsedPoints;
 
@@ -202,6 +208,10 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
                 newStake = voterCurrent + increase;
                 currentUsed += increase;
                 stakedAmounts[hcId] += increase;
+                if (voterCurrent == 0 && !_hypercertVoterTracked[hcId][_sender]) {
+                    _hypercertVoters[hcId].push(_sender);
+                    _hypercertVoterTracked[hcId][_sender] = true;
+                }
             } else {
                 uint256 decrease = uint256(-delta);
                 // Clamp removal to actual stake
@@ -356,10 +366,11 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
             if (hypercertActive[hcId]) {
                 hypercertIds[idx] = hcId;
                 uint256 timePassed = block.number - blockLast[hcId];
+                uint256 eligibleStake = _eligibleStakedAmount(hcId);
                 weights[idx] = ConvictionsUtils.calculateConviction(
                     timePassed,
                     convictionLast[hcId],
-                    stakedAmounts[hcId],
+                    eligibleStake,
                     decay
                 );
                 unchecked { ++idx; }
@@ -446,5 +457,16 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
         blockLast[_hypercertId] = block.number;
 
         emit ConvictionUpdated(_hypercertId, newConviction, stakedAmounts[_hypercertId]);
+    }
+
+    function _eligibleStakedAmount(uint256 _hypercertId) internal view returns (uint256 eligibleStake) {
+        address[] storage voters = _hypercertVoters[_hypercertId];
+        for (uint256 i = 0; i < voters.length;) {
+            address voter = voters[i];
+            if (votingPowerRegistry.isMember(voter)) {
+                eligibleStake += voterStakes[_hypercertId][voter];
+            }
+            unchecked { ++i; }
+        }
     }
 }

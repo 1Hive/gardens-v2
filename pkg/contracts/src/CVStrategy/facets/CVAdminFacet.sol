@@ -330,7 +330,9 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
     }
 
     function _deactivatePoints(address _member) internal {
-        _decreaseTotalPointsActivated(votingPowerRegistry.getMemberPowerInStrategy(_member, address(this)));
+        if (registryCommunity.memberActivatedInStrategies(_member, address(this))) {
+            _decreaseTotalPointsActivated(votingPowerRegistry.getMemberPowerInStrategy(_member, address(this)));
+        }
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
         // remove support from all proposals
         _withdraw(_member);
