@@ -122,7 +122,7 @@ export const IncreasePower = ({
     contractName: "Registry Community",
   };
 
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
 
   const [votingPowerTx, setVotingPowerTx] = useState<TransactionProps>({
     contractName: `Stake ${tokenGarden.symbol} in ${communityName}`,
@@ -141,8 +141,8 @@ export const IncreasePower = ({
     showNotification: false,
     fallbackErrorMessage:
       "Error staking governance token, please report a bug.",
-    onConfirmations: () => {
-      publish({
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(receipt, {
         topic: "member",
         type: "update",
         function: "increasePower",
@@ -160,8 +160,8 @@ export const IncreasePower = ({
       // Difference between staked amount and initial amount
       args: [stakeDifferenceBn * -1n],
       fallbackErrorMessage: "Error decreasing power, please report a bug.",
-      onConfirmations: () => {
-        publish({
+      onConfirmations: (receipt) => {
+        publishAfterIndexed(receipt, {
           topic: "member",
           type: "update",
           containerId: communityAddress,

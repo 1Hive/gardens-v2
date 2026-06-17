@@ -166,7 +166,7 @@ export function Proposals({
 
   // Hooks
   const { address: wallet } = useAccount();
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
   const chainId = useChainIdFromPath();
   const onchainProposalStatuses = useOnchainProposalStatuses({
     strategyAddress: strategy.id as Address,
@@ -622,8 +622,8 @@ export function Proposals({
     onSuccess: () => {
       setAllocationView(false);
     },
-    onConfirmations: () => {
-      publish({
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(receipt, {
         topic: "proposal",
         type: "update",
         containerId: strategy.id,

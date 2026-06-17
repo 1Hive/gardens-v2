@@ -34,7 +34,7 @@ export function ActivatePoints({
   const { address: connectedAccount } = useAccount();
   const { setOpen: setConnectModalOpen } = useModal();
   const chainId = useChainIdFromPath();
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
   const allowList = (strategy?.config?.allowlist as Address[]) ?? [];
   const isAllowed = useCheckAllowList(allowList, connectedAccount);
 
@@ -52,8 +52,8 @@ export function ActivatePoints({
     onSuccess: () => {
       handleTxSuccess?.();
     },
-    onConfirmations: () => {
-      publish({
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(receipt, {
         topic: "member",
         id: connectedAccount,
         type: "update",
@@ -77,8 +77,8 @@ export function ActivatePoints({
     onSuccess: () => {
       handleTxSuccess?.();
     },
-    onConfirmations: () => {
-      publish({
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(receipt, {
         topic: "member",
         id: connectedAccount,
         containerId: strategy.id,

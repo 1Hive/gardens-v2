@@ -506,7 +506,7 @@ export default function ClientPage({ params }: ClientPageProps) {
 
   const poolTokenAddr = proposalData?.strategy?.token as Address;
 
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
   const {
     data: onchainMetadataHash,
     isLoading: isOnchainMetadataHashLoading,
@@ -818,8 +818,8 @@ export default function ClientPage({ params }: ClientPageProps) {
     functionName: "distribute",
     contractName: "Allo",
     fallbackErrorMessage: "Error executing proposal, please report a bug.",
-    onConfirmations: () => {
-      publish({
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(receipt, {
         topic: "proposal",
         type: "update",
         function: "distribute",
@@ -961,12 +961,13 @@ export default function ClientPage({ params }: ClientPageProps) {
       contractName: "CVStrategy",
       fallbackErrorMessage:
         "Failed to sync stream for this strategy. Please try again.",
-      onConfirmations: () => {
+      onConfirmations: (receipt) => {
         void refetchLastRebalanceAt();
-        publish({
+        publishAfterIndexed(receipt, {
           topic: "stream",
           containerId: strategyAddress,
           function: "rebalance",
+          chainId,
         } as any);
       },
     });

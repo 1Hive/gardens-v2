@@ -84,9 +84,15 @@ export function useSubgraphQueryMultiChain<
     }
 
     subscritionId.current = subscribe(changeScope, (payload) => {
+      console.info("[indexing] multichain subgraph subscriber received event", {
+        payload,
+        chainsOverride: payload.chainId != null ? [payload.chainId] : undefined,
+        showToast: payload.silent !== true,
+      });
       fetchDebounce(
         payload.chainId != null ? [payload.chainId] : undefined,
         true,
+        payload.silent !== true,
       );
     });
 
@@ -103,7 +109,11 @@ export function useSubgraphQueryMultiChain<
   }, [connected]);
 
   const fetchDebounce = debounce(
-    async (chainsOverride?: ChainId[], retryOnNoChange?: boolean) => {
+    async (
+      chainsOverride?: ChainId[],
+      retryOnNoChange?: boolean,
+      showToast = true,
+    ) => {
       const chainSubgraphs = (chainsOverride ?? chainIds ?? allChains).map(
         (chain) => ({
           chainId: +chain,
@@ -117,26 +127,28 @@ export function useSubgraphQueryMultiChain<
               retryCount = 0;
             }
 
-            const toastContent = React.createElement(LoadingToast, {
-              message: "Pulling new data",
-            });
+            if (showToast) {
+              const toastContent = React.createElement(LoadingToast, {
+                message: "Pulling new data",
+              });
 
-            if (toast.isActive(pendingRefreshToastId)) {
-              toast.update(pendingRefreshToastId, {
-                render: toastContent,
-              });
-            } else {
-              toast.loading(toastContent, {
-                toastId: pendingRefreshToastId,
-                autoClose: false,
-                closeOnClick: true,
-                closeButton: false,
-                icon: false,
-                style: {
-                  width: "fit-content",
-                  marginLeft: "auto",
-                },
-              });
+              if (toast.isActive(pendingRefreshToastId)) {
+                toast.update(pendingRefreshToastId, {
+                  render: toastContent,
+                });
+              } else {
+                toast.loading(toastContent, {
+                  toastId: pendingRefreshToastId,
+                  autoClose: false,
+                  closeOnClick: true,
+                  closeButton: false,
+                  icon: false,
+                  style: {
+                    width: "fit-content",
+                    marginLeft: "auto",
+                  },
+                });
+              }
             }
             try {
               const fetchQuery = async (useDev: boolean) => {

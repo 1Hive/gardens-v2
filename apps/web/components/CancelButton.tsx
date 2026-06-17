@@ -21,7 +21,7 @@ type Props = {
 function CancelButton({ proposalData }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const chainId = useChainIdFromPath();
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
   const { strategy } = proposalData;
   const [, proposalNumber] = proposalData.id.split("-");
 
@@ -31,8 +31,8 @@ function CancelButton({ proposalData }: Props) {
     functionName: "cancelProposal",
     contractName: "CV Strategy",
     fallbackErrorMessage: "Error cancelling proposal, please report a bug.",
-    onConfirmations: () => {
-      publish({
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(receipt, {
         topic: "proposal",
         type: "update",
         function: "cancelProposal",

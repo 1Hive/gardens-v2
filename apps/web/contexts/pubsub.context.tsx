@@ -9,8 +9,13 @@ import React, {
 } from "react";
 import { Realtime } from "ably";
 import { uniqueId } from "lodash-es";
+import { toast } from "react-toastify";
+import { TransactionReceipt } from "viem";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { getConfigByChain } from "@/configs/chains";
 import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { queryByChain } from "@/providers/queryByChain";
 import { ChainId } from "@/types";
 
 // Define the shape of your context data
@@ -53,6 +58,10 @@ interface PubSubContextData {
   ) => string;
   unsubscribe: (subscriptionId: string) => void;
   publish: (payload: ChangeEventPayload) => void;
+  publishAfterIndexed: (
+    receipt: TransactionReceipt,
+    payload: ChangeEventPayload,
+  ) => void;
   messages: ChangeEventPayload[];
 }
 
@@ -86,7 +95,209 @@ export type ChangeEventPayload = {
   chainId?: ChainId;
   containerId?: string | number;
   id?: string | number;
+  silent?: boolean;
 } & { [key: string]: Native };
+
+type PendingIndexedPublish = {
+  txHash: `0x${string}`;
+  blockNumber: string;
+  chainId: number;
+  createdAt: number;
+  publishPayload?: ChangeEventPayload;
+};
+
+type LatestIndexedBlockResult = {
+  _meta?: {
+    block?: {
+      number?: number | string | null;
+    } | null;
+    hasIndexingErrors?: boolean | null;
+  } | null;
+};
+
+const INDEXING_STORAGE_KEY = "gardens.pending-indexed-publishes.v1";
+const INDEXING_TOAST_ID = "gardens-indexing-toast";
+const INDEXING_POLL_INTERVAL_MS = 5000;
+const INDEXING_LOG_PREFIX = "[indexing]";
+const LATEST_INDEXED_BLOCK_QUERY = `
+  query LatestIndexedBlock {
+    _meta {
+      block {
+        number
+      }
+      hasIndexingErrors
+    }
+  }
+`;
+
+const isRpcTransactionHash = (hash: unknown): hash is `0x${string}` =>
+  typeof hash === "string" && /^0x[a-fA-F0-9]{64}$/.test(hash);
+
+const toFiniteChainId = (chainId: unknown): number | null => {
+  const parsedChainId =
+    typeof chainId === "string" || typeof chainId === "number" ?
+      Number(chainId)
+    : NaN;
+  return Number.isFinite(parsedChainId) ? parsedChainId : null;
+};
+
+const pendingKey = (record: Pick<PendingIndexedPublish, "chainId" | "txHash">) =>
+  `${record.chainId}:${record.txHash.toLowerCase()}`;
+
+const formatIndexingProgress = (
+  indexedBlock?: string,
+  targetBlock?: string,
+) => {
+  if (!indexedBlock || !targetBlock) return "0%";
+
+  try {
+    const indexed = BigInt(indexedBlock);
+    const target = BigInt(targetBlock);
+    if (target <= 0n) return "0%";
+    if (indexed >= target) return "100%";
+
+    const percentTimes100 = (indexed * 10000n) / target;
+    const cappedPercent = percentTimes100 >= 10000n ? 9999n : percentTimes100;
+    const whole = cappedPercent / 100n;
+    const fraction = (cappedPercent % 100n).toString().padStart(2, "0");
+    return `${whole}.${fraction}%`;
+  } catch (error) {
+    console.debug(`${INDEXING_LOG_PREFIX} failed to format progress`, {
+      indexedBlock,
+      targetBlock,
+      error,
+    });
+    return "0%";
+  }
+};
+
+const getLatestTxBlock = (records: PendingIndexedPublish[]) =>
+  records.reduce<bigint | null>((latest, record) => {
+    const blockNumber = BigInt(record.blockNumber);
+    return latest == null || blockNumber > latest ? blockNumber : latest;
+  }, null);
+
+const summarizePendingRecord = (record: PendingIndexedPublish) => ({
+  key: pendingKey(record),
+  txHash: record.txHash,
+  blockNumber: record.blockNumber,
+  chainId: record.chainId,
+  topic: record.publishPayload?.topic,
+  type: record.publishPayload?.type,
+  function: record.publishPayload?.function,
+  containerId: record.publishPayload?.containerId,
+  id: record.publishPayload?.id,
+});
+
+function isSerializablePayload(payload: unknown): payload is ChangeEventPayload {
+  if (!payload || typeof payload !== "object") return false;
+  const candidate = payload as ChangeEventPayload;
+  return typeof candidate.topic === "string";
+}
+
+function normalizeRecord(record: unknown): PendingIndexedPublish | null {
+  if (!record || typeof record !== "object") return null;
+  const candidate = record as PendingIndexedPublish;
+  if (
+    !isRpcTransactionHash(candidate.txHash) ||
+    toFiniteChainId(candidate.chainId) == null ||
+    candidate.blockNumber == null ||
+    Number.isNaN(Number(candidate.blockNumber))
+  ) {
+    console.debug(`${INDEXING_LOG_PREFIX} dropping malformed stored record`, {
+      record,
+    });
+    return null;
+  }
+
+  return {
+    txHash: candidate.txHash,
+    blockNumber: String(candidate.blockNumber),
+    chainId: Number(candidate.chainId),
+    createdAt:
+      typeof candidate.createdAt === "number" ?
+        candidate.createdAt
+      : Date.now(),
+    publishPayload:
+      isSerializablePayload(candidate.publishPayload) ?
+        candidate.publishPayload
+      : undefined,
+  };
+}
+
+function readPendingIndexedPublishes(): PendingIndexedPublish[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(INDEXING_STORAGE_KEY);
+    if (!raw) {
+      console.debug(`${INDEXING_LOG_PREFIX} no pending records in storage`);
+      return [];
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      console.debug(`${INDEXING_LOG_PREFIX} storage payload is not an array`, {
+        parsed,
+      });
+      return [];
+    }
+    const records = parsed
+      .map(normalizeRecord)
+      .filter((record): record is PendingIndexedPublish => record != null);
+    console.info(`${INDEXING_LOG_PREFIX} restored pending records`, {
+      count: records.length,
+      records: records.map(summarizePendingRecord),
+    });
+    return records;
+  } catch (error) {
+    console.warn(
+      `${INDEXING_LOG_PREFIX} failed to read pending indexed publishes`,
+      error,
+    );
+    return [];
+  }
+}
+
+function writePendingIndexedPublishes(records: PendingIndexedPublish[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(INDEXING_STORAGE_KEY, JSON.stringify(records));
+    console.debug(`${INDEXING_LOG_PREFIX} persisted pending records`, {
+      count: records.length,
+      records: records.map(summarizePendingRecord),
+    });
+  } catch (error) {
+    console.warn(
+      `${INDEXING_LOG_PREFIX} failed to persist pending indexed publishes`,
+      error,
+    );
+  }
+}
+
+function IndexingToast({
+  count,
+  progress,
+}: {
+  count: number;
+  progress: string;
+}) {
+  const transactionLabel = count === 1 ? "1 transaction" : `${count} transactions`;
+
+  return (
+    <div className="flex flex-row items-center gap-3 px-3 py-2">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+        <LoadingSpinner size="loading-sm" />
+      </div>
+      <div className="flex min-w-0 flex-col gap-1">
+        <div className="text-sm font-semibold text-neutral-content dark:text-neutral-inverted-content">
+          Indexing
+        </div>
+        <div className="text-xs text-neutral-content dark:text-neutral-inverted-content">
+          {transactionLabel} ({progress})
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Create the context with an initial default value (optional)
 const PubSubContext = createContext<PubSubContextData | undefined>(undefined);
@@ -105,7 +316,15 @@ export function usePubSubContext() {
 export function PubSubProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<ChangeEventPayload[]>([]);
   const [connected, setConnected] = useState(false);
+  const [pendingIndexedPublishes, setPendingIndexedPublishes] = useState<
+    PendingIndexedPublish[]
+  >([]);
+  const [latestIndexedBlocksByChain, setLatestIndexedBlocksByChain] = useState<
+    Record<number, string>
+  >({});
   const chainId = useChainIdFromPath();
+  const indexingPollInFlight = useRef(false);
+  const isProgrammaticIndexingToastDismiss = useRef(false);
 
   const ablyClient = useMemo(
     () =>
@@ -146,6 +365,42 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const subMap = subscriptionsMap.current;
+
+  const setAndPersistPendingIndexedPublishes = useCallback(
+    (
+      updater:
+        | PendingIndexedPublish[]
+        | ((
+            records: PendingIndexedPublish[],
+          ) => PendingIndexedPublish[]),
+    ) => {
+      setPendingIndexedPublishes((current) => {
+        const next =
+          typeof updater === "function" ? updater(current) : updater;
+        console.debug(`${INDEXING_LOG_PREFIX} pending records state update`, {
+          previousCount: current.length,
+          nextCount: next.length,
+          previousRecords: current.map(summarizePendingRecord),
+          nextRecords: next.map(summarizePendingRecord),
+        });
+        writePendingIndexedPublishes(next);
+        return next;
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const restored = readPendingIndexedPublishes();
+    console.info(`${INDEXING_LOG_PREFIX} provider restored storage`, {
+      count: restored.length,
+      records: restored.map(summarizePendingRecord),
+    });
+    setPendingIndexedPublishes(restored);
+    if (restored.length > 0) {
+      writePendingIndexedPublishes(restored);
+    }
+  }, []);
 
   useEffect(() => {
     ablyClient.connection.on("connected", () => {
@@ -214,7 +469,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const publish = useCallback(
-    (payload: ChangeEventScope) => {
+    (payload: ChangeEventPayload) => {
       payload = {
         ...payload,
         chainId: +(payload.chainId ?? chainId ?? "NaN"),
@@ -227,9 +482,352 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
     [ablyClient.channels, chainId],
   );
 
+  const publishAfterIndexed = useCallback(
+    (receipt: TransactionReceipt, payload: ChangeEventPayload) => {
+      const resolvedChainId = toFiniteChainId(payload.chainId ?? chainId);
+      console.info(`${INDEXING_LOG_PREFIX} publishAfterIndexed called`, {
+        txHash: receipt.transactionHash,
+        receiptBlockNumber: receipt.blockNumber?.toString(),
+        payloadChainId: payload.chainId,
+        routeChainId: chainId,
+        resolvedChainId,
+        payload,
+      });
+      if (
+        !isRpcTransactionHash(receipt.transactionHash) ||
+        resolvedChainId == null ||
+        receipt.blockNumber == null
+      ) {
+        console.warn(
+          `${INDEXING_LOG_PREFIX} cannot queue indexed publish, publishing silently now`,
+          {
+            hasValidHash: isRpcTransactionHash(receipt.transactionHash),
+            hasResolvedChainId: resolvedChainId != null,
+            hasBlockNumber: receipt.blockNumber != null,
+            receipt,
+            payload,
+          },
+        );
+        publish({ ...payload, silent: true });
+        return;
+      }
+
+      const record: PendingIndexedPublish = {
+        txHash: receipt.transactionHash,
+        blockNumber: receipt.blockNumber.toString(),
+        chainId: resolvedChainId,
+        createdAt: Date.now(),
+        publishPayload: {
+          ...payload,
+          chainId: resolvedChainId,
+        },
+      };
+
+      console.info(`${INDEXING_LOG_PREFIX} queued pending indexed publish`, {
+        record: summarizePendingRecord(record),
+      });
+
+      setAndPersistPendingIndexedPublishes((records) => {
+        const recordsMap = new Map(
+          records.map((pendingRecord) => [
+            pendingKey(pendingRecord),
+            pendingRecord,
+          ]),
+        );
+        recordsMap.set(pendingKey(record), record);
+        return [...recordsMap.values()];
+      });
+    },
+    [chainId, publish, setAndPersistPendingIndexedPublishes],
+  );
+
+  useEffect(() => {
+    if (pendingIndexedPublishes.length === 0) {
+      console.debug(`${INDEXING_LOG_PREFIX} polling idle, no pending records`);
+      return;
+    }
+
+    let cancelled = false;
+
+    const pollIndexedBlocks = async () => {
+      if (indexingPollInFlight.current) {
+        console.debug(`${INDEXING_LOG_PREFIX} poll skipped, already in flight`);
+        return;
+      }
+      indexingPollInFlight.current = true;
+
+      try {
+        const pendingChainIds = [
+          ...new Set(pendingIndexedPublishes.map((record) => record.chainId)),
+        ];
+        const indexedBlocks = new Map<number, bigint>();
+        console.info(`${INDEXING_LOG_PREFIX} poll started`, {
+          pendingCount: pendingIndexedPublishes.length,
+          chainIds: pendingChainIds,
+          records: pendingIndexedPublishes.map(summarizePendingRecord),
+        });
+
+        await Promise.all(
+          pendingChainIds.map(async (pendingChainId) => {
+            const config = getConfigByChain(pendingChainId);
+            if (!config?.subgraphUrl) {
+              console.warn(`${INDEXING_LOG_PREFIX} missing subgraph config`, {
+                chainId: pendingChainId,
+              });
+              return;
+            }
+
+            console.debug(`${INDEXING_LOG_PREFIX} querying latest indexed block`, {
+              chainId: pendingChainId,
+              subgraphUrl: config.subgraphUrl,
+            });
+            const result = await queryByChain<LatestIndexedBlockResult>(
+              config,
+              LATEST_INDEXED_BLOCK_QUERY,
+              {},
+              undefined,
+              true,
+            );
+
+            if (result.error) {
+              console.warn(
+                `${INDEXING_LOG_PREFIX} latest indexed block query failed`,
+                {
+                  chainId: pendingChainId,
+                  error: result.error,
+                },
+              );
+              return;
+            }
+
+            if (result.data?._meta?.hasIndexingErrors) {
+              console.warn(`${INDEXING_LOG_PREFIX} subgraph reports errors`, {
+                chainId: pendingChainId,
+              });
+            }
+
+            const indexedBlock = result.data?._meta?.block?.number;
+            if (indexedBlock != null && !Number.isNaN(Number(indexedBlock))) {
+              indexedBlocks.set(pendingChainId, BigInt(indexedBlock));
+              console.info(`${INDEXING_LOG_PREFIX} latest indexed block`, {
+                chainId: pendingChainId,
+                indexedBlock: indexedBlock.toString(),
+                hasIndexingErrors: result.data?._meta?.hasIndexingErrors,
+              });
+            } else {
+              console.warn(
+                `${INDEXING_LOG_PREFIX} latest indexed block missing from response`,
+                {
+                  chainId: pendingChainId,
+                  data: result.data,
+                },
+              );
+            }
+          }),
+        );
+
+        if (cancelled || indexedBlocks.size === 0) {
+          console.debug(`${INDEXING_LOG_PREFIX} poll ended without block data`, {
+            cancelled,
+            indexedBlocksCount: indexedBlocks.size,
+          });
+          return;
+        }
+
+        setLatestIndexedBlocksByChain((current) => {
+          const next = { ...current };
+          indexedBlocks.forEach((indexedBlock, indexedChainId) => {
+            next[indexedChainId] = indexedBlock.toString();
+          });
+          return next;
+        });
+
+        setAndPersistPendingIndexedPublishes((records) => {
+          const remaining: PendingIndexedPublish[] = [];
+
+          records.forEach((record) => {
+            const indexedBlock = indexedBlocks.get(record.chainId);
+            if (
+              indexedBlock == null ||
+              indexedBlock < BigInt(record.blockNumber)
+            ) {
+              console.info(`${INDEXING_LOG_PREFIX} record still waiting`, {
+                record: summarizePendingRecord(record),
+                indexedBlock: indexedBlock?.toString(),
+                targetBlock: record.blockNumber,
+              });
+              remaining.push(record);
+              return;
+            }
+
+            console.info(`${INDEXING_LOG_PREFIX} record indexed`, {
+              record: summarizePendingRecord(record),
+              indexedBlock: indexedBlock.toString(),
+              targetBlock: record.blockNumber,
+            });
+            if (record.publishPayload) {
+              console.info(`${INDEXING_LOG_PREFIX} releasing silent publish`, {
+                record: summarizePendingRecord(record),
+                payload: {
+                  ...record.publishPayload,
+                  chainId: record.chainId,
+                  silent: true,
+                },
+              });
+              publish({
+                ...record.publishPayload,
+                chainId: record.chainId,
+                silent: true,
+              });
+            } else {
+              console.debug(`${INDEXING_LOG_PREFIX} indexed record has no payload`, {
+                record: summarizePendingRecord(record),
+              });
+            }
+          });
+
+          return remaining;
+        });
+      } catch (error) {
+        console.warn(`${INDEXING_LOG_PREFIX} failed to poll latest indexed block`, error);
+      } finally {
+        console.debug(`${INDEXING_LOG_PREFIX} poll finished`);
+        indexingPollInFlight.current = false;
+      }
+    };
+
+    void pollIndexedBlocks();
+    const intervalId = window.setInterval(
+      pollIndexedBlocks,
+      INDEXING_POLL_INTERVAL_MS,
+    );
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [pendingIndexedPublishes, publish, setAndPersistPendingIndexedPublishes]);
+
+  useEffect(() => {
+    const routeChainId = toFiniteChainId(chainId);
+    const dismissIndexingToast = () => {
+      isProgrammaticIndexingToastDismiss.current = true;
+      toast.dismiss(INDEXING_TOAST_ID);
+      queueMicrotask(() => {
+        isProgrammaticIndexingToastDismiss.current = false;
+      });
+    };
+
+    if (routeChainId == null) {
+      console.info(
+        `${INDEXING_LOG_PREFIX} toast hidden, route has no chain id`,
+        {
+          routeChainId: chainId,
+          pendingCount: pendingIndexedPublishes.length,
+        },
+      );
+      dismissIndexingToast();
+      return;
+    }
+
+    const currentChainRecords = pendingIndexedPublishes.filter(
+      (record) => record.chainId === routeChainId,
+    );
+    const currentChainCount = currentChainRecords.length;
+
+    if (currentChainCount === 0) {
+      console.info(
+        `${INDEXING_LOG_PREFIX} toast hidden, no pending records for route chain`,
+        {
+          routeChainId,
+          totalPendingCount: pendingIndexedPublishes.length,
+          allRecords: pendingIndexedPublishes.map(summarizePendingRecord),
+        },
+      );
+      dismissIndexingToast();
+      return;
+    }
+
+    const latestTxBlock = getLatestTxBlock(currentChainRecords)?.toString();
+    const progress = formatIndexingProgress(
+      latestIndexedBlocksByChain[routeChainId],
+      latestTxBlock,
+    );
+
+    const content = <IndexingToast count={currentChainCount} progress={progress} />;
+    const clearCurrentChain = () => {
+      if (isProgrammaticIndexingToastDismiss.current) {
+        console.debug(
+          `${INDEXING_LOG_PREFIX} toast closed programmatically, keeping records`,
+          { routeChainId },
+        );
+        return;
+      }
+
+      console.info(`${INDEXING_LOG_PREFIX} toast dismissed by user`, {
+        routeChainId,
+        clearedCount: currentChainCount,
+      });
+      setAndPersistPendingIndexedPublishes((records) =>
+        records.filter((record) => record.chainId !== routeChainId),
+      );
+    };
+
+    if (toast.isActive(INDEXING_TOAST_ID)) {
+      console.info(`${INDEXING_LOG_PREFIX} toast updated`, {
+        routeChainId,
+        currentChainCount,
+        latestIndexedBlock: latestIndexedBlocksByChain[routeChainId],
+        latestTxBlock,
+        progress,
+      });
+      toast.update(INDEXING_TOAST_ID, {
+        render: content,
+        type: "info",
+        closeButton: true,
+        closeOnClick: false,
+        onClick: undefined,
+        onClose: clearCurrentChain,
+      });
+    } else {
+      console.info(`${INDEXING_LOG_PREFIX} toast shown`, {
+        routeChainId,
+        currentChainCount,
+        latestIndexedBlock: latestIndexedBlocksByChain[routeChainId],
+        latestTxBlock,
+        progress,
+      });
+      toast.info(content, {
+        toastId: INDEXING_TOAST_ID,
+        autoClose: false,
+        closeOnClick: false,
+        closeButton: true,
+        icon: false,
+        className: "no-icon",
+        onClose: clearCurrentChain,
+        style: {
+          width: "fit-content",
+          marginLeft: "auto",
+        },
+      });
+    }
+  }, [
+    chainId,
+    latestIndexedBlocksByChain,
+    pendingIndexedPublishes,
+    setAndPersistPendingIndexedPublishes,
+  ]);
+
   const value = useMemo(
-    () => ({ connected, subscribe, unsubscribe, publish, messages }),
-    [connected, messages, publish, subscribe, unsubscribe],
+    () => ({
+      connected,
+      subscribe,
+      unsubscribe,
+      publish,
+      publishAfterIndexed,
+      messages,
+    }),
+    [connected, messages, publish, publishAfterIndexed, subscribe, unsubscribe],
   );
 
   return (

@@ -86,7 +86,7 @@ export const DisputeModal: FC<Props> = ({
   const [isModalOpened, setIsModalOpened] = useState(false);
   const [reason, setReason] = useState("");
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
   const { address } = useAccount();
   const [isDisputeCreateLoading, setIsDisputeCreateLoading] = useState(false);
   const { id: chainId, safePrefix } = useChainFromPath()!;
@@ -223,8 +223,8 @@ export const DisputeModal: FC<Props> = ({
       onSettled: () => {
         setIsDisputeCreateLoading(false);
       },
-      onConfirmations: () => {
-        publish({
+      onConfirmations: (receipt) => {
+        publishAfterIndexed(receipt, {
           topic: "proposal",
           type: "update",
           function: "disputeProposal",
@@ -263,8 +263,8 @@ export const DisputeModal: FC<Props> = ({
       setIsModalOpened(false);
     },
     onSettled: () => setisRulingLoading(false),
-    onConfirmations: () => {
-      publish({
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(receipt, {
         topic: "proposal",
         type: "update",
         function: "executeRuling",
@@ -285,8 +285,8 @@ export const DisputeModal: FC<Props> = ({
       setIsModalOpened(false);
     },
     onSettled: () => setisRulingLoading(false),
-    onConfirmations: () => {
-      publish({
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(receipt, {
         topic: "proposal",
         type: "update",
         function: "rule",
