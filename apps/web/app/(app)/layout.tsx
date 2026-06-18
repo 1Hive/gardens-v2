@@ -83,7 +83,10 @@ function MobileIndexingIndicator() {
           onClick={() => setIsTooltipOpen((open) => !open)}
           onBlur={() => setIsTooltipOpen(false)}
         >
-          <span className="loading loading-spinner loading-md text-primary-content" />
+          <span
+            aria-hidden="true"
+            className="loading loading-spinner loading-md text-primary-content"
+          />
           <span className="absolute">{pendingCount}</span>
         </button>
       </div>
