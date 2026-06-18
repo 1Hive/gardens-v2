@@ -18,6 +18,7 @@ import {
   INDEXING_PROBLEM_DELAY_MS,
   hasOneDayIndexingLag,
   getTransactionLabel,
+  useIndexingLagContext,
   usePubSubContext,
 } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
@@ -48,11 +49,9 @@ export function HeadphoneIcon() {
 
 function MobileIndexingIndicator() {
   const chainId = useChainIdFromPath();
-  const {
-    latestIndexedBlocksByChain,
-    pendingIndexedPublishes,
-    routeIndexingLagByChain,
-  } = usePubSubContext();
+  const { pendingIndexedPublishes } = usePubSubContext();
+  const { latestIndexedBlocksByChain, routeIndexingLagByChain } =
+    useIndexingLagContext();
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const [hasProblemDelayElapsed, setHasProblemDelayElapsed] = useState(false);
   const currentChainRecords = useMemo(() => {

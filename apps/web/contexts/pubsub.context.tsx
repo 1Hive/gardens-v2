@@ -69,6 +69,9 @@ interface PubSubContextData {
   ) => void;
   messages: ChangeEventPayload[];
   pendingIndexedPublishes: PendingIndexedPublish[];
+}
+
+interface IndexingLagContextData {
   latestIndexedBlocksByChain: Record<number, string>;
   routeIndexingLagByChain: Record<number, RouteIndexingLagStatus>;
 }
@@ -662,6 +665,9 @@ function IndexingProblemToast({ lagBlocks }: { lagBlocks: bigint | null }) {
 
 // Create the context with an initial default value (optional)
 const PubSubContext = createContext<PubSubContextData | undefined>(undefined);
+const IndexingLagContext = createContext<IndexingLagContextData | undefined>(
+  undefined,
+);
 
 // Helper hook for consuming the context
 export function usePubSubContext() {
@@ -669,6 +675,16 @@ export function usePubSubContext() {
   if (!context) {
     throw new Error(
       "⚡ WS: usePubSubContext must be used within a WebSocketProvider",
+    );
+  }
+  return context;
+}
+
+export function useIndexingLagContext() {
+  const context = useContext(IndexingLagContext);
+  if (!context) {
+    throw new Error(
+      "⚡ WS: useIndexingLagContext must be used within a WebSocketProvider",
     );
   }
   return context;
@@ -1627,23 +1643,31 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       publishAfterIndexed,
       messages,
       pendingIndexedPublishes,
-      latestIndexedBlocksByChain,
-      routeIndexingLagByChain,
     }),
     [
       connected,
-      latestIndexedBlocksByChain,
       messages,
       pendingIndexedPublishes,
       publish,
       publishAfterIndexed,
-      routeIndexingLagByChain,
       subscribe,
       unsubscribe,
     ],
   );
 
+  const indexingLagValue = useMemo(
+    () => ({
+      latestIndexedBlocksByChain,
+      routeIndexingLagByChain,
+    }),
+    [latestIndexedBlocksByChain, routeIndexingLagByChain],
+  );
+
   return (
-    <PubSubContext.Provider value={value}>{children}</PubSubContext.Provider>
+    <PubSubContext.Provider value={value}>
+      <IndexingLagContext.Provider value={indexingLagValue}>
+        {children}
+      </IndexingLagContext.Provider>
+    </PubSubContext.Provider>
   );
 }
