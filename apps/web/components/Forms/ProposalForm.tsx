@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
@@ -138,6 +138,11 @@ export const ProposalForm = ({
   const [requestedAmount, setRequestedAmount] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
+  const submittedProposalRef = useRef<{
+    metadataHash: string;
+    beneficiary?: string;
+    requestedAmount?: string;
+  } | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -185,6 +190,14 @@ export const ProposalForm = ({
       if (previewData === undefined) {
         throw new Error("No preview data");
       }
+      submittedProposalRef.current = {
+        metadataHash: ipfsHash,
+        beneficiary: previewData.beneficiary,
+        requestedAmount: parseUnits(
+          previewData.amount?.toString() || "0",
+          poolToken?.decimals ?? 0,
+        ).toString(),
+      };
       const encodedData = getEncodeData(ipfsHash);
 
       write({ args: [BigInt(poolId), encodedData] });
@@ -213,14 +226,33 @@ export const ProposalForm = ({
         "CVStrategy",
         "ProposalCreated",
       ).args.proposalId;
-      publishAfterIndexed(receipt, {
-        topic: "proposal",
-        type: "update",
-        function: "registerRecipient",
-        containerId: strategy.id,
-        id: proposalId.toString(), // proposalId is a bigint
-        chainId,
-      });
+      const submittedProposal = submittedProposalRef.current;
+      publishAfterIndexed(
+        receipt,
+        {
+          topic: "proposal",
+          type: "update",
+          function: "registerRecipient",
+          containerId: strategy.id,
+          id: proposalId.toString(), // proposalId is a bigint
+          chainId,
+        },
+        submittedProposal ?
+          {
+            optimistic: {
+              kind: "proposal-created",
+              strategyId: strategy.id,
+              proposalId: `${strategy.id.toLowerCase()}-${proposalId.toString()}`,
+              proposalNumber: proposalId.toString(),
+              metadataHash: submittedProposal.metadataHash,
+              beneficiary: submittedProposal.beneficiary,
+              requestedAmount: submittedProposal.requestedAmount,
+              proposalType: proposalType.toString(),
+              submitter: connectedWallet,
+            },
+          }
+        : undefined,
+      );
       if (pathname) {
         const proposalSlug = formatProposalSlug(proposalId.toString());
         const newPath = pathname.replace(

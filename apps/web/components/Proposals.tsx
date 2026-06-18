@@ -27,7 +27,7 @@ import { CheckIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Id, toast } from "react-toastify";
 import { parseAbiParameters, encodeAbiParameters, formatUnits } from "viem";
-import { Address, useAccount, useContractRead } from "wagmi";
+import { Address, useAccount, useContractRead, usePublicClient } from "wagmi";
 import {
   Allo,
   CVProposal,
@@ -66,12 +66,28 @@ import { PoolTypes, ProposalStatus } from "@/types";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { getMemberActivationState } from "@/utils/memberActivation";
 import { bigIntMin, calculatePercentageBigInt } from "@/utils/numbers";
+import {
+  createProposalOptimisticProjector,
+  hasPendingProposalAllocation,
+} from "@/utils/optimisticProposals";
 
 // Types
 export type ProposalInputItem = {
   proposalId: string;
   proposalNumber: number;
   value: bigint;
+};
+
+type SubmittedAllocationSnapshot = {
+  targets: {
+    proposalId: string;
+    proposalNumber: string;
+    amount: string;
+  }[];
+  deltas: {
+    proposalNumber: string;
+    deltaSupport: string;
+  }[];
 };
 
 export type MemberStrategyData = getMembersStrategyQuery["memberStrategies"][0];
@@ -155,6 +171,7 @@ export function Proposals({
   const [stakedFilters, setStakedFilters] = useState<{
     [key: string]: ProposalInputItem;
   }>({});
+  const submittedAllocationRef = useRef<SubmittedAllocationSnapshot | null>(null);
   const [showManageSupportTooltip, setShowManageSupportTooltip] =
     useState(false);
   const proposalCardRefs = useRef<Map<string, ProposalHandle>>(new Map());
@@ -166,8 +183,9 @@ export function Proposals({
 
   // Hooks
   const { address: wallet } = useAccount();
-  const { publishAfterIndexed } = usePubSubContext();
+  const { publishAfterIndexed, pendingIndexedPublishes } = usePubSubContext();
   const chainId = useChainIdFromPath();
+  const publicClient = usePublicClient({ chainId: Number(chainId) });
   const onchainProposalStatuses = useOnchainProposalStatuses({
     strategyAddress: strategy.id as Address,
     proposals: strategy.proposals,
@@ -178,6 +196,23 @@ export function Proposals({
   const isAllowed = useCheckAllowList(allowList, wallet);
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
+  const proposalOptimistic = useMemo(
+    () => ({
+      scope: { topic: "proposal" as const, containerId: strategy.id },
+      apply: createProposalOptimisticProjector({
+        strategyId: strategy.id,
+        allocator: wallet,
+      }),
+    }),
+    [strategy.id, wallet],
+  );
+  const hasPendingAllocation = hasPendingProposalAllocation(
+    pendingIndexedPublishes,
+    {
+      strategyId: strategy.id,
+      allocator: wallet,
+    },
+  );
   const searchParams = useCollectQueryParams();
 
   const proposalSectionRef = useRef<HTMLDivElement>(null);
@@ -252,6 +287,7 @@ export function Proposals({
       },
     ],
     enabled: !!wallet && !!strategy.registryCommunity.id,
+    optimistic: proposalOptimistic,
   });
 
   const { data: memberStrategyData } = useSubgraphQuery<getMemberStrategyQuery>(
@@ -269,6 +305,7 @@ export function Proposals({
         { topic: "member", id: wallet, containerId: strategy.id },
       ],
       enabled: !!wallet,
+      optimistic: proposalOptimistic,
     },
   );
 
@@ -564,6 +601,38 @@ export function Proposals({
     }, []);
   };
 
+  const getAllocationBaselineForSubmit = async (
+    currentInputs: { [key: string]: ProposalInputItem },
+  ) => {
+    if (!hasPendingAllocation) {
+      return stakedFilters;
+    }
+    if (publicClient == null || !wallet) {
+      throw new Error("Cannot refresh on-chain proposal support.");
+    }
+
+    const entries = await Promise.all(
+      Object.values(currentInputs).map(async (input) => {
+        const value = await publicClient.readContract({
+          address: strategy.id as Address,
+          abi: cvStrategyABI,
+          functionName: "getProposalVoterStake",
+          args: [BigInt(input.proposalNumber), wallet as Address],
+        });
+
+        return [
+          input.proposalId,
+          {
+            ...input,
+            value: value as bigint,
+          },
+        ] as const;
+      }),
+    );
+
+    return Object.fromEntries(entries) as { [key: string]: ProposalInputItem };
+  };
+
   const calculateTotalTokens = (exceptProposalId?: string) => {
     const currentInputs = inputsRef.current;
     if (!Object.keys(currentInputs).length) {
@@ -623,12 +692,28 @@ export function Proposals({
       setAllocationView(false);
     },
     onConfirmations: (receipt) => {
-      publishAfterIndexed(receipt, {
-        topic: "proposal",
-        type: "update",
-        containerId: strategy.id,
-        function: "allocate",
-      });
+      const submittedAllocation = submittedAllocationRef.current;
+      publishAfterIndexed(
+        receipt,
+        {
+          topic: "proposal",
+          type: "update",
+          containerId: strategy.id,
+          function: "allocate",
+          chainId,
+        },
+        submittedAllocation && wallet ?
+          {
+            optimistic: {
+              kind: "proposal-allocation",
+              strategyId: strategy.id,
+              allocator: wallet,
+              targets: submittedAllocation.targets,
+              deltas: submittedAllocation.deltas,
+            },
+          }
+        : undefined,
+      );
       if (toastId.current != null) {
         toast.dismiss(toastId.current);
         toastId.current = null;
@@ -659,10 +744,34 @@ export function Proposals({
       return;
     }
 
+    let allocationBaseline: { [key: string]: ProposalInputItem };
+    try {
+      allocationBaseline = await getAllocationBaselineForSubmit(currentInputs);
+    } catch (caughtError) {
+      console.error("[Proposals][Allocate] Failed to refresh on-chain support", {
+        error: caughtError,
+      });
+      toast.error(
+        "Could not refresh your latest on-chain support. Wait for indexing and try again.",
+      );
+      return;
+    }
+
     const proposalsDifferencesArr = getProposalsInputsDifferences(
       currentInputs,
-      stakedFilters,
+      allocationBaseline,
     );
+    submittedAllocationRef.current = {
+      targets: Object.values(currentInputs).map((input) => ({
+        proposalId: input.proposalId,
+        proposalNumber: input.proposalNumber.toString(),
+        amount: input.value.toString(),
+      })),
+      deltas: proposalsDifferencesArr.map((delta) => ({
+        proposalNumber: delta.proposalId.toString(),
+        deltaSupport: delta.deltaSupport.toString(),
+      })),
+    };
     if (process.env.NODE_ENV !== "production") {
       console.info("[Proposals][Allocate] Current inputs snapshot", {
         inputs: Object.values(currentInputs).map((input) => ({
@@ -670,7 +779,7 @@ export function Proposals({
           proposalNumber: input.proposalNumber,
           value: input.value.toString(),
         })),
-        stakedFilters: Object.values(stakedFilters).map((stake) => ({
+        stakedFilters: Object.values(allocationBaseline).map((stake) => ({
           proposalId: stake.proposalId,
           proposalNumber: stake.proposalNumber,
           value: stake.value.toString(),

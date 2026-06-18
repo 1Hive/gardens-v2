@@ -17,6 +17,7 @@ import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { queryByChain } from "@/providers/queryByChain";
 import { ChainId } from "@/types";
+import { normalizePendingIndexedPublishRecord } from "@/utils/pendingIndexedPublishes";
 
 // Define the shape of your context data
 interface PubSubContextData {
@@ -61,8 +62,10 @@ interface PubSubContextData {
   publishAfterIndexed: (
     receipt: TransactionReceipt,
     payload: ChangeEventPayload,
+    options?: PublishAfterIndexedOptions,
   ) => void;
   messages: ChangeEventPayload[];
+  pendingIndexedPublishes: PendingIndexedPublish[];
 }
 
 export type SubscriptionId = string;
@@ -98,12 +101,86 @@ export type ChangeEventPayload = {
   silent?: boolean;
 } & { [key: string]: Native };
 
-type PendingIndexedPublish = {
+export type ProposalOptimisticStatus =
+  | "inactive"
+  | "active"
+  | "paused"
+  | "cancelled"
+  | "executed"
+  | "disputed"
+  | "rejected";
+
+export type ProposalCreatedOptimistic = {
+  kind: "proposal-created";
+  strategyId: string;
+  proposalNumber: string;
+  proposalId?: string;
+  metadataHash: string;
+  beneficiary?: string;
+  requestedAmount?: string;
+  proposalType?: string;
+  submitter?: string;
+};
+
+export type ProposalAllocationOptimistic = {
+  kind: "proposal-allocation";
+  strategyId: string;
+  allocator: string;
+  targets: {
+    proposalId?: string;
+    proposalNumber: string;
+    amount: string;
+  }[];
+  deltas?: {
+    proposalId?: string;
+    proposalNumber: string;
+    deltaSupport: string;
+  }[];
+};
+
+export type ProposalStatusOptimistic = {
+  kind: "proposal-status";
+  strategyId: string;
+  proposalId?: string;
+  proposalNumber: string;
+  status: ProposalOptimisticStatus;
+};
+
+export type CommunityMemberOptimistic = {
+  kind: "community-member";
+  communityId: string;
+  memberAddress: string;
+  isRegistered: boolean;
+  stakedTokens?: string;
+};
+
+export type PoolGovernanceOptimistic = {
+  kind: "pool-governance";
+  strategyId: string;
+  communityId?: string;
+  memberAddress: string;
+  isActivated: boolean;
+  activatedPoints?: string;
+};
+
+export type IndexedPublishOptimistic =
+  | ProposalCreatedOptimistic
+  | ProposalAllocationOptimistic
+  | ProposalStatusOptimistic
+  | CommunityMemberOptimistic
+  | PoolGovernanceOptimistic;
+
+export type PublishAfterIndexedOptions = {
+  optimistic?: IndexedPublishOptimistic;
+};
+
+export type PendingIndexedPublish = {
   txHash: `0x${string}`;
   blockNumber: string;
   chainId: number;
   createdAt: number;
   publishPayload?: ChangeEventPayload;
+  optimistic?: IndexedPublishOptimistic;
 };
 
 type LatestIndexedBlockResult = {
@@ -187,42 +264,30 @@ const summarizePendingRecord = (record: PendingIndexedPublish) => ({
   function: record.publishPayload?.function,
   containerId: record.publishPayload?.containerId,
   id: record.publishPayload?.id,
+  optimisticKind: record.optimistic?.kind,
 });
 
-function isSerializablePayload(payload: unknown): payload is ChangeEventPayload {
-  if (!payload || typeof payload !== "object") return false;
-  const candidate = payload as ChangeEventPayload;
-  return typeof candidate.topic === "string";
-}
+export function matchesChangeScope(
+  payload: ChangeEventPayload | undefined,
+  scope: ChangeEventScope[] | ChangeEventScope | undefined,
+) {
+  if (!payload || !scope) return true;
+  const scopes = Array.isArray(scope) ? scope : [scope];
 
-function normalizeRecord(record: unknown): PendingIndexedPublish | null {
-  if (!record || typeof record !== "object") return null;
-  const candidate = record as PendingIndexedPublish;
-  if (
-    !isRpcTransactionHash(candidate.txHash) ||
-    toFiniteChainId(candidate.chainId) == null ||
-    candidate.blockNumber == null ||
-    Number.isNaN(Number(candidate.blockNumber))
-  ) {
-    console.debug(`${INDEXING_LOG_PREFIX} dropping malformed stored record`, {
-      record,
-    });
-    return null;
-  }
+  return scopes.some((scopeObj) =>
+    Object.entries(scopeObj).every(([key, scopeValue]) => {
+      if (scopeValue == null) return true;
+      const values = Array.isArray(scopeValue) ? scopeValue : [scopeValue];
+      const payloadValue = payload[key];
+      if (payloadValue == null) return false;
 
-  return {
-    txHash: candidate.txHash,
-    blockNumber: String(candidate.blockNumber),
-    chainId: Number(candidate.chainId),
-    createdAt:
-      typeof candidate.createdAt === "number" ?
-        candidate.createdAt
-      : Date.now(),
-    publishPayload:
-      isSerializablePayload(candidate.publishPayload) ?
-        candidate.publishPayload
-      : undefined,
-  };
+      return values.some(
+        (value) =>
+          value?.toString().toLowerCase() ===
+          payloadValue.toString().toLowerCase(),
+      );
+    }),
+  );
 }
 
 function readPendingIndexedPublishes(): PendingIndexedPublish[] {
@@ -241,7 +306,7 @@ function readPendingIndexedPublishes(): PendingIndexedPublish[] {
       return [];
     }
     const records = parsed
-      .map(normalizeRecord)
+      .map(normalizePendingIndexedPublishRecord)
       .filter((record): record is PendingIndexedPublish => record != null);
     console.info(`${INDEXING_LOG_PREFIX} restored pending records`, {
       count: records.length,
@@ -483,7 +548,11 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   );
 
   const publishAfterIndexed = useCallback(
-    (receipt: TransactionReceipt, payload: ChangeEventPayload) => {
+    (
+      receipt: TransactionReceipt,
+      payload: ChangeEventPayload,
+      options?: PublishAfterIndexedOptions,
+    ) => {
       const resolvedChainId = toFiniteChainId(payload.chainId ?? chainId);
       console.info(`${INDEXING_LOG_PREFIX} publishAfterIndexed called`, {
         txHash: receipt.transactionHash,
@@ -492,6 +561,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
         routeChainId: chainId,
         resolvedChainId,
         payload,
+        optimistic: options?.optimistic,
       });
       if (
         !isRpcTransactionHash(receipt.transactionHash) ||
@@ -521,6 +591,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
           ...payload,
           chainId: resolvedChainId,
         },
+        optimistic: options?.optimistic,
       };
 
       console.info(`${INDEXING_LOG_PREFIX} queued pending indexed publish`, {
@@ -826,8 +897,17 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       publish,
       publishAfterIndexed,
       messages,
+      pendingIndexedPublishes,
     }),
-    [connected, messages, publish, publishAfterIndexed, subscribe, unsubscribe],
+    [
+      connected,
+      messages,
+      pendingIndexedPublishes,
+      publish,
+      publishAfterIndexed,
+      subscribe,
+      unsubscribe,
+    ],
   );
 
   return (

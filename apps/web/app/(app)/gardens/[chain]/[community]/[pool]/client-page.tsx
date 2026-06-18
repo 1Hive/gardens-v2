@@ -41,7 +41,11 @@ import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { chainConfigMap } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
-import { SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
+import {
+  PendingIndexedPublish,
+  SubscriptionId,
+  usePubSubContext,
+} from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
@@ -63,6 +67,8 @@ import {
   SEC_TO_MONTH,
   SCALE_PRECISION,
 } from "@/utils/numbers";
+import { createMemberOptimisticProjector } from "@/utils/optimisticMembers";
+import { createProposalOptimisticProjector } from "@/utils/optimisticProposals";
 
 export type AlloQuery = getAlloQuery["allos"][number];
 const SYNC_STREAM_HIDE_WINDOW_SECONDS = 15 * 60;
@@ -185,6 +191,48 @@ export default function ClientPage({
   const searchParams = useCollectQueryParams();
   const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
   const strategyAddress = poolSlug.toLowerCase();
+  const { address: wallet } = useAccount();
+  const memberOptimisticProjector = useMemo(
+    () =>
+      createMemberOptimisticProjector({
+        communityId: _community,
+        strategyId: strategyAddress,
+        memberAddress: wallet,
+      }),
+    [_community, strategyAddress, wallet],
+  );
+  const memberOptimistic = useMemo(
+    () => ({
+      scope: [
+        { topic: "member" as const, containerId: _community, id: wallet },
+        { topic: "member" as const, containerId: strategyAddress, id: wallet },
+      ],
+      apply: memberOptimisticProjector,
+    }),
+    [_community, memberOptimisticProjector, strategyAddress, wallet],
+  );
+  const proposalOptimistic = useMemo(
+    () => ({
+      scope: [
+        { topic: "proposal" as const, containerId: strategyAddress },
+        { topic: "member" as const, containerId: _community, id: wallet },
+        { topic: "member" as const, containerId: strategyAddress, id: wallet },
+      ],
+      apply<TData>(
+        data: TData | undefined,
+        records: PendingIndexedPublish[],
+      ) {
+        return memberOptimisticProjector(
+          createProposalOptimisticProjector({
+            strategyId: strategyAddress,
+            allocator: wallet,
+          })(data, records),
+          records,
+        );
+      },
+    }),
+    [_community, memberOptimisticProjector, strategyAddress, wallet],
+  );
   const pendingNewPoolRefetch = useRef<string | null>(null);
   const [hasResolvedInitialNewPoolLookup, setHasResolvedInitialNewPoolLookup] =
     useState(() => !Boolean(newPoolId));
@@ -218,6 +266,7 @@ export default function ClientPage({
           containerId: strategyAddress,
         },
       ],
+      optimistic: proposalOptimistic,
     },
   );
 
@@ -260,8 +309,6 @@ export default function ClientPage({
   }, [newPoolId, strategy]);
   const communityAddress = strategy?.registryCommunity.id as Address;
 
-  const { address: wallet } = useAccount();
-
   const tokenDecimals = strategy?.registryCommunity.garden.decimals;
 
   const chainId = useChainIdFromPath();
@@ -300,8 +347,9 @@ export default function ClientPage({
         { topic: "community", id: communityAddress },
         { topic: "member", containerId: communityAddress },
       ],
-      enabled: wallet !== undefined && _community !== undefined,
-    });
+    enabled: wallet !== undefined && _community !== undefined,
+    optimistic: memberOptimistic,
+  });
 
   const registryCommunity = result?.registryCommunity;
   let { communityName, communityFee, registerStakeAmount, protocolFee } =
@@ -363,6 +411,7 @@ export default function ClientPage({
         ]
       : undefined,
     enabled: !!wallet && !!communityAddress,
+    optimistic: proposalOptimistic,
   });
 
   const { data: memberStrategyData, fetching: memberStrategyFetching } =
@@ -383,6 +432,7 @@ export default function ClientPage({
           ]
         : undefined,
       enabled: !!wallet && !!strategy?.id,
+      optimistic: proposalOptimistic,
     });
 
   const isMemberCommunityResult = isMemberResult?.member?.memberCommunity?.[0];
@@ -418,6 +468,7 @@ export default function ClientPage({
           ]
         : undefined,
       enabled: !!strategy?.id,
+      optimistic: proposalOptimistic,
     });
 
   const membersStrategies = membersStrategyData?.memberStrategies;
@@ -999,6 +1050,7 @@ export default function ClientPage({
                   <RegisterMember
                     memberData={wallet ? isMemberResult : undefined}
                     registrationCost={totalRegistrationCost}
+                    registrationStakeAmount={registerStakeAmountBn}
                     token={tokenGarden}
                     registryCommunity={registryCommunity}
                   />
@@ -1066,6 +1118,7 @@ export default function ClientPage({
                     isMemberActivated={memberActivatedStrategy}
                     isMember={isMemberCommunity}
                     handleTxSuccess={() => setTriggerSybilCheckModalClose(true)}
+                    memberPower={memberPower}
                   />
                 </CheckSybil>
               </div>
@@ -1168,6 +1221,7 @@ export default function ClientPage({
               strategy={effectiveStrategy}
               communityAddress={communityAddress}
               memberTokensInCommunity={memberTokensInCommunity}
+              memberPower={memberPower}
               isMemberCommunity={isMemberCommunity}
               memberActivatedStrategy={memberActivatedStrategy}
               membersStrategyData={

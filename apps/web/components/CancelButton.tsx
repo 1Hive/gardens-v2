@@ -32,14 +32,26 @@ function CancelButton({ proposalData }: Props) {
     contractName: "CV Strategy",
     fallbackErrorMessage: "Error cancelling proposal, please report a bug.",
     onConfirmations: (receipt) => {
-      publishAfterIndexed(receipt, {
-        topic: "proposal",
-        type: "update",
-        function: "cancelProposal",
-        id: +proposalNumber,
-        containerId: proposalData.strategy.id,
-        chainId: chainId,
-      });
+      publishAfterIndexed(
+        receipt,
+        {
+          topic: "proposal",
+          type: "update",
+          function: "cancelProposal",
+          id: +proposalNumber,
+          containerId: proposalData.strategy.id,
+          chainId: chainId,
+        },
+        {
+          optimistic: {
+            kind: "proposal-status",
+            strategyId: proposalData.strategy.id,
+            proposalId: proposalData.id,
+            proposalNumber,
+            status: "cancelled",
+          },
+        },
+      );
     },
   });
 

@@ -37,6 +37,7 @@ export type PoolGovernanceProps = {
   };
   communityAddress: Address;
   memberTokensInCommunity: bigint;
+  memberPower?: bigint | null;
   isMemberCommunity: boolean;
   memberActivatedStrategy: boolean;
   membersStrategyData: getMembersStrategyQuery | undefined;
@@ -48,6 +49,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   strategy,
   communityAddress,
   memberTokensInCommunity,
+  memberPower,
   isMemberCommunity,
   memberActivatedStrategy,
   membersStrategyData,
@@ -179,6 +181,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
                     isMemberActivated={memberActivatedStrategy}
                     isMember={isMemberCommunity}
                     handleTxSuccess={() => setTriggerSybilCheckModalClose(true)}
+                    memberPower={memberPower}
                     activate={false}
                   />
                 </CheckSybil>

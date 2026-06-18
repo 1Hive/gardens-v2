@@ -80,6 +80,7 @@ import {
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
+import { createMemberOptimisticProjector } from "@/utils/optimisticMembers";
 import { shortenAddress } from "@/utils/text";
 
 type MembersStaked = {
@@ -122,6 +123,16 @@ export default function ClientPage({
   const { publishAfterIndexed } = usePubSubContext();
   const chain = useChainFromPath();
   const [selectedTab, setSelectedTab] = useState(0);
+  const memberOptimistic = useMemo(
+    () => ({
+      scope: { topic: "member" as const, containerId: communityAddr },
+      apply: createMemberOptimisticProjector({
+        communityId: communityAddr,
+        memberAddress: accountAddress,
+      }),
+    }),
+    [accountAddress, communityAddr],
+  );
 
   const covenantSectionRef = useRef<HTMLDivElement>(null);
 
@@ -139,6 +150,7 @@ export default function ClientPage({
       { topic: "community", id: communityAddr },
       { topic: "member", containerId: communityAddr },
     ],
+    optimistic: memberOptimistic,
   });
 
   const registryCommunity = result?.registryCommunity;
@@ -323,6 +335,7 @@ export default function ClientPage({
       { topic: "member", containerId: communityAddr },
     ],
     enabled: accountAddress !== undefined && communityAddr !== undefined,
+    optimistic: memberOptimistic,
   });
 
   const { write: writeSetArchive, isLoading: isSetArchiveLoading } =
@@ -881,6 +894,7 @@ export default function ClientPage({
                     <RegisterMember
                       memberData={accountAddress ? isMemberResult : undefined}
                       registrationCost={totalRegistrationCost}
+                      registrationStakeAmount={registerStakeAmountBn}
                       token={resolvedTokenGarden}
                       registryCommunity={registryCommunity}
                     />
@@ -1252,6 +1266,7 @@ export default function ClientPage({
                       <RegisterMember
                         memberData={accountAddress ? isMemberResult : undefined}
                         registrationCost={totalRegistrationCost}
+                        registrationStakeAmount={registerStakeAmountBn}
                         token={resolvedTokenGarden}
                         registryCommunity={registryCommunity}
                       />

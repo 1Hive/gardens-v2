@@ -224,14 +224,26 @@ export const DisputeModal: FC<Props> = ({
         setIsDisputeCreateLoading(false);
       },
       onConfirmations: (receipt) => {
-        publishAfterIndexed(receipt, {
-          topic: "proposal",
-          type: "update",
-          function: "disputeProposal",
-          id: proposalData.proposalNumber,
-          containerId: proposalData.strategy.id,
-          chainId,
-        });
+        publishAfterIndexed(
+          receipt,
+          {
+            topic: "proposal",
+            type: "update",
+            function: "disputeProposal",
+            id: proposalData.proposalNumber,
+            containerId: proposalData.strategy.id,
+            chainId,
+          },
+          {
+            optimistic: {
+              kind: "proposal-status",
+              strategyId: proposalData.strategy.id,
+              proposalId: proposalData.id,
+              proposalNumber: proposalData.proposalNumber.toString(),
+              status: "disputed",
+            },
+          },
+        );
       },
     });
 

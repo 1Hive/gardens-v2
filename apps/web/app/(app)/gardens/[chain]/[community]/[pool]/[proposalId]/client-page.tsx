@@ -43,7 +43,10 @@ import { Skeleton } from "@/components/Skeleton";
 import { chainConfigMap } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
-import { usePubSubContext } from "@/contexts/pubsub.context";
+import {
+  PendingIndexedPublish,
+  usePubSubContext,
+} from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
@@ -69,6 +72,11 @@ import {
   calculatePercentageBigInt,
   roundToSignificant,
 } from "@/utils/numbers";
+import { createMemberOptimisticProjector } from "@/utils/optimisticMembers";
+import {
+  createProposalOptimisticProjector,
+  getLatestProposalCreation,
+} from "@/utils/optimisticProposals";
 import {
   buildProposalEntityId,
   extractProposalNumber,
@@ -375,6 +383,50 @@ export default function ClientPage({ params }: ClientPageProps) {
 
   const proposalNumber = extractProposalNumber(proposalSlug);
   const proposalEntityId = buildProposalEntityId(strategyAddress, proposalSlug);
+  const memberOptimisticProjector = useMemo(
+    () =>
+      createMemberOptimisticProjector({
+        communityId: communityAddr,
+        strategyId: strategyAddress,
+        memberAddress: address,
+      }),
+    [address, communityAddr, strategyAddress],
+  );
+  const proposalOptimistic = useMemo(
+    () => ({
+      scope: [
+        {
+          topic: "proposal" as const,
+          containerId: strategyAddress,
+          id: proposalNumber,
+        },
+        { topic: "member" as const, containerId: communityAddr, id: address },
+        { topic: "member" as const, containerId: strategyAddress, id: address },
+      ],
+      apply<TData>(
+        data: TData | undefined,
+        records: PendingIndexedPublish[],
+      ) {
+        return memberOptimisticProjector(
+          createProposalOptimisticProjector({
+            strategyId: strategyAddress,
+            proposalId: proposalEntityId,
+            proposalNumber,
+            allocator: address,
+          })(data, records),
+          records,
+        );
+      },
+    }),
+    [
+      address,
+      communityAddr,
+      memberOptimisticProjector,
+      proposalEntityId,
+      proposalNumber,
+      strategyAddress,
+    ],
+  );
   const {
     data,
     fetching,
@@ -394,6 +446,7 @@ export default function ClientPage({ params }: ClientPageProps) {
           type: "update",
         }
       : undefined,
+    optimistic: proposalOptimistic,
   });
 
   //query to get proposal supporters
@@ -403,6 +456,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       variables: {
         proposalId: proposalEntityId.toLowerCase(),
       },
+      optimistic: proposalOptimistic,
     },
   );
 
@@ -420,6 +474,7 @@ export default function ClientPage({ params }: ClientPageProps) {
             type: "update",
           }
         : undefined,
+      optimistic: proposalOptimistic,
     });
 
   //query to get member registry in community
@@ -430,6 +485,7 @@ export default function ClientPage({ params }: ClientPageProps) {
       comm: communityAddr?.toLowerCase(),
     },
     enabled: !!address && !!communityAddr,
+    optimistic: proposalOptimistic,
   });
 
   const isMemberCommunity =
@@ -506,7 +562,15 @@ export default function ClientPage({ params }: ClientPageProps) {
 
   const poolTokenAddr = proposalData?.strategy?.token as Address;
 
-  const { publishAfterIndexed } = usePubSubContext();
+  const { publishAfterIndexed, pendingIndexedPublishes } = usePubSubContext();
+  const optimisticProposalCreation = getLatestProposalCreation(
+    pendingIndexedPublishes,
+    {
+      strategyId: strategyAddress,
+      proposalId: proposalEntityId,
+      proposalNumber,
+    },
+  );
   const {
     data: onchainMetadataHash,
     isLoading: isOnchainMetadataHashLoading,
@@ -520,7 +584,10 @@ export default function ClientPage({ params }: ClientPageProps) {
     enabled: shouldReadOnchainMetadataHash,
   });
   const resolvedMetadataHash =
-    proposalData?.metadataHash ?? onchainMetadataHash ?? undefined;
+    proposalData?.metadataHash ??
+    onchainMetadataHash ??
+    optimisticProposalCreation?.optimistic?.metadataHash ??
+    undefined;
   const hasResolvedMetadataHash =
     typeof resolvedMetadataHash === "string" && resolvedMetadataHash.length > 0;
   const { data: ipfsResult, fetching: isIpfsMetadataFetching } =
@@ -584,6 +651,9 @@ export default function ClientPage({ params }: ClientPageProps) {
         }
       })()
     : undefined;
+  const pendingProposalDisplayTitle =
+    metadata?.title ?? ipfsResult?.title ?? pendingProposalTitle;
+  const pendingProposalDescription = ipfsResult?.description;
 
   const proposalType = proposalData?.strategy?.config?.proposalType;
   const isSignalingType = PoolTypes[proposalType] === "signaling";
@@ -819,14 +889,26 @@ export default function ClientPage({ params }: ClientPageProps) {
     contractName: "Allo",
     fallbackErrorMessage: "Error executing proposal, please report a bug.",
     onConfirmations: (receipt) => {
-      publishAfterIndexed(receipt, {
-        topic: "proposal",
-        type: "update",
-        function: "distribute",
-        id: proposalNumber,
-        containerId: strategyAddress,
-        chainId,
-      });
+      publishAfterIndexed(
+        receipt,
+        {
+          topic: "proposal",
+          type: "update",
+          function: "distribute",
+          id: proposalNumber,
+          containerId: strategyAddress,
+          chainId,
+        },
+        {
+          optimistic: {
+            kind: "proposal-status",
+            strategyId: strategyAddress,
+            proposalId: proposalEntityId,
+            proposalNumber: proposalNumber.toString(),
+            status: "executed",
+          },
+        },
+      );
     },
   });
 
@@ -1094,7 +1176,14 @@ export default function ClientPage({ params }: ClientPageProps) {
           title="Finalizing proposal creation"
           className="max-w-2xl"
         >
-          {`Waiting for "${pendingProposalTitle ?? "newly created proposal"}" to be indexed...`}
+          <div className="flex flex-col gap-3">
+            <p>
+              {`Waiting for "${pendingProposalDisplayTitle ?? "newly created proposal"}" to be indexed...`}
+            </p>
+            {pendingProposalDescription && (
+              <MarkdownWrapper source={pendingProposalDescription} />
+            )}
+          </div>
         </InfoBox>
       </div>
     );
