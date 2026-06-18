@@ -201,7 +201,7 @@ type LatestIndexedBlockResult = {
 const INDEXING_STORAGE_KEY = "gardens.pending-indexed-publishes.v1";
 const INDEXING_TOAST_ID = "gardens-indexing-toast";
 const INDEXING_PROBLEM_TOAST_ID = "gardens-indexing-problem-toast";
-const INDEXING_TOAST_CLASS_NAME = "no-icon opacity-50";
+const INDEXING_TOAST_CLASS_NAME = "no-icon hidden opacity-50 md:block";
 const INDEXING_TOAST_STYLE: React.CSSProperties = {
   width: "fit-content",
   marginLeft: "auto",

@@ -13,6 +13,8 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { newLogo } from "@/assets";
 import { Button, ConnectWallet, ThemeButton } from "@/components";
 import Footer from "@/components/Footer";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useIsPaused } from "@/hooks/useIsPaused";
 
 const CAMPAIGN_BADGE_STORAGE_KEY = "gardensCampaignsBadgeSeen-2";
@@ -35,6 +37,54 @@ export function HeadphoneIcon() {
         <path d="M 80.581 33.518 C 77.501 16.67 62.724 3.856 45 3.856 c -17.724 0 -32.501 12.814 -35.581 29.662 C 4.103 34.283 0 38.855 0 44.379 v 11.321 c 0 5.038 3.413 9.285 8.045 10.575 c 0.048 0.092 0.105 0.182 0.174 0.265 c 7.408 8.931 16.898 13.801 28.252 14.542 v -2.971 c -9.529 -0.678 -17.627 -4.505 -24.15 -11.424 h 1.018 c 2.926 0 5.307 -2.381 5.307 -5.307 V 38.699 c 0 -2.926 -2.381 -5.306 -5.307 -5.306 h -0.877 C 15.548 18.252 28.961 6.823 45 6.823 c 16.039 0 29.452 11.43 32.539 26.57 h -0.878 c -2.925 0 -5.306 2.38 -5.306 5.306 v 22.681 c 0 2.926 2.381 5.307 5.306 5.307 h 2.352 C 85.071 66.688 90 61.759 90 55.701 V 44.379 C 90 38.855 85.897 34.283 80.581 33.518 z M 13.339 36.36 c 1.29 0 2.34 1.049 2.34 2.339 v 22.681 c 0 1.29 -1.049 2.34 -2.34 2.34 h -2.352 c -4.422 0 -8.02 -3.598 -8.02 -8.02 V 44.379 c 0 -4.422 3.598 -8.019 8.02 -8.019 H 13.339 z M 87.033 55.701 c 0 4.422 -3.598 8.02 -8.02 8.02 h -2.352 c -1.289 0 -2.339 -1.05 -2.339 -2.34 V 38.699 c 0 -1.29 1.05 -2.339 2.339 -2.339 h 2.352 c 4.423 0 8.02 3.597 8.02 8.019 V 55.701 z" />
       </g>
     </svg>
+  );
+}
+
+function MobileIndexingIndicator() {
+  const chainId = useChainIdFromPath();
+  const { pendingIndexedPublishes } = usePubSubContext();
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false);
+  const pendingCount = useMemo(() => {
+    if (chainId == null) {
+      return 0;
+    }
+
+    return pendingIndexedPublishes.filter((record) => record.chainId === chainId)
+      .length;
+  }, [chainId, pendingIndexedPublishes]);
+  const tooltipLabel =
+    pendingCount === 1 ?
+      "Indexing 1 transaction"
+    : `Indexing ${pendingCount} transactions`;
+
+  useEffect(() => {
+    if (pendingCount === 0) {
+      setIsTooltipOpen(false);
+    }
+  }, [pendingCount]);
+
+  if (chainId == null || pendingCount === 0) {
+    return null;
+  }
+
+  return (
+    <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 md:hidden">
+      <div
+        className={`pointer-events-auto tooltip tooltip-bottom ${isTooltipOpen ? "tooltip-open" : ""}`}
+        data-tip={tooltipLabel}
+      >
+        <button
+          type="button"
+          aria-label={tooltipLabel}
+          className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border-neutral/70 bg-neutral/95 text-[11px] font-semibold leading-none text-neutral-content shadow-sm backdrop-blur-sm"
+          onClick={() => setIsTooltipOpen((open) => !open)}
+          onBlur={() => setIsTooltipOpen(false)}
+        >
+          <span className="loading loading-spinner loading-md text-primary-content" />
+          <span className="absolute">{pendingCount}</span>
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -149,7 +199,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Top Navigation Bar - Fixed with lower z-index */}
       <nav className="fixed top-0 left-0 right-0 z-50 h-[79px] px-4 lg:px-6 py-3 bg-neutral border-b border-border-neutral dark:border-border-neutral/50 flex flex-col justify-center">
-        <div className="flex items-center justify-between h-full gap-3">
+        <div className="relative flex items-center justify-between h-full gap-3">
           <div className="flex items-center gap-2">
             <Link href="/gardens" className="flex items-center gap-3 text-sm">
               <Image
@@ -171,6 +221,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             : <Bars3BottomLeftIcon className="w-5 h-5" />}
           </button> */}
           </div>
+
+          <MobileIndexingIndicator />
 
           <div className="hidden md:flex items-center justify-center gap-6">
             <Link href="/gardens" className="flex items-center gap-4 text-sm">
