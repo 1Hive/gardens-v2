@@ -1,4 +1,6 @@
-export function getLatestCampaignIdFromKeys(campaignIds: string[]) {
+export function getLatestCampaignIdFromKeys<T extends string>(
+  campaignIds: readonly T[],
+): T {
   if (campaignIds.length === 0) {
     throw new Error("No campaigns configured");
   }
@@ -10,8 +12,15 @@ export function getLatestCampaignIdFromKeys(campaignIds: string[]) {
       throw new Error(`Invalid campaign id: ${campaignId}`);
     }
 
-    return numericCampaignId;
+    return {
+      campaignId,
+      numericCampaignId,
+    };
   });
 
-  return String(Math.max(...numericCampaignIds));
+  return numericCampaignIds.reduce((latestCampaign, campaign) =>
+    campaign.numericCampaignId > latestCampaign.numericCampaignId ?
+      campaign
+    : latestCampaign,
+  ).campaignId;
 }

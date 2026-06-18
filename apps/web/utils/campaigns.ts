@@ -67,9 +67,7 @@ export const CAMPAIGNS = {
 } as const;
 
 export function getLatestCampaignId(): CampaignId {
-  return getLatestCampaignIdFromKeys(
-    Object.keys(CAMPAIGNS) as CampaignId[],
-  ) as CampaignId;
+  return getLatestCampaignIdFromKeys(Object.keys(CAMPAIGNS) as CampaignId[]);
 }
 
 const MONTHS_BY_NAME: Record<string, number> = {
