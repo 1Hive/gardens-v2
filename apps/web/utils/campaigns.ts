@@ -66,13 +66,13 @@ export const CAMPAIGNS = {
 } as const;
 
 export function getLatestCampaignId(): CampaignId {
-  return Object.keys(CAMPAIGNS).reduce<CampaignId>(
-    (latestCampaignId, campaignId) =>
-      Number(campaignId) > Number(latestCampaignId) ?
-        (campaignId as CampaignId)
-      : latestCampaignId,
-    Object.keys(CAMPAIGNS)[0] as CampaignId,
-  );
+  const campaignIds = Object.keys(CAMPAIGNS) as CampaignId[];
+
+  if (campaignIds.length === 0) {
+    throw new Error("No campaigns configured");
+  }
+
+  return String(Math.max(...campaignIds.map(Number))) as CampaignId;
 }
 
 const MONTHS_BY_NAME: Record<string, number> = {
