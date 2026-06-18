@@ -213,6 +213,7 @@ const INDEXING_POLL_INITIAL_DELAY_MS = 5000;
 const INDEXING_POLL_MAX_DELAY_MS = 60000;
 const INDEXING_POLL_BACKOFF_FACTOR = 2;
 const INDEXING_LOG_PREFIX = "[indexing]";
+const SECONDS_PER_DAY = 86_400;
 const LATEST_INDEXED_BLOCK_QUERY = `
   query LatestIndexedBlock {
     _meta {
@@ -278,7 +279,7 @@ const getOneDayLagThresholdBlocks = (chainId: number) => {
     return null;
   }
 
-  return BigInt(Math.ceil(86_400 / blockTime));
+  return BigInt(Math.ceil(SECONDS_PER_DAY / blockTime));
 };
 
 const summarizePendingRecord = (record: PendingIndexedPublish) => ({
