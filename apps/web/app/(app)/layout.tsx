@@ -132,7 +132,9 @@ function MobileIndexingIndicator() {
               className="loading loading-spinner loading-md text-neutral-soft-content"
             />
           }
-          <span className="absolute">{pendingCount}</span>
+          {!isIndexingProblem && (
+            <span className="absolute">{pendingCount}</span>
+          )}
         </button>
       </div>
     </div>
