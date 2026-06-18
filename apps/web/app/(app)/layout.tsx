@@ -155,7 +155,9 @@ function MobileIndexingIndicator() {
             />
           }
           {!isIndexingProblem && (
-            <span className="absolute">{pendingCount}</span>
+            <span aria-hidden="true" className="absolute">
+              {pendingCount}
+            </span>
           )}
         </button>
       </div>
