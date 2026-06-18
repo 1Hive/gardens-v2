@@ -77,7 +77,7 @@ function MobileIndexingIndicator() {
         <button
           type="button"
           aria-label={tooltipLabel}
-          className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border-neutral/70 bg-neutral/95 text-[11px] font-semibold leading-none text-neutral-content shadow-sm backdrop-blur-sm"
+          className="relative flex h-10 w-10 items-center justify-center rounded-full bg-neutral/95 text-[11px] font-semibold leading-none text-neutral-content shadow-sm backdrop-blur-sm"
           onClick={() => setIsTooltipOpen((open) => !open)}
           onBlur={() => setIsTooltipOpen(false)}
         >
@@ -86,7 +86,7 @@ function MobileIndexingIndicator() {
           </span>
           <span
             aria-hidden="true"
-            className="loading loading-spinner loading-md text-primary-content"
+            className="loading loading-spinner loading-md text-neutral-soft-content"
           />
           <span className="absolute">{pendingCount}</span>
         </button>

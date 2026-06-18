@@ -11,6 +11,7 @@ import { Realtime } from "ably";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { uniqueId } from "lodash-es";
 import { toast } from "react-toastify";
+import { useMediaQuery } from "usehooks-ts";
 import { TransactionReceipt } from "viem";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { getConfigByChain } from "@/configs/chains";
@@ -564,6 +565,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   const [indexingPollCompletedAtByChain, setIndexingPollCompletedAtByChain] =
     useState<Record<number, number>>({});
   const chainId = useChainIdFromPath();
+  const isMobileViewport = useMediaQuery("(max-width: 767px)");
   const skipPublished = useFlag("skipPublished");
   const indexingPollInFlight = useRef(false);
   const isProgrammaticIndexingToastDismiss = useRef(false);
@@ -1047,6 +1049,15 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       toast.dismiss(INDEXING_TOAST_ID);
     };
 
+    if (isMobileViewport) {
+      console.info(`${INDEXING_LOG_PREFIX} toast hidden on mobile viewport`, {
+        routeChainId: chainId,
+        pendingCount: pendingIndexedPublishes.length,
+      });
+      dismissIndexingToast();
+      return;
+    }
+
     if (routeChainId == null) {
       console.info(
         `${INDEXING_LOG_PREFIX} toast hidden, route has no chain id`,
@@ -1163,6 +1174,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
     }
   }, [
     chainId,
+    isMobileViewport,
     indexingProblemCheckTick,
     latestIndexedBlocksByChain,
     pendingIndexedPublishes,
