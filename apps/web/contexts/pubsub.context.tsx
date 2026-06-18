@@ -8,6 +8,7 @@ import React, {
   useState,
 } from "react";
 import { Realtime } from "ably";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { uniqueId } from "lodash-es";
 import { toast } from "react-toastify";
 import { TransactionReceipt } from "viem";
@@ -15,6 +16,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { getConfigByChain } from "@/configs/chains";
 import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useFlag } from "@/hooks/useFlag";
 import { queryByChain } from "@/providers/queryByChain";
 import { ChainId } from "@/types";
 import { normalizePendingIndexedPublishRecord } from "@/utils/pendingIndexedPublishes";
@@ -161,6 +163,11 @@ export type PoolGovernanceOptimistic = {
   memberAddress: string;
   isActivated: boolean;
   activatedPoints?: string;
+  supportSnapshot?: {
+    proposalId?: string;
+    proposalNumber: string;
+    amount: string;
+  }[];
 };
 
 export type IndexedPublishOptimistic =
@@ -194,7 +201,17 @@ type LatestIndexedBlockResult = {
 
 const INDEXING_STORAGE_KEY = "gardens.pending-indexed-publishes.v1";
 const INDEXING_TOAST_ID = "gardens-indexing-toast";
-const INDEXING_POLL_INTERVAL_MS = 5000;
+const INDEXING_PROBLEM_TOAST_ID = "gardens-indexing-problem-toast";
+const INDEXING_TOAST_CLASS_NAME = "no-icon opacity-50";
+const INDEXING_TOAST_STYLE: React.CSSProperties = {
+  width: "fit-content",
+  marginLeft: "auto",
+  marginBottom: "4.5rem",
+};
+const INDEXING_PROBLEM_DELAY_MS = 60_000;
+const INDEXING_POLL_INITIAL_DELAY_MS = 5000;
+const INDEXING_POLL_MAX_DELAY_MS = 60000;
+const INDEXING_POLL_BACKOFF_FACTOR = 2;
 const INDEXING_LOG_PREFIX = "[indexing]";
 const LATEST_INDEXED_BLOCK_QUERY = `
   query LatestIndexedBlock {
@@ -218,35 +235,9 @@ const toFiniteChainId = (chainId: unknown): number | null => {
   return Number.isFinite(parsedChainId) ? parsedChainId : null;
 };
 
-const pendingKey = (record: Pick<PendingIndexedPublish, "chainId" | "txHash">) =>
-  `${record.chainId}:${record.txHash.toLowerCase()}`;
-
-const formatIndexingProgress = (
-  indexedBlock?: string,
-  targetBlock?: string,
-) => {
-  if (!indexedBlock || !targetBlock) return "0%";
-
-  try {
-    const indexed = BigInt(indexedBlock);
-    const target = BigInt(targetBlock);
-    if (target <= 0n) return "0%";
-    if (indexed >= target) return "100%";
-
-    const percentTimes100 = (indexed * 10000n) / target;
-    const cappedPercent = percentTimes100 >= 10000n ? 9999n : percentTimes100;
-    const whole = cappedPercent / 100n;
-    const fraction = (cappedPercent % 100n).toString().padStart(2, "0");
-    return `${whole}.${fraction}%`;
-  } catch (error) {
-    console.debug(`${INDEXING_LOG_PREFIX} failed to format progress`, {
-      indexedBlock,
-      targetBlock,
-      error,
-    });
-    return "0%";
-  }
-};
+const pendingKey = (
+  record: Pick<PendingIndexedPublish, "chainId" | "txHash">,
+) => `${record.chainId}:${record.txHash.toLowerCase()}`;
 
 const getLatestTxBlock = (records: PendingIndexedPublish[]) =>
   records.reduce<bigint | null>((latest, record) => {
@@ -266,6 +257,34 @@ const summarizePendingRecord = (record: PendingIndexedPublish) => ({
   id: record.publishPayload?.id,
   optimisticKind: record.optimistic?.kind,
 });
+
+const getIndexingLagBlocks = (
+  indexedBlock: string | undefined,
+  records: PendingIndexedPublish[],
+) => {
+  if (!indexedBlock) return null;
+
+  try {
+    const latestTxBlock = getLatestTxBlock(records);
+    if (latestTxBlock == null) return null;
+    const lagBlocks = latestTxBlock - BigInt(indexedBlock);
+    return lagBlocks > 0n ? lagBlocks : 0n;
+  } catch (error) {
+    console.debug(`${INDEXING_LOG_PREFIX} failed to calculate lag blocks`, {
+      indexedBlock,
+      records: records.map(summarizePendingRecord),
+      error,
+    });
+    return null;
+  }
+};
+
+const getIndexingLagTooltip = (lagBlocks: bigint | null) =>
+  lagBlocks == null ?
+    "Indexing is lagging behind"
+  : `Indexing is lagging behind ${lagBlocks.toString()} ${
+      lagBlocks === 1n ? "block" : "blocks"
+    }`;
 
 export function matchesChangeScope(
   payload: ChangeEventPayload | undefined,
@@ -338,27 +357,101 @@ function writePendingIndexedPublishes(records: PendingIndexedPublish[]) {
   }
 }
 
+function arePendingIndexedPublishesEqual(
+  left: PendingIndexedPublish[],
+  right: PendingIndexedPublish[],
+) {
+  if (left === right) return true;
+  if (left.length !== right.length) return false;
+  return left.every((leftRecord, index) => {
+    const rightRecord = right[index];
+    return (
+      rightRecord != null &&
+      leftRecord.txHash === rightRecord.txHash &&
+      leftRecord.blockNumber === rightRecord.blockNumber &&
+      leftRecord.chainId === rightRecord.chainId &&
+      leftRecord.createdAt === rightRecord.createdAt &&
+      JSON.stringify(leftRecord.publishPayload) ===
+        JSON.stringify(rightRecord.publishPayload) &&
+      JSON.stringify(leftRecord.optimistic) ===
+        JSON.stringify(rightRecord.optimistic)
+    );
+  });
+}
+
 function IndexingToast({
   count,
-  progress,
+  isLagging,
+  lagBlocks,
 }: {
   count: number;
-  progress: string;
+  isLagging: boolean;
+  lagBlocks: bigint | null;
 }) {
-  const transactionLabel = count === 1 ? "1 transaction" : `${count} transactions`;
+  const transactionLabel =
+    count === 1 ? "1 transaction" : `${count} transactions`;
+  const lagTooltip = getIndexingLagTooltip(lagBlocks);
 
   return (
-    <div className="flex flex-row items-center gap-3 px-3 py-2">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-        <LoadingSpinner size="loading-sm" />
+    <div className="flex flex-row items-center gap-3 px-3 py-1.5">
+      <div
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+          isLagging ? "tooltip tooltip-right" : ""
+        }`}
+        data-tip={isLagging ? lagTooltip : undefined}
+      >
+        {isLagging ?
+          <ExclamationTriangleIcon className="h-5 w-5 text-warning" />
+        : <LoadingSpinner size="loading-sm" />}
       </div>
       <div className="flex min-w-0 flex-col gap-1">
         <div className="text-sm font-semibold text-neutral-content dark:text-neutral-inverted-content">
           Indexing
         </div>
         <div className="text-xs text-neutral-content dark:text-neutral-inverted-content">
-          {transactionLabel} ({progress})
+          {transactionLabel}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function IndexingToastClearButton({
+  closeToast,
+}: {
+  closeToast?: (event: React.MouseEvent<HTMLElement>) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        closeToast?.(event);
+      }}
+      className="btn btn-ghost btn-xs mr-2 h-auto min-h-0 rounded border border-transparent px-2 py-1 text-xs font-semibold leading-none text-neutral-content hover:border-neutral-soft-content/60 hover:bg-transparent hover:text-neutral-inverted-content"
+    >
+      Clear
+    </button>
+  );
+}
+
+function IndexingProblemToast({ lagBlocks }: { lagBlocks: bigint | null }) {
+  const lagTooltip = getIndexingLagTooltip(lagBlocks);
+
+  return (
+    <div className="flex min-w-0 flex-row items-start gap-3 px-3 py-1.5">
+      <div className="tooltip tooltip-right mt-0.5" data-tip={lagTooltip}>
+        <ExclamationTriangleIcon className="h-5 w-5 text-warning" />
+      </div>
+      <div className="flex min-w-0 flex-col gap-1">
+        <div className="text-sm font-semibold">Indexing problem detected</div>
+        <a
+          href="https://status.thegraph.com/"
+          target="_blank"
+          rel="noreferrer"
+          className="text-xs font-medium underline underline-offset-2"
+        >
+          Check The Graph status
+        </a>
       </div>
     </div>
   );
@@ -387,9 +480,13 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   const [latestIndexedBlocksByChain, setLatestIndexedBlocksByChain] = useState<
     Record<number, string>
   >({});
+  const [indexingPollCompletedAtByChain, setIndexingPollCompletedAtByChain] =
+    useState<Record<number, number>>({});
   const chainId = useChainIdFromPath();
+  const skipPublished = useFlag("skipPublished");
   const indexingPollInFlight = useRef(false);
   const isProgrammaticIndexingToastDismiss = useRef(false);
+  const [indexingProblemCheckTick, setIndexingProblemCheckTick] = useState(0);
 
   const ablyClient = useMemo(
     () =>
@@ -435,13 +532,20 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
     (
       updater:
         | PendingIndexedPublish[]
-        | ((
-            records: PendingIndexedPublish[],
-          ) => PendingIndexedPublish[]),
+        | ((records: PendingIndexedPublish[]) => PendingIndexedPublish[]),
     ) => {
       setPendingIndexedPublishes((current) => {
-        const next =
-          typeof updater === "function" ? updater(current) : updater;
+        const next = typeof updater === "function" ? updater(current) : updater;
+        if (arePendingIndexedPublishesEqual(current, next)) {
+          console.debug(
+            `${INDEXING_LOG_PREFIX} pending records unchanged, skipping state update`,
+            {
+              count: current.length,
+              records: current.map(summarizePendingRecord),
+            },
+          );
+          return current;
+        }
         console.debug(`${INDEXING_LOG_PREFIX} pending records state update`, {
           previousCount: current.length,
           nextCount: next.length,
@@ -619,18 +723,39 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
     }
 
     let cancelled = false;
+    let pollAttempt = 0;
+    let timeoutId: number | undefined;
+
+    const getNextPollDelay = () =>
+      Math.min(
+        INDEXING_POLL_INITIAL_DELAY_MS *
+          INDEXING_POLL_BACKOFF_FACTOR ** pollAttempt,
+        INDEXING_POLL_MAX_DELAY_MS,
+      );
+
+    const scheduleNextPoll = () => {
+      if (cancelled) return;
+      const delay = getNextPollDelay();
+      console.debug(`${INDEXING_LOG_PREFIX} scheduling next poll`, {
+        delay,
+        pollAttempt,
+      });
+      pollAttempt += 1;
+      timeoutId = window.setTimeout(pollIndexedBlocks, delay);
+    };
 
     const pollIndexedBlocks = async () => {
       if (indexingPollInFlight.current) {
         console.debug(`${INDEXING_LOG_PREFIX} poll skipped, already in flight`);
+        scheduleNextPoll();
         return;
       }
       indexingPollInFlight.current = true;
+      const pendingChainIds = [
+        ...new Set(pendingIndexedPublishes.map((record) => record.chainId)),
+      ];
 
       try {
-        const pendingChainIds = [
-          ...new Set(pendingIndexedPublishes.map((record) => record.chainId)),
-        ];
         const indexedBlocks = new Map<number, bigint>();
         console.info(`${INDEXING_LOG_PREFIX} poll started`, {
           pendingCount: pendingIndexedPublishes.length,
@@ -648,49 +773,77 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
               return;
             }
 
-            console.debug(`${INDEXING_LOG_PREFIX} querying latest indexed block`, {
-              chainId: pendingChainId,
-              subgraphUrl: config.subgraphUrl,
-            });
+            console.debug(
+              `${INDEXING_LOG_PREFIX} querying latest indexed block`,
+              {
+                chainId: pendingChainId,
+                subgraphUrl:
+                  skipPublished || !config.publishedSubgraphUrl ?
+                    config.subgraphUrl
+                  : config.publishedSubgraphUrl,
+                skipPublished,
+              },
+            );
             const result = await queryByChain<LatestIndexedBlockResult>(
               config,
               LATEST_INDEXED_BLOCK_QUERY,
               {},
               undefined,
-              true,
+              skipPublished,
             );
+            const resolvedResult =
+              result.error && !skipPublished && config.publishedSubgraphUrl ?
+                await queryByChain<LatestIndexedBlockResult>(
+                  config,
+                  LATEST_INDEXED_BLOCK_QUERY,
+                  {},
+                  undefined,
+                  true,
+                )
+              : result;
 
-            if (result.error) {
+            if (result.error && resolvedResult !== result) {
               console.warn(
-                `${INDEXING_LOG_PREFIX} latest indexed block query failed`,
+                `${INDEXING_LOG_PREFIX} latest indexed block query failed through published subgraph, retried hosted`,
                 {
                   chainId: pendingChainId,
                   error: result.error,
                 },
               );
+            }
+
+            if (resolvedResult.error) {
+              console.warn(
+                `${INDEXING_LOG_PREFIX} latest indexed block query failed`,
+                {
+                  chainId: pendingChainId,
+                  error: resolvedResult.error,
+                },
+              );
               return;
             }
 
-            if (result.data?._meta?.hasIndexingErrors) {
+            if (resolvedResult.data?._meta?.hasIndexingErrors) {
               console.warn(`${INDEXING_LOG_PREFIX} subgraph reports errors`, {
                 chainId: pendingChainId,
               });
             }
 
-            const indexedBlock = result.data?._meta?.block?.number;
+            const indexedBlock = resolvedResult.data?._meta?.block?.number;
             if (indexedBlock != null && !Number.isNaN(Number(indexedBlock))) {
               indexedBlocks.set(pendingChainId, BigInt(indexedBlock));
               console.info(`${INDEXING_LOG_PREFIX} latest indexed block`, {
                 chainId: pendingChainId,
                 indexedBlock: indexedBlock.toString(),
-                hasIndexingErrors: result.data?._meta?.hasIndexingErrors,
+                hasIndexingErrors:
+                  resolvedResult.data?._meta?.hasIndexingErrors,
               });
             } else {
               console.warn(
                 `${INDEXING_LOG_PREFIX} latest indexed block missing from response`,
                 {
                   chainId: pendingChainId,
-                  data: result.data,
+                  data: resolvedResult.data,
                 },
               );
             }
@@ -698,10 +851,13 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
         );
 
         if (cancelled || indexedBlocks.size === 0) {
-          console.debug(`${INDEXING_LOG_PREFIX} poll ended without block data`, {
-            cancelled,
-            indexedBlocksCount: indexedBlocks.size,
-          });
+          console.debug(
+            `${INDEXING_LOG_PREFIX} poll ended without block data`,
+            {
+              cancelled,
+              indexedBlocksCount: indexedBlocks.size,
+            },
+          );
           return;
         }
 
@@ -751,42 +907,63 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
                 silent: true,
               });
             } else {
-              console.debug(`${INDEXING_LOG_PREFIX} indexed record has no payload`, {
-                record: summarizePendingRecord(record),
-              });
+              console.debug(
+                `${INDEXING_LOG_PREFIX} indexed record has no payload`,
+                {
+                  record: summarizePendingRecord(record),
+                },
+              );
             }
           });
 
           return remaining;
         });
       } catch (error) {
-        console.warn(`${INDEXING_LOG_PREFIX} failed to poll latest indexed block`, error);
+        console.warn(
+          `${INDEXING_LOG_PREFIX} failed to poll latest indexed block`,
+          error,
+        );
       } finally {
+        if (!cancelled && pendingChainIds.length > 0) {
+          const completedAt = Date.now();
+          setIndexingPollCompletedAtByChain((current) => {
+            const next = { ...current };
+            pendingChainIds.forEach((pendingChainId) => {
+              next[pendingChainId] = completedAt;
+            });
+            return next;
+          });
+        }
         console.debug(`${INDEXING_LOG_PREFIX} poll finished`);
         indexingPollInFlight.current = false;
+        scheduleNextPoll();
       }
     };
 
     void pollIndexedBlocks();
-    const intervalId = window.setInterval(
-      pollIndexedBlocks,
-      INDEXING_POLL_INTERVAL_MS,
-    );
 
     return () => {
       cancelled = true;
-      window.clearInterval(intervalId);
+      if (timeoutId != null) {
+        window.clearTimeout(timeoutId);
+      }
     };
-  }, [pendingIndexedPublishes, publish, setAndPersistPendingIndexedPublishes]);
+  }, [
+    pendingIndexedPublishes,
+    publish,
+    setAndPersistPendingIndexedPublishes,
+    skipPublished,
+  ]);
 
   useEffect(() => {
     const routeChainId = toFiniteChainId(chainId);
     const dismissIndexingToast = () => {
+      if (!toast.isActive(INDEXING_TOAST_ID)) {
+        isProgrammaticIndexingToastDismiss.current = false;
+        return;
+      }
       isProgrammaticIndexingToastDismiss.current = true;
       toast.dismiss(INDEXING_TOAST_ID);
-      queueMicrotask(() => {
-        isProgrammaticIndexingToastDismiss.current = false;
-      });
     };
 
     if (routeChainId == null) {
@@ -819,15 +996,27 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const latestTxBlock = getLatestTxBlock(currentChainRecords)?.toString();
-    const progress = formatIndexingProgress(
+    const currentChainLagBlocks = getIndexingLagBlocks(
       latestIndexedBlocksByChain[routeChainId],
-      latestTxBlock,
+      currentChainRecords,
     );
-
-    const content = <IndexingToast count={currentChainCount} progress={progress} />;
+    const hasExceededProblemDelay = currentChainRecords.some(
+      (record) => Date.now() - record.createdAt >= INDEXING_PROBLEM_DELAY_MS,
+    );
+    const isLagging =
+      hasExceededProblemDelay &&
+      currentChainLagBlocks != null &&
+      currentChainLagBlocks > 0n;
+    const content = (
+      <IndexingToast
+        count={currentChainCount}
+        isLagging={isLagging}
+        lagBlocks={currentChainLagBlocks}
+      />
+    );
     const clearCurrentChain = () => {
       if (isProgrammaticIndexingToastDismiss.current) {
+        isProgrammaticIndexingToastDismiss.current = false;
         console.debug(
           `${INDEXING_LOG_PREFIX} toast closed programmatically, keeping records`,
           { routeChainId },
@@ -849,44 +1038,155 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
         routeChainId,
         currentChainCount,
         latestIndexedBlock: latestIndexedBlocksByChain[routeChainId],
-        latestTxBlock,
-        progress,
+        lagBlocks: currentChainLagBlocks?.toString(),
+        isLagging,
       });
       toast.update(INDEXING_TOAST_ID, {
         render: content,
         type: "info",
-        closeButton: true,
+        position: "bottom-right",
+        closeButton: ({
+          closeToast,
+        }: {
+          closeToast?: (event: React.MouseEvent<HTMLElement>) => void;
+        }) => <IndexingToastClearButton closeToast={closeToast} />,
         closeOnClick: false,
+        className: INDEXING_TOAST_CLASS_NAME,
         onClick: undefined,
         onClose: clearCurrentChain,
+        style: INDEXING_TOAST_STYLE,
       });
     } else {
       console.info(`${INDEXING_LOG_PREFIX} toast shown`, {
         routeChainId,
         currentChainCount,
         latestIndexedBlock: latestIndexedBlocksByChain[routeChainId],
-        latestTxBlock,
-        progress,
+        lagBlocks: currentChainLagBlocks?.toString(),
+        isLagging,
       });
       toast.info(content, {
         toastId: INDEXING_TOAST_ID,
+        position: "bottom-right",
         autoClose: false,
         closeOnClick: false,
-        closeButton: true,
+        closeButton: ({
+          closeToast,
+        }: {
+          closeToast?: (event: React.MouseEvent<HTMLElement>) => void;
+        }) => <IndexingToastClearButton closeToast={closeToast} />,
         icon: false,
-        className: "no-icon",
+        className: INDEXING_TOAST_CLASS_NAME,
         onClose: clearCurrentChain,
-        style: {
-          width: "fit-content",
-          marginLeft: "auto",
-        },
+        style: INDEXING_TOAST_STYLE,
       });
     }
   }, [
     chainId,
+    indexingProblemCheckTick,
     latestIndexedBlocksByChain,
     pendingIndexedPublishes,
     setAndPersistPendingIndexedPublishes,
+  ]);
+
+  useEffect(() => {
+    const routeChainId = toFiniteChainId(chainId);
+    let timeoutId: number | undefined;
+
+    const dismissProblemToast = () => {
+      if (toast.isActive(INDEXING_PROBLEM_TOAST_ID)) {
+        toast.dismiss(INDEXING_PROBLEM_TOAST_ID);
+      }
+    };
+
+    if (routeChainId == null) {
+      dismissProblemToast();
+      return;
+    }
+
+    const currentChainRecords = pendingIndexedPublishes.filter(
+      (record) => record.chainId === routeChainId,
+    );
+
+    if (currentChainRecords.length === 0) {
+      dismissProblemToast();
+      return;
+    }
+
+    const now = Date.now();
+    const oldestCreatedAt = Math.min(
+      ...currentChainRecords.map((record) => record.createdAt),
+    );
+    const lastPollCompletedAt =
+      indexingPollCompletedAtByChain[routeChainId] ?? 0;
+    const hasPollCompletedAfterOldestRecord =
+      lastPollCompletedAt >= oldestCreatedAt;
+    const currentChainLagBlocks = getIndexingLagBlocks(
+      latestIndexedBlocksByChain[routeChainId],
+      currentChainRecords,
+    );
+    const waitMs = now - oldestCreatedAt;
+    const remainingMs = INDEXING_PROBLEM_DELAY_MS - waitMs;
+
+    if (remainingMs > 0) {
+      dismissProblemToast();
+      timeoutId = window.setTimeout(() => {
+        setIndexingProblemCheckTick((tick) => tick + 1);
+      }, remainingMs);
+      return () => {
+        if (timeoutId != null) {
+          window.clearTimeout(timeoutId);
+        }
+      };
+    }
+
+    if (!hasPollCompletedAfterOldestRecord) {
+      console.info(
+        `${INDEXING_LOG_PREFIX} problem toast waiting for block poll chance`,
+        {
+          routeChainId,
+          oldestCreatedAt,
+          lastPollCompletedAt,
+          currentChainCount: currentChainRecords.length,
+        },
+      );
+      dismissProblemToast();
+      timeoutId = window.setTimeout(() => {
+        setIndexingProblemCheckTick((tick) => tick + 1);
+      }, 1_000);
+      return () => {
+        if (timeoutId != null) {
+          window.clearTimeout(timeoutId);
+        }
+      };
+    }
+
+    if (toast.isActive(INDEXING_PROBLEM_TOAST_ID)) {
+      toast.update(INDEXING_PROBLEM_TOAST_ID, {
+        render: <IndexingProblemToast lagBlocks={currentChainLagBlocks} />,
+        type: "warning",
+        position: "top-right",
+        autoClose: false,
+        icon: false,
+        closeButton: true,
+        closeOnClick: false,
+      });
+      return;
+    }
+
+    toast.warning(<IndexingProblemToast lagBlocks={currentChainLagBlocks} />, {
+      toastId: INDEXING_PROBLEM_TOAST_ID,
+      position: "top-right",
+      autoClose: false,
+      icon: false,
+      closeButton: true,
+      closeOnClick: false,
+    });
+  }, [
+    chainId,
+    indexingPollCompletedAtByChain,
+    indexingProblemCheckTick,
+    latestIndexedBlocksByChain,
+    pendingIndexedPublishes,
   ]);
 
   const value = useMemo(

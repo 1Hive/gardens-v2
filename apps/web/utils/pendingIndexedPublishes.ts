@@ -70,7 +70,19 @@ function isSerializableOptimistic(
     return (
       typeof optimistic.strategyId === "string" &&
       typeof optimistic.memberAddress === "string" &&
-      typeof optimistic.isActivated === "boolean"
+      typeof optimistic.isActivated === "boolean" &&
+      (optimistic.supportSnapshot == null ||
+        (Array.isArray(optimistic.supportSnapshot) &&
+          optimistic.supportSnapshot.every(
+            (item) =>
+              item != null &&
+              typeof item === "object" &&
+              typeof item.proposalNumber === "string" &&
+              typeof item.amount === "string" &&
+              (!("proposalId" in item) ||
+                item.proposalId == null ||
+                typeof item.proposalId === "string"),
+          )))
     );
   }
 

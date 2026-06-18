@@ -124,14 +124,14 @@ export async function generateMetadata({
   };
 
   if (chainConfig == null) {
-    console.error("Unsupported chainId for pool metadata generation.", {
+    console.warn("Unsupported chainId for pool metadata generation.", {
       chainId: resolvedParams.chain,
     });
     return fallbackMetadata;
   }
 
   if (!strategyAddress) {
-    console.error("Missing strategy address for pool metadata generation.", {
+    console.warn("Missing strategy address for pool metadata generation.", {
       strategySlug: resolvedParams.pool,
     });
     return fallbackMetadata;
@@ -147,7 +147,7 @@ export async function generateMetadata({
     );
 
     if (poolResult.error) {
-      console.error("Error fetching pool metadata.", {
+      console.warn("Error fetching pool metadata.", {
         chainId: resolvedParams.chain,
         strategyAddress,
         error: poolResult.error,
@@ -189,7 +189,7 @@ export async function generateMetadata({
       },
     };
   } catch (error) {
-    console.error("Failed to generate pool metadata.", {
+    console.warn("Failed to generate pool metadata.", {
       chainId: resolvedParams.chain,
       strategyAddress,
       error,

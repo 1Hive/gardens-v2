@@ -1,20 +1,22 @@
 import {
   IndexedPublishOptimistic,
   PendingIndexedPublish,
+  PoolGovernanceOptimistic,
   ProposalAllocationOptimistic,
   ProposalCreatedOptimistic,
   ProposalStatusOptimistic,
 } from "@/contexts/pubsub.context";
 
-const STATUS_CODE_BY_NAME: Record<ProposalStatusOptimistic["status"], number> = {
-  inactive: 0,
-  active: 1,
-  paused: 2,
-  cancelled: 3,
-  executed: 4,
-  disputed: 5,
-  rejected: 6,
-};
+const STATUS_CODE_BY_NAME: Record<ProposalStatusOptimistic["status"], number> =
+  {
+    inactive: 0,
+    active: 1,
+    paused: 2,
+    cancelled: 3,
+    executed: 4,
+    disputed: 5,
+    rejected: 6,
+  };
 
 type ProposalProjectorContext = {
   strategyId?: string | null;
@@ -89,7 +91,9 @@ export const getPendingProposalOptimistics = <
   records: PendingIndexedPublish[],
   kind: TKind,
   context: Pick<ProposalProjectorContext, "strategyId" | "allocator">,
-): PendingWithOptimistic<Extract<IndexedPublishOptimistic, { kind: TKind }>>[] =>
+): PendingWithOptimistic<
+  Extract<IndexedPublishOptimistic, { kind: TKind }>
+>[] =>
   records
     .filter((record) => record.optimistic?.kind === kind)
     .filter((record) => {
@@ -131,22 +135,24 @@ export const hasPendingProposalAllocation = (
   records: PendingIndexedPublish[],
   context: Pick<ProposalProjectorContext, "strategyId" | "allocator">,
 ) =>
-  getPendingProposalOptimistics(records, "proposal-allocation", context).length >
-  0;
+  getPendingProposalOptimistics(records, "proposal-allocation", context)
+    .length > 0;
 
 export const getOptimisticAllocationBaseline = (
   records: PendingIndexedPublish[],
   context: Pick<ProposalProjectorContext, "strategyId" | "allocator">,
 ) => {
   const baseline: Record<string, bigint> = {};
-  getPendingProposalOptimistics(records, "proposal-allocation", context).forEach(
-    (record) => {
-      const optimistic = record.optimistic as ProposalAllocationOptimistic;
-      optimistic.targets.forEach((target) => {
-        baseline[target.proposalNumber] = BigInt(target.amount);
-      });
-    },
-  );
+  getPendingProposalOptimistics(
+    records,
+    "proposal-allocation",
+    context,
+  ).forEach((record) => {
+    const optimistic = record.optimistic as ProposalAllocationOptimistic;
+    optimistic.targets.forEach((target) => {
+      baseline[target.proposalNumber] = BigInt(target.amount);
+    });
+  });
   return baseline;
 };
 
@@ -173,9 +179,10 @@ function patchValue(
   value: unknown,
   records: PendingIndexedPublish[],
   context: ProposalProjectorContext,
+  key?: string,
 ): unknown {
   if (Array.isArray(value)) {
-    return patchArray(value, records, context);
+    return patchArray(value, records, context, key);
   }
 
   if (!isObject(value)) {
@@ -184,7 +191,7 @@ function patchValue(
 
   const patchedChildren: StringRecord = {};
   Object.entries(value).forEach(([key, child]) => {
-    patchedChildren[key] = patchValue(child, records, context);
+    patchedChildren[key] = patchValue(child, records, context, key);
   });
 
   return patchObject(patchedChildren, records, context);
@@ -194,12 +201,14 @@ function patchArray(
   value: unknown[],
   records: PendingIndexedPublish[],
   context: ProposalProjectorContext,
+  key?: string,
 ) {
   let next = value.map((item) => patchValue(item, records, context));
 
   records.forEach((record) => {
     if (record.optimistic?.kind !== "proposal-created") return;
     const optimistic = record.optimistic;
+    if (key !== "proposals") return;
     if (!isProposalArray(next, optimistic.strategyId)) return;
     if (
       next.some(
@@ -211,7 +220,10 @@ function patchArray(
     ) {
       return;
     }
-    next = [createMinimalProposal(optimistic), ...next];
+    next = [
+      patchValue(createMinimalProposal(optimistic), records, context),
+      ...next,
+    ];
   });
 
   return next;
@@ -225,13 +237,107 @@ function patchObject(
   let next = { ...value };
 
   records.forEach((record) => {
+    if (record.optimistic?.kind === "proposal-created") {
+      next = patchCreatedProposalParentStrategy(next, record.optimistic);
+    }
     if (record.optimistic?.kind === "proposal-status") {
       next = patchProposalStatus(next, record.optimistic, context);
+    }
+    if (record.optimistic?.kind === "pool-governance") {
+      next = patchPoolGovernanceDeactivation(next, record.optimistic, context);
     }
     if (record.optimistic?.kind === "proposal-allocation") {
       next = patchProposalAllocation(next, record.optimistic, context);
     }
   });
+
+  return next;
+}
+
+function patchCreatedProposalParentStrategy(
+  value: StringRecord,
+  optimistic: ProposalCreatedOptimistic,
+) {
+  if (
+    !Array.isArray(value.proposals) ||
+    normalize(value.id) !== normalize(optimistic.strategyId)
+  ) {
+    return value;
+  }
+
+  return {
+    ...value,
+    proposals: value.proposals.map((proposal) => {
+      if (!isObject(proposal) || !matchesProposal(optimistic, proposal)) {
+        return proposal;
+      }
+
+      return {
+        ...proposal,
+        strategy: {
+          ...(isObject(proposal.strategy) ? proposal.strategy : {}),
+          id: optimistic.strategyId,
+          maxCVSupply:
+            proposal.strategy && isObject(proposal.strategy) ?
+              proposal.strategy.maxCVSupply ?? value.maxCVSupply ?? "0"
+            : value.maxCVSupply ?? "0",
+          totalEffectiveActivePoints:
+            proposal.strategy && isObject(proposal.strategy) ?
+              proposal.strategy.totalEffectiveActivePoints ??
+              value.totalEffectiveActivePoints ??
+              "0"
+            : value.totalEffectiveActivePoints ?? "0",
+        },
+      };
+    }),
+  };
+}
+
+function patchPoolGovernanceDeactivation(
+  value: StringRecord,
+  optimistic: PoolGovernanceOptimistic,
+  context: ProposalProjectorContext,
+) {
+  if (optimistic.isActivated) return value;
+  if (normalize(optimistic.strategyId) !== normalize(context.strategyId)) {
+    return value;
+  }
+
+  let next = value;
+
+  if (hasProposalStakeShape(value)) {
+    const snapshot = optimistic.supportSnapshot?.find((candidate) =>
+      matchesProposal(candidate, value),
+    );
+    if (snapshot) {
+      next = {
+        ...next,
+        stakedAmount: subtractDecimalStrings(value.stakedAmount, snapshot.amount),
+      };
+    }
+  }
+
+  if (
+    Array.isArray(value.stakes) &&
+    normalize(value.id) === normalize(optimistic.memberAddress)
+  ) {
+    next = {
+      ...next,
+      stakes: removeMemberStakesForStrategy(value.stakes, optimistic.strategyId),
+    };
+  }
+
+  if (
+    hasMemberStrategyShape(value) &&
+    normalize(context.allocator) === normalize(optimistic.memberAddress) &&
+    (!isObject(value.member) ||
+      normalize(value.member.id) === normalize(optimistic.memberAddress))
+  ) {
+    next = {
+      ...next,
+      totalStakedPoints: "0",
+    };
+  }
 
   return next;
 }
@@ -314,6 +420,53 @@ function patchProposalAllocation(
     };
   }
 
+  if (
+    Array.isArray(value.stakes) &&
+    (!context.allocator || normalize(value.id) === normalize(context.allocator))
+  ) {
+    next = {
+      ...next,
+      stakes: patchMemberAllocationStakes(value.stakes, optimistic, context),
+    };
+  }
+
+  return next;
+}
+
+function patchMemberAllocationStakes(
+  value: unknown[],
+  optimistic: ProposalAllocationOptimistic,
+  context: ProposalProjectorContext,
+) {
+  let next = value;
+
+  optimistic.targets.forEach((target) => {
+    const targetAmount = toBigInt(target.amount);
+    let hasTarget = false;
+    next = next.map((item) => {
+      if (
+        isObject(item) &&
+        isObject(item.proposal) &&
+        matchesProposal(target, item.proposal) &&
+        matchesStrategy(optimistic.strategyId, item.proposal, context)
+      ) {
+        hasTarget = true;
+        return {
+          ...item,
+          amount: target.amount,
+        };
+      }
+
+      return item;
+    });
+
+    if (hasTarget || targetAmount === 0n) {
+      return;
+    }
+
+    next = [createMinimalMemberStake(target, optimistic), ...next];
+  });
+
   return next;
 }
 
@@ -335,6 +488,34 @@ function addDecimalStrings(value: unknown, delta: string) {
   } catch {
     return value;
   }
+}
+
+function subtractDecimalStrings(value: unknown, amount: string) {
+  try {
+    const next = BigInt(value?.toString() ?? "0") - BigInt(amount);
+    return (next > 0n ? next : 0n).toString();
+  } catch {
+    return value;
+  }
+}
+
+function toBigInt(value: unknown) {
+  try {
+    return BigInt(value?.toString() ?? "0");
+  } catch {
+    return 0n;
+  }
+}
+
+function removeMemberStakesForStrategy(value: unknown[], strategyId: string) {
+  return value.filter((item) => {
+    if (!isObject(item) || !isObject(item.proposal)) return true;
+    const proposal = item.proposal;
+    const proposalStrategyId =
+      isObject(proposal.strategy) ? proposal.strategy.id : undefined;
+    if (proposalStrategyId == null) return false;
+    return normalize(proposalStrategyId) !== normalize(strategyId);
+  });
 }
 
 function isProposalArray(value: unknown[], strategyId: string) {
@@ -371,5 +552,27 @@ function createMinimalProposal(optimistic: ProposalCreatedOptimistic) {
       id: optimistic.strategyId,
     },
     proposalStream: null,
+  };
+}
+
+function createMinimalMemberStake(
+  target: ProposalAllocationOptimistic["targets"][number],
+  optimistic: ProposalAllocationOptimistic,
+) {
+  const proposalId =
+    target.proposalId ??
+    `${optimistic.strategyId.toLowerCase()}-${target.proposalNumber}`;
+
+  return {
+    id: `${optimistic.allocator.toLowerCase()}-${proposalId.toLowerCase()}`,
+    amount: target.amount,
+    proposal: {
+      id: proposalId,
+      proposalNumber: Number(target.proposalNumber),
+      proposalStatus: STATUS_CODE_BY_NAME.active,
+      strategy: {
+        id: optimistic.strategyId,
+      },
+    },
   };
 }

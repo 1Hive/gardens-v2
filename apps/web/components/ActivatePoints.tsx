@@ -23,6 +23,11 @@ type ActiveMemberProps = {
   handleTxSuccess?: () => void;
   activate?: boolean;
   memberPower?: bigint | null;
+  supportSnapshot?: {
+    proposalId?: string;
+    proposalNumber: string;
+    amount: string;
+  }[];
 };
 
 export function ActivatePoints({
@@ -32,6 +37,7 @@ export function ActivatePoints({
   handleTxSuccess = () => {},
   activate = true,
   memberPower,
+  supportSnapshot,
 }: ActiveMemberProps) {
   const { address: connectedAccount } = useAccount();
   const { setOpen: setConnectModalOpen } = useModal();
@@ -72,7 +78,10 @@ export function ActivatePoints({
               strategyId: strategy.id,
               memberAddress: connectedAccount,
               isActivated: true,
-              activatedPoints: memberPower?.toString(),
+              activatedPoints:
+                memberPower != null && memberPower > 0n ?
+                  memberPower.toString()
+                : undefined,
             },
           }
         : undefined,
@@ -112,6 +121,7 @@ export function ActivatePoints({
               memberAddress: connectedAccount,
               isActivated: false,
               activatedPoints: "0",
+              supportSnapshot,
             },
           }
         : undefined,

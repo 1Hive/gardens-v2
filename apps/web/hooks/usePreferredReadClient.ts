@@ -18,7 +18,8 @@ export function usePreferredReadClient(chainId?: number) {
     resolvedChainId != null &&
     walletChainId === resolvedChainId &&
     !!connector &&
-    connector.id !== "walletConnect";
+    connector.id !== "walletConnect" &&
+    connector.id !== "mock";
   const [preferredClient, setPreferredClient] = useState<PublicClient>(envClient);
 
   useEffect(() => {

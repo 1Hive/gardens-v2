@@ -38,6 +38,30 @@ describe("pending indexed publish normalization", () => {
     );
   });
 
+  it("keeps pool governance support snapshots for pending deactivations", () => {
+    const record = {
+      ...baseStoredRecord,
+      optimistic: {
+        kind: "pool-governance",
+        strategyId: "0xstrategy",
+        memberAddress: "0xmember",
+        isActivated: false,
+        activatedPoints: "0",
+        supportSnapshot: [
+          {
+            proposalId: "0xstrategy-1",
+            proposalNumber: "1",
+            amount: "100",
+          },
+        ],
+      },
+    };
+
+    expect(normalizePendingIndexedPublishRecord(record)?.optimistic).toEqual(
+      record.optimistic,
+    );
+  });
+
   it("drops malformed optimistic metadata without dropping the record", () => {
     const normalized = normalizePendingIndexedPublishRecord({
       ...baseStoredRecord,

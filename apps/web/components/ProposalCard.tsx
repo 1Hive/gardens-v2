@@ -282,6 +282,10 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
       PoolTypes[strategyConfig.proposalType] === "signaling";
     const isStreamingType =
       PoolTypes[strategyConfig.proposalType] === "streaming";
+    const shouldShowOnlyCreator =
+      isSignalingType ||
+      !proposalData.beneficiary ||
+      submitter === proposalData.beneficiary;
     const [escrowBalanceSnapshotBn, setEscrowBalanceSnapshotBn] = useState<
       bigint | null
     >(null);
@@ -576,7 +580,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                 </div>
                 <div className="flex  justify-between items-center">
                   <div className="flex sm:items-center flex-col items-start sm:flex-row gap-1">
-                    {submitter === proposalData.beneficiary ?
+                    {shouldShowOnlyCreator ?
                       <div
                         className="flex items-center gap-1"
                         onClick={(e) => {

@@ -41,6 +41,11 @@ export type PoolGovernanceProps = {
   isMemberCommunity: boolean;
   memberActivatedStrategy: boolean;
   membersStrategyData: getMembersStrategyQuery | undefined;
+  supportSnapshot?: {
+    proposalId?: string;
+    proposalNumber: string;
+    amount: string;
+  }[];
 };
 
 export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
@@ -53,6 +58,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   isMemberCommunity,
   memberActivatedStrategy,
   membersStrategyData,
+  supportSnapshot,
 }) => {
   const { address } = useAccount();
   const showVotingPowerBox =
@@ -183,6 +189,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
                     handleTxSuccess={() => setTriggerSybilCheckModalClose(true)}
                     memberPower={memberPower}
                     activate={false}
+                    supportSnapshot={supportSnapshot}
                   />
                 </CheckSybil>
               </>
@@ -203,6 +210,8 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
             <PoolGovernanceDetails
               membersStrategyData={membersStrategyData}
               totalEffectiveActivePoints={strategy.totalEffectiveActivePoints}
+              currentMemberAddress={address}
+              currentMemberActivatedStrategy={memberActivatedStrategy}
               openGovernanceDetailsModal={openGovernanceDetailsModal}
               setOpenGovernanceDetailsModal={setOpenGovernanceDetailsModal}
             />
@@ -218,15 +227,34 @@ type MemberColumn = Column<getMembersStrategyQuery["memberStrategies"][0]>;
 const PoolGovernanceDetails: React.FC<{
   membersStrategyData: getMembersStrategyQuery | undefined;
   totalEffectiveActivePoints: bigint | number | string;
+  currentMemberAddress?: Address;
+  currentMemberActivatedStrategy?: boolean;
   openGovernanceDetailsModal: boolean;
   setOpenGovernanceDetailsModal: (open: boolean) => void;
 }> = ({
   membersStrategyData,
   totalEffectiveActivePoints,
+  currentMemberAddress,
+  currentMemberActivatedStrategy,
   openGovernanceDetailsModal,
   setOpenGovernanceDetailsModal,
 }) => {
   const totalPoolActivePoints = BigInt(totalEffectiveActivePoints ?? 0);
+  const activeMemberStrategies =
+    membersStrategyData?.memberStrategies.filter(
+      (memberStrategy) => {
+        if (BigInt(memberStrategy.activatedPoints) <= 0n) return false;
+        if (currentMemberActivatedStrategy !== false || !currentMemberAddress) {
+          return true;
+        }
+
+        const memberAddress =
+          memberStrategy.member.memberCommunity?.[0]?.memberAddress;
+        return (
+          memberAddress?.toLowerCase() !== currentMemberAddress.toLowerCase()
+        );
+      },
+    ) ?? [];
   const columns: MemberColumn[] = [
     {
       header: "Member",
@@ -292,8 +320,9 @@ const PoolGovernanceDetails: React.FC<{
       setOpenModal={setOpenGovernanceDetailsModal}
       openModal={openGovernanceDetailsModal}
       description="A list of all the community members and their activity in this pool."
-      data={membersStrategyData?.memberStrategies ?? []}
+      data={activeMemberStrategies}
       columns={columns}
+      emptyMessage="No members activated"
     />
   );
 };

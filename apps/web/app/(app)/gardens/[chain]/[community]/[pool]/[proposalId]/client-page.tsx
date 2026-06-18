@@ -16,6 +16,8 @@ import {
   getProposalDataQuery,
   getProposalSupportersQuery,
   getProposalSupportersDocument,
+  getPoolDataDocument,
+  getPoolDataQuery,
   isMemberDocument,
   isMemberQuery,
   getMembersStrategyDocument,
@@ -119,6 +121,8 @@ const getSupporterVotingPowerUsedPct = (supporter: ProposalSupporter) => {
       )
     : undefined;
 };
+
+const normalizeEntityId = (value: unknown) => value?.toString().toLowerCase();
 
 const getSupporterPoolVotingPower = (
   supporter: ProposalSupporter,
@@ -373,6 +377,7 @@ export default function ClientPage({ params }: ClientPageProps) {
   const router = useRouter();
 
   const { address } = useAccount();
+  const { publishAfterIndexed, pendingIndexedPublishes } = usePubSubContext();
   const routerSearchParams = useSearchParams();
 
   const collectedParams = useCollectQueryParams();
@@ -448,6 +453,31 @@ export default function ClientPage({ params }: ClientPageProps) {
       : undefined,
     optimistic: proposalOptimistic,
   });
+  const optimisticProposalCreation = getLatestProposalCreation(
+    pendingIndexedPublishes,
+    {
+      strategyId: strategyAddress,
+      proposalId: proposalEntityId,
+      proposalNumber,
+    },
+  );
+
+  const { data: poolData } = useSubgraphQuery<getPoolDataQuery>({
+    query: getPoolDataDocument,
+    variables: {
+      strategyId: strategyAddress,
+    },
+    enabled: optimisticProposalCreation != null && data?.cvproposal == null,
+    changeScope:
+      strategyAddress != null ?
+        {
+          topic: "proposal",
+          containerId: strategyAddress,
+          type: "update",
+        }
+      : undefined,
+    optimistic: proposalOptimistic,
+  });
 
   //query to get proposal supporters
   const { data: supportersData } = useSubgraphQuery<getProposalSupportersQuery>(
@@ -493,6 +523,16 @@ export default function ClientPage({ params }: ClientPageProps) {
   //
 
   type ProposalData = NonNullable<getProposalDataQuery["cvproposal"]>;
+  const proposalDataFromPool =
+    poolData?.cvstrategies[0]?.proposals.find((proposal) => {
+      const proposalIdMatches =
+        normalizeEntityId(proposal.id) === normalizeEntityId(proposalEntityId);
+      const proposalNumberMatches =
+        normalizeEntityId(proposal.proposalNumber) ===
+        normalizeEntityId(proposalNumber);
+      return proposalIdMatches || proposalNumberMatches;
+    });
+  const poolStrategyData = poolData?.cvstrategies[0];
   const proposalData:
     | (ProposalData & {
         registryCommunity?: getProposalDataQuery["registryCommunity"];
@@ -503,6 +543,26 @@ export default function ClientPage({ params }: ClientPageProps) {
         ...data.cvproposal,
         registryCommunity: data?.registryCommunity,
       }
+    : proposalDataFromPool && poolStrategyData ?
+      ({
+        ...proposalDataFromPool,
+        strategy: {
+          ...poolStrategyData,
+          id: poolStrategyData.id,
+          maxCVSupply:
+            proposalDataFromPool.strategy?.maxCVSupply ??
+            poolStrategyData.maxCVSupply,
+          totalEffectiveActivePoints:
+            proposalDataFromPool.strategy?.totalEffectiveActivePoints ??
+            poolStrategyData.totalEffectiveActivePoints,
+        },
+        registryCommunity: poolStrategyData.registryCommunity,
+        arbitrableConfig: poolData?.arbitrableConfigs[0] ?? null,
+        updatedAt: null,
+        version: null,
+      } as ProposalData & {
+        registryCommunity?: getProposalDataQuery["registryCommunity"];
+      })
     : undefined;
   const proposalSupporters = supportersData?.members ?? [];
   const activatedPointsByMember = useMemo(() => {
@@ -562,15 +622,6 @@ export default function ClientPage({ params }: ClientPageProps) {
 
   const poolTokenAddr = proposalData?.strategy?.token as Address;
 
-  const { publishAfterIndexed, pendingIndexedPublishes } = usePubSubContext();
-  const optimisticProposalCreation = getLatestProposalCreation(
-    pendingIndexedPublishes,
-    {
-      strategyId: strategyAddress,
-      proposalId: proposalEntityId,
-      proposalNumber,
-    },
-  );
   const {
     data: onchainMetadataHash,
     isLoading: isOnchainMetadataHashLoading,
@@ -653,7 +704,6 @@ export default function ClientPage({ params }: ClientPageProps) {
     : undefined;
   const pendingProposalDisplayTitle =
     metadata?.title ?? ipfsResult?.title ?? pendingProposalTitle;
-  const pendingProposalDescription = ipfsResult?.description;
 
   const proposalType = proposalData?.strategy?.config?.proposalType;
   const isSignalingType = PoolTypes[proposalType] === "signaling";
@@ -1180,9 +1230,6 @@ export default function ClientPage({ params }: ClientPageProps) {
             <p>
               {`Waiting for "${pendingProposalDisplayTitle ?? "newly created proposal"}" to be indexed...`}
             </p>
-            {pendingProposalDescription && (
-              <MarkdownWrapper source={pendingProposalDescription} />
-            )}
           </div>
         </InfoBox>
       </div>

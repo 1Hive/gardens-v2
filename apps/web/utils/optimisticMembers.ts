@@ -39,6 +39,73 @@ export const createMemberOptimisticProjector =
     return patchValue(data, memberRecords, context) as TData | undefined;
   };
 
+export const getPendingPoolGovernanceActivation = (
+  records: PendingIndexedPublish[],
+  context: Pick<MemberProjectorContext, "strategyId" | "memberAddress"> & {
+    chainId?: number | string | null;
+  },
+) => {
+  const latestGovernanceRecord = records
+    .filter((record) => {
+      const optimistic = record.optimistic;
+      if (optimistic?.kind !== "pool-governance") return false;
+      if (!isSame(optimistic.strategyId, context.strategyId)) return false;
+      if (
+        context.memberAddress &&
+        !isSame(optimistic.memberAddress, context.memberAddress)
+      ) {
+        return false;
+      }
+      if (context.chainId != null && !isSame(record.chainId, context.chainId)) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => b.createdAt - a.createdAt)[0];
+
+  return latestGovernanceRecord?.optimistic?.kind === "pool-governance" ?
+      latestGovernanceRecord.optimistic.isActivated
+    : undefined;
+};
+
+export const getPendingPoolGovernanceActivatedPoints = (
+  records: PendingIndexedPublish[],
+  context: Pick<MemberProjectorContext, "strategyId" | "memberAddress"> & {
+    chainId?: number | string | null;
+  },
+) => {
+  const latestGovernanceRecord = records
+    .filter((record) => {
+      const optimistic = record.optimistic;
+      if (optimistic?.kind !== "pool-governance") return false;
+      if (!isSame(optimistic.strategyId, context.strategyId)) return false;
+      if (
+        context.memberAddress &&
+        !isSame(optimistic.memberAddress, context.memberAddress)
+      ) {
+        return false;
+      }
+      if (context.chainId != null && !isSame(record.chainId, context.chainId)) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => b.createdAt - a.createdAt)[0];
+
+  if (latestGovernanceRecord?.optimistic?.kind !== "pool-governance") {
+    return undefined;
+  }
+
+  const optimistic = latestGovernanceRecord.optimistic;
+  if (!optimistic.isActivated) return 0n;
+  try {
+    const activatedPoints = BigInt(optimistic.activatedPoints ?? 0);
+    return activatedPoints > 0n ? activatedPoints : 1n;
+  } catch {
+    return 1n;
+  }
+};
+
 function matchesContext(
   optimistic: PendingIndexedPublish["optimistic"],
   context: MemberProjectorContext,
@@ -275,6 +342,17 @@ function patchMemberStrategiesArray(
   optimistic: PoolGovernanceOptimistic,
   context: MemberProjectorContext,
 ) {
+  const withoutMember = value.filter(
+    (item) =>
+      !isObject(item) ||
+      !isObject(item.member) ||
+      !isSame(item.member.id, optimistic.memberAddress),
+  );
+
+  if (!optimistic.isActivated) {
+    return withoutMember;
+  }
+
   const found = value.some(
     (item) =>
       isObject(item) &&
@@ -288,12 +366,12 @@ function patchMemberStrategiesArray(
     : item,
   );
 
-  if (found || !optimistic.isActivated || !context.strategyId) return patched;
+  if (found || !context.strategyId) return patched;
 
   return [
     {
       id: `${optimistic.memberAddress.toLowerCase()}-${context.strategyId.toLowerCase()}`,
-      activatedPoints: optimistic.activatedPoints ?? "1",
+      activatedPoints: getOptimisticActivatedPoints(optimistic),
       totalStakedPoints: "0",
       member: {
         id: optimistic.memberAddress.toLowerCase(),
@@ -341,11 +419,20 @@ function patchMemberStrategy(
     return value;
   }
 
-  const activatedPoints =
-    optimistic.isActivated ? optimistic.activatedPoints ?? "1" : "0";
+  const activatedPoints = getOptimisticActivatedPoints(optimistic);
 
   return {
     ...value,
     activatedPoints,
   };
+}
+
+function getOptimisticActivatedPoints(optimistic: PoolGovernanceOptimistic) {
+  if (!optimistic.isActivated) return "0";
+  try {
+    const activatedPoints = BigInt(optimistic.activatedPoints ?? 0);
+    return activatedPoints > 0n ? activatedPoints.toString() : "1";
+  } catch {
+    return "1";
+  }
 }

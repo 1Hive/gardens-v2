@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { PendingIndexedPublish } from "@/contexts/pubsub.context";
-import { createMemberOptimisticProjector } from "./optimisticMembers";
+import {
+  createMemberOptimisticProjector,
+  getPendingPoolGovernanceActivatedPoints,
+  getPendingPoolGovernanceActivation,
+} from "./optimisticMembers";
 
 const baseRecord = (
   overrides: Partial<PendingIndexedPublish>,
@@ -206,6 +210,159 @@ describe("optimistic member projector", () => {
     ]);
 
     expect(deactivated?.memberStrategy?.activatedPoints).toBe("0");
-    expect(deactivated?.memberStrategies[0].activatedPoints).toBe("0");
+    expect(deactivated?.memberStrategies).toEqual([]);
+  });
+
+  it("treats active governance optimism with zero points as active", () => {
+    const apply = createMemberOptimisticProjector({
+      strategyId: "0xstrategy",
+      memberAddress: "0xmember",
+    });
+
+    const result: any = apply(
+      {
+        memberStrategy: null,
+        memberStrategies: [],
+      },
+      [
+        baseRecord({
+          optimistic: {
+            kind: "pool-governance",
+            strategyId: "0xstrategy",
+            memberAddress: "0xmember",
+            isActivated: true,
+            activatedPoints: "0",
+          },
+        }),
+      ],
+    );
+
+    expect(result?.memberStrategy?.activatedPoints).toBe("1");
+    expect(result?.memberStrategies[0].activatedPoints).toBe("1");
+  });
+
+  it("returns the latest pending pool governance activation for the matching chain", () => {
+    const records = [
+      baseRecord({
+        chainId: 42220,
+        createdAt: 1,
+        optimistic: {
+          kind: "pool-governance",
+          strategyId: "0xstrategy",
+          memberAddress: "0xmember",
+          isActivated: false,
+          activatedPoints: "0",
+        },
+      }),
+      baseRecord({
+        chainId: 42220,
+        createdAt: 2,
+        optimistic: {
+          kind: "pool-governance",
+          strategyId: "0xstrategy",
+          memberAddress: "0xmember",
+          isActivated: true,
+        },
+      }),
+      baseRecord({
+        chainId: 42220,
+        createdAt: 3,
+        optimistic: {
+          kind: "pool-governance",
+          strategyId: "0xstrategy",
+          memberAddress: "0xmember",
+          isActivated: false,
+          activatedPoints: "0",
+        },
+      }),
+      baseRecord({
+        chainId: 1,
+        createdAt: 4,
+        optimistic: {
+          kind: "pool-governance",
+          strategyId: "0xstrategy",
+          memberAddress: "0xmember",
+          isActivated: true,
+        },
+      }),
+    ];
+
+    expect(
+      getPendingPoolGovernanceActivation(records, {
+        chainId: 42220,
+        strategyId: "0xstrategy",
+        memberAddress: "0xmember",
+      }),
+    ).toBe(false);
+    expect(
+      getPendingPoolGovernanceActivation(records, {
+        chainId: 1,
+        strategyId: "0xstrategy",
+        memberAddress: "0xmember",
+      }),
+    ).toBe(true);
+    expect(
+      getPendingPoolGovernanceActivation(records, {
+        chainId: 42220,
+        strategyId: "0xother",
+        memberAddress: "0xmember",
+      }),
+    ).toBeUndefined();
+  });
+
+  it("returns optimistic activated points with a minimum fallback for pending activation", () => {
+    const baseContext = {
+      chainId: 42220,
+      strategyId: "0xstrategy",
+      memberAddress: "0xmember",
+    };
+
+    expect(
+      getPendingPoolGovernanceActivatedPoints(
+        [
+          baseRecord({
+            optimistic: {
+              kind: "pool-governance",
+              strategyId: "0xstrategy",
+              memberAddress: "0xmember",
+              isActivated: true,
+            },
+          }),
+        ],
+        baseContext,
+      ),
+    ).toBe(1n);
+    expect(
+      getPendingPoolGovernanceActivatedPoints(
+        [
+          baseRecord({
+            optimistic: {
+              kind: "pool-governance",
+              strategyId: "0xstrategy",
+              memberAddress: "0xmember",
+              isActivated: true,
+              activatedPoints: "77",
+            },
+          }),
+        ],
+        baseContext,
+      ),
+    ).toBe(77n);
+    expect(
+      getPendingPoolGovernanceActivatedPoints(
+        [
+          baseRecord({
+            optimistic: {
+              kind: "pool-governance",
+              strategyId: "0xstrategy",
+              memberAddress: "0xmember",
+              isActivated: false,
+              activatedPoints: "0",
+            },
+          }),
+        ],
+        baseContext,
+      ),
+    ).toBe(0n);
   });
 });
