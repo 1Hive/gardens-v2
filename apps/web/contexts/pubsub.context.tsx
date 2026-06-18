@@ -577,6 +577,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   const isMobileViewport = useMediaQuery("(max-width: 767px)");
   const skipPublished = useFlag("skipPublished");
   const indexingPollInFlight = useRef(false);
+  const initialIndexedBlockRequestByChain = useRef<Record<number, boolean>>({});
   const isProgrammaticIndexingToastDismiss = useRef(false);
   const shownIndexingProblemEpisodeByChain = useRef<Record<number, string>>({});
   const [indexingProblemCheckTick, setIndexingProblemCheckTick] = useState(0);
@@ -812,6 +813,133 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
     [chainId, publish, setAndPersistPendingIndexedPublishes],
   );
 
+  const fetchLatestIndexedBlockForChain = useCallback(
+    async (targetChainId: number) => {
+      const config = getConfigByChain(targetChainId);
+      if (!config?.subgraphUrl) {
+        console.warn(`${INDEXING_LOG_PREFIX} missing subgraph config`, {
+          chainId: targetChainId,
+        });
+        return null;
+      }
+
+      console.debug(`${INDEXING_LOG_PREFIX} querying latest indexed block`, {
+        chainId: targetChainId,
+        subgraphUrl:
+          skipPublished || !config.publishedSubgraphUrl ?
+            config.subgraphUrl
+          : config.publishedSubgraphUrl,
+        skipPublished,
+      });
+      const result = await queryByChain<LatestIndexedBlockResult>(
+        config,
+        LATEST_INDEXED_BLOCK_QUERY,
+        {},
+        undefined,
+        skipPublished,
+      );
+      const resolvedResult =
+        result.error && !skipPublished && config.publishedSubgraphUrl ?
+          await queryByChain<LatestIndexedBlockResult>(
+            config,
+            LATEST_INDEXED_BLOCK_QUERY,
+            {},
+            undefined,
+            true,
+          )
+        : result;
+
+      if (result.error && resolvedResult !== result) {
+        console.warn(
+          `${INDEXING_LOG_PREFIX} latest indexed block query failed through published subgraph, retried hosted`,
+          {
+            chainId: targetChainId,
+            error: result.error,
+          },
+        );
+      }
+
+      if (resolvedResult.error) {
+        console.warn(`${INDEXING_LOG_PREFIX} latest indexed block query failed`, {
+          chainId: targetChainId,
+          error: resolvedResult.error,
+        });
+        return null;
+      }
+
+      if (resolvedResult.data?._meta?.hasIndexingErrors) {
+        console.warn(`${INDEXING_LOG_PREFIX} subgraph reports errors`, {
+          chainId: targetChainId,
+        });
+      }
+
+      const indexedBlock = resolvedResult.data?._meta?.block?.number;
+      if (indexedBlock == null || Number.isNaN(Number(indexedBlock))) {
+        console.warn(
+          `${INDEXING_LOG_PREFIX} latest indexed block missing from response`,
+          {
+            chainId: targetChainId,
+            data: resolvedResult.data,
+          },
+        );
+        return null;
+      }
+
+      console.info(`${INDEXING_LOG_PREFIX} latest indexed block`, {
+        chainId: targetChainId,
+        indexedBlock: indexedBlock.toString(),
+        hasIndexingErrors: resolvedResult.data?._meta?.hasIndexingErrors,
+      });
+      return BigInt(indexedBlock);
+    },
+    [skipPublished],
+  );
+
+  useEffect(() => {
+    const routeChainId = toFiniteChainId(chainId);
+    if (routeChainId == null) {
+      return;
+    }
+
+    const hasPendingRouteTransactions = pendingIndexedPublishes.some(
+      (record) => record.chainId === routeChainId,
+    );
+    if (hasPendingRouteTransactions) {
+      return;
+    }
+
+    if (initialIndexedBlockRequestByChain.current[routeChainId]) {
+      return;
+    }
+
+    initialIndexedBlockRequestByChain.current[routeChainId] = true;
+
+    let cancelled = false;
+    void fetchLatestIndexedBlockForChain(routeChainId)
+      .then((indexedBlock) => {
+        if (cancelled || indexedBlock == null) {
+          return;
+        }
+
+        setLatestIndexedBlocksByChain((current) => ({
+          ...current,
+          [routeChainId]: indexedBlock.toString(),
+        }));
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIndexingPollCompletedAtByChain((current) => ({
+            ...current,
+            [routeChainId]: Date.now(),
+          }));
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [chainId, fetchLatestIndexedBlockForChain, pendingIndexedPublishes]);
+
   useEffect(() => {
     if (pendingIndexedPublishes.length === 0) {
       console.debug(`${INDEXING_LOG_PREFIX} polling idle, no pending records`);
@@ -861,87 +989,10 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
 
         await Promise.all(
           pendingChainIds.map(async (pendingChainId) => {
-            const config = getConfigByChain(pendingChainId);
-            if (!config?.subgraphUrl) {
-              console.warn(`${INDEXING_LOG_PREFIX} missing subgraph config`, {
-                chainId: pendingChainId,
-              });
-              return;
-            }
-
-            console.debug(
-              `${INDEXING_LOG_PREFIX} querying latest indexed block`,
-              {
-                chainId: pendingChainId,
-                subgraphUrl:
-                  skipPublished || !config.publishedSubgraphUrl ?
-                    config.subgraphUrl
-                  : config.publishedSubgraphUrl,
-                skipPublished,
-              },
-            );
-            const result = await queryByChain<LatestIndexedBlockResult>(
-              config,
-              LATEST_INDEXED_BLOCK_QUERY,
-              {},
-              undefined,
-              skipPublished,
-            );
-            const resolvedResult =
-              result.error && !skipPublished && config.publishedSubgraphUrl ?
-                await queryByChain<LatestIndexedBlockResult>(
-                  config,
-                  LATEST_INDEXED_BLOCK_QUERY,
-                  {},
-                  undefined,
-                  true,
-                )
-              : result;
-
-            if (result.error && resolvedResult !== result) {
-              console.warn(
-                `${INDEXING_LOG_PREFIX} latest indexed block query failed through published subgraph, retried hosted`,
-                {
-                  chainId: pendingChainId,
-                  error: result.error,
-                },
-              );
-            }
-
-            if (resolvedResult.error) {
-              console.warn(
-                `${INDEXING_LOG_PREFIX} latest indexed block query failed`,
-                {
-                  chainId: pendingChainId,
-                  error: resolvedResult.error,
-                },
-              );
-              return;
-            }
-
-            if (resolvedResult.data?._meta?.hasIndexingErrors) {
-              console.warn(`${INDEXING_LOG_PREFIX} subgraph reports errors`, {
-                chainId: pendingChainId,
-              });
-            }
-
-            const indexedBlock = resolvedResult.data?._meta?.block?.number;
-            if (indexedBlock != null && !Number.isNaN(Number(indexedBlock))) {
-              indexedBlocks.set(pendingChainId, BigInt(indexedBlock));
-              console.info(`${INDEXING_LOG_PREFIX} latest indexed block`, {
-                chainId: pendingChainId,
-                indexedBlock: indexedBlock.toString(),
-                hasIndexingErrors:
-                  resolvedResult.data?._meta?.hasIndexingErrors,
-              });
-            } else {
-              console.warn(
-                `${INDEXING_LOG_PREFIX} latest indexed block missing from response`,
-                {
-                  chainId: pendingChainId,
-                  data: resolvedResult.data,
-                },
-              );
+            const indexedBlock =
+              await fetchLatestIndexedBlockForChain(pendingChainId);
+            if (indexedBlock != null) {
+              indexedBlocks.set(pendingChainId, indexedBlock);
             }
           }),
         );
@@ -1044,8 +1095,8 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   }, [
     pendingIndexedPublishes,
     publish,
+    fetchLatestIndexedBlockForChain,
     setAndPersistPendingIndexedPublishes,
-    skipPublished,
   ]);
 
   useEffect(() => {
