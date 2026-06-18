@@ -999,6 +999,7 @@ export default function ClientPage({
                   <RegisterMember
                     memberData={wallet ? isMemberResult : undefined}
                     registrationCost={totalRegistrationCost}
+                    registrationStakeAmount={registerStakeAmountBn}
                     token={tokenGarden}
                     registryCommunity={registryCommunity}
                   />

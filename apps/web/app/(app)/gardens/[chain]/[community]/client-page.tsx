@@ -881,6 +881,7 @@ export default function ClientPage({
                     <RegisterMember
                       memberData={accountAddress ? isMemberResult : undefined}
                       registrationCost={totalRegistrationCost}
+                      registrationStakeAmount={registerStakeAmountBn}
                       token={resolvedTokenGarden}
                       registryCommunity={registryCommunity}
                     />
@@ -1252,6 +1253,7 @@ export default function ClientPage({
                       <RegisterMember
                         memberData={accountAddress ? isMemberResult : undefined}
                         registrationCost={totalRegistrationCost}
+                        registrationStakeAmount={registerStakeAmountBn}
                         token={resolvedTokenGarden}
                         registryCommunity={registryCommunity}
                       />

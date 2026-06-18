@@ -23,6 +23,7 @@ import { gte } from "@/utils/numbers";
 
 type RegisterMemberProps = {
   registrationCost: bigint;
+  registrationStakeAmount?: bigint;
   token: Pick<TokenGarden, "symbol" | "address" | "decimals">;
   registryCommunity: Pick<
     RegistryCommunity,
@@ -33,6 +34,7 @@ type RegisterMemberProps = {
 
 export function RegisterMember({
   registrationCost,
+  registrationStakeAmount,
   token,
   registryCommunity,
   memberData,
@@ -82,15 +84,29 @@ export function RegisterMember({
     functionName: "unregisterMember",
     fallbackErrorMessage: "Error unregistering member, please report a bug.",
     onConfirmations: useCallback((receipt: TransactionReceipt) => {
-      publishAfterIndexed(receipt, {
-        topic: "member",
-        type: "delete",
-        containerId: communityAddress,
-        function: "unregisterMember",
-        id: communityAddress,
-        chainId: urlChainId,
-      });
-    }, [publishAfterIndexed, communityAddress, urlChainId]),
+      publishAfterIndexed(
+        receipt,
+        {
+          topic: "member",
+          type: "delete",
+          containerId: communityAddress,
+          function: "unregisterMember",
+          id: accountAddress,
+          chainId: urlChainId,
+        },
+        accountAddress ?
+          {
+            optimistic: {
+              kind: "community-member",
+              communityId: communityAddress,
+              memberAddress: accountAddress,
+              isRegistered: false,
+              stakedTokens: "0",
+            },
+          }
+        : undefined,
+      );
+    }, [publishAfterIndexed, communityAddress, urlChainId, accountAddress]),
   });
 
   useErrorDetails(unregisterMemberError, "unregisterMember");
@@ -117,6 +133,7 @@ export function RegisterMember({
     communityAddress as Address,
     communityName ?? "",
     urlChainId,
+    registrationStakeAmount ?? registrationCost,
   );
 
   const {

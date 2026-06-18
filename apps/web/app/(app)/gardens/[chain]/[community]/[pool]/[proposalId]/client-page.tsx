@@ -819,14 +819,26 @@ export default function ClientPage({ params }: ClientPageProps) {
     contractName: "Allo",
     fallbackErrorMessage: "Error executing proposal, please report a bug.",
     onConfirmations: (receipt) => {
-      publishAfterIndexed(receipt, {
-        topic: "proposal",
-        type: "update",
-        function: "distribute",
-        id: proposalNumber,
-        containerId: strategyAddress,
-        chainId,
-      });
+      publishAfterIndexed(
+        receipt,
+        {
+          topic: "proposal",
+          type: "update",
+          function: "distribute",
+          id: proposalNumber,
+          containerId: strategyAddress,
+          chainId,
+        },
+        {
+          optimistic: {
+            kind: "proposal-status",
+            strategyId: strategyAddress,
+            proposalId: proposalEntityId,
+            proposalNumber: proposalNumber.toString(),
+            status: "executed",
+          },
+        },
+      );
     },
   });
 

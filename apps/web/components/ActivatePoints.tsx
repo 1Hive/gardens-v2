@@ -53,14 +53,27 @@ export function ActivatePoints({
       handleTxSuccess?.();
     },
     onConfirmations: (receipt) => {
-      publishAfterIndexed(receipt, {
-        topic: "member",
-        id: connectedAccount,
-        type: "update",
-        function: "activatePoints",
-        containerId: strategy.id,
-        chainId,
-      });
+      publishAfterIndexed(
+        receipt,
+        {
+          topic: "member",
+          id: connectedAccount,
+          type: "update",
+          function: "activatePoints",
+          containerId: strategy.id,
+          chainId,
+        },
+        connectedAccount ?
+          {
+            optimistic: {
+              kind: "pool-governance",
+              strategyId: strategy.id,
+              memberAddress: connectedAccount,
+              isActivated: true,
+            },
+          }
+        : undefined,
+      );
     },
   });
 
@@ -78,14 +91,28 @@ export function ActivatePoints({
       handleTxSuccess?.();
     },
     onConfirmations: (receipt) => {
-      publishAfterIndexed(receipt, {
-        topic: "member",
-        id: connectedAccount,
-        containerId: strategy.id,
-        type: "update",
-        function: "deactivatePoints",
-        chainId,
-      });
+      publishAfterIndexed(
+        receipt,
+        {
+          topic: "member",
+          id: connectedAccount,
+          containerId: strategy.id,
+          type: "update",
+          function: "deactivatePoints",
+          chainId,
+        },
+        connectedAccount ?
+          {
+            optimistic: {
+              kind: "pool-governance",
+              strategyId: strategy.id,
+              memberAddress: connectedAccount,
+              isActivated: false,
+              activatedPoints: "0",
+            },
+          }
+        : undefined,
+      );
     },
   });
 

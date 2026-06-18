@@ -74,6 +74,18 @@ export type ProposalInputItem = {
   value: bigint;
 };
 
+type SubmittedAllocationSnapshot = {
+  targets: {
+    proposalId: string;
+    proposalNumber: string;
+    amount: string;
+  }[];
+  deltas: {
+    proposalNumber: string;
+    deltaSupport: string;
+  }[];
+};
+
 export type MemberStrategyData = getMembersStrategyQuery["memberStrategies"][0];
 
 // export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
@@ -155,6 +167,9 @@ export function Proposals({
   const [stakedFilters, setStakedFilters] = useState<{
     [key: string]: ProposalInputItem;
   }>({});
+  const submittedAllocationRef = useRef<SubmittedAllocationSnapshot | null>(
+    null,
+  );
   const [showManageSupportTooltip, setShowManageSupportTooltip] =
     useState(false);
   const proposalCardRefs = useRef<Map<string, ProposalHandle>>(new Map());
@@ -623,12 +638,28 @@ export function Proposals({
       setAllocationView(false);
     },
     onConfirmations: (receipt) => {
-      publishAfterIndexed(receipt, {
-        topic: "proposal",
-        type: "update",
-        containerId: strategy.id,
-        function: "allocate",
-      });
+      const submittedAllocation = submittedAllocationRef.current;
+      publishAfterIndexed(
+        receipt,
+        {
+          topic: "proposal",
+          type: "update",
+          containerId: strategy.id,
+          function: "allocate",
+          chainId,
+        },
+        submittedAllocation && wallet ?
+          {
+            optimistic: {
+              kind: "proposal-allocation",
+              strategyId: strategy.id,
+              allocator: wallet,
+              targets: submittedAllocation.targets,
+              deltas: submittedAllocation.deltas,
+            },
+          }
+        : undefined,
+      );
       if (toastId.current != null) {
         toast.dismiss(toastId.current);
         toastId.current = null;
@@ -663,6 +694,17 @@ export function Proposals({
       currentInputs,
       stakedFilters,
     );
+    submittedAllocationRef.current = {
+      targets: Object.values(currentInputs).map((input) => ({
+        proposalId: input.proposalId,
+        proposalNumber: input.proposalNumber.toString(),
+        amount: input.value.toString(),
+      })),
+      deltas: proposalsDifferencesArr.map((delta) => ({
+        proposalNumber: delta.proposalId.toString(),
+        deltaSupport: delta.deltaSupport.toString(),
+      })),
+    };
     if (process.env.NODE_ENV !== "production") {
       console.info("[Proposals][Allocate] Current inputs snapshot", {
         inputs: Object.values(currentInputs).map((input) => ({
