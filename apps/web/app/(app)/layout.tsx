@@ -16,6 +16,7 @@ import { Button, ConnectWallet, ThemeButton } from "@/components";
 import Footer from "@/components/Footer";
 import {
   INDEXING_PROBLEM_DELAY_MS,
+  getTransactionLabel,
   usePubSubContext,
 } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
@@ -59,8 +60,7 @@ function MobileIndexingIndicator() {
     );
   }, [chainId, pendingIndexedPublishes]);
   const pendingCount = currentChainRecords.length;
-  const transactionLabel =
-    pendingCount === 1 ? "1 transaction" : `${pendingCount} transactions`;
+  const transactionLabel = getTransactionLabel(pendingCount);
   const oldestCreatedAt = useMemo(() => {
     if (currentChainRecords.length === 0) {
       return null;

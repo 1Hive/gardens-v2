@@ -273,7 +273,7 @@ const getIndexingLagTooltip = (lagBlocks: bigint | null) =>
       lagBlocks === 1n ? "block" : "blocks"
     }`;
 
-const getTransactionLabel = (count: number) =>
+export const getTransactionLabel = (count: number) =>
   count === 1 ? "1 transaction" : `${count} transactions`;
 
 const getOneDayLagThresholdBlocks = (chainId: number) => {
