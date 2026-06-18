@@ -1211,7 +1211,9 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
     );
 
     if (currentChainRecords.length === 0) {
-      delete shownIndexingProblemEpisodeByChain.current[routeChainId];
+      const { [routeChainId]: _clearedEpisode, ...remainingEpisodes } =
+        shownIndexingProblemEpisodeByChain.current;
+      shownIndexingProblemEpisodeByChain.current = remainingEpisodes;
       dismissProblemToast();
       return;
     }
