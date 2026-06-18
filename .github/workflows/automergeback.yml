@@ -25,7 +25,16 @@ jobs:
         id: merge
         run: |
           git checkout dev
-          git merge origin/main --no-edit || echo "conflict=true" >> $GITHUB_OUTPUT
+          if git merge origin/main --no-ff --no-edit; then
+            echo "conflict=false" >> $GITHUB_OUTPUT
+          else
+            if git diff --name-only --diff-filter=U | grep -q .; then
+              git merge --abort
+              echo "conflict=true" >> $GITHUB_OUTPUT
+            else
+              exit 1
+            fi
+          fi
 
       - name: Push if merge succeeded
         if: steps.merge.outputs.conflict != 'true'
