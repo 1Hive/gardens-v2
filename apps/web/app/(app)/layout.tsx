@@ -64,7 +64,7 @@ function MobileIndexingIndicator() {
     }
   }, [pendingCount]);
 
-  if (chainId == null || pendingCount === 0) {
+  if (pendingCount === 0) {
     return null;
   }
 
@@ -77,12 +77,13 @@ function MobileIndexingIndicator() {
         <button
           type="button"
           aria-label={tooltipLabel}
-          aria-live="polite"
-          aria-atomic="true"
           className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border-neutral/70 bg-neutral/95 text-[11px] font-semibold leading-none text-neutral-content shadow-sm backdrop-blur-sm"
           onClick={() => setIsTooltipOpen((open) => !open)}
           onBlur={() => setIsTooltipOpen(false)}
         >
+          <span className="sr-only" aria-live="polite" aria-atomic="true">
+            {tooltipLabel}
+          </span>
           <span
             aria-hidden="true"
             className="loading loading-spinner loading-md text-primary-content"
