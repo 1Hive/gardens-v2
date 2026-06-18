@@ -156,6 +156,70 @@ describe("optimistic proposal projector", () => {
     });
   });
 
+  it("adds pending allocation support to proposal supporter query members", () => {
+    const apply = createProposalOptimisticProjector({
+      strategyId: "0xstrategy",
+      proposalId: "0xstrategy-2",
+      proposalNumber: "2",
+      allocator: "0xallocator",
+    });
+
+    const data = {
+      members: [
+        {
+          id: "0xallocator",
+          stakes: [],
+        },
+        {
+          id: "0xother",
+          stakes: [],
+        },
+      ],
+    };
+
+    const result = apply(data, [
+      baseRecord({
+        optimistic: {
+          kind: "proposal-allocation",
+          strategyId: "0xstrategy",
+          allocator: "0xallocator",
+          targets: [
+            {
+              proposalId: "0xstrategy-2",
+              proposalNumber: "2",
+              amount: "1000",
+            },
+          ],
+          deltas: [
+            {
+              proposalNumber: "2",
+              deltaSupport: "1000",
+            },
+          ],
+        },
+      }),
+    ]);
+
+    expect(result?.members).toEqual([
+      expect.objectContaining({
+        id: "0xallocator",
+        stakes: [
+          expect.objectContaining({
+            amount: "1000",
+            proposal: expect.objectContaining({
+              id: "0xstrategy-2",
+              proposalNumber: 2,
+            }),
+          }),
+        ],
+      }),
+      expect.objectContaining({
+        id: "0xother",
+        stakes: [],
+      }),
+    ]);
+  });
+
   it("does not treat the same proposal number in another strategy as an existing allocation target", () => {
     const apply = createProposalOptimisticProjector({
       strategyId: "0xstrategy",

@@ -403,7 +403,6 @@ export default function ClientPage({ params }: ClientPageProps) {
         {
           topic: "proposal" as const,
           containerId: strategyAddress,
-          id: proposalNumber,
         },
         { topic: "member" as const, containerId: communityAddr, id: address },
         { topic: "member" as const, containerId: strategyAddress, id: address },
