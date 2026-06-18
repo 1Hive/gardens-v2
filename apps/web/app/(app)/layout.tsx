@@ -16,6 +16,7 @@ import { Button, ConnectWallet, ThemeButton } from "@/components";
 import Footer from "@/components/Footer";
 import {
   INDEXING_PROBLEM_DELAY_MS,
+  hasOneDayIndexingLag,
   getTransactionLabel,
   usePubSubContext,
 } from "@/contexts/pubsub.context";
@@ -47,9 +48,13 @@ export function HeadphoneIcon() {
 
 function MobileIndexingIndicator() {
   const chainId = useChainIdFromPath();
-  const { pendingIndexedPublishes } = usePubSubContext();
+  const {
+    latestIndexedBlocksByChain,
+    pendingIndexedPublishes,
+    routeIndexingLagByChain,
+  } = usePubSubContext();
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
-  const [isIndexingProblem, setIsIndexingProblem] = useState(false);
+  const [hasProblemDelayElapsed, setHasProblemDelayElapsed] = useState(false);
   const currentChainRecords = useMemo(() => {
     if (chainId == null) {
       return [];
@@ -68,6 +73,24 @@ function MobileIndexingIndicator() {
 
     return Math.min(...currentChainRecords.map((record) => record.createdAt));
   }, [currentChainRecords]);
+  const hasOneDayLag = useMemo(() => {
+    if (chainId == null) {
+      return false;
+    }
+
+    return hasOneDayIndexingLag({
+      chainId,
+      currentChainRecords,
+      latestIndexedBlock: latestIndexedBlocksByChain[chainId],
+      routeIndexingLag: routeIndexingLagByChain[chainId],
+    });
+  }, [
+    chainId,
+    currentChainRecords,
+    latestIndexedBlocksByChain,
+    routeIndexingLagByChain,
+  ]);
+  const isIndexingProblem = hasProblemDelayElapsed || hasOneDayLag;
   const tooltipLabel =
     isIndexingProblem ?
       `Indexing problem (${transactionLabel})`
@@ -81,20 +104,20 @@ function MobileIndexingIndicator() {
 
   useEffect(() => {
     if (oldestCreatedAt == null) {
-      setIsIndexingProblem(false);
+      setHasProblemDelayElapsed(false);
       return;
     }
 
     const remainingMs =
       INDEXING_PROBLEM_DELAY_MS - (Date.now() - oldestCreatedAt);
     if (remainingMs <= 0) {
-      setIsIndexingProblem(true);
+      setHasProblemDelayElapsed(true);
       return;
     }
 
-    setIsIndexingProblem(false);
+    setHasProblemDelayElapsed(false);
     const timeoutId = window.setTimeout(() => {
-      setIsIndexingProblem(true);
+      setHasProblemDelayElapsed(true);
     }, remainingMs);
 
     return () => {
@@ -114,7 +137,6 @@ function MobileIndexingIndicator() {
       >
         <button
           type="button"
-          aria-label={tooltipLabel}
           className="relative flex h-10 w-10 items-center justify-center rounded-full bg-neutral/95 text-[11px] font-semibold leading-none text-neutral-content shadow-sm backdrop-blur-sm"
           onClick={() => setIsTooltipOpen((open) => !open)}
           onBlur={() => setIsTooltipOpen(false)}

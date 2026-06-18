@@ -69,6 +69,8 @@ interface PubSubContextData {
   ) => void;
   messages: ChangeEventPayload[];
   pendingIndexedPublishes: PendingIndexedPublish[];
+  latestIndexedBlocksByChain: Record<number, string>;
+  routeIndexingLagByChain: Record<number, RouteIndexingLagStatus>;
 }
 
 export type SubscriptionId = string;
@@ -219,7 +221,7 @@ type SubgraphIndexingStatusResult = {
   } | null;
 };
 
-type RouteIndexingLagStatus = {
+export type RouteIndexingLagStatus = {
   indexedBlock: string;
   comparisonBlock: string;
   lagBlocks: string;
@@ -366,6 +368,32 @@ const getOneDayLagThresholdBlocks = (chainId: number) => {
   }
 
   return BigInt(Math.ceil(SECONDS_PER_DAY / blockTime));
+};
+
+export const hasOneDayIndexingLag = ({
+  chainId,
+  currentChainRecords,
+  latestIndexedBlock,
+  routeIndexingLag,
+}: {
+  chainId: number;
+  currentChainRecords: PendingIndexedPublish[];
+  latestIndexedBlock?: string;
+  routeIndexingLag?: RouteIndexingLagStatus;
+}) => {
+  const routeLagBlocks =
+    routeIndexingLag ? parseBlockNumber(routeIndexingLag.lagBlocks) : null;
+  const effectiveLagBlocks =
+    currentChainRecords.length > 0 ?
+      getIndexingLagBlocks(latestIndexedBlock, currentChainRecords)
+    : routeLagBlocks;
+  const oneDayLagThresholdBlocks = getOneDayLagThresholdBlocks(chainId);
+
+  return (
+    effectiveLagBlocks != null &&
+    oneDayLagThresholdBlocks != null &&
+    effectiveLagBlocks >= oneDayLagThresholdBlocks
+  );
 };
 
 const summarizePendingRecord = (record: PendingIndexedPublish) => ({
@@ -1092,7 +1120,12 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     void fetchRouteIndexingLagForChain(routeChainId)
       .then((status) => {
-        if (cancelled || status == null) {
+        if (cancelled) {
+          return;
+        }
+
+        if (status == null) {
+          initialIndexedBlockRequestByChain.current[routeChainId] = false;
           return;
         }
 
@@ -1109,14 +1142,10 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
             source: status.source,
           },
         }));
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIndexingPollCompletedAtByChain((current) => ({
-            ...current,
-            [routeChainId]: Date.now(),
-          }));
-        }
+        setIndexingPollCompletedAtByChain((current) => ({
+          ...current,
+          [routeChainId]: Date.now(),
+        }));
       });
 
     return () => {
@@ -1422,6 +1451,11 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
+    if (isMobileViewport) {
+      dismissProblemToast();
+      return;
+    }
+
     if (routeChainId == null) {
       dismissProblemToast();
       return;
@@ -1442,15 +1476,15 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
         )
       : routeLagBlocks;
     const oneDayLagThresholdBlocks = getOneDayLagThresholdBlocks(routeChainId);
-    const hasOneDayLag =
-      effectiveLagBlocks != null &&
-      oneDayLagThresholdBlocks != null &&
-      effectiveLagBlocks >= oneDayLagThresholdBlocks;
+    const hasOneDayLag = hasOneDayIndexingLag({
+      chainId: routeChainId,
+      currentChainRecords,
+      latestIndexedBlock: latestIndexedBlocksByChain[routeChainId],
+      routeIndexingLag,
+    });
 
     if (!hasPendingRecords && !hasOneDayLag) {
-      const { [routeChainId]: _clearedEpisode, ...remainingEpisodes } =
-        shownIndexingProblemEpisodeByChain.current;
-      shownIndexingProblemEpisodeByChain.current = remainingEpisodes;
+      delete shownIndexingProblemEpisodeByChain.current[routeChainId];
       dismissProblemToast();
       return;
     }
@@ -1491,7 +1525,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       };
     }
 
-    if (hasPendingRecords && !hasPollCompletedAfterOldestRecord) {
+    if (hasPendingRecords && !hasPollCompletedAfterOldestRecord && !hasOneDayLag) {
       console.info(
         `${INDEXING_LOG_PREFIX} problem toast waiting for block poll chance`,
         {
@@ -1575,6 +1609,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
     });
   }, [
     chainId,
+    isMobileViewport,
     indexingPollCompletedAtByChain,
     indexingProblemCheckTick,
     latestIndexedBlocksByChain,
@@ -1591,13 +1626,17 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       publishAfterIndexed,
       messages,
       pendingIndexedPublishes,
+      latestIndexedBlocksByChain,
+      routeIndexingLagByChain,
     }),
     [
       connected,
+      latestIndexedBlocksByChain,
       messages,
       pendingIndexedPublishes,
       publish,
       publishAfterIndexed,
+      routeIndexingLagByChain,
       subscribe,
       unsubscribe,
     ],
