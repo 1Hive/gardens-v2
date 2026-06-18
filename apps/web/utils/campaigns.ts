@@ -1,4 +1,5 @@
 import { SuperBanner, SuperLogo, GoodDollarLogo } from "@/assets";
+import { getLatestCampaignIdFromKeys } from "@/utils/campaignIds";
 
 export type CampaignId = "1" | "2" | "3" | "4";
 
@@ -64,6 +65,10 @@ export const CAMPAIGNS = {
     leaderboardEndpoint: "/api/superfluid-points/leaderboard?campaignId=607",
   },
 } as const;
+
+export function getLatestCampaignId(): CampaignId {
+  return getLatestCampaignIdFromKeys(Object.keys(CAMPAIGNS) as CampaignId[]);
+}
 
 const MONTHS_BY_NAME: Record<string, number> = {
   jan: 0,
