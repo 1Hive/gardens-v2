@@ -272,6 +272,15 @@ const getIndexingLagTooltip = (lagBlocks: bigint | null) =>
       lagBlocks === 1n ? "block" : "blocks"
     }`;
 
+const getOneDayLagThresholdBlocks = (chainId: number) => {
+  const blockTime = getConfigByChain(chainId)?.blockTime;
+  if (blockTime == null || blockTime <= 0) {
+    return null;
+  }
+
+  return BigInt(Math.ceil(86_400 / blockTime));
+};
+
 const summarizePendingRecord = (record: PendingIndexedPublish) => ({
   key: pendingKey(record),
   txHash: record.txHash,
@@ -569,6 +578,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   const skipPublished = useFlag("skipPublished");
   const indexingPollInFlight = useRef(false);
   const isProgrammaticIndexingToastDismiss = useRef(false);
+  const shownIndexingProblemEpisodeByChain = useRef<Record<number, string>>({});
   const [indexingProblemCheckTick, setIndexingProblemCheckTick] = useState(0);
 
   const ablyClient = useMemo(
@@ -1201,6 +1211,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
     );
 
     if (currentChainRecords.length === 0) {
+      delete shownIndexingProblemEpisodeByChain.current[routeChainId];
       dismissProblemToast();
       return;
     }
@@ -1217,10 +1228,18 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       latestIndexedBlocksByChain[routeChainId],
       currentChainRecords,
     );
+    const oneDayLagThresholdBlocks = getOneDayLagThresholdBlocks(routeChainId);
+    const hasOneDayLag =
+      currentChainLagBlocks != null &&
+      oneDayLagThresholdBlocks != null &&
+      currentChainLagBlocks >= oneDayLagThresholdBlocks;
     const waitMs = now - oldestCreatedAt;
     const remainingMs = INDEXING_PROBLEM_DELAY_MS - waitMs;
+    const episodeKey = `${routeChainId}:${oldestCreatedAt}`;
+    const hasShownCurrentEpisode =
+      shownIndexingProblemEpisodeByChain.current[routeChainId] === episodeKey;
 
-    if (remainingMs > 0) {
+    if (remainingMs > 0 && !hasOneDayLag) {
       dismissProblemToast();
       timeoutId = window.setTimeout(() => {
         setIndexingProblemCheckTick((tick) => tick + 1);
@@ -1240,6 +1259,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
           oldestCreatedAt,
           lastPollCompletedAt,
           currentChainCount: currentChainRecords.length,
+          hasOneDayLag,
         },
       );
       dismissProblemToast();
@@ -1253,6 +1273,23 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       };
     }
 
+    if (hasShownCurrentEpisode) {
+      if (toast.isActive(INDEXING_PROBLEM_TOAST_ID)) {
+        toast.update(INDEXING_PROBLEM_TOAST_ID, {
+          render: <IndexingProblemToast lagBlocks={currentChainLagBlocks} />,
+          type: "warning",
+          position: "top-right",
+          autoClose: false,
+          icon: false,
+          closeButton: true,
+          closeOnClick: false,
+        });
+      }
+      return;
+    }
+
+    shownIndexingProblemEpisodeByChain.current[routeChainId] = episodeKey;
+
     if (toast.isActive(INDEXING_PROBLEM_TOAST_ID)) {
       toast.update(INDEXING_PROBLEM_TOAST_ID, {
         render: <IndexingProblemToast lagBlocks={currentChainLagBlocks} />,
@@ -1263,9 +1300,25 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
         closeButton: true,
         closeOnClick: false,
       });
+      console.info(`${INDEXING_LOG_PREFIX} problem toast updated`, {
+        routeChainId,
+        episodeKey,
+        currentChainCount: currentChainRecords.length,
+        lagBlocks: currentChainLagBlocks?.toString(),
+        oneDayLagThresholdBlocks: oneDayLagThresholdBlocks?.toString(),
+        triggeredBy: hasOneDayLag ? "one-day-lag" : "delay",
+      });
       return;
     }
 
+    console.info(`${INDEXING_LOG_PREFIX} problem toast shown`, {
+      routeChainId,
+      episodeKey,
+      currentChainCount: currentChainRecords.length,
+      lagBlocks: currentChainLagBlocks?.toString(),
+      oneDayLagThresholdBlocks: oneDayLagThresholdBlocks?.toString(),
+      triggeredBy: hasOneDayLag ? "one-day-lag" : "delay",
+    });
     toast.warning(<IndexingProblemToast lagBlocks={currentChainLagBlocks} />, {
       toastId: INDEXING_PROBLEM_TOAST_ID,
       position: "top-right",
