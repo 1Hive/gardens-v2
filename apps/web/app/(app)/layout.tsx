@@ -65,6 +65,7 @@ function MobileIndexingIndicator() {
     );
   }, [chainId, pendingIndexedPublishes]);
   const pendingCount = currentChainRecords.length;
+  const hasPendingRecords = pendingCount > 0;
   const transactionLabel = getTransactionLabel(pendingCount);
   const oldestCreatedAt = useMemo(() => {
     if (currentChainRecords.length === 0) {
@@ -92,15 +93,16 @@ function MobileIndexingIndicator() {
   ]);
   const isIndexingProblem = hasProblemDelayElapsed || hasOneDayLag;
   const tooltipLabel =
-    isIndexingProblem ?
+    hasOneDayLag && !hasPendingRecords ? "Indexing problem"
+    : isIndexingProblem ?
       `Indexing problem (${transactionLabel})`
     : `Indexing ${transactionLabel}`;
 
   useEffect(() => {
-    if (pendingCount === 0) {
+    if (!hasPendingRecords && !hasOneDayLag) {
       setIsTooltipOpen(false);
     }
-  }, [pendingCount]);
+  }, [hasOneDayLag, hasPendingRecords]);
 
   useEffect(() => {
     if (oldestCreatedAt == null) {
@@ -125,7 +127,7 @@ function MobileIndexingIndicator() {
     };
   }, [oldestCreatedAt]);
 
-  if (pendingCount === 0) {
+  if (!hasPendingRecords && !hasOneDayLag) {
     return null;
   }
 
@@ -154,7 +156,7 @@ function MobileIndexingIndicator() {
               className="loading loading-spinner loading-md text-neutral-soft-content"
             />
           }
-          {!isIndexingProblem && (
+          {hasPendingRecords && !isIndexingProblem && (
             <span aria-hidden="true" className="absolute">
               {pendingCount}
             </span>

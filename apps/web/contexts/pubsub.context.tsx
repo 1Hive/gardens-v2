@@ -241,6 +241,7 @@ export const INDEXING_PROBLEM_DELAY_MS = 60_000;
 const INDEXING_POLL_INITIAL_DELAY_MS = 5000;
 const INDEXING_POLL_MAX_DELAY_MS = 60000;
 const INDEXING_POLL_BACKOFF_FACTOR = 2;
+const ROUTE_INDEXING_POLL_INTERVAL_MS = 5 * 60_000;
 const INDEXING_LOG_PREFIX = "[indexing]";
 const SECONDS_PER_DAY = 86_400;
 const LATEST_INDEXED_BLOCK_QUERY = `
@@ -691,7 +692,6 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   const isMobileViewport = useMediaQuery("(max-width: 767px)");
   const skipPublished = useFlag("skipPublished");
   const indexingPollInFlight = useRef(false);
-  const initialIndexedBlockRequestByChain = useRef<Record<number, boolean>>({});
   const isProgrammaticIndexingToastDismiss = useRef(false);
   const shownIndexingProblemEpisodeByChain = useRef<Record<number, string>>({});
   const [indexingProblemCheckTick, setIndexingProblemCheckTick] = useState(0);
@@ -1111,24 +1111,15 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (initialIndexedBlockRequestByChain.current[routeChainId]) {
-      return;
-    }
-
-    initialIndexedBlockRequestByChain.current[routeChainId] = true;
-
     let cancelled = false;
-    void fetchRouteIndexingLagForChain(routeChainId)
-      .then((status) => {
-        if (cancelled) {
-          return;
-        }
+    let timeoutId: number | undefined;
+    const pollRouteIndexingLag = async () => {
+      const status = await fetchRouteIndexingLagForChain(routeChainId);
+      if (cancelled) {
+        return;
+      }
 
-        if (status == null) {
-          initialIndexedBlockRequestByChain.current[routeChainId] = false;
-          return;
-        }
-
+      if (status != null) {
         setLatestIndexedBlocksByChain((current) => ({
           ...current,
           [routeChainId]: status.indexedBlock.toString(),
@@ -1146,10 +1137,20 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
           ...current,
           [routeChainId]: Date.now(),
         }));
-      });
+      }
+
+      timeoutId = window.setTimeout(() => {
+        void pollRouteIndexingLag();
+      }, ROUTE_INDEXING_POLL_INTERVAL_MS);
+    };
+
+    void pollRouteIndexingLag();
 
     return () => {
       cancelled = true;
+      if (timeoutId != null) {
+        window.clearTimeout(timeoutId);
+      }
     };
   }, [chainId, fetchRouteIndexingLagForChain]);
 
