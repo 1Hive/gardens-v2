@@ -1,4 +1,5 @@
 import { SuperBanner, SuperLogo, GoodDollarLogo } from "@/assets";
+import { getLatestCampaignIdFromKeys } from "@/utils/campaignIds";
 
 export type CampaignId = "1" | "2" | "3" | "4";
 
@@ -66,13 +67,9 @@ export const CAMPAIGNS = {
 } as const;
 
 export function getLatestCampaignId(): CampaignId {
-  const campaignIds = Object.keys(CAMPAIGNS) as CampaignId[];
-
-  if (campaignIds.length === 0) {
-    throw new Error("No campaigns configured");
-  }
-
-  return String(Math.max(...campaignIds.map(Number))) as CampaignId;
+  return getLatestCampaignIdFromKeys(
+    Object.keys(CAMPAIGNS) as CampaignId[],
+  ) as CampaignId;
 }
 
 const MONTHS_BY_NAME: Record<string, number> = {
