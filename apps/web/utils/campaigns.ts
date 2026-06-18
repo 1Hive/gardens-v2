@@ -65,6 +65,16 @@ export const CAMPAIGNS = {
   },
 } as const;
 
+export function getLatestCampaignId(): CampaignId {
+  return Object.keys(CAMPAIGNS).reduce<CampaignId>(
+    (latestCampaignId, campaignId) =>
+      Number(campaignId) > Number(latestCampaignId) ?
+        (campaignId as CampaignId)
+      : latestCampaignId,
+    Object.keys(CAMPAIGNS)[0] as CampaignId,
+  );
+}
+
 const MONTHS_BY_NAME: Record<string, number> = {
   jan: 0,
   feb: 1,
