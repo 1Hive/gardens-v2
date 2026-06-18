@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Address } from "wagmi";
+import { TransactionReceipt } from "viem";
+import { Address, useAccount } from "wagmi";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { TransactionProps } from "@/components/TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -11,6 +12,7 @@ export function useHandleRegistration(
   communityAddress: Address,
   communityName: string,
   urlChainId: number | undefined,
+  registrationStakeAmount?: bigint,
 ): {
   registrationTxProps: TransactionProps;
   handleRegistration: (covenantSig?: `0x${string}`) => void;
@@ -23,7 +25,8 @@ export function useHandleRegistration(
       status: "idle",
     }));
 
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
+  const { address } = useAccount();
 
   const {
     write: writeRegisterMember,
@@ -38,16 +41,36 @@ export function useHandleRegistration(
     contractName: "Registry Community",
     chainId: urlChainId,
     showNotification: false,
-    onConfirmations: useCallback(() => {
-      publish({
-        topic: "member",
-        type: "add",
-        containerId: communityAddress,
-        function: "stakeAndRegisterMember",
-        id: communityAddress,
-        chainId: urlChainId,
-      });
-    }, [publish, communityAddress, urlChainId]),
+    onConfirmations: useCallback((receipt: TransactionReceipt) => {
+      publishAfterIndexed(
+        receipt,
+        {
+          topic: "member",
+          type: "add",
+          containerId: communityAddress,
+          function: "stakeAndRegisterMember",
+          id: address,
+          chainId: urlChainId,
+        },
+        address ?
+          {
+            optimistic: {
+              kind: "community-member",
+              communityId: communityAddress,
+              memberAddress: address,
+              isRegistered: true,
+              stakedTokens: registrationStakeAmount?.toString(),
+            },
+          }
+        : undefined,
+      );
+    }, [
+      address,
+      publishAfterIndexed,
+      communityAddress,
+      urlChainId,
+      registrationStakeAmount,
+    ]),
   });
 
   useEffect(() => {

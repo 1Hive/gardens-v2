@@ -111,7 +111,7 @@ function CommunityEditModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
   const { tooltipMessage, isButtonDisabled } = useDisableButtons();
   const emptyCommunityOnlyDisabled = communityMembersCount > 0;
   const isReadonlyForCouncilMember = isCouncilMember && !isCouncilSafe;
@@ -288,9 +288,9 @@ function CommunityEditModal({
     abi: registryCommunityABI,
     contractName: "Registry Community",
     functionName: "setCommunityParams",
-    onConfirmations: () => {
+    onConfirmations: (receipt) => {
       setIsSubmitting(false);
-      publish({
+      publishAfterIndexed(receipt, {
         topic: "community",
         type: "update",
         id: communityAddress,

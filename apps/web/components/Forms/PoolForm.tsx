@@ -255,7 +255,7 @@ export function PoolForm({
   const [showWarningMessage, setShowWarningMessage] = useState(false);
 
   const router = useRouter();
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
   const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
 
   const pointSystemType = watch("pointSystemType");
@@ -571,7 +571,7 @@ export function PoolForm({
         "PoolCreated",
       ).args;
       const strategyAddress = (newPoolData._strategy as string).toLowerCase();
-      publish({
+      publishAfterIndexed(receipt, {
         topic: "pool",
         function: "createPool",
         type: "add",

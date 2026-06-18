@@ -96,7 +96,7 @@ export const EditProposalForm = ({
     },
   });
 
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
   const ONE_HOUR_MS = 60 * 60 * 1000;
   const proposalCreatedAtMs = Number(proposal.createdAt ?? 0) * 1000;
   const metadataEditDeadline = proposalCreatedAtMs + ONE_HOUR_MS;
@@ -256,8 +256,8 @@ export const EditProposalForm = ({
     onError: () => {
       setLoading(false);
     },
-    onConfirmations: () => {
-      publish({
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(receipt, {
         topic: "proposal",
         type: "update",
         function: "editProposal",

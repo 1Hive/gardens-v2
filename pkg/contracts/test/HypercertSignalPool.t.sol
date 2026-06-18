@@ -933,4 +933,16 @@ contract HypercertSignalPoolTest is Test {
         vm.expectRevert(abi.encodeWithSelector(PointBudgetExceeded.selector, 110, DEFAULT_POINTS));
         pool.allocate(abi.encode(s2), voter1);
     }
+
+    function test_reclaimStakes_revertsWhenBatchTooLarge() public {
+        uint256[] memory ids = new uint256[](pool.MAX_RECLAIM_BATCH() + 1);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                HypercertSignalPool.ReclaimBatchTooLarge.selector, pool.MAX_RECLAIM_BATCH() + 1, pool.MAX_RECLAIM_BATCH()
+            )
+        );
+        pool.reclaimStakes(ids);
+    }
+
 }

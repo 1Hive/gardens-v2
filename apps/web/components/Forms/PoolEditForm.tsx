@@ -307,7 +307,7 @@ export default function PoolEditForm({
   });
 
   const [loading, setLoading] = useState(false);
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
 
   useEffect(() => {
     if (!initialFormValues) return;
@@ -394,8 +394,8 @@ export default function PoolEditForm({
     contractName: "CV Strategy",
     functionName: "setPoolParams",
     fallbackErrorMessage: "Error editing a pool, please report a bug.",
-    onConfirmations: () => {
-      publish({
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(receipt, {
         topic: "pool",
         function: "setPoolParams",
         type: "update",

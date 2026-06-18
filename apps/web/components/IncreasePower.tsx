@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowTrendingDownIcon,
   ArrowTrendingUpIcon,
@@ -90,6 +90,7 @@ export const IncreasePower = ({
   const initialStakedAmountBn = BigInt(
     memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
   );
+  const targetStakedAmountRef = useRef(initialStakedAmountBn);
   const initialStakedAmount =
     initialStakedAmountBn ?
       +formatUnits(initialStakedAmountBn, tokenDecimals)
@@ -122,7 +123,7 @@ export const IncreasePower = ({
     contractName: "Registry Community",
   };
 
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
 
   const [votingPowerTx, setVotingPowerTx] = useState<TransactionProps>({
     contractName: `Stake ${tokenGarden.symbol} in ${communityName}`,
@@ -141,15 +142,29 @@ export const IncreasePower = ({
     showNotification: false,
     fallbackErrorMessage:
       "Error staking governance token, please report a bug.",
-    onConfirmations: () => {
-      publish({
-        topic: "member",
-        type: "update",
-        function: "increasePower",
-        containerId: communityAddress,
-        id: accountAddress,
-        chainId: urlChainId,
-      });
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(
+        receipt,
+        {
+          topic: "member",
+          type: "update",
+          function: "increasePower",
+          containerId: communityAddress,
+          id: accountAddress,
+          chainId: urlChainId,
+        },
+        accountAddress ?
+          {
+            optimistic: {
+              kind: "community-member",
+              communityId: communityAddress,
+              memberAddress: accountAddress,
+              isRegistered: true,
+              stakedTokens: targetStakedAmountRef.current.toString(),
+            },
+          }
+        : undefined,
+      );
     },
   });
 
@@ -160,15 +175,29 @@ export const IncreasePower = ({
       // Difference between staked amount and initial amount
       args: [stakeDifferenceBn * -1n],
       fallbackErrorMessage: "Error decreasing power, please report a bug.",
-      onConfirmations: () => {
-        publish({
-          topic: "member",
-          type: "update",
-          containerId: communityAddress,
-          function: "decreasePower",
-          id: accountAddress,
-          chainId: urlChainId,
-        });
+      onConfirmations: (receipt) => {
+        publishAfterIndexed(
+          receipt,
+          {
+            topic: "member",
+            type: "update",
+            containerId: communityAddress,
+            function: "decreasePower",
+            id: accountAddress,
+            chainId: urlChainId,
+          },
+          accountAddress ?
+            {
+              optimistic: {
+                kind: "community-member",
+                communityId: communityAddress,
+                memberAddress: accountAddress,
+                isRegistered: true,
+                stakedTokens: targetStakedAmountRef.current.toString(),
+              },
+            }
+          : undefined,
+        );
       },
     });
 
@@ -181,6 +210,7 @@ export const IncreasePower = ({
   }, [increasePowerStatus]);
 
   function handleClick() {
+    targetStakedAmountRef.current = stakedAmountBn;
     if (stakeDifferenceBn > 0n) {
       setVotingPowerTx((prev) => ({
         ...prev,

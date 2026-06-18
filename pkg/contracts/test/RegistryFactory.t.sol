@@ -238,6 +238,16 @@ contract RegistryFactoryTest is Test {
         assertEq(fee, 0);
     }
 
+    function test_getProtocolFee_zeroForDirectProtopianCommunity() public {
+        address registryAddr = factory.createRegistry(params);
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(registryAddr), true);
+
+        uint256 fee = factory.getProtocolFee(registryAddr);
+        assertEq(fee, 0);
+    }
+
     function test_getProtocolFee_returnsFeeWhenCouncilSafeIsEOA() public {
         params._councilSafe = payable(address(0xABCD));
         address registryAddr = factory.createRegistry(params);
@@ -582,6 +592,24 @@ contract RegistryFactoryTest is Test {
         (communityCuts,,) = factory.getCommunityFacets();
         assertEq(communityCuts[0].facetAddress, address(0x2222));
         assertEq(uint8(communityCuts[0].action), uint8(IDiamond.FacetCutAction.Replace));
+
+        vm.prank(owner);
+        factory.upsertStrategyFacetCut(0, address(0x3333), IDiamond.FacetCutAction.Replace, selectors);
+        (strategyCuts,,) = factory.getStrategyFacets();
+        assertEq(strategyCuts[0].facetAddress, address(0x3333));
+        assertEq(uint8(strategyCuts[0].action), uint8(IDiamond.FacetCutAction.Replace));
+
+        vm.prank(owner);
+        factory.setCommunityFacetInit(address(0xCCCC), hex"cafe");
+        (, communityInit, communityCalldata) = factory.getCommunityFacets();
+        assertEq(communityInit, address(0xCCCC));
+        assertEq(communityCalldata, hex"cafe");
+
+        vm.prank(owner);
+        factory.setStrategyFacetInit(address(0xDDDD), hex"beef");
+        (, strategyInit, strategyCalldata) = factory.getStrategyFacets();
+        assertEq(strategyInit, address(0xDDDD));
+        assertEq(strategyCalldata, hex"beef");
 
         vm.prank(owner);
         vm.expectRevert(bytes("invalid facet index"));

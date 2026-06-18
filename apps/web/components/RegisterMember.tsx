@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useCallback } from "react";
+import { TransactionReceipt } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
 import {
   RegistryCommunity,
@@ -22,6 +23,7 @@ import { gte } from "@/utils/numbers";
 
 type RegisterMemberProps = {
   registrationCost: bigint;
+  registrationStakeAmount?: bigint;
   token: Pick<TokenGarden, "symbol" | "address" | "decimals">;
   registryCommunity: Pick<
     RegistryCommunity,
@@ -32,6 +34,7 @@ type RegisterMemberProps = {
 
 export function RegisterMember({
   registrationCost,
+  registrationStakeAmount,
   token,
   registryCommunity,
   memberData,
@@ -44,7 +47,7 @@ export function RegisterMember({
   const { address: accountAddress } = useAccount();
   const urlChainId = useChainIdFromPath();
   const [isOpenModal, setIsOpenModal] = useState(false);
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
 
   const isMember = useMemo(
     () => memberData?.member?.memberCommunity?.[0]?.isRegistered ?? false,
@@ -80,16 +83,30 @@ export function RegisterMember({
     ...registryContractCallConfig,
     functionName: "unregisterMember",
     fallbackErrorMessage: "Error unregistering member, please report a bug.",
-    onConfirmations: useCallback(() => {
-      publish({
-        topic: "member",
-        type: "delete",
-        containerId: communityAddress,
-        function: "unregisterMember",
-        id: communityAddress,
-        chainId: urlChainId,
-      });
-    }, [publish, communityAddress, urlChainId]),
+    onConfirmations: useCallback((receipt: TransactionReceipt) => {
+      publishAfterIndexed(
+        receipt,
+        {
+          topic: "member",
+          type: "delete",
+          containerId: communityAddress,
+          function: "unregisterMember",
+          id: accountAddress,
+          chainId: urlChainId,
+        },
+        accountAddress ?
+          {
+            optimistic: {
+              kind: "community-member",
+              communityId: communityAddress,
+              memberAddress: accountAddress,
+              isRegistered: false,
+              stakedTokens: "0",
+            },
+          }
+        : undefined,
+      );
+    }, [publishAfterIndexed, communityAddress, urlChainId, accountAddress]),
   });
 
   useErrorDetails(unregisterMemberError, "unregisterMember");
@@ -116,6 +133,7 @@ export function RegisterMember({
     communityAddress as Address,
     communityName ?? "",
     urlChainId,
+    registrationStakeAmount ?? registrationCost,
   );
 
   const {

@@ -46,7 +46,7 @@ export function CommunityStakingLeaderboard({
   className,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
   const { tooltipMessage, isButtonDisabled } = useDisableButtons();
   const [kickingMemberAddress, setKickingMemberAddress] = useState<
     string | null
@@ -68,16 +68,16 @@ export function CommunityStakingLeaderboard({
     abi: registryCommunityABI,
     contractName: "Registry Community",
     functionName: "kickMember",
-    onConfirmations: () => {
+    onConfirmations: (receipt) => {
       setKickingMemberAddress(null);
-      publish({
+      publishAfterIndexed(receipt, {
         topic: "community",
         type: "update",
         id: communityAddress,
         function: "kickMember",
         containerId: communityAddress,
       });
-      publish({
+      publishAfterIndexed(receipt, {
         topic: "member",
         type: "update",
         containerId: communityAddress,

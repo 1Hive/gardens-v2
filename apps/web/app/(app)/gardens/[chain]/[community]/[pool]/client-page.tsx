@@ -486,7 +486,8 @@ export default function ClientPage({
     previousResolvedMembershipState.current = isMemberCommunity;
   }, [hasResolvedMembershipState, isMemberCommunity, memberActivatedStrategy]);
 
-  const { subscribe, unsubscribe, connected, publish } = usePubSubContext();
+  const { subscribe, unsubscribe, connected, publishAfterIndexed } =
+    usePubSubContext();
 
   const subscriptionId = useRef<SubscriptionId>();
   useEffect(() => {
@@ -694,9 +695,9 @@ export default function ClientPage({
       contractName: "CVStrategy",
       fallbackErrorMessage:
         "Failed to sync stream for this strategy. Please try again.",
-      onConfirmations: () => {
+      onConfirmations: (receipt) => {
         void refetchLastRebalanceAt();
-        publish({
+        publishAfterIndexed(receipt, {
           topic: "stream",
           containerId: strategyAddress,
           function: "rebalance",
@@ -998,6 +999,7 @@ export default function ClientPage({
                   <RegisterMember
                     memberData={wallet ? isMemberResult : undefined}
                     registrationCost={totalRegistrationCost}
+                    registrationStakeAmount={registerStakeAmountBn}
                     token={tokenGarden}
                     registryCommunity={registryCommunity}
                   />

@@ -34,7 +34,7 @@ export function ActivatePoints({
   const { address: connectedAccount } = useAccount();
   const { setOpen: setConnectModalOpen } = useModal();
   const chainId = useChainIdFromPath();
-  const { publish } = usePubSubContext();
+  const { publishAfterIndexed } = usePubSubContext();
   const allowList = (strategy?.config?.allowlist as Address[]) ?? [];
   const isAllowed = useCheckAllowList(allowList, connectedAccount);
 
@@ -52,15 +52,28 @@ export function ActivatePoints({
     onSuccess: () => {
       handleTxSuccess?.();
     },
-    onConfirmations: () => {
-      publish({
-        topic: "member",
-        id: connectedAccount,
-        type: "update",
-        function: "activatePoints",
-        containerId: strategy.id,
-        chainId,
-      });
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(
+        receipt,
+        {
+          topic: "member",
+          id: connectedAccount,
+          type: "update",
+          function: "activatePoints",
+          containerId: strategy.id,
+          chainId,
+        },
+        connectedAccount ?
+          {
+            optimistic: {
+              kind: "pool-governance",
+              strategyId: strategy.id,
+              memberAddress: connectedAccount,
+              isActivated: true,
+            },
+          }
+        : undefined,
+      );
     },
   });
 
@@ -77,15 +90,29 @@ export function ActivatePoints({
     onSuccess: () => {
       handleTxSuccess?.();
     },
-    onConfirmations: () => {
-      publish({
-        topic: "member",
-        id: connectedAccount,
-        containerId: strategy.id,
-        type: "update",
-        function: "deactivatePoints",
-        chainId,
-      });
+    onConfirmations: (receipt) => {
+      publishAfterIndexed(
+        receipt,
+        {
+          topic: "member",
+          id: connectedAccount,
+          containerId: strategy.id,
+          type: "update",
+          function: "deactivatePoints",
+          chainId,
+        },
+        connectedAccount ?
+          {
+            optimistic: {
+              kind: "pool-governance",
+              strategyId: strategy.id,
+              memberAddress: connectedAccount,
+              isActivated: false,
+              activatedPoints: "0",
+            },
+          }
+        : undefined,
+      );
     },
   });
 
