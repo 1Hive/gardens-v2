@@ -208,7 +208,7 @@ const INDEXING_TOAST_STYLE: React.CSSProperties = {
   marginLeft: "auto",
   marginBottom: "4.5rem",
 };
-const INDEXING_PROBLEM_DELAY_MS = 60_000;
+export const INDEXING_PROBLEM_DELAY_MS = 60_000;
 const INDEXING_POLL_INITIAL_DELAY_MS = 5000;
 const INDEXING_POLL_MAX_DELAY_MS = 60000;
 const INDEXING_POLL_BACKOFF_FACTOR = 2;
@@ -272,6 +272,9 @@ const getIndexingLagTooltip = (lagBlocks: bigint | null) =>
   : `Indexing is lagging behind ${lagBlocks.toString()} ${
       lagBlocks === 1n ? "block" : "blocks"
     }`;
+
+const getTransactionLabel = (count: number) =>
+  count === 1 ? "1 transaction" : `${count} transactions`;
 
 const getOneDayLagThresholdBlocks = (chainId: number) => {
   const blockTime = getConfigByChain(chainId)?.blockTime;
@@ -473,26 +476,22 @@ function arePendingIndexedPublishesEqual(
 
 function IndexingToast({
   count,
-  isLagging,
-  lagBlocks,
+  isProblem,
 }: {
   count: number;
-  isLagging: boolean;
-  lagBlocks: bigint | null;
+  isProblem: boolean;
 }) {
-  const transactionLabel =
-    count === 1 ? "1 transaction" : `${count} transactions`;
-  const lagTooltip = getIndexingLagTooltip(lagBlocks);
+  const transactionLabel = getTransactionLabel(count);
 
   return (
     <div className="flex flex-row items-center gap-3 px-3 py-1.5">
       <div
         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-          isLagging ? "tooltip tooltip-right" : ""
+          isProblem ? "tooltip tooltip-right" : ""
         }`}
-        data-tip={isLagging ? lagTooltip : undefined}
+        data-tip={isProblem ? "Indexing problem" : undefined}
       >
-        {isLagging ?
+        {isProblem ?
           <ExclamationTriangleIcon className="h-5 w-5 text-warning" />
         : <LoadingSpinner size="loading-sm" />}
       </div>
@@ -1099,23 +1098,11 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const currentChainLagBlocks = getIndexingLagBlocks(
-      latestIndexedBlocksByChain[routeChainId],
-      currentChainRecords,
-    );
     const hasExceededProblemDelay = currentChainRecords.some(
       (record) => Date.now() - record.createdAt >= INDEXING_PROBLEM_DELAY_MS,
     );
-    const isLagging =
-      hasExceededProblemDelay &&
-      currentChainLagBlocks != null &&
-      currentChainLagBlocks > 0n;
     const content = (
-      <IndexingToast
-        count={currentChainCount}
-        isLagging={isLagging}
-        lagBlocks={currentChainLagBlocks}
-      />
+      <IndexingToast count={currentChainCount} isProblem={hasExceededProblemDelay} />
     );
     const clearCurrentChain = () => {
       if (isProgrammaticIndexingToastDismiss.current) {
@@ -1141,8 +1128,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
         routeChainId,
         currentChainCount,
         latestIndexedBlock: latestIndexedBlocksByChain[routeChainId],
-        lagBlocks: currentChainLagBlocks?.toString(),
-        isLagging,
+        isProblem: hasExceededProblemDelay,
       });
       toast.update(INDEXING_TOAST_ID, {
         render: content,
@@ -1164,8 +1150,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
         routeChainId,
         currentChainCount,
         latestIndexedBlock: latestIndexedBlocksByChain[routeChainId],
-        lagBlocks: currentChainLagBlocks?.toString(),
-        isLagging,
+        isProblem: hasExceededProblemDelay,
       });
       toast.info(content, {
         toastId: INDEXING_TOAST_ID,

@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowTopRightOnSquareIcon,
   Bars3Icon,
+  ExclamationTriangleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { formatDistanceToNow } from "date-fns";
@@ -13,7 +14,10 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { newLogo } from "@/assets";
 import { Button, ConnectWallet, ThemeButton } from "@/components";
 import Footer from "@/components/Footer";
-import { usePubSubContext } from "@/contexts/pubsub.context";
+import {
+  INDEXING_PROBLEM_DELAY_MS,
+  usePubSubContext,
+} from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useIsPaused } from "@/hooks/useIsPaused";
 
@@ -44,25 +48,59 @@ function MobileIndexingIndicator() {
   const chainId = useChainIdFromPath();
   const { pendingIndexedPublishes } = usePubSubContext();
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
-  const pendingCount = useMemo(() => {
+  const [isIndexingProblem, setIsIndexingProblem] = useState(false);
+  const currentChainRecords = useMemo(() => {
     if (chainId == null) {
-      return 0;
+      return [];
     }
 
     return pendingIndexedPublishes.filter(
       (record) => record.chainId === chainId,
-    ).length;
+    );
   }, [chainId, pendingIndexedPublishes]);
+  const pendingCount = currentChainRecords.length;
+  const transactionLabel =
+    pendingCount === 1 ? "1 transaction" : `${pendingCount} transactions`;
+  const oldestCreatedAt = useMemo(() => {
+    if (currentChainRecords.length === 0) {
+      return null;
+    }
+
+    return Math.min(...currentChainRecords.map((record) => record.createdAt));
+  }, [currentChainRecords]);
   const tooltipLabel =
-    pendingCount === 1 ?
-      "Indexing 1 transaction"
-    : `Indexing ${pendingCount} transactions`;
+    isIndexingProblem ?
+      `Indexing problem (${transactionLabel})`
+    : `Indexing ${transactionLabel}`;
 
   useEffect(() => {
     if (pendingCount === 0) {
       setIsTooltipOpen(false);
     }
   }, [pendingCount]);
+
+  useEffect(() => {
+    if (oldestCreatedAt == null) {
+      setIsIndexingProblem(false);
+      return;
+    }
+
+    const remainingMs =
+      INDEXING_PROBLEM_DELAY_MS - (Date.now() - oldestCreatedAt);
+    if (remainingMs <= 0) {
+      setIsIndexingProblem(true);
+      return;
+    }
+
+    setIsIndexingProblem(false);
+    const timeoutId = window.setTimeout(() => {
+      setIsIndexingProblem(true);
+    }, remainingMs);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [oldestCreatedAt]);
 
   if (pendingCount === 0) {
     return null;
@@ -84,10 +122,16 @@ function MobileIndexingIndicator() {
           <span className="sr-only" aria-live="polite" aria-atomic="true">
             {tooltipLabel}
           </span>
-          <span
-            aria-hidden="true"
-            className="loading loading-spinner loading-md text-neutral-soft-content"
-          />
+          {isIndexingProblem ?
+            <ExclamationTriangleIcon
+              aria-hidden="true"
+              className="h-5 w-5 text-warning"
+            />
+          : <span
+              aria-hidden="true"
+              className="loading loading-spinner loading-md text-neutral-soft-content"
+            />
+          }
           <span className="absolute">{pendingCount}</span>
         </button>
       </div>
