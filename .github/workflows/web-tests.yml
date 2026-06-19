@@ -53,6 +53,10 @@ jobs:
         working-directory: apps/web
         run: pnpm lint
 
+      - name: Generate contract bindings
+        working-directory: apps/web
+        run: pnpm generate
+
       - name: Typecheck
         working-directory: apps/web
         run: pnpm typecheck

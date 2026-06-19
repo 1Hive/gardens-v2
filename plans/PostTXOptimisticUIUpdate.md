@@ -6,7 +6,7 @@ Extend pending-indexed transactions with proposal-specific optimistic metadata a
 
 ## Key Changes
 
-- Extend `publishAfterIndexed(receipt, payload, options?)` in `/home/corantin/Documents/GitHub/gardens-v2/apps/web/contexts/pubsub.context.tsx` with optional persisted optimistic metadata.
+- Extend `publishAfterIndexed(receipt, payload, options?)` in `apps/web/contexts/pubsub.context.tsx` with optional persisted optimistic metadata.
 - Add typed optimistic kinds:
   - `proposal-created`: strategy id, proposal number, metadata IPFS hash, beneficiary, requested amount, proposal type.
   - `proposal-allocation`: strategy id, allocator, submitted target support values/deltas as decimal strings.
@@ -38,7 +38,7 @@ Extend pending-indexed transactions with proposal-specific optimistic metadata a
 - Add projector tests for proposal creation, status overlays, allocation overlays, nested proposal lists, and missing/nonmatching records.
 - Add allocation submit tests proving a second allocation computes deltas from mocked `getProposalVoterStake`, not stale subgraph data.
 - Add coverage that all proposal-related `useSubgraphQuery` callsites opt into the proposal projector where they display proposal status/data.
-- Run from `/home/corantin/Documents/GitHub/gardens-v2/apps/web`:
+- Run from `apps/web`:
   - `pnpm typecheck`
   - `pnpm lint`
   - `pnpm test:unit` if new unit tests are added.

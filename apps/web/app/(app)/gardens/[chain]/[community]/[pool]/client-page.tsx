@@ -189,11 +189,13 @@ export default function ClientPage({
       "debug",
       "Loading page: (app)/gardens/[chain]/[community]/[pool]/page.tsx",
     );
-    console.info("[PoolPage] mounted", {
-      chain,
-      community: _community,
-      poolSlug,
-    });
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[PoolPage] mounted", {
+        chain,
+        community: _community,
+        poolSlug,
+      });
+    }
   }, []);
 
   const searchParams = useCollectQueryParams();
@@ -893,15 +895,17 @@ export default function ClientPage({
     isMissingFundingToken,
   };
 
-  if (typeof window !== "undefined") {
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") {
+      return;
+    }
     (
       window as typeof window & {
         __POOL_PAGE_DEBUG?: typeof poolPageDebugState;
       }
     ).__POOL_PAGE_DEBUG = poolPageDebugState;
-  }
-
-  console.info("[PoolPage] render checkpoint", poolPageDebugState);
+    console.info("[PoolPage] render checkpoint", poolPageDebugState);
+  }, [poolPageDebugState]);
 
   useEffect(() => {
     const matchingPendingRecords = pendingIndexedPublishes.filter(
@@ -913,11 +917,15 @@ export default function ClientPage({
         return (
           record.chainId === Number(chain) &&
           (normalizedContainerId === strategyAddress ||
-            record.optimistic?.kind === "pool-governance" &&
-              record.optimistic.strategyId.toLowerCase() === strategyAddress)
+            (record.optimistic?.kind === "pool-governance" &&
+              record.optimistic.strategyId.toLowerCase() === strategyAddress))
         );
       },
     );
+
+    if (process.env.NODE_ENV === "production") {
+      return;
+    }
 
     console.info("[PoolPage] render state", {
       route: {
@@ -989,21 +997,23 @@ export default function ClientPage({
   ]);
 
   if ((!strategy || isMissingFundingToken) && stillLoading) {
-    console.info("[PoolPage] returning loading spinner", {
-      reason:
-        !strategy ? "missing-strategy"
-        : isMissingFundingToken ? "missing-funding-token"
-        : "unknown",
-      fetching,
-      hasData: Boolean(data),
-      hasError: Boolean(error),
-      isAwaitingNewPoolIndexing,
-      hasResolvedInitialNewPoolLookup,
-      poolId,
-      needsFundingToken,
-      isPoolTokenLoading,
-      hasPoolToken: Boolean(poolToken),
-    });
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[PoolPage] returning loading spinner", {
+        reason:
+          !strategy ? "missing-strategy"
+          : isMissingFundingToken ? "missing-funding-token"
+          : "unknown",
+        fetching,
+        hasData: Boolean(data),
+        hasError: Boolean(error),
+        isAwaitingNewPoolIndexing,
+        hasResolvedInitialNewPoolLookup,
+        poolId,
+        needsFundingToken,
+        isPoolTokenLoading,
+        hasPoolToken: Boolean(poolToken),
+      });
+    }
 
     return (
       <div className="mt-96 col-span-12">
@@ -1018,16 +1028,18 @@ export default function ClientPage({
     connectedChainId !== expectedChainId;
 
   if (!strategy) {
-    console.info("[PoolPage] returning pool unavailable", {
-      isWrongNetwork,
-      expectedChainId,
-      connectedChainId,
-      hasError: Boolean(error),
-      error,
-      fetching,
-      hasData: Boolean(data),
-      cvstrategyCount: data?.cvstrategies?.length ?? 0,
-    });
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[PoolPage] returning pool unavailable", {
+        isWrongNetwork,
+        expectedChainId,
+        connectedChainId,
+        hasError: Boolean(error),
+        error,
+        fetching,
+        hasData: Boolean(data),
+        cvstrategyCount: data?.cvstrategies?.length ?? 0,
+      });
+    }
 
     const title =
       isWrongNetwork ? "Switch network to continue" : "Pool unavailable";
@@ -1052,13 +1064,15 @@ export default function ClientPage({
   }
 
   if (poolId == null) {
-    console.info("[PoolPage] returning pool id loading spinner", {
-      strategyId: strategy.id,
-      rawPoolId: strategy.poolId,
-      fetching,
-      hasConfig: Boolean(strategyConfig),
-      proposalType,
-    });
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[PoolPage] returning pool id loading spinner", {
+        strategyId: strategy.id,
+        rawPoolId: strategy.poolId,
+        fetching,
+        hasConfig: Boolean(strategyConfig),
+        proposalType,
+      });
+    }
 
     return (
       <div className="mt-96 col-span-12">
@@ -1068,12 +1082,14 @@ export default function ClientPage({
   }
 
   if (!effectiveStrategy) {
-    console.info("[PoolPage] returning missing config error", {
-      strategyId: strategy.id,
-      hasConfig: Boolean(strategyConfig),
-      proposalType,
-      configKeys: strategyConfig ? Object.keys(strategyConfig) : [],
-    });
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[PoolPage] returning missing config error", {
+        strategyId: strategy.id,
+        hasConfig: Boolean(strategyConfig),
+        proposalType,
+        configKeys: strategyConfig ? Object.keys(strategyConfig) : [],
+      });
+    }
 
     return (
       <div className="col-span-12 mt-48 flex justify-center">

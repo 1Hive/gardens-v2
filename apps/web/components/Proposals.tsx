@@ -1103,15 +1103,17 @@ export function Proposals({
     ).length,
   };
 
-  if (typeof window !== "undefined") {
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") {
+      return;
+    }
     (
       window as typeof window & {
         __PROPOSALS_DEBUG?: typeof proposalsDebugState;
       }
     ).__PROPOSALS_DEBUG = proposalsDebugState;
-  }
-
-  console.info("[Proposals] render checkpoint", proposalsDebugState);
+    console.info("[Proposals] render checkpoint", proposalsDebugState);
+  }, [proposalsDebugState]);
 
   return (
     <>

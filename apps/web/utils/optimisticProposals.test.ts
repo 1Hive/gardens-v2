@@ -648,7 +648,7 @@ describe("optimistic proposal projector", () => {
     ]);
   });
 
-  it("removes deactivated members from proposal supporter lists without strategy fields", () => {
+  it("keeps deactivated member stakes when proposal strategy fields are missing", () => {
     const apply = createProposalOptimisticProjector({
       strategyId: "0xstrategy",
       allocator: "0xmember",
@@ -706,7 +706,11 @@ describe("optimistic proposal projector", () => {
     expect(result?.members).toEqual([
       expect.objectContaining({
         id: "0xmember",
-        stakes: [],
+        stakes: [
+          expect.objectContaining({
+            amount: "25",
+          }),
+        ],
       }),
       expect.objectContaining({
         id: "0xother",

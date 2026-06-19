@@ -513,7 +513,7 @@ function removeMemberStakesForStrategy(value: unknown[], strategyId: string) {
     const proposal = item.proposal;
     const proposalStrategyId =
       isObject(proposal.strategy) ? proposal.strategy.id : undefined;
-    if (proposalStrategyId == null) return false;
+    if (proposalStrategyId == null) return true;
     return normalize(proposalStrategyId) !== normalize(strategyId);
   });
 }
