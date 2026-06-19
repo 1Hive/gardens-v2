@@ -1079,37 +1079,57 @@ export function Proposals({
       "All Proposals"
     : `${filter.charAt(0).toUpperCase()}${filter.slice(1)} Proposals`;
 
-  const proposalsDebugState = {
-    strategyId: strategy.id,
-    proposalCount: strategy.proposals.length,
-    sortedProposalCount: sortedProposals.length,
-    filteredProposalCount: filteredAndSorted.length,
-    activeOrDisputedProposalCount: activeOrDisputedProposals.length,
-    proposalCardRefCount: proposalCardRefs.current.size,
-    inputsIsNull: inputs == null,
-    inputCount: inputs != null ? Object.keys(inputs).length : 0,
+  const proposalsDebugState = useMemo(() => {
+    if (process.env.NODE_ENV === "production") {
+      return null;
+    }
+
+    return {
+      strategyId: strategy.id,
+      proposalCount: strategy.proposals.length,
+      sortedProposalCount: sortedProposals.length,
+      filteredProposalCount: filteredAndSorted.length,
+      activeOrDisputedProposalCount: activeOrDisputedProposals.length,
+      proposalCardRefCount: proposalCardRefs.current.size,
+      inputsIsNull: inputs == null,
+      inputCount: inputs != null ? Object.keys(inputs).length : 0,
+      allocationView,
+      isMemberCommunity,
+      memberActivatedStrategy,
+      memberActivatedPoints: memberActivatedPoints.toString(),
+      memberStakeCount: memberData?.member?.stakes?.length ?? 0,
+      pendingOptimisticCount: pendingIndexedPublishes.filter(
+        (record) =>
+          record.chainId === Number(chainId) &&
+          record.optimistic != null &&
+          "strategyId" in record.optimistic &&
+          record.optimistic.strategyId.toLowerCase() ===
+            strategy.id.toLowerCase(),
+      ).length,
+    };
+  }, [
+    activeOrDisputedProposals.length,
     allocationView,
+    chainId,
+    filteredAndSorted.length,
+    inputs,
     isMemberCommunity,
+    memberActivatedPoints,
     memberActivatedStrategy,
-    memberActivatedPoints: memberActivatedPoints.toString(),
-    memberStakeCount: memberData?.member?.stakes?.length ?? 0,
-    pendingOptimisticCount: pendingIndexedPublishes.filter(
-      (record) =>
-        record.chainId === Number(chainId) &&
-        record.optimistic != null &&
-        "strategyId" in record.optimistic &&
-        record.optimistic.strategyId.toLowerCase() ===
-          strategy.id.toLowerCase(),
-    ).length,
-  };
+    memberData?.member?.stakes?.length,
+    pendingIndexedPublishes,
+    sortedProposals.length,
+    strategy.id,
+    strategy.proposals.length,
+  ]);
 
   useEffect(() => {
-    if (process.env.NODE_ENV === "production") {
+    if (proposalsDebugState == null) {
       return;
     }
     (
       window as typeof window & {
-        __PROPOSALS_DEBUG?: typeof proposalsDebugState;
+        __PROPOSALS_DEBUG?: NonNullable<typeof proposalsDebugState>;
       }
     ).__PROPOSALS_DEBUG = proposalsDebugState;
     console.info("[Proposals] render checkpoint", proposalsDebugState);

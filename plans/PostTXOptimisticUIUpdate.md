@@ -1,5 +1,7 @@
 # Optimistic Proposal UI While Indexing
 
+Historical design plan retained for PR context. Treat the implementation and tests as the source of truth for current behavior.
+
 ## Summary
 
 Extend pending-indexed transactions with proposal-specific optimistic metadata and apply it through an opt-in `useSubgraphQuery` overlay layer. All proposal-related UI should use the shared proposal projector so status, creation, and support/allocation updates appear consistently while the subgraph is behind. The subgraph remains canonical once the indexed block passes the tx block.
