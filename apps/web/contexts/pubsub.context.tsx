@@ -244,6 +244,7 @@ export const INDEXING_PROBLEM_DELAY_MS = 60_000;
 const INDEXING_POLL_INITIAL_DELAY_MS = 5000;
 const INDEXING_POLL_MAX_DELAY_MS = 60000;
 const INDEXING_POLL_BACKOFF_FACTOR = 2;
+const INDEXING_PENDING_RECORD_TTL_MS = 30 * 60_000;
 const ROUTE_INDEXING_POLL_INTERVAL_MS = 5 * 60_000;
 const INDEXING_LOG_PREFIX = "[indexing]";
 const SECONDS_PER_DAY = 86_400;
@@ -400,6 +401,30 @@ export const hasOneDayIndexingLag = ({
   );
 };
 
+export function matchesChangeScope(
+  payload: ChangeEventPayload | undefined,
+  scope: ChangeEventScope[] | ChangeEventScope | undefined,
+) {
+  if (!scope) return true;
+  if (!payload) return false;
+  const scopes = Array.isArray(scope) ? scope : [scope];
+
+  return scopes.some((scopeObj) =>
+    Object.entries(scopeObj).every(([key, scopeValue]) => {
+      if (scopeValue == null) return true;
+      const values = Array.isArray(scopeValue) ? scopeValue : [scopeValue];
+      const payloadValue = payload[key];
+      if (payloadValue == null) return false;
+
+      return values.some(
+        (value) =>
+          value?.toString().toLowerCase() ===
+          payloadValue.toString().toLowerCase(),
+      );
+    }),
+  );
+}
+
 const summarizePendingRecord = (record: PendingIndexedPublish) => ({
   key: pendingKey(record),
   txHash: record.txHash,
@@ -534,9 +559,20 @@ function readPendingIndexedPublishes(): PendingIndexedPublish[] {
       });
       return [];
     }
+    const now = Date.now();
     const records = parsed
       .map(normalizeRecord)
-      .filter((record): record is PendingIndexedPublish => record != null);
+      .filter((record): record is PendingIndexedPublish => record != null)
+      .filter(
+        (record) => now - record.createdAt <= INDEXING_PENDING_RECORD_TTL_MS,
+      );
+    const staleCount = parsed.length - records.length;
+    if (staleCount > 0) {
+      console.info(`${INDEXING_LOG_PREFIX} dropped stale pending records`, {
+        staleCount,
+        ttlMs: INDEXING_PENDING_RECORD_TTL_MS,
+      });
+    }
     console.info(`${INDEXING_LOG_PREFIX} restored pending records`, {
       count: records.length,
       records: records.map(summarizePendingRecord),
@@ -708,6 +744,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   const isMobileViewport = useMediaQuery("(max-width: 767px)");
   const skipPublished = useFlag("skipPublished");
   const indexingPollInFlight = useRef(false);
+  const pendingIndexedPublishesRef = useRef<PendingIndexedPublish[]>([]);
   const isProgrammaticIndexingToastDismiss = useRef(false);
   const shownIndexingProblemEpisodeByChain = useRef<Record<number, string>>({});
   const [indexingProblemCheckTick, setIndexingProblemCheckTick] = useState(0);
@@ -751,6 +788,11 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const subMap = subscriptionsMap.current;
+
+  useEffect(() => {
+    pendingIndexedPublishesRef.current = pendingIndexedPublishes;
+  }, [pendingIndexedPublishes]);
+  const hasPendingIndexedPublishes = pendingIndexedPublishes.length > 0;
 
   const setAndPersistPendingIndexedPublishes = useCallback(
     (
@@ -1171,7 +1213,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   }, [chainId, fetchRouteIndexingLagForChain]);
 
   useEffect(() => {
-    if (pendingIndexedPublishes.length === 0) {
+    if (!hasPendingIndexedPublishes) {
       console.debug(`${INDEXING_LOG_PREFIX} polling idle, no pending records`);
       return;
     }
@@ -1205,16 +1247,19 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       indexingPollInFlight.current = true;
+      const pendingIndexedPublishesSnapshot = pendingIndexedPublishesRef.current;
       const pendingChainIds = [
-        ...new Set(pendingIndexedPublishes.map((record) => record.chainId)),
+        ...new Set(
+          pendingIndexedPublishesSnapshot.map((record) => record.chainId),
+        ),
       ];
 
       try {
         const indexedBlocks = new Map<number, bigint>();
         console.info(`${INDEXING_LOG_PREFIX} poll started`, {
-          pendingCount: pendingIndexedPublishes.length,
+          pendingCount: pendingIndexedPublishesSnapshot.length,
           chainIds: pendingChainIds,
-          records: pendingIndexedPublishes.map(summarizePendingRecord),
+          records: pendingIndexedPublishesSnapshot.map(summarizePendingRecord),
         });
 
         await Promise.all(
@@ -1323,7 +1368,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       }
     };
   }, [
-    pendingIndexedPublishes,
+    hasPendingIndexedPublishes,
     publish,
     fetchLatestIndexedBlockForChain,
     setAndPersistPendingIndexedPublishes,

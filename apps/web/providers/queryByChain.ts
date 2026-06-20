@@ -11,6 +11,8 @@ type QueryByChainResult<Data> = ExecutionResult<Data> & {
   error?: Error;
 };
 
+const MAX_RESPONSE_PREVIEW_LENGTH = 240;
+
 function resolveQueryDocument(
   query: string | DocumentNode | { toString(): string },
 ) {
@@ -63,7 +65,22 @@ export async function queryByChain<
     },
   );
 
-  const result = (await response.json()) as QueryByChainResult<Data>;
+  const responseText = await response.text();
+  let result: QueryByChainResult<Data>;
+  try {
+    result = JSON.parse(responseText) as QueryByChainResult<Data>;
+  } catch (error) {
+    const preview = responseText.slice(0, MAX_RESPONSE_PREVIEW_LENGTH).trim();
+    const message =
+      `Subgraph returned invalid JSON with status ${response.status}` +
+      (preview ? `: ${preview}` : "");
+    return {
+      error:
+        error instanceof Error ?
+          new Error(message, { cause: error })
+        : new Error(message),
+    };
+  }
 
   if (!response.ok) {
     const message =

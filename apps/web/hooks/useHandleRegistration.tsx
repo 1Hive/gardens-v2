@@ -25,8 +25,8 @@ export function useHandleRegistration(
       status: "idle",
     }));
 
-  const { publishAfterIndexed } = usePubSubContext();
   const { address } = useAccount();
+  const { publishAfterIndexed } = usePubSubContext();
 
   const {
     write: writeRegisterMember,

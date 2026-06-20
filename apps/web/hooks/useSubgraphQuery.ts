@@ -9,7 +9,9 @@ import { LoadingToast } from "@/components";
 import { getConfigByChain } from "@/configs/chains";
 import {
   ChangeEventScope,
+  PendingIndexedPublish,
   SubscriptionId,
+  matchesChangeScope,
   usePubSubContext,
 } from "@/contexts/pubsub.context";
 import {
@@ -24,6 +26,14 @@ export const PENDING_SUBGRAPH_REFRESH_TOAST_ID = "pending-refresh";
 
 type RefetchOptions = {
   showToast?: boolean;
+};
+
+export type OptimisticSubgraphConfig<Data> = {
+  scope?: ChangeEventScope[] | ChangeEventScope;
+  apply: (
+    data: Data | undefined,
+    records: PendingIndexedPublish[],
+  ) => Data | undefined;
 };
 
 export function dismissPendingSubgraphRefreshToast() {
@@ -56,6 +66,7 @@ export function useSubgraphQuery<
   changeScope: changeScope,
   enabled = true,
   modifier,
+  optimistic,
 }: {
   chainId?: ChainId;
   query: DocumentInput<any, Variables>;
@@ -64,6 +75,7 @@ export function useSubgraphQuery<
   changeScope?: ChangeEventScope[] | ChangeEventScope;
   enabled?: boolean;
   modifier?: (data: Data) => Data;
+  optimistic?: OptimisticSubgraphConfig<Data>;
 }): {
   hasNext: boolean;
   stale: boolean;
@@ -78,7 +90,8 @@ export function useSubgraphQuery<
   const pathChainId = useChainIdFromPath();
   const resolvedChainId = chainId ?? pathChainId;
   const { urqlClient } = initUrqlClient();
-  const { connected, subscribe, unsubscribe } = usePubSubContext();
+  const { connected, subscribe, unsubscribe, pendingIndexedPublishes } =
+    usePubSubContext();
   const [fetching, setFetching] = useState(false);
   const config =
     resolvedChainId != null ? getConfigByChain(resolvedChainId) : undefined;
@@ -126,6 +139,26 @@ export function useSubgraphQuery<
   }
 
   const stableNormalizedChangeScope = stableChangeScopeRef.current;
+  const optimisticScope = optimistic?.scope ?? stableNormalizedChangeScope;
+  const optimisticRecords = useMemo(() => {
+    if (!optimistic || resolvedChainId == null) return [];
+    return pendingIndexedPublishes.filter(
+      (record) =>
+        record.chainId === Number(resolvedChainId) &&
+        record.optimistic != null &&
+        matchesChangeScope(record.publishPayload, optimisticScope),
+    );
+  }, [
+    optimistic,
+    optimisticScope,
+    pendingIndexedPublishes,
+    resolvedChainId,
+  ]);
+
+  const responseData = useMemo(() => {
+    if (!optimistic) return response.data;
+    return optimistic.apply(response.data as Data | undefined, optimisticRecords);
+  }, [optimistic, optimisticRecords, response.data]);
 
   useEffect(() => {
     if (!stableNormalizedChangeScope || stableNormalizedChangeScope.length === 0) {
@@ -355,7 +388,7 @@ export function useSubgraphQuery<
   return {
     hasNext: response.hasNext,
     stale: response.stale,
-    data: response.data,
+    data: responseData,
     error: response.error,
     refetch: (options) => {
       return refetchFromOutside(options);

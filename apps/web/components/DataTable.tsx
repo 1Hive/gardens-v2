@@ -69,15 +69,6 @@ export const DataTable: React.FC<DataTableProps> = ({
                 ))}
               </tr>
             ))}
-            {data?.length === 0 && emptyMessage && (
-              <tr>
-                <td className="py-6 text-center" colSpan={columns.length}>
-                  <p className="text-sm text-neutral-soft-content">
-                    {emptyMessage}
-                  </p>
-                </td>
-              </tr>
-            )}
           </tbody>
           {!withModal && footer != null && (
             <tfoot className="border-t-[1px] border-neutral-soft-content/50 mt-2">
@@ -89,6 +80,13 @@ export const DataTable: React.FC<DataTableProps> = ({
             </tfoot>
           )}
         </table>
+        {data?.length === 0 && emptyMessage && (
+          <div className="flex min-h-20 w-full items-center justify-center">
+            <p className="text-center text-sm text-neutral-soft-content">
+              {emptyMessage}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

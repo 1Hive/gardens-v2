@@ -27,7 +27,7 @@ import { CheckIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Id, toast } from "react-toastify";
 import { parseAbiParameters, encodeAbiParameters, formatUnits } from "viem";
-import { Address, useAccount, useContractRead } from "wagmi";
+import { Address, useAccount, useContractRead, usePublicClient } from "wagmi";
 import {
   Allo,
   CVProposal,
@@ -65,7 +65,19 @@ import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { getMemberActivationState } from "@/utils/memberActivation";
-import { bigIntMin, calculatePercentageBigInt } from "@/utils/numbers";
+import {
+  bigIntMin,
+  calculatePercentageBigInt,
+  toBigInt,
+} from "@/utils/numbers";
+import {
+  getPendingPoolGovernanceActivatedPoints,
+  getPendingPoolGovernanceActivation,
+} from "@/utils/optimisticMembers";
+import {
+  createProposalOptimisticProjector,
+  hasPendingProposalAllocation,
+} from "@/utils/optimisticProposals";
 
 // Types
 export type ProposalInputItem = {
@@ -164,6 +176,7 @@ export function Proposals({
     {},
   );
   const inputsRef = useRef<{ [key: string]: ProposalInputItem }>({});
+  const dirtyInputIdsRef = useRef<Set<string>>(new Set());
   const [stakedFilters, setStakedFilters] = useState<{
     [key: string]: ProposalInputItem;
   }>({});
@@ -181,8 +194,9 @@ export function Proposals({
 
   // Hooks
   const { address: wallet } = useAccount();
-  const { publishAfterIndexed } = usePubSubContext();
+  const { publishAfterIndexed, pendingIndexedPublishes } = usePubSubContext();
   const chainId = useChainIdFromPath();
+  const publicClient = usePublicClient({ chainId: Number(chainId) });
   const onchainProposalStatuses = useOnchainProposalStatuses({
     strategyAddress: strategy.id as Address,
     proposals: strategy.proposals,
@@ -193,6 +207,23 @@ export function Proposals({
   const isAllowed = useCheckAllowList(allowList, wallet);
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
+  const proposalOptimistic = useMemo(
+    () => ({
+      scope: { topic: "proposal" as const, containerId: strategy.id },
+      apply: createProposalOptimisticProjector({
+        strategyId: strategy.id,
+        allocator: wallet,
+      }),
+    }),
+    [strategy.id, wallet],
+  );
+  const hasPendingAllocation = hasPendingProposalAllocation(
+    pendingIndexedPublishes,
+    {
+      strategyId: strategy.id,
+      allocator: wallet,
+    },
+  );
   const searchParams = useCollectQueryParams();
 
   const proposalSectionRef = useRef<HTMLDivElement>(null);
@@ -229,7 +260,9 @@ export function Proposals({
 
   const scheduleConvictionFlush = useCallback(() => {
     if (convictionFlushFrameRef.current != null) return;
-    convictionFlushFrameRef.current = requestAnimationFrame(flushPendingConvictions);
+    convictionFlushFrameRef.current = requestAnimationFrame(
+      flushPendingConvictions,
+    );
   }, [flushPendingConvictions]);
 
   const handleConvictionUpdate = useCallback(
@@ -267,6 +300,7 @@ export function Proposals({
       },
     ],
     enabled: !!wallet && !!strategy.registryCommunity.id,
+    optimistic: proposalOptimistic,
   });
 
   const { data: memberStrategyData } = useSubgraphQuery<getMemberStrategyQuery>(
@@ -284,6 +318,7 @@ export function Proposals({
         { topic: "member", id: wallet, containerId: strategy.id },
       ],
       enabled: !!wallet,
+      optimistic: proposalOptimistic,
     },
   );
 
@@ -326,11 +361,36 @@ export function Proposals({
   const isMemberCommunity =
     !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
   const memberPower = votingRegistryMemberPower ?? communityMemberPower;
-  const { memberActivatedStrategy, memberActivatedPoints } =
+  const { memberActivatedStrategy: indexedMemberActivatedStrategy } =
     getMemberActivationState({
       memberPower,
       subgraphActivatedPoints: memberActivatedPointsFromSubgraph,
     });
+  const pendingPoolGovernanceActivation = useMemo(
+    () =>
+      getPendingPoolGovernanceActivation(pendingIndexedPublishes, {
+        chainId,
+        strategyId: strategy.id,
+        memberAddress: wallet,
+      }),
+    [chainId, pendingIndexedPublishes, strategy.id, wallet],
+  );
+  const pendingPoolGovernanceActivatedPoints = useMemo(
+    () =>
+      getPendingPoolGovernanceActivatedPoints(pendingIndexedPublishes, {
+        chainId,
+        strategyId: strategy.id,
+        memberAddress: wallet,
+      }),
+    [chainId, pendingIndexedPublishes, strategy.id, wallet],
+  );
+  const memberVotingPower =
+    memberPower != null && memberPower > 0n ? memberPower
+    : memberActivatedPointsFromSubgraph > 0n ? memberActivatedPointsFromSubgraph
+    : pendingPoolGovernanceActivatedPoints ?? 0n;
+  const memberActivatedStrategy =
+    pendingPoolGovernanceActivation ?? indexedMemberActivatedStrategy;
+  const memberActivatedPoints = memberVotingPower;
 
   const proposalsWithResolvedStatus = useMemo(
     () =>
@@ -445,6 +505,12 @@ export function Proposals({
     }
   }, [memberActivatedStrategy]);
 
+  useEffect(() => {
+    if (!allocationView) {
+      dirtyInputIdsRef.current.clear();
+    }
+  }, [allocationView]);
+
   const disableManageSupportBtnCondition: ConditionObject[] = [
     {
       condition: !isMemberCommunity,
@@ -519,7 +585,10 @@ export function Proposals({
         ProposalStatus[proposalStatus] !== "disputed";
       const currentInput = currentInputs[id];
       const shouldPreserveDraft =
-        allocationView && !proposalEnded && currentInput != null;
+        allocationView &&
+        !proposalEnded &&
+        currentInput != null &&
+        dirtyInputIdsRef.current.has(id);
 
       newInputs[id] = {
         proposalId: id,
@@ -579,6 +648,38 @@ export function Proposals({
     }, []);
   };
 
+  const getAllocationBaselineForSubmit = async (currentInputs: {
+    [key: string]: ProposalInputItem;
+  }) => {
+    if (!hasPendingAllocation) {
+      return stakedFilters;
+    }
+    if (publicClient == null || !wallet) {
+      throw new Error("Cannot refresh on-chain proposal support.");
+    }
+
+    const entries = await Promise.all(
+      Object.values(currentInputs).map(async (input) => {
+        const value = await publicClient.readContract({
+          address: strategy.id as Address,
+          abi: cvStrategyABI,
+          functionName: "getProposalVoterStake",
+          args: [BigInt(input.proposalNumber), wallet as Address],
+        });
+
+        return [
+          input.proposalId,
+          {
+            ...input,
+            value: value as bigint,
+          },
+        ] as const;
+      }),
+    );
+
+    return Object.fromEntries(entries) as { [key: string]: ProposalInputItem };
+  };
+
   const calculateTotalTokens = (exceptProposalId?: string) => {
     const currentInputs = inputsRef.current;
     if (!Object.keys(currentInputs).length) {
@@ -598,6 +699,7 @@ export function Proposals({
   };
 
   const inputHandler = (proposalId: string, value: bigint) => {
+    dirtyInputIdsRef.current.add(proposalId);
     const currentPoints = calculateTotalTokens(proposalId);
 
     const maxAllowableValue =
@@ -668,6 +770,11 @@ export function Proposals({
   });
 
   const submit = async () => {
+    if (!memberActivatedStrategy) {
+      toast.error("You need to activate your governance first.");
+      return;
+    }
+
     const currentInputs = inputsRef.current;
     if (!Object.keys(currentInputs).length) {
       console.error("Inputs not yet computed");
@@ -690,9 +797,25 @@ export function Proposals({
       return;
     }
 
+    let allocationBaseline: { [key: string]: ProposalInputItem };
+    try {
+      allocationBaseline = await getAllocationBaselineForSubmit(currentInputs);
+    } catch (caughtError) {
+      console.error(
+        "[Proposals][Allocate] Failed to refresh on-chain support",
+        {
+          error: caughtError,
+        },
+      );
+      toast.error(
+        "Could not refresh your latest on-chain support. Wait for indexing and try again.",
+      );
+      return;
+    }
+
     const proposalsDifferencesArr = getProposalsInputsDifferences(
       currentInputs,
-      stakedFilters,
+      allocationBaseline,
     );
     submittedAllocationRef.current = {
       targets: Object.values(currentInputs).map((input) => ({
@@ -712,7 +835,7 @@ export function Proposals({
           proposalNumber: input.proposalNumber,
           value: input.value.toString(),
         })),
-        stakedFilters: Object.values(stakedFilters).map((stake) => ({
+        stakedFilters: Object.values(allocationBaseline).map((stake) => ({
           proposalId: stake.proposalId,
           proposalNumber: stake.proposalNumber,
           value: stake.value.toString(),
@@ -743,12 +866,39 @@ export function Proposals({
     memberActivatedPoints,
   );
 
+  const totalEffectiveActivePoints = toBigInt(
+    strategy.totalEffectiveActivePoints,
+  );
+  const effectiveTotalActivePoints =
+    (
+      pendingPoolGovernanceActivation === true &&
+      memberActivatedPointsFromSubgraph === 0n &&
+      memberVotingPower > 0n
+    ) ?
+      totalEffectiveActivePoints + memberVotingPower
+    : totalEffectiveActivePoints;
+  const withEffectiveActivePoints = useCallback(
+    <T extends ProposalCardProps["proposalData"]>(proposalData: T): T => {
+      const proposalTotalEffectiveActivePoints = toBigInt(
+        proposalData.strategy?.totalEffectiveActivePoints,
+      );
+      if (effectiveTotalActivePoints <= proposalTotalEffectiveActivePoints) {
+        return proposalData;
+      }
+
+      return {
+        ...proposalData,
+        strategy: {
+          ...proposalData.strategy,
+          totalEffectiveActivePoints: effectiveTotalActivePoints.toString(),
+        },
+      };
+    },
+    [effectiveTotalActivePoints],
+  );
   const memberPoolWeight =
-    memberPower != null && +strategy.totalEffectiveActivePoints > 0 ?
-      calculatePercentageBigInt(
-        memberPower,
-        BigInt(strategy.totalEffectiveActivePoints),
-      )
+    memberVotingPower > 0n && effectiveTotalActivePoints > 0n ?
+      calculatePercentageBigInt(memberVotingPower, effectiveTotalActivePoints)
     : undefined;
 
   const calcPoolWeightUsed =
@@ -929,6 +1079,62 @@ export function Proposals({
       "All Proposals"
     : `${filter.charAt(0).toUpperCase()}${filter.slice(1)} Proposals`;
 
+  const proposalsDebugState = useMemo(() => {
+    if (process.env.NODE_ENV === "production") {
+      return null;
+    }
+
+    return {
+      strategyId: strategy.id,
+      proposalCount: strategy.proposals.length,
+      sortedProposalCount: sortedProposals.length,
+      filteredProposalCount: filteredAndSorted.length,
+      activeOrDisputedProposalCount: activeOrDisputedProposals.length,
+      proposalCardRefCount: proposalCardRefs.current.size,
+      inputsIsNull: inputs == null,
+      inputCount: inputs != null ? Object.keys(inputs).length : 0,
+      allocationView,
+      isMemberCommunity,
+      memberActivatedStrategy,
+      memberActivatedPoints: memberActivatedPoints.toString(),
+      memberStakeCount: memberData?.member?.stakes?.length ?? 0,
+      pendingOptimisticCount: pendingIndexedPublishes.filter(
+        (record) =>
+          record.chainId === Number(chainId) &&
+          record.optimistic != null &&
+          "strategyId" in record.optimistic &&
+          record.optimistic.strategyId.toLowerCase() ===
+            strategy.id.toLowerCase(),
+      ).length,
+    };
+  }, [
+    activeOrDisputedProposals.length,
+    allocationView,
+    chainId,
+    filteredAndSorted.length,
+    inputs,
+    isMemberCommunity,
+    memberActivatedPoints,
+    memberActivatedStrategy,
+    memberData?.member?.stakes?.length,
+    pendingIndexedPublishes,
+    sortedProposals.length,
+    strategy.id,
+    strategy.proposals.length,
+  ]);
+
+  useEffect(() => {
+    if (proposalsDebugState == null) {
+      return;
+    }
+    (
+      window as typeof window & {
+        __PROPOSALS_DEBUG?: NonNullable<typeof proposalsDebugState>;
+      }
+    ).__PROPOSALS_DEBUG = proposalsDebugState;
+    console.info("[Proposals] render checkpoint", proposalsDebugState);
+  }, [proposalsDebugState]);
+
   return (
     <>
       {/* Proposals section */}
@@ -1067,33 +1273,37 @@ export function Proposals({
                 {selectedFilterTitle}
               </h6>
             )}
-            {filteredAndSorted.map((proposalData) => (
-              <Fragment key={proposalData.proposalNumber}>
-                <ProposalCard
-                  proposalData={proposalData}
-                  poolAddress={strategy.id}
-                  strategyConfig={strategy.config}
-                  inputData={inputs[proposalData.id]}
-                  stakedFilter={stakedFilters[proposalData.id]}
-                  isAllocationView={allocationView}
-                  memberActivatedPoints={memberActivatedPoints}
-                  memberPoolWeight={memberPoolWeight}
-                  executeDisabled={
-                    proposalData.proposalStatus == 4 ||
-                    !isConnected ||
-                    missmatchUrl
-                  }
-                  poolToken={poolToken}
-                  tokenDecimals={tokenDecimals}
-                  alloInfo={alloInfo}
-                  inputHandler={inputHandler}
-                  communityToken={strategy.registryCommunity.garden}
-                  isPoolEnabled={strategy.isEnabled}
-                  minThGtTotalEffPoints={minThGtTotalEffPoints}
-                  onConvictionUpdate={handleConvictionUpdate}
-                />
-              </Fragment>
-            ))}
+            {filteredAndSorted.map((proposalData) => {
+              const displayProposalData =
+                withEffectiveActivePoints(proposalData);
+              return (
+                <Fragment key={proposalData.proposalNumber}>
+                  <ProposalCard
+                    proposalData={displayProposalData}
+                    poolAddress={strategy.id}
+                    strategyConfig={strategy.config}
+                    inputData={inputs[displayProposalData.id]}
+                    stakedFilter={stakedFilters[displayProposalData.id]}
+                    isAllocationView={allocationView}
+                    memberActivatedPoints={memberActivatedPoints}
+                    memberPoolWeight={memberPoolWeight}
+                    executeDisabled={
+                      displayProposalData.proposalStatus == 4 ||
+                      !isConnected ||
+                      missmatchUrl
+                    }
+                    poolToken={poolToken}
+                    tokenDecimals={tokenDecimals}
+                    alloInfo={alloInfo}
+                    inputHandler={inputHandler}
+                    communityToken={strategy.registryCommunity.garden}
+                    isPoolEnabled={strategy.isEnabled}
+                    minThGtTotalEffPoints={minThGtTotalEffPoints}
+                    onConvictionUpdate={handleConvictionUpdate}
+                  />
+                </Fragment>
+              );
+            })}
           </>
         }
 
@@ -1117,32 +1327,36 @@ export function Proposals({
                   </div>
                 )}
 
-                {activeOrDisputedProposals.map((proposalData) => (
-                  <Fragment key={proposalData.id}>
-                    <ProposalsModalSupport
-                      ref={makeRef(proposalData.id)}
-                      proposalData={proposalData}
-                      strategyConfig={strategy.config}
-                      inputData={inputs[proposalData.id]}
-                      isAllocationView={allocationView}
-                      memberActivatedPoints={memberActivatedPoints}
-                      memberPoolWeight={memberPoolWeight}
-                      executeDisabled={
-                        proposalData.proposalStatus === 4 ||
-                        !isConnected ||
-                        missmatchUrl
-                      }
-                      poolToken={poolToken}
-                      tokenDecimals={tokenDecimals}
-                      alloInfo={alloInfo}
-                      inputHandler={inputHandler}
-                      communityToken={strategy.registryCommunity.garden}
-                      isPoolEnabled={strategy.isEnabled}
-                      minThGtTotalEffPoints={minThGtTotalEffPoints}
-                      poolAddress={strategy.id}
-                    />
-                  </Fragment>
-                ))}
+                {activeOrDisputedProposals.map((proposalData) => {
+                  const displayProposalData =
+                    withEffectiveActivePoints(proposalData);
+                  return (
+                    <Fragment key={displayProposalData.id}>
+                      <ProposalsModalSupport
+                        ref={makeRef(displayProposalData.id)}
+                        proposalData={displayProposalData}
+                        strategyConfig={strategy.config}
+                        inputData={inputs[displayProposalData.id]}
+                        isAllocationView={allocationView}
+                        memberActivatedPoints={memberActivatedPoints}
+                        memberPoolWeight={memberPoolWeight}
+                        executeDisabled={
+                          displayProposalData.proposalStatus === 4 ||
+                          !isConnected ||
+                          missmatchUrl
+                        }
+                        poolToken={poolToken}
+                        tokenDecimals={tokenDecimals}
+                        alloInfo={alloInfo}
+                        inputHandler={inputHandler}
+                        communityToken={strategy.registryCommunity.garden}
+                        isPoolEnabled={strategy.isEnabled}
+                        minThGtTotalEffPoints={minThGtTotalEffPoints}
+                        poolAddress={strategy.id}
+                      />
+                    </Fragment>
+                  );
+                })}
 
                 {strategy.isEnabled &&
                   allocationView &&
@@ -1155,12 +1369,17 @@ export function Proposals({
                           isLoading={isAllocateLoading}
                           disabled={
                             inputs == null ||
+                            !memberActivatedStrategy ||
                             !getProposalsInputsDifferences(
                               inputs,
                               stakedFilters,
                             ).length
                           }
-                          tooltip="Make changes in proposals support first"
+                          tooltip={
+                            !memberActivatedStrategy ?
+                              "You need to activate your governance first"
+                            : "Make changes in proposals support first"
+                          }
                           tooltipDesktopSide="tooltip-left"
                           className="!w-full sm:!w-auto"
                         >
@@ -1259,14 +1478,22 @@ export function useProposalFilter<
         return list.sort((a, b) => {
           const aStaked = toSortableBigInt(a.stakedAmount);
           const bStaked = toSortableBigInt(b.stakedAmount);
-          return aStaked < bStaked ? 1 : aStaked > bStaked ? -1 : 0;
+          return (
+            aStaked < bStaked ? 1
+            : aStaked > bStaked ? -1
+            : 0
+          );
         });
 
       case "mostRequested":
         return list.sort((a, b) => {
           const aRequested = toSortableBigInt(a.requestedAmount);
           const bRequested = toSortableBigInt(b.requestedAmount);
-          return aRequested < bRequested ? 1 : aRequested > bRequested ? -1 : 0;
+          return (
+            aRequested < bRequested ? 1
+            : aRequested > bRequested ? -1
+            : 0
+          );
         });
 
       case "mostConviction":
@@ -1434,9 +1661,9 @@ function ProposalFiltersUI({
 
           <ul
             className={`dropdown-content menu bg-primary rounded-md z-50 shadow w-full lg:w-[215px] ${
-              isSortDropdownLocked || disableSort ?
-                "hidden"
-              : "hidden group-hover:flex group-focus-within:flex"
+              isSortDropdownLocked || disableSort ? "hidden" : (
+                "hidden group-hover:flex group-focus-within:flex"
+              )
             }`}
           >
             {SORT_OPTIONS.map((option) => {

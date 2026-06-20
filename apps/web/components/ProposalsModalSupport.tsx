@@ -199,6 +199,8 @@ export const ProposalsModalSupport = forwardRef<
       PoolTypes[strategyConfig.proposalType] === "signaling";
     const isStreamingType =
       PoolTypes[strategyConfig.proposalType] === "streaming";
+    const shouldShowOnlyCreator =
+      isSignalingType || !beneficiary || submitter === beneficiary;
     const proposalStream =
       proposalData.proposalStream ?? proposalData.proposalStreams?.[0];
     const subgraphCurrentFlowRateBn = toBigInt(proposalStream?.currentFlowRate);
@@ -356,7 +358,7 @@ export const ProposalsModalSupport = forwardRef<
               </div>
               <div className="flex  justify-between items-center">
                 <div className="flex sm:items-center flex-col items-start sm:flex-row gap-2">
-                  {submitter === beneficiary ?
+                  {shouldShowOnlyCreator ?
                     <div
                       className="flex items-center gap-1"
                       onClick={(e) => {
