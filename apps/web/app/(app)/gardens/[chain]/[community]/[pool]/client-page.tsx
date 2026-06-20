@@ -877,37 +877,63 @@ export default function ClientPage({
     (strategy != null && poolId == null) ||
     (needsFundingToken && isPoolTokenLoading);
 
-  const poolPageDebugState = {
+  const poolPageDebugState = useMemo(() => {
+    if (process.env.NODE_ENV === "production") {
+      return null;
+    }
+
+    return {
+      fetching,
+      hasData: Boolean(data),
+      hasError: Boolean(error),
+      hasStrategy: Boolean(strategy),
+      poolId,
+      hasConfig: Boolean(strategyConfig),
+      proposalType,
+      poolType,
+      stillLoading,
+      isAwaitingNewPoolIndexing,
+      hasResolvedInitialNewPoolLookup,
+      needsFundingToken,
+      isPoolTokenLoading,
+      hasPoolToken: Boolean(poolToken),
+      isMissingFundingToken,
+    };
+  }, [
+    data,
+    error,
     fetching,
-    hasData: Boolean(data),
-    hasError: Boolean(error),
-    hasStrategy: Boolean(strategy),
-    poolId,
-    hasConfig: Boolean(strategyConfig),
-    proposalType,
-    poolType,
-    stillLoading,
-    isAwaitingNewPoolIndexing,
     hasResolvedInitialNewPoolLookup,
-    needsFundingToken,
-    isPoolTokenLoading,
-    hasPoolToken: Boolean(poolToken),
+    isAwaitingNewPoolIndexing,
     isMissingFundingToken,
-  };
+    isPoolTokenLoading,
+    needsFundingToken,
+    poolId,
+    poolToken,
+    poolType,
+    proposalType,
+    stillLoading,
+    strategy,
+    strategyConfig,
+  ]);
 
   useEffect(() => {
-    if (process.env.NODE_ENV === "production") {
+    if (poolPageDebugState == null) {
       return;
     }
     (
       window as typeof window & {
-        __POOL_PAGE_DEBUG?: typeof poolPageDebugState;
+        __POOL_PAGE_DEBUG?: NonNullable<typeof poolPageDebugState>;
       }
     ).__POOL_PAGE_DEBUG = poolPageDebugState;
     console.info("[PoolPage] render checkpoint", poolPageDebugState);
   }, [poolPageDebugState]);
 
   useEffect(() => {
+    if (process.env.NODE_ENV === "production") {
+      return;
+    }
+
     const matchingPendingRecords = pendingIndexedPublishes.filter(
       (record) => {
         const containerId = record.publishPayload?.containerId;
@@ -922,10 +948,6 @@ export default function ClientPage({
         );
       },
     );
-
-    if (process.env.NODE_ENV === "production") {
-      return;
-    }
 
     console.info("[PoolPage] render state", {
       route: {
