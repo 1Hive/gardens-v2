@@ -244,6 +244,33 @@ export const DisputeModal: FC<Props> = ({
             },
           },
         );
+        void fetch("/api/dispute-feed", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            chainId,
+            transactionHash: receipt.transactionHash,
+            strategyAddress: proposalData.strategy.id,
+            proposalId: proposalData.id,
+            proposalNumber: proposalData.proposalNumber.toString(),
+            proposalTitle: proposalData.title ?? null,
+            disputeReason: reason,
+            proposalPath: window.location.pathname,
+          }),
+        })
+          .then(async (response) => {
+            if (!response.ok) {
+              console.warn("Dispute feed notification failed", {
+                status: response.status,
+                body: await response.text(),
+              });
+            }
+          })
+          .catch((caughtError) => {
+            console.warn("Failed to notify dispute feed", caughtError);
+          });
       },
     });
 
