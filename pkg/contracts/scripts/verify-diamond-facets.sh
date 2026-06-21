@@ -36,6 +36,10 @@ VERIFY_RPC_INITIAL_DELAY=${VERIFY_RPC_INITIAL_DELAY:-8}
 VERIFY_RPC_SUCCESS_DELAY=${VERIFY_RPC_SUCCESS_DELAY:-2}
 VERIFY_COMMAND_TIMEOUT=${VERIFY_COMMAND_TIMEOUT:-300}
 STRICT_FACET_MATCH=${STRICT_FACET_MATCH:-true}
+ALLOW_POOL_TYPE_SCOPED_STALE_FACETS=${ALLOW_POOL_TYPE_SCOPED_STALE_FACETS:-true}
+
+ALLOCATION_SELECTORS="0xef2920fc 0x0a6f0ee9 0x4ab4ba42"
+STREAMING_SELECTORS="0x7d7c2a1c 0x0605821b 0x736dcb8b 0xe0ab98b5 0x7ce8962f"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -381,6 +385,92 @@ load_facets_for_network() {
     "$CONTRACTS_DIR/config/networks.json"
 }
 
+decode_uint8_call_result() {
+  local raw="$1"
+  local decoded
+
+  if [[ "$raw" =~ ^[0-9]+$ ]]; then
+    echo "$raw"
+    return 0
+  fi
+
+  if decoded=$(cast abi-decode "f(uint8)" "$raw" 2>/dev/null); then
+    echo "$decoded" | grep -oE '[0-9]+' | tail -n 1
+    return 0
+  fi
+
+  echo "$raw" | grep -oE '[0-9]+' | tail -n 1
+}
+
+selector_in_set() {
+  local selector
+  local allowed
+  selector=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+  allowed="$2"
+
+  grep -qw "$selector" <<< "$allowed"
+}
+
+selectors_are_subset() {
+  local selectors="$1"
+  local allowed="$2"
+  local selector
+  while read -r selector; do
+    [[ -z "$selector" ]] && continue
+    if ! selector_in_set "$selector" "$allowed"; then
+      return 1
+    fi
+  done <<< "$selectors"
+  return 0
+}
+
+get_facet_selectors() {
+  local proxy="$1"
+  local facet="$2"
+  local raw
+
+  if ! raw=$(verify_with_retry "facetFunctionSelectors for $facet on $proxy" cast call --rpc-url "$RPC_URL" "$proxy" "facetFunctionSelectors(address)(bytes4[])" "$facet" 2>/dev/null); then
+    return 1
+  fi
+
+  echo "$raw" | grep -oE '0x[0-9a-fA-F]{8}' | tr '[:upper:]' '[:lower:]' | sort -u
+}
+
+get_strategy_proposal_type() {
+  local proxy="$1"
+  local raw
+
+  if ! raw=$(verify_with_retry "proposalType for $proxy" cast call --rpc-url "$RPC_URL" "$proxy" "proposalType()(uint8)" 2>/dev/null); then
+    return 1
+  fi
+
+  decode_uint8_call_result "$raw"
+}
+
+is_pool_type_scoped_stale_facet() {
+  local proxy="$1"
+  local facet="$2"
+  local proposal_type
+  local selectors
+  local allowed_selectors
+
+  [[ "$ALLOW_POOL_TYPE_SCOPED_STALE_FACETS" == "true" ]] || return 1
+
+  proposal_type=$(get_strategy_proposal_type "$proxy" 2>/dev/null || true)
+  [[ -n "$proposal_type" ]] || return 1
+
+  # proposalType 2 is Streaming. Streaming pools must use the configured latest
+  # streaming and allocation facets. Non-streaming pools can intentionally retain
+  # stale streaming/allocation facet addresses when only streaming pools were cut.
+  [[ "$proposal_type" != "2" ]] || return 1
+
+  selectors=$(get_facet_selectors "$proxy" "$facet" 2>/dev/null || true)
+  [[ -n "$selectors" ]] || return 1
+
+  allowed_selectors="${ALLOCATION_SELECTORS} ${STREAMING_SELECTORS}"
+  selectors_are_subset "$selectors" "$allowed_selectors"
+}
+
 get_prod_networks() {
   jq -r '.networks[].name | select(test("sepolia|testnet") | not)' \
     "$CONTRACTS_DIR/config/networks.json"
@@ -460,14 +550,18 @@ verify_network() {
       codehash=$(verify_with_retry "codehash for $facet on $display_name" cast codehash --rpc-url "$rpc_url" "$facet")
       if ! resolve_contract_for_bytecode "$facet" "$rpc_url" "$codehash"; then
         if [[ ${#expected_facets[@]} -gt 0 && -z "${expected_facets[$facet_lc]:-}" ]]; then
-          historical_contract_name=$(lookup_broadcast_contract_name "$facet" "$chain_id" || true)
-          if [[ -n "$historical_contract_name" ]]; then
+          if is_pool_type_scoped_stale_facet "$proxy" "$facet"; then
+            echo "    - INFO: facet $facet is live but not declared in config/networks.json FACETS for $network; allowed as stale allocation/streaming facet on a non-streaming strategy"
+          else
+            historical_contract_name=$(lookup_broadcast_contract_name "$facet" "$chain_id" || true)
+            if [[ -n "$historical_contract_name" ]]; then
             echo "    - WARNING: facet $facet is live but not declared in config/networks.json FACETS for $network; broadcast history identifies it as $historical_contract_name"
             historical_undeclared_count=$((historical_undeclared_count + 1))
             historical_undeclared_messages+=("$facet -> $historical_contract_name")
-          else
+            else
             echo "    - ERROR: facet $facet is not declared in config/networks.json FACETS for $network and has no matching local artifact or broadcast history"
             unknown_facet_count=$((unknown_facet_count + 1))
+            fi
           fi
         fi
         unknown_codehash_count=$((unknown_codehash_count + 1))
@@ -476,9 +570,13 @@ verify_network() {
       fi
 
       if [[ ${#expected_facets[@]} -gt 0 && -z "${expected_facets[$facet_lc]:-}" ]]; then
-        echo "    - WARNING: facet $facet is live but not declared in config/networks.json FACETS for $network; resolved as $RESOLVED_CONTRACT"
-        undeclared_resolved_count=$((undeclared_resolved_count + 1))
-        undeclared_resolved_messages+=("$facet -> $RESOLVED_CONTRACT")
+        if is_pool_type_scoped_stale_facet "$proxy" "$facet"; then
+          echo "    - INFO: facet $facet is live but not declared in config/networks.json FACETS for $network; allowed as stale allocation/streaming facet on a non-streaming strategy"
+        else
+          echo "    - WARNING: facet $facet is live but not declared in config/networks.json FACETS for $network; resolved as $RESOLVED_CONTRACT"
+          undeclared_resolved_count=$((undeclared_resolved_count + 1))
+          undeclared_resolved_messages+=("$facet -> $RESOLVED_CONTRACT")
+        fi
       fi
 
       echo "    - Verifying $facet as $RESOLVED_CONTRACT"
