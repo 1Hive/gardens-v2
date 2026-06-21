@@ -2,8 +2,6 @@
 pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
-import {CVStreamingStorage} from "../CVStreamingStorage.sol";
-import {StreamingEscrow} from "../StreamingEscrow.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ProposalType, ProposalStatus, ProposalSupport, Proposal} from "../ICVStrategy.sol";
@@ -50,6 +48,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     error TooManyAllocations(uint256 provided, uint256 maxAllowed);
     error TooManyVoterStakedProposals(address voter, uint256 current, uint256 maxAllowed);
     error UpdateMemberUnitsFailed(address member, uint128 units);
+    error ProposalTypeNotSupported(ProposalType proposalType);
 
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
@@ -199,6 +198,10 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
 
         uint256 proposalId = abi.decode(_data, (uint256));
 
+        if (proposalType != ProposalType.Funding) {
+            revert ProposalTypeNotSupported(proposalType);
+        }
+
         uint256 poolAmount = getPoolAmount();
         if (poolAmount == 0 && proposals[proposalId].requestedAmount > 0) {
             revert PoolIsEmpty(poolAmount);
@@ -214,71 +217,60 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
             }
         }
 
-        if (proposalType == ProposalType.Funding || proposalType == ProposalType.Streaming) {
-            if (proposals[proposalId].proposalId != proposalId && proposalId != 0) {
-                revert ProposalNotInList(proposalId);
-            }
-
-            if (proposals[proposalId].proposalStatus != ProposalStatus.Active) {
-                revert ProposalNotActive(proposalId, uint8(proposals[proposalId].proposalStatus));
-            }
-
-            if (proposals[proposalId].requestedAmount > poolAmount) {
-                revert PoolAmountNotEnough(proposalId, proposals[proposalId].requestedAmount, poolAmount);
-            }
-
-            if (proposals[proposalId].requestedAmount > 0 && _isOverMaxRatio(proposals[proposalId].requestedAmount)) {
-                uint256 maxAllowed = (cvParams.maxRatio * poolAmount) / ConvictionsUtils.D;
-                revert AmountOverMaxRatio(proposals[proposalId].requestedAmount, maxAllowed, poolAmount);
-            }
-
-            if (proposals[proposalId].requestedAmount > 0 && totalPointsActivated == 0) {
-                revert NoActiveGovernancePoints(proposalId);
-            }
-
-            uint256 convictionLast = updateProposalConviction(proposalId);
-
-            uint256 threshold;
-            if (proposals[proposalId].requestedAmount > 0) {
-                threshold = ConvictionsUtils.calculateThreshold(
-                    proposals[proposalId].requestedAmount,
-                    poolAmount,
-                    totalPointsActivated,
-                    cvParams.decay,
-                    cvParams.weight,
-                    cvParams.maxRatio,
-                    cvParams.minThresholdPoints
-                );
-            }
-
-            // <= for when threshold being zero
-            if (convictionLast <= threshold && proposals[proposalId].requestedAmount > 0) {
-                revert ConvictionUnderMinimumThreshold(convictionLast, threshold, proposals[proposalId].requestedAmount);
-            }
-
-            proposals[proposalId].proposalStatus = ProposalStatus.Executed;
-            _decrementActiveProposalCount();
-            _removeOpenStreamingProposal(proposalId);
-            if (proposalType == ProposalType.Streaming) {
-                address escrow = CVStreamingStorage.layout().proposalEscrow[proposalId];
-                if (escrow != address(0)) {
-                    if (!superfluidGDA.updateMemberUnits(escrow, 0)) {
-                        revert UpdateMemberUnitsFailed(escrow, 0);
-                    }
-                    StreamingEscrow(escrow).drainToStrategy();
-                }
-            }
-            _transferAmount(
-                allo.getPool(poolId).token, proposals[proposalId].beneficiary, proposals[proposalId].requestedAmount
-            );
-            collateralVault.withdrawCollateral(
-                proposalId,
-                proposals[proposalId].submitter,
-                arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
-            );
-
-            emit Distributed(proposalId, proposals[proposalId].beneficiary, proposals[proposalId].requestedAmount);
+        if (proposals[proposalId].proposalId != proposalId && proposalId != 0) {
+            revert ProposalNotInList(proposalId);
         }
+
+        if (proposals[proposalId].proposalStatus != ProposalStatus.Active) {
+            revert ProposalNotActive(proposalId, uint8(proposals[proposalId].proposalStatus));
+        }
+
+        if (proposals[proposalId].requestedAmount > poolAmount) {
+            revert PoolAmountNotEnough(proposalId, proposals[proposalId].requestedAmount, poolAmount);
+        }
+
+        if (proposals[proposalId].requestedAmount > 0 && _isOverMaxRatio(proposals[proposalId].requestedAmount)) {
+            uint256 maxAllowed = (cvParams.maxRatio * poolAmount) / ConvictionsUtils.D;
+            revert AmountOverMaxRatio(proposals[proposalId].requestedAmount, maxAllowed, poolAmount);
+        }
+
+        if (proposals[proposalId].requestedAmount > 0 && totalPointsActivated == 0) {
+            revert NoActiveGovernancePoints(proposalId);
+        }
+
+        uint256 convictionLast = updateProposalConviction(proposalId);
+
+        uint256 threshold;
+        if (proposals[proposalId].requestedAmount > 0) {
+            threshold = ConvictionsUtils.calculateThreshold(
+                proposals[proposalId].requestedAmount,
+                poolAmount,
+                totalPointsActivated,
+                cvParams.decay,
+                cvParams.weight,
+                cvParams.maxRatio,
+                cvParams.minThresholdPoints
+            );
+        }
+
+        // <= for when threshold being zero
+        if (convictionLast <= threshold && proposals[proposalId].requestedAmount > 0) {
+            revert ConvictionUnderMinimumThreshold(convictionLast, threshold, proposals[proposalId].requestedAmount);
+        }
+
+        proposals[proposalId].proposalStatus = ProposalStatus.Executed;
+        _decrementActiveProposalCount();
+        _removeOpenStreamingProposal(proposalId);
+        _transferAmount(
+            allo.getPool(poolId).token, proposals[proposalId].beneficiary, proposals[proposalId].requestedAmount
+        );
+        collateralVault.withdrawCollateral(
+            proposalId,
+            proposals[proposalId].submitter,
+            arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
+        );
+
+        emit Distributed(proposalId, proposals[proposalId].beneficiary, proposals[proposalId].requestedAmount);
     }
 
     /*|--------------------------------------------|*/

@@ -510,7 +510,7 @@ contract CVAllocationFacetTest is Test {
         assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Executed));
     }
 
-    function test_distribute_streaming_completion_zeroes_units_and_drains_escrow_to_strategy() public {
+    function test_distribute_reverts_for_streaming_and_leaves_escrow_state_unchanged() public {
         allo.setPoolToken(1, facet.nativeToken());
         MockSuperfluidPoolAlloc pool = new MockSuperfluidPoolAlloc();
         MockStreamingEscrowDrain escrow = new MockStreamingEscrowDrain();
@@ -532,12 +532,13 @@ contract CVAllocationFacetTest is Test {
         facet.setProposal(1, ProposalStatus.Active, 0, facet.nativeToken(), beneficiary, member, 0, 0, 1);
 
         vm.prank(address(allo));
+        vm.expectRevert(abi.encodeWithSelector(CVAllocationFacet.ProposalTypeNotSupported.selector, ProposalType.Streaming));
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
 
-        assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Executed));
-        assertEq(pool.lastMember(), address(escrow));
+        assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Active));
+        assertEq(pool.lastMember(), address(0));
         assertEq(pool.lastUnits(), 0);
-        assertEq(escrow.drainToStrategyCount(), 1);
+        assertEq(escrow.drainToStrategyCount(), 0);
     }
 
     function test_distribute_zero_requested_executes_with_empty_pool() public {
@@ -650,7 +651,7 @@ contract CVAllocationFacetTest is Test {
         assertEq(poolAmount, 100 * 1 ether);
     }
 
-    function test_distribute_unwraps_superfluid_token() public {
+    function test_distribute_reverts_for_non_funding_pool_type() public {
         TERC20 underlying = new TERC20("Token", "TOK", 18);
         MockSuperToken superToken = new MockSuperToken(underlying);
         superToken.setBalance(5 ether);
@@ -661,6 +662,7 @@ contract CVAllocationFacetTest is Test {
         facet.setProposal(1, ProposalStatus.Active, 1 ether, address(underlying), beneficiary, member, 0, 0, 0);
 
         vm.prank(address(allo));
+        vm.expectRevert(abi.encodeWithSelector(CVAllocationFacet.ProposalTypeNotSupported.selector, ProposalType.Signaling));
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
     }
 }
