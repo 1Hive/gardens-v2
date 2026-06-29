@@ -1570,7 +1570,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                 <Button
                   btnStyle="outline"
                   color="tertiary"
-                  className="w-full"
+                  className="!w-full sm:!w-full"
                   disabled={!isSyncStreamConnected || isSyncStreamWrongNetwork}
                   tooltip={syncStreamButtonTooltip}
                   forceShowTooltip
@@ -2141,7 +2141,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                     <Button
                       btnStyle="outline"
                       color="tertiary"
-                      className="w-full"
+                      className="!w-full sm:!w-full"
                       disabled={
                         !isSyncStreamConnected || isSyncStreamWrongNetwork
                       }
