@@ -11,6 +11,9 @@ import {
 } from "viem";
 import { celo } from "viem/chains";
 import { useAccount } from "wagmi";
+
+const sameAddress = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+
 type Props = {
   enabled?: boolean;
 };
@@ -55,8 +58,9 @@ export const useGoodDollarSdk = ({ enabled }: Props) => {
     if (address && identitySDK) {
       return identitySDK
         .getWhitelistedRoot(address)
-        .then(({ root }) => {
-          const isVerified = root !== zeroAddress;
+        .then(({ root, isWhitelisted }) => {
+          const isVerified =
+            isWhitelisted && root !== zeroAddress && sameAddress(root, address);
           setIsWalletVerified(isVerified);
           return isVerified;
         });

@@ -325,7 +325,14 @@ export default function ClientPage({
       dismissPendingSubgraphRefreshToast();
     }
   }, [newPoolId, strategy]);
-  const communityAddress = strategy?.registryCommunity?.id as Address;
+  const communityAddress = strategy?.registryCommunity?.id as
+    | Address
+    | undefined;
+  const routeCommunityAddress = _community.toLowerCase();
+  const poolCommunityAddress = communityAddress?.toLowerCase();
+  const communityRouteMismatch =
+    poolCommunityAddress != null &&
+    routeCommunityAddress !== poolCommunityAddress;
 
   const tokenDecimals = strategy?.registryCommunity?.garden?.decimals;
 
@@ -344,9 +351,13 @@ export default function ClientPage({
   //Community Query and Register Member data
   const { data: result } = useSubgraphQuery<getCommunityQuery>({
     query: getCommunityDocument,
-    enabled: !!wallet && !!strategy?.token,
+    enabled:
+      !!wallet &&
+      !!strategy?.token &&
+      !!poolCommunityAddress &&
+      !communityRouteMismatch,
     variables: {
-      communityAddr: _community.toLowerCase(),
+      communityAddr: poolCommunityAddress ?? "",
     },
     changeScope: [
       { topic: "community", id: communityAddress },
@@ -359,13 +370,16 @@ export default function ClientPage({
       query: isMemberDocument,
       variables: {
         me: wallet?.toLowerCase(),
-        comm: _community.toLowerCase(),
+        comm: poolCommunityAddress ?? "",
       },
       changeScope: [
         { topic: "community", id: communityAddress },
         { topic: "member", containerId: communityAddress },
       ],
-    enabled: wallet !== undefined && _community !== undefined,
+    enabled:
+      wallet !== undefined &&
+      poolCommunityAddress !== undefined &&
+      !communityRouteMismatch,
     optimistic: memberOptimistic,
   });
 
@@ -1086,6 +1100,28 @@ export default function ClientPage({
           title={title}
         >
           {description}
+        </InfoBox>
+      </div>
+    );
+  }
+
+  if (!communityAddress) {
+    return (
+      <div className="col-span-12 mt-48 flex justify-center">
+        <InfoBox infoBoxType="error" title="Pool community unavailable">
+          We could not resolve the community for this pool from the subgraph.
+        </InfoBox>
+      </div>
+    );
+  }
+
+  if (communityRouteMismatch) {
+    return (
+      <div className="col-span-12 mt-48 flex justify-center">
+        <InfoBox infoBoxType="error" title="Pool URL mismatch">
+          This pool belongs to a different community than the one in the URL.
+          Open the pool from its canonical community page before joining or
+          voting.
         </InfoBox>
       </div>
     );

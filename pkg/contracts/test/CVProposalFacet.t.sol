@@ -167,6 +167,19 @@ contract CVProposalFacetTest is Test {
         facet.editProposal(1, Metadata({protocol: 1, pointer: "meta"}), beneficiary, 11);
     }
 
+    function test_editProposal_revertBeneficiaryWhenSupportActive() public {
+        address newBeneficiary = address(0xB0B);
+        facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Active, block.timestamp, 0);
+        facet.setProposalStakedAmount(1, 1);
+        vm.prank(member);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVProposalFacet.CannotEditBeneficiaryWithActiveSupport.selector, 1, beneficiary, newBeneficiary
+            )
+        );
+        facet.editProposal(1, Metadata({protocol: 1, pointer: "meta"}), newBeneficiary, 10);
+    }
+
     function test_editProposal_revertBeneficiaryTimeout() public {
         vm.warp(5000);
         facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Active, block.timestamp - 4000, 0);

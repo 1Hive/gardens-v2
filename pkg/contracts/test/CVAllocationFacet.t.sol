@@ -510,6 +510,44 @@ contract CVAllocationFacetTest is Test {
         assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Executed));
     }
 
+    function test_distribute_refunds_proposal_arbitrable_config_collateral() public {
+        allo.setPoolToken(1, facet.nativeToken());
+        vm.deal(address(facet), 1 ether);
+        facet.setProposalType(ProposalType.Funding);
+        facet.setCvParams(CVParams({maxRatio: 10_000_000, weight: 0, decay: 0, minThresholdPoints: 0}));
+        facet.setArbitrableConfig(
+            1,
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(0)),
+                tribunalSafe: address(0),
+                submitterCollateralAmount: 1 ether,
+                challengerCollateralAmount: 1,
+                defaultRuling: 0,
+                defaultRulingTimeout: 0
+            })
+        );
+        facet.setArbitrableConfig(
+            2,
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(0)),
+                tribunalSafe: address(0),
+                submitterCollateralAmount: 0.1 ether,
+                challengerCollateralAmount: 1,
+                defaultRuling: 0,
+                defaultRulingTimeout: 0
+            })
+        );
+        facet.setProposal(1, ProposalStatus.Active, 0, facet.nativeToken(), beneficiary, member, 0, 0, 1);
+
+        vm.prank(address(allo));
+        facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
+
+        assertEq(vault.lastProposalId(), 1);
+        assertEq(vault.lastAccount(), member);
+        assertEq(vault.lastAmount(), 1 ether);
+        assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Executed));
+    }
+
     function test_distribute_reverts_for_streaming_and_leaves_escrow_state_unchanged() public {
         allo.setPoolToken(1, facet.nativeToken());
         MockSuperfluidPoolAlloc pool = new MockSuperfluidPoolAlloc();
@@ -532,7 +570,9 @@ contract CVAllocationFacetTest is Test {
         facet.setProposal(1, ProposalStatus.Active, 0, facet.nativeToken(), beneficiary, member, 0, 0, 1);
 
         vm.prank(address(allo));
-        vm.expectRevert(abi.encodeWithSelector(CVAllocationFacet.ProposalTypeNotSupported.selector, ProposalType.Streaming));
+        vm.expectRevert(
+            abi.encodeWithSelector(CVAllocationFacet.ProposalTypeNotSupported.selector, ProposalType.Streaming)
+        );
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
 
         assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Active));
@@ -662,7 +702,9 @@ contract CVAllocationFacetTest is Test {
         facet.setProposal(1, ProposalStatus.Active, 1 ether, address(underlying), beneficiary, member, 0, 0, 0);
 
         vm.prank(address(allo));
-        vm.expectRevert(abi.encodeWithSelector(CVAllocationFacet.ProposalTypeNotSupported.selector, ProposalType.Signaling));
+        vm.expectRevert(
+            abi.encodeWithSelector(CVAllocationFacet.ProposalTypeNotSupported.selector, ProposalType.Signaling)
+        );
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
     }
 }

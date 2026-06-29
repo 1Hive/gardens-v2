@@ -56,6 +56,32 @@
     },
     {
       "type": "function",
+      "name": "activeProposalCount",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "activeProposalCountInitialized",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
       "name": "allocate",
       "inputs": [
         {
@@ -887,6 +913,57 @@
           "name": "",
           "type": "uint256",
           "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "openStreamingProposalIds",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "openStreamingProposalIndex",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "openStreamingProposalsInitialized",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
         }
       ],
       "stateMutability": "view"
@@ -4207,6 +4284,17 @@
     },
     {
       "type": "error",
+      "name": "ProposalTypeNotSupported",
+      "inputs": [
+        {
+          "name": "proposalType",
+          "type": "uint8",
+          "internalType": "enum ProposalType"
+        }
+      ]
+    },
+    {
+      "type": "error",
       "name": "TooManyAllocations",
       "inputs": [
         {
@@ -4239,6 +4327,22 @@
           "name": "maxAllowed",
           "type": "uint256",
           "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "UpdateMemberUnitsFailed",
+      "inputs": [
+        {
+          "name": "member",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "units",
+          "type": "uint128",
+          "internalType": "uint128"
         }
       ]
     },
@@ -4335,22 +4439,6 @@
           "name": "currentStatus",
           "type": "uint8",
           "internalType": "enum ProposalStatus"
-        }
-      ]
-    },
-    {
-      "type": "error",
-      "name": "UpdateMemberUnitsFailed",
-      "inputs": [
-        {
-          "name": "member",
-          "type": "address",
-          "internalType": "address"
-        },
-        {
-          "name": "units",
-          "type": "uint128",
-          "internalType": "uint128"
         }
       ]
     },
@@ -4485,6 +4573,27 @@
           "name": "creationTimestamp",
           "type": "uint256",
           "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CannotEditBeneficiaryWithActiveSupport",
+      "inputs": [
+        {
+          "name": "proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "currentBeneficiary",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "newBeneficiary",
+          "type": "address",
+          "internalType": "address"
         }
       ]
     },

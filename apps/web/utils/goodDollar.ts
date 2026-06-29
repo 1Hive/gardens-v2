@@ -11,9 +11,23 @@ import { Address as AddressType } from "viem";
 import { celo } from "viem/chains";
 import { getConfigByChain } from "@/configs/chains";
 
+const sameAddress = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+
+export type GoodDollarWhitelistStatus = {
+  isWhitelisted: boolean;
+  root: AddressType;
+};
+
 export async function fetchGooddollarWhitelisted(
   account: string,
 ): Promise<boolean> {
+  const { isWhitelisted } = await fetchGooddollarWhitelistStatus(account);
+  return isWhitelisted;
+}
+
+export async function fetchGooddollarWhitelistStatus(
+  account: string,
+): Promise<GoodDollarWhitelistStatus> {
   const celoRpc = getConfigByChain("celo")?.rpcUrl;
   const celoPublicClient = createPublicClient({
     chain: celo,
@@ -36,5 +50,9 @@ export async function fetchGooddollarWhitelisted(
   const { root } = await celoIdentitySDK!.getWhitelistedRoot(
     account as AddressType,
   );
-  return root !== zeroAddress;
+
+  return {
+    isWhitelisted: root !== zeroAddress && sameAddress(root, account),
+    root,
+  };
 }

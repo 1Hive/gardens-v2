@@ -24,7 +24,7 @@ contract ReplaceStreamingAllocationFacet is BaseMultiChain {
         }
 
         if (!vm.envOr("SKIP_STRATEGY_SYNC", false)) {
-            _replaceStreamingStrategies(networkJson, allocationFacet);
+            _replaceStrategies(networkJson, allocationFacet);
         }
     }
 
@@ -72,10 +72,11 @@ contract ReplaceStreamingAllocationFacet is BaseMultiChain {
         revert("factory allocation facet cut not found");
     }
 
-    function _replaceStreamingStrategies(string memory networkJson, address allocationFacet) internal {
+    function _replaceStrategies(string memory networkJson, address allocationFacet) internal {
         address[] memory strategies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         uint256 startIndex = _bounded(vm.envOr("STRATEGY_START_INDEX", uint256(0)), strategies.length);
         uint256 endIndex = _bounded(vm.envOr("STRATEGY_END_INDEX", strategies.length), strategies.length);
+        bool updateAllStrategies = vm.envOr("UPDATE_ALL_STRATEGIES", false);
         IDiamond.FacetCut[] memory cuts = _allocationReplacementCut(allocationFacet);
         uint256 updated = 0;
         uint256 skippedNonStreaming = 0;
@@ -84,7 +85,7 @@ contract ReplaceStreamingAllocationFacet is BaseMultiChain {
         for (uint256 i = startIndex; i < endIndex; i++) {
             address strategy = strategies[i];
 
-            if (CVStrategy(payable(strategy)).proposalType() != ProposalType.Streaming) {
+            if (!updateAllStrategies && CVStrategy(payable(strategy)).proposalType() != ProposalType.Streaming) {
                 skippedNonStreaming++;
                 continue;
             }
@@ -96,15 +97,19 @@ contract ReplaceStreamingAllocationFacet is BaseMultiChain {
 
             IDiamondCut(strategy).diamondCut(cuts, address(0), "");
             updated++;
-            console2.log("Updated streaming strategy allocation facet", strategy);
+            console2.log("Updated strategy allocation facet", strategy);
         }
 
-        console2.log("Streaming strategy allocation updates", updated);
+        console2.log("Strategy allocation updates", updated);
         console2.log("Skipped non-streaming strategies", skippedNonStreaming);
-        console2.log("Skipped already-current streaming strategies", skippedAlreadyCurrent);
+        console2.log("Skipped already-current strategies", skippedAlreadyCurrent);
     }
 
-    function _allocationReplacementCut(address allocationFacet) internal pure returns (IDiamond.FacetCut[] memory cuts) {
+    function _allocationReplacementCut(address allocationFacet)
+        internal
+        pure
+        returns (IDiamond.FacetCut[] memory cuts)
+    {
         bytes4[] memory selectors = new bytes4[](3);
         selectors[0] = CVAllocationFacet.allocate.selector;
         selectors[1] = CVAllocationFacet.distribute.selector;

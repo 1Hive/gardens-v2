@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits } from "viem";
-import { useAccount, useContractRead } from "wagmi";
+import { useContractRead } from "wagmi";
 import { CVProposal, getProposalDataQuery } from "#/subgraph/.graphclient";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormInput } from "./FormInput";
@@ -111,12 +111,15 @@ export const EditProposalForm = ({
     tokenData: poolToken?.poolToken,
     enabled: Boolean(strategy.id && proposal.proposalNumber),
   });
+  const hasActiveSupport = BigInt(proposal.stakedAmount ?? 0) > 0n;
   const currentConvictionPct = proposalConviction.currentConvictionPct ?? 0;
   const canEditAmount =
-    currentConvictionPct === 0 && proposalConviction.totalSupportPct === 0;
+    !hasActiveSupport &&
+    currentConvictionPct === 0 &&
+    proposalConviction.totalSupportPct === 0;
+  const canEditBeneficiary = canEditMetadata && !hasActiveSupport;
 
   const chainId = useChainIdFromPath();
-  const { address: connectedWallet } = useAccount();
   const beneficiary = watch("beneficiary");
 
   const formRowTypes: Record<string, FormRowTypes> = {
@@ -154,7 +157,7 @@ export const EditProposalForm = ({
         message: "This proposal is not editable anymore.",
       },
     ],
-    [connectedWallet, strategy.registryCommunity?.members],
+    [canEditAmount, canEditMetadata],
   );
   const { tooltipMessage, isButtonDisabled } =
     useDisableButtons(disableSubmitBtn);
@@ -239,7 +242,10 @@ export const EditProposalForm = ({
   };
 
   const handlePreview = (data: FormInputs) => {
-    setPreviewData(data);
+    setPreviewData({
+      ...data,
+      beneficiary: canEditBeneficiary ? data.beneficiary : proposal.beneficiary,
+    });
     setShowPreview(true);
   };
 
@@ -358,6 +364,14 @@ export const EditProposalForm = ({
           }}
         />
       : <div className="flex flex-col gap-2 overflow-hidden p-1">
+          {hasActiveSupport && proposalTypeName !== "signaling" && (
+            <InfoBox infoBoxType={"info"} className="mb-2" hideIcon>
+              <div className="font-bold">
+                The requested amount and beneficiary are locked while this
+                proposal has support.
+              </div>
+            </InfoBox>
+          )}
           {proposalTypeName === "funding" && canEditAmount && (
             <div className="border-2 border-neutral-soft dark:border-neutral rounded-lg p-4">
               <InfoBox infoBoxType={"info"} className="mb-2" hideIcon>
@@ -447,6 +461,15 @@ export const EditProposalForm = ({
 
               {proposalTypeName !== "signaling" && (
                 <div className="flex flex-col">
+                  {!canEditBeneficiary && (
+                    <InfoBox infoBoxType={"info"} className="mb-2" hideIcon>
+                      <div className="font-bold">
+                        The beneficiary is locked while this proposal has
+                        support. It can be changed again if all support is
+                        withdrawn before the edit window closes.
+                      </div>
+                    </InfoBox>
+                  )}
                   <FormAddressInput
                     label="Beneficiary address"
                     register={register}
@@ -457,9 +480,12 @@ export const EditProposalForm = ({
                     }}
                     required
                     errors={errors}
-                    disabled={!canEditMetadata}
+                    disabled={!canEditBeneficiary}
                     tooltip={
-                      canEditMetadata ? undefined : (
+                      canEditBeneficiary ? undefined
+                      : hasActiveSupport ?
+                        "Beneficiary can only be changed while the proposal has no support."
+                      : (
                         "Beneficiary can only be changed within the first hour."
                       )
                     }

@@ -33,13 +33,17 @@
           "0x091fb8bfeda17516c5a7feca757922ce054dcbe7",
           "0x0920320b9e27a6843afce4ec97089ab789868f4b",
           "0x0b7a86d3db350d6db8ad33f09cf797621f04d570",
+          "0x0d0fb308f0f7055f091eb8fce99c799c0e38dd7e",
           "0x0eed603eff0fc5a9025efc9861af1213144349de",
           "0x0f526d61454fc396e271723c47ec95feee7a9c0d",
           "0x0ff3f03efa2e7589c50236681889307891ef9240",
+          "0x106ae82a40da149ad62c9b6255d88e0335f20e89",
           "0x107e02cb882212c090343f9f8aa49cfec8c96a7b",
           "0x1120cd7ef2240766230649fdde9ed2a928590c3a",
+          "0x1177c3da040fc0f4badd98e6ffc437cb3c766b8f",
           "0x1338144564ab8a24af370c23a2505cdb02ee8591",
           "0x14ced99496e97905c1ddbe021f60162f252deae9",
+          "0x151caf20001773a2a52d6ffa070e46105ad114a4",
           "0x164f74ca69ddfc8c93f8e8d4f783784df490917b",
           "0x18ff29537ce07d2c76dc4c8be447aa5eb18cc7e4",
           "0x1961fb3c2a4b24092d4a97df589447319d3e3165",
@@ -71,6 +75,7 @@
           "0x32e8f267ca17b5a7c2b4abc0b8f72e6287572255",
           "0x35af0b98d4e866e8cd58def81b0d056f91db2219",
           "0x37c252eccb388a52c9f5a923b1acac7b8ee53c8a",
+          "0x38ba42db4e78a72ec5ddf1cb3bf2e503e4efb761",
           "0x38f0d2e4fe8719e9a504770ef3d5cc2d0a70ed80",
           "0x3956991874d863a5bec70c0796aa5b35a5977021",
           "0x39e59b17102bae7ea30bfb3b86788dc1ac2e53f6",
@@ -81,15 +86,18 @@
           "0x4043d9867e9a06a8afc5b269e22ac4f887a44a64",
           "0x412406673401b62eda3775b7a4612288b9ff91bc",
           "0x449984486057d3833d24435fcdfd084437a7d113",
+          "0x4647c0def4bda798572298e10ee0ecf6b912b19a",
           "0x46b17c1052dda2f923232321f4d23c8f26c79cfb",
           "0x4799e99a94913d016a1e2db9dbd37ddca5afbe04",
           "0x47df400a19252abf49a8726dbf2a600b05eabfd1",
           "0x49a365ce30a58131d395dd19e099701d7300a150",
           "0x4a748706098e14f474c439d0e21a542b3c592027",
           "0x4d74156d07e554bab33bedfcddab2dc73b463e5b",
+          "0x4d8df6183eaee6c70a68d05530b54083e5ae5a3d",
           "0x4d9d5de490162bd9b68678ddd017e1b303146c33",
           "0x4e17e5131b61802ced796b38f7986286d467da49",
           "0x4f042d94366eda11b8dee8c79fcec6706df53b67",
+          "0x4f268e35d41cde35a41e04fbd6d61f611d0b65db",
           "0x5129aec819e84190a2f39e6727aa8d46f22df337",
           "0x520ae665c0e430cc9ac06ae4a6adbf41c12c978c",
           "0x551542f49b12757fd7ded1a21528c3a46b554b14",
@@ -116,18 +124,10 @@
           "0x76971b0e6287d4287189a90d98e68f7fceb8b799",
           "0x776d49556348fde1b8652390116e68c1622e65f5",
           "0x77d22472a7f1bc85201da67c2aadef6291827639",
-          "0x78e27f82e23f2fdc2c64ede47efa99b58c063e5c",
-          "0x7ac4c7aa4d05a83c077046fe4801328116c71674",
-          "0x7b1287f9cb6da09d71ac42f64e5bde947a76bb43",
-          "0x7b1643860239f71dd39488a6fce96ce7a01c0200",
-          "0x7b85da909caf95a9e5ba53a6255c2e30b9da798b",
-          "0x7d491f25f70830415c1d3c9816d38036e0067189",
-          "0x7d82d0870fcc77a519014264dec70048aaeb876a",
-          "0x7d883b202aed9f33fd79099ee6fb8fd1e4ca2d06",
-          "0x7f591cab26b772a1e27758a03f8b3431ccc3bad9"
+          "0x78ab5c6f15d055502b2b20539260eb4d17df7d72"
         ]
       },
-      "hash": "d451a9bdfe811c389a929863857f1771f205857d",
+      "hash": "ec6d17370e8985ac5f38c5b2132ae26fe2676107",
       "IMPLEMENTATIONS": {
         "CV_STRATEGY": "0x937845385226217aefbecd6a4da35b2162f91c37",
         "CV_UTIL_LIB": "0x36eac4ca8389e35d66978e94c811f959e5a158f2",
@@ -142,7 +142,7 @@
       "FACETS": {
         "DIAMOND_LOUPE": "0x44c41a4f4f6086f9d3b53ba219e50664da5b4367",
         "CV_ADMIN": "0x694576368c752d2db51530ef1b69d7583a141887",
-        "CV_ALLOCATION": "0x49aed03293770b7f4820a423a6d2a1c5f14588f4",
+        "CV_ALLOCATION": "0x1df35926e2b358844ee963fbf4da92e72fb5173c",
         "CV_DISPUTE": "0xaef397243f375f578327c6ebb7f58a29c1217bf7",
         "CV_PAUSE": "0x4fda6b8e4430a80f8cabcc319511daf59643586f",
         "CV_POWER": "0x80bea2aa0bb47d93186fbcf01dcec83752c81d67",
@@ -164,7 +164,7 @@
       },
       "FACTORY_STATE": {
         "COMMUNITY_CUTS_DIGEST": "0x59cecbada7fc483095f9db814c5e5087d9ff25f2f55049a9b4fc455ce0d7a69e",
-        "STRATEGY_CUTS_DIGEST": "0xa2ccc1e1ae8b3f85c3a862431ab46f07f1a4868ce7708eed6b3cf1b79990a8ed"
+        "STRATEGY_CUTS_DIGEST": "0x9f30c8213ee85eb9afd106a9b759c486f94b057668cd12423cd2cda92846a3ef"
       }
     },
     {
@@ -248,7 +248,7 @@
       "FACETS": {
         "DIAMOND_LOUPE": "0x0ddd39306fa07931da14b30f24e74b8cbff27604",
         "CV_ADMIN": "0xed8d8b1dae7d6a0e3e49719628593df2d7ce5ca7",
-        "CV_ALLOCATION": "0xfa6269c378ecb692ad595d42a1d9115672b3a3f9",
+        "CV_ALLOCATION": "0xb5b5b4df921e33fe99606e2ca3b0b29af3642e8d",
         "CV_DISPUTE": "0x7f743918545bc90b82a38a58f4f8f69e36e4db29",
         "CV_POWER": "0x5801462c03fe8a3d0c4e8fc7b3b9c72751fa05e3",
         "CV_PROPOSAL": "0xd0d5f694a5efe4e8e59a5b9112850481815cc612",
@@ -328,7 +328,7 @@
       "FACETS": {
         "DIAMOND_LOUPE": "0xefe2fd44fb9d974e3cddfd00d362f09d60ad91da",
         "CV_ADMIN": "0x1df35926e2b358844ee963fbf4da92e72fb5173c",
-        "CV_ALLOCATION": "0xceb553fe94f87b8d35775f777ddc725d35c4ebc9",
+        "CV_ALLOCATION": "0xc396cdd4729067217ada6e300b8be08b429214ab",
         "CV_DISPUTE": "0x0f36343d1ce69ec0ee3999a6fec0bb56c6165dd2",
         "CV_PAUSE": "0x0fc0a9f123d709a41066d99977785c121ace7253",
         "CV_POWER": "0xe22c0fc26931ca3cad9127e6e0f1ae0fbd2a521f",
@@ -511,7 +511,7 @@
       "FACETS": {
         "DIAMOND_LOUPE": "0x0889a146d4bde13f2268e77055a4169a34cf484f",
         "CV_ADMIN": "0x0fc0a9f123d709a41066d99977785c121ace7253",
-        "CV_ALLOCATION": "0xfb7c7f5078513abdbd1f21cf8a2b3a70889d6aed",
+        "CV_ALLOCATION": "0xea0860cfb0255c642213119bf10f149a66b68a94",
         "CV_DISPUTE": "0x773d84b620d14f6c16d5decc4f72c2f243aa151b",
         "CV_PAUSE": "0x45a24d82f9902c0274060ae2b28a6ded3f11c95b",
         "CV_POWER": "0xe109b583e6e1b198a1b91808787022bbd06e3a2c",
@@ -700,7 +700,7 @@
       "FACETS": {
         "DIAMOND_LOUPE": "0x131ac23dc616c7e4b1ec8b7235c76ccfbb7a2b7d",
         "CV_ADMIN": "0x0fc0a9f123d709a41066d99977785c121ace7253",
-        "CV_ALLOCATION": "0x9bdedf6fdecf9dc5c8667745f743183818829169",
+        "CV_ALLOCATION": "0xd0447d4615df489dacbbff52324dcaafeeade6af",
         "CV_PAUSE": "0x45a24d82f9902c0274060ae2b28a6ded3f11c95b",
         "CV_POWER": "0xe109b583e6e1b198a1b91808787022bbd06e3a2c",
         "CV_PROPOSAL": "0xeab02f0f87d91ca7d3abd3571e014f36be854f6d",
@@ -795,7 +795,7 @@
       "FACETS": {
         "DIAMOND_LOUPE": "0xefeedd648f16c377e89e1b0ca74850f110df1fd8",
         "CV_ADMIN": "0x1df35926e2b358844ee963fbf4da92e72fb5173c",
-        "CV_ALLOCATION": "0x9df65940a66aa6416275d754d66f824d90295422",
+        "CV_ALLOCATION": "0xf7ae37e3cf89e8f1379c3d548dc243f196ffe9f7",
         "CV_DISPUTE": "0x0f36343d1ce69ec0ee3999a6fec0bb56c6165dd2",
         "CV_PAUSE": "0x0fc0a9f123d709a41066d99977785c121ace7253",
         "CV_POWER": "0xe22c0fc26931ca3cad9127e6e0f1ae0fbd2a521f",
@@ -928,11 +928,13 @@
           "0xaa0195986ffe8f3371444fa77ee3ed04ac787eea",
           "0xac948bca716b080df41afc70f37b7a9f6f3d9c9a",
           "0xaee688d041859839ea3918a6dfc0165848ace6eb",
+          "0xaf8fce9d1fc193fa71b477e2fdf53775c3995fe2",
           "0xb1a275419c817273f470ee1a102cad7507a25b6f",
           "0xb26d40c2dc96f35010e9bd1b044e0bdb4224dfb1",
           "0xb48fe96fcb6b3f7228247690f6a0f21d60002e52",
           "0xba5c9429472e9e0aa1d4f0276c7fb45374e2af6c",
           "0xbf1d2e31fa3d927673d2e95bfb2d940f5cc8890e",
+          "0xc3dc12ff1ada788e86c0dac4935e63975add5263",
           "0xcdd52a838b602910d582ebebe91f24cf284fddd2",
           "0xd12f4faab3a770175f5d7e19bd32b1a7aadc0a31",
           "0xd59884c190277f56a3dbf4b094e5fe9327150c24",
@@ -944,7 +946,7 @@
           "0xfbad687a935390ff59b36cd6c9462d0b1948e378"
         ]
       },
-      "hash": "67e28ff62e58d07ba6e95dc8b33a6d5f47e6e7c3",
+      "hash": "2d8e29d3e008347eb576339698abb52529c4e2ad",
       "IMPLEMENTATIONS": {
         "CV_STRATEGY": "0xe784a15deff19f1842e0867007a1f57ad9a885bf",
         "CV_UTIL_LIB": "0x36eac4ca8389e35d66978e94c811f959e5a158f2",
@@ -960,7 +962,7 @@
       "FACETS": {
         "DIAMOND_LOUPE": "0xd29d9eecbb4d42ec871431e06bc666f43779404b",
         "CV_ADMIN": "0x1df35926e2b358844ee963fbf4da92e72fb5173c",
-        "CV_ALLOCATION": "0xe836fea171ae41fe5aba461f89cffafd866cec04",
+        "CV_ALLOCATION": "0x4f42d21b4f344f9a59cd85bdc7eab1bcc1cd55ef",
         "CV_DISPUTE": "0x0f36343d1ce69ec0ee3999a6fec0bb56c6165dd2",
         "CV_PAUSE": "0x0fc0a9f123d709a41066d99977785c121ace7253",
         "CV_POWER": "0xe22c0fc26931ca3cad9127e6e0f1ae0fbd2a521f",
@@ -1092,7 +1094,7 @@
       "FACETS": {
         "DIAMOND_LOUPE": "0x713a34abbb5c877cc5ae0bb634b58236047ee0d8",
         "CV_ADMIN": "0x1df35926e2b358844ee963fbf4da92e72fb5173c",
-        "CV_ALLOCATION": "0x7bea574bc394c81b7df5f619d3faf3b5c5c4dad0",
+        "CV_ALLOCATION": "0x5bc93d1ad23f3cd9fbdf2dbe5b25727d62b9a600",
         "CV_DISPUTE": "0x0f36343d1ce69ec0ee3999a6fec0bb56c6165dd2",
         "CV_PAUSE": "0x0fc0a9f123d709a41066d99977785c121ace7253",
         "CV_POWER": "0xe22c0fc26931ca3cad9127e6e0f1ae0fbd2a521f",
@@ -1275,7 +1277,7 @@
       "FACETS": {
         "DIAMOND_LOUPE": "0x314c20bbb756ffe422c980f83b8ed3b62aef469b",
         "CV_ADMIN": "0x1df35926e2b358844ee963fbf4da92e72fb5173c",
-        "CV_ALLOCATION": "0x2a3d6a3cb2e4ef1a46c2e6d1f451aa0b36d5b786",
+        "CV_ALLOCATION": "0x4d9940302bb1a06346f4b011dbee609510de41ad",
         "CV_DISPUTE": "0x0f36343d1ce69ec0ee3999a6fec0bb56c6165dd2",
         "CV_PAUSE": "0x0fc0a9f123d709a41066d99977785c121ace7253",
         "CV_POWER": "0xe22c0fc26931ca3cad9127e6e0f1ae0fbd2a521f",
@@ -1356,7 +1358,7 @@
         "COMMUNITY_POWER": "0x01dc39f374f4d52affa0d66ed321ccc679d1c346",
         "COMMUNITY_STRATEGY": "0x36d1282837be4d428a54b30f0e378c0d3382b5e4",
         "CV_ADMIN": "0x0fc0a9f123d709a41066d99977785c121ace7253",
-        "CV_ALLOCATION": "0x7b1e40e10e30943d45ad6ac2925b615238dcf80c",
+        "CV_ALLOCATION": "0x61a3a1e8c23bbbc3e0c52089a8154467da4136b1",
         "CV_DISPUTE": "0x773d84b620d14f6c16d5decc4f72c2f243aa151b",
         "CV_PAUSE": "0x45a24d82f9902c0274060ae2b28a6ded3f11c95b",
         "CV_POWER": "0xe109b583e6e1b198a1b91808787022bbd06e3a2c",
