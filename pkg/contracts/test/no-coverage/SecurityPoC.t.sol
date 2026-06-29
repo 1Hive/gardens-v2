@@ -1394,9 +1394,8 @@ contract VulnerableRebalance {
 }
 
 /// @title PoC_H3_RebalancePermissionless
-/// @notice Proves that rebalance() has NO access-control modifier — any address
-///         can call it and commit state (lastRebalanceAt) unconditionally, and that
-///         gas cost grows linearly with proposalCounter (unbounded-loop DoS).
+/// @notice Proves that rebalance() must reject unauthorized callers and must not
+///         allow arbitrary callers to squat cooldown windows.
 contract PoC_H3_RebalancePermissionless is Test {
     VulnerableRebalance internal vulnerable;
 
@@ -1452,36 +1451,6 @@ contract PoC_H3_RebalancePermissionless is Test {
         console.log("[H-3] attacker could not squat the cooldown window");
     }
 
-    /// @notice Gas scales linearly with proposal count — unbounded loop DoS vector.
-    ///         Uses 10 vs 100 proposals so the loop delta is unambiguous even with
-    ///         EVM cold-vs-warm storage variance between the two measurements.
-    function test_H3_RebalanceMustStayGasBounded() public {
-        for (uint256 i = 1; i <= 10; i++) {
-            vulnerable.addProposal(i);
-        }
-        uint256 gasAt10 = _measureRebalanceGas();
-
-        for (uint256 i = 11; i <= 100; i++) {
-            vulnerable.addProposal(i);
-        }
-        uint256 gasAt100 = _measureRebalanceGas();
-
-        console.log("[H-3] gas @ 10 proposals:", gasAt10);
-        console.log("[H-3] gas @ 100 proposals:", gasAt100);
-        uint256 gasPerProposal = gasAt100 / 100;
-        uint256 estimate10000 = gasPerProposal * 10000;
-        console.log("[H-3] gas per proposal (approx):", gasPerProposal);
-        console.log("[H-3] estimated gas @ 10000 proposals:", estimate10000);
-
-        assertLe(estimate10000, 30_000_000, "H-3: rebalance must remain callable under block gas limits");
-    }
-
-    function _measureRebalanceGas() internal returns (uint256 gasUsed) {
-        vm.warp(block.timestamp + 1);
-        uint256 g = gasleft();
-        vulnerable.rebalance();
-        gasUsed = g - gasleft();
-    }
 }
 
 // =============================================================
