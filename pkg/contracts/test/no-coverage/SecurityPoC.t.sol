@@ -627,6 +627,7 @@ contract PoC_GDN01_AmountEditAfterFirstSupportBlocked is PoCBase {
 
     function test_GDN01_FirstSupportBlocksRequestedAmountEdit() public {
         uint256 proposalId = _createProposal(submitter, INITIAL_REQUEST);
+        address newBeneficiary = makeAddr("gdn01-new-beneficiary");
 
         _allocateSupport(voter, proposalId, int256(SUPPORT));
 
@@ -648,6 +649,14 @@ contract PoC_GDN01_AmountEditAfterFirstSupportBlocked is PoCBase {
         );
         cvStrategy.editProposal(proposalId, meta, submitter, INCREASED_REQUEST);
 
+        vm.prank(submitter);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVProposalFacet.CannotEditBeneficiaryWithActiveSupport.selector, proposalId, submitter, newBeneficiary
+            )
+        );
+        cvStrategy.editProposal(proposalId, meta, newBeneficiary, INITIAL_REQUEST);
+
         (,,, uint256 requestedAfter, uint256 stakedAfterEdit,,, uint256 convictionAfterEdit,,,,) =
             cvStrategy.getProposal(proposalId);
 
@@ -664,11 +673,16 @@ contract PoC_GDN01_AmountEditAfterFirstSupportBlocked is PoCBase {
         assertEq(stakedAfterWithdraw, 0, "GDN-01 setup: all support was withdrawn");
 
         vm.prank(submitter);
-        cvStrategy.editProposal(proposalId, meta, submitter, INCREASED_REQUEST);
+        cvStrategy.editProposal(proposalId, meta, newBeneficiary, INCREASED_REQUEST);
 
-        (,,, uint256 requestedAfterWithdrawEdit, uint256 stakedAfterWithdrawEdit,,,,,,,) =
+        (, address beneficiaryAfterWithdrawEdit,, uint256 requestedAfterWithdrawEdit, uint256 stakedAfterWithdrawEdit,,,,,,,) =
             cvStrategy.getProposal(proposalId);
         assertEq(requestedAfterWithdrawEdit, INCREASED_REQUEST, "GDN-01: amount can change after support is withdrawn");
+        assertEq(
+            beneficiaryAfterWithdrawEdit,
+            newBeneficiary,
+            "GDN-01: beneficiary can change after support is withdrawn"
+        );
         assertEq(stakedAfterWithdrawEdit, 0, "GDN-01: edit after withdrawal does not recreate support");
     }
 

@@ -267,7 +267,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         collateralVault.withdrawCollateral(
             proposalId,
             proposals[proposalId].submitter,
-            arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
+            arbitrableConfigs[proposals[proposalId].arbitrableConfigVersion].submitterCollateralAmount
         );
 
         emit Distributed(proposalId, proposals[proposalId].beneficiary, proposals[proposalId].requestedAmount);

@@ -3,9 +3,6 @@ name: E2E
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       preview_url:
@@ -27,7 +24,6 @@ permissions:
 jobs:
   e2e:
     name: E2E (playwright + synpress)
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     concurrency:
       group: e2e-global
       cancel-in-progress: false

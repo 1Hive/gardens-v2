@@ -41,7 +41,9 @@ Monorepo entrypoint for coding agents working in `gardens-v2`.
 ## Repo Skills
 
 - This repo includes a local skill library under `skills/`.
+- Also use relevant installed skills from `npx skills add vercel-labs/agent-skills` when they match the task domain, especially for frontend, Next.js, Vercel, browser verification, documents, spreadsheets, presentations, PDFs, or other specialized workflows not covered by the repo-local skills.
 - For Gardens E2E test creation, repair, or flakiness work, consult `skills/e2e-test-maker/SKILL.md`.
+- For Gardens proposal drafting or creation flows, consult `skills/proposal-creator/SKILL.md`.
 - For Gardens indexed data or entity lookup tasks, consult `skills/query-subgraph/SKILL.md`.
 - For Gardens on-chain read tasks, address/ABI resolution, or `cast call` usage, consult `skills/read-contracts/SKILL.md`.
 - For Gardens state-changing transactions, calldata encoding, multisig payloads, or write preparation, consult `skills/write-contract/SKILL.md`.

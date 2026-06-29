@@ -36,6 +36,9 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
         uint256 proposalId, string currentMetadata, string newMetadata, uint256 creationTimestamp
     ); // 0x7195b4df
     error CannotEditRequestedAmountWithActiveSupport(uint256 proposalId, uint256 currentAmount, uint256 newAmount); // 0xb5018617
+    error CannotEditBeneficiaryWithActiveSupport(
+        uint256 proposalId, address currentBeneficiary, address newBeneficiary
+    );
     error StreamingEscrowFactoryNotSet(); // 0x1dd8d4b9
     error UpdateMemberUnitsFailed(address member, uint128 units);
     error ProposalLimitReached(uint256 current, uint256 max);
@@ -204,6 +207,9 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
         bool metadataChanged = !proposal.metadata.pointer.equal(_metadata.pointer);
 
         if (beneficiaryChanged) {
+            if (proposal.stakedAmount != 0) {
+                revert CannotEditBeneficiaryWithActiveSupport(_proposalId, proposal.beneficiary, _beneficiary);
+            }
             if (timeout) {
                 revert BeneficiaryEditTimeout(
                     _proposalId, proposal.beneficiary, _beneficiary, proposal.creationTimestamp
