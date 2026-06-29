@@ -10,6 +10,7 @@ import {
   parseAbi,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { applyRebalanceGasBuffer } from "./gas";
 import {
   ACTIVE_STATUS,
   DEFAULT_SIGNIFICANT_RATE_CHANGE_BPS,
@@ -971,7 +972,17 @@ async function runKeeperForChain({
           continue;
         }
 
-        const hash = await walletClient.writeContract(simulation.request);
+        const estimatedGas = await publicClient.estimateContractGas(
+          simulation.request,
+        );
+        const gas = applyRebalanceGasBuffer({
+          estimatedGas,
+          blockGasLimit: block.gasLimit,
+        });
+        const hash = await walletClient.writeContract({
+          ...simulation.request,
+          gas,
+        });
         const receipt = await publicClient.waitForTransactionReceipt({ hash });
         const gasUsed = receipt.gasUsed.toString();
         const effectiveGasPrice = receipt.effectiveGasPrice?.toString();
