@@ -1237,7 +1237,7 @@ export default function ClientPage({
             <Button
               btnStyle="outline"
               color="primary"
-              className="sm:w-full"
+              className="!w-full sm:!w-full"
               disabled={!isSyncStreamConnected || isSyncStreamWrongNetwork}
               tooltip={syncStreamButtonTooltip}
               forceShowTooltip
