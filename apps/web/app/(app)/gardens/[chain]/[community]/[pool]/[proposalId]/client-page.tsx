@@ -83,7 +83,7 @@ import {
   buildProposalEntityId,
   extractProposalNumber,
 } from "@/utils/proposals";
-import { prettyTimestamp } from "@/utils/text";
+import { formatLastRebalanceTooltip, prettyTimestamp } from "@/utils/text";
 
 type ProposalSupporter = {
   id: string;
@@ -1083,6 +1083,11 @@ export default function ClientPage({ params }: ClientPageProps) {
     nowTs - lastRebalanceAt < SYNC_STREAM_HIDE_WINDOW_SECONDS;
   const showSyncStreamButton =
     !hideSyncStreamButton && !!address && isAuthorizedRebalanceCaller === true;
+  const lastRebalanceTooltip = formatLastRebalanceTooltip(lastRebalanceAt);
+  const syncStreamButtonTooltip =
+    syncStreamTooltipMessage != null ?
+      `${syncStreamTooltipMessage}\n${lastRebalanceTooltip}`
+    : lastRebalanceTooltip;
 
   const { write: writeRebalance, isLoading: isRebalanceLoading } =
     useContractWriteWithConfirmations({
@@ -1567,7 +1572,8 @@ export default function ClientPage({ params }: ClientPageProps) {
                   color="tertiary"
                   className="w-full"
                   disabled={!isSyncStreamConnected || isSyncStreamWrongNetwork}
-                  tooltip={syncStreamTooltipMessage}
+                  tooltip={syncStreamButtonTooltip}
+                  forceShowTooltip
                   isLoading={isRebalanceLoading}
                   onClick={() => writeRebalance?.()}
                 >
@@ -2139,7 +2145,8 @@ export default function ClientPage({ params }: ClientPageProps) {
                       disabled={
                         !isSyncStreamConnected || isSyncStreamWrongNetwork
                       }
-                      tooltip={syncStreamTooltipMessage}
+                      tooltip={syncStreamButtonTooltip}
+                      forceShowTooltip
                       isLoading={isRebalanceLoading}
                       onClick={() => writeRebalance?.()}
                     >

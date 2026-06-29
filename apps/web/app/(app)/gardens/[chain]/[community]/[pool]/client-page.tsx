@@ -72,6 +72,7 @@ import {
   getPendingPoolGovernanceActivation,
 } from "@/utils/optimisticMembers";
 import { createProposalOptimisticProjector } from "@/utils/optimisticProposals";
+import { formatLastRebalanceTooltip } from "@/utils/text";
 
 export type AlloQuery = getAlloQuery["allos"][number];
 const SYNC_STREAM_HIDE_WINDOW_SECONDS = 15 * 60;
@@ -772,12 +773,17 @@ export default function ClientPage({
     nowTs - lastRebalanceAt < SYNC_STREAM_HIDE_WINDOW_SECONDS;
   const showSyncStreamButton =
     !hideSyncStreamButton && !!wallet && isAuthorizedRebalanceCaller === true;
+  const lastRebalanceTooltip = formatLastRebalanceTooltip(lastRebalanceAt);
 
   const {
     tooltipMessage: syncStreamTooltipMessage,
     isConnected: isSyncStreamConnected,
     missmatchUrl: isSyncStreamWrongNetwork,
   } = useDisableButtons();
+  const syncStreamButtonTooltip =
+    syncStreamTooltipMessage != null ?
+      `${syncStreamTooltipMessage}\n${lastRebalanceTooltip}`
+    : lastRebalanceTooltip;
   const { write: writeRebalance, isLoading: isRebalanceLoading } =
     useContractWriteWithConfirmations({
       address: strategy?.id as Address,
@@ -1233,7 +1239,8 @@ export default function ClientPage({
               color="primary"
               className="sm:w-full"
               disabled={!isSyncStreamConnected || isSyncStreamWrongNetwork}
-              tooltip={syncStreamTooltipMessage}
+              tooltip={syncStreamButtonTooltip}
+              forceShowTooltip
               isLoading={isRebalanceLoading}
               onClick={() => writeRebalance?.()}
               icon={<ArrowPathIcon className="h-4 w-4" />}

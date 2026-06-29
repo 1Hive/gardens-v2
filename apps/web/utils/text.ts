@@ -17,6 +17,17 @@ export const prettyTimestamp = (timestamp: number) => {
   return `${day} ${month} ${year}`;
 };
 
+export const formatLastRebalanceTooltip = (timestamp: number) => {
+  if (!Number.isFinite(timestamp) || timestamp <= 0) {
+    return "Last rebalance: never";
+  }
+
+  return `Last rebalance: ${new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(timestamp * 1000))}`;
+};
+
 export const truncateString = (str: string) => {
   return `${str.slice(0, 6)}...${str.slice(-4)}`;
 };
