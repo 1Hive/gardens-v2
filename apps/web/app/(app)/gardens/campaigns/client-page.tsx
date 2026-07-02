@@ -8,6 +8,7 @@ import { PlantBanner } from "@/assets";
 import { Button } from "@/components/Button";
 import { Skeleton } from "@/components/Skeleton";
 import { fetchSuperfluidLeaderboard } from "@/types";
+import { getCampaignCardHref } from "@/utils/campaignRedirects";
 import { CAMPAIGNS, CampaignId, isCampaignActive } from "@/utils/campaigns";
 import { logOnce } from "@/utils/log";
 import { formatKNumber, timeAgo } from "@/utils/time";
@@ -179,7 +180,8 @@ export default function CampaignsPage() {
           </div>
         : displayedCampaigns.map((c) => {
             const isEndedCampaign = !isCampaignActive(c.endDate, now);
-            const totalStreamedSup = statsByCampaign[c.slug]?.totalStreamedSup ?? 0;
+            const totalStreamedSup =
+              statsByCampaign[c.slug]?.totalStreamedSup ?? 0;
             const targetStreamSup =
               statsByCampaign[c.slug]?.targetStreamSup ?? c.tokenAllocated;
             const progressPercentage =
@@ -198,7 +200,7 @@ export default function CampaignsPage() {
             return (
               <Link
                 key={c.slug}
-                href={`/gardens/campaigns/${c.slug}`}
+                href={getCampaignCardHref(c.slug)}
                 className={`section-layout !p-0 rounded-xl overflow-hidden transition group w-full max-w-2xl border ${cardBorderClasses} ${cardStateClasses} ${isEndedCampaign ? "hover:shadow-none" : "hover:shadow-lg"}`}
               >
                 {/* Image */}
@@ -250,10 +252,8 @@ export default function CampaignsPage() {
                       <div className="flex justify-between text-sm mb-2">
                         <span className="">Claimed</span>
                         <span className="font-medium">
-                          {formatKNumber(totalStreamedSup)}{" "}
-                          /{" "}
-                          {formatKNumber(targetStreamSup ?? 0)}{" "}
-                          {c.tokenSymbol}
+                          {formatKNumber(totalStreamedSup)} /{" "}
+                          {formatKNumber(targetStreamSup ?? 0)} {c.tokenSymbol}
                         </span>
                       </div>
                     </Skeleton>
@@ -274,7 +274,8 @@ export default function CampaignsPage() {
                         <div className="flex items-center gap-2">
                           <UserGroupIcon className="h-5 w-5 text-neutral-soft-content" />
                           <span className="text-neutral-soft-content text-sm">
-                            {statsByCampaign[c.slug]?.walletCount ?? 0} participants
+                            {statsByCampaign[c.slug]?.walletCount ?? 0}{" "}
+                            participants
                           </span>
                         </div>
                         <div>
