@@ -19,6 +19,7 @@ import { Address, useAccount, useBalance } from "wagmi";
 import { CVStrategy } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
+import { Divider } from "./Divider";
 import { FormCheckBox } from "./Forms/FormCheckBox";
 import { Modal } from "./Modal";
 import { Skeleton } from "./Skeleton";
@@ -561,8 +562,15 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     </label>
   );
 
+  const trimTrailingFractionZeros = (value: string) =>
+    value.includes(".") ? trimEnd(trimEnd(value, "0"), ".") : value;
+
   const fillTransferAmountWithWalletBalance = () => {
-    setAmount(trimEnd(trimEnd(walletBalanceExact, "0"), "."));
+    setAmount(trimTrailingFractionZeros(walletBalanceExact));
+  };
+
+  const fillStreamAmountWithAvailableBalance = () => {
+    setAmount(trimTrailingFractionZeros(effectiveAvailableBalance ?? "0"));
   };
 
   const availableBalanceTooltipMessage = [
@@ -584,6 +592,69 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     .filter(Boolean)
     .join(" + ")
     .replace(" + -", " - ");
+  const canUseAvailableBalance =
+    effectiveAvailableBalanceScaledBn != null &&
+    effectiveAvailableBalanceScaledBn > 0n;
+  const formattedAvailableBalance = roundToSignificant(
+    effectiveAvailableBalance ?? 0,
+    4,
+    { truncate: true },
+  );
+  const availableBalanceControls = (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="whitespace-nowrap">Available balance:</span>
+        <div
+          className="tooltip tooltip-top-left"
+          data-tip={
+            availableBalanceTooltipMessage.length ?
+              availableBalanceTooltipMessage
+            : "No available balance"
+          }
+        >
+          <button
+            type="button"
+            onClick={fillStreamAmountWithAvailableBalance}
+            disabled={!canUseAvailableBalance}
+            className="text-sm text-primary-content hover:underline disabled:cursor-not-allowed disabled:text-neutral-content disabled:no-underline"
+          >
+            {formattedAvailableBalance} {poolToken.symbol}
+          </button>
+        </div>
+      </div>
+      {showUseSuperTokenBalance && !isPureSuperfluidToken && (
+        <FormCheckBox
+          registerKey="useExistingBalance"
+          label="Include existing balance"
+          tooltip="Please make sure this balance isn't used for another stream."
+          value={forceAllBalanceUsage}
+          onChange={(e) => setForceAllBalanceUsage(e.target.checked)}
+          customTooltipIcon={
+            <ExclamationTriangleIcon
+              width={20}
+              height={20}
+              className="!text-warning-content"
+            />
+          }
+        />
+      )}
+    </div>
+  );
+
+  const superfluidAppLink = (
+    <div className="text-sm text-neutral-content flex items-center gap-1">
+      Check it on{" "}
+      <a
+        className="text-primary-content hover:text-primary-hover-content flex items-center gap-1"
+        target="_blank"
+        rel="noopener noreferrer"
+        href="https://app.superfluid.org/"
+      >
+        Superfluid app
+        <ArrowTopRightOnSquareIcon className="w-4 h-4 inline-block" />
+      </a>
+    </div>
+  );
 
   return (
     <>
@@ -653,10 +724,13 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             </>
           )}
 
-          <label className="flex flex-col gap-2">
-            {Boolean(currentFlowRateBn) ? "Change" : ""} Stream amount:
-            {fundAmountInput}
-          </label>
+          <div className="flex flex-col gap-2">
+            <label className="flex flex-col gap-2">
+              {Boolean(currentFlowRateBn) ? "Change" : ""} Stream amount:
+              {fundAmountInput}
+            </label>
+            {availableBalanceControls}
+          </div>
           <div className="border rounded-md flex flex-col p-4 gap-4 bg-base-200">
             <div className="flex items-center gap-2 w-full justify-between">
               <label htmlFor="duration">Duration</label>
@@ -714,6 +788,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 isLoading={isStreamFundsLoading}
                 disabled={isStreamButtonDisabled}
                 tooltip={streamTooltipMessage}
+                tooltipClassName="flex justify-end"
                 className="w-full"
               >
                 Stream {roundToSignificant(amount, 4)} {poolToken.symbol}
@@ -727,6 +802,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 disabled={isStreamButtonDisabled}
                 tooltip={streamTooltipMessage ?? "Replace current stream"}
                 forceShowTooltip={true}
+                tooltipClassName="flex justify-end"
                 className="w-full"
               >
                 Replace stream with {roundToSignificant(amount, 4)}{" "}
@@ -734,81 +810,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               </Button>
             }
           </div>
-
-          <hr className="w-full" />
-          <div className="flex items-center gap-2 justify-between">
-            <div className="flex flex-col gap-1 w-full">
-              <div className="flex items-center gap-2 w-full">
-                <div className="whitespace-nowrap">Available balance:</div>
-                <div className="flex items-center gap-1 w-full">
-                  <div
-                    className="tooltip"
-                    data-tip={
-                      availableBalanceTooltipMessage.length ?
-                        availableBalanceTooltipMessage
-                      : "No available balance"
-                    }
-                  >
-                    {forceAllBalanceUsage ?
-                      <Button
-                        btnStyle="link"
-                        color="primary"
-                        size="sm"
-                        className="!p-0"
-                        onClick={() => {
-                          setAmount(
-                            trimEnd(
-                              roundToSignificant(
-                                effectiveAvailableBalance ?? 0,
-                                4,
-                                { truncate: true },
-                              ),
-                              ".",
-                            ),
-                          );
-                        }}
-                      >
-                        {roundToSignificant(effectiveAvailableBalance ?? 0, 4, {
-                          truncate: true,
-                        })}
-                      </Button>
-                    : roundToSignificant(effectiveAvailableBalance ?? 0, 4)}
-                  </div>{" "}
-                  {poolToken?.symbol}
-                </div>
-              </div>
-              {showUseSuperTokenBalance && !isPureSuperfluidToken && (
-                <div>
-                  <FormCheckBox
-                    registerKey="useExistingBalance"
-                    label="Include existing balance"
-                    tooltip="Please make sure this balance isn't used for another stream."
-                    value={forceAllBalanceUsage}
-                    onChange={(e) => setForceAllBalanceUsage(e.target.checked)}
-                    customTooltipIcon={
-                      <ExclamationTriangleIcon
-                        width={20}
-                        height={20}
-                        className="!text-warning-content"
-                      />
-                    }
-                  />
-                </div>
-              )}
-              <div className="text-sm text-neutral-content flex items-center gap-1">
-                Check it on{" "}
-                <a
-                  className="text-primary-content hover:text-primary-hover-content flex items-center gap-1"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href="https://app.superfluid.org/"
-                >
-                  Superfluid app
-                  <ArrowTopRightOnSquareIcon className="w-4 h-4 inline-block" />
-                </a>
-              </div>
-            </div>
-          </div>
+          <Divider className="mt-0 mb-1" />
+          {superfluidAppLink}
         </div>
       </Modal>
       <Modal
