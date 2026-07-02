@@ -72,6 +72,10 @@ import {
   getPendingPoolGovernanceActivation,
 } from "@/utils/optimisticMembers";
 import { createProposalOptimisticProjector } from "@/utils/optimisticProposals";
+import {
+  getConfiguredSuperTokenAddress,
+  isSameAddress,
+} from "@/utils/superToken";
 import { formatLastRebalanceTooltip } from "@/utils/text";
 
 export type AlloQuery = getAlloQuery["allos"][number];
@@ -660,20 +664,30 @@ export default function ClientPage({
     }
   }, [error]);
 
+  const configuredSuperToken = getConfiguredSuperTokenAddress(
+    strategyConfig?.superfluidToken,
+  );
+  const shouldDiscoverSuperToken =
+    !!strategy?.token &&
+    (!configuredSuperToken ||
+      isSameAddress(configuredSuperToken, strategy.token));
   const {
     superToken: superTokenCandidate,
     isFetching: isSuperTokenCandidateFetching,
     setSuperToken: setSuperTokenCandidate,
   } = useSuperfluidToken({
     token: strategy?.token,
-    enabled: !!strategy?.token && !strategyConfig?.superfluidToken,
+    enabled: shouldDiscoverSuperToken,
   });
 
   const effectiveSuperToken =
-    strategyConfig?.superfluidToken ??
+    configuredSuperToken ??
     (superTokenCandidate && superTokenCandidate.sameAsUnderlying ?
       superTokenCandidate.id
     : null);
+  const effectiveSuperTokenSameAsUnderlying =
+    (superTokenCandidate?.sameAsUnderlying ?? false) ||
+    isSameAddress(effectiveSuperToken, strategy?.token);
 
   const connectedChainId = useChainId();
 
@@ -1449,7 +1463,7 @@ export default function ClientPage({
             superToken={
               superTokenInfo && {
                 ...superTokenInfo,
-                sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                sameAsUnderlying: effectiveSuperTokenSameAsUnderlying,
                 address: effectiveSuperToken as Address,
               }
             }
@@ -1491,7 +1505,7 @@ export default function ClientPage({
                   superToken={
                     superTokenInfo && {
                       ...superTokenInfo,
-                      sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                      sameAsUnderlying: effectiveSuperTokenSameAsUnderlying,
                       address: effectiveSuperToken as Address,
                     }
                   }
@@ -1558,7 +1572,7 @@ export default function ClientPage({
                   superToken={
                     superTokenInfo && {
                       ...superTokenInfo,
-                      sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                      sameAsUnderlying: effectiveSuperTokenSameAsUnderlying,
                       address: effectiveSuperToken as Address,
                     }
                   }
@@ -1585,7 +1599,7 @@ export default function ClientPage({
                     superToken={
                       superTokenInfo && {
                         ...superTokenInfo,
-                        sameAsUnderlying: superTokenCandidate?.sameAsUnderlying,
+                        sameAsUnderlying: effectiveSuperTokenSameAsUnderlying,
                         address: effectiveSuperToken as Address,
                       }
                     }
