@@ -21,6 +21,7 @@ import {
 import { getConfigByChain } from "@/configs/chains";
 import { queryByChain } from "@/providers/queryByChain";
 import { ProposalStatus } from "@/types";
+import { getCommunityRedirectPath } from "@/utils/communityRedirects";
 import {
   buildProposalEntityId,
   extractProposalNumber,
@@ -211,6 +212,16 @@ export default async function Page({
 }: PagePropsWithSearch) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
+  const communityRedirectPath = getCommunityRedirectPath(
+    resolvedParams.chain,
+    resolvedParams.community,
+    resolvedSearchParams,
+  );
+
+  if (communityRedirectPath) {
+    redirect(communityRedirectPath);
+  }
+
   const strategyAddress = await resolveStrategyAddress(
     resolvedParams.chain,
     resolvedParams.pool,

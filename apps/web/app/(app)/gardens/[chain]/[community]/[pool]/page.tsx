@@ -17,6 +17,7 @@ import {
 import { chainConfigMap, type ChainData } from "@/configs/chains";
 import { queryByChain } from "@/providers/queryByChain";
 import { PoolTypes } from "@/types";
+import { getCommunityRedirectPath } from "@/utils/communityRedirects";
 import { hasEthereumAddressFormat } from "@/utils/web3";
 
 type RouteParams = {
@@ -207,7 +208,17 @@ export default async function Page(props: PageProps) {
   const params = await props.params;
   const searchParams = await props.searchParams;
   const numericChain = Number(params.chain);
-  const chainConfig = chainConfigMap[params.chain] ?? chainConfigMap[numericChain];
+  const chainConfig =
+    chainConfigMap[params.chain] ?? chainConfigMap[numericChain];
+  const communityRedirectPath = getCommunityRedirectPath(
+    params.chain,
+    params.community,
+    searchParams,
+  );
+
+  if (communityRedirectPath) {
+    redirect(communityRedirectPath);
+  }
 
   const currentCommunityExists = await communityExistsOnChain(
     chainConfig,

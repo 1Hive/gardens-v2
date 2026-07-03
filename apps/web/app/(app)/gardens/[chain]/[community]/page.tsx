@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import {
   getCommunityNameDocument,
   type getCommunityNameQuery,
@@ -8,12 +9,14 @@ import ClientPage from "./client-page";
 import { FALLBACK_TITLE, description } from "./opengraph-image";
 import { chainConfigMap } from "@/configs/chains";
 import { queryByChain } from "@/providers/queryByChain";
+import { getCommunityRedirectPath } from "@/utils/communityRedirects";
 
 type PageParams = {
   params: Promise<{
     chain: string;
     community: string;
   }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export const dynamic = "force-dynamic";
@@ -127,9 +130,18 @@ export async function generateMetadata({
   }
 }
 
-export default async function Page({
-  params,
-}: PageParams) {
+export default async function Page({ params, searchParams }: PageParams) {
   const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  const redirectPath = getCommunityRedirectPath(
+    resolvedParams.chain,
+    resolvedParams.community,
+    resolvedSearchParams,
+  );
+
+  if (redirectPath) {
+    redirect(redirectPath);
+  }
+
   return <ClientPage params={resolvedParams} />;
 }
