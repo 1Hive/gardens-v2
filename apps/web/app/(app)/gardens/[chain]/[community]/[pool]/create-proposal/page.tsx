@@ -6,6 +6,7 @@ import {
   stringifySearchParams,
   type SearchParams,
 } from "../route-helpers";
+import { getCommunityRedirectPath } from "@/utils/communityRedirects";
 
 const TITLE = "Gardens - Create a proposal";
 const DESCRIPTION =
@@ -59,12 +60,19 @@ type PageProps = PageParams & {
   searchParams?: Promise<SearchParams>;
 };
 
-export default async function Page({
-  params,
-  searchParams,
-}: PageProps) {
+export default async function Page({ params, searchParams }: PageProps) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
+  const communityRedirectPath = getCommunityRedirectPath(
+    resolvedParams.chain,
+    resolvedParams.community,
+    resolvedSearchParams,
+  );
+
+  if (communityRedirectPath) {
+    redirect(communityRedirectPath);
+  }
+
   const strategyAddress = await resolveStrategyAddress(
     resolvedParams.chain,
     resolvedParams.pool,
@@ -83,4 +91,3 @@ export default async function Page({
 
   return <ClientPage params={{ ...resolvedParams, pool: normalizedSlug }} />;
 }
-

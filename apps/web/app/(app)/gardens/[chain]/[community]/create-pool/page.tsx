@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import ClientPage from "./client-page";
+import { getCommunityRedirectPath } from "@/utils/communityRedirects";
 
 const TITLE = "Gardens - Create a pool";
 const DESCRIPTION =
@@ -10,6 +12,7 @@ type PageParams = {
     chain: string;
     community: string;
   }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 type ResolvedPageParams = Awaited<PageParams["params"]>;
@@ -40,9 +43,18 @@ export async function generateMetadata({
   };
 }
 
-export default async function Page({
-  params,
-}: PageParams) {
+export default async function Page({ params, searchParams }: PageParams) {
   const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  const redirectPath = getCommunityRedirectPath(
+    resolvedParams.chain,
+    resolvedParams.community,
+    resolvedSearchParams,
+  );
+
+  if (redirectPath) {
+    redirect(redirectPath);
+  }
+
   return <ClientPage params={resolvedParams} />;
 }
