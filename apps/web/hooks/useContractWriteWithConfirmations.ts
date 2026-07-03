@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { getDataSuffix, submitReferral } from "@divvi/referral-sdk";
 import { WriteContractMode, WriteContractResult } from "@wagmi/core";
@@ -20,6 +20,8 @@ import { chainConfigMap } from "@/configs/chains";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useFlag } from "@/hooks/useFlag";
 import { abiWithErrors } from "@/utils/abi";
+import { reportClientError } from "@/utils/clientErrorReporter";
+import { stringifyJson } from "@/utils/json";
 import {
   getWalletConnectDeepLinkChoice,
   isMobileBrowser,
@@ -105,6 +107,7 @@ export function useContractWriteWithConfirmations<
   const chainIdFromWallet = useChainId();
   const chainIdFromPath = useChainIdFromPath();
   const { connector, address: connectedAddress } = useAccount();
+  const reportedTransactionErrorRef = useRef<string | null>(null);
   const queryParams = useCollectQueryParams();
   const resolvedChaindId = +(
     props.chainId ??
@@ -394,6 +397,8 @@ export function useContractWriteWithConfirmations<
     confirmations: propsWithChainId.confirmations,
     enabled: transactionHash != null,
   });
+  const transactionError =
+    directWriteResult.error ?? txResult.error ?? txWaitResult.error;
 
   const computedStatus = useMemo(() => {
     if (directWriteResult.status === "loading") {
@@ -461,7 +466,7 @@ export function useContractWriteWithConfirmations<
     safeAddress: connectedAddress,
     targetAddress: props.address,
     transactionStatus: computedStatus,
-    transactionError: directWriteResult.error ?? txResult.error,
+    transactionError,
     walletApprovalLink,
     enabled: props.showNotification ?? true, // default to true
     fallbackErrorMessage: props.fallbackErrorMessage,
@@ -470,6 +475,62 @@ export function useContractWriteWithConfirmations<
     confirmations: propsWithChainId.confirmations,
     watchTransaction: true,
   });
+
+  useEffect(() => {
+    if (computedStatus !== "error" || !transactionError) return;
+
+    const errorKey = stringifyJson({
+      chainId: resolvedChaindId,
+      contractName: props.contractName,
+      functionName: props.functionName,
+      address: props.address,
+      message: transactionError.message,
+      transactionHash,
+      safeTransactionHash,
+    });
+
+    if (reportedTransactionErrorRef.current === errorKey) return;
+    reportedTransactionErrorRef.current = errorKey;
+
+    reportClientError(transactionError, {
+      type: "transaction-error",
+      contractName: props.contractName,
+      functionName: props.functionName,
+      address: props.address,
+      args: props.args,
+      chainId: resolvedChaindId,
+      connectedAddress,
+      transactionHash,
+      safeTransactionHash,
+      fallbackErrorMessage: props.fallbackErrorMessage,
+      status: {
+        directWrite: directWriteResult.status,
+        write: txResult.status,
+        confirmations: txWaitResult.status,
+      },
+      tags: {
+        error_type: "transaction-error",
+        chain_id: resolvedChaindId,
+        contract_name: props.contractName,
+        function_name: props.functionName,
+      },
+    });
+  }, [
+    computedStatus,
+    transactionError,
+    resolvedChaindId,
+    props.contractName,
+    props.functionName,
+    props.address,
+    props.args,
+    props.fallbackErrorMessage,
+    connectedAddress,
+    transactionHash,
+    safeTransactionHash,
+    directWriteResult.status,
+    txResult.status,
+    txWaitResult.status,
+  ]);
 
   useEffect(() => {
     if (txWaitResult.isSuccess && txWaitResult.data) {
