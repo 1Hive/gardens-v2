@@ -17,6 +17,46 @@ import {
     MockCollateralVault
 } from "./helpers/CVStrategyHelpers.sol";
 
+contract MockProposalSuperfluidPool {
+    bool public updateShouldSucceed = true;
+    address public lastMember;
+    uint128 public lastUnits;
+
+    function setUpdateShouldSucceed(bool value) external {
+        updateShouldSucceed = value;
+    }
+
+    function updateMemberUnits(address member, uint128 units) external returns (bool) {
+        lastMember = member;
+        lastUnits = units;
+        return updateShouldSucceed;
+    }
+}
+
+contract MockStreamingEscrowFactory {
+    address public escrow;
+
+    constructor(address escrow_) {
+        escrow = escrow_;
+    }
+
+    function getStreamingEscrowFactory() external view returns (address) {
+        return address(this);
+    }
+
+    function deployEscrow(address, address, address, address) external view returns (address) {
+        return escrow;
+    }
+}
+
+contract MockStreamingEscrowReceiver {
+    address public beneficiary;
+
+    function setBeneficiary(address beneficiary_) external {
+        beneficiary = beneficiary_;
+    }
+}
+
 contract CVProposalFacetTest is Test {
     CVProposalFacetHarness internal facet;
     MockAlloWithPool internal allo;
@@ -115,6 +155,41 @@ contract CVProposalFacetTest is Test {
         facet.registerRecipient(data, member);
     }
 
+    function test_registerRecipient_reverts_when_active_proposal_limit_reached() public {
+        uint256 maxProposalCount = facet.MAX_PROPOSAL_COUNT();
+        facet.setActiveProposalCount(maxProposalCount);
+        facet.setActiveProposalCountInitialized(true);
+        CreateProposal memory proposal =
+            CreateProposal(1, beneficiary, 10, poolToken, Metadata({protocol: 1, pointer: "p"}));
+
+        vm.deal(address(allo), 2 ether);
+        vm.prank(address(allo));
+        vm.expectRevert(
+            abi.encodeWithSelector(CVProposalFacet.ProposalLimitReached.selector, maxProposalCount, maxProposalCount)
+        );
+        facet.registerRecipient{value: 1 ether}(abi.encode(proposal), member);
+    }
+
+    function test_registerRecipient_streaming_reverts_when_initial_units_update_fails() public {
+        MockProposalSuperfluidPool pool = new MockProposalSuperfluidPool();
+        pool.setUpdateShouldSucceed(false);
+        MockStreamingEscrowReceiver escrow = new MockStreamingEscrowReceiver();
+        MockStreamingEscrowFactory factory = new MockStreamingEscrowFactory(address(escrow));
+        registryCommunity.setRegistryFactory(address(factory));
+        facet.setProposalType(ProposalType.Streaming);
+        facet.setSuperfluidGDA(address(pool));
+
+        CreateProposal memory proposal =
+            CreateProposal(1, beneficiary, 0, poolToken, Metadata({protocol: 1, pointer: "p"}));
+
+        vm.deal(address(allo), 2 ether);
+        vm.prank(address(allo));
+        vm.expectRevert(
+            abi.encodeWithSelector(CVProposalFacet.UpdateMemberUnitsFailed.selector, address(escrow), uint256(0))
+        );
+        facet.registerRecipient{value: 1 ether}(abi.encode(proposal), member);
+    }
+
     function test_cancelProposal_success() public {
         facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Active, block.timestamp, 0);
         vm.prank(member);
@@ -138,6 +213,20 @@ contract CVProposalFacetTest is Test {
         facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Active, block.timestamp, 0);
         vm.prank(address(0xB0B));
         vm.expectRevert(abi.encodeWithSelector(CVStrategyBaseFacet.OnlySubmitter.selector, 1, member, address(0xB0B)));
+        facet.cancelProposal(1);
+    }
+
+    function test_cancelProposal_streaming_reverts_when_units_update_fails() public {
+        MockProposalSuperfluidPool pool = new MockProposalSuperfluidPool();
+        pool.setUpdateShouldSucceed(false);
+        facet.setProposalType(ProposalType.Streaming);
+        facet.setSuperfluidGDA(address(pool));
+        facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Active, block.timestamp, 0);
+
+        vm.prank(member);
+        vm.expectRevert(
+            abi.encodeWithSelector(CVProposalFacet.UpdateMemberUnitsFailed.selector, beneficiary, uint256(0))
+        );
         facet.cancelProposal(1);
     }
 
@@ -244,5 +333,19 @@ contract CVProposalFacetTest is Test {
         assertEq(blockLastAfter, block.number);
         assertEq(convictionAfter, 123);
         assertEq(snapshotAfter, 456);
+    }
+
+    function test_editProposal_streaming_updates_existing_escrow_beneficiary() public {
+        address newBeneficiary = address(0xB0B);
+        MockStreamingEscrowReceiver escrow = new MockStreamingEscrowReceiver();
+        facet.setProposalType(ProposalType.Streaming);
+        facet.seedProposal(1, member, beneficiary, poolToken, 0, ProposalStatus.Active, block.timestamp, 0);
+        facet.setStreamingEscrowExternal(1, address(escrow));
+
+        vm.prank(member);
+        facet.editProposal(1, Metadata({protocol: 1, pointer: "meta"}), newBeneficiary, 0);
+
+        assertEq(facet.getProposalBeneficiary(1), newBeneficiary);
+        assertEq(escrow.beneficiary(), newBeneficiary);
     }
 }
