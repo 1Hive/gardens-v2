@@ -12,7 +12,7 @@ VERIFY_COMMAND_TIMEOUT=${VERIFY_COMMAND_TIMEOUT:-300}
 VERIFY_REPLAY_OFFLINE=${VERIFY_REPLAY_OFFLINE:-true}
 
 is_retryable_rpc_error() {
-  grep -Eqi 'rate limit|max calls per sec|429|timeout|temporar|failed to get storage|HTTP error 429|Max retries exceeded' <<< "$1"
+  grep -Eqi 'rate limit|max calls per sec|429|timeout|temporar|failed to get storage|no state found for block number|HTTP error 429|Max retries exceeded' <<< "$1"
 }
 
 run_with_rpc_retry() {

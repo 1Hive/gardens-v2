@@ -501,6 +501,22 @@ abstract contract CVStrategyBaseFacet {
         }
         _proposal.blockLast = blockNumber;
         _proposal.convictionLast = conviction;
+        _setThresholdSnapshot(_proposal);
+    }
+
+    function _setThresholdSnapshot(Proposal storage _proposal) internal {
+        uint256 snapshot = _proposal.thresholdSnapshot;
+        if (snapshot == 0 || totalPointsActivated > snapshot) {
+            _proposal.thresholdSnapshot = totalPointsActivated;
+        }
+    }
+
+    function _getThresholdPoints(Proposal storage _proposal) internal view returns (uint256) {
+        uint256 snapshot = _proposal.thresholdSnapshot;
+        if (snapshot == 0 || totalPointsActivated > snapshot) {
+            return totalPointsActivated;
+        }
+        return snapshot;
     }
 
     /**

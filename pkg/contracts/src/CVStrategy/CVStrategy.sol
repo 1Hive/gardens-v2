@@ -506,7 +506,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         threshold = ConvictionsUtils.calculateThreshold(
             proposal.requestedAmount,
             currentPoolAmount,
-            totalPointsActivated,
+            _getThresholdPoints(proposal),
             cvParams.decay,
             cvParams.weight,
             cvParams.maxRatio,
@@ -638,7 +638,23 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         }
         _proposal.blockLast = blockNumber;
         _proposal.convictionLast = conviction;
+        _setThresholdSnapshot(_proposal);
         // emit Logger("Conviction set", conviction);
+    }
+
+    function _setThresholdSnapshot(Proposal storage _proposal) internal {
+        uint256 snapshot = _proposal.thresholdSnapshot;
+        if (snapshot == 0 || totalPointsActivated > snapshot) {
+            _proposal.thresholdSnapshot = totalPointsActivated;
+        }
+    }
+
+    function _getThresholdPoints(Proposal storage _proposal) internal view returns (uint256) {
+        uint256 snapshot = _proposal.thresholdSnapshot;
+        if (snapshot == 0 || totalPointsActivated > snapshot) {
+            return totalPointsActivated;
+        }
+        return snapshot;
     }
 
     function _checkBlockAndCalculateConviction(Proposal storage _proposal, uint256 _oldStaked)

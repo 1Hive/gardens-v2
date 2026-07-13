@@ -259,6 +259,19 @@ contract CVProposalFacetHarness is CVProposalFacet {
         return proposals[proposalId].requestedAmount;
     }
 
+    function getProposalConvictionState(uint256 proposalId)
+        external
+        view
+        returns (uint256 blockLast, uint256 convictionLast, uint256 thresholdSnapshot)
+    {
+        Proposal storage p = proposals[proposalId];
+        return (p.blockLast, p.convictionLast, p.thresholdSnapshot);
+    }
+
+    function setProposalThresholdSnapshot(uint256 proposalId, uint256 amount) external {
+        proposals[proposalId].thresholdSnapshot = amount;
+    }
+
     function setProposalStakedAmount(uint256 proposalId, uint256 amount) external {
         proposals[proposalId].stakedAmount = amount;
     }

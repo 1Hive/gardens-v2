@@ -128,29 +128,40 @@ contract CVPowerFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
 
     function _deactivatePoints(address _member) internal {
-        if (registryCommunity.memberActivatedInStrategies(_member, address(this))) {
-            _decreaseTotalPointsActivated(votingPowerRegistry.getMemberPowerInStrategy(_member, address(this)));
+        bool wasActivated = registryCommunity.memberActivatedInStrategies(_member, address(this));
+        uint256 points = wasActivated ? votingPowerRegistry.getMemberPowerInStrategy(_member, address(this)) : 0;
+
+        // Remove support before lowering totalPointsActivated so proposal threshold snapshots
+        // are taken against the pre-withdraw active-points denominator.
+        _withdraw(_member);
+
+        if (wasActivated) {
+            _decreaseTotalPointsActivated(points);
         }
+
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
 
         CVSyncPowerStorage.Layout storage syncLayout = CVSyncPowerStorage.layout();
         syncLayout.syncedPower[_member] = 0;
         syncLayout.hasSyncedPower[_member] = false;
 
-        // remove support from all proposals
-        _withdraw(_member);
         emit PointsDeactivated(_member);
     }
 
     function _deactivatePointsFromRegistry(address _member) internal {
+        uint256 points;
         if (registryCommunity.memberActivatedInStrategies(_member, address(this))) {
-            _decreaseTotalPointsActivated(votingPowerRegistry.getMemberPowerInStrategy(_member, address(this)));
+            points = votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));
         }
 
         bool hadStakeToWithdraw = totalVoterStakePct[_member] != 0 || voterStakedProposals[_member].length != 0;
         if (hadStakeToWithdraw) {
             _withdraw(_member);
             emit PointsDeactivated(_member);
+        }
+
+        if (points != 0) {
+            _decreaseTotalPointsActivated(points);
         }
     }
 
@@ -176,6 +187,7 @@ contract CVPowerFacet is CVStrategyBaseFacet {
                 proposal.voterStakedPoints[_member] = 0;
                 proposal.stakedAmount -= stakedPoints;
                 totalStaked -= stakedPoints;
+                _setThresholdSnapshot(proposal);
                 _calculateAndSetConviction(proposal, oldStake);
                 emit SupportAdded(_member, proposalId, 0, proposal.stakedAmount, proposal.convictionLast);
             }
@@ -195,6 +207,7 @@ contract CVPowerFacet is CVStrategyBaseFacet {
         proposal.voterStakedPoints[_member] = newStakedPoints;
         totalStaked -= stakeDelta;
         totalVoterStakePct[_member] -= stakeDelta;
+        _setThresholdSnapshot(proposal);
         _calculateAndSetConviction(proposal, oldStake);
 
         emit SupportAdded(_member, _proposalId, newStakedPoints, proposal.stakedAmount, proposal.convictionLast);
