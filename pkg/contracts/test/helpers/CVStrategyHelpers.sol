@@ -21,11 +21,16 @@ import {
 } from "../../src/CVStrategy/CVStrategy.sol";
 import {CVProposalFacet} from "../../src/CVStrategy/facets/CVProposalFacet.sol";
 import {CVStrategyBaseFacet} from "../../src/CVStrategy/CVStrategyBaseFacet.sol";
+import {CVStreamingStorage} from "../../src/CVStrategy/CVStreamingStorage.sol";
 import {ICollateralVault} from "../../src/interfaces/ICollateralVault.sol";
 import {IArbitrator} from "../../src/interfaces/IArbitrator.sol";
 import {IVotingPowerRegistry} from "../../src/interfaces/IVotingPowerRegistry.sol";
 import {LibDiamond} from "../../src/diamonds/libraries/LibDiamond.sol";
 import {LibPauseStorage} from "../../src/pausing/LibPauseStorage.sol";
+import {
+    ISuperfluidPool
+} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
+import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
 contract MockAlloWithPool {
@@ -215,8 +220,28 @@ contract CVProposalFacetHarness is CVProposalFacet {
         proposalType = proposalType_;
     }
 
+    function setSuperfluidToken(address token) external {
+        superfluidToken = ISuperToken(token);
+    }
+
+    function setSuperfluidGDA(address gda) external {
+        superfluidGDA = ISuperfluidPool(gda);
+    }
+
     function setCollateralVault(address collateralVault_) external {
         collateralVault = ICollateralVault(collateralVault_);
+    }
+
+    function setActiveProposalCount(uint256 count) external {
+        activeProposalCount = count;
+    }
+
+    function setActiveProposalCountInitialized(bool initialized) external {
+        activeProposalCountInitialized = initialized;
+    }
+
+    function setStreamingEscrowExternal(uint256 proposalId, address escrow) external {
+        CVStreamingStorage.layout().proposalEscrow[proposalId] = escrow;
     }
 
     function setArbitrableConfig(uint256 version, ArbitrableConfig memory config) external {

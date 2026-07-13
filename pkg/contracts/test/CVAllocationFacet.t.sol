@@ -378,6 +378,73 @@ contract CVAllocationFacetTest is Test {
         facet.allocate(abi.encode(pv), member);
     }
 
+    function test_allocate_reverts_too_many_allocations() public {
+        uint256 maxAllocations = facet.MAX_ALLOCATIONS_PER_TX();
+        ProposalSupport[] memory pv = new ProposalSupport[](maxAllocations + 1);
+
+        vm.prank(address(allo));
+        vm.expectRevert(
+            abi.encodeWithSelector(CVAllocationFacet.TooManyAllocations.selector, pv.length, maxAllocations)
+        );
+        facet.allocate(abi.encode(pv), member);
+    }
+
+    function test_allocate_multiple_distinct_proposals_covers_append_path() public {
+        bytes32 role = keccak256(abi.encodePacked("ALLOWLIST", uint256(1)));
+        registry.grantRole(role, address(0));
+        facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, 0, 0, 0);
+        facet.setProposal(2, ProposalStatus.Active, 0, address(token), beneficiary, member, 0, 0, 0);
+
+        ProposalSupport[] memory pv = new ProposalSupport[](2);
+        pv[0] = ProposalSupport({proposalId: 1, deltaSupport: 1});
+        pv[1] = ProposalSupport({proposalId: 2, deltaSupport: 1});
+
+        vm.prank(address(allo));
+        facet.allocate(abi.encode(pv), member);
+
+        assertEq(facet.getProposalVoterStake(1, member), 1);
+        assertEq(facet.getProposalVoterStake(2, member), 1);
+        assertEq(facet.totalStaked(), 2);
+    }
+
+    function test_allocate_decreasing_support_covers_total_staked_decrement() public {
+        bytes32 role = keccak256(abi.encodePacked("ALLOWLIST", uint256(1)));
+        registry.grantRole(role, address(0));
+        facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, 0, 0, 0);
+
+        vm.prank(address(allo));
+        facet.allocate(abi.encode(_support(1, 5)), member);
+
+        vm.roll(block.number + 1);
+        vm.prank(address(allo));
+        facet.allocate(abi.encode(_support(1, -2)), member);
+
+        assertEq(facet.getProposalVoterStake(1, member), 3);
+        assertEq(facet.totalStaked(), 3);
+    }
+
+    function test_allocate_reverts_when_voter_staked_proposal_limit_reached() public {
+        bytes32 role = keccak256(abi.encodePacked("ALLOWLIST", uint256(1)));
+        registry.grantRole(role, address(0));
+        registry.setMemberPower(member, 1_000);
+        uint256 maxVoterStakedProposals = facet.MAX_VOTER_STAKED_PROPOSALS();
+        for (uint256 i; i < maxVoterStakedProposals; i++) {
+            facet.pushVoterProposal(member, i + 1);
+        }
+        facet.setProposal(999, ProposalStatus.Active, 0, address(token), beneficiary, member, 0, 0, 0);
+
+        vm.prank(address(allo));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVAllocationFacet.TooManyVoterStakedProposals.selector,
+                member,
+                maxVoterStakedProposals,
+                maxVoterStakedProposals
+            )
+        );
+        facet.allocate(abi.encode(_support(999, 1)), member);
+    }
+
     function test_allocate_success_updates_state_and_conviction() public {
         bytes32 role = keccak256(abi.encodePacked("ALLOWLIST", uint256(1)));
         registry.grantRole(role, address(0));
@@ -632,6 +699,38 @@ contract CVAllocationFacetTest is Test {
         assertEq(vault.lastProposalId(), 1);
         assertEq(vault.lastAccount(), member);
         assertEq(vault.lastAmount(), 1 ether);
+        assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Executed));
+    }
+
+    function test_distribute_unwraps_superfluid_balance_when_pool_token_balance_is_short() public {
+        TERC20 underlying = new TERC20("Underlying", "UND", 18);
+        MockSuperToken superToken = new MockSuperToken(underlying);
+        superToken.setBalance(10 ether);
+
+        allo.setPoolToken(1, address(underlying));
+        facet.setSuperfluidToken(address(superToken));
+        facet.setProposalType(ProposalType.Funding);
+        facet.setCvParams(CVParams({maxRatio: 10_000_000, weight: 0, decay: 0, minThresholdPoints: 0}));
+        facet.setTotalPointsActivated(1);
+        facet.setArbitrableConfig(
+            1,
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(0)),
+                tribunalSafe: address(0),
+                submitterCollateralAmount: 1,
+                challengerCollateralAmount: 1,
+                defaultRuling: 0,
+                defaultRulingTimeout: 0
+            })
+        );
+        facet.setProposal(
+            1, ProposalStatus.Active, 1 ether, address(underlying), beneficiary, member, block.number, 1, 1
+        );
+
+        vm.prank(address(allo));
+        facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
+
+        assertEq(underlying.balanceOf(beneficiary), 1 ether);
         assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Executed));
     }
 
