@@ -29,6 +29,7 @@ import {
 import {CVParams, ProposalStatus, ProposalSupport} from "../../src/CVStrategy/ICVStrategy.sol";
 import {ConvictionsUtils} from "../../src/CVStrategy/ConvictionsUtils.sol";
 import {CVProposalFacet} from "../../src/CVStrategy/facets/CVProposalFacet.sol";
+import {CVAllocationFacet} from "../../src/CVStrategy/facets/CVAllocationFacet.sol";
 import {GV2ERC20} from "../../script/GV2ERC20.sol";
 import {CVStrategyHelpers} from "../CVStrategyHelpers.sol";
 import {SafeSetup} from "../shared/SafeSetup.sol";
@@ -572,12 +573,14 @@ contract PoC_H2_DecreasePowerReentrancy is PoCBase {
 }
 
 // =============================================================
-//  [GDN-01] Requested amount must not remain editable after first support
+//  [GDN-01 / GHSA-942] Requested amount edits must not reuse stale conviction
 // =============================================================
 
-/// @title PoC_GDN01_AmountEditAfterFirstSupportBlocked
+/// @title PoC_GDN01_GHSA942_AmountEditAfterFirstSupportBlocked
 /// @notice Security regression test: once first support exists, the submitter
 ///         must not be able to raise requestedAmount even if convictionLast is zero.
+///         If support is later withdrawn and requestedAmount changes, stale
+///         conviction state must be cleared before the proposal can execute.
 contract PoC_GDN01_AmountEditAfterFirstSupportBlocked is PoCBase {
     GV2ERC20 token;
     address submitter = makeAddr("submitter");
@@ -675,15 +678,61 @@ contract PoC_GDN01_AmountEditAfterFirstSupportBlocked is PoCBase {
         vm.prank(submitter);
         cvStrategy.editProposal(proposalId, meta, newBeneficiary, INCREASED_REQUEST);
 
-        (, address beneficiaryAfterWithdrawEdit,, uint256 requestedAfterWithdrawEdit, uint256 stakedAfterWithdrawEdit,,,,,,,) =
-            cvStrategy.getProposal(proposalId);
+        (
+            ,
+            address beneficiaryAfterWithdrawEdit,,
+            uint256 requestedAfterWithdrawEdit,
+            uint256 stakedAfterWithdrawEdit,,,,,,,
+        ) = cvStrategy.getProposal(proposalId);
         assertEq(requestedAfterWithdrawEdit, INCREASED_REQUEST, "GDN-01: amount can change after support is withdrawn");
         assertEq(
-            beneficiaryAfterWithdrawEdit,
-            newBeneficiary,
-            "GDN-01: beneficiary can change after support is withdrawn"
+            beneficiaryAfterWithdrawEdit, newBeneficiary, "GDN-01: beneficiary can change after support is withdrawn"
         );
         assertEq(stakedAfterWithdrawEdit, 0, "GDN-01: edit after withdrawal does not recreate support");
+    }
+
+    function test_GHSA942_AmountEditAfterSupportWithdrawalClearsResidualConviction() public {
+        uint256 proposalId = _createProposal(submitter, INITIAL_REQUEST);
+
+        vm.deal(address(this), POOL_AMOUNT);
+        (bool funded,) = address(cvStrategy).call{value: POOL_AMOUNT}("");
+        require(funded, "pool fund failed");
+
+        _allocateSupport(voter, proposalId, int256(SUPPORT));
+        vm.roll(block.number + 1_000);
+        _allocateSupport(voter, proposalId, -int256(SUPPORT));
+
+        (,,,, uint256 stakedAfterWithdraw,, uint256 blockLastBeforeEdit, uint256 convictionBeforeEdit,,,,) =
+            cvStrategy.getProposal(proposalId);
+        assertEq(stakedAfterWithdraw, 0, "GDN-01 setup: support was fully withdrawn");
+        assertGt(convictionBeforeEdit, 0, "GDN-01 setup: residual conviction exists before amount edit");
+        assertGt(blockLastBeforeEdit, 0, "GDN-01 setup: conviction block is initialized before amount edit");
+
+        vm.prank(submitter);
+        cvStrategy.editProposal(proposalId, meta, submitter, INCREASED_REQUEST);
+
+        (
+            ,,,
+            uint256 requestedAfterEdit,,
+            ProposalStatus statusAfterEdit,
+            uint256 blockLastAfterEdit,
+            uint256 convictionAfterEdit,
+            uint256 thresholdAfterEdit,,,
+        ) = cvStrategy.getProposal(proposalId);
+        assertEq(requestedAfterEdit, INCREASED_REQUEST, "GDN-01: requested amount can still change");
+        assertEq(uint256(statusAfterEdit), uint256(ProposalStatus.Active), "GDN-01: proposal remains active");
+        assertEq(blockLastAfterEdit, 0, "GDN-01: amount edit clears conviction block");
+        assertEq(convictionAfterEdit, 0, "GDN-01: amount edit clears residual conviction");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVAllocationFacet.ConvictionUnderMinimumThreshold.selector,
+                uint256(0),
+                thresholdAfterEdit,
+                INCREASED_REQUEST
+            )
+        );
+        allo().distribute(poolId, new address[](0), abi.encode(proposalId));
     }
 
     function _allocateSupport(address allocator, uint256 proposalId, int256 support) internal {
@@ -807,6 +856,168 @@ contract PoC_GDN02_WithdrawConvictionPreserved is PoCBase {
 
         vm.prank(voter);
         allo().allocate(poolId, abi.encode(votes));
+    }
+}
+
+// =============================================================
+//  [H-4] Self-decreasing active power must not collapse execution threshold
+// =============================================================
+
+/// @title PoC_H4_SelfPowerDecreaseThresholdCollapse
+/// @notice Security regression test for GHSA-22hv-jcwr-j733 finding #1.
+///         A proposal that cannot pass while the attacker's points are active
+///         must not become executable in the same block after the attacker
+///         withdraws their own support and reduces totalPointsActivated.
+contract PoC_H4_SelfPowerDecreaseThresholdCollapse is PoCBase {
+    GV2ERC20 token;
+    address honest = makeAddr("honest");
+    address attacker = makeAddr("attacker");
+
+    uint256 constant HONEST_POWER = 80 ether;
+    uint256 constant ATTACKER_POWER = 20 ether;
+    uint256 constant BLOCKS_ELAPSED = 5000;
+    uint256 constant SUBMITTER_COL = 0.02 ether;
+    uint256 constant CHALLENGER_COL = 0.01 ether;
+    uint256 constant ARB_FEE = 0.5 ether;
+    uint256 constant DEFAULT_MIN_THRESHOLD_POINTS = 0;
+
+    function setUp() public {
+        _alloSetup();
+
+        token = new GV2ERC20("Token", "TKN", 18);
+        token.mint(local(), TOTAL_SUPPLY / 3);
+        token.mint(pool_admin(), TOTAL_SUPPLY / 3);
+        token.mint(honest, TOTAL_SUPPLY / 6);
+        token.mint(attacker, TOTAL_SUPPLY / 6);
+
+        _deployArbitrator(ARB_FEE);
+        _deployFactory(address(token));
+        _deployStrategy(
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(safeArbitrator)),
+                tribunalSafe: payable(address(_councilSafe())),
+                submitterCollateralAmount: SUBMITTER_COL,
+                challengerCollateralAmount: CHALLENGER_COL,
+                defaultRuling: 1,
+                defaultRulingTimeout: 300
+            })
+        );
+
+        vm.prank(pool_admin());
+        safeHelper(
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(cvStrategy))
+        );
+
+        _registerIncreaseAndActivate(honest, HONEST_POWER);
+        _registerIncreaseAndActivate(attacker, ATTACKER_POWER);
+
+        vm.deal(address(this), POOL_AMOUNT);
+        (bool ok,) = address(cvStrategy).call{value: POOL_AMOUNT}("");
+        require(ok, "H-4 setup: pool funding failed");
+
+        (,,, uint256 minThresholdPoints) = cvStrategy.cvParams();
+        assertEq(minThresholdPoints, DEFAULT_MIN_THRESHOLD_POINTS, "H-4 setup: non-default min threshold");
+    }
+
+    function test_H4_SelfPowerDecreaseMustNotMakeProposalExecutable() public {
+        (,, uint256 decay,) = cvStrategy.cvParams();
+        uint256 convictionAtExecutionWindow =
+            ConvictionsUtils.calculateConviction(BLOCKS_ELAPSED, 0, ATTACKER_POWER, decay);
+        uint256 requestedAmount = _findRequestAmountInThresholdCollapseWindow(convictionAtExecutionWindow);
+
+        uint256 proposalId = _createProposal(attacker, requestedAmount);
+        _allocateSupport(attacker, proposalId, ATTACKER_POWER);
+
+        vm.roll(block.number + BLOCKS_ELAPSED);
+
+        uint256 convictionBeforeWithdraw = cvStrategy.calculateProposalConviction(proposalId);
+        uint256 thresholdBeforeWithdraw = cvStrategy.calculateThreshold(requestedAmount);
+        assertLe(
+            convictionBeforeWithdraw,
+            thresholdBeforeWithdraw,
+            "H-4 setup: proposal must not pass before attacker power decrease"
+        );
+
+        vm.prank(attacker);
+        cvStrategy.deactivatePoints();
+
+        (,,,, uint256 stakeAfterWithdraw,, uint256 blockLastAfterWithdraw, uint256 convictionAfterWithdraw,,,,) =
+            cvStrategy.getProposal(proposalId);
+        uint256 thresholdAfterWithdraw = cvStrategy.calculateThreshold(requestedAmount);
+
+        console.log("[H-4] requested amount:", requestedAmount);
+        console.log("[H-4] conviction before withdraw:", convictionBeforeWithdraw);
+        console.log("[H-4] threshold before withdraw:", thresholdBeforeWithdraw);
+        console.log("[H-4] conviction after withdraw:", convictionAfterWithdraw);
+        console.log("[H-4] threshold after withdraw:", thresholdAfterWithdraw);
+
+        assertEq(stakeAfterWithdraw, 0, "H-4 setup: attacker support should be withdrawn");
+        assertEq(blockLastAfterWithdraw, block.number, "H-4 setup: withdrawal records current block");
+
+        uint256 attackerBalanceBefore = attacker.balance;
+        vm.expectRevert();
+        allo().distribute(poolId, new address[](0), abi.encode(proposalId));
+        assertEq(attacker.balance, attackerBalanceBefore, "H-4: attacker must not receive proposal funds");
+    }
+
+    function _registerIncreaseAndActivate(address member, uint256 power) internal {
+        _approveAndRegister(member);
+
+        vm.startPrank(member);
+        token.approve(address(registryCommunity), power - MINIMUM_STAKE);
+        registryCommunity.increasePower(power - MINIMUM_STAKE);
+        cvStrategy.activatePoints();
+        vm.stopPrank();
+    }
+
+    function _allocateSupport(address voter, uint256 proposalId, uint256 support) internal {
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
+        votes[0] = ProposalSupport({proposalId: proposalId, deltaSupport: int256(support)});
+
+        vm.prank(voter);
+        allo().allocate(poolId, abi.encode(votes));
+    }
+
+    function _findRequestAmountInThresholdCollapseWindow(uint256 conviction) internal view returns (uint256) {
+        uint256 maxRequest = _maxRequestAmount();
+        uint256 low = 1;
+        uint256 high = maxRequest - 1;
+
+        while (low < high) {
+            uint256 mid = (low + high) / 2;
+            uint256 thresholdBeforeWithdraw = _thresholdFor(mid, HONEST_POWER + ATTACKER_POWER);
+
+            if (thresholdBeforeWithdraw < conviction) {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+
+        for (uint256 requestedAmount = low; requestedAmount < maxRequest; requestedAmount += 1 ether) {
+            uint256 thresholdBeforeWithdraw = _thresholdFor(requestedAmount, HONEST_POWER + ATTACKER_POWER);
+            uint256 thresholdAfterWithdraw = _thresholdFor(requestedAmount, HONEST_POWER);
+
+            if (conviction <= thresholdBeforeWithdraw && conviction > thresholdAfterWithdraw) {
+                return requestedAmount;
+            }
+        }
+
+        revert("H-4 setup: no exploitable threshold window");
+    }
+
+    function _maxRequestAmount() internal view returns (uint256) {
+        (uint256 maxRatio,,,) = cvStrategy.cvParams();
+        return (POOL_AMOUNT * maxRatio) / ConvictionsUtils.D;
+    }
+
+    function _thresholdFor(uint256 requestedAmount, uint256 totalPoints) internal view returns (uint256) {
+        (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPoints) = cvStrategy.cvParams();
+        return ConvictionsUtils.calculateThreshold(
+            requestedAmount, POOL_AMOUNT, totalPoints, decay, weight, maxRatio, minThresholdPoints
+        );
     }
 }
 
@@ -1450,7 +1661,6 @@ contract PoC_H3_RebalancePermissionless is Test {
 
         console.log("[H-3] attacker could not squat the cooldown window");
     }
-
 }
 
 // =============================================================

@@ -212,6 +212,7 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
         proposal.voterStakedPoints[_member] = newStakedPoints;
         totalStaked -= stakeDelta;
         totalVoterStakePct[_member] -= stakeDelta;
+        _setThresholdSnapshot(proposal);
         _calculateAndSetConviction(proposal, oldStake);
 
         emit SupportAdded(_member, _proposalId, newStakedPoints, proposal.stakedAmount, proposal.convictionLast);

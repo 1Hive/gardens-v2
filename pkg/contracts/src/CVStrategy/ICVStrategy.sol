@@ -74,6 +74,7 @@ struct Proposal {
     uint256 lastDisputeCompletion;
     uint256 arbitrableConfigVersion;
     uint256 creationTimestamp;
+    uint256 thresholdSnapshot;
 }
 
 struct ProposalSupport {

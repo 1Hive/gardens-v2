@@ -174,7 +174,9 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
             }
             if (proposal.blockLast == 0) {
                 proposal.blockLast = block.number;
+                _setThresholdSnapshot(proposal);
             } else {
+                _setThresholdSnapshot(proposal);
                 _calculateAndSetConviction(proposal, previousStakedAmount);
                 emit SupportAdded(_sender, proposalId, stakedPoints, proposal.stakedAmount, proposal.convictionLast);
             }
@@ -245,7 +247,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
             threshold = ConvictionsUtils.calculateThreshold(
                 proposals[proposalId].requestedAmount,
                 poolAmount,
-                totalPointsActivated,
+                _getThresholdPoints(proposals[proposalId]),
                 cvParams.decay,
                 cvParams.weight,
                 cvParams.maxRatio,

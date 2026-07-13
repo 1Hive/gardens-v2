@@ -192,13 +192,17 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
             revert OnlySubmitter(_proposalId, proposal.submitter, msg.sender);
         }
 
-        if ((proposal.requestedAmount != _requestedAmount)) {
+        uint256 requestedAmount = proposalType == ProposalType.Funding ? _requestedAmount : 0;
+        if ((proposal.requestedAmount != requestedAmount)) {
             if (proposal.stakedAmount != 0) {
                 revert CannotEditRequestedAmountWithActiveSupport(
-                    _proposalId, proposal.requestedAmount, _requestedAmount
+                    _proposalId, proposal.requestedAmount, requestedAmount
                 );
             }
-            proposal.requestedAmount = proposalType == ProposalType.Funding ? _requestedAmount : 0;
+            proposal.requestedAmount = requestedAmount;
+            proposal.convictionLast = 0;
+            proposal.blockLast = 0;
+            proposal.thresholdSnapshot = 0;
         }
 
         // 1763099258 - 1763007730  = 91528 > 3600

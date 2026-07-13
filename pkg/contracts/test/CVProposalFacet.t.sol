@@ -212,4 +212,37 @@ contract CVProposalFacetTest is Test {
         assertEq(facet.getProposalBeneficiary(1), address(0xB0B));
         assertEq(facet.getProposalMetadataPointer(1), "newmeta");
     }
+
+    function test_editProposal_resetsConvictionStateWhenRequestedAmountChanges() public {
+        facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Active, block.timestamp, 123);
+        facet.setProposalThresholdSnapshot(1, 456);
+
+        (uint256 blockLastBefore, uint256 convictionBefore, uint256 snapshotBefore) =
+            facet.getProposalConvictionState(1);
+        assertEq(blockLastBefore, block.number);
+        assertEq(convictionBefore, 123);
+        assertEq(snapshotBefore, 456);
+
+        vm.prank(member);
+        facet.editProposal(1, Metadata({protocol: 1, pointer: "meta"}), beneficiary, 11);
+
+        (uint256 blockLastAfter, uint256 convictionAfter, uint256 snapshotAfter) = facet.getProposalConvictionState(1);
+        assertEq(facet.getProposalRequestedAmount(1), 11);
+        assertEq(blockLastAfter, 0);
+        assertEq(convictionAfter, 0);
+        assertEq(snapshotAfter, 0);
+    }
+
+    function test_editProposal_doesNotResetConvictionStateForMetadataOnlyEdit() public {
+        facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Active, block.timestamp, 123);
+        facet.setProposalThresholdSnapshot(1, 456);
+
+        vm.prank(member);
+        facet.editProposal(1, Metadata({protocol: 1, pointer: "newmeta"}), beneficiary, 10);
+
+        (uint256 blockLastAfter, uint256 convictionAfter, uint256 snapshotAfter) = facet.getProposalConvictionState(1);
+        assertEq(blockLastAfter, block.number);
+        assertEq(convictionAfter, 123);
+        assertEq(snapshotAfter, 456);
+    }
 }

@@ -249,7 +249,7 @@ verify_resolved_contract() {
 }
 
 is_retryable_rpc_error() {
-  grep -Eqi 'rate limit|max calls per sec|expected value|SourcifyResponse|429|timeout|failed to get storage|HTTP error 429|Max retries exceeded' <<< "$1"
+  grep -Eqi 'rate limit|max calls per sec|expected value|SourcifyResponse|429|timeout|failed to get storage|no state found for block number|HTTP error 429|Max retries exceeded' <<< "$1"
 }
 
 verify_with_retry() {

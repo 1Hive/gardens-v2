@@ -207,6 +207,10 @@ contract CVAllocationFacetHarness is CVAllocationFacet {
         totalPointsActivated = amount;
     }
 
+    function setProposalThresholdSnapshot(uint256 proposalId, uint256 amount) external {
+        proposals[proposalId].thresholdSnapshot = amount;
+    }
+
     function setTotalStaked(uint256 amount) external {
         totalStaked = amount;
     }
@@ -272,6 +276,10 @@ contract CVAllocationFacetHarness is CVAllocationFacet {
 
     function getProposalVoterStake(uint256 proposalId, address voter) external view returns (uint256) {
         return proposals[proposalId].voterStakedPoints[voter];
+    }
+
+    function getProposalThresholdSnapshot(uint256 proposalId) external view returns (uint256) {
+        return proposals[proposalId].thresholdSnapshot;
     }
 }
 
@@ -389,6 +397,36 @@ contract CVAllocationFacetTest is Test {
         assertEq(facet.totalStaked(), 6);
     }
 
+    function test_allocate_snapshots_total_points_for_threshold() public {
+        bytes32 role = keccak256(abi.encodePacked("ALLOWLIST", uint256(1)));
+        registry.grantRole(role, address(0));
+        facet.setTotalPointsActivated(42);
+        facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, 0, 0, 0);
+
+        vm.prank(address(allo));
+        facet.allocate(abi.encode(_support(1, 5)), member);
+
+        assertEq(facet.getProposalThresholdSnapshot(1), 42);
+    }
+
+    function test_allocate_does_not_lower_existing_threshold_snapshot() public {
+        bytes32 role = keccak256(abi.encodePacked("ALLOWLIST", uint256(1)));
+        registry.grantRole(role, address(0));
+        facet.setTotalPointsActivated(100);
+        facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, 0, 0, 0);
+
+        vm.prank(address(allo));
+        facet.allocate(abi.encode(_support(1, 5)), member);
+        assertEq(facet.getProposalThresholdSnapshot(1), 100);
+
+        facet.setTotalPointsActivated(20);
+
+        vm.prank(address(allo));
+        facet.allocate(abi.encode(_support(1, 1)), member);
+
+        assertEq(facet.getProposalThresholdSnapshot(1), 100);
+    }
+
     function test_applyDelta_underflow_reverts() public {
         vm.expectRevert(abi.encodeWithSelector(CVAllocationFacet.SupportUnderflow.selector, 1, -2, -1));
         facet.exposedApplyDelta(1, -2);
@@ -482,6 +520,55 @@ contract CVAllocationFacetTest is Test {
         vm.prank(address(allo));
         vm.expectRevert(
             abi.encodeWithSelector(CVAllocationFacet.ConvictionUnderMinimumThreshold.selector, 0, threshold, 1 ether)
+        );
+        facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
+    }
+
+    function test_distribute_uses_snapshot_when_total_points_decreased() public {
+        allo.setPoolToken(1, facet.nativeToken());
+        vm.deal(address(facet), 10_000 ether);
+        facet.setProposalType(ProposalType.Funding);
+
+        uint256 maxRatio = 3_656_188;
+        uint256 weight = 133_677;
+        uint256 decay = 9_940_581;
+        uint256 requestedAmount = 1_071 ether;
+        uint256 liveTotalPoints = 80 ether;
+        uint256 snapshotPoints = 100 ether;
+        facet.setCvParams(CVParams({maxRatio: maxRatio, weight: weight, decay: decay, minThresholdPoints: 0}));
+        facet.setTotalPointsActivated(liveTotalPoints);
+
+        uint256 liveThreshold = ConvictionsUtils.calculateThreshold(
+            requestedAmount, 10_000 ether, liveTotalPoints, decay, weight, maxRatio, 0
+        );
+        uint256 snapshotThreshold = ConvictionsUtils.calculateThreshold(
+            requestedAmount, 10_000 ether, snapshotPoints, decay, weight, maxRatio, 0
+        );
+        uint256 conviction = (liveThreshold + snapshotThreshold) / 2;
+        assertGt(conviction, liveThreshold, "setup: conviction must clear live threshold");
+        assertLt(conviction, snapshotThreshold, "setup: conviction must not clear snapshot threshold");
+
+        facet.setProposal(
+            1,
+            ProposalStatus.Active,
+            requestedAmount,
+            facet.nativeToken(),
+            beneficiary,
+            member,
+            block.number,
+            conviction,
+            0
+        );
+        facet.setProposalThresholdSnapshot(1, snapshotPoints);
+
+        vm.prank(address(allo));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVAllocationFacet.ConvictionUnderMinimumThreshold.selector,
+                conviction,
+                snapshotThreshold,
+                requestedAmount
+            )
         );
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
     }

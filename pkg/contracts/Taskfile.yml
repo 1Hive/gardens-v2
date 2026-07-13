@@ -8343,6 +8343,88 @@ tasks:
           DRY_RUN: '{{default "false" .DRY_RUN}}'
       - task: log-old-private-key-balances
 
+  bridge-gas-quote:
+    desc: "Quote a native-gas bridge. Set either TO_AMOUNT=<dest native> or FROM_AMOUNT=<source native>. Optionally set RECIPIENT_ADDRESS when sender != recipient."
+    cmds:
+      - cmd: |
+          : "{{.SOURCE_NETWORK}}"
+          : "{{.DESTINATION_NETWORK}}"
+          if [ -z "{{.TO_AMOUNT}}" ] && [ -z "{{.FROM_AMOUNT}}" ] && [ -z "{{.SOURCE_USD}}" ]; then
+            echo "Set one of TO_AMOUNT, FROM_AMOUNT, or SOURCE_USD"
+            exit 1
+          fi
+          SOURCE_NETWORK="{{.SOURCE_NETWORK}}" \
+          DESTINATION_NETWORK="{{.DESTINATION_NETWORK}}" \
+          TO_AMOUNT='{{default "" .TO_AMOUNT}}' \
+          FROM_AMOUNT='{{default "" .FROM_AMOUNT}}' \
+          SOURCE_USD='{{default "" .SOURCE_USD}}' \
+          RECIPIENT_ADDRESS='{{default "" .RECIPIENT_ADDRESS}}' \
+          BRIDGE_FROM_ACCOUNT='{{default "" .BRIDGE_FROM_ACCOUNT}}' \
+          BRIDGE_FROM_PASSWORD='{{default "" .BRIDGE_FROM_PASSWORD}}' \
+          BRIDGE_PROVIDERS='{{default "across,lifi" .BRIDGE_PROVIDERS}}' \
+          SLIPPAGE='{{default "0.005" .SLIPPAGE}}' \
+          BRIDGE_MODE=quote \
+          node scripts/bridge-gas.mjs
+
+  bridge-gas-execute:
+    desc: "Execute the cheapest available native-gas bridge quote. Set either TO_AMOUNT=<dest native> or FROM_AMOUNT=<source native>. Requires CONFIRM_BRIDGE_EXECUTION=true."
+    cmds:
+      - cmd: |
+          : "{{.SOURCE_NETWORK}}"
+          : "{{.DESTINATION_NETWORK}}"
+          if [ -z "{{.TO_AMOUNT}}" ] && [ -z "{{.FROM_AMOUNT}}" ] && [ -z "{{.SOURCE_USD}}" ]; then
+            echo "Set one of TO_AMOUNT, FROM_AMOUNT, or SOURCE_USD"
+            exit 1
+          fi
+          SOURCE_NETWORK="{{.SOURCE_NETWORK}}" \
+          DESTINATION_NETWORK="{{.DESTINATION_NETWORK}}" \
+          TO_AMOUNT='{{default "" .TO_AMOUNT}}' \
+          FROM_AMOUNT='{{default "" .FROM_AMOUNT}}' \
+          SOURCE_USD='{{default "" .SOURCE_USD}}' \
+          RECIPIENT_ADDRESS='{{default "" .RECIPIENT_ADDRESS}}' \
+          BRIDGE_FROM_ACCOUNT='{{default "" .BRIDGE_FROM_ACCOUNT}}' \
+          BRIDGE_FROM_PASSWORD='{{default "" .BRIDGE_FROM_PASSWORD}}' \
+          BRIDGE_PROVIDERS='{{default "across,lifi" .BRIDGE_PROVIDERS}}' \
+          SLIPPAGE='{{default "0.005" .SLIPPAGE}}' \
+          CONFIRM_BRIDGE_EXECUTION='{{default "false" .CONFIRM_BRIDGE_EXECUTION}}' \
+          BRIDGE_MODE=execute \
+          node scripts/bridge-gas.mjs
+
+  bridge-keeper-gas-from-deployer-quote:
+    desc: "Quote a keeper top-up sourced from the PK_DEPLOYER foundry keystore on Ethereum mainnet. Defaults to a $30 source budget."
+    cmds:
+      - cmd: |
+          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
+          : "{{.DESTINATION_NETWORK}}"
+          SOURCE_NETWORK="mainnet" \
+          DESTINATION_NETWORK="{{.DESTINATION_NETWORK}}" \
+          SOURCE_USD='{{default "30" .SOURCE_USD}}' \
+          RECIPIENT_ADDRESS='{{default "0xb5f2B971878dD2Bc8A0c53635f33280F34C41F2A" .RECIPIENT_ADDRESS}}' \
+          BRIDGE_FROM_ACCOUNT="PK_DEPLOYER" \
+          BRIDGE_FROM_PASSWORD="${PK_DEPLOYER_PW}" \
+          BRIDGE_PROVIDERS='{{default "across,lifi" .BRIDGE_PROVIDERS}}' \
+          SLIPPAGE='{{default "0.005" .SLIPPAGE}}' \
+          BRIDGE_MODE=quote \
+          node scripts/bridge-gas.mjs
+
+  bridge-keeper-gas-from-deployer-execute:
+    desc: "Execute a keeper top-up sourced from the PK_DEPLOYER foundry keystore on Ethereum mainnet. Defaults to a $30 source budget."
+    cmds:
+      - cmd: |
+          : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
+          : "{{.DESTINATION_NETWORK}}"
+          SOURCE_NETWORK="mainnet" \
+          DESTINATION_NETWORK="{{.DESTINATION_NETWORK}}" \
+          SOURCE_USD='{{default "30" .SOURCE_USD}}' \
+          RECIPIENT_ADDRESS='{{default "0xb5f2B971878dD2Bc8A0c53635f33280F34C41F2A" .RECIPIENT_ADDRESS}}' \
+          BRIDGE_FROM_ACCOUNT="PK_DEPLOYER" \
+          BRIDGE_FROM_PASSWORD="${PK_DEPLOYER_PW}" \
+          BRIDGE_PROVIDERS='{{default "across,lifi" .BRIDGE_PROVIDERS}}' \
+          SLIPPAGE='{{default "0.005" .SLIPPAGE}}' \
+          CONFIRM_BRIDGE_EXECUTION='{{default "false" .CONFIRM_BRIDGE_EXECUTION}}' \
+          BRIDGE_MODE=execute \
+          node scripts/bridge-gas.mjs
+
   check-owner-proxy-owner-all:
     desc: Check owner() and proxyOwner() on all configured chains (defaults to ENVS.SENDER and ENVS.PROXY_OWNER per chain)
     cmds:
