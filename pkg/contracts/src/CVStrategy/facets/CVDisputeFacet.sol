@@ -25,6 +25,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
     error DisputeCooldownActive(uint256 proposalId, uint256 secondsRemaining); // 0xc84ca6af
     error OnlyArbitrator(address sender, address arbitrator); // 0x84844502
     error DefaultRulingNotConfigured(uint256 proposalId); // 0x1b330288
+    error InvalidRuling(uint256 ruling);
     error UpdateMemberUnitsFailed(address member, uint128 units);
 
     /*|--------------------------------------------|*/
@@ -122,6 +123,9 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
 
         if (!isTimeOut && msg.sender != address(arbitrableConfig.arbitrator)) {
             revert OnlyArbitrator(msg.sender, address(arbitrableConfig.arbitrator));
+        }
+        if (!isTimeOut && _ruling > 2) {
+            revert InvalidRuling(_ruling);
         }
 
         if (isTimeOut || _ruling == 0) {

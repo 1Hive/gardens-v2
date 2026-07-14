@@ -9,6 +9,7 @@ import {
     PointSystemConfig,
     PointSystem,
     ProposalType,
+    ProposalStatus,
     CreateProposal
 } from "../src/CVStrategy/CVStrategy.sol";
 import {RegistryCommunity, RegistryCommunityInitializeParams} from "../src/RegistryCommunity/RegistryCommunity.sol";
@@ -446,6 +447,26 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         vm.expectRevert(SafeArbitrator.InvalidRuling.selector);
         vm.prank(address(_councilSafe()));
         safeArbitrator.executeRuling(disputeID, 4, address(cvStrategy));
+    }
+
+    function testCannotFinalizeUnhandledRulingThree() public {
+        uint256 proposalId = createProposal();
+
+        vm.deal(challenger, 10 ether);
+        vm.prank(challenger);
+        uint256 disputeID = cvStrategy.disputeProposal{value: 0.01 ether + ARBITRATION_FEE}(proposalId, "", "");
+
+        vm.prank(address(_councilSafe()));
+        vm.expectRevert(abi.encodeWithSelector(CVDisputeFacet.InvalidRuling.selector, 3));
+        safeArbitrator.executeRuling(disputeID, 3, address(cvStrategy));
+
+        (,,,, uint256 ruling, SafeArbitrator.DisputeStatus status,) = safeArbitrator.disputes(disputeID - 1);
+        assertEq(ruling, 0);
+        assertEq(uint256(status), uint256(SafeArbitrator.DisputeStatus.Waiting));
+
+        (,,,,, ProposalStatus proposalStatus,,,,,,) = cvStrategy.getProposal(proposalId);
+        assertEq(uint256(proposalStatus), uint256(ProposalStatus.Disputed));
+        assertEq(cvStrategy.disputeCount(), 1);
     }
 
     function testCurrentRuling() public {

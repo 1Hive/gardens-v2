@@ -4428,6 +4428,17 @@
     },
     {
       "type": "error",
+      "name": "InvalidRuling",
+      "inputs": [
+        {
+          "name": "ruling",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
       "name": "ProposalStatusInvalid",
       "inputs": [
         {
