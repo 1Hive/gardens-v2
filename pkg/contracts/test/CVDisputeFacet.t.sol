@@ -282,6 +282,21 @@ contract CVDisputeFacetTest is Test {
         facet.rule(6, 1);
     }
 
+    function test_rule_reverts_for_unhandled_live_ruling() public {
+        ArbitrableConfig memory config = _config(1 ether, 1, 1000);
+        facet.setArbitrableConfig(1, config);
+        facet.setProposal(1, ProposalStatus.Disputed, 1, 0);
+        facet.setDisputeInfo(1, 6, block.timestamp, member);
+        facet.setDisputeId(6, 1);
+        facet.setDisputeCount(1);
+
+        vm.prank(address(arbitrator));
+        vm.expectRevert(abi.encodeWithSelector(CVDisputeFacet.InvalidRuling.selector, 3));
+        facet.rule(6, 3);
+
+        assertEq(facet.disputeCount(), 1);
+    }
+
     function test_rule_ruling_one_streaming_resumes_without_draining_beneficiary() public {
         ArbitrableConfig memory config = _config(1 ether, 1, 1000);
         facet.setArbitrableConfig(1, config);
