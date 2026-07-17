@@ -527,6 +527,43 @@ const notionQueryDb = async (
   }
 };
 
+type NotionWalletPage = {
+  pageId: string;
+  totalPts: number;
+  checksum: string | null;
+};
+
+const archiveNotionPages = async ({
+  pageIds,
+  reason,
+}: {
+  pageIds: string[];
+  reason: string;
+}) => {
+  if (!notionClient || notionDisabled) return 0;
+  const uniquePageIds = Array.from(new Set(pageIds.filter(Boolean)));
+  let archived = 0;
+  for (const pageId of uniquePageIds) {
+    try {
+      await notionClient.pages.update({ page_id: pageId, archived: true });
+      archived += 1;
+    } catch (error) {
+      console.error("[superfluid-points] failed to archive Notion page", {
+        pageId,
+        reason,
+        error,
+      });
+    }
+  }
+  if (archived > 0) {
+    console.log("[superfluid-points] archived Notion pages", {
+      archived,
+      reason,
+    });
+  }
+  return archived;
+};
+
 const upsertNotionWallet = async ({
   address,
   fundPoints,
@@ -535,6 +572,9 @@ const upsertNotionWallet = async ({
   totalPoints,
   farcasterPoints,
   breakdown,
+  existingPageId,
+  existingChecksum,
+  duplicatePageIds = [],
 }: {
   address: string;
   fundPoints: number;
@@ -543,6 +583,9 @@ const upsertNotionWallet = async ({
   totalPoints: number;
   farcasterPoints: number;
   breakdown: string;
+  existingPageId?: string | null;
+  existingChecksum?: string | null;
+  duplicatePageIds?: string[];
 }): Promise<boolean> => {
   if (!notionClient || !NOTION_DB_ID_NORMALIZED || notionDisabled) return false;
   const checksumReady = await ensureNotionChecksumProperty();
@@ -581,29 +624,40 @@ const upsertNotionWallet = async ({
   } as Record<string, any>;
 
   try {
+    const duplicateIds = [...duplicatePageIds];
     console.log("[superfluid-points] notion upsert lookup", {
       address: normalized,
     });
-    let pageId: string | null = null;
+    let pageId: string | null = existingPageId ?? null;
     let existingResult: any | null = null;
-    try {
-      existingResult = await notionQueryDb({
-        filter: {
-          property: "Wallet",
-          title: { equals: normalized },
-        },
-      });
-      if (
-        existingResult?.results?.length > 0 &&
-        "id" in existingResult.results[0]
-      ) {
-        pageId = existingResult.results[0].id;
+    if (!pageId) {
+      try {
+        existingResult = await notionQueryDb({
+          filter: {
+            property: "Wallet",
+            title: { equals: normalized },
+          },
+        });
+        if (
+          existingResult?.results?.length > 0 &&
+          "id" in existingResult.results[0]
+        ) {
+          pageId = existingResult.results[0].id;
+        }
+        if (existingResult?.results?.length > 1) {
+          duplicateIds.push(
+            ...existingResult.results
+              .slice(1)
+              .map((page: any) => page?.id)
+              .filter((id: any): id is string => typeof id === "string"),
+          );
+        }
+      } catch (err) {
+        console.warn("[superfluid-points] notion lookup failed, will create", {
+          address: normalized,
+          err,
+        });
       }
-    } catch (err) {
-      console.warn("[superfluid-points] notion lookup failed, will create", {
-        address: normalized,
-        err,
-      });
     }
 
     if (pageId) {
@@ -626,9 +680,16 @@ const upsertNotionWallet = async ({
           );
         }
       }
-      const existingChecksum = (existingResult?.results?.[0]?.properties as any)
-        ?.Checksum?.rich_text?.[0]?.plain_text;
-      if (existingChecksum === checksum) {
+      const currentChecksum =
+        existingChecksum !== undefined ?
+          existingChecksum
+        : (existingResult?.results?.[0]?.properties as any)?.Checksum
+            ?.rich_text?.[0]?.plain_text;
+      if (currentChecksum === checksum) {
+        await archiveNotionPages({
+          pageIds: duplicateIds.filter((id) => id !== pageId),
+          reason: `duplicate wallet ${normalized}`,
+        });
         return true; // no changes needed
       }
       console.log("[superfluid-points] notion updating page", {
@@ -639,6 +700,10 @@ const upsertNotionWallet = async ({
       await notionClient.pages.update({
         page_id: pageId,
         properties: props,
+      });
+      await archiveNotionPages({
+        pageIds: duplicateIds.filter((id) => id !== pageId),
+        reason: `duplicate wallet ${normalized}`,
       });
     } else {
       const dataSourceId = await ensureNotionDataSourceId();
@@ -3613,10 +3678,7 @@ export async function GET(req: Request) {
   let responseEnsCid: string | null = null;
   let pinnedPriceCacheCid: string | null = null;
   let responseRunLogsCid: string | null = null;
-  const notionExistingPages = new Map<
-    string,
-    { pageId: string; totalPts: number; checksum: string | null }
-  >();
+  const notionExistingPages = new Map<string, NotionWalletPage[]>();
 
   try {
     const { start, end } = parseCampaignWindow();
@@ -4181,11 +4243,18 @@ export async function GET(req: Request) {
             const checksum =
               page?.properties?.Checksum?.rich_text?.[0]?.plain_text ?? null;
             if (pid && typeof wallet === "string") {
-              notionExistingPages.set(wallet.toLowerCase(), {
+              const normalizedWallet = wallet.toLowerCase();
+              const existingPagesForWallet =
+                notionExistingPages.get(normalizedWallet) ?? [];
+              existingPagesForWallet.push({
                 pageId: pid,
                 totalPts: typeof total === "number" ? total : 0,
                 checksum: typeof checksum === "string" ? checksum : null,
               });
+              notionExistingPages.set(
+                normalizedWallet,
+                existingPagesForWallet,
+              );
               fetched += 1;
             }
           }
@@ -4220,12 +4289,20 @@ export async function GET(req: Request) {
           try {
             const results = await Promise.all(
               batch.map((wallet) => {
-                seen.add(wallet.address.toLowerCase());
+                const walletKey = wallet.address.toLowerCase();
+                seen.add(walletKey);
+                const existingPages = notionExistingPages.get(walletKey) ?? [];
+                const [existing] = existingPages;
+                const duplicatePageIds = existingPages
+                  .slice(1)
+                  .map((entry) => entry.pageId);
                 // Skip update if checksum matches existing
-                const existing = notionExistingPages.get(
-                  wallet.address.toLowerCase(),
-                );
-                if (existing?.checksum === wallet.checksum) return true;
+                if (existing?.checksum === wallet.checksum) {
+                  return archiveNotionPages({
+                    pageIds: duplicatePageIds,
+                    reason: `duplicate wallet ${walletKey}`,
+                  }).then(() => true);
+                }
                 return upsertNotionWallet({
                   address: wallet.address,
                   fundPoints: wallet.fundPoints,
@@ -4234,6 +4311,9 @@ export async function GET(req: Request) {
                   farcasterPoints: wallet.farcasterPoints,
                   totalPoints: wallet.totalPoints,
                   breakdown: wallet.breakdown,
+                  existingPageId: existing?.pageId ?? null,
+                  existingChecksum: existing?.checksum ?? null,
+                  duplicatePageIds,
                 });
               }),
             );
@@ -4266,15 +4346,18 @@ export async function GET(req: Request) {
         }
         // Archive rows no longer present
         const toArchive: string[] = [];
-        for (const [wallet, entry] of notionExistingPages.entries()) {
-          if (!seen.has(wallet)) toArchive.push(entry.pageId);
+        for (const [wallet, entries] of notionExistingPages.entries()) {
+          if (!seen.has(wallet)) {
+            toArchive.push(...entries.map((entry) => entry.pageId));
+          }
         }
-        for (const pageId of toArchive) {
-          await notionClient.pages.update({ page_id: pageId, archived: true });
-        }
+        const archived = await archiveNotionPages({
+          pageIds: toArchive,
+          reason: "wallet no longer present",
+        });
         if (toArchive.length) {
           console.log("[superfluid-points] Notion archived removed rows", {
-            archived: toArchive.length,
+            archived,
           });
         }
       } catch (error) {
