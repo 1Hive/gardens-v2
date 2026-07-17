@@ -52,6 +52,7 @@ type WalletActivity = {
   communityId?: string | null;
   communityName?: string | null;
   farcasterUsername?: string | null;
+  communityPoints?: number;
   sharePercent?: number;
   token: string;
   chainId?: ChainId;
@@ -127,6 +128,14 @@ const formatWalletActivityBreakdown = (activities: WalletActivity[]) => {
           details.push(
             `   - Source: follows @${FARCASTER_GARDENS_USERNAME}`,
             `   - Username: ${activity.farcasterUsername ?? "n/a"}`,
+          );
+        }
+        if (
+          activity.type === "governance" &&
+          typeof activity.communityPoints === "number"
+        ) {
+          details.push(
+            `   - Community points: ${formatPoints(activity.communityPoints)} pts`,
           );
         }
         const share = formatPercent(activity.sharePercent);
@@ -3391,6 +3400,7 @@ const processChain = async ({
         poolName,
         communityId: communityIdLower,
         communityName,
+        communityPoints: totalPts,
         sharePercent: share * 100,
         token: "aggregate",
         chainId,
