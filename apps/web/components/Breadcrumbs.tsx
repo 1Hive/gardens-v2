@@ -5,6 +5,7 @@ import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import TooltipIfOverflow from "./TooltipIfOverflow";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useFlag } from "@/hooks/useFlag";
 import { queryByChain } from "@/providers/queryByChain";
@@ -12,6 +13,7 @@ import {
   parseStaticSegment,
   queryMap,
 } from "@/services/getTitlesFromUrlSegments";
+import { buildProposalEntityId } from "@/utils/proposals";
 import { truncateString } from "@/utils/text";
 interface Breadcrumb {
   href: string;
@@ -23,6 +25,7 @@ export function Breadcrumbs() {
   const chain = useChainFromPath();
   const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([]);
   const skipPublished = useFlag("skipPublished");
+  const { pendingIndexedPublishes } = usePubSubContext();
 
   /**
    * Fetches and parses titles from URL segments.
@@ -77,6 +80,54 @@ export function Breadcrumbs() {
     const segments = path.split("/").filter((segment) => segment !== "");
 
     const titles = await getTitlesFromUrlSegments(segments);
+    const pendingProposalId =
+      segments.length === 5 ?
+        buildProposalEntityId(
+          segments[3] ?? "",
+          segments[4] ?? "",
+        ).toLowerCase()
+      : undefined;
+    const pendingProposal = pendingIndexedPublishes.find((record) => {
+      const optimistic = record.optimistic;
+      if (
+        optimistic?.kind !== "proposal-created" ||
+        !pendingProposalId ||
+        record.chainId !== chain?.id
+      ) {
+        return false;
+      }
+      const optimisticProposalId =
+        optimistic.proposalId ??
+        `${optimistic.strategyId.toLowerCase()}-${optimistic.proposalNumber}`;
+      return optimisticProposalId.toLowerCase() === pendingProposalId;
+    });
+    let pendingTitles: (string | undefined)[] = [];
+    if (pendingProposal?.optimistic?.kind === "proposal-created" && chain) {
+      pendingTitles = [
+        undefined,
+        undefined,
+        pendingProposal.optimistic.proposalTitle,
+      ];
+      try {
+        const poolQuery = queryMap[3];
+        const poolResult = await queryByChain(
+          chain,
+          poolQuery.document,
+          poolQuery.getVariables(segments[3] ?? "", segments),
+          undefined,
+          skipPublished,
+        );
+        const parentTitles =
+          poolResult.data ? await poolQuery.parseResult(poolResult.data) : [];
+        pendingTitles[0] = parentTitles[0];
+        pendingTitles[1] = parentTitles[1];
+      } catch (error) {
+        console.error(
+          "Error fetching parent titles for pending proposal:",
+          error,
+        );
+      }
+    }
 
     return segments
       .map((segment, index) => {
@@ -88,9 +139,9 @@ export function Breadcrumbs() {
         let displayLabel =
           segment.startsWith("0x") ? truncateString(segment) : segment;
 
-        if (titles) {
+        if (titles != null || pendingTitles.length > 0) {
           // index correction as first 2 segments are /gardens/[chainId]
-          const title = titles[index - 2];
+          const title = titles?.[index - 2] ?? pendingTitles[index - 2];
           if (title) {
             displayLabel = title;
           }
@@ -105,7 +156,7 @@ export function Breadcrumbs() {
       const result = await fetchBreadcrumbs();
       setBreadcrumbs(result);
     })();
-  }, [path]);
+  }, [path, pendingIndexedPublishes]);
 
   if (!breadcrumbs.length) {
     return <></>;

@@ -7,8 +7,8 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Realtime } from "ably";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { Realtime } from "ably";
 import { uniqueId } from "lodash-es";
 import { toast } from "react-toastify";
 import { useMediaQuery } from "usehooks-ts";
@@ -124,6 +124,7 @@ export type ProposalCreatedOptimistic = {
   proposalNumber: string;
   proposalId?: string;
   metadataHash: string;
+  proposalTitle?: string;
   beneficiary?: string;
   requestedAmount?: string;
   proposalType?: string;

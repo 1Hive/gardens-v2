@@ -38,6 +38,23 @@ describe("pending indexed publish normalization", () => {
     );
   });
 
+  it("keeps a pending proposal title for optimistic breadcrumbs", () => {
+    const record = {
+      ...baseStoredRecord,
+      optimistic: {
+        kind: "proposal-created",
+        strategyId: "0xstrategy",
+        proposalNumber: "1",
+        metadataHash: "ipfs-hash",
+        proposalTitle: "Fund community garden",
+      },
+    };
+
+    expect(normalizePendingIndexedPublishRecord(record)?.optimistic).toEqual(
+      record.optimistic,
+    );
+  });
+
   it("keeps pool governance support snapshots for pending deactivations", () => {
     const record = {
       ...baseStoredRecord,
