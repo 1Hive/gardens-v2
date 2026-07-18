@@ -290,12 +290,16 @@ contract CVPowerFacetTest is Test {
     function test_deactivatePoints_updates_totals() public {
         registry.setMemberPower(member, 4);
         registry.setActivated(member, true);
-        facet.setTotalPointsActivated(4);
+        facet.setTotalPointsActivatedWithCheckpoint(4);
 
+        vm.roll(block.number + 3);
         vm.prank(member);
         facet.deactivatePoints();
 
         assertEq(facet.totalPointsActivated(), 0);
+        (uint256 accumulator, uint256 lastBlock) = facet.getAccumulatorState();
+        assertEq(accumulator, 12);
+        assertEq(lastBlock, block.number);
         assertEq(registry.lastDeactivated(), member);
     }
 

@@ -321,6 +321,15 @@ contract CVAdminFacetHarness is CVAdminFacet {
         totalPointsActivated = amount;
     }
 
+    function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
+        _checkpointActivePointsAccumulator();
+        totalPointsActivated = amount;
+    }
+
+    function getAccumulatorState() external view returns (uint256 accumulator, uint256 lastBlock) {
+        return (activePointsAccumulator, activePointsAccumulatorLastBlock);
+    }
+
     function setTotalStaked(uint256 amount) external {
         totalStaked = amount;
     }
@@ -456,7 +465,8 @@ contract CVAdminFacetTest is Test {
         registry.grantRole(allowlistRole, member);
         registry.setMemberPower(member, 10);
         registry.setActivated(member, true);
-        facet.setTotalPointsActivated(4);
+        facet.setTotalPointsActivatedWithCheckpoint(4);
+        vm.roll(block.number + 5);
 
         ArbitrableConfig memory arb = ArbitrableConfig({
             arbitrator: IArbitrator(address(arbitrator)),
@@ -472,6 +482,9 @@ contract CVAdminFacetTest is Test {
         facet.setPoolParams(arb, params, 5, add, remove, address(0));
 
         assertEq(facet.totalPointsActivated(), 0);
+        (uint256 accumulator, uint256 lastBlock) = facet.getAccumulatorState();
+        assertEq(accumulator, 20);
+        assertEq(lastBlock, block.number);
         assertFalse(registry.hasRole(allowlistRole, member));
     }
 
