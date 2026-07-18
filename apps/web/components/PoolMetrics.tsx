@@ -336,14 +336,21 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     walletBalance && superToken ?
       scaleTo(walletBalance.value, poolToken.decimals, superToken.decimals)
     : walletBalance?.value;
-  const walletBalanceExact =
-    walletBalance ? formatUnits(walletBalance.value, poolToken.decimals) : "0";
   const isPureSuperfluidToken = superToken?.sameAsUnderlying === true;
+  const transferWalletBalanceBn =
+    isPureSuperfluidToken ?
+      scaleTo(superToken.value, superToken.decimals, poolToken.decimals)
+    : walletBalance?.value;
+  const transferWalletBalanceExact =
+    transferWalletBalanceBn != null ?
+      formatUnits(transferWalletBalanceBn, poolToken.decimals)
+    : "0";
   const pureSuperTokenAvailableBalanceBn =
     superToken ? superToken.value - reservedSuperTokenBn : walletBalanceScaledUpBn;
 
   const hasInsufficientBalance =
-    !!walletBalance?.formatted && +walletBalance.formatted < amount;
+    transferWalletBalanceBn != null &&
+    transferWalletBalanceBn < requestedAmountBn;
 
   const effectiveAvailableBalanceScaledBn =
     isPureSuperfluidToken ?
@@ -566,7 +573,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     value.includes(".") ? trimEnd(trimEnd(value, "0"), ".") : value;
 
   const fillTransferAmountWithWalletBalance = () => {
-    setAmount(trimTrailingFractionZeros(walletBalanceExact));
+    setAmount(trimTrailingFractionZeros(transferWalletBalanceExact));
   };
 
   const fillStreamAmountWithAvailableBalance = () => {
@@ -827,9 +834,13 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               type="button"
               onClick={fillTransferAmountWithWalletBalance}
               className="text-primary-content hover:underline disabled:opacity-50"
-              disabled={!walletBalance || walletBalance.value <= 0n}
+              disabled={
+                transferWalletBalanceBn == null || transferWalletBalanceBn <= 0n
+              }
             >
-              {roundToSignificant(walletBalanceExact, 4, { truncate: true })}{" "}
+              {roundToSignificant(transferWalletBalanceExact, 4, {
+                truncate: true,
+              })}{" "}
               {poolToken.symbol}
             </button>
           </div>
