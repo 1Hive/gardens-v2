@@ -249,6 +249,11 @@ contract CVProposalFacetHarness is CVProposalFacet {
         arbitrableConfigs[version] = config;
     }
 
+    function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
+        _checkpointActivePointsAccumulator();
+        totalPointsActivated = amount;
+    }
+
     function seedProposal(
         uint256 proposalId,
         address submitter,
@@ -291,6 +296,14 @@ contract CVProposalFacetHarness is CVProposalFacet {
     {
         Proposal storage p = proposals[proposalId];
         return (p.blockLast, p.convictionLast, p.thresholdSnapshot);
+    }
+
+    function getProposalCreationBlock(uint256 proposalId) external view returns (uint256) {
+        return proposals[proposalId].creationBlock;
+    }
+
+    function getProposalThresholdPoints(uint256 proposalId) external view returns (uint256) {
+        return _getThresholdPoints(proposals[proposalId]);
     }
 
     function setProposalThresholdSnapshot(uint256 proposalId, uint256 amount) external {

@@ -200,7 +200,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     uint256[] public openStreamingProposalIds;
     mapping(uint256 => uint256) public openStreamingProposalIndex;
     bool public openStreamingProposalsInitialized;
-    uint256[41] private __gap;
+    uint256 internal activePointsAccumulator;
+    uint256 internal activePointsAccumulatorLastBlock;
+    uint256[39] private __gap;
 
     // Constants (also defined in CVStrategyBaseFacet for facet access)
     uint256 public constant RULING_OPTIONS = 3;
@@ -642,7 +644,51 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         // emit Logger("Conviction set", conviction);
     }
 
+    function _checkpointActivePointsAccumulator() internal {
+        uint256 lastBlock = activePointsAccumulatorLastBlock;
+        if (lastBlock == 0) {
+            activePointsAccumulatorLastBlock = block.number;
+            return;
+        }
+
+        uint256 elapsedBlocks = block.number - lastBlock;
+        if (elapsedBlocks == 0) {
+            return;
+        }
+
+        activePointsAccumulator += totalPointsActivated * elapsedBlocks;
+        activePointsAccumulatorLastBlock = block.number;
+    }
+
+    function _currentActivePointsAccumulator() internal view returns (uint256) {
+        uint256 lastBlock = activePointsAccumulatorLastBlock;
+        if (lastBlock == 0 || lastBlock == block.number) {
+            return activePointsAccumulator;
+        }
+
+        return activePointsAccumulator + totalPointsActivated * (block.number - lastBlock);
+    }
+
+    function _initializeThresholdSnapshot(Proposal storage _proposal) internal {
+        _checkpointActivePointsAccumulator();
+        _proposal.creationBlock = block.number;
+        _proposal.thresholdSnapshot = activePointsAccumulator;
+    }
+
+    function _resetThresholdSnapshot(Proposal storage _proposal) internal {
+        if (_proposal.creationBlock == 0) {
+            _proposal.thresholdSnapshot = 0;
+            return;
+        }
+
+        _initializeThresholdSnapshot(_proposal);
+    }
+
     function _setThresholdSnapshot(Proposal storage _proposal) internal {
+        if (_proposal.creationBlock != 0) {
+            return;
+        }
+
         uint256 snapshot = _proposal.thresholdSnapshot;
         if (snapshot == 0 || totalPointsActivated > snapshot) {
             _proposal.thresholdSnapshot = totalPointsActivated;
@@ -650,6 +696,22 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     }
 
     function _getThresholdPoints(Proposal storage _proposal) internal view returns (uint256) {
+        uint256 creationBlock = _proposal.creationBlock;
+        if (creationBlock != 0) {
+            uint256 elapsedBlocks = block.number - creationBlock;
+            if (elapsedBlocks == 0) {
+                return totalPointsActivated;
+            }
+
+            uint256 currentAccumulator = _currentActivePointsAccumulator();
+            uint256 proposalStartAccumulator = _proposal.thresholdSnapshot;
+            if (currentAccumulator <= proposalStartAccumulator) {
+                return totalPointsActivated;
+            }
+
+            return (currentAccumulator - proposalStartAccumulator) / elapsedBlocks;
+        }
+
         uint256 snapshot = _proposal.thresholdSnapshot;
         if (snapshot == 0 || totalPointsActivated > snapshot) {
             return totalPointsActivated;
