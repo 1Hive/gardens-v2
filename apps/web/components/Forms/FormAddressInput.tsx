@@ -10,9 +10,9 @@ import { LoadingSpinner } from "../LoadingSpinner";
 import { newLogo } from "@/assets";
 import { getChain, getConfigByChain } from "@/configs/chains";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
-import { useCVStrategyLink } from "@/hooks/useCVStrategyLink";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useFlag } from "@/hooks/useFlag";
+import { usePoolLink } from "@/hooks/usePoolLink";
 import { safeABI } from "@/src/customAbis";
 import { erc20ABI } from "@/src/generated";
 import { isENS } from "@/utils/web3";
@@ -88,7 +88,7 @@ export const FormAddressInput = ({
   const [isValidatingSafe, setIsValidatingSafe] = useState<boolean>(false);
   const [isValidatingERC20, setIsValidatingERC20] = useState<boolean>(false);
   const bypassSafeCheck = useFlag("bypassSafeCheck");
-  const poolHref = useCVStrategyLink(inputValue);
+  const poolHref = usePoolLink(inputValue);
 
   useEffect(() => {
     setInputValue(value ?? "");

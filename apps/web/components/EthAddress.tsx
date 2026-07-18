@@ -11,8 +11,8 @@ import { isSafeAvatarUrl } from "@/app/api/utils";
 import { newLogo } from "@/assets";
 import { getExplorerUrl } from "@/configs/chains";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
-import { useCVStrategyLink } from "@/hooks/useCVStrategyLink";
 import { useExplorerPreference } from "@/hooks/useExplorerPreference";
+import { usePoolLink } from "@/hooks/usePoolLink";
 import { useTheme } from "@/providers/ThemeProvider";
 import { shortenAddress as shortenAddressFn } from "@/utils/text";
 
@@ -43,7 +43,7 @@ export const EthAddress = ({
 }: EthAddressProps) => {
   const divParentRef = React.useRef<HTMLDivElement>(null);
   const chain = useChainFromPath();
-  const poolHref = useCVStrategyLink(address);
+  const poolHref = usePoolLink(address);
   const { explorerPreference } = useExplorerPreference();
   const { resolvedTheme } = useTheme();
   const explorerUrl = getExplorerUrl(chain?.id, explorerPreference);

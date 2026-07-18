@@ -96,7 +96,7 @@ const writeCachedEntry = (
   }
 };
 
-export function useCVStrategyLink(address?: string) {
+export function usePoolLink(address?: string) {
   const chain = useChainFromPath();
   const readClient = usePreferredReadClient(chain?.id);
   const normalizedAddress = useMemo(
