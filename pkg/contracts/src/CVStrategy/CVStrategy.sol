@@ -659,6 +659,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
             return;
         }
 
+        // Bounded by active voting-token supply * elapsed blocks; expected deployments stay far below uint256 max.
         activePointsAccumulator += totalPointsActivated * elapsedBlocks;
         activePointsAccumulatorLastBlock = block.number;
     }
