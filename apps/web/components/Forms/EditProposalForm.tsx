@@ -474,7 +474,9 @@ export const EditProposalForm = ({
                     label="Beneficiary address"
                     register={register}
                     registerKey="beneficiary"
-                    value={beneficiary}
+                    value={
+                      canEditBeneficiary ? beneficiary : proposal.beneficiary
+                    }
                     onChange={(e) => {
                       setValue("beneficiary", e.target.value);
                     }}

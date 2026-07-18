@@ -117,7 +117,6 @@ export const ProposalForm = ({
   const chainId = alloInfo.chainId;
   const beneficiary = watch("beneficiary");
 
-
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {
       label: "Requested amount:",
@@ -140,6 +139,7 @@ export const ProposalForm = ({
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const submittedProposalRef = useRef<{
     metadataHash: string;
+    title?: string;
     beneficiary?: string;
     requestedAmount?: string;
   } | null>(null);
@@ -192,6 +192,7 @@ export const ProposalForm = ({
       }
       submittedProposalRef.current = {
         metadataHash: ipfsHash,
+        title: json.title,
         beneficiary: previewData.beneficiary,
         requestedAmount: parseUnits(
           previewData.amount?.toString() || "0",
@@ -245,6 +246,7 @@ export const ProposalForm = ({
               proposalId: `${strategy.id.toLowerCase()}-${proposalId.toString()}`,
               proposalNumber: proposalId.toString(),
               metadataHash: submittedProposal.metadataHash,
+              proposalTitle: submittedProposal.title,
               beneficiary: submittedProposal.beneficiary,
               requestedAmount: submittedProposal.requestedAmount,
               proposalType: proposalType.toString(),
