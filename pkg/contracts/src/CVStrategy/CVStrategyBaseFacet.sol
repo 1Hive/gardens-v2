@@ -512,6 +512,7 @@ abstract contract CVStrategyBaseFacet {
         _setThresholdSnapshot(_proposal);
     }
 
+    // slither-disable-start incorrect-equality
     function _checkpointActivePointsAccumulator() internal {
         uint256 lastBlock = activePointsAccumulatorLastBlock;
         if (lastBlock == 0) {
@@ -536,6 +537,7 @@ abstract contract CVStrategyBaseFacet {
 
         return activePointsAccumulator + totalPointsActivated * (block.number - lastBlock);
     }
+    // slither-disable-end incorrect-equality
 
     function _initializeThresholdSnapshot(Proposal storage _proposal) internal {
         _checkpointActivePointsAccumulator();
@@ -566,11 +568,11 @@ abstract contract CVStrategyBaseFacet {
     function _getThresholdPoints(Proposal storage _proposal) internal view returns (uint256) {
         uint256 creationBlock = _proposal.creationBlock;
         if (creationBlock != 0) {
-            uint256 elapsedBlocks = block.number - creationBlock;
-            if (elapsedBlocks == 0) {
+            if (block.number <= creationBlock) {
                 return totalPointsActivated;
             }
 
+            uint256 elapsedBlocks = block.number - creationBlock;
             uint256 currentAccumulator = _currentActivePointsAccumulator();
             uint256 proposalStartAccumulator = _proposal.thresholdSnapshot;
             if (currentAccumulator <= proposalStartAccumulator) {

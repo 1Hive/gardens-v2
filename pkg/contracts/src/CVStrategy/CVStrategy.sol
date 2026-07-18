@@ -202,6 +202,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     bool public openStreamingProposalsInitialized;
     uint256 internal activePointsAccumulator;
     uint256 internal activePointsAccumulatorLastBlock;
+    // slither-disable-next-line shadowing-state
     uint256[39] private __gap;
 
     // Constants (also defined in CVStrategyBaseFacet for facet access)
@@ -644,6 +645,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         // emit Logger("Conviction set", conviction);
     }
 
+    // slither-disable-start incorrect-equality
     function _checkpointActivePointsAccumulator() internal {
         uint256 lastBlock = activePointsAccumulatorLastBlock;
         if (lastBlock == 0) {
@@ -668,6 +670,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
 
         return activePointsAccumulator + totalPointsActivated * (block.number - lastBlock);
     }
+    // slither-disable-end incorrect-equality
 
     function _initializeThresholdSnapshot(Proposal storage _proposal) internal {
         _checkpointActivePointsAccumulator();
@@ -698,11 +701,11 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     function _getThresholdPoints(Proposal storage _proposal) internal view returns (uint256) {
         uint256 creationBlock = _proposal.creationBlock;
         if (creationBlock != 0) {
-            uint256 elapsedBlocks = block.number - creationBlock;
-            if (elapsedBlocks == 0) {
+            if (block.number <= creationBlock) {
                 return totalPointsActivated;
             }
 
+            uint256 elapsedBlocks = block.number - creationBlock;
             uint256 currentAccumulator = _currentActivePointsAccumulator();
             uint256 proposalStartAccumulator = _proposal.thresholdSnapshot;
             if (currentAccumulator <= proposalStartAccumulator) {
