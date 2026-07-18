@@ -120,6 +120,15 @@ contract CVPowerFacetHarness is CVPowerFacet {
         totalPointsActivated = amount;
     }
 
+    function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
+        _checkpointActivePointsAccumulator();
+        totalPointsActivated = amount;
+    }
+
+    function getAccumulatorState() external view returns (uint256 accumulator, uint256 lastBlock) {
+        return (activePointsAccumulator, activePointsAccumulatorLastBlock);
+    }
+
     function setTotalStaked(uint256 amount) external {
         totalStaked = amount;
     }
@@ -182,6 +191,43 @@ contract CVPowerFacetTest is Test {
 
         assertEq(facet.totalPointsActivated(), 7);
         assertEq(registry.lastActivated(), member);
+    }
+
+    function test_powerMutations_checkpointAccumulatorBeforeTotalsChange() public {
+        sybil.setCanExecute(member, true);
+        registry.setMemberPower(member, 7);
+
+        vm.roll(block.number + 10);
+        vm.prank(member);
+        facet.activatePoints();
+
+        (uint256 accumulator, uint256 lastBlock) = facet.getAccumulatorState();
+        assertEq(accumulator, 0);
+        assertEq(lastBlock, block.number);
+        assertEq(facet.totalPointsActivated(), 7);
+
+        vm.roll(block.number + 5);
+        registry.setActivated(member, true);
+        registry.setMemberStaked(member, 10);
+        vm.prank(address(registry));
+        uint256 increased = facet.increasePower(member, 3);
+
+        assertEq(increased, 3);
+        (accumulator, lastBlock) = facet.getAccumulatorState();
+        assertEq(accumulator, 35);
+        assertEq(lastBlock, block.number);
+        assertEq(facet.totalPointsActivated(), 10);
+
+        vm.roll(block.number + 2);
+        registry.setMemberPower(member, 10);
+        vm.prank(address(registry));
+        uint256 decreased = facet.decreasePower(member, 2);
+
+        assertEq(decreased, 2);
+        (accumulator, lastBlock) = facet.getAccumulatorState();
+        assertEq(accumulator, 55);
+        assertEq(lastBlock, block.number);
+        assertEq(facet.totalPointsActivated(), 8);
     }
 
     function test_increasePower_only_registry_community() public {
@@ -292,9 +338,7 @@ contract CVPowerFacetTest is Test {
         facet.deactivatePoints();
 
         assertEq(
-            facet.totalPointsActivated(),
-            4,
-            "unactivated custom-registry member must not reduce pool activated power"
+            facet.totalPointsActivated(), 4, "unactivated custom-registry member must not reduce pool activated power"
         );
     }
 

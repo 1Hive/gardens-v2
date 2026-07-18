@@ -165,6 +165,67 @@ contract CVStrategyBaseFacetTest is Test {
         assertGt(blockNumber, 0);
     }
 
+    function test_timeWeightedThreshold_helpers_cover_accumulator_branches() public {
+        facet.setProposal(1, member, block.number, 0);
+
+        facet.setTotalPointsActivatedWithCheckpoint(10);
+        (uint256 accumulator, uint256 lastBlock) = facet.getAccumulatorState();
+        assertEq(accumulator, 0);
+        assertEq(lastBlock, block.number);
+
+        facet.exposedCheckpointActivePointsAccumulator();
+        (accumulator, lastBlock) = facet.getAccumulatorState();
+        assertEq(accumulator, 0);
+        assertEq(lastBlock, block.number);
+
+        vm.roll(block.number + 3);
+        assertEq(facet.exposedCurrentActivePointsAccumulator(), 30);
+
+        facet.exposedCheckpointActivePointsAccumulator();
+        (accumulator, lastBlock) = facet.getAccumulatorState();
+        assertEq(accumulator, 30);
+        assertEq(lastBlock, block.number);
+
+        facet.exposedInitializeThresholdSnapshot(1);
+        (uint256 creationBlock, uint256 thresholdSnapshot) = facet.getProposalCreationAndThreshold(1);
+        assertEq(creationBlock, block.number);
+        assertEq(thresholdSnapshot, 30);
+        assertEq(facet.exposedGetThresholdPoints(1), 10);
+
+        vm.roll(block.number + 2);
+        assertEq(facet.exposedGetThresholdPoints(1), 10);
+
+        facet.setTotalPointsActivatedWithCheckpoint(0);
+        facet.setProposal(2, member, block.number, 0);
+        facet.exposedInitializeThresholdSnapshot(2);
+        vm.roll(block.number + 1);
+        assertEq(facet.exposedGetThresholdPoints(2), 0);
+
+        facet.setProposalCreationAndThreshold(3, 0, 99);
+        facet.exposedRebaselineThresholdSnapshot(3);
+        (, thresholdSnapshot) = facet.getProposalCreationAndThreshold(3);
+        assertEq(thresholdSnapshot, 0);
+
+        facet.setProposal(4, member, block.number, 0);
+        facet.exposedInitializeThresholdSnapshot(4);
+        vm.roll(block.number + 1);
+        facet.exposedRebaselineThresholdSnapshot(4);
+        (creationBlock, thresholdSnapshot) = facet.getProposalCreationAndThreshold(4);
+        assertEq(creationBlock, block.number);
+        assertEq(thresholdSnapshot, facet.exposedCurrentActivePointsAccumulator());
+
+        facet.setTotalPointsActivatedWithCheckpoint(123);
+        facet.setProposalCreationAndThreshold(5, 0, 0);
+        facet.exposedSetThresholdSnapshot(5);
+        (, thresholdSnapshot) = facet.getProposalCreationAndThreshold(5);
+        assertEq(thresholdSnapshot, 123);
+
+        facet.setProposalCreationAndThreshold(6, block.number, 777);
+        facet.exposedSetThresholdSnapshot(6);
+        (, thresholdSnapshot) = facet.getProposalCreationAndThreshold(6);
+        assertEq(thresholdSnapshot, 777);
+    }
+
     function test_conviction_snapshot_freezes_when_strategy_disabled_for_all_pool_types() public {
         uint256 proposalId = 1;
         facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: 9_000_000, minThresholdPoints: 0}));
@@ -206,9 +267,7 @@ contract CVStrategyBaseFacetTest is Test {
         facet.exposedEnforceNotPaused(selector);
 
         controller.setGlobalPaused(true);
-        vm.expectRevert(
-            abi.encodeWithSelector(CVStrategyBaseFacet.StrategyPaused.selector, address(controller))
-        );
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyBaseFacet.StrategyPaused.selector, address(controller)));
         facet.exposedEnforceNotPaused(selector);
 
         bytes4 pauseSelector = bytes4(keccak256("pause(uint256)"));
@@ -239,9 +298,7 @@ contract CVStrategyBaseFacetTest is Test {
         facet.setPauseController(address(controller));
 
         controller.setGlobalPaused(true);
-        vm.expectRevert(
-            abi.encodeWithSelector(CVStrategyBaseFacet.StrategyPaused.selector, address(controller))
-        );
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyBaseFacet.StrategyPaused.selector, address(controller)));
         facet.guardedWhenNotPaused();
 
         bytes4 selector = bytes4(keccak256("someAction()"));
