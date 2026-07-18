@@ -174,6 +174,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     uint256 public proposalCounter;
     uint256 public currentArbitrableConfigVersion;
     uint256 public totalStaked;
+    // Mutations must checkpoint activePointsAccumulator first so new proposal thresholds stay time-weighted.
     // slither-disable-next-line uninitialized-state
     uint256 public totalPointsActivated;
     CVParams public cvParams;
@@ -678,7 +679,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         _proposal.thresholdSnapshot = activePointsAccumulator;
     }
 
-    function _resetThresholdSnapshot(Proposal storage _proposal) internal {
+    function _rebaselineThresholdSnapshot(Proposal storage _proposal) internal {
         if (_proposal.creationBlock == 0) {
             _proposal.thresholdSnapshot = 0;
             return;
@@ -689,6 +690,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
 
     function _setThresholdSnapshot(Proposal storage _proposal) internal {
         if (_proposal.creationBlock != 0) {
+            // New proposals use the time-weighted accumulator path instead of the legacy monotonic snapshot.
             return;
         }
 
@@ -709,7 +711,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
             uint256 currentAccumulator = _currentActivePointsAccumulator();
             uint256 proposalStartAccumulator = _proposal.thresholdSnapshot;
             if (currentAccumulator <= proposalStartAccumulator) {
-                return totalPointsActivated;
+                return 0;
             }
 
             return (currentAccumulator - proposalStartAccumulator) / elapsedBlocks;

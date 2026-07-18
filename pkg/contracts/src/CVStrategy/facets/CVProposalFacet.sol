@@ -203,7 +203,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
             proposal.requestedAmount = requestedAmount;
             proposal.convictionLast = 0;
             proposal.blockLast = 0;
-            _resetThresholdSnapshot(proposal);
+            _rebaselineThresholdSnapshot(proposal);
         }
 
         // 1763099258 - 1763007730  = 91528 > 3600

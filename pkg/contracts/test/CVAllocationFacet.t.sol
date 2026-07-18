@@ -556,6 +556,22 @@ contract CVAllocationFacetTest is Test {
         assertEq(facet.exposedGetThresholdPoints(1), 991);
     }
 
+    function test_timeWeightedThreshold_doesNotBackfillCurrentBlockActivation() public {
+        vm.roll(100);
+        facet.setTotalPointsActivatedWithCheckpoint(0);
+        facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, block.number, 0, 0);
+        facet.initializeProposalThresholdSnapshot(1);
+
+        vm.roll(101);
+        facet.setTotalPointsActivatedWithCheckpoint(100);
+
+        assertEq(facet.exposedGetThresholdPoints(1), 0);
+
+        vm.roll(102);
+
+        assertEq(facet.exposedGetThresholdPoints(1), 50);
+    }
+
     function test_timeWeightedThreshold_legacyProposalKeepsMonotonicSnapshotPath() public {
         bytes32 role = keccak256(abi.encodePacked("ALLOWLIST", uint256(1)));
         registry.grantRole(role, address(0));

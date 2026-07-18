@@ -134,6 +134,7 @@ abstract contract CVStrategyBaseFacet {
     uint256 public totalStaked;
 
     /// @notice Total voting power activated in this strategy - Slot 113
+    /// @dev Mutations must checkpoint activePointsAccumulator first so new proposal thresholds stay time-weighted.
     // slither-disable-next-line uninitialized-state
     uint256 public totalPointsActivated;
 
@@ -545,7 +546,7 @@ abstract contract CVStrategyBaseFacet {
         _proposal.thresholdSnapshot = activePointsAccumulator;
     }
 
-    function _resetThresholdSnapshot(Proposal storage _proposal) internal {
+    function _rebaselineThresholdSnapshot(Proposal storage _proposal) internal {
         if (_proposal.creationBlock == 0) {
             _proposal.thresholdSnapshot = 0;
             return;
@@ -556,6 +557,7 @@ abstract contract CVStrategyBaseFacet {
 
     function _setThresholdSnapshot(Proposal storage _proposal) internal {
         if (_proposal.creationBlock != 0) {
+            // New proposals use the time-weighted accumulator path instead of the legacy monotonic snapshot.
             return;
         }
 
@@ -576,7 +578,7 @@ abstract contract CVStrategyBaseFacet {
             uint256 currentAccumulator = _currentActivePointsAccumulator();
             uint256 proposalStartAccumulator = _proposal.thresholdSnapshot;
             if (currentAccumulator <= proposalStartAccumulator) {
-                return totalPointsActivated;
+                return 0;
             }
 
             return (currentAccumulator - proposalStartAccumulator) / elapsedBlocks;
