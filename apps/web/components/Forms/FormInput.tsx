@@ -27,6 +27,7 @@ type Props = {
   tooltipClassName?: string;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
   suffix?: React.ReactNode;
+  outsideSuffix?: React.ReactNode;
   wide?: boolean;
   testId?: string;
 };
@@ -52,6 +53,7 @@ export function FormInput({
   tooltipClassName,
   onChange,
   suffix,
+  outsideSuffix,
   wide = true,
   testId,
 }: Props) {
@@ -101,73 +103,78 @@ export function FormInput({
         </p>
       )}
       <div
-        className={`relative ${type !== "textarea" && type !== "markdown" && "max-w-[29rem]"}`}
+        className={`flex items-center gap-2 ${Boolean(outsideSuffix) && type !== "textarea" && type !== "markdown" ? "max-w-[31rem]" : ""}`}
       >
-        {type !== "textarea" && type !== "markdown" ?
-          <input
-            {...registeredProps}
-            ref={registerRef}
-            id={registerKey}
-            type={type}
-            placeholder={placeholder}
-            className={`hide-input-arrows input dark:bg-primary-soft-dark input-bordered ${
-              errors[registerKey] ?
-                "input-error dark:dark:bg-primary-soft-dark"
-              : "input-info dark:bg-primary-soft-dark"
-            } w-full ${
-              disabled || readOnly ? disabledInputClassname : ""
-            } ${className}`}
-            required={required}
-            step={step}
-            disabled={disabled || readOnly}
-            readOnly={readOnly || disabled}
-            value={value}
-            onChange={registered?.onChange ?? onChange}
-            data-testid={testId}
-            {...otherProps}
-          />
-        : type === "textarea" ?
-          <textarea
-            {...registeredProps}
-            ref={registerRef}
-            id={registerKey}
-            placeholder={placeholder}
-            className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 dark:bg-primary-soft-dark ${
-              errors[registerKey] ? "input-error" : "input-info"
-            } ${disabled || readOnly ? disabledInputClassname : ""}`}
-            required={required}
-            rows={rows}
-            disabled={disabled || readOnly}
-            readOnly={readOnly || disabled}
-            onChange={registered?.onChange ?? onChange}
-            value={value}
-            data-testid={testId}
-            {...otherProps}
-          />
-        : <MarkdownEditor
-            {...registeredProps}
-            ref={markdownEditorRef}
-            id={registerKey}
-            placeholder={placeholder}
-            required={required}
-            rows={rows}
-            errors={errors}
-            disabled={disabled || readOnly}
-            readOnly={readOnly || disabled}
-            onChange={registered?.onChange ?? onChange}
-            value={value}
-            className={`input input-info dark:bg-primary-soft-dark ${disabled || readOnly ? disabledInputClassname : ""}`}
-            testId={testId}
-            {...otherProps}
-          />
-        }
-        {Boolean(suffix) && (
-          <span
-            className={`absolute right-[10px] top-1/2 -translate-y-1/2 text-neutral-content ${disabled || readOnly ? "opacity-60" : ""}`}
-          >
-            {suffix}
-          </span>
-        )}
+        <div
+          className={`relative w-full ${type !== "textarea" && type !== "markdown" && "max-w-[29rem]"}`}
+        >
+          {type !== "textarea" && type !== "markdown" ?
+            <input
+              {...registeredProps}
+              ref={registerRef}
+              id={registerKey}
+              type={type}
+              placeholder={placeholder}
+              className={`hide-input-arrows input dark:bg-primary-soft-dark input-bordered ${
+                errors[registerKey] ?
+                  "input-error dark:dark:bg-primary-soft-dark"
+                : "input-info dark:bg-primary-soft-dark"
+              } w-full ${
+                disabled || readOnly ? disabledInputClassname : ""
+              } ${className}`}
+              required={required}
+              step={step}
+              disabled={disabled || readOnly}
+              readOnly={readOnly || disabled}
+              value={value}
+              onChange={registered?.onChange ?? onChange}
+              data-testid={testId}
+              {...otherProps}
+            />
+          : type === "textarea" ?
+            <textarea
+              {...registeredProps}
+              ref={registerRef}
+              id={registerKey}
+              placeholder={placeholder}
+              className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 dark:bg-primary-soft-dark ${
+                errors[registerKey] ? "input-error" : "input-info"
+              } ${disabled || readOnly ? disabledInputClassname : ""}`}
+              required={required}
+              rows={rows}
+              disabled={disabled || readOnly}
+              readOnly={readOnly || disabled}
+              onChange={registered?.onChange ?? onChange}
+              value={value}
+              data-testid={testId}
+              {...otherProps}
+            />
+          : <MarkdownEditor
+              {...registeredProps}
+              ref={markdownEditorRef}
+              id={registerKey}
+              placeholder={placeholder}
+              required={required}
+              rows={rows}
+              errors={errors}
+              disabled={disabled || readOnly}
+              readOnly={readOnly || disabled}
+              onChange={registered?.onChange ?? onChange}
+              value={value}
+              className={`input input-info dark:bg-primary-soft-dark ${disabled || readOnly ? disabledInputClassname : ""}`}
+              testId={testId}
+              {...otherProps}
+            />
+          }
+          {Boolean(suffix) && (
+            <span
+              className={`absolute right-[10px] top-1/2 -translate-y-1/2 text-neutral-content ${disabled || readOnly ? "opacity-60" : ""}`}
+            >
+              {suffix}
+            </span>
+          )}
+        </div>
+        {outsideSuffix}
       </div>
       {errors && (
         <p className="text-danger-content text-sm mt-2">

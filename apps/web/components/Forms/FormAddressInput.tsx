@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { blo } from "blo";
 import Image from "next/image";
+import Link from "next/link";
 import { RegisterOptions } from "react-hook-form";
 import { Address, createPublicClient, http, isAddress } from "viem";
 import { useEnsAddress, useEnsAvatar, useEnsName, useNetwork } from "wagmi";
 import { FormInput } from "./FormInput";
 import { LoadingSpinner } from "../LoadingSpinner";
+import { newLogo } from "@/assets";
 import { getChain, getConfigByChain } from "@/configs/chains";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useCVStrategyLink } from "@/hooks/useCVStrategyLink";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useFlag } from "@/hooks/useFlag";
 import { safeABI } from "@/src/customAbis";
@@ -85,6 +88,7 @@ export const FormAddressInput = ({
   const [isValidatingSafe, setIsValidatingSafe] = useState<boolean>(false);
   const [isValidatingERC20, setIsValidatingERC20] = useState<boolean>(false);
   const bypassSafeCheck = useFlag("bypassSafeCheck");
+  const poolHref = useCVStrategyLink(inputValue);
 
   useEffect(() => {
     setInputValue(value ?? "");
@@ -126,7 +130,7 @@ export const FormAddressInput = ({
     if (bypassSafeCheck) {
       return true;
     }
-    
+
     if (!validationClient) {
       return "Unable to validate Safe address without an RPC client.";
     }
@@ -250,7 +254,7 @@ export const FormAddressInput = ({
     : errors;
 
   return (
-    <div className="w-full max-w-[29rem]">
+    <div className="w-full max-w-[31rem]">
       <FormInput
         {...rest}
         label={label}
@@ -295,6 +299,25 @@ export const FormAddressInput = ({
               height={30}
             />
           : null)
+        }
+        outsideSuffix={
+          poolHref ?
+            <Link
+              href={poolHref}
+              aria-label="Open pool page"
+              className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-primary hover:opacity-80"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <Image
+                src={newLogo}
+                alt=""
+                height={24}
+                width={24}
+                className="h-6 w-6"
+                loading="lazy"
+              />
+            </Link>
+          : undefined
         }
         testId={testId}
       />

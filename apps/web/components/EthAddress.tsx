@@ -11,10 +11,9 @@ import { isSafeAvatarUrl } from "@/app/api/utils";
 import { newLogo } from "@/assets";
 import { getExplorerUrl } from "@/configs/chains";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useCVStrategyLink } from "@/hooks/useCVStrategyLink";
 import { useExplorerPreference } from "@/hooks/useExplorerPreference";
-import { usePreferredReadClient } from "@/hooks/usePreferredReadClient";
 import { useTheme } from "@/providers/ThemeProvider";
-import { cvStrategyABI } from "@/src/generated";
 import { shortenAddress as shortenAddressFn } from "@/utils/text";
 
 type EthAddressProps = {
@@ -26,153 +25,6 @@ type EthAddressProps = {
   showPopup?: boolean;
   textColor?: string;
   explorer?: "explorer" | "louper";
-};
-
-type CVStrategyCacheEntry =
-  | {
-      isCVStrategy: true;
-      registryCommunity: Address;
-    }
-  | {
-      isCVStrategy: false;
-    };
-
-const CV_STRATEGY_ADDRESS_STORAGE_KEY = "gardens.cvStrategyAddress";
-const LEGACY_CV_STRATEGY_ADDRESS_STORAGE_PREFIX =
-  "gardens.cvStrategyAddress.v";
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-const cvStrategyAddressCache = new Map<string, CVStrategyCacheEntry>();
-const pendingCVStrategyChecks = new Map<
-  string,
-  Promise<CVStrategyCacheEntry>
->();
-let didCleanupLegacyCVStrategyStorage = false;
-
-type CVStrategyCacheStorage = Record<string, Record<string, unknown>>;
-
-const getCVStrategyCacheKey = (chainId: number, address: Address) =>
-  `${chainId}.${address.toLowerCase()}`;
-
-const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value != null && !Array.isArray(value);
-
-const isValidCVStrategyCacheEntry = (
-  value: unknown,
-): value is CVStrategyCacheEntry => {
-  if (
-    typeof value !== "object" ||
-    value == null ||
-    Array.isArray(value) ||
-    !("isCVStrategy" in value)
-  ) {
-    return false;
-  }
-
-  if (value.isCVStrategy === false) {
-    return true;
-  }
-
-  return (
-    value.isCVStrategy === true &&
-    "registryCommunity" in value &&
-    typeof value.registryCommunity === "string" &&
-    isAddress(value.registryCommunity) &&
-    value.registryCommunity.toLowerCase() !== ZERO_ADDRESS
-  );
-};
-
-const isCVStrategyCacheStorage = (
-  value: unknown,
-): value is CVStrategyCacheStorage => {
-  if (!isObjectRecord(value)) {
-    return false;
-  }
-
-  return Object.values(value).every(isObjectRecord);
-};
-
-const readCVStrategyStorage = (): CVStrategyCacheStorage | undefined => {
-  try {
-    if (!didCleanupLegacyCVStrategyStorage) {
-      const legacyKeys = Array.from(
-        { length: window.localStorage.length },
-        (_, index) => window.localStorage.key(index),
-      ).filter(
-        (key): key is string =>
-          key?.startsWith(LEGACY_CV_STRATEGY_ADDRESS_STORAGE_PREFIX) ?? false,
-      );
-
-      legacyKeys.forEach((key) => window.localStorage.removeItem(key));
-      didCleanupLegacyCVStrategyStorage = true;
-    }
-
-    const cachedValue = window.localStorage.getItem(
-      CV_STRATEGY_ADDRESS_STORAGE_KEY,
-    );
-    if (!cachedValue) return undefined;
-
-    const parsed = JSON.parse(cachedValue) as unknown;
-    if (!isCVStrategyCacheStorage(parsed)) {
-      window.localStorage.removeItem(CV_STRATEGY_ADDRESS_STORAGE_KEY);
-      return undefined;
-    }
-
-    return parsed;
-  } catch {
-    window.localStorage.removeItem(CV_STRATEGY_ADDRESS_STORAGE_KEY);
-    return undefined;
-  }
-};
-
-const getStoredCVStrategyEntry = (
-  storage: CVStrategyCacheStorage | undefined,
-  chainId: number,
-  address: Address,
-) => storage?.[String(chainId)]?.[address.toLowerCase()];
-
-const readCachedCVStrategyAddress = (
-  chainId: number,
-  address: Address,
-): CVStrategyCacheEntry | undefined => {
-  const cacheKey = getCVStrategyCacheKey(chainId, address);
-  const memoryEntry = cvStrategyAddressCache.get(cacheKey);
-  if (memoryEntry) return memoryEntry;
-
-  const parsed = getStoredCVStrategyEntry(
-    readCVStrategyStorage(),
-    chainId,
-    address,
-  );
-  if (!isValidCVStrategyCacheEntry(parsed)) return undefined;
-
-  cvStrategyAddressCache.set(cacheKey, parsed);
-  return parsed;
-};
-
-const writeCachedCVStrategyAddress = (
-  chainId: number,
-  address: Address,
-  entry: CVStrategyCacheEntry,
-) => {
-  const cacheKey = getCVStrategyCacheKey(chainId, address);
-  cvStrategyAddressCache.set(cacheKey, entry);
-
-  try {
-    const storage = readCVStrategyStorage() ?? {};
-    const currentChainStorage = storage[String(chainId)];
-    const chainStorage =
-      isObjectRecord(currentChainStorage) ?
-        currentChainStorage
-      : {};
-    chainStorage[address.toLowerCase()] = entry;
-    storage[String(chainId)] = chainStorage;
-    window.localStorage.setItem(
-      CV_STRATEGY_ADDRESS_STORAGE_KEY,
-      JSON.stringify(storage),
-    );
-  } catch {
-    // localStorage can be unavailable or full; memory cache still dedupes this session.
-  }
 };
 
 //TODO: handle theme change by create a theme object and pass it to Addre
@@ -191,21 +43,10 @@ export const EthAddress = ({
 }: EthAddressProps) => {
   const divParentRef = React.useRef<HTMLDivElement>(null);
   const chain = useChainFromPath();
-  const readClient = usePreferredReadClient(chain?.id);
+  const poolHref = useCVStrategyLink(address);
   const { explorerPreference } = useExplorerPreference();
   const { resolvedTheme } = useTheme();
   const explorerUrl = getExplorerUrl(chain?.id, explorerPreference);
-  const normalizedAddress = React.useMemo(
-    () =>
-      address && isAddress(address) ?
-        (address.toLowerCase() as Address)
-      : undefined,
-    [address],
-  );
-  const [cvStrategyEntry, setCVStrategyEntry] = React.useState<
-    CVStrategyCacheEntry | undefined
-  >(undefined);
-
   const { data: ensName } = useEnsName({
     address: address as Address,
     enabled: isAddress(address ?? ""),
@@ -220,94 +61,6 @@ export const EthAddress = ({
     cacheTime: 30_000,
   });
 
-  React.useEffect(() => {
-    if (!normalizedAddress || chain?.id == null) {
-      setCVStrategyEntry(undefined);
-      return;
-    }
-
-    const cachedEntry = readCachedCVStrategyAddress(
-      chain.id,
-      normalizedAddress,
-    );
-    if (cachedEntry) {
-      setCVStrategyEntry(cachedEntry);
-      return;
-    }
-
-    let cancelled = false;
-    const cacheKey = getCVStrategyCacheKey(chain.id, normalizedAddress);
-    const pendingCheck =
-      pendingCVStrategyChecks.get(cacheKey) ??
-      (async () => {
-        const bytecode = await readClient.getBytecode({
-          address: normalizedAddress,
-        });
-
-        if (!bytecode || bytecode === "0x") {
-          return { isCVStrategy: false } satisfies CVStrategyCacheEntry;
-        }
-
-        const registryCommunity = await readClient
-          .readContract({
-            address: normalizedAddress,
-            abi: cvStrategyABI,
-            functionName: "registryCommunity",
-          })
-          .catch(() => undefined);
-
-        return (
-            registryCommunity != null &&
-              isAddress(registryCommunity) &&
-              registryCommunity.toLowerCase() !== ZERO_ADDRESS
-          ) ?
-            {
-              isCVStrategy: true,
-              registryCommunity: registryCommunity.toLowerCase() as Address,
-            }
-          : ({ isCVStrategy: false } satisfies CVStrategyCacheEntry);
-      })();
-
-    pendingCVStrategyChecks.set(cacheKey, pendingCheck);
-
-    pendingCheck
-      .then((entry) => {
-        writeCachedCVStrategyAddress(chain.id, normalizedAddress, entry);
-        if (!cancelled) {
-          setCVStrategyEntry(entry);
-        }
-      })
-      .catch((error) => {
-        if (process.env.NODE_ENV === "development") {
-          console.debug("Unable to detect CVStrategy address", {
-            address: normalizedAddress,
-            chainId: chain.id,
-            error,
-          });
-        }
-        if (!cancelled) {
-          setCVStrategyEntry(undefined);
-        }
-      })
-      .finally(() => {
-        if (pendingCVStrategyChecks.get(cacheKey) === pendingCheck) {
-          pendingCVStrategyChecks.delete(cacheKey);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [chain?.id, normalizedAddress, readClient]);
-
-  const poolHref =
-    (
-      cvStrategyEntry?.isCVStrategy === true &&
-      normalizedAddress != null &&
-      chain?.id != null
-    ) ?
-      `/gardens/${chain.id}/${cvStrategyEntry.registryCommunity}/${normalizedAddress}`
-    : undefined;
   const showCVStrategyLink = poolHref != null && icon !== false;
   const addrethIcon =
     showCVStrategyLink ? false
