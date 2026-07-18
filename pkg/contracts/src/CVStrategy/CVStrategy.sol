@@ -659,7 +659,8 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
             return;
         }
 
-        // Bounded by active voting-token supply * elapsed blocks; expected deployments stay far below uint256 max.
+        // Bounded by active voting-token supply * elapsed blocks. For example, 1e27 active points
+        // over 1e8 blocks is 1e35, far below type(uint256).max.
         activePointsAccumulator += totalPointsActivated * elapsedBlocks;
         activePointsAccumulatorLastBlock = block.number;
     }
@@ -690,8 +691,8 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     }
 
     function _setThresholdSnapshot(Proposal storage _proposal) internal {
+        // New proposals use the time-weighted accumulator path instead of the legacy monotonic snapshot.
         if (_proposal.creationBlock != 0) {
-            // New proposals use the time-weighted accumulator path instead of the legacy monotonic snapshot.
             return;
         }
 
