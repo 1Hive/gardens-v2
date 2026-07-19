@@ -346,7 +346,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       formatUnits(transferWalletBalanceBn, poolToken.decimals)
     : "0";
   const pureSuperTokenAvailableBalanceBn =
-    superToken ? superToken.value - reservedSuperTokenBn : walletBalanceScaledUpBn;
+    superToken?.value ?? walletBalanceScaledUpBn;
 
   const hasInsufficientBalance =
     transferWalletBalanceBn != null &&
