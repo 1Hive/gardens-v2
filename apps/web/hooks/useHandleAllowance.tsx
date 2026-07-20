@@ -19,6 +19,7 @@ export function useHandleAllowance(
   transactionLabel?: string,
 ): {
   allowanceTxProps: TransactionProps;
+  allowanceRequired: boolean | undefined;
   handleAllowance: (args?: {
     formAmount?: bigint;
     covenantSignature?: `0x${string}`;
@@ -32,6 +33,9 @@ export function useHandleAllowance(
     status: "idle",
   });
   const [onSuccess, setOnSuccess] = useState<() => void>(noop);
+  const [allowanceRequired, setAllowanceRequired] = useState<
+    boolean | undefined
+  >(undefined);
 
   const { refetch: refetchAllowance } = useContractRead({
     chainId,
@@ -65,6 +69,7 @@ export function useHandleAllowance(
       amount = args.formAmount;
     }
     if (currentAllowance?.data && currentAllowance.data >= amount) {
+      setAllowanceRequired(false);
       await delayAsync(1000);
       setAllowanceTxProps((x) => ({
         ...x,
@@ -73,6 +78,7 @@ export function useHandleAllowance(
       }));
       triggerNextTx(args?.covenantSignature);
     } else {
+      setAllowanceRequired(true);
       if (currentAllowance?.data) {
         // Already found allowance but not enough, need to reset allowance
         setAllowanceTxProps({
@@ -104,15 +110,18 @@ export function useHandleAllowance(
     }
   }, [transactionStatus]);
 
-  const resetState = () =>
+  const resetState = () => {
+    setAllowanceRequired(undefined);
     setAllowanceTxProps((x) => ({
       ...x,
       message: getTxMessage("idle"),
       status: "idle",
     }));
+  };
 
   return {
     allowanceTxProps,
+    allowanceRequired,
     handleAllowance,
     resetState,
   };

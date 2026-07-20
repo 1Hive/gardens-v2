@@ -28,6 +28,7 @@ export type TransactionModalProps = {
   onClose: () => void;
   isOpen: boolean;
   testId?: string;
+  showTransactionCount?: boolean;
 };
 
 export function TransactionModal({
@@ -37,6 +38,7 @@ export function TransactionModal({
   onClose,
   isOpen,
   testId,
+  showTransactionCount = false,
 }: TransactionModalProps) {
   return (
     <Modal
@@ -48,6 +50,12 @@ export function TransactionModal({
     >
       {children}
       <div className="w-[420px]">
+        {showTransactionCount && (
+          <p className="mb-4 text-sm text-neutral-content dark:text-neutral-inverted-content">
+            {transactions.length} wallet transaction
+            {transactions.length === 1 ? "" : "s"} required
+          </p>
+        )}
         {transactions.map((props, index) => {
           return (
             <React.Fragment key={`${props.contractName + "_" + index + 1}`}>
