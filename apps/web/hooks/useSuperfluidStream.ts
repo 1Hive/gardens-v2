@@ -8,6 +8,7 @@ import { useSuperfluidSugraphClient as useSuperfluidSugraphClient } from "./useS
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { superfluidPoolAbi } from "@/src/customAbis";
 import { ChainId } from "@/types";
+import { getCurrentSenderFlowRate } from "@/utils/superfluidStreams";
 
 export const STREAM_TO_TARGET_QUERY = gql`
   query streamToTarget($receiver: String!, $token: String!, $from: String) {
@@ -315,14 +316,10 @@ export function useSuperfluidStream({
       );
       setCurrentUserOtherFlowRateBn(toOtherRecipientFlowRate);
 
-      const currentUserStreamingToPoolRate =
-        BigInt(
-          result.data.receiverStreams.find(
-            (flow: { sender: { id: string } }) =>
-              flow.sender.id.toLowerCase() ===
-              connectedWalletAddress.toLowerCase(),
-          )?.currentFlowRate ?? "0",
-        ) || null;
+      const currentUserStreamingToPoolRate = getCurrentSenderFlowRate(
+        result.data.receiverStreams,
+        connectedWalletAddress,
+      );
 
       setCurrentUserFlowRateBn(currentUserStreamingToPoolRate);
     }

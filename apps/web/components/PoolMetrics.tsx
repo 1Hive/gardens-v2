@@ -46,6 +46,7 @@ import {
   shouldBatchUpgradeAndStream,
   superfluidHostBatchAbi,
 } from "@/utils/superfluidBatch";
+import { getDisplayedIncomingFlowRate } from "@/utils/superfluidStreams";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {
@@ -135,7 +136,10 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       args: [poolAddress as Address, requestedAmountBn],
     });
 
-  const displayedIncomingFlowRateBn = directPoolFlowRateBn ?? currentFlowRateBn;
+  const displayedIncomingFlowRateBn = getDisplayedIncomingFlowRate(
+    directPoolFlowRateBn,
+    currentFlowRateBn,
+  );
 
   const currentFlowPerMonth =
     superToken && displayedIncomingFlowRateBn != null ?
