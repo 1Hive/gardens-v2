@@ -73,7 +73,6 @@ interface PoolMetricsProps {
         sameAsUnderlying?: boolean;
       }
     | undefined;
-  streamingRatePerSecond?: bigint | string | number | null;
   streamReceiver?: Address;
   streamSender?: Address;
 }
@@ -83,7 +82,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   poolToken,
   chainId,
   superToken,
-  streamingRatePerSecond,
   streamReceiver,
   streamSender,
 }) => {
@@ -150,23 +148,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const currentUserFlowPerMonth =
     superToken && currentUserFlowRateBn != null ?
       +formatUnits(currentUserFlowRateBn, superToken.decimals) * SEC_TO_MONTH
-    : null;
-
-  const configuredFlowPerSecondBn =
-    streamingRatePerSecond != null ?
-      (() => {
-        try {
-          return BigInt(streamingRatePerSecond);
-        } catch (_error) {
-          return null;
-        }
-      })()
-    : null;
-
-  const configuredFlowPerMonth =
-    superToken && configuredFlowPerSecondBn != null ?
-      +formatUnits(configuredFlowPerSecondBn, superToken.decimals) *
-      SEC_TO_MONTH
     : null;
 
   const requestedStreamPerMonth =
@@ -901,12 +882,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       {poolToken.symbol}
                       /mo
                     </div>
-                    {configuredFlowPerMonth != null && (
-                      <p className="text-xs text-neutral-soft-content whitespace-nowrap">
-                        target {roundToSignificant(configuredFlowPerMonth, 3)}{" "}
-                        {poolToken.symbol}/mo
-                      </p>
-                    )}
                     <div
                       className="tooltip tooltip-top-left cursor-pointer w-8"
                       data-tip={`This pool is receiving ${roundToSignificant(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through Superfluid streaming`}
