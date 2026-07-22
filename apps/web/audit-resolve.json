@@ -1,6 +1,18 @@
 {
   "version": 1,
   "decisions": {
+    "1123686|@allo-team/allo-v2-sdk>@typechain/hardhat>hardhat>@ethersproject/abi>@ethersproject/hash>@ethersproject/abstract-signer>@ethersproject/abstract-provider>@ethersproject/transactions>@ethersproject/signing-key>elliptic>@sentry/node>cookie>adm-zip": {
+      "decision": "ignore",
+      "madeAt": 1784736000000,
+      "reason": "Hardhat build tooling does not process user-supplied ZIP archives in the deployed web application.",
+      "expiresAt": 1787328000000
+    },
+    "1123686|@typechain/hardhat>hardhat>@ethersproject/abi>@ethersproject/hash>@ethersproject/abstract-signer>@ethersproject/abstract-provider>@ethersproject/transactions>@ethersproject/signing-key>elliptic>@sentry/node>cookie>adm-zip": {
+      "decision": "ignore",
+      "madeAt": 1784736000000,
+      "reason": "Hardhat build tooling does not process user-supplied ZIP archives in the deployed web application.",
+      "expiresAt": 1787328000000
+    },
     "1098392|@wagmi/core>@wagmi/connectors>@safe-global/safe-apps-sdk>viem>ws": {
       "decision": "ignore",
       "madeAt": 1775832300000,
