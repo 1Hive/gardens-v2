@@ -38,11 +38,11 @@ import {
   bigNumberMin,
   parsePositiveUnitsFloor,
   roundToSignificant,
-  scaleDownRoundUp,
   scaleTo,
 } from "@/utils/numbers";
 import {
   buildUpgradeAndStreamBatch,
+  getStreamFundingAmounts,
   shouldBatchUpgradeAndStream,
   superfluidHostBatchAbi,
 } from "@/utils/superfluidBatch";
@@ -180,23 +180,22 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       superToken.value - reservedSuperTokenBn
     : 0n;
 
-  // Used for upgrade transaction
-  const effectiveRequestedAmountScaledUpBn =
+  const streamFundingAmounts =
     requestedAmountBnScaledUpBn != null ?
-      forceAllBalanceUsage ?
-        requestedAmountBnScaledUpBn - (superToken?.value ?? 0n)
-      : requestedAmountBnScaledUpBn - (userSuperTokenAvailableBudgetBn ?? 0n)
+      getStreamFundingAmounts({
+        requestedAmount: requestedAmountBnScaledUpBn,
+        availableSuperTokenBalance:
+          forceAllBalanceUsage ?
+            superToken?.value ?? 0n
+          : userSuperTokenAvailableBudgetBn ?? 0n,
+        superTokenDecimals: superToken?.decimals ?? 0,
+        underlyingTokenDecimals: poolToken.decimals,
+      })
     : undefined;
-
-  // Used for allowance of pooltoken
+  const effectiveRequestedAmountScaledUpBn =
+    streamFundingAmounts?.upgradeAmount;
   const effectiveRequestedAmountScaledDownBn =
-    effectiveRequestedAmountScaledUpBn != null ?
-      scaleDownRoundUp(
-        effectiveRequestedAmountScaledUpBn,
-        superToken?.decimals ?? 0,
-        poolToken.decimals,
-      )
-    : undefined;
+    streamFundingAmounts?.allowanceAmount;
 
   const isSuperTokenEnoughBalance =
     effectiveRequestedAmountScaledUpBn != null &&
@@ -323,6 +322,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     superToken?.address as Address,
     effectiveRequestedAmountScaledDownBn as bigint,
     () => writeUpgradeAndStream(),
+    { resetAllowanceIfNeeded: false },
   );
 
   const { data: walletBalance } = useBalance({

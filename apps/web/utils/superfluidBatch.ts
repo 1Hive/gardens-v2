@@ -6,6 +6,7 @@ import {
   parseAbi,
   parseAbiParameters,
 } from "viem";
+import { scaleDownRoundUp } from "./numbers";
 
 export const superfluidHostBatchAbi = parseAbi([
   "function batchCall((uint32 operationType,address target,bytes data)[] operations) payable",
@@ -25,6 +26,30 @@ type SuperfluidBatchOperation = {
   operationType: number;
   target: Address;
   data: Hex;
+};
+
+export const getStreamFundingAmounts = ({
+  requestedAmount,
+  availableSuperTokenBalance,
+  superTokenDecimals,
+  underlyingTokenDecimals,
+}: {
+  requestedAmount: bigint;
+  availableSuperTokenBalance: bigint;
+  superTokenDecimals: number;
+  underlyingTokenDecimals: number;
+}) => {
+  const upgradeAmount = requestedAmount - availableSuperTokenBalance;
+  const allowanceAmount =
+    upgradeAmount > 0n ?
+      scaleDownRoundUp(
+        upgradeAmount,
+        superTokenDecimals,
+        underlyingTokenDecimals,
+      )
+    : 0n;
+
+  return { upgradeAmount, allowanceAmount };
 };
 
 export const shouldBatchUpgradeAndStream = ({

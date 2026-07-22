@@ -6,6 +6,7 @@ import {
 import { describe, expect, it } from "vitest";
 import {
   buildUpgradeAndStreamBatch,
+  getStreamFundingAmounts,
   shouldBatchUpgradeAndStream,
   SUPERFLUID_BATCH_OPERATION,
   superfluidCfaV1Abi,
@@ -16,6 +17,45 @@ const cfaV1 = "0x0000000000000000000000000000000000000002";
 const receiver = "0x0000000000000000000000000000000000000003";
 
 describe("buildUpgradeAndStreamBatch", () => {
+  it("uses only the raw portion of a mixed balance for upgrade and allowance", () => {
+    expect(
+      getStreamFundingAmounts({
+        requestedAmount: 10_487_000000000000000000n,
+        availableSuperTokenBalance: 2_425_527442921011032304n,
+        superTokenDecimals: 18,
+        underlyingTokenDecimals: 18,
+      }),
+    ).toEqual({
+      upgradeAmount: 8_061_472557078988967696n,
+      allowanceAmount: 8_061_472557078988967696n,
+    });
+  });
+
+  it("does not request an allowance when the Super Token balance is enough", () => {
+    expect(
+      getStreamFundingAmounts({
+        requestedAmount: 100n,
+        availableSuperTokenBalance: 120n,
+        superTokenDecimals: 18,
+        underlyingTokenDecimals: 18,
+      }),
+    ).toEqual({ upgradeAmount: -20n, allowanceAmount: 0n });
+  });
+
+  it("rounds only the underlying allowance up when token decimals differ", () => {
+    expect(
+      getStreamFundingAmounts({
+        requestedAmount: 1_000000000001n,
+        availableSuperTokenBalance: 0n,
+        superTokenDecimals: 12,
+        underlyingTokenDecimals: 6,
+      }),
+    ).toEqual({
+      upgradeAmount: 1_000000000001n,
+      allowanceAmount: 1_000001n,
+    });
+  });
+
   it("never batches an upgrade for a pure native Super Token", () => {
     expect(
       shouldBatchUpgradeAndStream({

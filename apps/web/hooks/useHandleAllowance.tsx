@@ -6,6 +6,7 @@ import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirm
 import { useResolvedChainId } from "./useResolvedChainId";
 import { TransactionProps } from "@/components/TransactionModal";
 import { erc20ABI } from "@/src/generated";
+import { getAllowanceAction } from "@/utils/allowance";
 import { delayAsync } from "@/utils/delayAsync";
 import { roundToSignificant } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
@@ -16,7 +17,10 @@ export function useHandleAllowance(
   spenderAddr: Address,
   amount: bigint,
   triggerNextTx: (covenantSignature: `0x${string}` | undefined) => void,
-  transactionLabel?: string,
+  options: {
+    transactionLabel?: string;
+    resetAllowanceIfNeeded?: boolean;
+  } = {},
 ): {
   allowanceTxProps: TransactionProps;
   allowanceRequired: boolean | undefined;
@@ -28,7 +32,8 @@ export function useHandleAllowance(
 } {
   const chainId = useResolvedChainId();
   const [allowanceTxProps, setAllowanceTxProps] = useState<TransactionProps>({
-    contractName: transactionLabel ?? `${token?.symbol} expenditure approval`,
+    contractName:
+      options.transactionLabel ?? `${token?.symbol} expenditure approval`,
     message: "",
     status: "idle",
   });
@@ -68,7 +73,12 @@ export function useHandleAllowance(
     if (args?.formAmount != null) {
       amount = args.formAmount;
     }
-    if (currentAllowance?.data && currentAllowance.data >= amount) {
+    const allowanceAction = getAllowanceAction({
+      currentAllowance: currentAllowance?.data ?? 0n,
+      requiredAllowance: amount,
+      resetAllowanceIfNeeded: options.resetAllowanceIfNeeded,
+    });
+    if (allowanceAction === "none") {
       setAllowanceRequired(false);
       await delayAsync(1000);
       setAllowanceTxProps((x) => ({
@@ -79,7 +89,7 @@ export function useHandleAllowance(
       triggerNextTx(args?.covenantSignature);
     } else {
       setAllowanceRequired(true);
-      if (currentAllowance?.data) {
+      if (allowanceAction === "reset-and-approve") {
         // Already found allowance but not enough, need to reset allowance
         setAllowanceTxProps({
           contractName: `${token?.symbol} allowance reset`,
@@ -89,7 +99,7 @@ export function useHandleAllowance(
         await writeAllowTokenAsync({ args: [spenderAddr, 0n] });
         setAllowanceTxProps({
           contractName:
-            transactionLabel ?? `${token?.symbol} expenditure approval`,
+            options.transactionLabel ?? `${token?.symbol} expenditure approval`,
           message: `Setting allowance for ${token?.symbol} of ${token ? roundToSignificant(formatUnits(amount, token.decimals), 4) : ""}`,
           status: "waiting",
         });
