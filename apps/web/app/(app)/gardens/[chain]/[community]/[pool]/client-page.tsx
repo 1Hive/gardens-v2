@@ -9,7 +9,13 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { Address, formatUnits } from "viem";
-import { useBalance, useAccount, useChainId, useContractRead } from "wagmi";
+import {
+  useAccount,
+  useBalance,
+  useChainId,
+  useContractRead,
+  useToken,
+} from "wagmi";
 import {
   getAlloQuery,
   getCommunityDocument,
@@ -74,6 +80,7 @@ import {
 import { createProposalOptimisticProjector } from "@/utils/optimisticProposals";
 import {
   getConfiguredSuperTokenAddress,
+  getSuperTokenInfo,
   isSameAddress,
 } from "@/utils/superToken";
 import { formatLastRebalanceTooltip } from "@/utils/text";
@@ -691,12 +698,25 @@ export default function ClientPage({
 
   const connectedChainId = useChainId();
 
-  const { data: superTokenInfo } = useBalance({
+  const { data: superTokenMetadata } = useToken({
+    address: effectiveSuperToken as Address,
+    chainId,
+    enabled: !!effectiveSuperToken,
+  });
+
+  const { data: superTokenBalance } = useBalance({
     address: wallet as Address,
     token: effectiveSuperToken as Address,
     chainId,
     watch: true,
     enabled: !!effectiveSuperToken && !!wallet,
+  });
+
+  const superTokenInfo = getSuperTokenInfo({
+    address: effectiveSuperToken as Address | undefined,
+    token: superTokenMetadata,
+    balance: superTokenBalance,
+    sameAsUnderlying: effectiveSuperTokenSameAsUnderlying,
   });
 
   const tokenGarden = strategy?.registryCommunity?.garden;
@@ -1460,13 +1480,7 @@ export default function ClientPage({
             maxAmount={maxAmount}
             superTokenCandidate={superTokenCandidate}
             isSuperTokenCandidateFetching={isSuperTokenCandidateFetching}
-            superToken={
-              superTokenInfo && {
-                ...superTokenInfo,
-                sameAsUnderlying: effectiveSuperTokenSameAsUnderlying,
-                address: effectiveSuperToken as Address,
-              }
-            }
+            superToken={superTokenInfo}
             setSuperTokenCandidate={setSuperTokenCandidate}
             minThGtTotalEffPoints={minThGtTotalEffPoints}
             communityName={communityName ?? ""}
@@ -1501,13 +1515,7 @@ export default function ClientPage({
                       | undefined
                   }
                   streamSender={effectiveStrategy.id as Address}
-                  superToken={
-                    superTokenInfo && {
-                      ...superTokenInfo,
-                      sameAsUnderlying: effectiveSuperTokenSameAsUnderlying,
-                      address: effectiveSuperToken as Address,
-                    }
-                  }
+                  superToken={superTokenInfo}
                 />
               )}
             </>
@@ -1568,13 +1576,7 @@ export default function ClientPage({
                   maxAmount={maxAmount}
                   superTokenCandidate={superTokenCandidate}
                   isSuperTokenCandidateFetching={isSuperTokenCandidateFetching}
-                  superToken={
-                    superTokenInfo && {
-                      ...superTokenInfo,
-                      sameAsUnderlying: effectiveSuperTokenSameAsUnderlying,
-                      address: effectiveSuperToken as Address,
-                    }
-                  }
+                  superToken={superTokenInfo}
                   setSuperTokenCandidate={setSuperTokenCandidate}
                   minThGtTotalEffPoints={minThGtTotalEffPoints}
                   communityName={communityName ?? ""}
@@ -1592,13 +1594,7 @@ export default function ClientPage({
                         | undefined
                     }
                     streamSender={effectiveStrategy.id as Address}
-                    superToken={
-                      superTokenInfo && {
-                        ...superTokenInfo,
-                        sameAsUnderlying: effectiveSuperTokenSameAsUnderlying,
-                        address: effectiveSuperToken as Address,
-                      }
-                    }
+                    superToken={superTokenInfo}
                   />
                 )}
               </div>
