@@ -132,7 +132,9 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
 
     // Sig: 0x924e6704
     function connectSuperfluidGDA(address gda) external {
-        onlyCouncilSafeOrMember();
+        if (!_isRegistryFactoryAuthorizedWallet(msg.sender)) {
+            onlyCouncilSafeOrMember();
+        }
         ISuperToken supertoken =
             address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
         bool success = supertoken.connectPool(ISuperfluidPool(gda));
@@ -144,7 +146,9 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
 
     // Sig: 0xc69271ec
     function disconnectSuperfluidGDA(address gda) external {
-        onlyCouncilSafeOrMember();
+        if (!_isRegistryFactoryAuthorizedWallet(msg.sender)) {
+            onlyCouncilSafe();
+        }
         ISuperToken supertoken =
             address(superfluidToken) != address(0) ? superfluidToken : ISuperToken(allo.getPool(poolId).token);
         bool success = supertoken.disconnectPool(ISuperfluidPool(gda));
@@ -180,6 +184,18 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
     /*|--------------------------------------------|*/
     /*|              INTERNAL HELPERS              |*/
     /*|--------------------------------------------|*/
+
+    function _isRegistryFactoryAuthorizedWallet(address caller) internal view returns (bool) {
+        address registryFactoryAddress = registryCommunity.registryFactory();
+        if (registryFactoryAddress == address(0)) {
+            return false;
+        }
+        try IRegistryFactory(registryFactoryAddress).isAuthorizedWallet(caller) returns (bool isAuthorized) {
+            return isAuthorized;
+        } catch {
+            return false;
+        }
+    }
 
     function _setPoolParams(
         ArbitrableConfig memory _arbitrableConfig,

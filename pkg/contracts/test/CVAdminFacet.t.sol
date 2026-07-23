@@ -282,9 +282,18 @@ contract MockVotingRegistryAdmin is IVotingPowerRegistry {
 
 contract MockFactoryAllowlist {
     mapping(address => bool) internal allowed;
+    mapping(address => bool) internal authorizedWallets;
 
     function setAllowed(address target, bool isAllowed) external {
         allowed[target] = isAllowed;
+    }
+
+    function setAuthorizedWallet(address wallet, bool authorized) external {
+        authorizedWallets[wallet] = authorized;
+    }
+
+    function isAuthorizedWallet(address wallet) external view returns (bool) {
+        return authorizedWallets[wallet];
     }
 
     function isContractRegistered(address target) external view returns (bool) {
@@ -318,6 +327,10 @@ contract CVAdminFacetHarness is CVAdminFacet {
     }
 
     function setTotalPointsActivated(uint256 amount) external {
+        totalPointsActivated = amount;
+    }
+
+    function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
         totalPointsActivated = amount;
     }
 
@@ -384,6 +397,7 @@ contract CVAdminFacetTest is Test {
 
     address internal councilSafe = makeAddr("councilSafe");
     address internal member = makeAddr("member");
+    address internal keeper = makeAddr("keeper");
 
     function setUp() public {
         facet = new CVAdminFacetHarness();
@@ -456,7 +470,8 @@ contract CVAdminFacetTest is Test {
         registry.grantRole(allowlistRole, member);
         registry.setMemberPower(member, 10);
         registry.setActivated(member, true);
-        facet.setTotalPointsActivated(4);
+        facet.setTotalPointsActivatedWithCheckpoint(4);
+        vm.roll(block.number + 5);
 
         ArbitrableConfig memory arb = ArbitrableConfig({
             arbitrator: IArbitrator(address(arbitrator)),
@@ -514,6 +529,49 @@ contract CVAdminFacetTest is Test {
         facet.connectSuperfluidGDA(address(0xB0B));
 
         vm.prank(councilSafe);
+        facet.disconnectSuperfluidGDA(address(0xB0B));
+    }
+
+    function test_connectSuperfluidGDA_allowsActionEligibleMember() public {
+        MockGDAAgreement gdaAgreement = new MockGDAAgreement();
+        MockSuperfluidHost host = new MockSuperfluidHost(address(gdaAgreement));
+        MockSuperToken token = new MockSuperToken(address(host), address(underlyingToken));
+        facet.setSuperfluidToken(address(token));
+
+        vm.prank(member);
+        facet.connectSuperfluidGDA(address(0xB0B));
+    }
+
+    function test_connectSuperfluidGDA_allowsRegistryFactoryAuthorizedWallet() public {
+        MockGDAAgreement gdaAgreement = new MockGDAAgreement();
+        MockSuperfluidHost host = new MockSuperfluidHost(address(gdaAgreement));
+        MockSuperToken token = new MockSuperToken(address(host), address(underlyingToken));
+        facet.setSuperfluidToken(address(token));
+        facet.setSybilScorer(address(0));
+        factoryAllowlist.setAuthorizedWallet(keeper, true);
+
+        vm.prank(keeper);
+        facet.connectSuperfluidGDA(address(0xB0B));
+    }
+
+    function test_disconnectSuperfluidGDA_revertsForActionEligibleMember() public {
+        vm.prank(member);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                bytes4(keccak256("OnlyCouncilSafe(address,address,address)")), member, councilSafe, address(0)
+            )
+        );
+        facet.disconnectSuperfluidGDA(address(0xB0B));
+    }
+
+    function test_disconnectSuperfluidGDA_allowsRegistryFactoryAuthorizedWallet() public {
+        MockGDAAgreement gdaAgreement = new MockGDAAgreement();
+        MockSuperfluidHost host = new MockSuperfluidHost(address(gdaAgreement));
+        MockSuperToken token = new MockSuperToken(address(host), address(underlyingToken));
+        facet.setSuperfluidToken(address(token));
+        factoryAllowlist.setAuthorizedWallet(keeper, true);
+
+        vm.prank(keeper);
         facet.disconnectSuperfluidGDA(address(0xB0B));
     }
 

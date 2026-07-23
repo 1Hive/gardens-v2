@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {CVStrategyBaseFacet} from "../src/CVStrategy/CVStrategyBaseFacet.sol";
+import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
 import {MockPauseController} from "./helpers/PauseHelpers.sol";
 
 import {PointSystem, CVParams} from "../src/CVStrategy/CVStrategy.sol";
@@ -165,6 +166,54 @@ contract CVStrategyBaseFacetTest is Test {
         assertGt(blockNumber, 0);
     }
 
+    function test_timeWeightedThreshold_helpers_followConvictionDecay() public {
+        facet.setProposal(1, member, block.number, 0);
+        uint256 decay = 9_000_000;
+        facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
+        facet.setTotalPointsActivatedWithCheckpoint(100);
+        facet.exposedInitializeThresholdSnapshot(1);
+        (uint256 updatedAtBlock, uint256 thresholdSnapshot) = facet.getProposalThresholdState(1);
+        assertEq(updatedAtBlock, block.number);
+        assertEq(thresholdSnapshot, 100);
+
+        facet.setTotalPointsActivatedWithCheckpoint(0);
+        assertEq(facet.exposedGetThresholdPoints(1), 100, "same-block decrease must not lower threshold");
+
+        vm.roll(block.number + 1);
+        assertEq(facet.exposedGetThresholdPoints(1), ConvictionsUtils.weightedAverage(100, 0, 1, decay));
+
+        facet.setTotalPointsActivatedWithCheckpoint(200);
+        assertEq(facet.exposedGetThresholdPoints(1), 200, "increases apply immediately");
+        facet.exposedSetThresholdSnapshot(1);
+
+        facet.setTotalPointsActivatedWithCheckpoint(0);
+        assertEq(facet.exposedGetThresholdPoints(1), 200, "checkpointed peak must not fall in the same block");
+
+        facet.setProposalThresholdState(3, 0, 99);
+        facet.exposedRebaselineThresholdSnapshot(3);
+        (, thresholdSnapshot) = facet.getProposalThresholdState(3);
+        assertEq(thresholdSnapshot, 0);
+
+        facet.setProposal(4, member, block.number, 0);
+        facet.exposedInitializeThresholdSnapshot(4);
+        vm.roll(block.number + 1);
+        facet.exposedRebaselineThresholdSnapshot(4);
+        (updatedAtBlock, thresholdSnapshot) = facet.getProposalThresholdState(4);
+        assertEq(updatedAtBlock, block.number);
+        assertEq(thresholdSnapshot, 0);
+
+        facet.setTotalPointsActivatedWithCheckpoint(123);
+        facet.setProposalThresholdState(5, 0, 0);
+        facet.exposedSetThresholdSnapshot(5);
+        (, thresholdSnapshot) = facet.getProposalThresholdState(5);
+        assertEq(thresholdSnapshot, 123);
+
+        facet.setProposalThresholdState(6, block.number, 777);
+        facet.exposedSetThresholdSnapshot(6);
+        (, thresholdSnapshot) = facet.getProposalThresholdState(6);
+        assertEq(thresholdSnapshot, 777);
+    }
+
     function test_conviction_snapshot_freezes_when_strategy_disabled_for_all_pool_types() public {
         uint256 proposalId = 1;
         facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: 9_000_000, minThresholdPoints: 0}));
@@ -206,9 +255,7 @@ contract CVStrategyBaseFacetTest is Test {
         facet.exposedEnforceNotPaused(selector);
 
         controller.setGlobalPaused(true);
-        vm.expectRevert(
-            abi.encodeWithSelector(CVStrategyBaseFacet.StrategyPaused.selector, address(controller))
-        );
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyBaseFacet.StrategyPaused.selector, address(controller)));
         facet.exposedEnforceNotPaused(selector);
 
         bytes4 pauseSelector = bytes4(keccak256("pause(uint256)"));
@@ -239,9 +286,7 @@ contract CVStrategyBaseFacetTest is Test {
         facet.setPauseController(address(controller));
 
         controller.setGlobalPaused(true);
-        vm.expectRevert(
-            abi.encodeWithSelector(CVStrategyBaseFacet.StrategyPaused.selector, address(controller))
-        );
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyBaseFacet.StrategyPaused.selector, address(controller)));
         facet.guardedWhenNotPaused();
 
         bytes4 selector = bytes4(keccak256("someAction()"));

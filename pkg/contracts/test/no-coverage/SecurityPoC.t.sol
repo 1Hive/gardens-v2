@@ -1022,6 +1022,136 @@ contract PoC_H4_SelfPowerDecreaseThresholdCollapse is PoCBase {
 }
 
 // =============================================================
+//  [GHSA-qpr5-mcg9-v98x] Threshold snapshots must be time-weighted
+// =============================================================
+
+/// @title PoC_GHSAQPR5_TimeWeightedThresholdSnapshot
+/// @notice Security regression test: a temporary active-point spike at an
+///         allocation touchpoint must not permanently raise a proposal's
+///         execution threshold. New proposals use the average active points
+///         across their lifetime while legacy proposals keep the old behavior.
+contract PoC_GHSAQPR5_TimeWeightedThresholdSnapshot is PoCBase {
+    GV2ERC20 token;
+    address honest = makeAddr("honest");
+    address spike = makeAddr("spike");
+
+    uint256 constant BASE_POWER = 100 ether;
+    uint256 constant SPIKE_POWER = 900 ether;
+    uint256 constant REQUESTED_AMOUNT = 1_000 ether;
+    uint256 constant SUBMITTER_COL = 0.02 ether;
+    uint256 constant CHALLENGER_COL = 0.01 ether;
+    uint256 constant ARB_FEE = 0.5 ether;
+
+    function setUp() public {
+        _alloSetup();
+
+        token = new GV2ERC20("Token", "TKN", 18);
+        token.mint(local(), TOTAL_SUPPLY / 4);
+        token.mint(pool_admin(), TOTAL_SUPPLY / 4);
+        token.mint(honest, TOTAL_SUPPLY / 4);
+        token.mint(spike, TOTAL_SUPPLY / 4);
+
+        _deployArbitrator(ARB_FEE);
+        _deployFactory(address(token));
+        _deployStrategy(
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(safeArbitrator)),
+                tribunalSafe: payable(address(_councilSafe())),
+                submitterCollateralAmount: SUBMITTER_COL,
+                challengerCollateralAmount: CHALLENGER_COL,
+                defaultRuling: 1,
+                defaultRulingTimeout: 300
+            })
+        );
+
+        vm.prank(pool_admin());
+        safeHelper(
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(cvStrategy))
+        );
+
+        _registerIncreaseAndActivate(honest, BASE_POWER);
+        _registerIncrease(spike, SPIKE_POWER);
+
+        vm.deal(address(this), POOL_AMOUNT);
+        (bool ok,) = address(cvStrategy).call{value: POOL_AMOUNT}("");
+        require(ok, "GHSA-qpr5 setup: pool funding failed");
+    }
+
+    function test_GHSAQPR5_TemporarySpikeDecaysAtConvictionRate() public {
+        vm.roll(100);
+        uint256 proposalId = _createProposal(honest, REQUESTED_AMOUNT);
+
+        vm.roll(110);
+        vm.prank(spike);
+        cvStrategy.activatePoints();
+        _allocateSupport(honest, proposalId, MINIMUM_STAKE);
+
+        vm.roll(111);
+        vm.prank(spike);
+        cvStrategy.deactivatePoints();
+
+        vm.roll(200);
+
+        (,,,,,,,, uint256 observedThreshold,,,) = cvStrategy.getProposal(proposalId);
+        (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPoints) = cvStrategy.cvParams();
+
+        uint256 weightedPoints =
+            ConvictionsUtils.weightedAverage(BASE_POWER + SPIKE_POWER, BASE_POWER, block.number - 110, decay);
+        uint256 expectedWeightedThreshold = ConvictionsUtils.calculateThreshold(
+            REQUESTED_AMOUNT, POOL_AMOUNT, weightedPoints, decay, weight, maxRatio, minThresholdPoints
+        );
+        uint256 spikeThreshold = ConvictionsUtils.calculateThreshold(
+            REQUESTED_AMOUNT, POOL_AMOUNT, BASE_POWER + SPIKE_POWER, decay, weight, maxRatio, minThresholdPoints
+        );
+
+        console.log("[GHSA-qpr5] observed threshold:", observedThreshold);
+        console.log("[GHSA-qpr5] weighted threshold:", expectedWeightedThreshold);
+        console.log("[GHSA-qpr5] spike threshold:", spikeThreshold);
+
+        assertEq(observedThreshold, expectedWeightedThreshold, "GHSA-qpr5: threshold must use weighted points");
+        assertLt(observedThreshold, spikeThreshold, "GHSA-qpr5: one-block spike must not define threshold");
+
+        uint256 conviction = cvStrategy.calculateProposalConviction(proposalId);
+        assertLe(conviction, observedThreshold, "GHSA-qpr5 setup: conviction must stay below weighted threshold");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVAllocationFacet.ConvictionUnderMinimumThreshold.selector,
+                conviction,
+                observedThreshold,
+                REQUESTED_AMOUNT
+            )
+        );
+        allo().distribute(poolId, new address[](0), abi.encode(proposalId));
+    }
+
+    function _registerIncreaseAndActivate(address member, uint256 power) internal {
+        _registerIncrease(member, power);
+
+        vm.prank(member);
+        cvStrategy.activatePoints();
+    }
+
+    function _registerIncrease(address member, uint256 power) internal {
+        _approveAndRegister(member);
+
+        vm.startPrank(member);
+        token.approve(address(registryCommunity), power - MINIMUM_STAKE);
+        registryCommunity.increasePower(power - MINIMUM_STAKE);
+        vm.stopPrank();
+    }
+
+    function _allocateSupport(address voter, uint256 proposalId, uint256 support) internal {
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
+        votes[0] = ProposalSupport({proposalId: proposalId, deltaSupport: int256(support)});
+
+        vm.prank(voter);
+        allo().allocate(poolId, abi.encode(votes));
+    }
+}
+
+// =============================================================
 //  [GDN-05] Cancelled proposals must not exhaust proposal creation
 // =============================================================
 

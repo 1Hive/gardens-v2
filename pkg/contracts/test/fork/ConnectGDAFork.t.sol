@@ -72,10 +72,12 @@ contract ConnectGDAForkTest is Test {
         cvStrategy.connectSuperfluidGDA(buildersGDA);
     }
 
-    function test_disconnectSuperfluidGDA_member_allowed() public {
-        vm.prank(allowlistMember);
+    function test_disconnectSuperfluidGDA_allowlistMember_reverts() public {
+        vm.prank(council);
         cvStrategy.connectSuperfluidGDA(buildersGDA);
+
         vm.prank(allowlistMember);
+        vm.expectRevert();
         cvStrategy.disconnectSuperfluidGDA(buildersGDA);
     }
 }

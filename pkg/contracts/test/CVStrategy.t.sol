@@ -25,12 +25,13 @@ import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {MockPauseController} from "./helpers/PauseHelpers.sol";
 import {GlobalPauseController} from "../src/pausing/GlobalPauseController.sol";
-import {ISuperfluidToken} from
-    "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
-import {ISuperfluidPool} from
-    "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
-import {PoolConfig} from
-    "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/IGeneralDistributionAgreementV1.sol";
+import {ISuperfluidToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import {
+    ISuperfluidPool
+} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
+import {
+    PoolConfig
+} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/IGeneralDistributionAgreementV1.sol";
 
 import {TERC20} from "./shared/TERC20.sol";
 
@@ -198,7 +199,7 @@ contract CVStrategyCoverageHarness is CVStrategyHarness {
     }
 }
 
-contract CVStrategyTest is Test {
+contract CVStrategyCoverageTest is Test {
     CVStrategyHarness internal strategy;
     MockAlloWithPool internal allo;
     MockRegistryCommunity internal registryCommunity;
@@ -419,9 +420,7 @@ contract CVStrategyTest is Test {
         strategy.setTotalPointsActivated(1_000_000_000_000);
         strategy.setProposal(5, member, 1, ProposalStatus.Active, block.number - 1, 0);
 
-        uint256 expectedOverride = ConvictionsUtils.calculateThresholdOverride(
-             params.decay, params.minThresholdPoints
-        );
+        uint256 expectedOverride = ConvictionsUtils.calculateThresholdOverride(params.decay, params.minThresholdPoints);
         uint256 threshold = strategy.calculateThreshold(1);
 
         assertGt(threshold, expectedOverride);
@@ -446,9 +445,7 @@ contract CVStrategyTest is Test {
 
         address unregisteredSybilScorer = makeAddr("unregisteredSybilScorer");
         vm.prank(councilSafe);
-        vm.expectRevert(
-            abi.encodeWithSelector(CVStrategy.SybilScorerNotAllowed.selector, unregisteredSybilScorer)
-        );
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.SybilScorerNotAllowed.selector, unregisteredSybilScorer));
         strategy.setSybilScorer(unregisteredSybilScorer, 10);
 
         vm.prank(councilSafe);
@@ -862,7 +859,8 @@ contract CVStrategyTest is Test {
         GlobalPauseController controller = GlobalPauseController(
             address(
                 new ERC1967Proxy(
-                    address(controllerImpl), abi.encodeWithSelector(GlobalPauseController.initialize.selector, ownerAddr)
+                    address(controllerImpl),
+                    abi.encodeWithSelector(GlobalPauseController.initialize.selector, ownerAddr)
                 )
             )
         );
@@ -936,14 +934,12 @@ contract CVStrategyTest is Test {
         CVPauseFacet pauseFacet = new CVPauseFacet();
 
         CVStrategyHarness local = CVStrategyHarness(
-            payable(
-                address(
+            payable(address(
                     new ERC1967Proxy(
                         address(new CVStrategyHarness()),
                         abi.encodeWithSelector(CVStrategy.init.selector, address(allo), address(0xBEEF), ownerAddr)
                     )
-                )
-            )
+                ))
         );
 
         vm.prank(ownerAddr);
@@ -1022,9 +1018,7 @@ contract CVStrategyTest is Test {
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = CVStrategy.activatePoints.selector;
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(revertFacet),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(revertFacet), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
 
         vm.prank(ownerAddr);
@@ -1067,9 +1061,7 @@ contract CVStrategyTest is Test {
             functionSelectors: replaceSelectors
         });
         replaceCuts[1] = IDiamond.FacetCut({
-            facetAddress: address(stubFacet),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: addSelectors
+            facetAddress: address(stubFacet), action: IDiamond.FacetCutAction.Add, functionSelectors: addSelectors
         });
 
         vm.prank(ownerAddr);

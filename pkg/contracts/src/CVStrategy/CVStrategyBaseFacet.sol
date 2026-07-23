@@ -504,19 +504,25 @@ abstract contract CVStrategyBaseFacet {
         _setThresholdSnapshot(_proposal);
     }
 
+    function _initializeThresholdSnapshot(Proposal storage _proposal) internal {
+        _proposal.thresholdSnapshot = totalPointsActivated;
+        _proposal.thresholdUpdatedAtBlock = block.number;
+    }
+
+    function _rebaselineThresholdSnapshot(Proposal storage _proposal) internal {
+        _initializeThresholdSnapshot(_proposal);
+    }
+
     function _setThresholdSnapshot(Proposal storage _proposal) internal {
-        uint256 snapshot = _proposal.thresholdSnapshot;
-        if (snapshot == 0 || totalPointsActivated > snapshot) {
-            _proposal.thresholdSnapshot = totalPointsActivated;
-        }
+        _proposal.thresholdSnapshot = _getThresholdPoints(_proposal);
+        _proposal.thresholdUpdatedAtBlock = block.number;
     }
 
     function _getThresholdPoints(Proposal storage _proposal) internal view returns (uint256) {
-        uint256 snapshot = _proposal.thresholdSnapshot;
-        if (snapshot == 0 || totalPointsActivated > snapshot) {
-            return totalPointsActivated;
-        }
-        return snapshot;
+        uint256 updatedAtBlock = _proposal.thresholdUpdatedAtBlock;
+        return ConvictionsUtils.weightedAverage(
+            _proposal.thresholdSnapshot, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
+        );
     }
 
     /**

@@ -48,13 +48,21 @@ contract MockCommunityForSync {
     }
 
     // Stubs for RegistryCommunity interface compatibility
-    function hasRole(bytes32, address) external pure returns (bool) { return true; }
+    function hasRole(bytes32, address) external pure returns (bool) {
+        return true;
+    }
     function grantRole(bytes32, address) external {}
     function revokeRole(bytes32, address) external {}
     function activateMemberInStrategy(address, address) external {}
     function deactivateMemberInStrategy(address, address) external {}
-    function gardenToken() external view returns (address) { return address(token); }
-    function getMemberStakedAmount(address) external pure returns (uint256) { return 0; }
+
+    function gardenToken() external view returns (address) {
+        return address(token);
+    }
+
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
 }
 
 /// @notice Mock voting power registry that returns configurable live power
@@ -69,9 +77,17 @@ contract MockVotingPowerRegistryForSync {
         return livePower[member];
     }
 
-    function getMemberStakedAmount(address) external pure returns (uint256) { return 0; }
-    function ercAddress() external pure returns (address) { return address(0); }
-    function isMember(address member) external view returns (bool) { return livePower[member] > 0; }
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
+
+    function ercAddress() external pure returns (address) {
+        return address(0);
+    }
+
+    function isMember(address member) external view returns (bool) {
+        return livePower[member] > 0;
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -88,6 +104,10 @@ contract CVSyncPowerFacetHarness is CVSyncPowerFacet {
     }
 
     function setTotalPointsActivated(uint256 amount) external {
+        totalPointsActivated = amount;
+    }
+
+    function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
         totalPointsActivated = amount;
     }
 
@@ -283,6 +303,27 @@ contract CVSyncPowerFacetTest is Test {
         facet.syncPower(member);
 
         assertEq(facet.totalPointsActivated(), 60); // 100 - 40 decrease
+    }
+
+    function test_syncPower_updatesActivatedPointsAcrossIncreaseAndDecrease() public {
+        _authorizeSyncCaller();
+        community.setCachedPower(member, 100);
+        community.setActivated(member, true);
+        registry.setLivePower(member, 150);
+        facet.setTotalPointsActivatedWithCheckpoint(100);
+
+        vm.roll(block.number + 3);
+        vm.prank(syncCaller);
+        facet.syncPower(member);
+
+        assertEq(facet.totalPointsActivated(), 150);
+
+        vm.roll(block.number + 2);
+        registry.setLivePower(member, 125);
+        vm.prank(syncCaller);
+        facet.syncPower(member);
+
+        assertEq(facet.totalPointsActivated(), 125);
     }
 
     function test_syncPower_doesNotReapplyDecreaseOnRepeatedCalls() public {

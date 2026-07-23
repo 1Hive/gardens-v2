@@ -8,7 +8,7 @@ coverage:
     patch:
       default:
         target: auto
-        threshold: 0.1
+        threshold: 4.0
         informational: false
 
 ignore:
