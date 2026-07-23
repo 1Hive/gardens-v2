@@ -55,9 +55,10 @@ For concrete examples of intended-design, non-production, and duplicate report c
 
 ## Known Vulnerabilities
 
-Before reporting a new issue, review existing advisories:
+Before reporting a new issue, review existing advisories and acknowledged decisions:
 
 * **GitHub Security Advisories**: [https://github.com/1Hive/gardens-v2/security/advisories](https://github.com/1Hive/gardens-v2/security/advisories)
+* **Advisory History**: [./security/advisory-history.md](./security/advisory-history.md)
 
 Duplicate reports are not eligible for rewards.
 
