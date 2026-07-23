@@ -225,6 +225,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
 
     /// @notice Initialize time-weighted threshold state for proposals created before this upgrade.
     /// @dev Intended for an atomic UUPS upgradeToAndCall and removable in the next implementation.
+    ///      Upgrade tooling must verify the proposal count fits the destination chain's block gas limit.
     function reinitializeV2MigrateThresholdSnapshots() external reinitializer(2) onlyOwner {
         uint256 currentTotalPointsActivated = totalPointsActivated;
         uint256 currentProposalCounter = proposalCounter;
