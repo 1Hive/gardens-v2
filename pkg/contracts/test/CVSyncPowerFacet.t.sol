@@ -108,12 +108,7 @@ contract CVSyncPowerFacetHarness is CVSyncPowerFacet {
     }
 
     function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
-        _checkpointActivePointsAccumulator();
         totalPointsActivated = amount;
-    }
-
-    function getAccumulatorState() external view returns (uint256 accumulator, uint256 lastBlock) {
-        return (activePointsAccumulator, activePointsAccumulatorLastBlock);
     }
 
     function setTotalStaked(uint256 amount) external {
@@ -310,7 +305,7 @@ contract CVSyncPowerFacetTest is Test {
         assertEq(facet.totalPointsActivated(), 60); // 100 - 40 decrease
     }
 
-    function test_syncPower_checkpointsAccumulatorBeforeActivePowerChanges() public {
+    function test_syncPower_updatesActivatedPointsAcrossIncreaseAndDecrease() public {
         _authorizeSyncCaller();
         community.setCachedPower(member, 100);
         community.setActivated(member, true);
@@ -321,9 +316,6 @@ contract CVSyncPowerFacetTest is Test {
         vm.prank(syncCaller);
         facet.syncPower(member);
 
-        (uint256 accumulator, uint256 lastBlock) = facet.getAccumulatorState();
-        assertEq(accumulator, 300);
-        assertEq(lastBlock, block.number);
         assertEq(facet.totalPointsActivated(), 150);
 
         vm.roll(block.number + 2);
@@ -331,9 +323,6 @@ contract CVSyncPowerFacetTest is Test {
         vm.prank(syncCaller);
         facet.syncPower(member);
 
-        (accumulator, lastBlock) = facet.getAccumulatorState();
-        assertEq(accumulator, 600);
-        assertEq(lastBlock, block.number);
         assertEq(facet.totalPointsActivated(), 125);
     }
 

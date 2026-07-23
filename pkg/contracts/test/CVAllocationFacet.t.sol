@@ -208,7 +208,6 @@ contract CVAllocationFacetHarness is CVAllocationFacet {
     }
 
     function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
-        _checkpointActivePointsAccumulator();
         totalPointsActivated = amount;
     }
 
@@ -218,6 +217,10 @@ contract CVAllocationFacetHarness is CVAllocationFacet {
 
     function initializeProposalThresholdSnapshot(uint256 proposalId) external {
         _initializeThresholdSnapshot(proposals[proposalId]);
+    }
+
+    function checkpointProposalThreshold(uint256 proposalId) external {
+        _setThresholdSnapshot(proposals[proposalId]);
     }
 
     function setTotalStaked(uint256 amount) external {
@@ -291,16 +294,12 @@ contract CVAllocationFacetHarness is CVAllocationFacet {
         return proposals[proposalId].thresholdSnapshot;
     }
 
-    function getProposalCreationBlock(uint256 proposalId) external view returns (uint256) {
-        return proposals[proposalId].creationBlock;
+    function getProposalThresholdUpdatedAtBlock(uint256 proposalId) external view returns (uint256) {
+        return proposals[proposalId].thresholdUpdatedAtBlock;
     }
 
     function exposedGetThresholdPoints(uint256 proposalId) external view returns (uint256) {
         return _getThresholdPoints(proposals[proposalId]);
-    }
-
-    function exposedCurrentActivePointsAccumulator() external view returns (uint256) {
-        return _currentActivePointsAccumulator();
     }
 }
 
@@ -515,17 +514,19 @@ contract CVAllocationFacetTest is Test {
         assertEq(facet.getProposalThresholdSnapshot(1), 100);
     }
 
-    function test_timeWeightedThreshold_initializes_newProposalAtCreationBlock() public {
+    function test_timeWeightedThreshold_initializes_newProposalCheckpoint() public {
         vm.roll(100);
         facet.setTotalPointsActivatedWithCheckpoint(42);
         facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, block.number, 0, 0);
         facet.initializeProposalThresholdSnapshot(1);
 
-        assertEq(facet.getProposalCreationBlock(1), block.number);
+        assertEq(facet.getProposalThresholdUpdatedAtBlock(1), block.number);
         assertEq(facet.exposedGetThresholdPoints(1), 42);
     }
 
-    function test_timeWeightedThreshold_usesExactAverageAcrossTemporarySpike() public {
+    function test_timeWeightedThreshold_decaysCheckpointedSpikeAtConvictionRate() public {
+        uint256 decay = 9_000_000;
+        facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
         vm.roll(100);
         facet.setTotalPointsActivatedWithCheckpoint(100);
         facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, block.number, 0, 0);
@@ -533,15 +534,20 @@ contract CVAllocationFacetTest is Test {
 
         vm.roll(110);
         facet.setTotalPointsActivatedWithCheckpoint(1000);
+        facet.checkpointProposalThreshold(1);
         vm.roll(111);
         facet.setTotalPointsActivatedWithCheckpoint(100);
-        vm.roll(200);
 
-        assertEq(facet.exposedCurrentActivePointsAccumulator(), 10_900);
-        assertEq(facet.exposedGetThresholdPoints(1), 109);
+        uint256 oneBlockWeighted = ConvictionsUtils.weightedAverage(1000, 100, 1, decay);
+        assertEq(facet.exposedGetThresholdPoints(1), oneBlockWeighted);
+
+        vm.roll(200);
+        assertEq(facet.exposedGetThresholdPoints(1), ConvictionsUtils.weightedAverage(1000, 100, 90, decay));
     }
 
-    function test_timeWeightedThreshold_usesExactAverageAcrossTemporaryDrop() public {
+    function test_timeWeightedThreshold_increaseAppliesImmediately() public {
+        uint256 decay = 9_000_000;
+        facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
         vm.roll(100);
         facet.setTotalPointsActivatedWithCheckpoint(1000);
         facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, block.number, 0, 0);
@@ -549,38 +555,35 @@ contract CVAllocationFacetTest is Test {
 
         vm.roll(110);
         facet.setTotalPointsActivatedWithCheckpoint(100);
-        vm.roll(111);
-        facet.setTotalPointsActivatedWithCheckpoint(1000);
-        vm.roll(200);
+        assertEq(facet.exposedGetThresholdPoints(1), ConvictionsUtils.weightedAverage(1000, 100, 10, decay));
 
-        assertEq(facet.exposedGetThresholdPoints(1), 991);
+        facet.setTotalPointsActivatedWithCheckpoint(2000);
+        assertEq(facet.exposedGetThresholdPoints(1), 2000);
     }
 
-    function test_timeWeightedThreshold_doesNotBackfillCurrentBlockActivation() public {
+    function test_timeWeightedThreshold_sameBlockDecreaseKeepsSnapshot() public {
+        uint256 decay = 9_000_000;
+        facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
         vm.roll(100);
+        facet.setTotalPointsActivatedWithCheckpoint(100);
+        facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, block.number, 0, 0);
+        facet.initializeProposalThresholdSnapshot(1);
+
         facet.setTotalPointsActivatedWithCheckpoint(0);
-        facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, block.number, 0, 0);
-        facet.initializeProposalThresholdSnapshot(1);
-
-        vm.roll(101);
-        facet.setTotalPointsActivatedWithCheckpoint(100);
-
-        assertEq(facet.exposedGetThresholdPoints(1), 0);
-
-        vm.roll(102);
-
-        assertEq(facet.exposedGetThresholdPoints(1), 50);
+        assertEq(facet.exposedGetThresholdPoints(1), 100);
     }
 
-    function test_timeWeightedThreshold_legacyProposalKeepsMonotonicSnapshotPath() public {
+    function test_timeWeightedThreshold_uninitializedProposalTouchpointSnapshotsCurrentThreshold() public {
         bytes32 role = keccak256(abi.encodePacked("ALLOWLIST", uint256(1)));
         registry.grantRole(role, address(0));
+        uint256 decay = 9_000_000;
+        facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
         facet.setTotalPointsActivated(100);
         facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, 0, 0, 0);
 
         vm.prank(address(allo));
         facet.allocate(abi.encode(_support(1, 5)), member);
-        assertEq(facet.getProposalCreationBlock(1), 0);
+        assertEq(facet.getProposalThresholdUpdatedAtBlock(1), block.number);
         assertEq(facet.getProposalThresholdSnapshot(1), 100);
 
         facet.setTotalPointsActivated(20);
@@ -588,8 +591,9 @@ contract CVAllocationFacetTest is Test {
         vm.prank(address(allo));
         facet.allocate(abi.encode(_support(1, 1)), member);
 
-        assertEq(facet.getProposalThresholdSnapshot(1), 100);
-        assertEq(facet.exposedGetThresholdPoints(1), 100);
+        uint256 expectedWeighted = ConvictionsUtils.weightedAverage(100, 20, 1, decay);
+        assertEq(facet.getProposalThresholdSnapshot(1), expectedWeighted);
+        assertEq(facet.exposedGetThresholdPoints(1), expectedWeighted);
     }
 
     function test_applyDelta_underflow_reverts() public {
@@ -689,7 +693,7 @@ contract CVAllocationFacetTest is Test {
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
     }
 
-    function test_distribute_uses_snapshot_when_total_points_decreased() public {
+    function test_preUpgradeProposal_readsCurrentPointsBeforeMigration() public {
         allo.setPoolToken(1, facet.nativeToken());
         vm.deal(address(facet), 10_000 ether);
         facet.setProposalType(ProposalType.Funding);
@@ -699,43 +703,14 @@ contract CVAllocationFacetTest is Test {
         uint256 decay = 9_940_581;
         uint256 requestedAmount = 1_071 ether;
         uint256 liveTotalPoints = 80 ether;
-        uint256 snapshotPoints = 100 ether;
         facet.setCvParams(CVParams({maxRatio: maxRatio, weight: weight, decay: decay, minThresholdPoints: 0}));
         facet.setTotalPointsActivated(liveTotalPoints);
 
-        uint256 liveThreshold = ConvictionsUtils.calculateThreshold(
-            requestedAmount, 10_000 ether, liveTotalPoints, decay, weight, maxRatio, 0
-        );
-        uint256 snapshotThreshold = ConvictionsUtils.calculateThreshold(
-            requestedAmount, 10_000 ether, snapshotPoints, decay, weight, maxRatio, 0
-        );
-        uint256 conviction = (liveThreshold + snapshotThreshold) / 2;
-        assertGt(conviction, liveThreshold, "setup: conviction must clear live threshold");
-        assertLt(conviction, snapshotThreshold, "setup: conviction must not clear snapshot threshold");
-
         facet.setProposal(
-            1,
-            ProposalStatus.Active,
-            requestedAmount,
-            facet.nativeToken(),
-            beneficiary,
-            member,
-            block.number,
-            conviction,
-            0
+            1, ProposalStatus.Active, requestedAmount, facet.nativeToken(), beneficiary, member, block.number, 0, 0
         );
-        facet.setProposalThresholdSnapshot(1, snapshotPoints);
-
-        vm.prank(address(allo));
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CVAllocationFacet.ConvictionUnderMinimumThreshold.selector,
-                conviction,
-                snapshotThreshold,
-                requestedAmount
-            )
-        );
-        facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
+        assertEq(facet.getProposalThresholdUpdatedAtBlock(1), 0);
+        assertEq(facet.exposedGetThresholdPoints(1), liveTotalPoints);
     }
 
     function test_distribute_uses_timeWeightedThresholdForNewProposal() public {
@@ -758,12 +733,13 @@ contract CVAllocationFacetTest is Test {
 
         vm.roll(110);
         facet.setTotalPointsActivatedWithCheckpoint(1000 ether);
+        facet.checkpointProposalThreshold(1);
         vm.roll(111);
         facet.setTotalPointsActivatedWithCheckpoint(100 ether);
         vm.roll(200);
 
         uint256 weightedPoints = facet.exposedGetThresholdPoints(1);
-        assertEq(weightedPoints, 109 ether);
+        assertEq(weightedPoints, ConvictionsUtils.weightedAverage(1000 ether, 100 ether, 90, decay));
 
         uint256 weightedThreshold = ConvictionsUtils.calculateThreshold(
             requestedAmount, 10_000 ether, weightedPoints, decay, weight, maxRatio, 0

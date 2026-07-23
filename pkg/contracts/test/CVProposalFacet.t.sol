@@ -121,7 +121,7 @@ contract CVProposalFacetTest is Test {
         vm.prank(address(allo));
         facet.registerRecipient{value: 1 ether}(abi.encode(proposal), member);
 
-        assertEq(facet.getProposalCreationBlock(1), block.number);
+        assertEq(facet.getProposalThresholdUpdatedAtBlock(1), block.number);
         assertEq(facet.getProposalThresholdPoints(1), 77);
     }
 
@@ -354,7 +354,7 @@ contract CVProposalFacetTest is Test {
 
         (uint256 blockLastAfter, uint256 convictionAfter,) = facet.getProposalConvictionState(1);
         assertEq(facet.getProposalRequestedAmount(1), 11);
-        assertEq(facet.getProposalCreationBlock(1), block.number);
+        assertEq(facet.getProposalThresholdUpdatedAtBlock(1), block.number);
         assertEq(facet.getProposalThresholdPoints(1), 50);
         assertEq(blockLastAfter, 0);
         assertEq(convictionAfter, 0);

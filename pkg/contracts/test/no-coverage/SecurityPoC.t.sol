@@ -1079,7 +1079,7 @@ contract PoC_GHSAQPR5_TimeWeightedThresholdSnapshot is PoCBase {
         require(ok, "GHSA-qpr5 setup: pool funding failed");
     }
 
-    function test_GHSAQPR5_TemporarySpikeAtAllocationTouchpointIsTimeWeighted() public {
+    function test_GHSAQPR5_TemporarySpikeDecaysAtConvictionRate() public {
         vm.roll(100);
         uint256 proposalId = _createProposal(honest, REQUESTED_AMOUNT);
 
@@ -1097,7 +1097,8 @@ contract PoC_GHSAQPR5_TimeWeightedThresholdSnapshot is PoCBase {
         (,,,,,,,, uint256 observedThreshold,,,) = cvStrategy.getProposal(proposalId);
         (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPoints) = cvStrategy.cvParams();
 
-        uint256 weightedPoints = 109 ether;
+        uint256 weightedPoints =
+            ConvictionsUtils.weightedAverage(BASE_POWER + SPIKE_POWER, BASE_POWER, block.number - 110, decay);
         uint256 expectedWeightedThreshold = ConvictionsUtils.calculateThreshold(
             REQUESTED_AMOUNT, POOL_AMOUNT, weightedPoints, decay, weight, maxRatio, minThresholdPoints
         );

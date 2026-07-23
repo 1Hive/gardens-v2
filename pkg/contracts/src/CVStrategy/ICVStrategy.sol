@@ -74,9 +74,9 @@ struct Proposal {
     uint256 lastDisputeCompletion;
     uint256 arbitrableConfigVersion;
     uint256 creationTimestamp;
-    // Legacy proposals use this as threshold points; new proposals use it as the active-points accumulator baseline.
+    // Pre-upgrade proposals initialize these fields through the UUPS threshold migration.
     uint256 thresholdSnapshot;
-    uint256 creationBlock;
+    uint256 thresholdUpdatedAtBlock;
 }
 
 struct ProposalSupport {

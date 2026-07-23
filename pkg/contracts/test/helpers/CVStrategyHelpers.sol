@@ -250,7 +250,6 @@ contract CVProposalFacetHarness is CVProposalFacet {
     }
 
     function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
-        _checkpointActivePointsAccumulator();
         totalPointsActivated = amount;
     }
 
@@ -298,8 +297,8 @@ contract CVProposalFacetHarness is CVProposalFacet {
         return (p.blockLast, p.convictionLast, p.thresholdSnapshot);
     }
 
-    function getProposalCreationBlock(uint256 proposalId) external view returns (uint256) {
-        return proposals[proposalId].creationBlock;
+    function getProposalThresholdUpdatedAtBlock(uint256 proposalId) external view returns (uint256) {
+        return proposals[proposalId].thresholdUpdatedAtBlock;
     }
 
     function getProposalThresholdPoints(uint256 proposalId) external view returns (uint256) {
@@ -349,7 +348,6 @@ contract CVStrategyBaseFacetHarness is CVStrategyBaseFacet {
     }
 
     function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
-        _checkpointActivePointsAccumulator();
         totalPointsActivated = amount;
     }
 
@@ -369,10 +367,8 @@ contract CVStrategyBaseFacetHarness is CVStrategyBaseFacet {
         p.convictionLast = convictionLast;
     }
 
-    function setProposalCreationAndThreshold(uint256 proposalId, uint256 creationBlock, uint256 thresholdSnapshot)
-        external
-    {
-        proposals[proposalId].creationBlock = creationBlock;
+    function setProposalThresholdState(uint256 proposalId, uint256 updatedAtBlock, uint256 thresholdSnapshot) external {
+        proposals[proposalId].thresholdUpdatedAtBlock = updatedAtBlock;
         proposals[proposalId].thresholdSnapshot = thresholdSnapshot;
     }
 
@@ -415,14 +411,6 @@ contract CVStrategyBaseFacetHarness is CVStrategyBaseFacet {
         _calculateAndSetConviction(proposals[proposalId], oldStaked);
     }
 
-    function exposedCheckpointActivePointsAccumulator() external {
-        _checkpointActivePointsAccumulator();
-    }
-
-    function exposedCurrentActivePointsAccumulator() external view returns (uint256) {
-        return _currentActivePointsAccumulator();
-    }
-
     function exposedInitializeThresholdSnapshot(uint256 proposalId) external {
         _initializeThresholdSnapshot(proposals[proposalId]);
     }
@@ -439,17 +427,13 @@ contract CVStrategyBaseFacetHarness is CVStrategyBaseFacet {
         return _getThresholdPoints(proposals[proposalId]);
     }
 
-    function getProposalCreationAndThreshold(uint256 proposalId)
+    function getProposalThresholdState(uint256 proposalId)
         external
         view
-        returns (uint256 creationBlock, uint256 thresholdSnapshot)
+        returns (uint256 updatedAtBlock, uint256 thresholdSnapshot)
     {
         Proposal storage p = proposals[proposalId];
-        return (p.creationBlock, p.thresholdSnapshot);
-    }
-
-    function getAccumulatorState() external view returns (uint256 accumulator, uint256 lastBlock) {
-        return (activePointsAccumulator, activePointsAccumulatorLastBlock);
+        return (p.thresholdUpdatedAtBlock, p.thresholdSnapshot);
     }
 
     function exposedCheckBlockAndCalculateConviction(uint256 proposalId, uint256 oldStaked)
@@ -547,6 +531,9 @@ contract CVStrategyHarness is CVStrategy {
         p.blockLast = blockLast;
         p.convictionLast = convictionLast;
         p.metadata = Metadata({protocol: 1, pointer: "meta"});
+        if (proposalCounter < proposalId) {
+            proposalCounter = proposalId;
+        }
     }
 
     function setArbitrableConfig(uint256 version, ArbitrableConfig memory config) external {
@@ -567,16 +554,7 @@ contract CVStrategyHarness is CVStrategy {
     }
 
     function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
-        _checkpointActivePointsAccumulator();
         totalPointsActivated = amount;
-    }
-
-    function exposedCheckpointActivePointsAccumulator() external {
-        _checkpointActivePointsAccumulator();
-    }
-
-    function exposedCurrentActivePointsAccumulator() external view returns (uint256) {
-        return _currentActivePointsAccumulator();
     }
 
     function exposedInitializeThresholdSnapshot(uint256 proposalId) external {
@@ -595,17 +573,13 @@ contract CVStrategyHarness is CVStrategy {
         return _getThresholdPoints(proposals[proposalId]);
     }
 
-    function getProposalCreationAndThreshold(uint256 proposalId)
+    function getProposalThresholdState(uint256 proposalId)
         external
         view
-        returns (uint256 creationBlock, uint256 thresholdSnapshot)
+        returns (uint256 updatedAtBlock, uint256 thresholdSnapshot)
     {
         Proposal storage p = proposals[proposalId];
-        return (p.creationBlock, p.thresholdSnapshot);
-    }
-
-    function getAccumulatorState() external view returns (uint256 accumulator, uint256 lastBlock) {
-        return (activePointsAccumulator, activePointsAccumulatorLastBlock);
+        return (p.thresholdUpdatedAtBlock, p.thresholdSnapshot);
     }
 
     function exposedCalculateAndSetConviction(uint256 proposalId, uint256 oldStaked) external {

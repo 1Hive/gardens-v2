@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {CVStrategyBaseFacet} from "../src/CVStrategy/CVStrategyBaseFacet.sol";
+import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
 import {MockPauseController} from "./helpers/PauseHelpers.sol";
 
 import {PointSystem, CVParams} from "../src/CVStrategy/CVStrategy.sol";
@@ -165,64 +166,51 @@ contract CVStrategyBaseFacetTest is Test {
         assertGt(blockNumber, 0);
     }
 
-    function test_timeWeightedThreshold_helpers_cover_accumulator_branches() public {
+    function test_timeWeightedThreshold_helpers_followConvictionDecay() public {
         facet.setProposal(1, member, block.number, 0);
-
-        facet.setTotalPointsActivatedWithCheckpoint(10);
-        (uint256 accumulator, uint256 lastBlock) = facet.getAccumulatorState();
-        assertEq(accumulator, 0);
-        assertEq(lastBlock, block.number);
-
-        facet.exposedCheckpointActivePointsAccumulator();
-        (accumulator, lastBlock) = facet.getAccumulatorState();
-        assertEq(accumulator, 0);
-        assertEq(lastBlock, block.number);
-
-        vm.roll(block.number + 3);
-        assertEq(facet.exposedCurrentActivePointsAccumulator(), 30);
-
-        facet.exposedCheckpointActivePointsAccumulator();
-        (accumulator, lastBlock) = facet.getAccumulatorState();
-        assertEq(accumulator, 30);
-        assertEq(lastBlock, block.number);
-
+        uint256 decay = 9_000_000;
+        facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
+        facet.setTotalPointsActivatedWithCheckpoint(100);
         facet.exposedInitializeThresholdSnapshot(1);
-        (uint256 creationBlock, uint256 thresholdSnapshot) = facet.getProposalCreationAndThreshold(1);
-        assertEq(creationBlock, block.number);
-        assertEq(thresholdSnapshot, 30);
-        assertEq(facet.exposedGetThresholdPoints(1), 10);
-
-        vm.roll(block.number + 2);
-        assertEq(facet.exposedGetThresholdPoints(1), 10);
+        (uint256 updatedAtBlock, uint256 thresholdSnapshot) = facet.getProposalThresholdState(1);
+        assertEq(updatedAtBlock, block.number);
+        assertEq(thresholdSnapshot, 100);
 
         facet.setTotalPointsActivatedWithCheckpoint(0);
-        facet.setProposal(2, member, block.number, 0);
-        facet.exposedInitializeThresholdSnapshot(2);
-        vm.roll(block.number + 1);
-        assertEq(facet.exposedGetThresholdPoints(2), 0);
+        assertEq(facet.exposedGetThresholdPoints(1), 100, "same-block decrease must not lower threshold");
 
-        facet.setProposalCreationAndThreshold(3, 0, 99);
+        vm.roll(block.number + 1);
+        assertEq(facet.exposedGetThresholdPoints(1), ConvictionsUtils.weightedAverage(100, 0, 1, decay));
+
+        facet.setTotalPointsActivatedWithCheckpoint(200);
+        assertEq(facet.exposedGetThresholdPoints(1), 200, "increases apply immediately");
+        facet.exposedSetThresholdSnapshot(1);
+
+        facet.setTotalPointsActivatedWithCheckpoint(0);
+        assertEq(facet.exposedGetThresholdPoints(1), 200, "checkpointed peak must not fall in the same block");
+
+        facet.setProposalThresholdState(3, 0, 99);
         facet.exposedRebaselineThresholdSnapshot(3);
-        (, thresholdSnapshot) = facet.getProposalCreationAndThreshold(3);
+        (, thresholdSnapshot) = facet.getProposalThresholdState(3);
         assertEq(thresholdSnapshot, 0);
 
         facet.setProposal(4, member, block.number, 0);
         facet.exposedInitializeThresholdSnapshot(4);
         vm.roll(block.number + 1);
         facet.exposedRebaselineThresholdSnapshot(4);
-        (creationBlock, thresholdSnapshot) = facet.getProposalCreationAndThreshold(4);
-        assertEq(creationBlock, block.number);
-        assertEq(thresholdSnapshot, facet.exposedCurrentActivePointsAccumulator());
+        (updatedAtBlock, thresholdSnapshot) = facet.getProposalThresholdState(4);
+        assertEq(updatedAtBlock, block.number);
+        assertEq(thresholdSnapshot, 0);
 
         facet.setTotalPointsActivatedWithCheckpoint(123);
-        facet.setProposalCreationAndThreshold(5, 0, 0);
+        facet.setProposalThresholdState(5, 0, 0);
         facet.exposedSetThresholdSnapshot(5);
-        (, thresholdSnapshot) = facet.getProposalCreationAndThreshold(5);
+        (, thresholdSnapshot) = facet.getProposalThresholdState(5);
         assertEq(thresholdSnapshot, 123);
 
-        facet.setProposalCreationAndThreshold(6, block.number, 777);
+        facet.setProposalThresholdState(6, block.number, 777);
         facet.exposedSetThresholdSnapshot(6);
-        (, thresholdSnapshot) = facet.getProposalCreationAndThreshold(6);
+        (, thresholdSnapshot) = facet.getProposalThresholdState(6);
         assertEq(thresholdSnapshot, 777);
     }
 

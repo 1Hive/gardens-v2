@@ -134,7 +134,6 @@ abstract contract CVStrategyBaseFacet {
     uint256 public totalStaked;
 
     /// @notice Total voting power activated in this strategy - Slot 113
-    /// @dev Mutations must checkpoint activePointsAccumulator first so new proposal thresholds stay time-weighted.
     // slither-disable-next-line uninitialized-state
     uint256 public totalPointsActivated;
 
@@ -238,17 +237,9 @@ abstract contract CVStrategyBaseFacet {
     /// @dev Slot 137+
     bool public openStreamingProposalsInitialized;
 
-    /// @notice Cumulative sum of active governance points weighted by elapsed blocks
-    /// @dev Slot 137+
-    uint256 internal activePointsAccumulator;
-
-    /// @notice Last block included in activePointsAccumulator
-    /// @dev Slot 138+
-    uint256 internal activePointsAccumulatorLastBlock;
-
     /// @dev Reserved storage space to allow for layout changes in the future
     /// @dev This gap is at the end of storage to allow adding new variables without shifting slots
-    uint256[39] private __gap;
+    uint256[41] private __gap;
 
     /*|--------------------------------------------|*/
     /*|         SHARED HELPER FUNCTIONS            |*/
@@ -513,84 +504,25 @@ abstract contract CVStrategyBaseFacet {
         _setThresholdSnapshot(_proposal);
     }
 
-    // slither-disable-start incorrect-equality
-    function _checkpointActivePointsAccumulator() internal {
-        uint256 lastBlock = activePointsAccumulatorLastBlock;
-        if (lastBlock == 0) {
-            activePointsAccumulatorLastBlock = block.number;
-            return;
-        }
-
-        uint256 elapsedBlocks = block.number - lastBlock;
-        if (elapsedBlocks == 0) {
-            return;
-        }
-
-        // Bounded by active voting-token supply * elapsed blocks. For example, 1e27 active points
-        // over 1e8 blocks is 1e35, far below type(uint256).max.
-        activePointsAccumulator += totalPointsActivated * elapsedBlocks;
-        activePointsAccumulatorLastBlock = block.number;
-    }
-
-    function _currentActivePointsAccumulator() internal view returns (uint256) {
-        uint256 lastBlock = activePointsAccumulatorLastBlock;
-        if (lastBlock == 0 || lastBlock == block.number) {
-            return activePointsAccumulator;
-        }
-
-        return activePointsAccumulator + totalPointsActivated * (block.number - lastBlock);
-    }
-    // slither-disable-end incorrect-equality
-
     function _initializeThresholdSnapshot(Proposal storage _proposal) internal {
-        _checkpointActivePointsAccumulator();
-        _proposal.creationBlock = block.number;
-        _proposal.thresholdSnapshot = activePointsAccumulator;
+        _proposal.thresholdSnapshot = totalPointsActivated;
+        _proposal.thresholdUpdatedAtBlock = block.number;
     }
 
     function _rebaselineThresholdSnapshot(Proposal storage _proposal) internal {
-        if (_proposal.creationBlock == 0) {
-            _proposal.thresholdSnapshot = 0;
-            return;
-        }
-
         _initializeThresholdSnapshot(_proposal);
     }
 
     function _setThresholdSnapshot(Proposal storage _proposal) internal {
-        // New proposals use the time-weighted accumulator path instead of the legacy monotonic snapshot.
-        if (_proposal.creationBlock != 0) {
-            return;
-        }
-
-        uint256 snapshot = _proposal.thresholdSnapshot;
-        if (snapshot == 0 || totalPointsActivated > snapshot) {
-            _proposal.thresholdSnapshot = totalPointsActivated;
-        }
+        _proposal.thresholdSnapshot = _getThresholdPoints(_proposal);
+        _proposal.thresholdUpdatedAtBlock = block.number;
     }
 
     function _getThresholdPoints(Proposal storage _proposal) internal view returns (uint256) {
-        uint256 creationBlock = _proposal.creationBlock;
-        if (creationBlock != 0) {
-            if (block.number <= creationBlock) {
-                return totalPointsActivated;
-            }
-
-            uint256 elapsedBlocks = block.number - creationBlock;
-            uint256 currentAccumulator = _currentActivePointsAccumulator();
-            uint256 proposalStartAccumulator = _proposal.thresholdSnapshot;
-            if (currentAccumulator <= proposalStartAccumulator) {
-                return 0;
-            }
-
-            return (currentAccumulator - proposalStartAccumulator) / elapsedBlocks;
-        }
-
-        uint256 snapshot = _proposal.thresholdSnapshot;
-        if (snapshot == 0 || totalPointsActivated > snapshot) {
-            return totalPointsActivated;
-        }
-        return snapshot;
+        uint256 updatedAtBlock = _proposal.thresholdUpdatedAtBlock;
+        return ConvictionsUtils.weightedAverage(
+            _proposal.thresholdSnapshot, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
+        );
     }
 
     /**
