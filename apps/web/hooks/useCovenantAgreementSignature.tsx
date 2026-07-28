@@ -27,7 +27,7 @@ export function useCovenantAgreementSignature(
   }: {
     chainId: number | undefined;
     communityAddress: Address;
-    covenant: string;
+    covenant: string | null | undefined;
   },
 ): {
   covenantAgreementTxProps: TransactionProps;
@@ -84,11 +84,12 @@ export function useCovenantAgreementSignature(
       }
 
       const storageKey =
-        chainId == null
+        chainId == null || covenant == null || !address
           ? undefined
           : getCovenantSignatureKey({
               chainId,
               communityAddress,
+              accountAddress: address,
               covenant,
             });
 
@@ -103,9 +104,7 @@ export function useCovenantAgreementSignature(
           message: getTxMessage("success"),
           status: "success",
         });
-        triggerNextTx({
-          covenantSignature: cachedSignature.signature ?? "",
-        });
+        triggerNextTx({ covenantSignature: cachedSignature.signature });
         return;
       }
 
