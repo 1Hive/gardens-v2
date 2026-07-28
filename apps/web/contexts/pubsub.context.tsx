@@ -7,7 +7,10 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import {
+  CheckIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/outline";
 import { Realtime } from "ably";
 import { uniqueId } from "lodash-es";
 import { toast } from "react-toastify";
@@ -236,6 +239,7 @@ const INDEXING_STORAGE_KEY = "gardens.pending-indexed-publishes.v1";
 const INDEXING_TOAST_ID = "gardens-indexing-toast";
 const INDEXING_PROBLEM_TOAST_ID = "gardens-indexing-problem-toast";
 const INDEXING_TOAST_CLASS_NAME = "no-icon hidden opacity-50 md:block";
+const INDEXING_TOAST_SUCCESS_DURATION_MS = 1000;
 const INDEXING_TOAST_STYLE: React.CSSProperties = {
   width: "fit-content",
   marginLeft: "auto",
@@ -629,11 +633,15 @@ function arePendingIndexedPublishesEqual(
 function IndexingToast({
   count,
   isProblem,
+  isComplete = false,
 }: {
   count: number;
   isProblem: boolean;
+  isComplete?: boolean;
 }) {
-  const transactionLabel = getTransactionLabel(count);
+  const transactionLabel = `${getTransactionLabel(count)}${
+    isComplete ? " indexed" : ""
+  }`;
 
   return (
     <div className="flex flex-row items-center gap-3 px-3 py-1.5">
@@ -645,11 +653,13 @@ function IndexingToast({
       >
         {isProblem ?
           <ExclamationTriangleIcon className="h-5 w-5 text-warning" />
+        : isComplete ?
+          <CheckIcon className="h-5 w-5 text-success" />
         : <LoadingSpinner size="loading-sm" />}
       </div>
       <div className="flex min-w-0 flex-col gap-1">
         <div className="text-sm font-semibold text-neutral-content dark:text-neutral-inverted-content">
-          Indexing
+          {isComplete ? "Indexed" : "Indexing"}
         </div>
         <div className="text-xs text-neutral-content dark:text-neutral-inverted-content">
           {transactionLabel}
@@ -746,6 +756,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   const skipPublished = useFlag("skipPublished");
   const indexingPollInFlight = useRef(false);
   const pendingIndexedPublishesRef = useRef<PendingIndexedPublish[]>([]);
+  const lastIndexingToastCountByChain = useRef<Record<number, number>>({});
   const isProgrammaticIndexingToastDismiss = useRef(false);
   const shownIndexingProblemEpisodeByChain = useRef<Record<number, string>>({});
   const [indexingProblemCheckTick, setIndexingProblemCheckTick] = useState(0);
@@ -1413,6 +1424,50 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
     const currentChainCount = currentChainRecords.length;
 
     if (currentChainCount === 0) {
+      const completedCount =
+        lastIndexingToastCountByChain.current[routeChainId];
+      if (completedCount != null && toast.isActive(INDEXING_TOAST_ID)) {
+        console.info(`${INDEXING_LOG_PREFIX} toast completed`, {
+          routeChainId,
+          completedCount,
+        });
+        toast.update(INDEXING_TOAST_ID, {
+          render: (
+            <IndexingToast
+              count={completedCount}
+              isProblem={false}
+              isComplete
+            />
+          ),
+          type: "success",
+          position: "bottom-right",
+          autoClose: false,
+          closeButton: false,
+          closeOnClick: false,
+          className: INDEXING_TOAST_CLASS_NAME,
+          onClick: undefined,
+          onClose: () => {
+            isProgrammaticIndexingToastDismiss.current = false;
+          },
+          style: INDEXING_TOAST_STYLE,
+        });
+
+        const timeoutId = window.setTimeout(() => {
+          const hasNewPendingRecords = pendingIndexedPublishesRef.current.some(
+            (record) => record.chainId === routeChainId,
+          );
+          if (hasNewPendingRecords) return;
+
+          isProgrammaticIndexingToastDismiss.current = true;
+          toast.dismiss(INDEXING_TOAST_ID);
+          delete lastIndexingToastCountByChain.current[routeChainId];
+        }, INDEXING_TOAST_SUCCESS_DURATION_MS);
+
+        return () => {
+          window.clearTimeout(timeoutId);
+        };
+      }
+
       console.info(
         `${INDEXING_LOG_PREFIX} toast hidden, no pending records for route chain`,
         {
@@ -1425,6 +1480,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    lastIndexingToastCountByChain.current[routeChainId] = currentChainCount;
     const hasExceededProblemDelay = currentChainRecords.some(
       (record) => Date.now() - record.createdAt >= INDEXING_PROBLEM_DELAY_MS,
     );
