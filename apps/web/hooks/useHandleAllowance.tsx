@@ -12,9 +12,9 @@ import {
   increaseAllowanceAbi,
   preflightIncreaseAllowance,
 } from "@/utils/allowance";
+import { CovenantSignature } from "@/utils/covenantSignatureStorage";
 import { delayAsync } from "@/utils/delayAsync";
 import { roundToSignificant } from "@/utils/numbers";
-import { CovenantSignature } from "@/utils/covenantSignatureStorage";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 export function useHandleAllowance(
