@@ -18,14 +18,17 @@ describe("covenantSignatureStorage", () => {
     vi.stubGlobal("window", { localStorage });
   });
 
-  it("builds a chain-community-covenant key with a normalized address", () => {
+  it("builds a chain-community-account-covenant key with normalized addresses", () => {
     expect(
       getCovenantSignatureKey({
         chainId: 100,
         communityAddress: "0xE33E18B5887CF16AD4E351E98980EB5F50727C31",
+        accountAddress: "0xA11CE00000000000000000000000000000000000",
         covenant: "ipfs-hash",
       }),
-    ).toBe("100-0xe33e18b5887cf16ad4e351e98980eb5f50727c31-ipfs-hash");
+    ).toBe(
+      "100-0xe33e18b5887cf16ad4e351e98980eb5f50727c31-0xa11ce00000000000000000000000000000000000-ipfs-hash",
+    );
   });
 
   it("stores signatures for multiple communities in one object", () => {
