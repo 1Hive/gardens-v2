@@ -6,15 +6,22 @@ export const COVENANT_SIGNATURES_STORAGE_KEY = "covenantSignatures";
 
 type CovenantSignatures = Record<string, CovenantSignature>;
 
+type CovenantSignatureResult =
+  | { found: true; signature: CovenantSignature }
+  | { found: false };
+
 export const getCovenantSignatureKey = ({
   chainId,
   communityAddress,
+  accountAddress,
   covenant,
 }: {
   chainId: number;
   communityAddress: Address;
+  accountAddress: Address;
   covenant: string;
-}) => `${chainId}-${communityAddress.toLowerCase()}-${covenant}`;
+}) =>
+  `${chainId}-${communityAddress.toLowerCase()}-${accountAddress.toLowerCase()}-${covenant}`;
 
 const readCovenantSignatures = (): CovenantSignatures => {
   if (typeof window === "undefined") return {};
@@ -48,7 +55,7 @@ const readCovenantSignatures = (): CovenantSignatures => {
 
 export const getCovenantSignature = (
   key: string,
-): { found: boolean; signature?: CovenantSignature } => {
+): CovenantSignatureResult => {
   const signatures = readCovenantSignatures();
   if (!Object.prototype.hasOwnProperty.call(signatures, key)) {
     return { found: false };
