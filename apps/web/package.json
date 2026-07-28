@@ -55,7 +55,7 @@
     "lodash-es": "^4.17.23",
     "lokijs": "^1.5.12",
     "motion": "^12.4.7",
-    "next": "15.5.18",
+    "next": "15.5.22",
     "next-themes": "^0.2.1",
     "pino-pretty": "^10.2.3",
     "react": "18.2.0",
@@ -83,7 +83,10 @@
     "sharp": "0.35.3",
     "tmp": "0.2.7",
     "undici": "7.28.0",
-    "ws": "8.21.0"
+    "ws": "8.21.0",
+    "adm-zip": "0.6.0",
+    "brace-expansion": "5.0.8",
+    "postcss": "8.5.24"
   },
   "devDependencies": {
     "@eslint/js": "^9.6.0",
