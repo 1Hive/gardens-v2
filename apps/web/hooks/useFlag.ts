@@ -8,6 +8,7 @@ export const cheats = [
   "showStreamingPools",
   "showEscrow",
   "bypassSafeCheck",
+  "bypassCovenantSignature",
   "allowNoProtection",
   "skipPublished",
   "queryAllChains",
@@ -69,6 +70,8 @@ const getFlagFromEnv = (flag: CheatName) => {
       return process.env.NEXT_PUBLIC_FLAG_SHOWESCROW;
     case "bypassSafeCheck":
       return process.env.NEXT_PUBLIC_FLAG_BYPASSSAFECHECK;
+    case "bypassCovenantSignature":
+      return process.env.NEXT_PUBLIC_FLAG_BYPASSCOVENANTSIGNATURE;
     case "allowNoProtection":
       return process.env.NEXT_PUBLIC_FLAG_ALLOWNOPROTECTION;
     case "skipPublished":
