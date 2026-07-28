@@ -74,24 +74,23 @@ export function useCovenantAgreementSignature(
 
     try {
       const storageKey =
-        chainId == null ?
-          undefined
-        : getCovenantSignatureKey({
-            chainId,
-            communityAddress,
-            covenant,
-          });
+        chainId == null
+          ? undefined
+          : getCovenantSignatureKey({
+              chainId,
+              communityAddress,
+              covenant,
+            });
 
       const cachedSignature =
-        storageKey == null ?
-          { found: false as const }
-        : getCovenantSignature(storageKey);
+        storageKey == null
+          ? { found: false as const }
+          : getCovenantSignature(storageKey);
 
       if (bypassCovenantSignature || cachedSignature.found) {
-        const covenantSignature =
-          bypassCovenantSignature ?
-            "0x0"
-          : (cachedSignature.signature ?? "");
+        const covenantSignature = bypassCovenantSignature
+          ? "0x0"
+          : cachedSignature.signature ?? "";
 
         setCovenantAgreementTxProps({
           contractName: CovenantTitle,
