@@ -14,6 +14,7 @@ import {
 } from "@/utils/allowance";
 import { delayAsync } from "@/utils/delayAsync";
 import { roundToSignificant } from "@/utils/numbers";
+import { CovenantSignature } from "@/utils/covenantSignatureStorage";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 export function useHandleAllowance(
@@ -21,7 +22,7 @@ export function useHandleAllowance(
   token: { address: string; decimals: number; symbol: string } | undefined,
   spenderAddr: Address,
   amount: bigint,
-  triggerNextTx: (covenantSignature: `0x${string}` | undefined) => void,
+  triggerNextTx: (covenantSignature: CovenantSignature | undefined) => void,
   options: {
     transactionLabel?: string;
     resetAllowanceIfNeeded?: boolean;
@@ -31,7 +32,7 @@ export function useHandleAllowance(
   allowanceRequired: boolean | undefined;
   handleAllowance: (args?: {
     formAmount?: bigint;
-    covenantSignature?: `0x${string}`;
+    covenantSignature?: CovenantSignature;
   }) => Promise<void>;
   resetState: () => void;
 } {
@@ -87,7 +88,7 @@ export function useHandleAllowance(
 
   const handleAllowance = async (args?: {
     formAmount?: bigint;
-    covenantSignature?: `0x${string}`;
+    covenantSignature?: CovenantSignature;
   }) => {
     const currentAllowance = await refetchAllowance();
 
