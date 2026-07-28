@@ -42,39 +42,36 @@ export function useHandleRegistration(
     contractName: "Registry Community",
     chainId: urlChainId,
     showNotification: false,
-    onConfirmations: useCallback(
-      (receipt: TransactionReceipt) => {
-        publishAfterIndexed(
-          receipt,
+    onConfirmations: useCallback((receipt: TransactionReceipt) => {
+      publishAfterIndexed(
+        receipt,
+        {
+          topic: "member",
+          type: "add",
+          containerId: communityAddress,
+          function: "stakeAndRegisterMember",
+          id: address,
+          chainId: urlChainId,
+        },
+        address ?
           {
-            topic: "member",
-            type: "add",
-            containerId: communityAddress,
-            function: "stakeAndRegisterMember",
-            id: address,
-            chainId: urlChainId,
-          },
-          address
-            ? {
-                optimistic: {
-                  kind: "community-member",
-                  communityId: communityAddress,
-                  memberAddress: address,
-                  isRegistered: true,
-                  stakedTokens: registrationStakeAmount?.toString(),
-                },
-              }
-            : undefined,
-        );
-      },
-      [
-        address,
-        publishAfterIndexed,
-        communityAddress,
-        urlChainId,
-        registrationStakeAmount,
-      ],
-    ),
+            optimistic: {
+              kind: "community-member",
+              communityId: communityAddress,
+              memberAddress: address,
+              isRegistered: true,
+              stakedTokens: registrationStakeAmount?.toString(),
+            },
+          }
+        : undefined,
+      );
+    }, [
+      address,
+      publishAfterIndexed,
+      communityAddress,
+      urlChainId,
+      registrationStakeAmount,
+    ]),
   });
 
   useEffect(() => {
