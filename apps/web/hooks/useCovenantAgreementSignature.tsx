@@ -1,8 +1,15 @@
 import { useCallback, useState } from "react";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
-import { useAccount } from "wagmi";
+import { Address, useAccount } from "wagmi";
 import { TransactionProps } from "@/components/TransactionModal";
+import { useFlag } from "@/hooks/useFlag";
+import {
+  CovenantSignature,
+  getCovenantSignature,
+  getCovenantSignatureKey,
+  setCovenantSignature,
+} from "@/utils/covenantSignatureStorage";
 import { getTxMessage } from "@/utils/transactionMessages";
 import { signMessageWithProvider } from "@/utils/signMessageWithProvider";
 
@@ -12,12 +19,22 @@ interface CustomError extends Error {
 
 export function useCovenantAgreementSignature(
   message: string,
-  triggerNextTx: (args: { covenantSignature: `0x${string}` }) => void,
+  triggerNextTx: (args: { covenantSignature: CovenantSignature }) => void,
+  {
+    chainId,
+    communityAddress,
+    covenant,
+  }: {
+    chainId: number | undefined;
+    communityAddress: Address;
+    covenant: string | null | undefined;
+  },
 ): {
   covenantAgreementTxProps: TransactionProps;
   handleSignature: () => void;
 } {
   const path = usePathname();
+  const bypassCovenantSignature = useFlag("bypassCovenantSignature");
   const CovenantTitle = (
     <div className="flex gap-2">
       <a
@@ -56,6 +73,41 @@ export function useCovenantAgreementSignature(
     setIsSigning(true);
 
     try {
+      if (bypassCovenantSignature) {
+        setCovenantAgreementTxProps({
+          contractName: CovenantTitle,
+          message: getTxMessage("success"),
+          status: "success",
+        });
+        triggerNextTx({ covenantSignature: "0x0" });
+        return;
+      }
+
+      const storageKey =
+        chainId == null || covenant == null || !address
+          ? undefined
+          : getCovenantSignatureKey({
+              chainId,
+              communityAddress,
+              accountAddress: address,
+              covenant,
+            });
+
+      const cachedSignature =
+        storageKey == null
+          ? { found: false as const }
+          : getCovenantSignature(storageKey);
+
+      if (cachedSignature.found) {
+        setCovenantAgreementTxProps({
+          contractName: CovenantTitle,
+          message: getTxMessage("success"),
+          status: "success",
+        });
+        triggerNextTx({ covenantSignature: cachedSignature.signature });
+        return;
+      }
+
       if (!address || !connector) {
         throw new Error("Connect your wallet before signing the covenant.");
       }
@@ -65,6 +117,10 @@ export function useCovenantAgreementSignature(
         account: address,
         message,
       });
+
+      if (storageKey != null) {
+        setCovenantSignature(storageKey, signature);
+      }
 
       setCovenantAgreementTxProps({
         contractName: CovenantTitle,
@@ -84,7 +140,17 @@ export function useCovenantAgreementSignature(
     } finally {
       setIsSigning(false);
     }
-  }, [address, connector, isSigning, message, triggerNextTx]);
+  }, [
+    address,
+    bypassCovenantSignature,
+    chainId,
+    communityAddress,
+    connector,
+    covenant,
+    isSigning,
+    message,
+    triggerNextTx,
+  ]);
 
   return {
     covenantAgreementTxProps,
