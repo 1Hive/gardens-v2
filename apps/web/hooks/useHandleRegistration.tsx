@@ -6,6 +6,7 @@ import { TransactionProps } from "@/components/TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { registryCommunityABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abi";
+import { CovenantSignature } from "@/utils/covenantSignatureStorage";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 export function useHandleRegistration(
@@ -15,7 +16,7 @@ export function useHandleRegistration(
   registrationStakeAmount?: bigint,
 ): {
   registrationTxProps: TransactionProps;
-  handleRegistration: (covenantSig?: `0x${string}`) => void;
+  handleRegistration: (covenantSig?: CovenantSignature) => void;
   resetState: () => void;
 } {
   const [registrationTxProps, setRegistrationTxProps] =
@@ -37,7 +38,7 @@ export function useHandleRegistration(
     address: communityAddress,
     abi: abiWithErrors(registryCommunityABI),
     functionName: "stakeAndRegisterMember",
-    args: [""], // Empty covenant signature as a default value
+    args: [""],
     contractName: "Registry Community",
     chainId: urlChainId,
     showNotification: false,
@@ -83,9 +84,9 @@ export function useHandleRegistration(
   }, [registerMemberTxStatus, registerMemberTxError, transactionData?.hash]);
 
   const handleRegistration = useCallback(
-    (covenantSig?: `0x${string}`) => {
+    (covenantSig?: CovenantSignature) => {
       writeRegisterMember({
-        args: [covenantSig ?? "0x"], // Use empty string if covenantSig is undefined
+        args: [covenantSig ?? "0x"],
       });
     },
     [writeRegisterMember],
