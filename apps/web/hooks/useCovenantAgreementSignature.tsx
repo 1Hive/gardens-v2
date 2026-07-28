@@ -73,6 +73,16 @@ export function useCovenantAgreementSignature(
     setIsSigning(true);
 
     try {
+      if (bypassCovenantSignature) {
+        setCovenantAgreementTxProps({
+          contractName: CovenantTitle,
+          message: getTxMessage("success"),
+          status: "success",
+        });
+        triggerNextTx({ covenantSignature: "0x0" });
+        return;
+      }
+
       const storageKey =
         chainId == null
           ? undefined
@@ -87,17 +97,15 @@ export function useCovenantAgreementSignature(
           ? { found: false as const }
           : getCovenantSignature(storageKey);
 
-      if (bypassCovenantSignature || cachedSignature.found) {
-        const covenantSignature = bypassCovenantSignature
-          ? "0x0"
-          : cachedSignature.signature ?? "";
-
+      if (cachedSignature.found) {
         setCovenantAgreementTxProps({
           contractName: CovenantTitle,
           message: getTxMessage("success"),
           status: "success",
         });
-        triggerNextTx({ covenantSignature });
+        triggerNextTx({
+          covenantSignature: cachedSignature.signature ?? "",
+        });
         return;
       }
 
