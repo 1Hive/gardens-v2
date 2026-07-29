@@ -255,7 +255,7 @@ export const IncreasePower = ({
     communityAddress as Address,
     stakeDifferenceBn,
     () => writeIncreasePower(),
-    `Approve ${tokenSymbol}`,
+    { transactionLabel: `Approve ${tokenSymbol}` },
   );
 
   const AddedStake = [

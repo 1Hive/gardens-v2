@@ -1,11 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { noop } from "lodash-es";
 import { formatUnits } from "viem";
-import { Address, useContractRead } from "wagmi";
+import { Address, useContractRead, usePublicClient } from "wagmi";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { useResolvedChainId } from "./useResolvedChainId";
 import { TransactionProps } from "@/components/TransactionModal";
 import { erc20ABI } from "@/src/generated";
+import {
+  getAllowanceAction,
+  getAllowanceShortfall,
+  increaseAllowanceAbi,
+  preflightIncreaseAllowance,
+} from "@/utils/allowance";
+import { CovenantSignature } from "@/utils/covenantSignatureStorage";
 import { delayAsync } from "@/utils/delayAsync";
 import { roundToSignificant } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
@@ -15,23 +22,35 @@ export function useHandleAllowance(
   token: { address: string; decimals: number; symbol: string } | undefined,
   spenderAddr: Address,
   amount: bigint,
-  triggerNextTx: (covenantSignature: `0x${string}` | undefined) => void,
-  transactionLabel?: string,
+  triggerNextTx: (covenantSignature: CovenantSignature | undefined) => void,
+  options: {
+    transactionLabel?: string;
+    resetAllowanceIfNeeded?: boolean;
+  } = {},
 ): {
   allowanceTxProps: TransactionProps;
+  allowanceRequired: boolean | undefined;
   handleAllowance: (args?: {
     formAmount?: bigint;
-    covenantSignature?: `0x${string}`;
+    covenantSignature?: CovenantSignature;
   }) => Promise<void>;
   resetState: () => void;
 } {
   const chainId = useResolvedChainId();
+  const publicClient = usePublicClient({ chainId });
+  const activeAllowanceMethod = useRef<"approve" | "increaseAllowance">(
+    "approve",
+  );
   const [allowanceTxProps, setAllowanceTxProps] = useState<TransactionProps>({
-    contractName: transactionLabel ?? `${token?.symbol} expenditure approval`,
+    contractName:
+      options.transactionLabel ?? `${token?.symbol} expenditure approval`,
     message: "",
     status: "idle",
   });
   const [onSuccess, setOnSuccess] = useState<() => void>(noop);
+  const [allowanceRequired, setAllowanceRequired] = useState<
+    boolean | undefined
+  >(undefined);
 
   const { refetch: refetchAllowance } = useContractRead({
     chainId,
@@ -44,8 +63,8 @@ export function useHandleAllowance(
 
   const {
     writeAsync: writeAllowTokenAsync,
-    transactionStatus,
-    error: allowanceError,
+    transactionStatus: approveTransactionStatus,
+    error: approveAllowanceError,
   } = useContractWriteWithConfirmations({
     address: token?.address as Address,
     abi: erc20ABI,
@@ -55,16 +74,58 @@ export function useHandleAllowance(
     showNotification: false,
   });
 
+  const {
+    writeAsync: writeIncreaseAllowanceAsync,
+    transactionStatus: increaseTransactionStatus,
+    error: increaseAllowanceError,
+  } = useContractWriteWithConfirmations({
+    address: token?.address as Address,
+    abi: increaseAllowanceAbi,
+    functionName: "increaseAllowance",
+    contractName: "ERC20",
+    showNotification: false,
+  });
+
   const handleAllowance = async (args?: {
     formAmount?: bigint;
-    covenantSignature?: `0x${string}`;
+    covenantSignature?: CovenantSignature;
   }) => {
     const currentAllowance = await refetchAllowance();
 
     if (args?.formAmount != null) {
       amount = args.formAmount;
     }
-    if (currentAllowance?.data && currentAllowance.data >= amount) {
+    const currentAllowanceValue = currentAllowance?.data ?? 0n;
+    const allowanceShortfall = getAllowanceShortfall(
+      currentAllowanceValue,
+      amount,
+    );
+    const increaseAllowanceSupported =
+      (
+        allowanceShortfall > 0n &&
+        currentAllowanceValue > 0n &&
+        accountAddr != null &&
+        token?.address != null &&
+        publicClient != null
+      ) ?
+        await preflightIncreaseAllowance(() =>
+          (publicClient as any).simulateContract({
+            account: accountAddr,
+            address: token?.address as Address,
+            abi: increaseAllowanceAbi,
+            functionName: "increaseAllowance",
+            args: [spenderAddr, allowanceShortfall],
+          }),
+        )
+      : false;
+    const allowanceAction = getAllowanceAction({
+      currentAllowance: currentAllowanceValue,
+      requiredAllowance: amount,
+      increaseAllowanceSupported,
+      resetAllowanceIfNeeded: options.resetAllowanceIfNeeded,
+    });
+    if (allowanceAction === "none") {
+      setAllowanceRequired(false);
       await delayAsync(1000);
       setAllowanceTxProps((x) => ({
         ...x,
@@ -73,7 +134,22 @@ export function useHandleAllowance(
       }));
       triggerNextTx(args?.covenantSignature);
     } else {
-      if (currentAllowance?.data) {
+      setAllowanceRequired(true);
+      if (allowanceAction === "increase") {
+        activeAllowanceMethod.current = "increaseAllowance";
+        setOnSuccess(() => () => triggerNextTx(args?.covenantSignature));
+        setAllowanceTxProps({
+          contractName: `${token?.symbol} allowance increase`,
+          message: `Increasing allowance for ${token?.symbol} by ${token ? roundToSignificant(formatUnits(allowanceShortfall, token.decimals), 4) : ""}`,
+          status: "waiting",
+        });
+        await writeIncreaseAllowanceAsync({
+          args: [spenderAddr, allowanceShortfall],
+        });
+        return;
+      }
+      activeAllowanceMethod.current = "approve";
+      if (allowanceAction === "reset-and-approve") {
         // Already found allowance but not enough, need to reset allowance
         setAllowanceTxProps({
           contractName: `${token?.symbol} allowance reset`,
@@ -83,7 +159,7 @@ export function useHandleAllowance(
         await writeAllowTokenAsync({ args: [spenderAddr, 0n] });
         setAllowanceTxProps({
           contractName:
-            transactionLabel ?? `${token?.symbol} expenditure approval`,
+            options.transactionLabel ?? `${token?.symbol} expenditure approval`,
           message: `Setting allowance for ${token?.symbol} of ${token ? roundToSignificant(formatUnits(amount, token.decimals), 4) : ""}`,
           status: "waiting",
         });
@@ -94,25 +170,42 @@ export function useHandleAllowance(
   };
 
   useEffect(() => {
+    if (activeAllowanceMethod.current !== "approve") return;
     setAllowanceTxProps((x) => ({
       ...x,
-      message: getTxMessage(transactionStatus, allowanceError),
-      status: transactionStatus ?? "idle",
+      message: getTxMessage(approveTransactionStatus, approveAllowanceError),
+      status: approveTransactionStatus ?? "idle",
     }));
-    if (transactionStatus === "success") {
+    if (approveTransactionStatus === "success") {
       delayAsync(2000).then(() => onSuccess());
     }
-  }, [transactionStatus]);
+  }, [approveTransactionStatus]);
 
-  const resetState = () =>
+  useEffect(() => {
+    if (activeAllowanceMethod.current !== "increaseAllowance") return;
+    setAllowanceTxProps((x) => ({
+      ...x,
+      message: getTxMessage(increaseTransactionStatus, increaseAllowanceError),
+      status: increaseTransactionStatus ?? "idle",
+    }));
+    if (increaseTransactionStatus === "success") {
+      delayAsync(2000).then(() => onSuccess());
+    }
+  }, [increaseTransactionStatus]);
+
+  const resetState = () => {
+    activeAllowanceMethod.current = "approve";
+    setAllowanceRequired(undefined);
     setAllowanceTxProps((x) => ({
       ...x,
       message: getTxMessage("idle"),
       status: "idle",
     }));
+  };
 
   return {
     allowanceTxProps,
+    allowanceRequired,
     handleAllowance,
     resetState,
   };

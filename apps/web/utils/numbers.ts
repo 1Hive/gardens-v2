@@ -293,6 +293,17 @@ export function roundToSignificant(
 
 export const TEN = (n: number) => 10n ** BigInt(n);
 
+export const parsePositiveUnitsFloor = (value: string, decimals: number) => {
+  const match = value.trim().match(/^(\d*)(?:\.(\d*))?$/);
+  if (!match || decimals < 0) return 0n;
+
+  const integerPart = match[1] || "0";
+  const fractionalPart = (match[2] ?? "").slice(0, decimals);
+  const paddedFraction = fractionalPart.padEnd(decimals, "0");
+
+  return BigInt(integerPart) * TEN(decimals) + BigInt(paddedFraction || "0");
+};
+
 export const scaleTo = (x: bigint, from: number, to: number) =>
   from === to ? x
   : from < to ? x * TEN(to - from)

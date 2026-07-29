@@ -30,18 +30,23 @@ import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
-import { superfluidCFAv1ForwarderAbi, superTokenABI } from "@/src/customAbis";
+import { superfluidCFAv1ForwarderAbi } from "@/src/customAbis";
 import { abiWithErrors } from "@/utils/abi";
-import { delayAsync } from "@/utils/delayAsync";
 import {
-  MONTH_TO_SEC,
   SEC_TO_MONTH,
+  TEN,
   bigNumberMin,
+  parsePositiveUnitsFloor,
   roundToSignificant,
-  safeParseUnits,
-  scaleDownRoundUp,
   scaleTo,
 } from "@/utils/numbers";
+import {
+  buildUpgradeAndStreamBatch,
+  getStreamFundingAmounts,
+  shouldBatchUpgradeAndStream,
+  superfluidHostBatchAbi,
+} from "@/utils/superfluidBatch";
+import { getDisplayedIncomingFlowRate } from "@/utils/superfluidStreams";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {
@@ -68,7 +73,6 @@ interface PoolMetricsProps {
         sameAsUnderlying?: boolean;
       }
     | undefined;
-  streamingRatePerSecond?: bigint | string | number | null;
   streamReceiver?: Address;
   streamSender?: Address;
 }
@@ -78,7 +82,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   poolToken,
   chainId,
   superToken,
-  streamingRatePerSecond,
   streamReceiver,
   streamSender,
 }) => {
@@ -117,8 +120,9 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
 
   const amount = +(amountInput || 0);
 
-  const requestedAmountBn = BigInt(
-    Math.floor(amount * 10 ** poolToken.decimals),
+  const requestedAmountBn = parsePositiveUnitsFloor(
+    amountInput,
+    poolToken.decimals,
   );
 
   const { writeAsync: writeFundPoolAsync, isLoading: isSendFundsLoading } =
@@ -130,8 +134,10 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       args: [poolAddress as Address, requestedAmountBn],
     });
 
-  const displayedIncomingFlowRateBn =
-    directPoolFlowRateBn ?? currentFlowRateBn;
+  const displayedIncomingFlowRateBn = getDisplayedIncomingFlowRate(
+    directPoolFlowRateBn,
+    currentFlowRateBn,
+  );
 
   const currentFlowPerMonth =
     superToken && displayedIncomingFlowRateBn != null ?
@@ -144,30 +150,18 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       +formatUnits(currentUserFlowRateBn, superToken.decimals) * SEC_TO_MONTH
     : null;
 
-  const configuredFlowPerSecondBn =
-    streamingRatePerSecond != null ?
-      (() => {
-        try {
-          return BigInt(streamingRatePerSecond);
-        } catch (_error) {
-          return null;
-        }
-      })()
-    : null;
-
-  const configuredFlowPerMonth =
-    superToken && configuredFlowPerSecondBn != null ?
-      +formatUnits(configuredFlowPerSecondBn, superToken.decimals) *
-      SEC_TO_MONTH
-    : null;
-
   const requestedStreamPerMonth =
     streamDuration != null ? amount / +streamDuration : 0;
 
-  const streamRequestedAmountPerSec = requestedStreamPerMonth * MONTH_TO_SEC;
-  const streamRequestedAmountPerSecScaledUpBn =
+  const requestedAmountBnScaledUpBn =
     superToken &&
-    safeParseUnits(streamRequestedAmountPerSec, superToken.decimals);
+    scaleTo(requestedAmountBn, poolToken.decimals, superToken.decimals);
+  const streamDurationScaledBn = parsePositiveUnitsFloor(streamDuration, 18);
+  const streamRequestedAmountPerSecScaledUpBn =
+    requestedAmountBnScaledUpBn != null && streamDurationScaledBn > 0n ?
+      (requestedAmountBnScaledUpBn * TEN(18)) /
+      (streamDurationScaledBn * BigInt(SEC_TO_MONTH))
+    : undefined;
 
   // If user is streaming super same token to other recipient, we can deduct from balance a 3 month budget for each stream
   const secsTo3MonthsBn = 3n * BigInt(SEC_TO_MONTH);
@@ -186,93 +180,86 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       superToken.value - reservedSuperTokenBn
     : 0n;
 
-  const requestedAmountBnScaledUpBn =
-    superToken &&
-    scaleTo(requestedAmountBn, poolToken.decimals, superToken.decimals);
-
-  // Used for upgrade transaction
-  const effectiveRequestedAmountScaledUpBn =
+  const streamFundingAmounts =
     requestedAmountBnScaledUpBn != null ?
-      forceAllBalanceUsage ?
-        requestedAmountBnScaledUpBn - (superToken?.value ?? 0n)
-      : requestedAmountBnScaledUpBn - (userSuperTokenAvailableBudgetBn ?? 0n)
+      getStreamFundingAmounts({
+        requestedAmount: requestedAmountBnScaledUpBn,
+        availableSuperTokenBalance:
+          forceAllBalanceUsage ?
+            superToken?.value ?? 0n
+          : userSuperTokenAvailableBudgetBn ?? 0n,
+        superTokenDecimals: superToken?.decimals ?? 0,
+        underlyingTokenDecimals: poolToken.decimals,
+      })
     : undefined;
-
-  // Used for allowance of pooltoken
+  const effectiveRequestedAmountScaledUpBn =
+    streamFundingAmounts?.upgradeAmount;
   const effectiveRequestedAmountScaledDownBn =
-    effectiveRequestedAmountScaledUpBn != null ?
-      scaleDownRoundUp(
-        effectiveRequestedAmountScaledUpBn,
-        superToken?.decimals ?? 0,
-        poolToken.decimals,
-      )
-    : undefined;
+    streamFundingAmounts?.allowanceAmount;
 
   const isSuperTokenEnoughBalance =
     effectiveRequestedAmountScaledUpBn != null &&
     effectiveRequestedAmountScaledUpBn <= 0n;
-
-  const {
-    writeAsync: writeStreamFundsAsync,
-    transactionStatus: streamFundsStatus,
-    error: streamFundsError,
-    isLoading: isStreamFundsLoading,
-  } = useContractWriteWithConfirmations({
-    address: sfMeta.getNetworkByChainId(+chainId)?.contractsV1
-      .cfaV1Forwarder as Address,
-    abi: abiWithErrors(superfluidCFAv1ForwarderAbi),
-    functionName: "createFlow",
-    contractName: "SuperFluid Constant Flow Agreement",
-    showNotification: isSuperTokenEnoughBalance,
-    onConfirmations: () => {
-      setCurrentFlowRateBn(
-        (old) =>
-          (old ?? 0n) + (streamRequestedAmountPerSecScaledUpBn as bigint),
-      );
-      setCurrentUserFlowRateBn(streamRequestedAmountPerSecScaledUpBn as bigint);
-    },
-    args: [
-      superToken?.address as Address,
-      accountAddress as Address,
-      poolAddress as Address,
-      streamRequestedAmountPerSecScaledUpBn as bigint,
-      "0x",
-    ],
+  const shouldBatchStreamFunding = shouldBatchUpgradeAndStream({
+    sameAsUnderlying: superToken?.sameAsUnderlying,
+    upgradeAmount: effectiveRequestedAmountScaledUpBn,
   });
+  const superfluidContracts = sfMeta.getNetworkByChainId(+chainId)?.contractsV1;
 
-  const {
-    writeAsync: writeEditStreamAsync,
-    transactionStatus: editStreamStatus,
-    error: editStreamError,
-    isLoading: isEditStreamLoading,
-  } = useContractWriteWithConfirmations({
-    address: sfMeta.getNetworkByChainId(+chainId)?.contractsV1
-      .cfaV1Forwarder as Address,
-    abi: abiWithErrors(superfluidCFAv1ForwarderAbi),
-    functionName: "updateFlow",
-    contractName: "SuperFluid Constant Flow Agreement",
-    onConfirmations: () => {
-      setCurrentFlowRateBn(
-        (old) =>
-          (old ?? 0n) +
-          (streamRequestedAmountPerSecScaledUpBn as bigint) -
-          (currentUserFlowRateBn ?? 0n),
-      );
-      setCurrentUserFlowRateBn(streamRequestedAmountPerSecScaledUpBn as bigint);
-    },
-    args: [
-      superToken?.address as Address,
-      accountAddress as Address,
-      poolAddress as Address,
-      streamRequestedAmountPerSecScaledUpBn as bigint,
-      "0x",
-    ],
-  });
+  const { writeAsync: writeStreamFundsAsync, isLoading: isStreamFundsLoading } =
+    useContractWriteWithConfirmations({
+      address: superfluidContracts?.cfaV1Forwarder as Address,
+      abi: abiWithErrors(superfluidCFAv1ForwarderAbi),
+      functionName: "createFlow",
+      contractName: "SuperFluid Constant Flow Agreement",
+      showNotification: !shouldBatchStreamFunding,
+      onConfirmations: () => {
+        setCurrentFlowRateBn(
+          (old) =>
+            (old ?? 0n) + (streamRequestedAmountPerSecScaledUpBn as bigint),
+        );
+        setCurrentUserFlowRateBn(
+          streamRequestedAmountPerSecScaledUpBn as bigint,
+        );
+      },
+      args: [
+        superToken?.address as Address,
+        accountAddress as Address,
+        poolAddress as Address,
+        streamRequestedAmountPerSecScaledUpBn as bigint,
+        "0x",
+      ],
+    });
+
+  const { writeAsync: writeEditStreamAsync, isLoading: isEditStreamLoading } =
+    useContractWriteWithConfirmations({
+      address: superfluidContracts?.cfaV1Forwarder as Address,
+      abi: abiWithErrors(superfluidCFAv1ForwarderAbi),
+      functionName: "updateFlow",
+      contractName: "SuperFluid Constant Flow Agreement",
+      onConfirmations: () => {
+        setCurrentFlowRateBn(
+          (old) =>
+            (old ?? 0n) +
+            (streamRequestedAmountPerSecScaledUpBn as bigint) -
+            (currentUserFlowRateBn ?? 0n),
+        );
+        setCurrentUserFlowRateBn(
+          streamRequestedAmountPerSecScaledUpBn as bigint,
+        );
+      },
+      args: [
+        superToken?.address as Address,
+        accountAddress as Address,
+        poolAddress as Address,
+        streamRequestedAmountPerSecScaledUpBn as bigint,
+        "0x",
+      ],
+    });
 
   const { writeAsync: writeStopStreamAsync, isLoading: isStopStreamLoading } =
     useContractWriteWithConfirmations({
-      address: sfMeta.getNetworkByChainId(+chainId)?.contractsV1
-        .cfaV1Forwarder as Address,
+      address: superfluidContracts?.cfaV1Forwarder as Address,
       abi: abiWithErrors(superfluidCFAv1ForwarderAbi),
       functionName: "deleteFlow",
       contractName: "SuperFluid Constant Flow Agreement",
@@ -290,29 +277,43 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       },
     });
 
+  const isUpdatingStream = currentUserFlowRateBn != null;
+  const upgradeAndStreamOperations =
+    shouldBatchStreamFunding ?
+      buildUpgradeAndStreamBatch({
+        superToken: superToken?.address as Address,
+        cfaV1: superfluidContracts?.cfaV1 as Address,
+        receiver: poolAddress as Address,
+        upgradeAmount: effectiveRequestedAmountScaledUpBn as bigint,
+        flowRate: streamRequestedAmountPerSecScaledUpBn as bigint,
+        isUpdate: isUpdatingStream,
+      })
+    : [];
   const {
-    write: writeWrapFunds,
-    transactionStatus: wrapFundsStatus,
-    error: wrapFundsError,
+    write: writeUpgradeAndStream,
+    transactionStatus: upgradeAndStreamStatus,
+    error: upgradeAndStreamError,
   } = useContractWriteWithConfirmations({
-    address: superToken?.address as Address,
-    abi: superTokenABI,
-    functionName: "upgrade",
-    contractName: "SuperToken",
+    address: superfluidContracts?.host as Address,
+    abi: superfluidHostBatchAbi,
+    functionName: "batchCall",
+    contractName: "Superfluid Host",
     showNotification: false,
-    onConfirmations: async () => {
-      await delayAsync(2000);
-      if (currentUserFlowRateBn != null) {
-        writeEditStreamAsync();
-      } else {
-        writeStreamFundsAsync();
-      }
+    onConfirmations: () => {
+      setCurrentFlowRateBn(
+        (old) =>
+          (old ?? 0n) +
+          (streamRequestedAmountPerSecScaledUpBn as bigint) -
+          (currentUserFlowRateBn ?? 0n),
+      );
+      setCurrentUserFlowRateBn(streamRequestedAmountPerSecScaledUpBn as bigint);
     },
-    args: [effectiveRequestedAmountScaledUpBn as bigint],
+    args: [upgradeAndStreamOperations],
   });
 
   const {
     allowanceTxProps: wrapAllowanceTx,
+    allowanceRequired: wrapAllowanceRequired,
     handleAllowance: handleWrapAllowance,
     resetState: resetWrapAllowanceState,
   } = useHandleAllowance(
@@ -320,7 +321,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     poolToken,
     superToken?.address as Address,
     effectiveRequestedAmountScaledDownBn as bigint,
-    () => writeWrapFunds(),
+    () => writeUpgradeAndStream(),
+    { resetAllowanceIfNeeded: false },
   );
 
   const { data: walletBalance } = useBalance({
@@ -346,15 +348,14 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       formatUnits(transferWalletBalanceBn, poolToken.decimals)
     : "0";
   const pureSuperTokenAvailableBalanceBn =
-    superToken ? superToken.value - reservedSuperTokenBn : walletBalanceScaledUpBn;
+    superToken?.value ?? walletBalanceScaledUpBn;
 
   const hasInsufficientBalance =
     transferWalletBalanceBn != null &&
     transferWalletBalanceBn < requestedAmountBn;
 
   const effectiveAvailableBalanceScaledBn =
-    isPureSuperfluidToken ?
-      pureSuperTokenAvailableBalanceBn
+    isPureSuperfluidToken ? pureSuperTokenAvailableBalanceBn
     : (
       userSuperTokenAvailableBudgetBn != null &&
       walletBalanceScaledUpBn != null &&
@@ -365,9 +366,17 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       : userSuperTokenAvailableBudgetBn) + walletBalanceScaledUpBn
     : walletBalanceScaledUpBn;
 
-  const effectiveAvailableBalance =
+  const effectiveAvailableBalanceInputBn =
     effectiveAvailableBalanceScaledBn != null && superToken ?
-      formatUnits(effectiveAvailableBalanceScaledBn, superToken.decimals)
+      scaleTo(
+        effectiveAvailableBalanceScaledBn,
+        superToken.decimals,
+        poolToken.decimals,
+      )
+    : null;
+  const effectiveAvailableBalance =
+    effectiveAvailableBalanceInputBn != null ?
+      formatUnits(effectiveAvailableBalanceInputBn, poolToken.decimals)
     : null;
 
   const hasInsufficientStreamBalance =
@@ -441,49 +450,23 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     },
   ]);
 
-  const [wrapFundsTx, setWrapFundsTx] = useState<TransactionProps>({
-    contractName: "Wrap funds",
-    message: getTxMessage("idle"),
-    status: "idle",
-  });
-
-  const [streamFundsTx, setStreamFundsTx] = useState<TransactionProps>({
-    contractName: "Stream funds",
-    message: getTxMessage("idle"),
-    status: "idle",
-  });
-
-  useEffect(() => {
-    setStreamFundsTx((prev) => ({
-      ...prev,
-      message: getTxMessage(streamFundsStatus, streamFundsError),
-      status: streamFundsStatus ?? "idle",
-    }));
-  }, [streamFundsStatus, streamFundsError]);
-
-  useEffect(() => {
-    setStreamFundsTx((prev) => ({
-      ...prev,
-      message: getTxMessage(editStreamStatus, editStreamError),
-      status: editStreamStatus ?? "idle",
-    }));
-  }, [editStreamStatus, streamFundsError]);
-
-  useEffect(() => {
-    setWrapFundsTx((prev) => ({
-      ...prev,
-      message: getTxMessage(wrapFundsStatus, wrapFundsError),
-      status: wrapFundsStatus ?? "idle",
-    }));
-  }, [wrapFundsStatus]);
-
-  const resetTxsStatus = () => {
-    setWrapFundsTx((prev) => ({
-      ...prev,
+  const [upgradeAndStreamTx, setUpgradeAndStreamTx] =
+    useState<TransactionProps>({
+      contractName: "Upgrade and stream funds",
       message: getTxMessage("idle"),
       status: "idle",
+    });
+
+  useEffect(() => {
+    setUpgradeAndStreamTx((prev) => ({
+      ...prev,
+      message: getTxMessage(upgradeAndStreamStatus, upgradeAndStreamError),
+      status: upgradeAndStreamStatus ?? "idle",
     }));
-    setStreamFundsTx((prev) => ({
+  }, [upgradeAndStreamStatus, upgradeAndStreamError]);
+
+  const resetTxsStatus = () => {
+    setUpgradeAndStreamTx((prev) => ({
       ...prev,
       message: getTxMessage("idle"),
       status: "idle",
@@ -491,15 +474,15 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     resetWrapAllowanceState();
   };
 
+  const streamFundingTransactions =
+    wrapAllowanceRequired === false ?
+      [upgradeAndStreamTx]
+    : [wrapAllowanceTx, upgradeAndStreamTx];
+
   const handleStreamFunds = async () => {
     resetTxsStatus();
     if (superToken?.sameAsUnderlying) {
       // If super token is the same as underlying token, we can directly stream funds
-      setStreamFundsTx((prev) => ({
-        ...prev,
-        message: getTxMessage("idle"),
-        status: "idle",
-      }));
       await writeStreamFundsAsync();
       setIsStreamModalOpened(false);
       return;
@@ -510,7 +493,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       setIsStreamModalOpened(false);
       return;
     }
-    setWrapFundsTx((prev) => ({
+    setUpgradeAndStreamTx((prev) => ({
       ...prev,
       message: getTxMessage("idle"),
       status: "idle",
@@ -524,12 +507,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     resetTxsStatus();
     if (superToken?.sameAsUnderlying) {
       // If super token is the same as underlying token, we can directly stream funds
-      setStreamFundsTx((prev) => ({
-        ...prev,
-        message: getTxMessage("idle"),
-        status: "idle",
-      }));
-      await writeStreamFundsAsync();
+      await writeEditStreamAsync();
       setIsStreamModalOpened(false);
       return;
     }
@@ -538,7 +516,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       setIsStreamModalOpened(false);
       return;
     }
-    setWrapFundsTx((prev) => ({
+    setUpgradeAndStreamTx((prev) => ({
       ...prev,
       message: getTxMessage("idle"),
       status: "idle",
@@ -556,7 +534,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
         value={amountInput}
         onChange={(e) => {
           const value = e.target.value;
-          if (+value >= 0) {
+          if (/^\d*(?:\.\d*)?$/.test(value)) {
             setAmount(value);
           }
         }}
@@ -586,13 +564,19 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     : walletBalance && +walletBalance.formatted > 0 ?
       `${roundToSignificant(walletBalance.formatted, 4, { truncate: true })} ${poolToken?.symbol}`
     : null,
-    !isPureSuperfluidToken &&
+    (
+      !isPureSuperfluidToken &&
       superToken &&
       superToken.formatted != null &&
-      +superToken.formatted > 0 ?
+      +superToken.formatted > 0
+    ) ?
       `${roundToSignificant(superToken.formatted, 4, { truncate: true })} ${superToken.symbol}`
     : null,
-    !isPureSuperfluidToken && reservedSuperToken != null && reservedSuperToken > 0 ?
+    (
+      !isPureSuperfluidToken &&
+      reservedSuperToken != null &&
+      reservedSuperToken > 0
+    ) ?
       `- ${roundToSignificant(reservedSuperToken, 4, { truncate: true })} ${superToken?.symbol} reserved for other streams`
     : null,
   ]
@@ -667,9 +651,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     <>
       <TransactionModal
         label={`Stream funds in pool #${poolId}`}
-        transactions={[wrapAllowanceTx, wrapFundsTx, streamFundsTx].filter(
-          Boolean,
-        )}
+        transactions={streamFundingTransactions}
+        showTransactionCount={true}
         isOpen={isStreamTxModalOpen}
         onClose={() => setIsStreamTxModalOpen(false)}
       >
@@ -899,12 +882,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                       {poolToken.symbol}
                       /mo
                     </div>
-                    {configuredFlowPerMonth != null && (
-                      <p className="text-xs text-neutral-soft-content whitespace-nowrap">
-                        target {roundToSignificant(configuredFlowPerMonth, 3)}{" "}
-                        {poolToken.symbol}/mo
-                      </p>
-                    )}
                     <div
                       className="tooltip tooltip-top-left cursor-pointer w-8"
                       data-tip={`This pool is receiving ${roundToSignificant(currentFlowPerMonth, 4)} ${poolToken.symbol}/month through Superfluid streaming`}

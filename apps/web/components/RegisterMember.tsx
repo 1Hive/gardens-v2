@@ -152,7 +152,11 @@ export function RegisterMember({
     https://ipfs.io/ipfs/${covenantIpfsHash}`;
 
   const { covenantAgreementTxProps: covenantAgreementTx, handleSignature } =
-    useCovenantAgreementSignature(message, handleAllowance);
+    useCovenantAgreementSignature(message, handleAllowance, {
+      chainId: urlChainId,
+      communityAddress: communityAddress as Address,
+      covenant: covenantIpfsHash,
+    });
 
   const handleClick = useCallback(() => {
     if (isMember) {
