@@ -29,6 +29,9 @@ type ConvictionBarChartProps = {
   refreshConviction?: () => Promise<any> | void;
   isThresholdOutOfReach?: boolean;
   isThresholdBelowDisplayPrecision?: boolean;
+  stableThresholdPct?: number;
+  hasReachedThreshold?: boolean;
+  willReachThreshold?: boolean;
 };
 
 export function getChartColors(isDarkTheme?: boolean) {
@@ -62,13 +65,18 @@ const ConvictionBarChartBase = ({
   proposalType,
   isThresholdOutOfReach = false,
   isThresholdBelowDisplayPrecision = false,
+  stableThresholdPct,
+  hasReachedThreshold,
+  willReachThreshold,
 }: ConvictionBarChartProps) => {
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
   const { resolvedTheme } = useTheme();
   const isDarkTheme = resolvedTheme === "darkTheme";
   const chartColors = getChartColors(isDarkTheme);
-  const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
-  const isThresholdOverOneHundred = !isSignalingType && thresholdPct >= 100;
+  const thresholdToPassPct = stableThresholdPct ?? thresholdPct;
+  const supportNeeded = (thresholdToPassPct - proposalSupportPct).toFixed(2);
+  const isThresholdOverOneHundred =
+    !isSignalingType && thresholdToPassPct >= 100;
   const isThresholdImpossible =
     isThresholdOutOfReach || isThresholdOverOneHundred;
   const scenarioMappings: Record<string, ScenarioMapping> = {
@@ -91,6 +99,19 @@ const ConvictionBarChartBase = ({
               "Threshold over 100%."
             : "Threshold out of reach.",
           growing: null,
+        },
+      ],
+    },
+    decayingThresholdWillPass: {
+      condition: () =>
+        !isSignalingType &&
+        hasReachedThreshold !== true &&
+        willReachThreshold === true &&
+        currentConvictionPct <= thresholdPct,
+      details: [
+        {
+          message: "",
+          growing: proposalSupportPct > currentConvictionPct,
         },
       ],
     },
@@ -127,7 +148,7 @@ const ConvictionBarChartBase = ({
         proposalSupportPct < thresholdPct,
       details: [
         {
-          message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdPct} VP threshold.`,
+          message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdToPassPct} VP threshold.`,
           growing: true,
         },
       ],
@@ -163,7 +184,7 @@ const ConvictionBarChartBase = ({
         currentConvictionPct < thresholdPct,
       details: [
         {
-          message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdPct} VP threshold.`,
+          message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdToPassPct} VP threshold.`,
           growing: false,
         },
       ],
@@ -175,7 +196,7 @@ const ConvictionBarChartBase = ({
         currentConvictionPct == thresholdPct,
       details: [
         {
-          message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdPct} VP threshold.`,
+          message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdToPassPct} VP threshold.`,
           growing: false,
         },
       ],
@@ -248,7 +269,7 @@ const ConvictionBarChartBase = ({
         proposalSupportPct < thresholdPct,
       details: [
         {
-          message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdPct} VP threshold.`,
+          message: `This proposal needs ${supportNeeded} VP more support to reach ${thresholdToPassPct} VP threshold.`,
           growing: null,
         },
       ],
@@ -310,13 +331,16 @@ const ConvictionBarChartBase = ({
     );
   }, [
     currentConvictionPct,
+    hasReachedThreshold,
     hasInsufficientPoolFunds,
     isSignalingType,
     isThresholdImpossible,
     isThresholdOverOneHundred,
     proposalSupportPct,
     proposalType,
+    thresholdToPassPct,
     thresholdPct,
+    willReachThreshold,
   ]);
 
   useEffect(() => {
@@ -490,10 +514,11 @@ const ConvictionBarChartBase = ({
     ],
   };
 
-  const readyToBeExecuted = currentConvictionPct >= thresholdPct;
+  const readyToBeExecuted =
+    hasReachedThreshold ?? currentConvictionPct > thresholdPct;
   const proposalWillPass =
-    Number(supportNeeded) < 0 &&
-    (currentConvictionPct ?? 0) < (thresholdPct ?? 0);
+    willReachThreshold ??
+    (Number(supportNeeded) < 0 && currentConvictionPct < thresholdPct);
 
   const chart = (
     <>

@@ -13,7 +13,7 @@ import { usePreferredReadClient } from "./usePreferredReadClient";
 import { useResolvedChainId } from "./useResolvedChainId";
 import { cvStrategyABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
-import { getRemainingBlocksToPass } from "@/utils/convictionFormulas";
+import { getRemainingBlocksToPassWithThresholdDecay } from "@/utils/convictionFormulas";
 import { logOnce } from "@/utils/log";
 import { calculatePercentageBigInt, CV_SCALE_PRECISION } from "@/utils/numbers";
 
@@ -53,7 +53,8 @@ export const useConvictionRead = ({
   const [updatedStakedAmount, setUpdatedStakedAmount] = useState<bigint>();
   const [updatedTotalPointsActivated, setUpdatedTotalPointsActivated] =
     useState<bigint>();
-  const [thresholdFromContract, setThresholdFromContract] = useState<bigint>();
+  const [proposalThreshold, setProposalThreshold] = useState<bigint>();
+  const [stableThreshold, setStableThreshold] = useState<bigint>();
   const [errorConviction, setErrorConviction] = useState<unknown>();
   const [errorStakedAmount, setErrorStakedAmount] = useState<unknown>();
   const [errorTotalPointsActivated, setErrorTotalPointsActivated] =
@@ -87,38 +88,46 @@ export const useConvictionRead = ({
   const proposalNumber = BigInt(proposalData?.proposalNumber ?? 0);
   const requestedAmount = BigInt(proposalData?.requestedAmount ?? 0);
   const poolType = PoolTypes[strategyConfig?.proposalType];
-  const isStreamingPool = poolType === "streaming";
-  const hasRequestedAmount = requestedAmount > 0n;
   const shouldReadThreshold = shouldReadConviction && poolType !== "signaling";
-  const shouldReadThresholdFromContract =
-    shouldReadThreshold && (hasRequestedAmount || isStreamingPool);
 
   const readConvictionData = useCallback(async () => {
     if (!shouldReadConviction || !readClient || !cvStrategyContract.address) {
       setUpdatedConviction(undefined);
       setUpdatedStakedAmount(undefined);
       setUpdatedTotalPointsActivated(undefined);
-      setThresholdFromContract(undefined);
+      setProposalThreshold(undefined);
+      setStableThreshold(undefined);
       return;
     }
 
-    const [convictionResult, stakedAmountResult, totalPointsActivatedResult] =
-      await Promise.allSettled([
+    const [
+      convictionResult,
+      proposalResult,
+      totalPointsActivatedResult,
+      stableThresholdResult,
+    ] = await Promise.allSettled([
+      readClient.readContract({
+        ...cvStrategyContract,
+        functionName: "calculateProposalConviction",
+        args: [proposalNumber],
+      }),
+      readClient.readContract({
+        ...cvStrategyContract,
+        functionName: "getProposal",
+        args: [proposalNumber],
+      }),
+      readClient.readContract({
+        ...cvStrategyContract,
+        functionName: "totalPointsActivated",
+      }),
+      shouldReadThreshold ?
         readClient.readContract({
           ...cvStrategyContract,
-          functionName: "calculateProposalConviction",
-          args: [proposalNumber],
-        }),
-        readClient.readContract({
-          ...cvStrategyContract,
-          functionName: "getProposalStakedAmount",
-          args: [proposalNumber],
-        }),
-        readClient.readContract({
-          ...cvStrategyContract,
-          functionName: "totalPointsActivated",
-        }),
-      ]);
+          functionName: "calculateThreshold",
+          args: [requestedAmount],
+        })
+      : Promise.resolve(undefined),
+    ]);
 
     if (convictionResult.status === "fulfilled") {
       setUpdatedConviction(convictionResult.value as bigint);
@@ -128,12 +137,25 @@ export const useConvictionRead = ({
       setErrorConviction(convictionResult.reason);
     }
 
-    if (stakedAmountResult.status === "fulfilled") {
-      setUpdatedStakedAmount(stakedAmountResult.value as bigint);
+    if (proposalResult.status === "fulfilled") {
+      const proposal = proposalResult.value as readonly unknown[];
+      setUpdatedStakedAmount(proposal[4] as bigint);
       setErrorStakedAmount(undefined);
+
+      if (shouldReadThreshold) {
+        setProposalThreshold(proposal[8] as bigint);
+        setThresholdReadError(undefined);
+      } else {
+        setProposalThreshold(undefined);
+        setThresholdReadError(undefined);
+      }
     } else {
       setUpdatedStakedAmount(undefined);
-      setErrorStakedAmount(stakedAmountResult.reason);
+      setProposalThreshold(undefined);
+      setErrorStakedAmount(proposalResult.reason);
+      setThresholdReadError(
+        shouldReadThreshold ? proposalResult.reason : undefined,
+      );
     }
 
     if (totalPointsActivatedResult.status === "fulfilled") {
@@ -146,23 +168,10 @@ export const useConvictionRead = ({
       setErrorTotalPointsActivated(totalPointsActivatedResult.reason);
     }
 
-    if (!shouldReadThresholdFromContract) {
-      setThresholdFromContract(undefined);
-      setThresholdReadError(undefined);
-      return;
-    }
-
-    try {
-      const nextThreshold = await readClient.readContract({
-        ...cvStrategyContract,
-        functionName: "calculateThreshold",
-        args: [requestedAmount],
-      });
-      setThresholdFromContract(nextThreshold as bigint);
-      setThresholdReadError(undefined);
-    } catch (error) {
-      setThresholdFromContract(undefined);
-      setThresholdReadError(error);
+    if (shouldReadThreshold && stableThresholdResult.status === "fulfilled") {
+      setStableThreshold(stableThresholdResult.value as bigint);
+    } else {
+      setStableThreshold(undefined);
     }
   }, [
     cvStrategyContract.address,
@@ -170,7 +179,7 @@ export const useConvictionRead = ({
     readClient,
     requestedAmount,
     shouldReadConviction,
-    shouldReadThresholdFromContract,
+    shouldReadThreshold,
   ]);
 
   useEffect(() => {
@@ -178,7 +187,8 @@ export const useConvictionRead = ({
       setUpdatedConviction(undefined);
       setUpdatedStakedAmount(undefined);
       setUpdatedTotalPointsActivated(undefined);
-      setThresholdFromContract(undefined);
+      setProposalThreshold(undefined);
+      setStableThreshold(undefined);
       setErrorConviction(undefined);
       setErrorStakedAmount(undefined);
       setErrorTotalPointsActivated(undefined);
@@ -243,12 +253,12 @@ export const useConvictionRead = ({
       return undefined;
     }
 
-    return shouldReadThresholdFromContract ? thresholdFromContract : 0n;
-  }, [
-    shouldReadThreshold,
-    shouldReadThresholdFromContract,
-    thresholdFromContract,
-  ]);
+    return proposalThreshold;
+  }, [proposalThreshold, shouldReadThreshold]);
+  const resolvedStableThreshold = useMemo(
+    () => stableThreshold ?? resolvedThreshold,
+    [resolvedThreshold, stableThreshold],
+  );
 
   if (
     thresholdReadError instanceof Error &&
@@ -256,7 +266,7 @@ export const useConvictionRead = ({
   ) {
     logOnce(
       "error",
-      "Error reading threshold from contract",
+      "Error reading proposal threshold from contract",
       thresholdReadError,
     );
   }
@@ -266,13 +276,20 @@ export const useConvictionRead = ({
 
   const remainingBlocksToPass = useMemo(
     () =>
-      getRemainingBlocksToPass(
+      getRemainingBlocksToPassWithThresholdDecay(
         Number(resolvedThreshold ?? 0n),
+        Number(resolvedStableThreshold ?? resolvedThreshold ?? 0n),
         Number(resolvedConviction),
         Number(resolvedStakedAmount),
         alphaDecay,
       ),
-    [resolvedThreshold, resolvedConviction, resolvedStakedAmount],
+    [
+      alphaDecay,
+      resolvedConviction,
+      resolvedStableThreshold,
+      resolvedStakedAmount,
+      resolvedThreshold,
+    ],
   );
   const blockTime = chain?.blockTime;
 
@@ -291,6 +308,18 @@ export const useConvictionRead = ({
       : undefined,
     [resolvedThreshold, resolvedMaxCVSupply, token?.decimals, initialized],
   );
+  const stableThresholdPct = useMemo(
+    () =>
+      initialized && resolvedStableThreshold != null ?
+        calculatePercentageBigInt(resolvedStableThreshold, resolvedMaxCVSupply)
+      : undefined,
+    [
+      initialized,
+      resolvedMaxCVSupply,
+      resolvedStableThreshold,
+      token?.decimals,
+    ],
+  );
 
   const isThresholdBelowDisplayPrecision = useMemo(() => {
     if (!initialized || resolvedThreshold == null || resolvedThreshold <= 0n) {
@@ -304,10 +333,32 @@ export const useConvictionRead = ({
   const hasReachedThreshold = useMemo(
     () =>
       initialized && resolvedThreshold != null ?
-        resolvedConviction >= resolvedThreshold
+        resolvedConviction > resolvedThreshold
       : undefined,
     [initialized, resolvedThreshold, resolvedConviction],
   );
+  const willReachThreshold = useMemo(() => {
+    if (
+      !initialized ||
+      resolvedStableThreshold == null ||
+      resolvedStakedAmount == null
+    ) {
+      return undefined;
+    }
+
+    const decay = BigInt(strategyConfig?.decay ?? 0);
+    const precision = BigInt(CV_SCALE_PRECISION);
+    if (decay >= precision) return false;
+
+    const maxProposalConviction =
+      (resolvedStakedAmount * precision) / (precision - decay);
+    return maxProposalConviction > resolvedStableThreshold;
+  }, [
+    initialized,
+    resolvedStableThreshold,
+    resolvedStakedAmount,
+    strategyConfig?.decay,
+  ]);
 
   let totalSupportPct = useMemo(
     () =>
@@ -335,7 +386,9 @@ export const useConvictionRead = ({
 
   logOnce("debug", "Conviction computed numbers", {
     thresholdPct,
-    thresholdFromContract: resolvedThreshold,
+    proposalThreshold: resolvedThreshold,
+    stableThreshold: resolvedStableThreshold,
+    stableThresholdPct,
     totalSupportPct,
     currentConvictionPct,
   });
@@ -343,8 +396,10 @@ export const useConvictionRead = ({
   return initialized ?
       {
         thresholdPct,
+        stableThresholdPct,
         isThresholdBelowDisplayPrecision,
         hasReachedThreshold,
+        willReachThreshold,
         totalSupportPct,
         currentConvictionPct,
         updatedConviction: resolvedConviction,
@@ -355,7 +410,9 @@ export const useConvictionRead = ({
       }
     : {
         hasReachedThreshold: undefined,
+        willReachThreshold: undefined,
         thresholdPct: undefined,
+        stableThresholdPct: undefined,
         isThresholdBelowDisplayPrecision: undefined,
         totalSupportPct: undefined,
         currentConvictionPct: undefined,

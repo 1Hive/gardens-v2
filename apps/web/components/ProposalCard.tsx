@@ -201,8 +201,10 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const {
       currentConvictionPct,
       thresholdPct,
+      stableThresholdPct,
       isThresholdBelowDisplayPrecision,
       hasReachedThreshold,
+      willReachThreshold,
       totalSupportPct,
       timeToPass,
       triggerConvictionRefetch,
@@ -439,8 +441,9 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
     const hasThreshold = thresholdPct != null;
     const thresholdValue = thresholdPct ?? 0;
+    const stableThresholdValue = stableThresholdPct ?? thresholdValue;
     const supportNeededToPass = (
-      thresholdValue - (totalSupportPct ?? 0)
+      stableThresholdValue - (totalSupportPct ?? 0)
     ).toFixed(2);
 
     const readyToBeExecuted = hasThreshold && hasReachedThreshold === true;
@@ -452,8 +455,8 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
     const proposalWillPass =
       hasThreshold &&
-      Number(supportNeededToPass) < 0 &&
-      (currentConvictionPct ?? 0) < thresholdValue &&
+      willReachThreshold === true &&
+      hasReachedThreshold !== true &&
       !alreadyExecuted;
 
     const hasProposalPassCountdown =
@@ -466,7 +469,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const hasActiveStream = (currentFlowRateBn ?? 0n) > 0n;
 
     const impossibleToPass =
-      hasThreshold && (thresholdValue >= 100 || minThGtTotalEffPoints);
+      hasThreshold && (stableThresholdValue >= 100 || minThGtTotalEffPoints);
 
     const streamingStatusLabel =
       isStreamingType ?
@@ -737,6 +740,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           compact
                           currentConvictionPct={currentConvictionPct}
                           thresholdPct={thresholdPct ?? 0}
+                          stableThresholdPct={stableThresholdPct}
                           proposalSupportPct={totalSupportPct ?? 0}
                           isSignalingType={isSignalingType}
                           proposalNumber={proposalNumber}
@@ -750,6 +754,8 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           isThresholdBelowDisplayPrecision={
                             isThresholdBelowDisplayPrecision
                           }
+                          hasReachedThreshold={hasReachedThreshold}
+                          willReachThreshold={willReachThreshold}
                         />
                       </div>
                     </div>
