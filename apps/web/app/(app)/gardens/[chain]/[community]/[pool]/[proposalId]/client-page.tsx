@@ -682,28 +682,6 @@ export default function ClientPage({ params }: ClientPageProps) {
     routerSearchParams.get(QUERY_PARAMS.proposalPage.pendingProposal) ??
     initialSearchParams?.[QUERY_PARAMS.proposalPage.pendingProposal] ??
     undefined;
-  const pendingProposalTitleParam =
-    collectedParams[QUERY_PARAMS.proposalPage.pendingProposalTitle] ??
-    routerSearchParams.get(QUERY_PARAMS.proposalPage.pendingProposalTitle) ??
-    initialSearchParams?.[QUERY_PARAMS.proposalPage.pendingProposalTitle] ??
-    undefined;
-  const pendingProposalTitle =
-    pendingProposalTitleParam ?
-      (() => {
-        try {
-          return decodeURIComponent(pendingProposalTitleParam);
-        } catch (error) {
-          console.warn("Unable to decode pending proposal title", {
-            pendingProposalTitleParam,
-            error,
-          });
-          return pendingProposalTitleParam;
-        }
-      })()
-    : undefined;
-  const pendingProposalDisplayTitle =
-    metadata?.title ?? ipfsResult?.title ?? pendingProposalTitle;
-
   const proposalType = proposalData?.strategy?.config?.proposalType;
   const isSignalingType = PoolTypes[proposalType] === "signaling";
   const isStreamingType = PoolTypes[proposalType] === "streaming";
@@ -1216,24 +1194,6 @@ export default function ClientPage({ params }: ClientPageProps) {
     isConnected: isUnwrapConnected,
     missmatchUrl: isUnwrapWrongNetwork,
   } = useDisableButtons(disableUnwrapBtnConditions);
-  if (isAwaitingProposal) {
-    return (
-      <div className="col-span-12 flex min-h-[60vh] flex-col items-center justify-center gap-6">
-        <InfoBox
-          infoBoxType="info"
-          title="Finalizing proposal creation"
-          className="max-w-2xl"
-        >
-          <div className="flex flex-col gap-3">
-            <p>
-              {`Waiting for "${pendingProposalDisplayTitle ?? "newly created proposal"}" to be indexed...`}
-            </p>
-          </div>
-        </InfoBox>
-      </div>
-    );
-  }
-
   if (!isProposalCoreReady) {
     return (
       <div className="col-span-12 flex min-h-[40vh] items-center justify-center">
