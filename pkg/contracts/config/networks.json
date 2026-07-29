@@ -129,7 +129,7 @@
       },
       "hash": "04665d55f192e5e6430e914a14ebcacc8552ba24",
       "IMPLEMENTATIONS": {
-        "CV_STRATEGY": "0x862ac7d64f64eb79236ddb81fa3a40487bff056a",
+        "CV_STRATEGY": "0x66f562965e679a258acd8feae0f3b692e99ae7b7",
         "CV_UTIL_LIB": "0xf4fa51c691ffd862fae5b56f23e56392b511c04f",
         "REGISTRY_COMMUNITY": "0xb28a4c023632528a7e8df403c8f78ba50dc4ecdb",
         "COLLATERAL_VAULT": "0x32ef7222b5291b3710f0a59ab042118f9dd06a47",
@@ -164,7 +164,7 @@
       },
       "FACTORY_STATE": {
         "COMMUNITY_CUTS_DIGEST": "0x59cecbada7fc483095f9db814c5e5087d9ff25f2f55049a9b4fc455ce0d7a69e",
-        "STRATEGY_CUTS_DIGEST": "0x95be1ad2ee19c6e206685d6728bddc1e02817b59097647f6cec27f5c3a7af309"
+        "STRATEGY_CUTS_DIGEST": "0xf7e0c906d834db06c97d6d521dc245d304aa187b80010a7687889be0152cc49a"
       }
     },
     {
@@ -237,7 +237,7 @@
       },
       "hash": "950f5a5ae733ac941ffc29cd4e4317f05fb9fc00",
       "IMPLEMENTATIONS": {
-        "CV_STRATEGY": "0x047328eb5c7e09c66cb3238f0d6603b2d547cbc0",
+        "CV_STRATEGY": "0x85249a6da3ff7ba8ea8ca21c8755728a4a1f0698",
         "CV_UTIL_LIB": "0xf4fa51c691ffd862fae5b56f23e56392b511c04f",
         "REGISTRY_COMMUNITY": "0x37a4f7dbf48cd29284b22360672f9f27e4603ba0",
         "COLLATERAL_VAULT": "0x5d5a26a0b5b14ca4c8b116db7d04289bbe52d9e0",
@@ -270,7 +270,7 @@
       },
       "FACTORY_STATE": {
         "COMMUNITY_CUTS_DIGEST": "0x6aa5f186b9649a4bfaea6a86feaf6fecd29ef255469ad86b3b56d30240810fa4",
-        "STRATEGY_CUTS_DIGEST": "0xaabde7ccd558d7a165627522a68186158e68a2e10cd14f82b283b75d67338dc4"
+        "STRATEGY_CUTS_DIGEST": "0x3b29c4afe38b1fc52e8a461eb66092883848c061de8f675888bd40b7c0afac38"
       }
     },
     {
@@ -315,7 +315,7 @@
       },
       "hash": "3ecebb00804f0b9734163d97d400bfa6f2bef25b",
       "IMPLEMENTATIONS": {
-        "CV_STRATEGY": "0x0fde6dab5cf29a60146f0843b8e31c69a22961bd",
+        "CV_STRATEGY": "0x7185cdc8c2cd1b7f111705311bce0b06e0ab9571",
         "CV_UTIL_LIB": "0xf4fa51c691ffd862fae5b56f23e56392b511c04f",
         "REGISTRY_COMMUNITY": "0x9f7cf8cc40e515626a10865c28cfa3abb1baad14",
         "COLLATERAL_VAULT": "0xb60d6b4c50e8a3b073c3d408fe7786c4a939720e",
@@ -350,7 +350,7 @@
       },
       "FACTORY_STATE": {
         "COMMUNITY_CUTS_DIGEST": "0xf90f5cfffeec7307e5890181267bc25ca06b287b6962c808237b0bf8c7eef499",
-        "STRATEGY_CUTS_DIGEST": "0xafab98feebb2ebaec03f81073879bfae0dd83cb05394b52a20293f188dd2f595"
+        "STRATEGY_CUTS_DIGEST": "0x3084665a5aa3fa2aecea3aaf1224ba3cf8546ee3d48a29add88b8d3a29e67524"
       }
     },
     {
