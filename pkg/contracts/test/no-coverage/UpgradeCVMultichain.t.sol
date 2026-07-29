@@ -465,6 +465,23 @@ contract UpgradeCVMultichainScript is Test {
         );
     }
 
+    function test_runCurrentNetwork_strategy_phase_can_atomically_migrate_threshold_snapshots() public {
+        _useFixture("strategies-migrate-thresholds");
+        _setDefaultScriptEnv();
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
+
+        script.setPhaseForTest(3);
+        script.setFactoryActionForTest(0);
+        script.setFlagForTest("MIGRATE_THRESHOLD_SNAPSHOTS", true);
+        script.executeCurrentNetworkForTest();
+
+        vm.prank(address(script));
+        vm.expectRevert();
+        strategy.reinitializeV2MigrateThresholdSnapshots();
+    }
+
     function test_runCurrentNetwork_communities_phase_only_upgrades_community_proxy_and_syncs_live_impl() public {
         _useFixture("communities-only");
         _setDefaultScriptEnv();
@@ -553,6 +570,7 @@ contract UpgradeCVMultichainScript is Test {
         script.setFlagForTest("SKIP_STRATEGY_DIAMOND_CUT", false);
         script.setFlagForTest("STRATEGY_DCUT_BEFORE_UPGRADE", false);
         script.setFlagForTest("SKIP_STRATEGY_DIAMOND_INIT", false);
+        script.setFlagForTest("MIGRATE_THRESHOLD_SNAPSHOTS", false);
     }
 
     function _networkMetaJson() internal pure returns (string memory) {
