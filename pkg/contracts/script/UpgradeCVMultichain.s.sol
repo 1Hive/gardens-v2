@@ -130,7 +130,9 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         }
         if (_shouldDoStrategies()) {
             _executeStrategyUpgrades(context, networkJson);
-            _syncFactoryStrategyState(context);
+            if (!_flagEnabled("SKIP_FACTORY_STRATEGY_SYNC")) {
+                _syncFactoryStrategyState(context);
+            }
             if (_isFullStrategySelection(networkJson)) {
                 _syncStrategyImplementationFromLive(networkJson);
             }
@@ -460,8 +462,9 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         require(linkedLibrary != address(0), "CV_UTIL_LIB link missing");
         require(_readLinkedAddress(runtimeCode, 6955) == linkedLibrary, "CV_UTIL_LIB link mismatch");
         require(_readLinkedAddress(runtimeCode, 8737) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 13343) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 13980) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 13344) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 14078) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 16795) == linkedLibrary, "CV_UTIL_LIB link mismatch");
         require(linkedLibrary.code.length != 0, "CV_UTIL_LIB has no code");
 
         _writeNetworkAddress(".IMPLEMENTATIONS.CV_UTIL_LIB", linkedLibrary);
