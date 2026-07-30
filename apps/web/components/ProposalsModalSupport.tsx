@@ -142,7 +142,6 @@ export const ProposalsModalSupport = forwardRef<
     const {
       currentConvictionPct,
       thresholdPct,
-      stableThresholdPct,
       hasReachedThreshold,
       willReachThreshold,
       totalSupportPct,
@@ -235,7 +234,7 @@ export const ProposalsModalSupport = forwardRef<
       liveCurrentFlowRateBn ?? subgraphCurrentFlowRateBn;
 
     const supportNeededToPass = (
-      (stableThresholdPct ?? thresholdPct ?? 0) - (totalSupportPct ?? 0)
+      (thresholdPct ?? 0) - (totalSupportPct ?? 0)
     ).toFixed(2);
 
     const readyToBeExecuted = hasReachedThreshold === true;
@@ -252,7 +251,7 @@ export const ProposalsModalSupport = forwardRef<
       Number(timeToPass) > 0;
 
     const impossibleToPass =
-      (stableThresholdPct ?? thresholdPct ?? 0) >= 100 || minThGtTotalEffPoints;
+      (thresholdPct ?? 0) >= 100 || minThGtTotalEffPoints;
     const hasActiveStream = (currentFlowRateBn ?? 0n) > 0n;
     const showStreamingAboutToStart =
       isStreamingType &&
