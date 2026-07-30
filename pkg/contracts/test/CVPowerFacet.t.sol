@@ -172,6 +172,10 @@ contract CVPowerFacetHarness is CVPowerFacet {
 }
 
 contract CVPowerFacetTest is Test {
+    event PoolThresholdUpdated(
+        uint256 thresholdSnapshot, uint256 totalPointsActivated, uint256 thresholdUpdatedAtBlock
+    );
+
     CVPowerFacetHarness internal facet;
     MockRegistryCommunityPower internal registry;
     MockExternalVotingPowerRegistry internal externalRegistry;
@@ -203,11 +207,29 @@ contract CVPowerFacetTest is Test {
         sybil.setCanExecute(member, true);
         registry.setMemberPower(member, 7);
 
+        vm.expectEmit();
+        emit PoolThresholdUpdated(7, 7, block.number);
         vm.prank(member);
         facet.activatePoints();
 
         assertEq(facet.totalPointsActivated(), 7);
         assertEq(registry.lastActivated(), member);
+    }
+
+    function test_deactivatePoints_emitsDecayingThresholdCheckpoint() public {
+        uint256 decay = 9_000_000;
+        facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
+        registry.setMemberPower(member, 20);
+        registry.setActivated(member, true);
+        facet.setTotalPointsActivatedWithCheckpoint(100);
+
+        vm.roll(block.number + 10);
+        vm.expectEmit();
+        emit PoolThresholdUpdated(100, 80, block.number);
+        vm.prank(member);
+        facet.deactivatePoints();
+
+        assertEq(facet.totalPointsActivated(), 80);
     }
 
     function test_powerMutations_updateActivatedPointTotals() public {

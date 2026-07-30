@@ -155,6 +155,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     event SuperfluidGDAConnected(address indexed gda, address indexed by);
     event SuperfluidGDADisconnected(address indexed gda, address indexed by);
     event ThresholdSnapshotsMigrated(uint256 proposalCount, uint256 totalPointsActivated, uint256 blockNumber);
+    event PoolThresholdUpdated(
+        uint256 thresholdSnapshot, uint256 totalPointsActivated, uint256 thresholdUpdatedAtBlock
+    );
     // event Logger(string message, uint256 value);
 
     /*|-------------------------------------/-------|*o

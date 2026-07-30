@@ -129,6 +129,8 @@ templates:
           handler: handlePowerIncreased
         - event: PowerDecreased(address,uint256,uint256)
           handler: handlePowerDecreased
+        - event: PoolThresholdUpdated(uint256,uint256,uint256)
+          handler: handlePoolThresholdUpdated
         - event: PointsDeactivated(address)
           handler: handlePointsDeactivated
         - event: CVParamsUpdated((uint256,uint256,uint256,uint256))

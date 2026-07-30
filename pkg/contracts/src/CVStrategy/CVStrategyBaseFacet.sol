@@ -51,6 +51,10 @@ abstract contract CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
     using ConvictionsUtils for uint256;
 
+    event PoolThresholdUpdated(
+        uint256 thresholdSnapshot, uint256 totalPointsActivated, uint256 thresholdUpdatedAtBlock
+    );
+
     /*|--------------------------------------------|*/
     /*|              ERRORS                        |*/
     /*|--------------------------------------------|*/
@@ -549,6 +553,8 @@ abstract contract CVStrategyBaseFacet {
         thresholdLayout.thresholdSnapshot = thresholdPoints;
         thresholdLayout.thresholdUpdatedAtBlock = block.number;
         totalPointsActivated = newTotalPointsActivated;
+
+        emit PoolThresholdUpdated(thresholdPoints, newTotalPointsActivated, block.number);
     }
 
     /**
