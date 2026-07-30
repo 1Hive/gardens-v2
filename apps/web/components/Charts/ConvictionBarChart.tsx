@@ -562,6 +562,7 @@ const ConvictionBarChartBase = ({
               color: chartColors.threshold,
             },
             color: chartColors.threshold,
+            tooltip: { show: false },
             z: 0,
             markLine: {
               ...markLineTh,
@@ -574,13 +575,25 @@ const ConvictionBarChartBase = ({
         [
           {
             type: "bar" as const,
-            name: "Target threshold",
+            name: "Threshold",
             barWidth: 18,
-            data: [thresholdAdjustment.stableThresholdPct],
+            data: [thresholdPct],
             silent: true,
             color: "#3e4943",
             itemStyle: {
               color: "#3e4943",
+              opacity: 0,
+            },
+          },
+          {
+            type: "bar" as const,
+            name: "Target threshold",
+            barWidth: 18,
+            data: [thresholdAdjustment.stableThresholdPct],
+            silent: true,
+            color: "#333e37",
+            itemStyle: {
+              color: "#333e37",
               opacity: 0,
             },
             markLine: stableThresholdMarkLine,
