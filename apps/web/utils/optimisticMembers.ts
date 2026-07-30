@@ -23,6 +23,17 @@ const isSame = (left: unknown, right: unknown) =>
 const memberAddressFromRecord = (value: StringRecord) =>
   value.memberAddress ?? value.id;
 
+const memberAddressFromStrategyRecord = (value: StringRecord) => {
+  if (!isObject(value.member)) return undefined;
+  if (value.member.id != null) return value.member.id;
+  if (!Array.isArray(value.member.memberCommunity)) return undefined;
+
+  const membership = value.member.memberCommunity.find(
+    (item) => isObject(item) && item.memberAddress != null,
+  );
+  return isObject(membership) ? membership.memberAddress : undefined;
+};
+
 export const createMemberOptimisticProjector =
   (context: MemberProjectorContext) =>
   <TData>(data: TData | undefined, records: PendingIndexedPublish[]) => {
@@ -345,8 +356,7 @@ function patchMemberStrategiesArray(
   const withoutMember = value.filter(
     (item) =>
       !isObject(item) ||
-      !isObject(item.member) ||
-      !isSame(item.member.id, optimistic.memberAddress),
+      !isSame(memberAddressFromStrategyRecord(item), optimistic.memberAddress),
   );
 
   if (!optimistic.isActivated) {
@@ -356,12 +366,14 @@ function patchMemberStrategiesArray(
   const found = value.some(
     (item) =>
       isObject(item) &&
-      isObject(item.member) &&
-      isSame(item.member.id, optimistic.memberAddress),
+      isSame(memberAddressFromStrategyRecord(item), optimistic.memberAddress),
   );
 
   const patched = value.map((item) =>
-    isObject(item) && isObject(item.member) && isSame(item.member.id, optimistic.memberAddress) ?
+    (
+      isObject(item) &&
+      isSame(memberAddressFromStrategyRecord(item), optimistic.memberAddress)
+    ) ?
       patchMemberStrategy(item, optimistic)
     : item,
   );
@@ -383,7 +395,7 @@ function patchMemberStrategiesArray(
         ],
       },
     },
-    ...patched,
+    ...withoutMember,
   ];
 }
 
@@ -415,7 +427,10 @@ function patchMemberStrategy(
   value: StringRecord,
   optimistic: PoolGovernanceOptimistic,
 ) {
-  if (isObject(value.member) && !isSame(value.member.id, optimistic.memberAddress)) {
+  if (
+    isObject(value.member) &&
+    !isSame(memberAddressFromStrategyRecord(value), optimistic.memberAddress)
+  ) {
     return value;
   }
 

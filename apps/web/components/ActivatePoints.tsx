@@ -12,6 +12,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { cvStrategyABI } from "@/src/generated";
 import { useErrorDetails } from "@/utils/getErrorName";
+import { publishGovernanceChangeBeforeClosing } from "@/utils/governanceConfirmation";
 
 type ActiveMemberProps = {
   strategy: Pick<CVStrategy, "id" | "poolId"> & {
@@ -57,35 +58,34 @@ export function ActivatePoints({
     abi: cvStrategyABI,
     functionName: "activatePoints",
     fallbackErrorMessage: "Error activating points, please report a bug.",
-    onSuccess: () => {
-      handleTxSuccess?.();
-    },
     onConfirmations: (receipt) => {
-      publishAfterIndexed(
-        receipt,
-        {
-          topic: "member",
-          id: connectedAccount,
-          type: "update",
-          function: "activatePoints",
-          containerId: strategy.id,
-          chainId,
-        },
-        connectedAccount ?
+      publishGovernanceChangeBeforeClosing(() => {
+        publishAfterIndexed(
+          receipt,
           {
-            optimistic: {
-              kind: "pool-governance",
-              strategyId: strategy.id,
-              memberAddress: connectedAccount,
-              isActivated: true,
-              activatedPoints:
-                memberPower != null && memberPower > 0n ?
-                  memberPower.toString()
-                : undefined,
-            },
-          }
-        : undefined,
-      );
+            topic: "member",
+            id: connectedAccount,
+            type: "update",
+            function: "activatePoints",
+            containerId: strategy.id,
+            chainId,
+          },
+          connectedAccount ?
+            {
+              optimistic: {
+                kind: "pool-governance",
+                strategyId: strategy.id,
+                memberAddress: connectedAccount,
+                isActivated: true,
+                activatedPoints:
+                  memberPower != null && memberPower > 0n ?
+                    memberPower.toString()
+                  : undefined,
+              },
+            }
+          : undefined,
+        );
+      }, handleTxSuccess);
     },
   });
 
@@ -99,33 +99,32 @@ export function ActivatePoints({
     contractName: "CV Strategy",
     functionName: "deactivatePoints",
     fallbackErrorMessage: "Error deactivating points, please report a bug.",
-    onSuccess: () => {
-      handleTxSuccess?.();
-    },
     onConfirmations: (receipt) => {
-      publishAfterIndexed(
-        receipt,
-        {
-          topic: "member",
-          id: connectedAccount,
-          containerId: strategy.id,
-          type: "update",
-          function: "deactivatePoints",
-          chainId,
-        },
-        connectedAccount ?
+      publishGovernanceChangeBeforeClosing(() => {
+        publishAfterIndexed(
+          receipt,
           {
-            optimistic: {
-              kind: "pool-governance",
-              strategyId: strategy.id,
-              memberAddress: connectedAccount,
-              isActivated: false,
-              activatedPoints: "0",
-              supportSnapshot,
-            },
-          }
-        : undefined,
-      );
+            topic: "member",
+            id: connectedAccount,
+            containerId: strategy.id,
+            type: "update",
+            function: "deactivatePoints",
+            chainId,
+          },
+          connectedAccount ?
+            {
+              optimistic: {
+                kind: "pool-governance",
+                strategyId: strategy.id,
+                memberAddress: connectedAccount,
+                isActivated: false,
+                activatedPoints: "0",
+                supportSnapshot,
+              },
+            }
+          : undefined,
+        );
+      }, handleTxSuccess);
     },
   });
 
