@@ -47,9 +47,9 @@ export function getChartColors(isDarkTheme?: boolean) {
     conviction: isDarkTheme ? "#3f8f65" : "#74c898",
     threshold:
       isDarkTheme ? "rgba(79, 161, 118, 0.35)" : "rgba(150, 211, 105, 0.45)",
-    thresholdTarget: isDarkTheme ? "#D6B45A" : "#7A5A00",
+    thresholdTarget: isDarkTheme ? "#8B9490" : "#66706B",
     thresholdAdjustment:
-      isDarkTheme ? "rgba(214, 180, 90, 0.14)" : "rgba(122, 90, 0, 0.1)",
+      isDarkTheme ? "rgba(139, 148, 144, 0.12)" : "rgba(102, 112, 107, 0.1)",
     markLine: isDarkTheme ? "#E8E8E8" : "#191919",
     label: isDarkTheme ? "#F5F5F5" : "#191919",
     tooltipBorder: isDarkTheme ? "#4FA176" : "#65AD18",
@@ -406,8 +406,7 @@ const ConvictionBarChartBase = ({
     isSignalingType || thresholdAdjustment == null ?
       {}
     : {
-        symbol: ["none", "diamond"],
-        symbolSize: compact ? 8 : 10,
+        symbol: "none",
         label: { show: false },
         data: [
           {
@@ -577,8 +576,9 @@ const ConvictionBarChartBase = ({
             type: "bar" as const,
             name: "Settles at",
             barWidth: 18,
-            data: [thresholdAdjustment.stableThresholdPct],
+            data: [0],
             silent: true,
+            tooltip: { show: false },
             itemStyle: { color: "transparent" },
             markLine: stableThresholdMarkLine,
           },
