@@ -1082,11 +1082,11 @@ contract PoC_GHSAQPR5_TimeWeightedThresholdSnapshot is PoCBase {
     function test_GHSAQPR5_TemporarySpikeDecaysAtConvictionRate() public {
         vm.roll(100);
         uint256 proposalId = _createProposal(honest, REQUESTED_AMOUNT);
+        _allocateSupport(honest, proposalId, MINIMUM_STAKE);
 
         vm.roll(110);
         vm.prank(spike);
         cvStrategy.activatePoints();
-        _allocateSupport(honest, proposalId, MINIMUM_STAKE);
 
         vm.roll(111);
         vm.prank(spike);
@@ -1098,7 +1098,7 @@ contract PoC_GHSAQPR5_TimeWeightedThresholdSnapshot is PoCBase {
         (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPoints) = cvStrategy.cvParams();
 
         uint256 weightedPoints =
-            ConvictionsUtils.weightedAverage(BASE_POWER + SPIKE_POWER, BASE_POWER, block.number - 110, decay);
+            ConvictionsUtils.weightedAverage(BASE_POWER + SPIKE_POWER, BASE_POWER, block.number - 111, decay);
         uint256 expectedWeightedThreshold = ConvictionsUtils.calculateThreshold(
             REQUESTED_AMOUNT, POOL_AMOUNT, weightedPoints, decay, weight, maxRatio, minThresholdPoints
         );

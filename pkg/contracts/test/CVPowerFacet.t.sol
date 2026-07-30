@@ -431,6 +431,47 @@ contract CVPowerFacetTest is Test {
         _assertProposalBelowThreshold(requestedAmount, poolAmount, decay, weight, maxRatio);
     }
 
+    function test_activationSpike_deactivationWithoutProposalTouchpointDecaysFromHigherThreshold() public {
+        uint256 decay = 9_000_000;
+        uint256 basePoints = 100 ether;
+        uint256 activatedPoints = 20 ether;
+        facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
+        facet.setTotalPointsActivated(basePoints);
+        facet.setProposal(1, address(0), 0, 0);
+        facet.setProposalSubmitter(1, address(0xBEEF));
+
+        vm.roll(100);
+        facet.initializeProposalThreshold(1);
+
+        sybil.setCanExecute(member, true);
+        registry.setMemberPower(member, activatedPoints);
+        vm.roll(110);
+        vm.prank(member);
+        facet.activatePoints();
+
+        uint256 peakPoints = basePoints + activatedPoints;
+        assertEq(facet.getProposalThresholdPoints(1), peakPoints);
+
+        vm.roll(111);
+        vm.prank(member);
+        facet.deactivatePoints();
+
+        assertEq(facet.totalPointsActivated(), basePoints);
+        assertEq(
+            facet.getProposalThresholdPoints(1),
+            peakPoints,
+            "deactivation must not immediately erase the activated threshold"
+        );
+
+        vm.roll(112);
+        assertEq(
+            facet.getProposalThresholdPoints(1), ConvictionsUtils.weightedAverage(peakPoints, basePoints, 1, decay)
+        );
+
+        vm.roll(10_000);
+        assertEq(facet.getProposalThresholdPoints(1), basePoints);
+    }
+
     function test_increasePower_custom_usesDeltaNotAbsolute() public {
         sybil.setCanExecute(member, true);
         facet.setPointSystem(PointSystem.Custom);

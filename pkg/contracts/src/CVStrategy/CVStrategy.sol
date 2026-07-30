@@ -37,6 +37,7 @@ import {ConvictionsUtils} from "./ConvictionsUtils.sol";
 import {PowerManagementUtils} from "./PowerManagementUtils.sol";
 import {CVStreamingBase} from "./CVStreamingStorage.sol";
 import {DecimalScalingUtils} from "./DecimalScalingUtils.sol";
+import {CVThresholdStorage} from "./CVThresholdStorage.sol";
 
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
@@ -680,8 +681,21 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
 
     function _getThresholdPoints(Proposal storage _proposal) internal view returns (uint256) {
         uint256 updatedAtBlock = _proposal.thresholdUpdatedAtBlock;
-        return ConvictionsUtils.weightedAverage(
+        uint256 proposalThresholdPoints = ConvictionsUtils.weightedAverage(
             _proposal.thresholdSnapshot, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
+        );
+        uint256 poolThresholdPoints = _getPoolThresholdPoints();
+        return proposalThresholdPoints > poolThresholdPoints ? proposalThresholdPoints : poolThresholdPoints;
+    }
+
+    function _getPoolThresholdPoints() internal view returns (uint256) {
+        CVThresholdStorage.Layout storage thresholdLayout = CVThresholdStorage.layout();
+        uint256 updatedAtBlock = thresholdLayout.thresholdUpdatedAtBlock;
+        if (updatedAtBlock == 0) {
+            return totalPointsActivated;
+        }
+        return ConvictionsUtils.weightedAverage(
+            thresholdLayout.thresholdSnapshot, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
         );
     }
 

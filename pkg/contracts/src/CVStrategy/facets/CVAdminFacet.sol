@@ -357,9 +357,9 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
 
     function _decreaseTotalPointsActivated(uint256 points) internal {
         if (points > totalPointsActivated) {
-            totalPointsActivated = 0;
+            _checkpointTotalPointsActivated(0);
         } else {
-            totalPointsActivated -= points;
+            _checkpointTotalPointsActivated(totalPointsActivated - points);
         }
     }
 

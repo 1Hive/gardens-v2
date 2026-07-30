@@ -190,14 +190,14 @@ contract CVSyncPowerFacet is CVStrategyBaseFacet {
         if (activeDecrease > totalPointsActivated) {
             activeDecrease = totalPointsActivated;
         }
-        totalPointsActivated -= activeDecrease;
+        _checkpointTotalPointsActivated(totalPointsActivated - activeDecrease);
     }
 
     /// @dev Handle power increase — just add to activated points
     function _handlePowerIncrease(address _member, uint256 _increase) internal {
         bool isActivated = registryCommunity.memberActivatedInStrategies(_member, address(this));
         if (isActivated) {
-            totalPointsActivated += _increase;
+            _checkpointTotalPointsActivated(totalPointsActivated + _increase);
         }
     }
 

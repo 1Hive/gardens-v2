@@ -23,6 +23,7 @@ import {IPauseController} from "../interfaces/IPauseController.sol";
 import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
 import {LibPauseStorage} from "../pausing/LibPauseStorage.sol";
 import {DecimalScalingUtils} from "./DecimalScalingUtils.sol";
+import {CVThresholdStorage} from "./CVThresholdStorage.sol";
 
 interface IOwnableLike {
     function owner() external view returns (address);
@@ -520,9 +521,34 @@ abstract contract CVStrategyBaseFacet {
 
     function _getThresholdPoints(Proposal storage _proposal) internal view returns (uint256) {
         uint256 updatedAtBlock = _proposal.thresholdUpdatedAtBlock;
-        return ConvictionsUtils.weightedAverage(
+        uint256 proposalThresholdPoints = ConvictionsUtils.weightedAverage(
             _proposal.thresholdSnapshot, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
         );
+        uint256 poolThresholdPoints = _getPoolThresholdPoints();
+        return proposalThresholdPoints > poolThresholdPoints ? proposalThresholdPoints : poolThresholdPoints;
+    }
+
+    function _getPoolThresholdPoints() internal view returns (uint256) {
+        CVThresholdStorage.Layout storage thresholdLayout = CVThresholdStorage.layout();
+        uint256 updatedAtBlock = thresholdLayout.thresholdUpdatedAtBlock;
+        if (updatedAtBlock == 0) {
+            return totalPointsActivated;
+        }
+        return ConvictionsUtils.weightedAverage(
+            thresholdLayout.thresholdSnapshot, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
+        );
+    }
+
+    function _checkpointTotalPointsActivated(uint256 newTotalPointsActivated) internal {
+        CVThresholdStorage.Layout storage thresholdLayout = CVThresholdStorage.layout();
+        uint256 thresholdPoints = _getPoolThresholdPoints();
+        if (newTotalPointsActivated > thresholdPoints) {
+            thresholdPoints = newTotalPointsActivated;
+        }
+
+        thresholdLayout.thresholdSnapshot = thresholdPoints;
+        thresholdLayout.thresholdUpdatedAtBlock = block.number;
+        totalPointsActivated = newTotalPointsActivated;
     }
 
     /**
