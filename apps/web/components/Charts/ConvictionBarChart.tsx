@@ -574,11 +574,10 @@ const ConvictionBarChartBase = ({
         [
           {
             type: "bar" as const,
-            name: "Settles at",
+            name: "Target threshold",
             barWidth: 18,
-            data: [0],
+            data: [thresholdAdjustment.stableThresholdPct],
             silent: true,
-            tooltip: { show: false },
             itemStyle: { color: "transparent" },
             markLine: stableThresholdMarkLine,
           },
