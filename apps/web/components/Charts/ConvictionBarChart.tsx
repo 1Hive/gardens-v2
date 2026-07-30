@@ -575,11 +575,14 @@ const ConvictionBarChartBase = ({
           {
             type: "bar" as const,
             name: "Target threshold",
-            barWidth: 0,
+            barWidth: 18,
             data: [thresholdAdjustment.stableThresholdPct],
             silent: true,
-            color: chartColors.thresholdTarget,
-            itemStyle: { color: chartColors.thresholdTarget },
+            color: "#3e4943",
+            itemStyle: {
+              color: "#3e4943",
+              opacity: 0,
+            },
             markLine: stableThresholdMarkLine,
           },
         ]
