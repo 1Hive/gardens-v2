@@ -57,12 +57,13 @@ contract OptimismStreamingRebalanceForkTest is Test {
 
     function _upgradeStreamingFacet(CVStrategy strategy) internal {
         CVStreamingFacet streamingFacet = new CVStreamingFacet();
-        bytes4[] memory selectors = new bytes4[](5);
+        bytes4[] memory selectors = new bytes4[](6);
         selectors[0] = CVStreamingFacet.rebalance.selector;
         selectors[1] = CVStreamingFacet.stopEscrowStream.selector;
         selectors[2] = CVStreamingFacet.setAuthorizedRebalanceCaller.selector;
         selectors[3] = CVStreamingFacet.isAuthorizedRebalanceCaller.selector;
         selectors[4] = CVStreamingFacet.wrapIfNeeded.selector;
+        selectors[5] = CVStreamingFacet.getPoolThresholdPoints.selector;
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({

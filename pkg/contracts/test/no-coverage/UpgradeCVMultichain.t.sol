@@ -425,6 +425,7 @@ contract UpgradeCVMultichainScript is Test {
         _assertFactoryStrategyCutsIncludeSelector(CVStreamingFacet.setAuthorizedRebalanceCaller.selector);
         _assertFactoryStrategyCutsIncludeSelector(CVStreamingFacet.isAuthorizedRebalanceCaller.selector);
         _assertFactoryStrategyCutsIncludeSelector(CVStreamingFacet.wrapIfNeeded.selector);
+        _assertFactoryStrategyCutsIncludeSelector(CVStreamingFacet.getPoolThresholdPoints.selector);
     }
 
     function test_configurators_include_full_public_facet_surface() public view {
@@ -433,6 +434,7 @@ contract UpgradeCVMultichainScript is Test {
 
         assertTrue(_cutsContainSelector(strategyCuts, CVAllocationFacet.getPoolAmount.selector));
         assertTrue(_cutsContainSelector(strategyCuts, CVStreamingFacet.wrapIfNeeded.selector));
+        assertTrue(_cutsContainSelector(strategyCuts, CVStreamingFacet.getPoolThresholdPoints.selector));
         assertTrue(_cutsContainSelector(strategyCuts, CVStreamingFacet.setAuthorizedRebalanceCaller.selector));
         assertTrue(_cutsContainSelector(strategyCuts, CVStreamingFacet.isAuthorizedRebalanceCaller.selector));
 
