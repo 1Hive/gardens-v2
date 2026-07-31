@@ -1,12 +1,17 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import type { EChartsOption, MarkLineComponentOption } from "echarts";
+import type {
+  EChartsOption,
+  MarkAreaComponentOption,
+  MarkLineComponentOption,
+} from "echarts";
 import EChartsReact from "echarts-for-react";
 import { ChartWrapper } from "./ChartWrapper";
 import { Countdown } from "../Countdown";
 import { Skeleton } from "../Skeleton";
 import { useTheme } from "@/providers/ThemeProvider";
+import { getThresholdAdjustment } from "@/utils/thresholdAdjustment";
 
 type ScenarioMapping = {
   condition: () => boolean;
@@ -29,6 +34,9 @@ type ConvictionBarChartProps = {
   refreshConviction?: () => Promise<any> | void;
   isThresholdOutOfReach?: boolean;
   isThresholdBelowDisplayPrecision?: boolean;
+  stableThresholdPct?: number;
+  hasReachedThreshold?: boolean;
+  willReachThreshold?: boolean;
 };
 
 export function getChartColors(isDarkTheme?: boolean) {
@@ -39,6 +47,9 @@ export function getChartColors(isDarkTheme?: boolean) {
     conviction: isDarkTheme ? "#3f8f65" : "#74c898",
     threshold:
       isDarkTheme ? "rgba(79, 161, 118, 0.35)" : "rgba(150, 211, 105, 0.45)",
+    thresholdTarget: isDarkTheme ? "#8B9490" : "#66706B",
+    thresholdAdjustment:
+      isDarkTheme ? "rgba(139, 148, 144, 0.12)" : "rgba(102, 112, 107, 0.1)",
     markLine: isDarkTheme ? "#E8E8E8" : "#191919",
     label: isDarkTheme ? "#F5F5F5" : "#191919",
     tooltipBorder: isDarkTheme ? "#4FA176" : "#65AD18",
@@ -62,11 +73,18 @@ const ConvictionBarChartBase = ({
   proposalType,
   isThresholdOutOfReach = false,
   isThresholdBelowDisplayPrecision = false,
+  stableThresholdPct,
+  hasReachedThreshold,
+  willReachThreshold,
 }: ConvictionBarChartProps) => {
   const [convictionRefreshing, setConvictionRefreshing] = useState(true);
   const { resolvedTheme } = useTheme();
   const isDarkTheme = resolvedTheme === "darkTheme";
   const chartColors = getChartColors(isDarkTheme);
+  const thresholdAdjustment = getThresholdAdjustment(
+    thresholdPct,
+    stableThresholdPct,
+  );
   const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
   const isThresholdOverOneHundred = !isSignalingType && thresholdPct >= 100;
   const isThresholdImpossible =
@@ -91,6 +109,19 @@ const ConvictionBarChartBase = ({
               "Threshold over 100%."
             : "Threshold out of reach.",
           growing: null,
+        },
+      ],
+    },
+    decayingThresholdWillPass: {
+      condition: () =>
+        !isSignalingType &&
+        hasReachedThreshold !== true &&
+        willReachThreshold === true &&
+        currentConvictionPct <= thresholdPct,
+      details: [
+        {
+          message: "",
+          growing: proposalSupportPct > currentConvictionPct,
         },
       ],
     },
@@ -310,6 +341,7 @@ const ConvictionBarChartBase = ({
     );
   }, [
     currentConvictionPct,
+    hasReachedThreshold,
     hasInsufficientPoolFunds,
     isSignalingType,
     isThresholdImpossible,
@@ -317,6 +349,7 @@ const ConvictionBarChartBase = ({
     proposalSupportPct,
     proposalType,
     thresholdPct,
+    willReachThreshold,
   ]);
 
   useEffect(() => {
@@ -369,12 +402,59 @@ const ConvictionBarChartBase = ({
         z: 50,
       };
 
+  const stableThresholdMarkLine: MarkLineComponentOption =
+    isSignalingType || thresholdAdjustment == null ?
+      {}
+    : {
+        symbol: "none",
+        label: { show: false },
+        data: [
+          {
+            xAxis: thresholdAdjustment.stableThresholdPct,
+          },
+        ],
+        lineStyle: {
+          width: compact ? 0.75 : 1,
+          color: chartColors.thresholdTarget,
+          type: "dashed",
+          opacity: 0.85,
+        },
+        z: 49,
+      };
+
+  const thresholdMarkArea: MarkAreaComponentOption | undefined =
+    thresholdAdjustment == null ? undefined : (
+      {
+        silent: true,
+        itemStyle: {
+          color: chartColors.thresholdAdjustment,
+        },
+        data: [
+          [
+            {
+              xAxis: Math.min(
+                thresholdPct,
+                thresholdAdjustment.stableThresholdPct,
+              ),
+            },
+            {
+              xAxis: Math.max(
+                thresholdPct,
+                thresholdAdjustment.stableThresholdPct,
+              ),
+            },
+          ],
+        ],
+      }
+    );
+
   const chartMaxValue =
     defaultChartMaxValue ?
       Math.max(
         currentConvictionPct,
         proposalSupportPct,
         isThresholdImpossible ? 100 : thresholdPct,
+        thresholdAdjustment?.stableThresholdPct ?? 0,
       )
     : 100;
 
@@ -470,30 +550,64 @@ const ConvictionBarChartBase = ({
         z: 1,
         data: [currentConvictionPct],
       },
-      isSignalingType ?
-        {}
-      : {
-          type: "bar",
-          name: "Threshold",
-          barWidth: 18,
-          data: isThresholdImpossible ? [] : [thresholdPct],
-          itemStyle: {
-            borderRadius: borderRadius,
+      ...(!isSignalingType ?
+        [
+          {
+            type: "bar" as const,
+            name: "Threshold",
+            barWidth: 18,
+            data: isThresholdImpossible ? [] : [thresholdPct],
+            itemStyle: {
+              borderRadius: borderRadius,
+              color: chartColors.threshold,
+            },
             color: chartColors.threshold,
+            tooltip: { show: false },
+            z: 0,
+            markLine: {
+              ...markLineTh,
+            },
+            markArea: thresholdMarkArea,
           },
-          color: chartColors.threshold,
-          z: 0,
-          markLine: {
-            ...markLineTh,
+        ]
+      : []),
+      ...(!isSignalingType && thresholdAdjustment != null ?
+        [
+          {
+            type: "bar" as const,
+            name: "Threshold",
+            barWidth: 18,
+            data: [thresholdPct],
+            silent: true,
+            color: "#3e4943",
+            itemStyle: {
+              color: "#3e4943",
+              opacity: 0,
+            },
           },
-        },
+          {
+            type: "bar" as const,
+            name: "Target threshold",
+            barWidth: 18,
+            data: [thresholdAdjustment.stableThresholdPct],
+            silent: true,
+            color: "#333e37",
+            itemStyle: {
+              color: "#333e37",
+              opacity: 0,
+            },
+            markLine: stableThresholdMarkLine,
+          },
+        ]
+      : []),
     ],
   };
 
-  const readyToBeExecuted = currentConvictionPct >= thresholdPct;
+  const readyToBeExecuted =
+    hasReachedThreshold ?? currentConvictionPct > thresholdPct;
   const proposalWillPass =
-    Number(supportNeeded) < 0 &&
-    (currentConvictionPct ?? 0) < (thresholdPct ?? 0);
+    willReachThreshold ??
+    (Number(supportNeeded) < 0 && currentConvictionPct < thresholdPct);
 
   const chart = (
     <>
@@ -529,6 +643,7 @@ const ConvictionBarChartBase = ({
             proposalStatus={proposalStatus}
             support={proposalSupportPct}
             threshold={thresholdPct}
+            stableThreshold={stableThresholdPct}
             conviction={currentConvictionPct}
             isThresholdOutOfReach={isThresholdOutOfReach}
             isThresholdBelowDisplayPrecision={isThresholdBelowDisplayPrecision}
@@ -566,6 +681,7 @@ function areConvictionBarChartPropsEqual(
   return (
     prev.currentConvictionPct === next.currentConvictionPct &&
     prev.thresholdPct === next.thresholdPct &&
+    prev.stableThresholdPct === next.stableThresholdPct &&
     prev.proposalSupportPct === next.proposalSupportPct &&
     prev.isSignalingType === next.isSignalingType &&
     prev.proposalNumber === next.proposalNumber &&
@@ -577,7 +693,9 @@ function areConvictionBarChartPropsEqual(
     prev.proposalType === next.proposalType &&
     prev.isThresholdOutOfReach === next.isThresholdOutOfReach &&
     prev.isThresholdBelowDisplayPrecision ===
-      next.isThresholdBelowDisplayPrecision
+      next.isThresholdBelowDisplayPrecision &&
+    prev.hasReachedThreshold === next.hasReachedThreshold &&
+    prev.willReachThreshold === next.willReachThreshold
   );
 }
 

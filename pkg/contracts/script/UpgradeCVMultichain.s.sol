@@ -60,6 +60,7 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         bool skipUpgradeTo;
         bool skipDiamondCut;
         bool diamondCutBeforeUpgrade;
+        bool migrateThresholdSnapshots;
         address strategyInit;
         bytes strategyInitCalldata;
     }
@@ -129,7 +130,9 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         }
         if (_shouldDoStrategies()) {
             _executeStrategyUpgrades(context, networkJson);
-            _syncFactoryStrategyState(context);
+            if (!_flagEnabled("SKIP_FACTORY_STRATEGY_SYNC")) {
+                _syncFactoryStrategyState(context);
+            }
             if (_isFullStrategySelection(networkJson)) {
                 _syncStrategyImplementationFromLive(networkJson);
             }
@@ -453,13 +456,15 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     function _syncCVUtilLibFromStrategyImplementation(address implementation) internal {
         require(implementation != address(0), "strategy implementation missing");
         bytes memory runtimeCode = implementation.code;
-        require(runtimeCode.length > 13642, "strategy implementation code too short");
+        require(runtimeCode.length > 14004, "strategy implementation code too short");
 
-        address linkedLibrary = _readLinkedAddress(runtimeCode, 6488);
+        address linkedLibrary = _readLinkedAddress(runtimeCode, 6798);
         require(linkedLibrary != address(0), "CV_UTIL_LIB link missing");
-        require(_readLinkedAddress(runtimeCode, 6645) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 8427) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 13618) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 6955) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 8737) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 13344) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 14078) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 16795) == linkedLibrary, "CV_UTIL_LIB link mismatch");
         require(linkedLibrary.code.length != 0, "CV_UTIL_LIB has no code");
 
         _writeNetworkAddress(".IMPLEMENTATIONS.CV_UTIL_LIB", linkedLibrary);
@@ -600,6 +605,7 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
             skipUpgradeTo: _flagEnabled("SKIP_STRATEGY_UPGRADE_TO"),
             skipDiamondCut: _flagEnabled("SKIP_STRATEGY_DIAMOND_CUT"),
             diamondCutBeforeUpgrade: _flagEnabled("STRATEGY_DCUT_BEFORE_UPGRADE"),
+            migrateThresholdSnapshots: _flagEnabled("MIGRATE_THRESHOLD_SNAPSHOTS"),
             strategyInit: address(0),
             strategyInitCalldata: bytes("")
         });
@@ -701,16 +707,30 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
                 IDiamondCut(proxy).diamondCut(allCuts, options.strategyInit, options.strategyInitCalldata);
             }
             if (needsUpgradeTo) {
-                cvStrategy.upgradeTo(context.strategyImplementation);
+                _upgradeStrategyImplementation(cvStrategy, context.strategyImplementation, options);
             }
             return;
         }
 
         if (needsUpgradeTo) {
-            cvStrategy.upgradeTo(context.strategyImplementation);
+            _upgradeStrategyImplementation(cvStrategy, context.strategyImplementation, options);
         }
         if (needsDiamondCut) {
             IDiamondCut(proxy).diamondCut(allCuts, options.strategyInit, options.strategyInitCalldata);
+        }
+    }
+
+    function _upgradeStrategyImplementation(
+        CVStrategy cvStrategy,
+        address strategyImplementation,
+        StrategyUpgradeOptions memory options
+    ) internal {
+        if (options.migrateThresholdSnapshots) {
+            cvStrategy.upgradeToAndCall(
+                strategyImplementation, abi.encodeCall(CVStrategy.reinitializeV2MigrateThresholdSnapshots, ())
+            );
+        } else {
+            cvStrategy.upgradeTo(strategyImplementation);
         }
     }
 

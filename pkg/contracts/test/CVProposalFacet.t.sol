@@ -110,6 +110,21 @@ contract CVProposalFacetTest is Test {
         assertEq(collateralVault.lastAmount(), 1 ether);
     }
 
+    function test_registerRecipient_initializesTimeWeightedThresholdState() public {
+        CreateProposal memory proposal =
+            CreateProposal(1, beneficiary, 10, poolToken, Metadata({protocol: 1, pointer: "p"}));
+
+        vm.roll(100);
+        facet.setTotalPointsActivatedWithCheckpoint(77);
+
+        vm.deal(address(allo), 2 ether);
+        vm.prank(address(allo));
+        facet.registerRecipient{value: 1 ether}(abi.encode(proposal), member);
+
+        assertEq(facet.getProposalThresholdUpdatedAtBlock(1), block.number);
+        assertEq(facet.getProposalThresholdPoints(1), 77);
+    }
+
     function test_registerRecipient_revertWhenNotMember() public {
         registryCommunity.setMember(member, false);
         vm.prank(address(allo));
@@ -320,6 +335,29 @@ contract CVProposalFacetTest is Test {
         assertEq(blockLastAfter, 0);
         assertEq(convictionAfter, 0);
         assertEq(snapshotAfter, 0);
+    }
+
+    function test_editProposal_resetsTimeWeightedThresholdStateWhenRequestedAmountChanges() public {
+        CreateProposal memory proposal =
+            CreateProposal(1, beneficiary, 10, poolToken, Metadata({protocol: 1, pointer: "p"}));
+
+        vm.roll(100);
+        facet.setTotalPointsActivatedWithCheckpoint(100);
+        vm.deal(address(allo), 2 ether);
+        vm.prank(address(allo));
+        facet.registerRecipient{value: 1 ether}(abi.encode(proposal), member);
+
+        vm.roll(110);
+        facet.setTotalPointsActivatedWithCheckpoint(50);
+        vm.prank(member);
+        facet.editProposal(1, Metadata({protocol: 1, pointer: "p"}), beneficiary, 11);
+
+        (uint256 blockLastAfter, uint256 convictionAfter,) = facet.getProposalConvictionState(1);
+        assertEq(facet.getProposalRequestedAmount(1), 11);
+        assertEq(facet.getProposalThresholdUpdatedAtBlock(1), block.number);
+        assertEq(facet.getProposalThresholdPoints(1), 50);
+        assertEq(blockLastAfter, 0);
+        assertEq(convictionAfter, 0);
     }
 
     function test_editProposal_doesNotResetConvictionStateForMetadataOnlyEdit() public {

@@ -39,7 +39,7 @@ contract CVPowerFacet is CVStrategyBaseFacet {
         }
         registryCommunity.activateMemberInStrategy(msg.sender, address(this));
         uint256 currentPower = votingPowerRegistry.getMemberPowerInStrategy(msg.sender, address(this));
-        totalPointsActivated += currentPower;
+        _checkpointTotalPointsActivated(totalPointsActivated + currentPower);
 
         CVSyncPowerStorage.Layout storage syncLayout = CVSyncPowerStorage.layout();
         syncLayout.syncedPower[msg.sender] = currentPower;
@@ -64,8 +64,8 @@ contract CVPowerFacet is CVStrategyBaseFacet {
         }
 
         bool isActivated = registryCommunity.memberActivatedInStrategies(_member, address(this));
-        if (isActivated) {
-            totalPointsActivated += pointsToIncrease;
+        if (isActivated && pointsToIncrease != 0) {
+            _checkpointTotalPointsActivated(totalPointsActivated + pointsToIncrease);
         }
 
         CVSyncPowerStorage.Layout storage syncLayout = CVSyncPowerStorage.layout();
@@ -102,7 +102,7 @@ contract CVPowerFacet is CVStrategyBaseFacet {
             }
             _pruneVoterProposals(_member);
         }
-        totalPointsActivated -= pointsToDecrease;
+        _checkpointTotalPointsActivated(totalPointsActivated - pointsToDecrease);
 
         CVSyncPowerStorage.Layout storage syncLayout = CVSyncPowerStorage.layout();
         syncLayout.syncedPower[_member] = currentPower;
@@ -167,9 +167,9 @@ contract CVPowerFacet is CVStrategyBaseFacet {
 
     function _decreaseTotalPointsActivated(uint256 points) internal {
         if (points > totalPointsActivated) {
-            totalPointsActivated = 0;
+            _checkpointTotalPointsActivated(0);
         } else {
-            totalPointsActivated -= points;
+            _checkpointTotalPointsActivated(totalPointsActivated - points);
         }
     }
 

@@ -465,6 +465,44 @@ contract UpgradeCVMultichainScript is Test {
         );
     }
 
+    function test_runCurrentNetwork_strategy_phase_can_skip_factory_sync() public {
+        _useFixture("strategies-without-factory-sync");
+        _setDefaultScriptEnv();
+        _writeFixtureJson(address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0));
+
+        script.setPhaseForTest(3);
+        script.setFactoryActionForTest(0);
+        script.setFlagForTest("SKIP_FACTORY_STRATEGY_SYNC", true);
+        script.executeCurrentNetworkForTest();
+
+        string memory updated = vm.readFile(fixturePath);
+        address newStrategyImpl = updated.readAddress("$.networks[0].IMPLEMENTATIONS.CV_STRATEGY");
+
+        assertEq(_implementation(address(strategy)), newStrategyImpl);
+        assertEq(factory.strategyTemplate(), address(oldStrategyImpl));
+        assertEq(
+            _factoryFacetAddress(CVAdminFacet.setVotingPowerRegistry.selector),
+            address(oldStrategyConfigurator.adminFacet())
+        );
+    }
+
+    function test_runCurrentNetwork_strategy_phase_can_atomically_migrate_threshold_snapshots() public {
+        _useFixture("strategies-migrate-thresholds");
+        _setDefaultScriptEnv();
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
+
+        script.setPhaseForTest(3);
+        script.setFactoryActionForTest(0);
+        script.setFlagForTest("MIGRATE_THRESHOLD_SNAPSHOTS", true);
+        script.executeCurrentNetworkForTest();
+
+        vm.prank(address(script));
+        vm.expectRevert();
+        strategy.reinitializeV2MigrateThresholdSnapshots();
+    }
+
     function test_runCurrentNetwork_communities_phase_only_upgrades_community_proxy_and_syncs_live_impl() public {
         _useFixture("communities-only");
         _setDefaultScriptEnv();
@@ -553,6 +591,7 @@ contract UpgradeCVMultichainScript is Test {
         script.setFlagForTest("SKIP_STRATEGY_DIAMOND_CUT", false);
         script.setFlagForTest("STRATEGY_DCUT_BEFORE_UPGRADE", false);
         script.setFlagForTest("SKIP_STRATEGY_DIAMOND_INIT", false);
+        script.setFlagForTest("MIGRATE_THRESHOLD_SNAPSHOTS", false);
     }
 
     function _networkMetaJson() internal pure returns (string memory) {
@@ -680,6 +719,18 @@ contract UpgradeCVMultichainScript is Test {
             if (found) break;
         }
         assertTrue(found);
+    }
+
+    function _factoryFacetAddress(bytes4 selector) internal view returns (address) {
+        (IDiamondCut.FacetCut[] memory strategyCuts,,) = factory.getStrategyFacets();
+        for (uint256 i = 0; i < strategyCuts.length; i++) {
+            for (uint256 j = 0; j < strategyCuts[i].functionSelectors.length; j++) {
+                if (strategyCuts[i].functionSelectors[j] == selector) {
+                    return strategyCuts[i].facetAddress;
+                }
+            }
+        }
+        return address(0);
     }
 
     function _cutsContainSelector(IDiamondCut.FacetCut[] memory cuts, bytes4 selector) internal pure returns (bool) {

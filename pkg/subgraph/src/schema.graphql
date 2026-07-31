@@ -9,6 +9,8 @@ type CVStrategy @entity(immutable: false) {
   memberActive: [Member!]
   maxCVSupply: BigInt!
   totalEffectiveActivePoints: BigInt!
+  thresholdSnapshot: BigInt
+  thresholdUpdatedAtBlock: BigInt
   isEnabled: Boolean!
   token: String!
   sybil: SybilProtection

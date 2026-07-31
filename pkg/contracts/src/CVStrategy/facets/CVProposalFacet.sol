@@ -112,6 +112,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
         p.convictionLast = 0;
         p.metadata = proposal.metadata;
         p.arbitrableConfigVersion = currentArbitrableConfigVersion;
+        _initializeThresholdSnapshot(p);
         collateralVault.depositCollateral{value: msg.value}(proposalId, p.submitter);
 
         address proposalEscrow = address(0);
@@ -202,7 +203,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
             proposal.requestedAmount = requestedAmount;
             proposal.convictionLast = 0;
             proposal.blockLast = 0;
-            proposal.thresholdSnapshot = 0;
+            _rebaselineThresholdSnapshot(proposal);
         }
 
         // 1763099258 - 1763007730  = 91528 > 3600

@@ -8,6 +8,7 @@ import {
 import { InfoWrapper } from "../InfoWrapper";
 import { getChartColors } from "@/components/Charts/ConvictionBarChart";
 import { useTheme } from "@/providers/ThemeProvider";
+import { getThresholdAdjustment } from "@/utils/thresholdAdjustment";
 
 type ChartWrapperProps = {
   children?: ReactNode;
@@ -18,6 +19,7 @@ type ChartWrapperProps = {
   proposalStatus?: string;
   support?: number;
   threshold?: number;
+  stableThreshold?: number;
   conviction?: number;
   isThresholdOutOfReach?: boolean;
   isThresholdBelowDisplayPrecision?: boolean;
@@ -32,6 +34,7 @@ export const ChartWrapper = ({
   proposalStatus,
   support,
   threshold,
+  stableThreshold,
   conviction,
   isThresholdOutOfReach = false,
   isThresholdBelowDisplayPrecision = false,
@@ -41,15 +44,21 @@ export const ChartWrapper = ({
   const iconClassname = `h-3 w-3 ${growthClassname}`;
   const { isDarkTheme } = useTheme();
   const chartColors = getChartColors(isDarkTheme);
+  const thresholdAdjustment = getThresholdAdjustment(
+    threshold,
+    stableThreshold,
+  );
   const isThresholdTooHigh =
     (typeof threshold === "number" && threshold >= 100) ||
     isThresholdOutOfReach;
   const hasThresholdWarningMessage =
     proposalStatus !== "disputed" &&
-    (message === "Threshold over 100%." || message === "Threshold out of reach.");
+    (message === "Threshold over 100%." ||
+      message === "Threshold out of reach.");
   const legend = [
     {
       name: "Support",
+      kind: "support",
       className: "h-3 w-8 rounded-md",
       style: { backgroundColor: chartColors.support },
       info: "Represents the Total Voting Power allocated to a proposal (out of 100 VP).",
@@ -57,13 +66,15 @@ export const ChartWrapper = ({
     },
     {
       name: "Conviction",
+      kind: "conviction",
       className: "h-3 w-8 rounded-md",
       style: { backgroundColor: chartColors.conviction },
       info: "Voting Power accumulated as conviction for a proposal. Conviction grows or shrinks over time to meet support.",
       value: conviction,
     },
     {
-      name: "Threshold",
+      name: "Threshold now",
+      kind: "threshold",
       style: {
         borderColor: chartColors.markLine,
       },
@@ -77,6 +88,20 @@ export const ChartWrapper = ({
         : isThresholdBelowDisplayPrecision ? "< 0.01 VP"
         : threshold ?? 0,
     },
+    ...(thresholdAdjustment == null ?
+      []
+    : [
+        {
+          name: "Settles at",
+          kind: "stableThreshold",
+          style: {
+            borderColor: chartColors.thresholdTarget,
+          },
+          className: "w-5 border-t-[1px] border-dashed",
+          info: `The threshold is gradually adjusting after pool voting power changed. The current threshold remains in effect until it settles at ${thresholdAdjustment.stableThresholdPct} VP.`,
+          value: thresholdAdjustment.stableThresholdPct,
+        },
+      ]),
   ] as const;
 
   return (
@@ -84,12 +109,16 @@ export const ChartWrapper = ({
       <div className="flex flex-col gap-2 sm:gap-4 mt-2">
         <div className="flex flex-col sm:flex-row flex-wrap items-start gap-2 sm:gap-4">
           {legend
-            .filter((item) => !(isSignalingType && item.name === "Threshold"))
+            .filter(
+              (item) =>
+                !(isSignalingType && item.kind === "threshold") &&
+                !(isSignalingType && item.kind === "stableThreshold"),
+            )
             .map((item) => (
               <Fragment key={item.name}>
                 <InfoWrapper tooltip={item.info} size="sm">
                   <div className="flex items-center gap-1">
-                    {item.name === "Threshold" ?
+                    {item.kind === "threshold" ?
                       <div className="relative">
                         <div
                           className={`${item.className}`}
@@ -99,6 +128,23 @@ export const ChartWrapper = ({
                           className="absolute -left-[3.70px] sm:-left-[3.50px] -top-5 h-3 w-3"
                           style={{ color: chartColors.markLine }}
                         />
+                      </div>
+                    : item.kind === "stableThreshold" ?
+                      <div className="flex items-center gap-0.5">
+                        <div
+                          className={`${item.className}`}
+                          style={item.style}
+                        />
+                        {thresholdAdjustment?.direction === "up" ?
+                          <ArrowUpRightIcon
+                            className="h-3 w-3"
+                            style={{ color: chartColors.thresholdTarget }}
+                          />
+                        : <ArrowDownRightIcon
+                            className="h-3 w-3"
+                            style={{ color: chartColors.thresholdTarget }}
+                          />
+                        }
                       </div>
                     : <div className={`${item.className}`} style={item.style} />
                     }

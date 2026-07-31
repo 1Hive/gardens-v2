@@ -241,6 +241,50 @@ describe("optimistic member projector", () => {
     expect(result?.memberStrategies[0].activatedPoints).toBe("1");
   });
 
+  it("updates an indexed member strategy that only exposes memberCommunity", () => {
+    const apply = createMemberOptimisticProjector({
+      strategyId: "0xstrategy",
+      memberAddress: "0xmember",
+    });
+
+    const result: any = apply(
+      {
+        memberStrategies: [
+          {
+            id: "0xmember-0xstrategy",
+            activatedPoints: "50",
+            totalStakedPoints: "0",
+            member: {
+              memberCommunity: [
+                {
+                  memberAddress: "0xmember",
+                  isRegistered: true,
+                },
+              ],
+            },
+          },
+        ],
+      },
+      [
+        baseRecord({
+          optimistic: {
+            kind: "pool-governance",
+            strategyId: "0xstrategy",
+            memberAddress: "0xmember",
+            isActivated: true,
+            activatedPoints: "77",
+          },
+        }),
+      ],
+    );
+
+    expect(result?.memberStrategies).toHaveLength(1);
+    expect(result?.memberStrategies[0]).toMatchObject({
+      id: "0xmember-0xstrategy",
+      activatedPoints: "77",
+    });
+  });
+
   it("returns the latest pending pool governance activation for the matching chain", () => {
     const records = [
       baseRecord({

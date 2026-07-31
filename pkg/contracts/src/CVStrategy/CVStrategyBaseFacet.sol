@@ -23,6 +23,7 @@ import {IPauseController} from "../interfaces/IPauseController.sol";
 import {IVotingPowerRegistry} from "../interfaces/IVotingPowerRegistry.sol";
 import {LibPauseStorage} from "../pausing/LibPauseStorage.sol";
 import {DecimalScalingUtils} from "./DecimalScalingUtils.sol";
+import {CVThresholdStorage} from "./CVThresholdStorage.sol";
 
 interface IOwnableLike {
     function owner() external view returns (address);
@@ -49,6 +50,10 @@ interface IOwnableLike {
 abstract contract CVStrategyBaseFacet {
     using SuperTokenV1Library for ISuperToken;
     using ConvictionsUtils for uint256;
+
+    event PoolThresholdUpdated(
+        uint256 thresholdSnapshot, uint256 totalPointsActivated, uint256 thresholdUpdatedAtBlock
+    );
 
     /*|--------------------------------------------|*/
     /*|              ERRORS                        |*/
@@ -504,19 +509,52 @@ abstract contract CVStrategyBaseFacet {
         _setThresholdSnapshot(_proposal);
     }
 
+    function _initializeThresholdSnapshot(Proposal storage _proposal) internal {
+        _proposal.thresholdSnapshot = totalPointsActivated;
+        _proposal.thresholdUpdatedAtBlock = block.number;
+    }
+
+    function _rebaselineThresholdSnapshot(Proposal storage _proposal) internal {
+        _initializeThresholdSnapshot(_proposal);
+    }
+
     function _setThresholdSnapshot(Proposal storage _proposal) internal {
-        uint256 snapshot = _proposal.thresholdSnapshot;
-        if (snapshot == 0 || totalPointsActivated > snapshot) {
-            _proposal.thresholdSnapshot = totalPointsActivated;
-        }
+        _proposal.thresholdSnapshot = _getThresholdPoints(_proposal);
+        _proposal.thresholdUpdatedAtBlock = block.number;
     }
 
     function _getThresholdPoints(Proposal storage _proposal) internal view returns (uint256) {
-        uint256 snapshot = _proposal.thresholdSnapshot;
-        if (snapshot == 0 || totalPointsActivated > snapshot) {
+        uint256 updatedAtBlock = _proposal.thresholdUpdatedAtBlock;
+        uint256 proposalThresholdPoints = ConvictionsUtils.weightedAverage(
+            _proposal.thresholdSnapshot, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
+        );
+        uint256 poolThresholdPoints = _getPoolThresholdPoints();
+        return proposalThresholdPoints > poolThresholdPoints ? proposalThresholdPoints : poolThresholdPoints;
+    }
+
+    function _getPoolThresholdPoints() internal view returns (uint256) {
+        CVThresholdStorage.Layout storage thresholdLayout = CVThresholdStorage.layout();
+        uint256 updatedAtBlock = thresholdLayout.thresholdUpdatedAtBlock;
+        if (updatedAtBlock == 0) {
             return totalPointsActivated;
         }
-        return snapshot;
+        return ConvictionsUtils.weightedAverage(
+            thresholdLayout.thresholdSnapshot, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
+        );
+    }
+
+    function _checkpointTotalPointsActivated(uint256 newTotalPointsActivated) internal {
+        CVThresholdStorage.Layout storage thresholdLayout = CVThresholdStorage.layout();
+        uint256 thresholdPoints = _getPoolThresholdPoints();
+        if (newTotalPointsActivated > thresholdPoints) {
+            thresholdPoints = newTotalPointsActivated;
+        }
+
+        thresholdLayout.thresholdSnapshot = thresholdPoints;
+        thresholdLayout.thresholdUpdatedAtBlock = block.number;
+        totalPointsActivated = newTotalPointsActivated;
+
+        emit PoolThresholdUpdated(thresholdPoints, newTotalPointsActivated, block.number);
     }
 
     /**
