@@ -147,12 +147,6 @@ export async function POST(req: Request, { params }: RouteContext) {
       transport: http(chainConfig?.rpcUrl ?? LOCAL_RPC),
     });
 
-    const walletClient = createWalletClient({
-      account: privateKeyToAccount(PASSPORT_KEEPER_PRIVATE_KEY),
-      chain: chain,
-      transport: custom(client.transport),
-    });
-
     const score = await fetchPassportScore(user);
     const integerScore = Math.round(score * CV_PASSPORT_THRESHOLD_SCALE);
 
@@ -171,13 +165,37 @@ export async function POST(req: Request, { params }: RouteContext) {
       );
     }
 
+    const nextScore = BigInt(integerScore);
+    const currentScore = await client.readContract({
+      abi: passportScorerABI,
+      address: chainConfig.passportScorer,
+      functionName: "userScores",
+      args: [user as Address],
+    });
+
+    if (currentScore === nextScore) {
+      return NextResponse.json({
+        message: "User score is already up to date",
+        score: integerScore,
+        unchanged: true,
+      });
+    }
+
+    const walletClient = createWalletClient({
+      account: privateKeyToAccount(PASSPORT_KEEPER_PRIVATE_KEY),
+      chain: chain,
+      transport: custom(client.transport),
+    });
+
     const hash = await walletClient.writeContract({
       abi: passportScorerABI,
       address: chainConfig.passportScorer,
       functionName: "addUserScore",
       chain: chain,
-      args: [user as Address, BigInt(integerScore)],
+      args: [user as Address, nextScore],
     });
+
+    await client.waitForTransactionReceipt({ hash });
 
     return NextResponse.json({
       message: "User score added successfully",
