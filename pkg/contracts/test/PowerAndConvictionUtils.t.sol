@@ -145,12 +145,16 @@ contract PowerAndConvictionUtilsTest is Test {
         ConvictionsUtils.calculateConviction(1, 1, 1, ConvictionsUtils.D);
     }
 
-    function test_convictionsUtils_weightedAverage_appliesIncreaseImmediately() public pure {
-        assertEq(ConvictionsUtils.weightedAverage(100, 200, 10, 9_000_000), 200);
+    function test_convictionsUtils_weightedAverage_timeWeightsIncrease() public pure {
+        uint256 weighted = ConvictionsUtils.weightedAverage(100, 200, 10, 9_000_000);
+
+        assertGt(weighted, 100);
+        assertLt(weighted, 200);
     }
 
     function test_convictionsUtils_weightedAverage_preservesSnapshotInSameBlock() public pure {
         assertEq(ConvictionsUtils.weightedAverage(100, 0, 0, 9_000_000), 100);
+        assertEq(ConvictionsUtils.weightedAverage(100, 200, 0, 9_000_000), 100);
     }
 
     function test_convictionsUtils_weightedAverage_decreasesNoFasterThanConviction() public pure {
@@ -180,6 +184,23 @@ contract PowerAndConvictionUtilsTest is Test {
 
         assertGe(weighted, current);
         assertLe(weighted, snapshot);
+    }
+
+    function testFuzz_convictionsUtils_weightedAverage_increaseStaysBetweenSnapshotAndCurrent(
+        uint128 snapshotSeed,
+        uint128 currentSeed,
+        uint32 elapsedSeed,
+        uint32 decaySeed
+    ) public pure {
+        uint256 snapshot = uint256(snapshotSeed);
+        uint256 current = bound(uint256(currentSeed), snapshot, type(uint128).max);
+        uint256 elapsedBlocks = bound(uint256(elapsedSeed), 0, 1_000_000);
+        uint256 decay = bound(uint256(decaySeed), 0, ConvictionsUtils.D - 1);
+
+        uint256 weighted = ConvictionsUtils.weightedAverage(snapshot, current, elapsedBlocks, decay);
+
+        assertGe(weighted, snapshot);
+        assertLe(weighted, current);
     }
 
     function test_convictionsUtils_threshold_override_paths() public {

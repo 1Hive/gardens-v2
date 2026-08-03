@@ -50,6 +50,10 @@ import {
     MockSuperToken
 } from "../CVStreamingFacet.t.sol";
 
+interface IPoolThresholdView {
+    function getPoolThresholdPoints() external view returns (uint256);
+}
+
 // =============================================================
 //  ATTACK CONTRACTS
 // =============================================================
@@ -1027,9 +1031,8 @@ contract PoC_H4_SelfPowerDecreaseThresholdCollapse is PoCBase {
 
 /// @title PoC_GHSAQPR5_TimeWeightedThresholdSnapshot
 /// @notice Security regression test: a temporary active-point spike at an
-///         allocation touchpoint must not permanently raise a proposal's
-///         execution threshold. New proposals use the average active points
-///         across their lifetime while legacy proposals keep the old behavior.
+///         allocation touchpoint must not immediately raise or permanently
+///         inflate a proposal's execution threshold.
 contract PoC_GHSAQPR5_TimeWeightedThresholdSnapshot is PoCBase {
     GV2ERC20 token;
     address honest = makeAddr("honest");
@@ -1089,6 +1092,7 @@ contract PoC_GHSAQPR5_TimeWeightedThresholdSnapshot is PoCBase {
         cvStrategy.activatePoints();
 
         vm.roll(111);
+        uint256 oneBlockIncrease = IPoolThresholdView(address(cvStrategy)).getPoolThresholdPoints();
         vm.prank(spike);
         cvStrategy.deactivatePoints();
 
@@ -1097,8 +1101,9 @@ contract PoC_GHSAQPR5_TimeWeightedThresholdSnapshot is PoCBase {
         (,,,,,,,, uint256 observedThreshold,,,) = cvStrategy.getProposal(proposalId);
         (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPoints) = cvStrategy.cvParams();
 
-        uint256 weightedPoints =
-            ConvictionsUtils.weightedAverage(BASE_POWER + SPIKE_POWER, BASE_POWER, block.number - 111, decay);
+        uint256 poolWeightedPoints =
+            ConvictionsUtils.weightedAverage(oneBlockIncrease, BASE_POWER, block.number - 111, decay);
+        uint256 weightedPoints = poolWeightedPoints > BASE_POWER ? poolWeightedPoints : BASE_POWER;
         uint256 expectedWeightedThreshold = ConvictionsUtils.calculateThreshold(
             REQUESTED_AMOUNT, POOL_AMOUNT, weightedPoints, decay, weight, maxRatio, minThresholdPoints
         );

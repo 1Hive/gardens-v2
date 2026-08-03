@@ -79,9 +79,9 @@ library ConvictionsUtils {
     }
 
     /**
-     * @notice Weight a decreasing active-points snapshot with the same decay used by conviction.
-     * @dev Increases apply immediately. Decreases are rounded up so integer truncation cannot make
-     *      the weighted value fall faster than the conviction decay factor.
+     * @notice Move an active-points snapshot toward the current value with the same decay used by conviction.
+     * @dev The remaining difference is rounded up so integer truncation cannot make the weighted value
+     *      move away from the snapshot faster than the conviction decay factor.
      */
     function weightedAverage(
         uint256 _thresholdPointsSnapshot,
@@ -89,15 +89,18 @@ library ConvictionsUtils {
         uint256 _elapsedBlocks,
         uint256 _decay
     ) public pure returns (uint256) {
-        if (_currentTotalPointsActivated >= _thresholdPointsSnapshot) {
-            return _currentTotalPointsActivated;
-        }
-
         uint256 decayFactor = _pow((_decay << 128) / D, _elapsedBlocks);
-        uint256 weightedDifference = Math.mulDiv(
-            _thresholdPointsSnapshot - _currentTotalPointsActivated, decayFactor, TWO_128, Math.Rounding.Up
-        );
-        return _currentTotalPointsActivated + weightedDifference;
+        if (_currentTotalPointsActivated >= _thresholdPointsSnapshot) {
+            uint256 weightedDifference = Math.mulDiv(
+                _currentTotalPointsActivated - _thresholdPointsSnapshot, decayFactor, TWO_128, Math.Rounding.Up
+            );
+            return _currentTotalPointsActivated - weightedDifference;
+        } else {
+            uint256 weightedDifference = Math.mulDiv(
+                _thresholdPointsSnapshot - _currentTotalPointsActivated, decayFactor, TWO_128, Math.Rounding.Up
+            );
+            return _currentTotalPointsActivated + weightedDifference;
+        }
     }
 
     /**

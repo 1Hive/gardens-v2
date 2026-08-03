@@ -684,9 +684,12 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
 
     function _getThresholdPoints(Proposal storage _proposal) internal view returns (uint256) {
         uint256 updatedAtBlock = _proposal.thresholdUpdatedAtBlock;
-        uint256 proposalThresholdPoints = ConvictionsUtils.weightedAverage(
-            _proposal.thresholdSnapshot, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
-        );
+        uint256 proposalThresholdPoints = _proposal.thresholdSnapshot;
+        if (proposalThresholdPoints > totalPointsActivated) {
+            proposalThresholdPoints = ConvictionsUtils.weightedAverage(
+                proposalThresholdPoints, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
+            );
+        }
         uint256 poolThresholdPoints = _getPoolThresholdPoints();
         return proposalThresholdPoints > poolThresholdPoints ? proposalThresholdPoints : poolThresholdPoints;
     }

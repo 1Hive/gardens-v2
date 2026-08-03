@@ -525,9 +525,12 @@ abstract contract CVStrategyBaseFacet {
 
     function _getThresholdPoints(Proposal storage _proposal) internal view returns (uint256) {
         uint256 updatedAtBlock = _proposal.thresholdUpdatedAtBlock;
-        uint256 proposalThresholdPoints = ConvictionsUtils.weightedAverage(
-            _proposal.thresholdSnapshot, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
-        );
+        uint256 proposalThresholdPoints = _proposal.thresholdSnapshot;
+        if (proposalThresholdPoints > totalPointsActivated) {
+            proposalThresholdPoints = ConvictionsUtils.weightedAverage(
+                proposalThresholdPoints, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
+            );
+        }
         uint256 poolThresholdPoints = _getPoolThresholdPoints();
         return proposalThresholdPoints > poolThresholdPoints ? proposalThresholdPoints : poolThresholdPoints;
     }
@@ -546,9 +549,6 @@ abstract contract CVStrategyBaseFacet {
     function _checkpointTotalPointsActivated(uint256 newTotalPointsActivated) internal {
         CVThresholdStorage.Layout storage thresholdLayout = CVThresholdStorage.layout();
         uint256 thresholdPoints = _getPoolThresholdPoints();
-        if (newTotalPointsActivated > thresholdPoints) {
-            thresholdPoints = newTotalPointsActivated;
-        }
 
         thresholdLayout.thresholdSnapshot = thresholdPoints;
         thresholdLayout.thresholdUpdatedAtBlock = block.number;
