@@ -13,7 +13,7 @@ import { usePreferredReadClient } from "./usePreferredReadClient";
 import { useResolvedChainId } from "./useResolvedChainId";
 import { cvStrategyABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
-import { getRemainingBlocksToPassWithThresholdDecay } from "@/utils/convictionFormulas";
+import { getRemainingBlocksToPassWithThresholdAdjustment } from "@/utils/convictionFormulas";
 import { logOnce } from "@/utils/log";
 import { calculatePercentageBigInt, CV_SCALE_PRECISION } from "@/utils/numbers";
 
@@ -276,7 +276,7 @@ export const useConvictionRead = ({
 
   const remainingBlocksToPass = useMemo(
     () =>
-      getRemainingBlocksToPassWithThresholdDecay(
+      getRemainingBlocksToPassWithThresholdAdjustment(
         Number(resolvedThreshold ?? 0n),
         Number(resolvedStableThreshold ?? resolvedThreshold ?? 0n),
         Number(resolvedConviction),

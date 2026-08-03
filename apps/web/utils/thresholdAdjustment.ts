@@ -39,8 +39,8 @@ export function formatThresholdAdjustmentTooltip(
   adjustment: ThresholdAdjustment,
 ): string {
   if (adjustment.direction === "up") {
-    return `Activated pool voting power increased, raising the target threshold to ${adjustment.stableThresholdPct} VP.`;
+    return `More voting power is active in this pool, so the threshold is gradually increasing toward ${adjustment.stableThresholdPct} VP.`;
   }
 
-  return `Activated pool voting power decreased, so the threshold is gradually falling toward its ${adjustment.stableThresholdPct} VP target without falling faster than conviction.`;
+  return `Less voting power is active in this pool, so the threshold is gradually decreasing toward ${adjustment.stableThresholdPct} VP.`;
 }

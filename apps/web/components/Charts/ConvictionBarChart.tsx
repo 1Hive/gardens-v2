@@ -100,7 +100,7 @@ const ConvictionBarChartBase = ({
         },
       ],
     },
-    decayingThresholdWillPass: {
+    adjustingThresholdWillPass: {
       condition: () =>
         !isSignalingType &&
         hasReachedThreshold !== true &&

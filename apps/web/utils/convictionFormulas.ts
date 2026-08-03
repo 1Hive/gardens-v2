@@ -89,7 +89,7 @@ export function getRemainingBlocksToPass(
   return blocksToPass;
 }
 
-export function getRemainingBlocksToPassWithThresholdDecay(
+export function getRemainingBlocksToPassWithThresholdAdjustment(
   currentThreshold: number,
   stableThreshold: number,
   conviction: number,

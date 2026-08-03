@@ -34,7 +34,7 @@ describe("getThresholdAdjustment", () => {
         stableThresholdPct: 18.95,
       }),
     ).toBe(
-      "Activated pool voting power decreased, so the threshold is gradually falling toward its 18.95 VP target without falling faster than conviction.",
+      "Less voting power is active in this pool, so the threshold is gradually decreasing toward 18.95 VP.",
     );
 
     expect(
@@ -43,7 +43,7 @@ describe("getThresholdAdjustment", () => {
         stableThresholdPct: 28.42,
       }),
     ).toBe(
-      "Activated pool voting power increased, raising the target threshold to 28.42 VP.",
+      "More voting power is active in this pool, so the threshold is gradually increasing toward 28.42 VP.",
     );
   });
 });
