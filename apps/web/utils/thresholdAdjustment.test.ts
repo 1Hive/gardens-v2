@@ -34,7 +34,7 @@ describe("getThresholdAdjustment", () => {
         stableThresholdPct: 18.95,
       }),
     ).toBe(
-      "Less voting power is active in this pool, so the threshold is gradually decreasing toward 18.95 VP.",
+      "A community member recently left or deactivated their governance in this pool. Because of this, the threshold is now gradually decreasing to 18.95 VP.",
     );
 
     expect(
@@ -43,7 +43,7 @@ describe("getThresholdAdjustment", () => {
         stableThresholdPct: 28.42,
       }),
     ).toBe(
-      "More voting power is active in this pool, so the threshold is gradually increasing toward 28.42 VP.",
+      "A community member recently activated their governance in this pool. Because of this, the threshold is now gradually increasing to 28.42 VP.",
     );
   });
 });
