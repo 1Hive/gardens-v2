@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { getThresholdAdjustment } from "./thresholdAdjustment";
+import {
+  formatThresholdAdjustmentTooltip,
+  getThresholdAdjustment,
+} from "./thresholdAdjustment";
 
 describe("getThresholdAdjustment", () => {
   it("returns a downward adjustment when the threshold is settling lower", () => {
@@ -22,5 +25,25 @@ describe("getThresholdAdjustment", () => {
 
   it("hides the adjustment when the stable threshold is unavailable", () => {
     expect(getThresholdAdjustment(28.42, undefined)).toBeUndefined();
+  });
+
+  it("explains the target without replacing the live threshold", () => {
+    expect(
+      formatThresholdAdjustmentTooltip({
+        direction: "down",
+        stableThresholdPct: 18.95,
+      }),
+    ).toBe(
+      "Activated pool voting power decreased, so the threshold is gradually falling toward its 18.95 VP target without falling faster than conviction.",
+    );
+
+    expect(
+      formatThresholdAdjustmentTooltip({
+        direction: "up",
+        stableThresholdPct: 28.42,
+      }),
+    ).toBe(
+      "Activated pool voting power increased, raising the target threshold to 28.42 VP.",
+    );
   });
 });

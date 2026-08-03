@@ -8,7 +8,10 @@ import {
 import { InfoWrapper } from "../InfoWrapper";
 import { getChartColors } from "@/components/Charts/ConvictionBarChart";
 import { useTheme } from "@/providers/ThemeProvider";
-import { getThresholdAdjustment } from "@/utils/thresholdAdjustment";
+import {
+  formatThresholdAdjustmentTooltip,
+  getThresholdAdjustment,
+} from "@/utils/thresholdAdjustment";
 
 type ChartWrapperProps = {
   children?: ReactNode;
@@ -48,6 +51,12 @@ export const ChartWrapper = ({
     threshold,
     stableThreshold,
   );
+  const thresholdInfo =
+    thresholdAdjustment == null ?
+      isStreamingPool ?
+        "The minimum level of conviction required for a proposal to stream."
+      : "The minimum level of conviction required for a proposal to pass."
+    : formatThresholdAdjustmentTooltip(thresholdAdjustment);
   const isThresholdTooHigh =
     (typeof threshold === "number" && threshold >= 100) ||
     isThresholdOutOfReach;
@@ -73,35 +82,18 @@ export const ChartWrapper = ({
       value: conviction,
     },
     {
-      name: "Threshold now",
+      name: "Threshold",
       kind: "threshold",
       style: {
         borderColor: chartColors.markLine,
       },
       className: "w-5 border-t-[1px] border-dashed rotate-90 -mx-3",
-      info:
-        isStreamingPool ?
-          "The minimum level of conviction required for a proposal to stream."
-        : "The minimum level of conviction required for a proposal to pass.",
+      info: thresholdInfo,
       value:
         isThresholdTooHigh ? "too high"
         : isThresholdBelowDisplayPrecision ? "< 0.01 VP"
         : threshold ?? 0,
     },
-    ...(thresholdAdjustment == null ?
-      []
-    : [
-        {
-          name: "Settles at",
-          kind: "stableThreshold",
-          style: {
-            borderColor: chartColors.thresholdTarget,
-          },
-          className: "w-5 border-t-[1px] border-dashed",
-          info: `The threshold is gradually adjusting after pool voting power changed. The current threshold remains in effect until it settles at ${thresholdAdjustment.stableThresholdPct} VP.`,
-          value: thresholdAdjustment.stableThresholdPct,
-        },
-      ]),
   ] as const;
 
   return (
@@ -109,11 +101,7 @@ export const ChartWrapper = ({
       <div className="flex flex-col gap-2 sm:gap-4 mt-2">
         <div className="flex flex-col sm:flex-row flex-wrap items-start gap-2 sm:gap-4">
           {legend
-            .filter(
-              (item) =>
-                !(isSignalingType && item.kind === "threshold") &&
-                !(isSignalingType && item.kind === "stableThreshold"),
-            )
+            .filter((item) => !(isSignalingType && item.kind === "threshold"))
             .map((item) => (
               <Fragment key={item.name}>
                 <InfoWrapper tooltip={item.info} size="sm">
@@ -129,23 +117,6 @@ export const ChartWrapper = ({
                           style={{ color: chartColors.markLine }}
                         />
                       </div>
-                    : item.kind === "stableThreshold" ?
-                      <div className="flex items-center gap-0.5">
-                        <div
-                          className={`${item.className}`}
-                          style={item.style}
-                        />
-                        {thresholdAdjustment?.direction === "up" ?
-                          <ArrowUpRightIcon
-                            className="h-3 w-3"
-                            style={{ color: chartColors.thresholdTarget }}
-                          />
-                        : <ArrowDownRightIcon
-                            className="h-3 w-3"
-                            style={{ color: chartColors.thresholdTarget }}
-                          />
-                        }
-                      </div>
                     : <div className={`${item.className}`} style={item.style} />
                     }
                     <p className="text-sm">{item.name}: </p>
@@ -154,6 +125,17 @@ export const ChartWrapper = ({
                         `${item.value} VP`
                       : item.value}
                     </p>
+                    {item.kind === "threshold" &&
+                      thresholdAdjustment != null &&
+                      (thresholdAdjustment.direction === "up" ?
+                        <ArrowUpRightIcon
+                          className="h-3 w-3 shrink-0"
+                          aria-label="Threshold moving toward a higher target"
+                        />
+                      : <ArrowDownRightIcon
+                          className="h-3 w-3 shrink-0"
+                          aria-label="Threshold moving toward a lower target"
+                        />)}
                   </div>
                 </InfoWrapper>
               </Fragment>
