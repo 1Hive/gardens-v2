@@ -2,7 +2,7 @@
 
 ## Summary
 
-Gardens communities can opt into a Markee `StreamingLeaderboard` whose community revenue share is streamed to a dedicated vault on Base. Revenue is automatically delivered to the community's latest council Safe when the effective bridge cost is at most 1% of accumulated revenue. The council Safe or any current Safe member can request an earlier manual claim after accepting the quoted fee.
+Gardens communities can opt into a Markee `StreamingLeaderboard` whose community revenue share is streamed to a dedicated vault on Base. A singleton Gardens router atomically deploys or reuses the community vault, creates the leaderboard through its configured streaming leaderboard factory, and registers the complete community integration on Base. Revenue is automatically delivered to the community's latest council Safe when the effective bridge cost is at most 1% of accumulated revenue. The council Safe or any current Safe member can request an earlier manual claim after accepting the quoted fee.
 
 V1 integrates only the streaming leaderboard strategy. The Gardens community receives ETH revenue; MARKEE issuance remains with backers and the Markee platform.
 
@@ -11,6 +11,10 @@ V1 integrates only the streaming leaderboard strategy. The Gardens community rec
 - One deterministic `CommunityRevenueVault` per Gardens community on Base.
 - Community identity is `keccak256(abi.encode(communityChainId, registryCommunity))`.
 - Only `StreamingLeaderboard` is offered during opt-in.
+- The singleton `GardensMarkeeRouter` is the only integration entrypoint: it deploys or reuses the vault, creates the leaderboard, and registers the community association atomically.
+- The router stores a settable `StreamingLeaderboardFactory` address. Only the effective Gardens owner may update it, and updates affect only future leaderboard creation.
+- The router stores the canonical `communityKey -> { communityChainId, registryCommunity, vault, factory, leaderboard, seedMarkee }` registration.
+- Because the router calls the factory, it is the initial leaderboard admin and seed Markee owner. Any admin action or ownership handoff exposed by the router is restricted to the effective Gardens owner and emits an audit event.
 - The leaderboard's `beneficiaryAddress` is the community vault.
 - The vault normalizes native ETH, canonical Base ETHx, and canonical Base WETH into native ETH.
 - Canonical Base ETHx: `0x46fd5cfB4c12D87acD3a13e92BAa53240C661D93`.
@@ -34,6 +38,7 @@ flowchart LR
 
     subgraph Base["Markee and Gardens on Base"]
         Leaderboards["Streaming Leaderboards"]
+        Factory["StreamingLeaderboardFactory"]
         RevNet["Markee RevNet"]
         VaultX["Community X Vault"]
         VaultY["Community Y Vault"]
@@ -69,6 +74,8 @@ flowchart LR
 
     UI -->|"Safe authorization or manual claim"| API
     API -->|"Authorized execution"| Router
+    Router -->|"Create registered leaderboard"| Factory
+    Factory --> Leaderboards
 
     VaultX --> Router
     VaultY --> Router
@@ -109,9 +116,12 @@ Because remote community Safes cannot directly transact on Base, the flow is:
 3. The council Safe produces a threshold-valid signature.
 4. API validates the signature through EIP-1271 on the community chain.
 5. API rechecks the latest council Safe and consumes the nonce.
-6. The authorized Gardens keeper creates or resolves the deterministic vault on Base.
-7. The keeper creates the streaming leaderboard with the vault as `beneficiaryAddress`.
-8. API stores the community, vault, leaderboard, seed Markee, and transaction identifiers.
+6. The authorized Gardens keeper calls the singleton router on Base.
+7. The router derives the community key and atomically:
+   - deploys or reuses the deterministic community vault;
+   - calls its configured `StreamingLeaderboardFactory` with the vault as `beneficiaryAddress`;
+   - registers the chain ID, RegistryCommunity, vault, factory, leaderboard, and seed Markee.
+8. The API stores the router transaction identifier and mirrors the canonical on-chain registration for indexing and status reporting.
 
 ```mermaid
 sequenceDiagram
@@ -120,6 +130,7 @@ sequenceDiagram
     participant API as "Gardens API"
     participant Registry as "RegistryCommunity"
     participant Router as "Base Router"
+    participant Vault as "Community Vault"
     participant Factory as "StreamingLeaderboardFactory"
 
     UI->>API: Request opt-in authorization
@@ -129,10 +140,12 @@ sequenceDiagram
     UI->>API: Submit signature
     API->>Safe: Validate EIP-1271
     API->>Registry: Recheck current councilSafe()
-    API->>Router: ensureCommunityVault()
-    Router-->>API: Vault address
-    API->>Factory: createLeaderboard(vault, metadata)
-    Factory-->>API: Leaderboard and seed Markee
+    API->>Router: createCommunityLeaderboard(chainId, community, metadata)
+    Router->>Vault: Deploy deterministic vault if absent
+    Router->>Factory: createLeaderboard(vault, metadata)
+    Factory-->>Router: Leaderboard and seed Markee
+    Router->>Router: Register complete community integration
+    Router-->>API: Vault, leaderboard, and seed Markee
     API-->>UI: Opt-in complete
 ```
 
@@ -151,7 +164,7 @@ struct OptInAuthorization {
 }
 ```
 
-Creation must be idempotent. If vault deployment succeeds but leaderboard creation fails, retry reuses the same vault and cannot create a duplicate active leaderboard.
+Creation must be idempotent. If a community is already registered, the router returns the existing vault, leaderboard, and seed Markee without creating duplicates. Vault deployment, factory creation, and registration occur in one transaction, so a factory failure reverts the entire new-community registration. A factory-address update cannot alter an existing registration.
 
 ## Workstream B — Community Share and Bridging
 
@@ -261,11 +274,11 @@ flowchart TD
 | Component | Deployment | Upgrade policy | Owner/access |
 |---|---|---|---|
 | `CommunityRevenueVault` | One deterministic clone per community on Base | Non-upgradeable clone | Router-only release |
-| `GardensMarkeeRouter` | Singleton on Base | UUPS via `ProxyOwnableUpgrader` | Gardens Base `ProxyOwner` |
+| `GardensMarkeeRouter` | Singleton on Base; deploys vault clones and creates/registers leaderboards | UUPS via `ProxyOwnableUpgrader` | Authorized keeper for creation; Gardens Base `ProxyOwner` for factory/configuration and leaderboard administration |
 | `SquidBridgeAdapter` | Replaceable adapter on Base | Replace by router configuration | Router-only execution |
 | `GardensRevenueReceiver` | Singleton per remote chain | UUPS via `ProxyOwnableUpgrader` | Chain-local Gardens `ProxyOwner` |
 
-The effective Gardens owner manages keeper authorization and adapter/receiver configuration. Successful router and adapter calls must not retain community revenue.
+The effective Gardens owner manages keeper authorization, the settable streaming leaderboard factory, leaderboard administration, and adapter/receiver configuration. The factory setter rejects the zero address and addresses without contract code. Successful router and adapter calls must not retain community revenue.
 
 ## Supported Destinations
 
@@ -288,9 +301,9 @@ Exact Squid route availability, refund assets, destination token addresses, and 
 - Build the simplified Gardens opt-in modal and Safe signing states.
 - Implement challenge, signature validation, nonce, deadline, and idempotency APIs.
 - Validate the latest council Safe through `RegistryCommunity` and EIP-1271.
-- Orchestrate deterministic vault resolution and streaming leaderboard creation.
-- Persist community-to-vault-to-leaderboard associations and creation status.
-- Test valid quorum, insufficient signatures, stale Safe, replay, expiry, and partial retry.
+- Submit the authorized atomic router creation call and decode its registration event.
+- Persist a query/indexing mirror of the router's canonical community-to-vault-to-leaderboard registration and creation status.
+- Test valid quorum, insufficient signatures, stale Safe, replay, expiry, idempotent retries, and atomic rollback when factory creation fails.
 
 ### Developer 2 — Community split bridge
 
@@ -303,34 +316,72 @@ Exact Squid route availability, refund assets, destination token addresses, and 
 
 ### Shared seam
 
-Developer 2 publishes this interface and a mock first:
+Developer 2 publishes this interface and a mock first. The router is the canonical registry and the only contract that calls the streaming leaderboard factory for Gardens opt-ins:
 
 ```solidity
 interface IGardensMarkeeRouter {
-    function ensureCommunityVault(
-        uint256 communityChainId,
-        address registryCommunity
-    ) external returns (address vault);
+    struct CommunityIntegration {
+        uint256 communityChainId;
+        address registryCommunity;
+        address vault;
+        address factory;
+        address leaderboard;
+        address seedMarkee;
+    }
 
-    function communityVault(bytes32 communityKey)
+    event CommunityLeaderboardRegistered(
+        bytes32 indexed communityKey,
+        uint256 indexed communityChainId,
+        address indexed registryCommunity,
+        address vault,
+        address factory,
+        address leaderboard,
+        address seedMarkee
+    );
+
+    event StreamingLeaderboardFactoryChanged(
+        address indexed oldFactory,
+        address indexed newFactory
+    );
+
+    function createCommunityLeaderboard(
+        uint256 communityChainId,
+        address registryCommunity,
+        string calldata leaderboardName,
+        string calldata platformId
+    ) external returns (
+        address vault,
+        address leaderboard,
+        address seedMarkee
+    );
+
+    function communityIntegration(bytes32 communityKey)
         external
         view
-        returns (address vault);
+        returns (CommunityIntegration memory integration);
+
+    function streamingLeaderboardFactory()
+        external
+        view
+        returns (address factory);
+
+    function setStreamingLeaderboardFactory(address newFactory) external;
 }
 ```
 
-Developer 1 uses the returned vault as the streaming leaderboard beneficiary. Both workstreams use the same community-key algorithm and event identifiers.
+`createCommunityLeaderboard` is authorized-keeper-only and uses the router's configured factory; callers cannot supply an arbitrary factory or beneficiary. The router passes the deterministic community vault as beneficiary and the fixed platform name `Gardens`, then records the factory actually used. Existing registrations are returned unchanged. Both workstreams use the same community-key algorithm and event identifiers.
 
 ## Assumptions
 
-- Streaming leaderboards, vaults, router, and adapter are deployed on Base.
+- Streaming leaderboard factory, vault implementation, router, and adapter are deployed on Base.
+- The router's streaming leaderboard factory variable is configured before opt-in is enabled.
 - All supported Gardens communities expose `RegistryCommunity.councilSafe()`.
 - Council Safes support threshold-valid EIP-1271 signatures and owner lookup.
 - The Gardens keeper is funded with Base ETH and is operationally trusted to submit validated routes.
 - Squid enables the integrator ID for all required Base routes and destination hooks.
 - Squid can encode the originating vault as the source-chain refund recipient.
 - Polygon, Gnosis, and Celo communities accept the configured wrapped ETH representation.
-- The API safely persists consumed nonces, community associations, claims, quotes, and transfer status.
+- The API safely persists consumed nonces, an indexing mirror of router community registrations, claims, quotes, and transfer status.
 - Threshold policy stays off-chain; contracts enforce quote validity, destination integrity, minimum output, and funds conservation.
 
 ## Definition of Done
@@ -340,10 +391,12 @@ Developer 1 uses the returned vault as the streaming leaderboard beneficiary. Bo
 - The modal contains only the product explanation and create action.
 - A threshold-valid current council Safe can opt in.
 - One Safe owner alone cannot opt in.
-- Replayed, expired, stale-Safe, and duplicate requests are rejected.
+- Replayed, expired, and stale-Safe authorizations are rejected; duplicate router execution returns the existing registration.
 - The deterministic vault is created or reused.
 - The streaming leaderboard is created with that vault as beneficiary.
-- Partial creation resumes without duplicate vaults or leaderboards.
+- The router atomically registers the chain ID, RegistryCommunity, vault, factory, leaderboard, and seed Markee.
+- Repeated creation returns the existing registration without duplicate vaults or leaderboards.
+- A failed factory call leaves no partial new-community registration.
 
 ### Revenue and claims
 
