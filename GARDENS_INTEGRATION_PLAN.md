@@ -1,0 +1,367 @@
+# Gardens × Markee Streaming Revenue Integration — V1
+
+## Summary
+
+Gardens communities can opt into a Markee `StreamingLeaderboard` whose community revenue share is streamed to a dedicated vault on Base. Revenue is automatically delivered to the community's latest council Safe when the effective bridge cost is at most 1% of accumulated revenue. The council Safe or any current Safe member can request an earlier manual claim after accepting the quoted fee.
+
+V1 integrates only the streaming leaderboard strategy. The Gardens community receives ETH revenue; MARKEE issuance remains with backers and the Markee platform.
+
+## Locked V1 Decisions
+
+- One deterministic `CommunityRevenueVault` per Gardens community on Base.
+- Community identity is `keccak256(abi.encode(communityChainId, registryCommunity))`.
+- Only `StreamingLeaderboard` is offered during opt-in.
+- The leaderboard's `beneficiaryAddress` is the community vault.
+- The vault normalizes native ETH, canonical Base ETHx, and canonical Base WETH into native ETH.
+- Canonical Base ETHx: `0x46fd5cfB4c12D87acD3a13e92BAa53240C661D93`.
+- Canonical Base WETH: `0x4200000000000000000000000000000000000006`.
+- Only the singleton Gardens router can release revenue from a vault.
+- Vault normalization and release are reentrancy-protected and atomic.
+- A keeper automatically sweeps when effective bridge cost is at most 1% of available revenue.
+- A manual claim may be initiated by the council Safe or any current Safe owner.
+- Manual claims may exceed 1% only when the signer accepts explicit maximum fee limits.
+- Bridge fees are deducted from community revenue; the keeper pays its own Base transaction gas.
+- Base communities are paid locally without bridging.
+- Remote payouts resolve `RegistryCommunity.councilSafe()` on the destination chain at delivery time.
+- V1 bridge execution is keeper-only. Permissionless sponsored bridging is deferred.
+- No MARKEE tokens are sent or bridged to the council Safe.
+
+## Big-Picture Architecture
+
+```mermaid
+flowchart LR
+    Users["Markee backers"]
+
+    subgraph Base["Markee and Gardens on Base"]
+        Leaderboards["Streaming Leaderboards"]
+        RevNet["Markee RevNet"]
+        VaultX["Community X Vault"]
+        VaultY["Community Y Vault"]
+        VaultZ["Community Z Vault"]
+        Router["Singleton Gardens Router"]
+        Adapter["Squid Bridge Adapter"]
+    end
+
+    subgraph App["Gardens Application"]
+        UI["Opt-in and Claim UI"]
+        API["API and Authorized Keeper"]
+    end
+
+    subgraph BaseCommunity["Community Z on Base"]
+        RegistryZ["RegistryCommunity Z"]
+        SafeZ["Latest Council Safe Z"]
+    end
+
+    subgraph Remote["Remote Gardens Chains"]
+        Squid["Squid"]
+        Receiver["Singleton Receiver per Chain"]
+        RegistryX["RegistryCommunity X"]
+        SafeX["Latest Council Safe X"]
+        RegistryY["RegistryCommunity Y"]
+        SafeY["Latest Council Safe Y"]
+    end
+
+    Users --> Leaderboards
+    Leaderboards -->|"Community ETHx share"| VaultX
+    Leaderboards -->|"Community ETHx share"| VaultY
+    Leaderboards -->|"Community ETHx share"| VaultZ
+    Leaderboards -->|"RevNet share"| RevNet
+
+    UI -->|"Safe authorization or manual claim"| API
+    API -->|"Authorized execution"| Router
+
+    VaultX --> Router
+    VaultY --> Router
+    VaultZ --> Router
+
+    Router -->|"Local ETH payout"| RegistryZ
+    RegistryZ -->|"Resolve councilSafe()"| SafeZ
+
+    Router -->|"Remote ETH payout"| Adapter
+    Adapter --> Squid
+    Squid --> Receiver
+    Receiver --> RegistryX
+    RegistryX --> SafeX
+    Receiver --> RegistryY
+    RegistryY --> SafeY
+```
+
+## Workstream A — Opt-In and Leaderboard Creation
+
+### User experience
+
+The opt-in modal contains no strategy, payout-mode, threshold, or bridge configuration options. It explains only the product behavior:
+
+> Markee is a streaming leaderboard where supporters stream funds toward community messages. The message receiving the most support takes the top position.
+>
+> A share of the winning stream goes to your community. Revenue is automatically sent to the council Safe once enough has accumulated. Council Safe members can also claim it manually.
+
+The primary action is **Create Markee leaderboard**.
+
+### Authorization
+
+Opt-in requires a threshold-valid signature from the current council Safe. An individual Safe member cannot authorize opt-in alone.
+
+Because remote community Safes cannot directly transact on Base, the flow is:
+
+1. Gardens API reads the latest `RegistryCommunity.councilSafe()` on the community chain.
+2. API creates a nonce-bound, expiring EIP-712 opt-in message.
+3. The council Safe produces a threshold-valid signature.
+4. API validates the signature through EIP-1271 on the community chain.
+5. API rechecks the latest council Safe and consumes the nonce.
+6. The authorized Gardens keeper creates or resolves the deterministic vault on Base.
+7. The keeper creates the streaming leaderboard with the vault as `beneficiaryAddress`.
+8. API stores the community, vault, leaderboard, seed Markee, and transaction identifiers.
+
+```mermaid
+sequenceDiagram
+    participant Safe as "Council Safe"
+    participant UI as "Gardens UI"
+    participant API as "Gardens API"
+    participant Registry as "RegistryCommunity"
+    participant Router as "Base Router"
+    participant Factory as "StreamingLeaderboardFactory"
+
+    UI->>API: Request opt-in authorization
+    API->>Registry: Resolve current councilSafe()
+    API-->>UI: Nonce-bound Safe message
+    Safe->>UI: Produce threshold-valid signature
+    UI->>API: Submit signature
+    API->>Safe: Validate EIP-1271
+    API->>Registry: Recheck current councilSafe()
+    API->>Router: ensureCommunityVault()
+    Router-->>API: Vault address
+    API->>Factory: createLeaderboard(vault, metadata)
+    Factory-->>API: Leaderboard and seed Markee
+    API-->>UI: Opt-in complete
+```
+
+### Opt-in message
+
+The signed authorization binds at least:
+
+```solidity
+struct OptInAuthorization {
+    bytes32 communityKey;
+    uint256 communityChainId;
+    address registryCommunity;
+    bytes32 leaderboardMetadataHash;
+    uint256 nonce;
+    uint256 deadline;
+}
+```
+
+Creation must be idempotent. If vault deployment succeeds but leaderboard creation fails, retry reuses the same vault and cannot create a duplicate active leaderboard.
+
+## Workstream B — Community Share and Bridging
+
+### Vault normalization
+
+Each community vault counts all three supported Base ETH forms as revenue:
+
+```mermaid
+flowchart LR
+    Native["Native ETH"] --> Combined["Normalized native ETH"]
+    ETHx["Canonical ETHx"] -->|"downgradeToETH()"| Combined
+    WETH["Canonical WETH"] -->|"withdraw()"| Combined
+    Combined --> Router["Gardens Router"]
+```
+
+The vault:
+
+- Accepts the streaming beneficiary flow as ETHx.
+- Accepts native ETH and WETH transfers or refunds.
+- Reports native ETH, positive available ETHx, WETH, and combined revenue.
+- Downgrades all available ETHx and unwraps all WETH during release.
+- Allows only the Gardens router to call `releaseRevenue()`.
+- Uses reentrancy protection because ETHx and WETH normalization return native ETH.
+- Reverts normalization and release atomically on failure.
+
+### Automatic slow path
+
+The API periodically fetches a fresh Squid quote for each opted-in remote community and automatically sweeps when:
+
+```text
+effectiveBridgeCost / availableRevenue <= 1%
+```
+
+Effective bridge cost includes destination execution, cross-chain execution, and route or swap loss. It excludes the keeper's Base transaction gas.
+
+If the ratio exceeds 1%, revenue remains in the vault and continues accumulating. Base communities have no bridge fee and are paid locally by the keeper.
+
+### Manual claim
+
+A manual claim may be requested by:
+
+- The current council Safe, validated through EIP-1271.
+- Any current Safe owner, validated through `Safe.isOwner()`.
+
+The signed claim binds:
+
+```solidity
+struct ClaimAuthorization {
+    bytes32 communityKey;
+    address vault;
+    uint256 maxFee;
+    uint16 maxFeeBps;
+    uint256 nonce;
+    uint256 deadline;
+}
+```
+
+Before execution, the API refreshes the quote, rechecks the latest Safe or current membership, and rejects any quote exceeding the signed limits. The claimant cannot specify a beneficiary; delivery always targets the latest registered council Safe.
+
+### Bridge interface
+
+The generic adapter accepts native ETH only:
+
+```solidity
+interface IBridgeAdapter {
+    function bridgeETH(
+        BridgeRequest calldata request,
+        bytes calldata quoteData
+    ) external payable returns (bytes32 transferId, uint256 expectedAmountOut);
+}
+```
+
+The adapter forwards native ETH when supported and wraps to canonical Base WETH internally when required by the bridge route. Protocol-specific wrapping, approvals, and calldata remain inside the adapter.
+
+### Destination delivery
+
+There is one shared receiver on every supported remote Gardens chain. It authenticates the delivery payload, resolves the latest council Safe, and forwards the delivered native ETH or approved wrapped ETH asset.
+
+If the Safe transfer fails, the receiver catches the failure instead of reverting the Squid hook. It records the amount against `payoutId` and `communityKey`, then permits a permissionless local retry that resolves the latest Safe again.
+
+### Failure handling
+
+```mermaid
+flowchart TD
+    Start["Squid transfer"] --> Arrived{"Funds reached destination?"}
+    Arrived -->|"No"| Refund["Refund to Community Vault on Base"]
+    Refund --> Detect["API detects REFUND"]
+    Detect --> Requote["Keeper obtains a new quote"]
+    Requote --> Start
+
+    Arrived -->|"Yes"| Receiver["Destination Receiver"]
+    Receiver --> SafeCall{"Transfer to latest Safe succeeds?"}
+    SafeCall -->|"Yes"| Complete["Payout complete"]
+    SafeCall -->|"No"| Escrow["Escrow failed payout"]
+    Escrow --> Retry["Permissionless local retry"]
+    Retry --> Receiver
+```
+
+- If the source transaction reverts, funds never leave the vault.
+- If Squid fails before destination delivery, the route refund address is the originating community vault.
+- Native ETH refunds remain native; WETH refunds are normalized on the next sweep.
+- If funds arrive but the Safe transfer fails, retry is local and does not invoke Squid again.
+- A maintainer recovery function applies only to recorded failed payouts and emits a complete audit event.
+
+## Contracts and Ownership
+
+| Component | Deployment | Upgrade policy | Owner/access |
+|---|---|---|---|
+| `CommunityRevenueVault` | One deterministic clone per community on Base | Non-upgradeable clone | Router-only release |
+| `GardensMarkeeRouter` | Singleton on Base | UUPS via `ProxyOwnableUpgrader` | Gardens Base `ProxyOwner` |
+| `SquidBridgeAdapter` | Replaceable adapter on Base | Replace by router configuration | Router-only execution |
+| `GardensRevenueReceiver` | Singleton per remote chain | UUPS via `ProxyOwnableUpgrader` | Chain-local Gardens `ProxyOwner` |
+
+The effective Gardens owner manages keeper authorization and adapter/receiver configuration. Successful router and adapter calls must not retain community revenue.
+
+## Supported Destinations
+
+| Community chain | Chain ID | Delivery asset |
+|---|---:|---|
+| Base | 8453 | Native ETH, local payout |
+| Ethereum | 1 | Native ETH |
+| Optimism | 10 | Native ETH |
+| Arbitrum | 42161 | Native ETH |
+| Polygon | 137 | Canonical/approved WETH |
+| Gnosis | 100 | Approved wrapped ETH representation |
+| Celo | 42220 | Approved wrapped ETH representation |
+
+Exact Squid route availability, refund assets, destination token addresses, and hook behavior must be validated with the Gardens integrator ID before deployment.
+
+## Two-Developer Split
+
+### Developer 1 — Opt-in flow
+
+- Build the simplified Gardens opt-in modal and Safe signing states.
+- Implement challenge, signature validation, nonce, deadline, and idempotency APIs.
+- Validate the latest council Safe through `RegistryCommunity` and EIP-1271.
+- Orchestrate deterministic vault resolution and streaming leaderboard creation.
+- Persist community-to-vault-to-leaderboard associations and creation status.
+- Test valid quorum, insufficient signatures, stale Safe, replay, expiry, and partial retry.
+
+### Developer 2 — Community split bridge
+
+- Implement vault normalization, router, bridge adapter, and destination receiver contracts.
+- Implement the 1% automatic quote/keeper path.
+- Implement council Safe and Safe-member manual claims.
+- Implement Squid status reconciliation, Base-vault refunds, and fresh-route retry.
+- Implement destination failed-payout escrow, permissionless retry, and maintainer recovery.
+- Test accounting, access control, refunds, duplicate delivery, Safe rotation, and all destination assets.
+
+### Shared seam
+
+Developer 2 publishes this interface and a mock first:
+
+```solidity
+interface IGardensMarkeeRouter {
+    function ensureCommunityVault(
+        uint256 communityChainId,
+        address registryCommunity
+    ) external returns (address vault);
+
+    function communityVault(bytes32 communityKey)
+        external
+        view
+        returns (address vault);
+}
+```
+
+Developer 1 uses the returned vault as the streaming leaderboard beneficiary. Both workstreams use the same community-key algorithm and event identifiers.
+
+## Assumptions
+
+- Streaming leaderboards, vaults, router, and adapter are deployed on Base.
+- All supported Gardens communities expose `RegistryCommunity.councilSafe()`.
+- Council Safes support threshold-valid EIP-1271 signatures and owner lookup.
+- The Gardens keeper is funded with Base ETH and is operationally trusted to submit validated routes.
+- Squid enables the integrator ID for all required Base routes and destination hooks.
+- Squid can encode the originating vault as the source-chain refund recipient.
+- Polygon, Gnosis, and Celo communities accept the configured wrapped ETH representation.
+- The API safely persists consumed nonces, community associations, claims, quotes, and transfer status.
+- Threshold policy stays off-chain; contracts enforce quote validity, destination integrity, minimum output, and funds conservation.
+
+## Definition of Done
+
+### Opt-in
+
+- The modal contains only the product explanation and create action.
+- A threshold-valid current council Safe can opt in.
+- One Safe owner alone cannot opt in.
+- Replayed, expired, stale-Safe, and duplicate requests are rejected.
+- The deterministic vault is created or reused.
+- The streaming leaderboard is created with that vault as beneficiary.
+- Partial creation resumes without duplicate vaults or leaderboards.
+
+### Revenue and claims
+
+- ETHx, native ETH, and WETH balances are included and normalized correctly.
+- Only the router can release vault revenue, with reentrancy protection.
+- Automatic remote sweeps occur only at an effective fee ratio of 1% or less.
+- Manual claims verify the Safe or current owner and honor signed fee limits.
+- Base communities receive native ETH locally.
+- Remote communities receive the configured asset at the latest council Safe.
+- Council Safe rotation before delivery targets the new Safe.
+
+### Failures and operations
+
+- Source reverts preserve funds in the vault.
+- Pre-delivery Squid failures refund the correct community vault.
+- Refunded WETH is included in the next normalization.
+- Safe-transfer failures are escrowed without reverting destination delivery.
+- Permissionless retry cannot change the community or beneficiary.
+- Maintainer recovery cannot withdraw unrelated funds.
+- Transfer, refund, escrow, retry, and recovery events are monitored.
+- Low-value canaries succeed on every supported destination before general rollout.
