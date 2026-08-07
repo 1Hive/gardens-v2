@@ -107,8 +107,15 @@ const Footer = () => {
   );
 };
 
-export default function ClientPage() {
+interface ClientPageProps {
+  redirectedCommunityKeys: string[];
+}
+
+export default function ClientPage({
+  redirectedCommunityKeys,
+}: ClientPageProps) {
   const showArchived = useFlag("showArchived");
+  const redirectedCommunityKeySet = new Set(redirectedCommunityKeys);
 
   useEffect(() => {
     logOnce("debug", "Loading page: (app)/gardens/page.tsx");
@@ -129,7 +136,13 @@ export default function ClientPage() {
                   .protopianDelegatedFrom != null,
             })),
           )
-          .filter((x) => !x.archived || showArchived);
+          .filter(
+            (x) =>
+              (!x.archived || showArchived) &&
+              !redirectedCommunityKeySet.has(
+                `${x.garden.chainId}/${x.id.toLowerCase()}`,
+              ),
+          );
       },
       changeScope: [
         {
