@@ -613,7 +613,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const availableBalanceControls = (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3 text-sm">
-        <span className="whitespace-nowrap">Available balance:</span>
+        <span className="whitespace-nowrap">Balance:</span>
         <div className="flex items-center gap-3">
           <div
             className="tooltip tooltip-top-left"
