@@ -614,27 +614,34 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3 text-sm">
         <span className="whitespace-nowrap">Available balance:</span>
-        <div
-          className="tooltip tooltip-top-left"
-          data-tip={
-            availableBalanceTooltipMessage.length ?
-              availableBalanceTooltipMessage
-            : "No available balance"
-          }
-        >
-          <span className="text-sm text-primary-content">
-            {formattedAvailableBalance} {poolToken.symbol}
-          </span>
+        <div className="flex items-center gap-3">
+          <div
+            className="tooltip tooltip-top-left"
+            data-tip={
+              availableBalanceTooltipMessage.length ?
+                availableBalanceTooltipMessage
+              : "No available balance"
+            }
+          >
+            <span className="text-sm text-primary-content">
+              {formattedAvailableBalance} {poolToken.symbol}
+            </span>
+          </div>
+          <label
+            className="tooltip tooltip-top-left flex cursor-pointer items-center gap-2"
+            data-tip="Keep the amount synced with your live available balance. The transaction reserves one minute of streaming for signing time."
+          >
+            <span className="whitespace-nowrap">Use max</span>
+            <input
+              type="checkbox"
+              className="toggle toggle-primary toggle-sm"
+              checked={useMaxStreamAmount}
+              disabled={effectiveAvailableBalanceScaledBn == null}
+              onChange={(e) => setUseMaxStreamAmount(e.target.checked)}
+            />
+          </label>
         </div>
       </div>
-      <FormCheckBox
-        registerKey="useMaxStreamAmount"
-        label="Use max"
-        tooltip="Keep the amount synced with your live available balance. The transaction reserves one minute of streaming for signing time."
-        value={useMaxStreamAmount}
-        disabled={effectiveAvailableBalanceScaledBn == null}
-        onChange={(e) => setUseMaxStreamAmount(e.target.checked)}
-      />
       {showUseSuperTokenBalance && !isPureSuperfluidToken && (
         <FormCheckBox
           registerKey="useExistingBalance"
