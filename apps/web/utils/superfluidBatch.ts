@@ -22,6 +22,8 @@ export const SUPERFLUID_BATCH_OPERATION = {
   callAgreement: 201,
 } as const;
 
+export const MAX_STREAM_SIGNING_BUFFER_SECONDS = 60n;
+
 type SuperfluidBatchOperation = {
   operationType: number;
   target: Address;
@@ -50,6 +52,22 @@ export const getStreamFundingAmounts = ({
     : 0n;
 
   return { upgradeAmount, allowanceAmount };
+};
+
+export const getBufferedMaxStreamAmount = ({
+  availableBalance,
+  duration,
+  bufferDuration,
+}: {
+  availableBalance: bigint;
+  duration: bigint;
+  bufferDuration: bigint;
+}) => {
+  if (availableBalance <= 0n || duration <= 0n || bufferDuration < 0n) {
+    return 0n;
+  }
+
+  return (availableBalance * duration) / (duration + bufferDuration);
 };
 
 export const shouldBatchUpgradeAndStream = ({

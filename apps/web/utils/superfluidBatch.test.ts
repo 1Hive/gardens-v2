@@ -6,6 +6,7 @@ import {
 import { describe, expect, it } from "vitest";
 import {
   buildUpgradeAndStreamBatch,
+  getBufferedMaxStreamAmount,
   getStreamFundingAmounts,
   shouldBatchUpgradeAndStream,
   SUPERFLUID_BATCH_OPERATION,
@@ -17,6 +18,33 @@ const cfaV1 = "0x0000000000000000000000000000000000000002";
 const receiver = "0x0000000000000000000000000000000000000003";
 
 describe("buildUpgradeAndStreamBatch", () => {
+  it("keeps one buffer interval when max balance is selected", () => {
+    expect(
+      getBufferedMaxStreamAmount({
+        availableBalance: 110n,
+        duration: 100n,
+        bufferDuration: 10n,
+      }),
+    ).toBe(100n);
+  });
+
+  it("returns zero when a max stream has no usable balance or duration", () => {
+    expect(
+      getBufferedMaxStreamAmount({
+        availableBalance: 100n,
+        duration: 0n,
+        bufferDuration: 10n,
+      }),
+    ).toBe(0n);
+    expect(
+      getBufferedMaxStreamAmount({
+        availableBalance: 0n,
+        duration: 100n,
+        bufferDuration: 10n,
+      }),
+    ).toBe(0n);
+  });
+
   it("uses only the raw portion of a mixed balance for upgrade and allowance", () => {
     expect(
       getStreamFundingAmounts({
