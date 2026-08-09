@@ -69,6 +69,7 @@ import {
   MAX_RATIO_CONSTANT,
   roundToSignificant,
 } from "@/utils/numbers";
+import { resolvePoolHeaderTokens } from "@/utils/poolHeaderTokens";
 import { shortenAddress } from "@/utils/text";
 
 type Props = {
@@ -210,8 +211,23 @@ export default function PoolHeader({
       )
     : "0";
 
-  const maxVotingWeight =
-    poolToken ? formatTokenAmount(maxAmount, poolToken.decimals) : 0;
+  const gardenToken = strategy.registryCommunity.garden;
+
+  const governanceToken = {
+    address: (gardenToken.address ?? gardenToken.id) as Address,
+    symbol: gardenToken.symbol,
+    decimals: communityGovTokenDecimals ?? 18,
+  };
+
+  // Signaling pools have no funding token, so the pool configuration describes
+  // the governance token instead.
+  const { votingToken, configToken } = resolvePoolHeaderTokens({
+    poolType: PoolTypes[strategy.config.proposalType],
+    governanceToken,
+    poolToken,
+  });
+
+  const maxVotingWeight = formatTokenAmount(maxAmount, votingToken.decimals);
 
   const spendingLimit =
     (strategy.config.maxRatio / CV_SCALE_PRECISION) *
@@ -312,7 +328,7 @@ export default function PoolHeader({
     },
     {
       label: "Max voting weight",
-      value: `${maxVotingWeight} ${poolToken?.symbol}`,
+      value: `${maxVotingWeight} ${votingToken.symbol}`,
       info: "Staking above this specified limit won’t increase your voting weight.",
     },
     {
@@ -352,17 +368,24 @@ export default function PoolHeader({
     {
       label: "Token",
       info:
-        PoolTypes[proposalType] === "streaming" ?
+        PoolTypes[proposalType] === "signaling" ?
+          "The community governance token used to determine voting power."
+        : PoolTypes[proposalType] === "streaming" ?
           "The token used in this pool for streaming."
         : "The token used in this pool to fund proposals.",
       value: (
         <div className="flex items-center">
+          {/*
+            `configToken` is always defined for signaling pools. For funding and
+            streaming pools it resolves asynchronously, so keep passing it
+            through and let `EthAddress` show its loading state meanwhile.
+          */}
           <EthAddress
-            address={poolToken?.address as Address}
+            address={configToken?.address as Address}
             shortenAddress={true}
             icon={false}
             actions="none"
-            label={poolToken?.symbol}
+            label={configToken?.symbol}
           />
           {superToken && (
             <div
