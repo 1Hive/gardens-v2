@@ -565,7 +565,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             setAmount(value);
           }
         }}
-        readOnly={isStreamModalOpened && useMaxStreamAmount}
         required
         type="number"
         placeholder="0"
@@ -634,7 +633,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             <span className="whitespace-nowrap">Use max</span>
             <input
               type="checkbox"
-              className="toggle toggle-primary toggle-sm"
+              className="toggle toggle-sm !border-neutral-button !bg-transparent !text-neutral-button [--tglbg:theme(colors.neutral)] hover:!bg-transparent checked:!border-neutral-button checked:!bg-transparent checked:!text-neutral-button checked:[--tglbg:theme(colors.neutral)] dark:[--tglbg:theme(colors.primary)] dark:checked:[--tglbg:theme(colors.primary)]"
               checked={useMaxStreamAmount}
               disabled={effectiveAvailableBalanceScaledBn == null}
               onChange={(e) => setUseMaxStreamAmount(e.target.checked)}
