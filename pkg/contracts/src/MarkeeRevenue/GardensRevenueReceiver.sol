@@ -8,6 +8,7 @@ import {
 import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
 import {IGardensRevenueReceiver} from "./interfaces/IGardensRevenueReceiver.sol";
 import {IRegistryCommunitySafe} from "./interfaces/IRegistryCommunitySafe.sol";
+import {IWETH9} from "./interfaces/IWETH9.sol";
 
 /// @notice One shared singleton per supported remote Gardens chain. Receives
 /// bridged community revenue, resolves the latest council Safe for the
@@ -15,48 +16,56 @@ import {IRegistryCommunitySafe} from "./interfaces/IRegistryCommunitySafe.sol";
 /// transfer is escrowed rather than reverting the inbound bridge hook, and
 /// can be retried permissionlessly or recovered by a maintainer.
 ///
-/// V1 status: `squidExecutor` defaults to the zero address, so `onReceive`
-/// reverts until an owner configures the real Squid executor for this chain
-/// (see SquidBridgeAdapter's integration-pending note) — safe by default.
 contract GardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, IGardensRevenueReceiver {
-    address public squidExecutor;
+    address public acrossSpokePool;
     mapping(bytes32 payoutId => bool processed) public processedPayoutIds;
     mapping(bytes32 payoutId => FailedPayout) public failedPayouts;
+    address public wrappedNativeToken;
 
-    uint256[45] private __gap;
+    uint256[44] private __gap;
 
-    event SquidExecutorUpdated(address indexed executor);
+    event AcrossConfigUpdated(address indexed spokePool, address indexed wrappedNativeToken);
 
-    modifier onlySquidExecutor() {
-        if (squidExecutor == address(0) || msg.sender != squidExecutor) {
-            revert NotSquidExecutor();
+    modifier onlyAcrossSpokePool() {
+        if (acrossSpokePool == address(0) || msg.sender != acrossSpokePool) {
+            revert NotAcrossSpokePool();
         }
         _;
     }
 
-    function initialize(address _owner) public override initializer {
-        if (_owner == address(0)) {
+    function initialize(address _owner, address _acrossSpokePool, address _wrappedNativeToken) public initializer {
+        if (_owner == address(0) || _acrossSpokePool == address(0) || _wrappedNativeToken == address(0)) {
             revert ZeroAddress();
         }
         ProxyOwnableUpgrader.initialize(_owner);
         __ReentrancyGuard_init();
+        acrossSpokePool = _acrossSpokePool;
+        wrappedNativeToken = _wrappedNativeToken;
     }
 
-    function setSquidExecutor(address executor) external onlyOwner {
-        squidExecutor = executor;
-        emit SquidExecutorUpdated(executor);
+    function setAcrossConfig(address _acrossSpokePool, address _wrappedNativeToken) external onlyOwner {
+        if (_acrossSpokePool == address(0) || _wrappedNativeToken == address(0)) revert ZeroAddress();
+        acrossSpokePool = _acrossSpokePool;
+        wrappedNativeToken = _wrappedNativeToken;
+        emit AcrossConfigUpdated(_acrossSpokePool, _wrappedNativeToken);
+    }
+
+    receive() external payable {
+        if (msg.sender != wrappedNativeToken) revert InvalidToken();
     }
 
     /// @inheritdoc IGardensRevenueReceiver
-    function onReceive(bytes32 payoutId, bytes32 communityKey, address registryCommunity, uint256 amount)
+    function handleV3AcrossMessage(address tokenSent, uint256 amount, address, bytes memory message)
         external
-        payable
-        onlySquidExecutor
+        onlyAcrossSpokePool
         nonReentrant
     {
-        if (msg.value != amount) {
-            revert ValueMismatch();
-        }
+        if (tokenSent != wrappedNativeToken) revert InvalidToken();
+        if (IWETH9(wrappedNativeToken).balanceOf(address(this)) < amount) revert InsufficientBalance();
+        IWETH9(wrappedNativeToken).withdraw(amount);
+
+        (bytes32 payoutId, bytes32 communityKey, address registryCommunity) =
+            abi.decode(message, (bytes32, bytes32, address));
         if (processedPayoutIds[payoutId]) {
             revert PayoutAlreadyProcessed();
         }

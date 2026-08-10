@@ -46,6 +46,7 @@ import {
   RegisterMember,
   Statistic,
 } from "@/components";
+import { CommunityMarkeePlaceholder } from "@/components/CommunityMarkeePlaceholder";
 import { Divider } from "@/components/Divider";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { LoupeButton } from "@/components/LoupeButton";
@@ -1039,12 +1040,18 @@ export default function ClientPage({
 
       {/* Desktop Right Sidebar - Stake component */}
       <div className="hidden md:block col-span-12 xl:col-span-3">
-        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
+        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-4 sticky top-32">
           <IncreasePower
             memberData={accountAddress ? isMemberResult : undefined}
             registryCommunity={registryCommunity}
             tokenGarden={resolvedTokenGarden}
             registrationAmount={registrationAmount}
+          />
+          <CommunityMarkeePlaceholder
+            canOptIn={Boolean(isCouncilMember || isCouncilSafe)}
+            chainId={chain?.id}
+            community={communityAddr as Address}
+            councilSafe={effectiveCouncilSafe}
           />
         </div>
       </div>
@@ -1075,6 +1082,12 @@ export default function ClientPage({
           {/* Overview Tab */}
           {selectedTab === 0 && (
             <div className="backdrop-blur-sm flex flex-col gap-6">
+              <CommunityMarkeePlaceholder
+                canOptIn={Boolean(isCouncilMember || isCouncilSafe)}
+                chainId={chain?.id}
+                community={communityAddr as Address}
+                councilSafe={effectiveCouncilSafe}
+              />
               <header
                 className={`border shadow-sm section-layout ${headerCardBorderClass}`}
               >

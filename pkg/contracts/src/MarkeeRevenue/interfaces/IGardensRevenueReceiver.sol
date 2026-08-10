@@ -18,18 +18,18 @@ interface IGardensRevenueReceiver {
     event PayoutRetried(bytes32 indexed payoutId, address safe, uint256 amount);
     event PayoutRecovered(bytes32 indexed payoutId, address indexed to, uint256 amount);
 
-    error NotSquidExecutor();
+    error NotAcrossSpokePool();
+    error InvalidToken();
+    error InsufficientBalance();
     error PayoutAlreadyProcessed();
     error PayoutAlreadyResolved();
     error PayoutNotFound();
     error TransferFailed();
-    error ValueMismatch();
     error ZeroAddress();
 
-    /// @notice Entry point invoked by the trusted Squid executor on delivery.
-    function onReceive(bytes32 payoutId, bytes32 communityKey, address registryCommunity, uint256 amount)
-        external
-        payable;
+    /// @notice Across V3 callback invoked by the trusted destination SpokePool
+    /// after it transfers and unwraps the bridged native token.
+    function handleV3AcrossMessage(address tokenSent, uint256 amount, address relayer, bytes memory message) external;
 
     /// @notice Permissionless retry against the latest `councilSafe()`. Cannot
     /// change the community, registry, or amount recorded for `payoutId`.

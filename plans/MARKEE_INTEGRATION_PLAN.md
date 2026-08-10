@@ -44,7 +44,7 @@ flowchart LR
         VaultY["Community Y Vault"]
         VaultZ["Community Z Vault"]
         Router["Singleton Gardens Router"]
-        Adapter["Squid Bridge Adapter"]
+        Adapter["Across Bridge Adapter"]
     end
 
     subgraph App["Gardens Application"]
@@ -58,7 +58,7 @@ flowchart LR
     end
 
     subgraph Remote["Remote Gardens Chains"]
-        Squid["Squid"]
+        Across["Across V3"]
         Receiver["Singleton Receiver per Chain"]
         RegistryX["RegistryCommunity X"]
         SafeX["Latest Council Safe X"]
@@ -85,8 +85,8 @@ flowchart LR
     RegistryZ -->|"Resolve councilSafe()"| SafeZ
 
     Router -->|"Remote ETH payout"| Adapter
-    Adapter --> Squid
-    Squid --> Receiver
+    Adapter --> Across
+    Across --> Receiver
     Receiver --> RegistryX
     RegistryX --> SafeX
     Receiver --> RegistryY
@@ -192,7 +192,7 @@ The vault:
 
 ### Automatic slow path
 
-The API periodically fetches a fresh Squid quote for each opted-in remote community and automatically sweeps when:
+The API periodically fetches a fresh Across quote for each opted-in remote community and automatically sweeps when:
 
 ```text
 effectiveBridgeCost / availableRevenue <= 1%
@@ -237,19 +237,19 @@ interface IBridgeAdapter {
 }
 ```
 
-The adapter forwards native ETH when supported and wraps to canonical Base WETH internally when required by the bridge route. Protocol-specific wrapping, approvals, and calldata remain inside the adapter.
+The Across adapter deposits native ETH into the origin SpokePool as canonical WETH, binds the originating vault as the depositor/refund address, and passes a payout identifier plus the community identity to the destination receiver. Quote output, deadline, destination token, destination receiver, and minimum output are validated before deposit.
 
 ### Destination delivery
 
-There is one shared receiver on every supported remote Gardens chain. It authenticates the delivery payload, resolves the latest council Safe, and forwards the delivered native ETH or approved wrapped ETH asset.
+There is one shared receiver on every supported remote Gardens chain. It authenticates the destination Across SpokePool, verifies the configured wrapped-native token, unwraps the exact delivered amount, resolves the latest council Safe, and forwards native ETH.
 
-If the Safe transfer fails, the receiver catches the failure instead of reverting the Squid hook. It records the amount against `payoutId` and `communityKey`, then permits a permissionless local retry that resolves the latest Safe again.
+If the Safe transfer fails, the receiver catches the failure instead of reverting the Across callback. It records the amount against `payoutId` and `communityKey`, then permits a permissionless local retry that resolves the latest Safe again.
 
 ### Failure handling
 
 ```mermaid
 flowchart TD
-    Start["Squid transfer"] --> Arrived{"Funds reached destination?"}
+    Start["Across transfer"] --> Arrived{"Funds reached destination?"}
     Arrived -->|"No"| Refund["Refund to Community Vault on Base"]
     Refund --> Detect["API detects REFUND"]
     Detect --> Requote["Keeper obtains a new quote"]
@@ -264,9 +264,9 @@ flowchart TD
 ```
 
 - If the source transaction reverts, funds never leave the vault.
-- If Squid fails before destination delivery, the route refund address is the originating community vault.
-- Native ETH refunds remain native; WETH refunds are normalized on the next sweep.
-- If funds arrive but the Safe transfer fails, retry is local and does not invoke Squid again.
+- If Across expires the deposit before destination delivery, the depositor/refund address is the originating community vault.
+- Wrapped-native refunds are normalized by the vault on the next sweep.
+- If funds arrive but the Safe transfer fails, retry is local and does not invoke Across again.
 - A maintainer recovery function applies only to recorded failed payouts and emits a complete audit event.
 
 ## Contracts and Ownership
@@ -275,7 +275,7 @@ flowchart TD
 |---|---|---|---|
 | `CommunityRevenueVault` | One deterministic clone per community on Base | Non-upgradeable clone | Router-only release |
 | `GardensMarkeeRouter` | Singleton on Base; deploys vault clones and creates/registers leaderboards | UUPS via `ProxyOwnableUpgrader` | Authorized keeper for creation; Gardens Base `ProxyOwner` for factory/configuration and leaderboard administration |
-| `SquidBridgeAdapter` | Replaceable adapter on Base | Replace by router configuration | Router-only execution |
+| `AcrossBridgeAdapter` | Replaceable adapter on Base | Replace by router configuration | Router-only execution; owner-configured destination token allowlist |
 | `GardensRevenueReceiver` | Singleton per remote chain | UUPS via `ProxyOwnableUpgrader` | Chain-local Gardens `ProxyOwner` |
 
 The effective Gardens owner manages keeper authorization, the settable streaming leaderboard factory, leaderboard administration, and adapter/receiver configuration. The factory setter rejects the zero address and addresses without contract code. Successful router and adapter calls must not retain community revenue.
@@ -289,10 +289,8 @@ The effective Gardens owner manages keeper authorization, the settable streaming
 | Optimism | 10 | Native ETH |
 | Arbitrum | 42161 | Native ETH |
 | Polygon | 137 | Canonical/approved WETH |
-| Gnosis | 100 | Approved wrapped ETH representation |
-| Celo | 42220 | Approved wrapped ETH representation |
 
-Exact Squid route availability, refund assets, destination token addresses, and hook behavior must be validated with the Gardens integrator ID before deployment.
+Across currently exposes Base routes for Ethereum, Optimism, Arbitrum, and Polygon. Gnosis and Celo are deferred until Across supports those routes or a second adapter is selected. Route availability, refund behavior, destination WETH, SpokePool addresses, and quote limits must be validated live before enabling a chain. Ethereum Sepolia to Arbitrum Sepolia was exercised end to end with the destination callback; Optimism Sepolia is configured but Across testnet relayer availability is not reliable enough to make it a rollout gate.
 
 ## Two-Developer Split
 
@@ -310,7 +308,7 @@ Exact Squid route availability, refund assets, destination token addresses, and 
 - Implement vault normalization, router, bridge adapter, and destination receiver contracts.
 - Implement the 1% automatic quote/keeper path.
 - Implement council Safe and Safe-member manual claims.
-- Implement Squid status reconciliation, Base-vault refunds, and fresh-route retry.
+- Implement Across deposit-status reconciliation, Base-vault refunds, and fresh-route retry.
 - Implement destination failed-payout escrow, permissionless retry, and maintainer recovery.
 - Test accounting, access control, refunds, duplicate delivery, Safe rotation, and all destination assets.
 
@@ -378,9 +376,9 @@ interface IGardensMarkeeRouter {
 - All supported Gardens communities expose `RegistryCommunity.councilSafe()`.
 - Council Safes support threshold-valid EIP-1271 signatures and owner lookup.
 - The Gardens keeper is funded with Base ETH and is operationally trusted to submit validated routes.
-- Squid enables the integrator ID for all required Base routes and destination hooks.
-- Squid can encode the originating vault as the source-chain refund recipient.
-- Polygon, Gnosis, and Celo communities accept the configured wrapped ETH representation.
+- Across exposes a live quote within the configured limits for every enabled Base route.
+- The Across deposit binds the originating vault as depositor/refund recipient.
+- Polygon communities accept the configured wrapped ETH representation.
 - The API safely persists consumed nonces, an indexing mirror of router community registrations, claims, quotes, and transfer status.
 - Threshold policy stays off-chain; contracts enforce quote validity, destination integrity, minimum output, and funds conservation.
 
@@ -411,7 +409,7 @@ interface IGardensMarkeeRouter {
 ### Failures and operations
 
 - Source reverts preserve funds in the vault.
-- Pre-delivery Squid failures refund the correct community vault.
+- Expired pre-delivery Across deposits refund the correct community vault.
 - Refunded WETH is included in the next normalization.
 - Safe-transfer failures are escrowed without reverting destination delivery.
 - Permissionless retry cannot change the community or beneficiary.

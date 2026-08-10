@@ -14,7 +14,7 @@ struct BridgeRequest {
 
 /// @notice Generic bridge adapter accepting native ETH only. Protocol
 /// specific wrapping, approvals, and calldata stay inside the adapter
-/// implementation (e.g. `SquidBridgeAdapter`).
+/// implementation (e.g. `AcrossBridgeAdapter`).
 interface IBridgeAdapter {
     function bridgeETH(BridgeRequest calldata request, bytes calldata quoteData)
         external

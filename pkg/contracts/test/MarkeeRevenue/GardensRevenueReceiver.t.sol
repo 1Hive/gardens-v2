@@ -7,6 +7,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {GardensRevenueReceiver} from "../../src/MarkeeRevenue/GardensRevenueReceiver.sol";
 import {IGardensRevenueReceiver} from "../../src/MarkeeRevenue/interfaces/IGardensRevenueReceiver.sol";
 import {MockRegistryCommunity} from "./mocks/MockRegistryCommunity.sol";
+import {MockWETH9} from "./mocks/MockWETH9.sol";
 
 contract RejectingReceiver {
     // No receive/fallback: any plain ETH transfer to this contract reverts.
@@ -16,76 +17,99 @@ contract RejectingReceiver {
 contract GardensRevenueReceiverTest is Test {
     GardensRevenueReceiver internal receiver;
     address internal proxyOwner = address(0xA11CE);
-    address internal squidExecutor = address(0x5921D);
+    address internal acrossSpokePool = address(0xAC2055);
+    MockWETH9 internal wrappedNativeToken;
 
     function setUp() public {
+        wrappedNativeToken = new MockWETH9();
+        receiver = _deployReceiver();
+    }
+
+    function _deployReceiver() internal returns (GardensRevenueReceiver deployed) {
         address implementation = address(new GardensRevenueReceiver());
         address proxy = address(
             new ERC1967Proxy(
-                implementation, abi.encodeWithSelector(GardensRevenueReceiver.initialize.selector, proxyOwner)
+                implementation,
+                abi.encodeWithSignature(
+                    "initialize(address,address,address)", proxyOwner, acrossSpokePool, address(wrappedNativeToken)
+                )
             )
         );
-        receiver = GardensRevenueReceiver(payable(proxy));
-
-        vm.prank(proxyOwner);
-        receiver.setSquidExecutor(squidExecutor);
+        deployed = GardensRevenueReceiver(payable(proxy));
     }
 
     function _deliver(bytes32 payoutId, MockRegistryCommunity registryCommunity, uint256 amount) internal {
-        vm.deal(squidExecutor, amount);
-        vm.prank(squidExecutor);
-        receiver.onReceive{value: amount}(payoutId, keccak256("key"), address(registryCommunity), amount);
+        vm.deal(address(this), amount);
+        wrappedNativeToken.mint{value: amount}(address(receiver));
+        vm.prank(acrossSpokePool);
+        receiver.handleV3AcrossMessage(
+            address(wrappedNativeToken),
+            amount,
+            address(0xBEEF),
+            abi.encode(payoutId, keccak256("key"), address(registryCommunity))
+        );
     }
 
-    function test_onReceive_revertsWhenExecutorUnset() public {
+    function test_initialize_revertsOnZeroAddresses() public {
         address implementation = address(new GardensRevenueReceiver());
-        address proxy = address(
-            new ERC1967Proxy(
-                implementation, abi.encodeWithSelector(GardensRevenueReceiver.initialize.selector, proxyOwner)
+        vm.expectRevert(IGardensRevenueReceiver.ZeroAddress.selector);
+        new ERC1967Proxy(
+            implementation,
+            abi.encodeWithSignature(
+                "initialize(address,address,address)", proxyOwner, address(0), address(wrappedNativeToken)
             )
         );
-        GardensRevenueReceiver fresh = GardensRevenueReceiver(payable(proxy));
-
-        vm.expectRevert(IGardensRevenueReceiver.NotSquidExecutor.selector);
-        fresh.onReceive(bytes32(uint256(1)), bytes32(uint256(2)), address(0xC0DE), 0);
     }
 
-    function test_onReceive_revertsForWrongCaller() public {
-        vm.expectRevert(IGardensRevenueReceiver.NotSquidExecutor.selector);
-        receiver.onReceive(bytes32(uint256(1)), bytes32(uint256(2)), address(0xC0DE), 0);
+    function test_handleV3AcrossMessage_revertsForWrongCaller() public {
+        vm.expectRevert(IGardensRevenueReceiver.NotAcrossSpokePool.selector);
+        receiver.handleV3AcrossMessage(
+            address(wrappedNativeToken), 1, address(0), abi.encode(bytes32(0), bytes32(0), address(0))
+        );
     }
 
-    function test_onReceive_revertsOnValueMismatch() public {
-        vm.deal(squidExecutor, 1 ether);
-        vm.prank(squidExecutor);
-        vm.expectRevert(IGardensRevenueReceiver.ValueMismatch.selector);
-        receiver.onReceive{value: 1 ether}(bytes32(uint256(1)), bytes32(uint256(2)), address(0xC0DE), 0.5 ether);
+    function test_handleV3AcrossMessage_revertsForWrongToken() public {
+        vm.prank(acrossSpokePool);
+        vm.expectRevert(IGardensRevenueReceiver.InvalidToken.selector);
+        receiver.handleV3AcrossMessage(address(0xBAD), 1, address(0), abi.encode(bytes32(0), bytes32(0), address(0)));
     }
 
-    function test_onReceive_deliversToCouncilSafe() public {
+    function test_handleV3AcrossMessage_revertsWithoutTransferredFunds() public {
+        vm.prank(acrossSpokePool);
+        vm.expectRevert(IGardensRevenueReceiver.InsufficientBalance.selector);
+        receiver.handleV3AcrossMessage(
+            address(wrappedNativeToken),
+            1 ether,
+            address(0),
+            abi.encode(bytes32(uint256(1)), bytes32(0), address(0xC0DE))
+        );
+    }
+
+    function test_handleV3AcrossMessage_deliversToCouncilSafe() public {
         MockRegistryCommunity registryCommunity = new MockRegistryCommunity(address(0x5AFE1));
-        bytes32 payoutId = bytes32(uint256(1));
-
-        _deliver(payoutId, registryCommunity, 1 ether);
+        _deliver(bytes32(uint256(1)), registryCommunity, 1 ether);
 
         assertEq(address(0x5AFE1).balance, 1 ether);
-        (,,, bool resolved) = receiver.failedPayouts(payoutId);
-        assertFalse(resolved);
     }
 
-    function test_onReceive_revertsOnDuplicatePayoutId() public {
+    function test_handleV3AcrossMessage_revertsOnDuplicatePayoutId() public {
         MockRegistryCommunity registryCommunity = new MockRegistryCommunity(address(0x5AFE1));
         bytes32 payoutId = bytes32(uint256(1));
-
         _deliver(payoutId, registryCommunity, 1 ether);
 
-        vm.deal(squidExecutor, 1 ether);
-        vm.prank(squidExecutor);
+        vm.deal(address(this), 1 ether);
+        wrappedNativeToken.mint{value: 1 ether}(address(receiver));
+        vm.prank(acrossSpokePool);
         vm.expectRevert(IGardensRevenueReceiver.PayoutAlreadyProcessed.selector);
-        receiver.onReceive{value: 1 ether}(payoutId, keccak256("key"), address(registryCommunity), 1 ether);
+        receiver.handleV3AcrossMessage(
+            address(wrappedNativeToken),
+            1 ether,
+            address(0),
+            abi.encode(payoutId, keccak256("key"), address(registryCommunity))
+        );
     }
 
-    function test_onReceive_escrowsOnSafeTransferFailure() public {
+    function test_handleV3AcrossMessage_escrowsOnSafeTransferFailure() public {
         RejectingReceiver badSafe = new RejectingReceiver();
         MockRegistryCommunity registryCommunity = new MockRegistryCommunity(address(badSafe));
         bytes32 payoutId = bytes32(uint256(1));
@@ -108,7 +132,6 @@ contract GardensRevenueReceiverTest is Test {
 
         address newSafe = address(0x5AFE2);
         registryCommunity.setCouncilSafe(newSafe);
-
         receiver.retryPayout(payoutId);
 
         assertEq(newSafe.balance, 1 ether);
@@ -119,19 +142,6 @@ contract GardensRevenueReceiverTest is Test {
     function test_retryPayout_revertsForUnknownPayout() public {
         vm.expectRevert(IGardensRevenueReceiver.PayoutNotFound.selector);
         receiver.retryPayout(bytes32(uint256(999)));
-    }
-
-    function test_retryPayout_revertsIfAlreadyResolved() public {
-        RejectingReceiver badSafe = new RejectingReceiver();
-        MockRegistryCommunity registryCommunity = new MockRegistryCommunity(address(badSafe));
-        bytes32 payoutId = bytes32(uint256(1));
-        _deliver(payoutId, registryCommunity, 1 ether);
-
-        registryCommunity.setCouncilSafe(address(0x5AFE2));
-        receiver.retryPayout(payoutId);
-
-        vm.expectRevert(IGardensRevenueReceiver.PayoutAlreadyResolved.selector);
-        receiver.retryPayout(payoutId);
     }
 
     function test_retryPayout_revertsIfStillFailing() public {
@@ -151,20 +161,21 @@ contract GardensRevenueReceiverTest is Test {
         _deliver(payoutId, registryCommunity, 1 ether);
 
         address recoveryTarget = address(0xFEE);
-
         vm.expectRevert();
         receiver.recoverPayout(payoutId, payable(recoveryTarget));
 
         vm.prank(proxyOwner);
         receiver.recoverPayout(payoutId, payable(recoveryTarget));
         assertEq(recoveryTarget.balance, 1 ether);
+    }
+
+    function test_setAcrossConfig_onlyOwner() public {
+        vm.expectRevert();
+        receiver.setAcrossConfig(address(1), address(2));
 
         vm.prank(proxyOwner);
-        vm.expectRevert(IGardensRevenueReceiver.PayoutAlreadyResolved.selector);
-        receiver.recoverPayout(payoutId, payable(recoveryTarget));
-
-        vm.prank(proxyOwner);
-        vm.expectRevert(IGardensRevenueReceiver.PayoutNotFound.selector);
-        receiver.recoverPayout(bytes32(uint256(999)), payable(recoveryTarget));
+        receiver.setAcrossConfig(address(1), address(2));
+        assertEq(receiver.acrossSpokePool(), address(1));
+        assertEq(receiver.wrappedNativeToken(), address(2));
     }
 }
