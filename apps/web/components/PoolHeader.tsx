@@ -69,6 +69,7 @@ import {
   MAX_RATIO_CONSTANT,
   roundToSignificant,
 } from "@/utils/numbers";
+import { getHiddenPoolConfigLabels } from "@/utils/poolConfigLabels";
 import { shortenAddress } from "@/utils/text";
 
 type Props = {
@@ -210,8 +211,12 @@ export default function PoolHeader({
       )
     : "0";
 
-  const maxVotingWeight =
-    poolToken ? formatTokenAmount(maxAmount, poolToken.decimals) : 0;
+  // Voting weight is denominated in the community governance token, and pool
+  // creation stores `pointConfig.maxAmount` with that token's decimals.
+  const maxVotingWeight = formatTokenAmount(
+    maxAmount,
+    communityGovTokenDecimals ?? 18,
+  );
 
   const spendingLimit =
     (strategy.config.maxRatio / CV_SCALE_PRECISION) *
@@ -312,7 +317,7 @@ export default function PoolHeader({
     },
     {
       label: "Max voting weight",
-      value: `${maxVotingWeight} ${poolToken?.symbol}`,
+      value: `${maxVotingWeight} ${strategy.registryCommunity.garden.symbol}`,
       info: "Staking above this specified limit won’t increase your voting weight.",
     },
     {
@@ -411,32 +416,16 @@ export default function PoolHeader({
     : []),
   ] as const;
 
-  const filteredPoolConfig =
-    (
-      PoolTypes[proposalType] === "signaling" &&
-      PointSystems[pointSystem] !== "capped"
-    ) ?
-      poolConfig.filter((config) => {
-        const filter: (typeof poolConfig)[number]["label"][] = [
-          "Spending limit",
-          "Min threshold",
-          "Min conviction",
-          "Max voting weight",
-          "Token",
-        ];
-        return config.value != null && !filter.includes(config.label);
-      })
-    : PoolTypes[proposalType] === "signaling" ?
-      poolConfig.filter((config) => {
-        const filteredLabels: (typeof poolConfig)[number]["label"][] = [
-          "Spending limit",
-          "Min threshold",
-          "Min conviction",
-        ];
-        return config.value != null && !filteredLabels.includes(config.label);
-      })
-    : PointSystems[pointSystem] === "capped" ? poolConfig
-    : poolConfig.filter((config) => config.label !== "Max voting weight");
+  const hiddenPoolConfigLabels = getHiddenPoolConfigLabels({
+    poolType: PoolTypes[proposalType],
+    pointSystem: PointSystems[pointSystem],
+  });
+
+  const filteredPoolConfig = poolConfig.filter(
+    (config) =>
+      !hiddenPoolConfigLabels.includes(config.label) &&
+      (PoolTypes[proposalType] !== "signaling" || config.value != null),
+  );
 
   const { write: rejectPoolWrite } = useContractWriteWithConfirmations({
     address: communityAddr,
