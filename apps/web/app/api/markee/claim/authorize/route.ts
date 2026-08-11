@@ -385,6 +385,7 @@ const verifyChallenge = async (body: VerifyRequest) => {
 
     return jsonSuccess({
       authorized: true,
+      bridgeName: execution.bridgeName,
       bridged: execution.bridged,
       chainId: challenge.chainId,
       claimAmount: execution.claimAmount.toString(),
@@ -396,6 +397,7 @@ const verifyChallenge = async (body: VerifyRequest) => {
       markeeChainId: execution.markeeChainId,
       recipient: currentCouncilSafe,
       transactionHash: execution.transactionHash,
+      transactionUrl: execution.transactionUrl,
     });
   } catch (error) {
     console.error("[Markee claim authorization] Verification failed", error);

@@ -37,6 +37,7 @@ export const CFA_V1_FORWARDER_ADDRESS =
   "0xcfA132E353cB4E398080B9700609bb008eceB125" as Address;
 
 export const streamingLeaderboardRuntimeABI = parseAbi([
+  "error UnknownMarkee()",
   "function ETHX() view returns (address)",
   "function HOST() view returns (address)",
   "function backerDeposit(address backer) view returns (uint256)",
@@ -44,12 +45,14 @@ export const streamingLeaderboardRuntimeABI = parseAbi([
   "function createMarkee(string message, string name) returns (address markeeAddress)",
   "function getTopMarkees(uint256 limit) view returns (address[] topAddresses, uint256[] topRates)",
   "function getMarkees(uint256 offset, uint256 limit) view returns (address[] result)",
+  "function isMarkeeOnLeaderboard(address markee) view returns (bool)",
   "function markeeCount() view returns (uint256)",
   "function maxNameLength() view returns (uint256)",
   "function poolOf(address markee) view returns (address)",
   "function updateMessage(address markee, string newMessage)",
   "function updateName(address markee, string newName)",
   "event MarkeeCreated(address indexed markeeAddress, address indexed owner, string message, string name)",
+  "event MarkeeRegistered(address indexed markeeAddress, address indexed pool)",
 ]);
 
 export const markeeOwnerABI = parseAbi([
@@ -59,6 +62,7 @@ export const markeeOwnerABI = parseAbi([
 ]);
 
 export const superfluidHostABI = parseAbi([
+  "error UnknownMarkee()",
   "function batchCall((uint32 operationType,address target,bytes data)[] operations) payable",
   "function getAgreementClass(bytes32 agreementType) view returns (address)",
 ]);
@@ -98,6 +102,30 @@ export type MarkeeStreamOperation = {
   operationType: number;
   target: Address;
 };
+
+export async function waitForMarkeeRegistration({
+  isRegistered,
+  maxAttempts = 5,
+  retryDelayMs = 500,
+}: {
+  isRegistered: () => Promise<boolean>;
+  maxAttempts?: number;
+  retryDelayMs?: number;
+}) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      if (await isRegistered()) return true;
+    } catch {
+      // A newly mined block may not be visible on every RPC backend yet.
+    }
+
+    if (attempt + 1 < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+    }
+  }
+
+  return false;
+}
 
 export function getMarkeeStreamAmounts(
   monthlyWei: bigint,

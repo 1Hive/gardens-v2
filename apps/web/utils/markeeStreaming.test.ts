@@ -1,5 +1,5 @@
-import { getAddress, parseEther, parseUnits } from "viem";
-import { describe, expect, it } from "vitest";
+import { decodeErrorResult, getAddress, parseEther, parseUnits } from "viem";
+import { describe, expect, it, vi } from "vitest";
 import {
   buildMarkeeOpenStreamOperations,
   getBufferedMarkeeGasEstimate,
@@ -9,11 +9,47 @@ import {
   getMarkeeStreamAmounts,
   getMarkeeStreamFunding,
   MARKEE_SECONDS_IN_MONTH,
+  superfluidHostABI,
+  waitForMarkeeRegistration,
 } from "./markeeStreaming";
 
 const address = (suffix: string) => getAddress(`0x${suffix.padStart(40, "0")}`);
 
 describe("Markee streaming transaction builder", () => {
+  it("decodes a nested UnknownMarkee batch revert", () => {
+    expect(
+      decodeErrorResult({ abi: superfluidHostABI, data: "0x6663ccf3" })
+        .errorName,
+    ).toBe("UnknownMarkee");
+  });
+
+  it("retries until a newly created Markee is visible", async () => {
+    let attempts = 0;
+    const registered = await waitForMarkeeRegistration({
+      isRegistered: async () => {
+        attempts += 1;
+        return attempts === 3;
+      },
+      retryDelayMs: 0,
+    });
+
+    expect(registered).toBe(true);
+    expect(attempts).toBe(3);
+  });
+
+  it("stops waiting when a new Markee remains unavailable", async () => {
+    const isRegistered = vi.fn().mockResolvedValue(false);
+
+    await expect(
+      waitForMarkeeRegistration({
+        isRegistered,
+        maxAttempts: 2,
+        retryDelayMs: 0,
+      }),
+    ).resolves.toBe(false);
+    expect(isRegistered).toHaveBeenCalledTimes(2);
+  });
+
   it("calculates the prefund, buffer, and non-zero per-second rate", () => {
     const amounts = getMarkeeStreamAmounts(
       parseEther("0.001"),

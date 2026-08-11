@@ -28,6 +28,7 @@ type Props = {
   children: ReactNode;
   currentMessage: string;
   currentName?: string;
+  currentRatePerSecondWei?: string;
   footer: ReactNode;
   isOpen: boolean;
   leaderboardAddress?: Address;
@@ -56,6 +57,7 @@ export function CommunityStreamingMarkeeModal({
   children,
   currentMessage,
   currentName,
+  currentRatePerSecondWei,
   footer,
   isOpen,
   leaderboardAddress,
@@ -70,6 +72,10 @@ export function CommunityStreamingMarkeeModal({
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
   const [totalViews, setTotalViews] = useState<number | null>(null);
+  const currentRate =
+    currentRatePerSecondWei != null && /^\d+$/u.test(currentRatePerSecondWei) ?
+      BigInt(currentRatePerSecondWei)
+    : null;
 
   const markeeAppUrl = useMemo(
     () =>
@@ -77,6 +83,16 @@ export function CommunityStreamingMarkeeModal({
         getMarkeeAppUrl(chainId, leaderboardAddress)
       ),
     [chainId, leaderboardAddress],
+  );
+  const challengerLeaderboard = useMemo(
+    () =>
+      leaderboard.filter(
+        ({ address, message }) =>
+          message.trim().length > 0 &&
+          (topMarkeeAddress == null ||
+            address.toLowerCase() !== topMarkeeAddress.toLowerCase()),
+      ),
+    [leaderboard, topMarkeeAddress],
   );
 
   useEffect(() => {
@@ -121,7 +137,7 @@ export function CommunityStreamingMarkeeModal({
       const [addresses, rates] = await publicClient.readContract({
         abi: streamingLeaderboardRuntimeABI,
         address: leaderboardAddress,
-        args: [10n],
+        args: [11n],
         functionName: "getTopMarkees",
       });
       const validAddresses = addresses.filter((address): address is Address =>
@@ -231,16 +247,23 @@ export function CommunityStreamingMarkeeModal({
                   </p>
                 )}
               </div>
-              {markeeAppUrl && (
-                <a
-                  href={markeeAppUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="shrink-0 text-xs text-primary-content underline underline-offset-2"
-                >
-                  Open in Markee
-                </a>
-              )}
+              <div className="flex shrink-0 flex-col items-end gap-2">
+                {markeeAppUrl && (
+                  <a
+                    href={markeeAppUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-primary-content underline underline-offset-2"
+                  >
+                    Open in Markee
+                  </a>
+                )}
+                {currentRate != null && (
+                  <p className="font-mono text-xs text-neutral-content/60">
+                    {formatMonthlyRate(currentRate)} ETH/mo
+                  </p>
+                )}
+              </div>
             </div>
 
             <button
@@ -265,22 +288,22 @@ export function CommunityStreamingMarkeeModal({
                   <p className="text-xs text-danger-content">
                     {leaderboardError}
                   </p>
-                : leaderboard.length === 0 ?
+                : challengerLeaderboard.length === 0 ?
                   <p className="text-xs text-neutral-content/40">
-                    No Markees yet.
+                    No other Markees yet.
                   </p>
-                : leaderboard.map((entry, index) => (
+                : challengerLeaderboard.map((entry, index) => (
                     <div
                       key={entry.address}
                       className="flex items-start justify-between gap-3"
                     >
                       <div className="flex min-w-0 gap-2">
                         <span className="font-mono text-xs text-neutral-content/30">
-                          {index + 1}
+                          {index + 2}
                         </span>
                         <div className="min-w-0">
                           <p className="break-words font-mono text-xs text-neutral-content">
-                            {entry.message || "No message yet"}
+                            {entry.message}
                           </p>
                           {entry.name && (
                             <p className="mt-0.5 text-xs text-neutral-content/40">

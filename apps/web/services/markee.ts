@@ -31,10 +31,13 @@ export type CommunityMarkeeResponse = {
 };
 
 export type MarkeeClaimQuoteResponse = {
+  bridgeProtocol: "across" | "lifi" | "none" | "squid";
   bridged: boolean;
   claimAmount: string;
+  destinationSymbol: string;
   estimatedFeeAmount: string;
   estimatedNetworkFeeAmount: string;
+  expectedAmountOut: string;
   expiresAt: number;
   markeeChainId: number;
   recipient: Address;

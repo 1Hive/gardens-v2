@@ -59,6 +59,7 @@ export async function GET(request: NextRequest) {
         claimAmount: quote.claimAmount.toString(),
         estimatedFeeAmount: quote.estimatedFeeAmount.toString(),
         estimatedNetworkFeeAmount: quote.estimatedNetworkFeeAmount.toString(),
+        expectedAmountOut: quote.expectedAmountOut.toString(),
       },
       { headers: { "Cache-Control": "no-store" } },
     );

@@ -91,12 +91,14 @@ describe("Markee manual claim authorization", () => {
       recipient: councilSafe,
     });
     mocks.executeMarkeeClaim.mockResolvedValue({
+      bridgeName: "LI.FI",
       bridged: true,
       claimAmount: BigInt("420000000000000000"),
       estimatedFeeAmount: BigInt("2000000000000000"),
       expectedAmountOut: BigInt("418000000000000000"),
       markeeChainId: 11155111,
       transactionHash: `0x${"22".repeat(32)}`,
+      transactionUrl: `https://scan.li.fi/tx/0x${"22".repeat(32)}`,
     });
     mocks.getEnvPublicClient.mockReturnValue({
       readContract: mocks.readContract,
@@ -181,6 +183,7 @@ describe("Markee manual claim authorization", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       authorized: true,
+      bridgeName: "LI.FI",
       bridged: true,
       chainId: 100,
       claimAmount: "420000000000000000",
@@ -192,6 +195,7 @@ describe("Markee manual claim authorization", () => {
       markeeChainId: 11155111,
       recipient: councilSafe,
       transactionHash: `0x${"22".repeat(32)}`,
+      transactionUrl: `https://scan.li.fi/tx/0x${"22".repeat(32)}`,
     });
     expect(mocks.verifyTypedData).toHaveBeenCalledWith(
       expect.objectContaining({

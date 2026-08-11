@@ -2,6 +2,7 @@ import {
   Address,
   createWalletClient,
   encodeAbiParameters,
+  encodeFunctionData,
   getAddress,
   Hex,
   http,
@@ -19,27 +20,62 @@ import {
 
 const MARKEE_SEPOLIA_CHAIN_ID = 11155111;
 const MARKEE_BASE_CHAIN_ID = 8453;
+const GNOSIS_CHAIN_ID = 100;
+const SQUID_MAX_WETH_SLIPPAGE_PERCENT = 5;
+const SQUID_NATIVE_TOKEN: Address =
+  "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+const SQUID_DESTINATION_ETH_TOKENS: Record<number, Address> = {
+  1: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+  10: "0x4200000000000000000000000000000000000006",
+  100: "0x6a023ccd1ff6f2045c3309768ead9e68f978f6e1",
+  137: "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+  42161: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+  42220: "0x2def4285787d58a2f811af24755a8150622f4361",
+};
+const SQUID_NATIVE_ETH_CHAIN_IDS = new Set([1, 10, 42161]);
+const SQUID_ROUTE_URL = "https://v2.api.squidrouter.com/v2/route";
 const GARDENS_TESTNET_CHAIN_IDS = new Set([421614, 11155420, 11155111]);
+const BRIDGE_PROTOCOL = {
+  NONE: 0,
+  ACROSS: 1,
+  SQUID: 2,
+  LIFI: 3,
+} as const;
+
+type BridgeProtocol = (typeof BRIDGE_PROTOCOL)[keyof typeof BRIDGE_PROTOCOL];
 
 const isTestnetCommunity = (chainId?: number) =>
   chainId != null && GARDENS_TESTNET_CHAIN_IDS.has(chainId);
 
 export const getMarkeeChainId = (communityChainId?: number) =>
-  isTestnetCommunity(communityChainId) ? MARKEE_SEPOLIA_CHAIN_ID
-  : process.env.NEXT_PUBLIC_ENV_GARDENS === "prod" ? MARKEE_BASE_CHAIN_ID
-  : MARKEE_SEPOLIA_CHAIN_ID;
+  isTestnetCommunity(communityChainId) ?
+    MARKEE_SEPOLIA_CHAIN_ID
+  : MARKEE_BASE_CHAIN_ID;
 
 const gardensMarkeeRouterABI = parseAbi([
   "function communityVault(bytes32 communityKey) view returns (address vault)",
-  "function bridgeAdapter() view returns (address)",
+  "function bridgeConfiguration(uint256 destinationChainId) view returns (address adapter, uint8 protocol)",
   "function keepers(address keeper) view returns (bool)",
   "function remoteReceivers(uint256 chainId) view returns (address)",
-  "function sweep(bytes32 communityKey, bytes quoteData, uint256 minAmountOut)",
+  "function sweep(bytes32 communityKey, bytes quoteData, uint256 minAmountOut) payable",
 ]);
 
 const acrossBridgeAdapterABI = parseAbi([
   "function wrappedNativeToken() view returns (address)",
   "function destinationTokens(uint256 chainId) view returns (address)",
+]);
+
+const squidBridgeAdapterABI = parseAbi([
+  "function squidRouter() view returns (address)",
+]);
+
+const squidGardensRevenueReceiverABI = parseAbi([
+  "function receiveSquidRevenue(bytes32 payoutId, bytes32 communityKey, address registryCommunity) payable",
+  "function receiveSquidTokenRevenue(bytes32 payoutId, bytes32 communityKey, address registryCommunity, address token, uint256 amount)",
+]);
+
+const erc20ABI = parseAbi([
+  "function approve(address spender, uint256 amount) returns (bool)",
 ]);
 
 const communityRevenueVaultABI = parseAbi([
@@ -141,10 +177,34 @@ type AcrossSuggestedFeesResponse = {
   outputAmount?: string;
 };
 
+type SquidRouteResponse = {
+  message?: string;
+  requestId?: string;
+  route?: {
+    estimate?: {
+      aggregateSlippage?: number | string;
+      fromAmountUSD?: string;
+      toAmount?: string;
+      toAmountMin?: string;
+      toAmountUSD?: string;
+    };
+    transactionRequest?: {
+      data?: string;
+      target?: string;
+      targetAddress?: string;
+      value?: string;
+    };
+  };
+};
+
 export type MarkeeClaimExecutionQuote = {
+  bridgeProtocol: "across" | "lifi" | "none" | "squid";
   bridged: boolean;
   claimAmount: bigint;
+  destinationSymbol: string;
   estimatedFeeAmount: bigint;
+  executionValue: bigint;
+  expectedAmountOut: bigint;
   expiresAt: number;
   markeeChainId: number;
   minAmountOut: bigint;
@@ -152,6 +212,39 @@ export type MarkeeClaimExecutionQuote = {
   recipient: Address;
   router: Address;
   symbol: "ETH";
+};
+
+const getClaimBridgeDetails = ({
+  chainId,
+  markeeChainId,
+  protocol,
+  transactionHash,
+}: {
+  chainId: number;
+  markeeChainId: number;
+  protocol: MarkeeClaimExecutionQuote["bridgeProtocol"];
+  transactionHash: Hex;
+}) => {
+  if (chainId === GNOSIS_CHAIN_ID || protocol === "lifi") {
+    return {
+      bridgeName: "LI.FI",
+      transactionUrl: `https://scan.li.fi/tx/${transactionHash}`,
+    };
+  }
+  if (protocol === "squid") {
+    return {
+      bridgeName: "Squid",
+      transactionUrl: `https://axelarscan.io/gmp/${transactionHash}`,
+    };
+  }
+
+  return {
+    bridgeName: protocol === "across" ? "Across" : null,
+    transactionUrl:
+      markeeChainId === MARKEE_BASE_CHAIN_ID ?
+        `https://basescan.org/tx/${transactionHash}`
+      : `https://sepolia.etherscan.io/tx/${transactionHash}`,
+  };
 };
 
 export class MarkeeClaimExecutionError extends Error {
@@ -175,6 +268,39 @@ const requireAddress = (value: unknown, message: string) => {
   return address;
 };
 
+const getBridgeConfiguration = async ({
+  chainId,
+  client,
+  router,
+}: {
+  chainId: number;
+  client: ReturnType<typeof getEnvPublicClient>;
+  router: Address;
+}) => {
+  const configuration = (await client.readContract({
+    abi: gardensMarkeeRouterABI,
+    address: router,
+    args: [BigInt(chainId)],
+    functionName: "bridgeConfiguration",
+  })) as readonly [Address, number];
+  const adapter = requireAddress(
+    configuration[0],
+    "Markee bridge adapter is not configured for this chain.",
+  );
+  const protocol = Number(configuration[1]);
+  if (
+    protocol !== BRIDGE_PROTOCOL.ACROSS &&
+    protocol !== BRIDGE_PROTOCOL.SQUID &&
+    protocol !== BRIDGE_PROTOCOL.LIFI
+  ) {
+    throw new MarkeeClaimExecutionError(
+      "The configured Markee bridge protocol is not supported.",
+      503,
+    );
+  }
+  return { adapter, protocol: protocol as BridgeProtocol };
+};
+
 const getAcrossSuggestedFees = async ({
   adapter,
   amount,
@@ -182,6 +308,7 @@ const getAcrossSuggestedFees = async ({
   community,
   communityKey,
   inputToken,
+  originChainId,
   outputToken,
   receiver,
 }: {
@@ -191,6 +318,7 @@ const getAcrossSuggestedFees = async ({
   community: Address;
   communityKey: Hex;
   inputToken: Address;
+  originChainId: number;
   outputToken: Address;
   receiver: Address;
 }) => {
@@ -210,12 +338,16 @@ const getAcrossSuggestedFees = async ({
     destinationChainId: chainId.toString(),
     inputToken,
     message,
-    originChainId: MARKEE_SEPOLIA_CHAIN_ID.toString(),
+    originChainId: originChainId.toString(),
     outputToken,
     recipient: receiver,
   });
+  const acrossApi =
+    originChainId === MARKEE_SEPOLIA_CHAIN_ID ?
+      "https://testnet.across.to/api"
+    : "https://app.across.to/api";
   const response = await fetch(
-    `https://testnet.across.to/api/suggested-fees?${params.toString()}`,
+    `${acrossApi}/suggested-fees?${params.toString()}`,
     { cache: "no-store", signal: AbortSignal.timeout(15_000) },
   );
   const body = (await response.json()) as AcrossSuggestedFeesResponse;
@@ -259,12 +391,286 @@ const getAcrossSuggestedFees = async ({
   return { fillDeadline, outputAmount };
 };
 
+const parseDecimalToFixed = (value: string, decimals = 18) => {
+  if (!/^\d+(?:\.\d+)?$/u.test(value)) return null;
+  const [whole, fraction = ""] = value.split(".");
+  return (
+    BigInt(whole) * 10n ** BigInt(decimals) +
+    BigInt(fraction.slice(0, decimals).padEnd(decimals, "0"))
+  );
+};
+
+const getDestinationNativeSymbol = (chainId: number) =>
+  chainId === 137 ? "POL"
+  : chainId === 100 ? "XDAI"
+  : chainId === 42220 ? "CELO"
+  : "ETH";
+
+const getSquidRoute = async ({
+  amount,
+  chainId,
+  community,
+  communityKey,
+  destinationRecipient,
+  receiver,
+  refundRecipient,
+  squidRouter,
+}: {
+  amount: bigint;
+  chainId: number;
+  community: Address;
+  communityKey: Hex;
+  destinationRecipient: Address;
+  receiver: Address;
+  refundRecipient: Address;
+  squidRouter: Address;
+}) => {
+  const integratorId = process.env.SQUID_INTEGRATOR_ID?.trim();
+  if (!integratorId) {
+    throw new MarkeeClaimExecutionError(
+      "The Squid integrator ID is not configured.",
+      503,
+    );
+  }
+
+  const payoutId = keccak256(
+    encodeAbiParameters(
+      [{ type: "bytes32" }, { type: "address" }, { type: "uint256" }],
+      [communityKey, community, amount],
+    ),
+  );
+  const fallbackToken = SQUID_DESTINATION_ETH_TOKENS[chainId];
+  if (fallbackToken == null) {
+    throw new MarkeeClaimExecutionError(
+      "This destination chain does not have a configured ETH token.",
+      503,
+    );
+  }
+  const destinationTokens =
+    chainId === GNOSIS_CHAIN_ID ? [fallbackToken, SQUID_NATIVE_TOKEN]
+    : SQUID_NATIVE_ETH_CHAIN_IDS.has(chainId) ?
+      [SQUID_NATIVE_TOKEN, fallbackToken]
+    : [fallbackToken];
+  let response: Awaited<ReturnType<typeof fetch>> | undefined;
+  let body: SquidRouteResponse = {};
+  let selectedDestinationToken: Address | undefined;
+
+  for (const destinationToken of destinationTokens) {
+    const usesNativeEth = destinationToken === SQUID_NATIVE_TOKEN;
+    const postHookCalls =
+      usesNativeEth ?
+        [
+          {
+            callData: encodeFunctionData({
+              abi: squidGardensRevenueReceiverABI,
+              args: [payoutId, communityKey, community],
+              functionName: "receiveSquidRevenue",
+            }),
+            callType: 2,
+            chainType: "evm",
+            estimatedGas: "250000",
+            payload: { inputPos: 0, tokenAddress: SQUID_NATIVE_TOKEN },
+            target: receiver,
+            value: "0",
+          },
+        ]
+      : [
+          {
+            callData: encodeFunctionData({
+              abi: erc20ABI,
+              args: [receiver, 0n],
+              functionName: "approve",
+            }),
+            callType: 1,
+            chainType: "evm",
+            estimatedGas: "70000",
+            payload: { inputPos: 1, tokenAddress: destinationToken },
+            target: destinationToken,
+            value: "0",
+          },
+          {
+            callData: encodeFunctionData({
+              abi: squidGardensRevenueReceiverABI,
+              args: [payoutId, communityKey, community, destinationToken, 0n],
+              functionName: "receiveSquidTokenRevenue",
+            }),
+            callType: 1,
+            chainType: "evm",
+            estimatedGas: "250000",
+            payload: { inputPos: 4, tokenAddress: destinationToken },
+            target: receiver,
+            value: "0",
+          },
+        ];
+    response = await fetch(SQUID_ROUTE_URL, {
+      body: JSON.stringify({
+        // Squid encodes fromAddress as the source-chain refund recipient even
+        // when another contract submits the route transaction.
+        fromAddress: refundRecipient,
+        fromAmount: amount.toString(),
+        fromChain: MARKEE_BASE_CHAIN_ID.toString(),
+        fromToken: SQUID_NATIVE_TOKEN,
+        postHook: {
+          calls: postHookCalls,
+          chainType: "evm",
+          description:
+            "Send Markee community revenue to the latest council Safe",
+          provider: "Gardens",
+        },
+        quoteOnly: false,
+        slippage: 1,
+        toAddress: destinationRecipient,
+        toChain: chainId.toString(),
+        toToken: destinationToken,
+      }),
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+        "x-integrator-id": integratorId,
+      },
+      method: "POST",
+      signal: AbortSignal.timeout(20_000),
+    });
+    body = (await response.json()) as SquidRouteResponse;
+    const aggregateSlippage = Number(
+      body.route?.estimate?.aggregateSlippage ?? 0,
+    );
+    const wethSlippageTooHigh =
+      chainId === GNOSIS_CHAIN_ID &&
+      destinationToken === fallbackToken &&
+      response.ok &&
+      Number.isFinite(aggregateSlippage) &&
+      aggregateSlippage > SQUID_MAX_WETH_SLIPPAGE_PERCENT;
+    if (response.ok && !wethSlippageTooHigh) {
+      selectedDestinationToken = destinationToken;
+      break;
+    }
+  }
+
+  if (response == null) {
+    throw new MarkeeClaimExecutionError(
+      "A bridge route is temporarily unavailable. Please try again shortly.",
+      502,
+    );
+  }
+  if (!response.ok) {
+    const providerMessage = body.message ?? "No provider error message";
+    console.error(
+      `[Markee claim quote] Squid route request failed: ${providerMessage}`,
+      {
+        chainId,
+        community,
+        message: providerMessage,
+        requestId: body.requestId ?? null,
+        status: response.status,
+      },
+    );
+    throw new MarkeeClaimExecutionError(
+      /low liquidity/iu.test(providerMessage) ?
+        "No bridge route currently has enough liquidity for this claim. Please try again later."
+      : "A bridge route is temporarily unavailable. Please try again shortly.",
+      502,
+    );
+  }
+
+  const estimate = body.route?.estimate;
+  const transactionRequest = body.route?.transactionRequest;
+  const target = requireAddress(
+    transactionRequest?.target ?? transactionRequest?.targetAddress,
+    "Squid returned an invalid transaction target.",
+  );
+  if (target !== squidRouter) {
+    throw new MarkeeClaimExecutionError(
+      "Squid returned an unexpected transaction target.",
+      502,
+    );
+  }
+  if (
+    typeof transactionRequest?.data !== "string" ||
+    !/^0x[0-9a-fA-F]+$/u.test(transactionRequest.data)
+  ) {
+    throw new MarkeeClaimExecutionError(
+      "Squid returned invalid route calldata.",
+      502,
+    );
+  }
+  let executionValue: bigint;
+  try {
+    executionValue = BigInt(transactionRequest.value ?? "0");
+    if (executionValue < amount) {
+      throw new MarkeeClaimExecutionError(
+        "Squid returned an unexpected transaction value.",
+        502,
+      );
+    }
+  } catch (error) {
+    if (error instanceof MarkeeClaimExecutionError) throw error;
+    throw new MarkeeClaimExecutionError(
+      "Squid returned an invalid transaction value.",
+      502,
+    );
+  }
+
+  let expectedAmountOut: bigint;
+  try {
+    expectedAmountOut = BigInt(
+      estimate?.toAmountMin ?? estimate?.toAmount ?? "0",
+    );
+  } catch {
+    expectedAmountOut = 0n;
+  }
+  if (expectedAmountOut <= 0n) {
+    throw new MarkeeClaimExecutionError(
+      "Squid returned an invalid output amount.",
+      502,
+    );
+  }
+
+  const fromAmountUsd = parseDecimalToFixed(estimate?.fromAmountUSD ?? "");
+  const toAmountUsd = parseDecimalToFixed(estimate?.toAmountUSD ?? "");
+  const estimatedRouteLoss =
+    fromAmountUsd != null && fromAmountUsd > 0n && toAmountUsd != null ?
+      (amount *
+        (fromAmountUsd > toAmountUsd ? fromAmountUsd - toAmountUsd : 0n) +
+        fromAmountUsd -
+        1n) /
+      fromAmountUsd
+    : amount > expectedAmountOut ? amount - expectedAmountOut
+    : 0n;
+
+  return {
+    destinationSymbol:
+      (
+        chainId === GNOSIS_CHAIN_ID &&
+        selectedDestinationToken === SQUID_NATIVE_TOKEN
+      ) ?
+        "XDAI"
+      : "ETH",
+    estimatedFeeAmount: estimatedRouteLoss + executionValue - amount,
+    executionValue,
+    expectedAmountOut,
+    routerCalldata: transactionRequest.data as Hex,
+  };
+};
+
 export const getMarkeeClaimExecutionQuote = async (
   chainId: number,
   community: Address,
   recipient: Address,
+  requestedClaimAmount?: bigint,
 ): Promise<MarkeeClaimExecutionQuote> => {
   const revenue = await getCommunityRevenue(chainId, community);
+  if (
+    requestedClaimAmount != null &&
+    (requestedClaimAmount <= 0n ||
+      requestedClaimAmount > revenue.claimableAmount)
+  ) {
+    throw new MarkeeClaimExecutionError(
+      "The authorized community revenue is no longer available.",
+      409,
+    );
+  }
+  const claimAmount = requestedClaimAmount ?? revenue.claimableAmount;
   const markeeChainId = getMarkeeChainId(chainId);
   const router = getMarkeeRouterAddress(chainId);
   if (router == null) {
@@ -275,11 +681,18 @@ export const getMarkeeClaimExecutionQuote = async (
   }
 
   const now = Math.floor(Date.now() / 1000);
-  if (revenue.claimableAmount === 0n) {
+  if (claimAmount === 0n) {
     return {
+      bridgeProtocol: "none",
       bridged: chainId !== markeeChainId,
       claimAmount: 0n,
+      destinationSymbol:
+        markeeChainId === MARKEE_BASE_CHAIN_ID ? "ETH" : (
+          getDestinationNativeSymbol(chainId)
+        ),
       estimatedFeeAmount: 0n,
+      executionValue: 0n,
+      expectedAmountOut: 0n,
       expiresAt: now + 5 * 60,
       markeeChainId,
       minAmountOut: 0n,
@@ -292,9 +705,13 @@ export const getMarkeeClaimExecutionQuote = async (
 
   if (chainId === markeeChainId) {
     return {
+      bridgeProtocol: "none",
       bridged: false,
-      claimAmount: revenue.claimableAmount,
+      claimAmount,
+      destinationSymbol: "ETH",
       estimatedFeeAmount: 0n,
+      executionValue: 0n,
+      expectedAmountOut: claimAmount,
       expiresAt: now + 5 * 60,
       markeeChainId,
       minAmountOut: 0n,
@@ -304,20 +721,9 @@ export const getMarkeeClaimExecutionQuote = async (
       symbol: "ETH",
     };
   }
-  if (markeeChainId !== MARKEE_SEPOLIA_CHAIN_ID) {
-    throw new MarkeeClaimExecutionError(
-      "Production Markee bridge execution is not configured yet.",
-      503,
-    );
-  }
-
   const client = getEnvPublicClient(markeeChainId);
-  const [adapterResult, receiverResult] = await Promise.all([
-    client.readContract({
-      abi: gardensMarkeeRouterABI,
-      address: router,
-      functionName: "bridgeAdapter",
-    }),
+  const [bridgeConfiguration, receiverResult] = await Promise.all([
+    getBridgeConfiguration({ chainId, client, router }),
     client.readContract({
       abi: gardensMarkeeRouterABI,
       address: router,
@@ -325,14 +731,91 @@ export const getMarkeeClaimExecutionQuote = async (
       functionName: "remoteReceivers",
     }),
   ]);
-  const adapter = requireAddress(
-    adapterResult,
-    "Markee bridge adapter is not configured.",
-  );
+  const { adapter, protocol } = bridgeConfiguration;
   const receiver = requireAddress(
     receiverResult,
     "Markee destination receiver is not configured for this chain.",
   );
+  const communityKey = getCommunityKey(chainId, community);
+
+  if (protocol === BRIDGE_PROTOCOL.SQUID) {
+    if (revenue.vaultAddress == null) {
+      throw new MarkeeClaimExecutionError(
+        "The community revenue vault is not configured.",
+        503,
+      );
+    }
+    const squidRouter = requireAddress(
+      await client.readContract({
+        abi: squidBridgeAdapterABI,
+        address: adapter,
+        functionName: "squidRouter",
+      }),
+      "The Squid router is not configured.",
+    );
+    const squidQuote = await getSquidRoute({
+      amount: claimAmount,
+      chainId,
+      community,
+      communityKey,
+      destinationRecipient: recipient,
+      receiver,
+      refundRecipient: revenue.vaultAddress,
+      squidRouter,
+    });
+
+    return {
+      bridgeProtocol: "squid",
+      bridged: true,
+      claimAmount,
+      destinationSymbol: squidQuote.destinationSymbol,
+      estimatedFeeAmount: squidQuote.estimatedFeeAmount,
+      executionValue: squidQuote.executionValue,
+      expectedAmountOut: squidQuote.expectedAmountOut,
+      expiresAt: now + 3 * 60,
+      markeeChainId,
+      minAmountOut: squidQuote.expectedAmountOut,
+      quoteData: encodeAbiParameters(
+        [
+          {
+            components: [
+              { name: "inputAmount", type: "uint256" },
+              { name: "expectedAmountOut", type: "uint256" },
+              { name: "executionValue", type: "uint256" },
+              { name: "routerCalldata", type: "bytes" },
+            ],
+            type: "tuple",
+          },
+        ],
+        [
+          {
+            expectedAmountOut: squidQuote.expectedAmountOut,
+            executionValue: squidQuote.executionValue,
+            inputAmount: claimAmount,
+            routerCalldata: squidQuote.routerCalldata,
+          },
+        ],
+      ),
+      recipient,
+      router,
+      symbol: "ETH",
+    };
+  }
+
+  if (protocol === BRIDGE_PROTOCOL.LIFI) {
+    throw new MarkeeClaimExecutionError(
+      "LI.FI bridge execution is not configured yet.",
+      503,
+    );
+  }
+
+  if (protocol !== BRIDGE_PROTOCOL.ACROSS) {
+    throw new MarkeeClaimExecutionError(
+      "The configured Markee bridge protocol is not supported.",
+      503,
+    );
+  }
+
   const [inputTokenResult, outputTokenResult] = await Promise.all([
     client.readContract({
       abi: acrossBridgeAdapterABI,
@@ -354,22 +837,26 @@ export const getMarkeeClaimExecutionQuote = async (
     outputTokenResult,
     "Markee bridge output token is not configured for this chain.",
   );
-  const communityKey = getCommunityKey(chainId, community);
   const acrossQuote = await getAcrossSuggestedFees({
     adapter,
-    amount: revenue.claimableAmount,
+    amount: claimAmount,
     chainId,
     community,
     communityKey,
     inputToken,
+    originChainId: markeeChainId,
     outputToken,
     receiver,
   });
 
   return {
+    bridgeProtocol: "across",
     bridged: true,
-    claimAmount: revenue.claimableAmount,
-    estimatedFeeAmount: revenue.claimableAmount - acrossQuote.outputAmount,
+    claimAmount,
+    destinationSymbol: getDestinationNativeSymbol(chainId),
+    estimatedFeeAmount: claimAmount - acrossQuote.outputAmount,
+    executionValue: claimAmount,
+    expectedAmountOut: acrossQuote.outputAmount,
     expiresAt: acrossQuote.fillDeadline,
     markeeChainId,
     minAmountOut: acrossQuote.outputAmount,
@@ -431,6 +918,7 @@ const estimateKeeperNetworkFee = async (
       quote.minAmountOut,
     ],
     functionName: "sweep",
+    value: quote.bridged ? quote.executionValue - quote.claimAmount : undefined,
   });
   const [estimatedGas, gasPrice] = await Promise.all([
     client.estimateContractGas(simulation.request),
@@ -457,8 +945,13 @@ export const executeMarkeeClaim = async ({
     chainId,
     community,
     recipient,
+    chainId === getMarkeeChainId(chainId) ? undefined : expectedClaimAmount,
   );
-  if (quote.claimAmount !== expectedClaimAmount) {
+  const claimAmountIsInvalid =
+    quote.bridged ?
+      quote.claimAmount !== expectedClaimAmount
+    : quote.claimAmount < expectedClaimAmount;
+  if (claimAmountIsInvalid) {
     throw new MarkeeClaimExecutionError(
       "The available community revenue changed. Request a new claim authorization.",
       409,
@@ -509,11 +1002,15 @@ export const executeMarkeeClaim = async ({
       quote.minAmountOut,
     ],
     functionName: "sweep",
+    value: quote.bridged ? quote.executionValue - quote.claimAmount : undefined,
   });
   const estimatedGas = await client.estimateContractGas(simulation.request);
   const gas = (estimatedGas * 125n + 99n) / 100n;
   const gasPrice = await client.getGasPrice();
-  const requiredKeeperBalance = (gas * gasPrice * 125n + 99n) / 100n;
+  const bridgeExecutionFee =
+    quote.bridged ? quote.executionValue - quote.claimAmount : 0n;
+  const requiredKeeperBalance =
+    bridgeExecutionFee + (gas * gasPrice * 125n + 99n) / 100n;
   const keeperBalance = await client.getBalance({ address: account.address });
   if (keeperBalance < requiredKeeperBalance) {
     throw new MarkeeClaimExecutionError(
@@ -541,11 +1038,19 @@ export const executeMarkeeClaim = async ({
     );
   }
 
+  const bridgeDetails = getClaimBridgeDetails({
+    chainId,
+    markeeChainId: quote.markeeChainId,
+    protocol: quote.bridgeProtocol,
+    transactionHash,
+  });
+
   return {
+    ...bridgeDetails,
     bridged: quote.bridged,
     claimAmount: quote.claimAmount,
     estimatedFeeAmount: quote.estimatedFeeAmount,
-    expectedAmountOut: quote.claimAmount - quote.estimatedFeeAmount,
+    expectedAmountOut: quote.expectedAmountOut,
     markeeChainId: quote.markeeChainId,
     transactionHash,
   };
@@ -717,10 +1222,13 @@ export const markeeAdapter = {
     );
 
     return {
+      bridgeProtocol: quote.bridgeProtocol,
       bridged: quote.bridged,
       claimAmount: quote.claimAmount,
+      destinationSymbol: quote.destinationSymbol,
       estimatedFeeAmount: quote.estimatedFeeAmount,
       estimatedNetworkFeeAmount,
+      expectedAmountOut: quote.expectedAmountOut,
       expiresAt: quote.expiresAt,
       markeeChainId: quote.markeeChainId,
       recipient: quote.recipient,

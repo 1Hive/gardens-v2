@@ -2,9 +2,11 @@ import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import {
   Address,
+  createWalletClient,
   encodePacked,
   getAddress,
   Hex,
+  http,
   isAddress,
   isHex,
   keccak256,
@@ -15,7 +17,11 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { chainConfigMap } from "@/configs/chains";
 import { registryCommunityABI } from "@/src/generated";
-import { getEnvPublicClient } from "@/utils/publicClient";
+import {
+  getEnvPublicClient,
+  getRpcUrlForChain,
+  resolveClientChain,
+} from "@/utils/publicClient";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -35,6 +41,7 @@ const PLATFORM_ID = "Gardens";
 
 const gardensMarkeeRouterABI = parseAbi([
   "function createCommunityLeaderboard(uint256 communityChainId, address registryCommunity, string leaderboardName, string platformId) returns (address vault, address leaderboard, address seedMarkee)",
+  "function keepers(address keeper) view returns (bool)",
 ]);
 
 const authorizationTypes = {
@@ -172,14 +179,10 @@ const getAuthorizationDomain = (chainId: number, community: Address) => ({
   verifyingContract: community,
 });
 
-const isGardensProduction = () =>
-  process.env.NEXT_PUBLIC_ENV_GARDENS === "prod";
-
 const getMarkeeExecutionConfig = (communityChainId?: number) => {
   const isProduction =
-    isGardensProduction() &&
-    (communityChainId == null ||
-      chainConfigMap[communityChainId]?.isTestnet !== true);
+    communityChainId == null ||
+    chainConfigMap[communityChainId]?.isTestnet !== true;
   const factoryValue = (
     isProduction ?
       process.env.MARKEE_STREAMING_LEADERBOARD_FACTORY_ADDRESS_BASE
@@ -208,7 +211,7 @@ const getStreamingLeaderboardFactoryAddress = (communityChainId?: number) => {
   return value && isAddress(value) ? getAddress(value) : null;
 };
 
-const simulateRouterCreation = async (challenge: Challenge) => {
+const executeRouterCreation = async (challenge: Challenge) => {
   const execution = getMarkeeExecutionConfig(challenge.chainId);
   if (!execution.router) {
     throw new Error("Markee router is not configured for this environment");
@@ -221,6 +224,15 @@ const simulateRouterCreation = async (challenge: Challenge) => {
 
   const account = privateKeyToAccount(privateKey as Hex);
   const client = getEnvPublicClient(execution.chainId);
+  const keeperIsAuthorized = await client.readContract({
+    abi: gardensMarkeeRouterABI,
+    address: execution.router,
+    args: [account.address],
+    functionName: "keepers",
+  });
+  if (!keeperIsAuthorized) {
+    throw new Error("Markee keeper is not authorized by the router");
+  }
   const simulation = await client.simulateContract({
     abi: gardensMarkeeRouterABI,
     account,
@@ -233,13 +245,37 @@ const simulateRouterCreation = async (challenge: Challenge) => {
     ],
     functionName: "createCommunityLeaderboard",
   });
+  const estimatedGas = await client.estimateContractGas(simulation.request);
+  const gas = (estimatedGas * 125n + 99n) / 100n;
+  const gasPrice = await client.getGasPrice();
+  const requiredKeeperBalance = (gas * gasPrice * 125n + 99n) / 100n;
+  const keeperBalance = await client.getBalance({ address: account.address });
+  if (keeperBalance < requiredKeeperBalance) {
+    throw new Error("Markee keeper needs more ETH to create the leaderboard");
+  }
+
+  const walletClient = createWalletClient({
+    account,
+    chain: resolveClientChain(execution.chainId),
+    transport: http(getRpcUrlForChain(execution.chainId)),
+  });
+  const transactionHash = await walletClient.writeContract({
+    ...simulation.request,
+    gas,
+  });
+  const receipt = await client.waitForTransactionReceipt({
+    hash: transactionHash,
+  });
+  if (receipt.status !== "success") {
+    throw new Error("Markee leaderboard creation transaction reverted");
+  }
 
   return {
     chainId: execution.chainId,
     from: account.address,
     router: execution.router,
     result: simulation.result,
-    simulated: true,
+    transactionHash,
   };
 };
 
@@ -431,7 +467,7 @@ const verifyChallenge = async (body: VerifyRequest) => {
       return jsonError("Invalid council Safe authorization signature.", 401);
     }
 
-    const routerSimulation = await simulateRouterCreation(challenge);
+    const routerExecution = await executeRouterCreation(challenge);
 
     return jsonSuccess({
       authorized: true,
@@ -439,7 +475,9 @@ const verifyChallenge = async (body: VerifyRequest) => {
       community: challenge.community,
       councilSafe: currentCouncilSafe,
       leaderboardFactory: challenge.leaderboardFactory,
-      routerSimulation,
+      markeeChainId: routerExecution.chainId,
+      router: routerExecution.router,
+      transactionHash: routerExecution.transactionHash,
     });
   } catch (error) {
     console.error("[Markee authorization] Failed to verify challenge", error);

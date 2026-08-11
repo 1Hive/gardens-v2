@@ -3,13 +3,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowTrendingUpIcon,
+  ArrowTopRightOnSquareIcon,
   ArrowsRightLeftIcon,
   BanknotesIcon,
   ChatBubbleBottomCenterTextIcon,
   CheckCircleIcon,
   CheckIcon,
   ClipboardDocumentIcon,
+  EyeIcon,
 } from "@heroicons/react/24/outline";
+import { getNetwork, getWalletClient } from "@wagmi/core";
 import { toast } from "react-toastify";
 import {
   decodeEventLog,
@@ -36,7 +39,7 @@ import {
   TransactionModal,
   TransactionProps,
 } from "@/components/TransactionModal";
-import { chainConfigMap } from "@/configs/chains";
+import { chainConfigMap, getExplorerUrl } from "@/configs/chains";
 import { ComputedStatus } from "@/hooks/useContractWriteWithConfirmations";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import {
@@ -47,6 +50,7 @@ import {
 import { reportClientError } from "@/utils/clientErrorReporter";
 import { formatAddress } from "@/utils/formatAddress";
 import { logOnce } from "@/utils/log";
+import { recordMarkeeView } from "@/utils/markee";
 import {
   buildMarkeeOpenStreamOperations,
   CFA_AGREEMENT_ID,
@@ -65,6 +69,7 @@ import {
   markeeOwnerABI,
   streamingLeaderboardRuntimeABI,
   superfluidHostABI,
+  waitForMarkeeRegistration,
 } from "@/utils/markeeStreaming";
 import {
   Eip712TypedData,
@@ -86,6 +91,9 @@ type AuthorizationStatus =
   | "verifying"
   | "authorized";
 
+const CLAIM_QUOTE_CHANGED_MESSAGE =
+  "The claim quote changed. Refreshing the latest quote…";
+
 type ChallengeResponse = {
   nonce: string;
   typedData: Eip712TypedData;
@@ -93,8 +101,12 @@ type ChallengeResponse = {
 
 type VerifyResponse = {
   authorized: boolean;
+  bridgeName?: string | null;
   bridged?: boolean;
+  markeeChainId?: number;
+  router?: Address;
   transactionHash?: `0x${string}`;
+  transactionUrl?: string;
 };
 
 type MarkeeTransactionNotification = {
@@ -144,29 +156,37 @@ async function postClaimAuthorization<T>(body: Record<string, unknown>) {
   return result;
 }
 
-const authorizationStatusMessage: Partial<Record<AuthorizationStatus, string>> =
-  {
-    requesting: "Preparing the council Safe authorization request…",
-    signing: "Approve the authorization request in your council Safe…",
-    verifying: "Verifying the council Safe approval…",
-  };
-
 function PlaceholderSign({
   hint,
+  isEmpty,
   isPlaceholder,
   message,
+  totalViews,
 }: {
   hint: string;
+  isEmpty: boolean;
   isPlaceholder: boolean;
   message: string;
+  totalViews: number | null;
 }) {
   return (
     <div className="group relative w-full pb-3">
       <div
-        className={`relative rounded-xl bg-neutral/50 px-6 py-8 transition-colors duration-200 group-hover:border-primary-content/50 ${isPlaceholder ? "border-2 border-dashed border-neutral-content/30" : "border border-neutral-content/15"}`}
+        className={`relative rounded-xl bg-neutral/50 px-6 py-8 transition-all duration-200 group-hover:border-primary-content/50 ${isEmpty ? "opacity-50 group-hover:opacity-70" : "opacity-100"} ${isPlaceholder ? "border-2 border-dashed border-neutral-content/30" : "border border-neutral-content/15"}`}
       >
+        <span
+          aria-hidden="true"
+          className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[40%] text-lg leading-none"
+        >
+          🪧
+        </span>
+        {totalViews !== null && (
+          <span className="absolute right-3 top-2 flex items-center gap-1 font-mono text-xs text-neutral-content/40 transition-colors duration-200 group-hover:text-primary-content/50">
+            <EyeIcon className="h-3 w-3" />
+            {totalViews.toLocaleString()}
+          </span>
+        )}
         <p className="w-full text-center font-mono text-lg leading-snug text-neutral-content transition-colors duration-200 group-hover:text-primary-content">
-          <span aria-hidden="true">🪧 </span>
           {message}
         </p>
       </div>
@@ -191,6 +211,22 @@ function getTransactionError(error: unknown, fallback: string) {
 }
 
 function getTransactionErrorMessage(error: unknown, fallback: string) {
+  let cause: unknown = error;
+  for (let depth = 0; depth < 6 && cause != null; depth += 1) {
+    const contractError = cause as {
+      cause?: unknown;
+      data?: { errorName?: unknown };
+      signature?: unknown;
+    };
+    if (
+      contractError.signature === "0x6663ccf3" ||
+      contractError.data?.errorName === "UnknownMarkee"
+    ) {
+      return "Your Markee is still being confirmed. Please try again in a moment.";
+    }
+    cause = contractError.cause;
+  }
+
   const shortMessage = (error as { shortMessage?: unknown })?.shortMessage;
   return (
     typeof shortMessage === "string" ? shortMessage
@@ -215,10 +251,47 @@ function formatEthAmount(value: string | bigint) {
   return `${whole}.${visibleFraction}`;
 }
 
+function formatEthAmountRounded(value: string | bigint, decimals: number) {
+  const amount = BigInt(value);
+  const divisor = 10n ** BigInt(18 - decimals);
+  const roundedAmount = (amount + divisor / 2n) / divisor;
+  const decimalScale = 10n ** BigInt(decimals);
+  const whole = roundedAmount / decimalScale;
+  const fraction = (roundedAmount % decimalScale)
+    .toString()
+    .padStart(decimals, "0");
+
+  return `${whole}.${fraction}`;
+}
+
 function formatEthInput(value: bigint) {
   const [whole, fraction = ""] = formatEther(value).split(".");
   const visibleFraction = fraction.slice(0, 12).replace(/0+$/u, "");
   return visibleFraction.length > 0 ? `${whole}.${visibleFraction}` : whole;
+}
+
+function formatEthAmountRoundedUp(value: bigint, decimals: number) {
+  const divisor = 10n ** BigInt(18 - decimals);
+  const roundedUpAmount = (value + divisor - 1n) / divisor;
+  const decimalScale = 10n ** BigInt(decimals);
+  const whole = roundedUpAmount / decimalScale;
+  const fraction = (roundedUpAmount % decimalScale)
+    .toString()
+    .padStart(decimals, "0")
+    .replace(/0+$/u, "");
+
+  return fraction.length > 0 ? `${whole}.${fraction}` : whole.toString();
+}
+
+function formatEthFundingInput(value: bigint) {
+  const twelveDecimalWeiStep = 10n ** 6n;
+  const roundedUpValue =
+    value > 0n ?
+      ((value + twelveDecimalWeiStep - 1n) / twelveDecimalWeiStep) *
+      twelveDecimalWeiStep
+    : 0n;
+
+  return formatEthInput(roundedUpValue);
 }
 
 function CommunityMarkeePreviewModal({
@@ -237,6 +310,7 @@ function CommunityMarkeePreviewModal({
   topMarkeeAddress,
   topMarkeeName,
   topMarkeeOwner,
+  topRatePerSecondWei,
 }: {
   canIntegrate: boolean;
   isOpen: boolean;
@@ -253,17 +327,27 @@ function CommunityMarkeePreviewModal({
   topMarkeeAddress?: Address;
   topMarkeeName?: string;
   topMarkeeOwner?: Address;
+  topRatePerSecondWei?: string;
 }) {
   const minimumMonthlyRateAmount = BigInt(
     minimumMonthlyRateWei ?? "10000000000000000",
   );
   const minimumMonthlyRate = Number(formatEther(minimumMonthlyRateAmount));
-  const minimumOneMonthFundingAmount = formatEthInput(
-    getMarkeeStreamAmounts(minimumMonthlyRateAmount, 10n ** 18n).value,
+  const topMonthlyRateAmount =
+    BigInt(topRatePerSecondWei ?? "0") * MARKEE_SECONDS_IN_MONTH;
+  const hasTopStream = topMonthlyRateAmount > 0n;
+  const challengeMonthlyRateAmount =
+    hasTopStream ?
+      [
+        topMonthlyRateAmount + parseEther("0.01"),
+        minimumMonthlyRateAmount,
+      ].reduce((highest, amount) => (amount > highest ? amount : highest))
+    : minimumMonthlyRateAmount;
+  const challengeMonthlyRate = formatEthInput(challengeMonthlyRateAmount);
+  const presetOneMonthFundingAmount = formatEthFundingInput(
+    getMarkeeStreamAmounts(challengeMonthlyRateAmount, 10n ** 18n).value,
   );
-  const [streamAmount, setStreamAmount] = useState(
-    minimumOneMonthFundingAmount,
-  );
+  const [streamAmount, setStreamAmount] = useState(presetOneMonthFundingAmount);
   const [fundDuration, setFundDuration] = useState("1");
   const [fundUnit, setFundUnit] = useState<MarkeeFundingUnit>("month");
   const [streamValidationError, setStreamValidationError] = useState<
@@ -342,10 +426,7 @@ function CommunityMarkeePreviewModal({
     transactionStatus: transactionNotification?.status,
     watchTransaction: true,
   });
-  const isLive =
-    leaderboardAddress != null &&
-    topMarkeeAddress != null &&
-    markeeChainId != null;
+  const isLive = leaderboardAddress != null && markeeChainId != null;
   const isTopMarkeeOwner =
     connectedAccount != null &&
     topMarkeeOwner != null &&
@@ -364,11 +445,6 @@ function CommunityMarkeePreviewModal({
   const shouldShowOwnedMarkeeEditor =
     isEditingMessage || ownedMarkeeHasEmptyMessage;
   const hasActiveStream = activeStreamRate > 0n;
-  const activeStreamTargetsOwnedMarkee =
-    hasActiveStream &&
-    activeStreamMarkee != null &&
-    ownedMarkeeAddress != null &&
-    activeStreamMarkee.toLowerCase() === ownedMarkeeAddress.toLowerCase();
   const messageByteLength = new TextEncoder().encode(editedMessage).length;
   const newMarkeeMessageByteLength = new TextEncoder().encode(
     newMarkeeMessage,
@@ -411,32 +487,56 @@ function CommunityMarkeePreviewModal({
       total,
     };
   }, [fundDuration, fundUnit, streamAmount]);
-  const minimumFundingAmount = useMemo(() => {
+  const presetFundingAmount = useMemo(() => {
     try {
-      return formatEthInput(
+      return formatEthFundingInput(
         getMarkeeStreamAmounts(
-          minimumMonthlyRateAmount,
+          challengeMonthlyRateAmount,
           getMarkeeFundingMonths(fundDuration, fundUnit),
         ).value,
       );
     } catch {
-      return minimumOneMonthFundingAmount;
+      return presetOneMonthFundingAmount;
     }
   }, [
+    challengeMonthlyRateAmount,
     fundDuration,
     fundUnit,
-    minimumMonthlyRateAmount,
-    minimumOneMonthFundingAmount,
+    presetOneMonthFundingAmount,
   ]);
+  const derivedMonthlyRateAmount = useMemo(() => {
+    try {
+      return getMarkeeMonthlyAmountForFundingValue(
+        parseEther(streamAmount),
+        getMarkeeFundingMonths(fundDuration, fundUnit),
+      );
+    } catch {
+      return 0n;
+    }
+  }, [fundDuration, fundUnit, streamAmount]);
   const isBelowMinimum =
-    streamSummary.monthly > 0 && streamSummary.monthly < minimumMonthlyRate;
+    derivedMonthlyRateAmount > 0n &&
+    derivedMonthlyRateAmount < minimumMonthlyRateAmount;
   const fundingDurationError =
     streamSummary.months > 0 && streamSummary.months <= 4 / 730 ?
       "Fund the stream for more than four hours to cover its refundable buffer."
     : null;
   const streamFormError = fundingDurationError ?? streamValidationError;
+  const handleFundingUnitChange = (
+    event: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const nextUnit = event.target.value as MarkeeFundingUnit;
+    if (nextUnit === "hour") {
+      const minimumFundingHours = Number(MARKEE_BUFFER_PERIOD / 3_600n) + 1;
+      const currentDuration = Number(fundDuration) || 0;
+      setFundDuration(
+        Math.max(minimumFundingHours, currentDuration).toString(),
+      );
+    }
+    setFundUnit(nextUnit);
+  };
   const canStartPreview =
-    streamSummary.monthly >= minimumMonthlyRate &&
+    derivedMonthlyRateAmount >= minimumMonthlyRateAmount &&
     streamSummary.total > 0 &&
     streamSummary.months > 0 &&
     fundingDurationError == null &&
@@ -493,14 +593,14 @@ function CommunityMarkeePreviewModal({
 
   useEffect(() => {
     if (isOpen) {
-      setStreamAmount(minimumOneMonthFundingAmount);
+      setStreamAmount(presetOneMonthFundingAmount);
       setFundDuration("1");
       setFundUnit("month");
       setStreamValidationError(null);
       setNewMarkeeMessage("");
       setNewMarkeeName("");
     }
-  }, [isOpen, minimumOneMonthFundingAmount]);
+  }, [isOpen, presetOneMonthFundingAmount]);
 
   useEffect(() => {
     setStreamValidationError(null);
@@ -569,7 +669,7 @@ function CommunityMarkeePreviewModal({
       );
       if (liveRate > 0n) {
         setStreamAmount(
-          formatEthInput(
+          formatEthFundingInput(
             getMarkeeStreamAmounts(
               liveRate * MARKEE_SECONDS_IN_MONTH,
               10n ** 18n,
@@ -768,6 +868,31 @@ function CommunityMarkeePreviewModal({
     return toastMessage;
   };
 
+  const restoreOriginalChain = async (originalChainId: number | undefined) => {
+    if (
+      originalChainId == null ||
+      originalChainId === markeeChainId ||
+      switchNetworkAsync == null ||
+      getNetwork().chain?.id === originalChainId
+    ) {
+      return;
+    }
+
+    try {
+      await switchNetworkAsync(originalChainId);
+    } catch (error) {
+      logOnce(
+        "warn",
+        "[CommunityMarkee] Unable to restore the original wallet chain",
+        error,
+      );
+      toast.warn(
+        "Transaction submitted, but your wallet could not switch back to the original network.",
+        { toastId: "markee-network-restore-warning" },
+      );
+    }
+  };
+
   const handleStartStream = async () => {
     if (!isLive) {
       setIsPreviewComplete(true);
@@ -777,6 +902,8 @@ function CommunityMarkeePreviewModal({
       showStreamError(null, "Connect a wallet to start streaming.");
       return;
     }
+    const originalChainId = connectedChain?.id;
+    let actionWalletClient = walletClient;
     if (connectedChain?.id !== markeeChainId) {
       if (switchNetworkAsync == null) {
         showStreamError(
@@ -787,12 +914,13 @@ function CommunityMarkeePreviewModal({
       }
       try {
         await switchNetworkAsync(markeeChainId);
+        actionWalletClient = await getWalletClient({ chainId: markeeChainId });
       } catch (error) {
         showStreamError(error, "Unable to switch to Ethereum Sepolia.");
+        return;
       }
-      return;
     }
-    if (publicClient == null || walletClient == null) {
+    if (publicClient == null || actionWalletClient == null) {
       showStreamError(null, "The Sepolia wallet client is not ready yet.");
       return;
     }
@@ -861,6 +989,7 @@ function CommunityMarkeePreviewModal({
       | "update-name" = "preflight";
     let showsTransactionModal = false;
     let targetMarkeeAddress = ownedMarkeeAddress;
+    let targetPoolAddress: Address | undefined;
     let createTransactionHash: `0x${string}` | undefined;
     let messageTransactionHash: `0x${string}` | undefined;
     let nameTransactionHash: `0x${string}` | undefined;
@@ -1008,7 +1137,7 @@ function CommunityMarkeePreviewModal({
           "Create Markee",
           leaderboardAddress,
         );
-        createTransactionHash = await walletClient.writeContract({
+        createTransactionHash = await actionWalletClient.writeContract({
           abi: streamingLeaderboardRuntimeABI,
           address: leaderboardAddress,
           args: [newMarkeeMessage.trim(), newMarkeeName.trim()],
@@ -1030,6 +1159,8 @@ function CommunityMarkeePreviewModal({
           throw new Error("The Markee creation transaction reverted.");
         }
 
+        let registeredMarkeeAddress: Address | undefined;
+        let registeredPoolAddress: Address | undefined;
         for (const log of createReceipt.logs) {
           if (log.address.toLowerCase() !== leaderboardAddress.toLowerCase()) {
             continue;
@@ -1042,7 +1173,10 @@ function CommunityMarkeePreviewModal({
             });
             if (decoded.eventName === "MarkeeCreated") {
               targetMarkeeAddress = getAddress(decoded.args.markeeAddress);
-              break;
+            }
+            if (decoded.eventName === "MarkeeRegistered") {
+              registeredMarkeeAddress = getAddress(decoded.args.markeeAddress);
+              registeredPoolAddress = getAddress(decoded.args.pool);
             }
           } catch {
             // Other leaderboard events in the receipt are unrelated.
@@ -1055,6 +1189,22 @@ function CommunityMarkeePreviewModal({
         ) {
           throw new Error("Unable to find the newly created Markee.");
         }
+        const markeeIsRegistered = await waitForMarkeeRegistration({
+          isRegistered: async () =>
+            Boolean(
+              await publicClient.readContract({
+                abi: streamingLeaderboardRuntimeABI,
+                address: leaderboardAddress,
+                args: [targetMarkeeAddress as Address],
+                functionName: "isMarkeeOnLeaderboard",
+              }),
+            ),
+        });
+        if (!markeeIsRegistered) {
+          throw new Error(
+            "Your Markee is still being confirmed. Please try again in a moment.",
+          );
+        }
         setCreateTransaction({
           contractName: "Create Markee",
           message: "Markee created.",
@@ -1063,6 +1213,13 @@ function CommunityMarkeePreviewModal({
         updateTransactionNotification(notificationToastId, {
           status: "success",
         });
+        activeStep = "stream";
+        if (
+          registeredMarkeeAddress?.toLowerCase() ===
+          targetMarkeeAddress.toLowerCase()
+        ) {
+          targetPoolAddress = registeredPoolAddress;
+        }
         setConnectedMarkeeAddress(targetMarkeeAddress);
         setConnectedMarkeeMessage(newMarkeeMessage.trim());
         setConnectedMarkeeName(newMarkeeName.trim());
@@ -1078,7 +1235,7 @@ function CommunityMarkeePreviewModal({
             "Update Markee message",
             leaderboardAddress,
           );
-          messageTransactionHash = await walletClient.writeContract({
+          messageTransactionHash = await actionWalletClient.writeContract({
             abi: streamingLeaderboardRuntimeABI,
             address: leaderboardAddress,
             args: [targetMarkeeAddress, editedMessage.trim()],
@@ -1122,7 +1279,7 @@ function CommunityMarkeePreviewModal({
             "Update Markee name",
             leaderboardAddress,
           );
-          nameTransactionHash = await walletClient.writeContract({
+          nameTransactionHash = await actionWalletClient.writeContract({
             abi: streamingLeaderboardRuntimeABI,
             address: leaderboardAddress,
             args: [targetMarkeeAddress, editedName.trim()],
@@ -1158,16 +1315,19 @@ function CommunityMarkeePreviewModal({
       if (targetMarkeeAddress == null) {
         throw new Error("The target Markee is unavailable.");
       }
-      const poolResult = await publicClient.readContract({
-        abi: streamingLeaderboardRuntimeABI,
-        address: leaderboardAddress,
-        args: [targetMarkeeAddress],
-        functionName: "poolOf",
-      });
-      if (!isAddress(poolResult) || poolResult === zeroAddress) {
-        throw new Error("The Markee refund pool is unavailable.");
+      if (targetPoolAddress == null) {
+        const poolResult = await publicClient.readContract({
+          abi: streamingLeaderboardRuntimeABI,
+          address: leaderboardAddress,
+          args: [targetMarkeeAddress],
+          functionName: "poolOf",
+        });
+        if (!isAddress(poolResult) || poolResult === zeroAddress) {
+          throw new Error("The Markee refund pool is unavailable.");
+        }
+        targetPoolAddress = getAddress(poolResult);
       }
-      const pool = getAddress(poolResult);
+      const pool = targetPoolAddress;
 
       activeStep = "stream";
       setStreamTransaction({
@@ -1215,6 +1375,13 @@ function CommunityMarkeePreviewModal({
         setStreamValidationError(
           `Your wallet needs ${formatEthAmount(requiredBalance)} ETH, including an estimated ${formatEthAmount(estimatedGasCost)} ETH gas buffer. You currently have ${formatEthAmount(nativeBalance)} ETH.`,
         );
+        if (
+          createTransactionHash != null ||
+          messageTransactionHash != null ||
+          nameTransactionHash != null
+        ) {
+          await restoreOriginalChain(originalChainId);
+        }
         return;
       }
       if (!showsTransactionModal) onClose();
@@ -1222,7 +1389,7 @@ function CommunityMarkeePreviewModal({
         existingFlowRate > 0n ? "Replace Markee stream" : "Start Markee stream",
         host,
       );
-      streamTransactionHash = await walletClient.writeContract({
+      streamTransactionHash = await actionWalletClient.writeContract({
         abi: superfluidHostABI,
         address: host,
         args: [operations],
@@ -1234,6 +1401,7 @@ function CommunityMarkeePreviewModal({
         status: "loading",
         transactionHash: streamTransactionHash,
       });
+      await restoreOriginalChain(originalChainId);
       setStreamTransaction({
         contractName: existingFlowRate > 0n ? "Replace stream" : "Start stream",
         message:
@@ -1348,6 +1516,8 @@ function CommunityMarkeePreviewModal({
     ) {
       return;
     }
+    const originalChainId = connectedChain?.id;
+    let actionWalletClient = walletClient;
     if (connectedChain?.id !== markeeChainId) {
       if (switchNetworkAsync == null) {
         showStreamError(
@@ -1358,12 +1528,13 @@ function CommunityMarkeePreviewModal({
       }
       try {
         await switchNetworkAsync(markeeChainId);
+        actionWalletClient = await getWalletClient({ chainId: markeeChainId });
       } catch (error) {
         showStreamError(error, "Unable to switch to Ethereum Sepolia.");
+        return;
       }
-      return;
     }
-    if (publicClient == null || walletClient == null) {
+    if (publicClient == null || actionWalletClient == null) {
       showStreamError(null, "The Sepolia wallet client is not ready yet.");
       return;
     }
@@ -1386,7 +1557,7 @@ function CommunityMarkeePreviewModal({
         "Stop Markee stream",
         CFA_V1_FORWARDER_ADDRESS,
       );
-      stopTransactionHash = await walletClient.writeContract({
+      stopTransactionHash = await actionWalletClient.writeContract({
         abi: cfaV1ForwarderABI,
         address: CFA_V1_FORWARDER_ADDRESS,
         args: [getAddress(ethxResult), leaderboardAddress, 0n],
@@ -1396,6 +1567,7 @@ function CommunityMarkeePreviewModal({
         status: "loading",
         transactionHash: stopTransactionHash,
       });
+      await restoreOriginalChain(originalChainId);
       onClose();
       const receipt = await publicClient.waitForTransactionReceipt({
         hash: stopTransactionHash,
@@ -1457,6 +1629,7 @@ function CommunityMarkeePreviewModal({
         chainId={markeeChainId}
         currentMessage={message}
         currentName={topMarkeeName}
+        currentRatePerSecondWei={topRatePerSecondWei}
         leaderboardAddress={leaderboardAddress}
         isOpen={isOpen}
         onClose={handleClose}
@@ -1523,8 +1696,6 @@ function CommunityMarkeePreviewModal({
                   "Checking your stream…"
                 : isLive && connectedAccount == null ?
                   "Connect wallet"
-                : isLive && connectedChain?.id !== markeeChainId ?
-                  "Switch to Sepolia"
                 : shouldCreateMarkee ?
                   "Create and start streaming"
                 : (
@@ -1562,26 +1733,6 @@ function CommunityMarkeePreviewModal({
             </div>
           </div>
         : <div className="flex flex-col gap-5">
-            <InfoBox
-              infoBoxType="info"
-              className="rounded-xl px-4 py-3"
-              title={isLive ? "Ethereum Sepolia" : "Preview mode"}
-              content={
-                isLive ?
-                  shouldCreateMarkee ?
-                    "Create your own Markee message, then fund its stream on Sepolia. The transaction modal will guide you through creation and streaming."
-                  : hasActiveStream && activeStreamTargetsOwnedMarkee ?
-                    "Your stream is live. Change the monthly rate or funding below, then replace it in one transaction. You can also stop streaming."
-                  : hasActiveStream ?
-                    "You currently stream to another Markee. Replacing it below will move that stream to your Markee in one transaction, or you can stop it."
-                  : !isTopMarkeeOwner ?
-                    "Your Markee is already created. Native ETH wrapping, the refundable ETHx buffer, and streaming are handled together in one transaction."
-                  : "Adjust the stream backing your Markee. Native ETH wrapping, the refundable ETHx buffer, and streaming are handled together in one transaction."
-
-                : "Try the streaming interaction below. Nothing will be sent on-chain."
-              }
-            />
-
             {shouldCreateMarkee ?
               newMarkeeMessageInput
             : ownedMarkeeAddress != null && (
@@ -1649,7 +1800,6 @@ function CommunityMarkeePreviewModal({
                         Your Markee
                       </p>
                       <p className="mt-2 break-words font-mono text-lg text-neutral-content">
-                        <span aria-hidden="true">🪧 </span>
                         {displayedMarkeeMessage}
                       </p>
                       {ownedMarkeeName && (
@@ -1673,17 +1823,19 @@ function CommunityMarkeePreviewModal({
 
             <button
               type="button"
-              className={`w-full rounded-xl border p-4 text-left transition-colors ${streamAmount === minimumFundingAmount ? "border-primary-content bg-neutral/60" : "border-neutral-content/20 bg-neutral/30 hover:border-primary-content/50"}`}
-              onClick={() => setStreamAmount(minimumFundingAmount)}
+              className={`w-full rounded-xl border p-4 text-left transition-colors ${streamAmount === presetFundingAmount ? "border-primary-content bg-neutral/60" : "border-neutral-content/20 bg-neutral/30 hover:border-primary-content/50"}`}
+              onClick={() => setStreamAmount(presetFundingAmount)}
             >
               <p className="text-sm font-medium text-neutral-soft-content">
-                Minimum
+                {hasTopStream ? "Stream to beat the top Markee" : "Minimum"}
               </p>
               <p className="mt-1 font-mono text-lg font-semibold text-neutral-content">
-                {minimumMonthlyRate} ETH / mo
+                {challengeMonthlyRate} ETH / mo
               </p>
               <p className="mt-1 text-xs text-neutral-soft-content">
-                Stream at the lowest rate
+                {hasTopStream ?
+                  "Top stream rate plus 0.01 ETH per month"
+                : "Stream at the lowest rate"}
               </p>
             </button>
 
@@ -1743,9 +1895,7 @@ function CommunityMarkeePreviewModal({
                 <select
                   className="select join-item select-bordered select-info shrink-0 bg-transparent text-sm text-neutral-soft-content dark:bg-primary-soft-dark"
                   value={fundUnit}
-                  onChange={(event) =>
-                    setFundUnit(event.target.value as MarkeeFundingUnit)
-                  }
+                  onChange={handleFundingUnitChange}
                   aria-label="Funding duration unit"
                 >
                   <option value="hour">hours</option>
@@ -1828,33 +1978,54 @@ function CommunityMarkeePreviewModal({
 }
 
 function CommunityRevenueClaimModal({
+  availableRevenueWei,
   chainId,
   community,
   councilSafe,
   isOpen,
+  markeeChainId,
   onClose,
 }: {
+  availableRevenueWei?: string;
   chainId?: number;
   community: Address;
   councilSafe?: Address;
   isOpen: boolean;
+  markeeChainId?: number;
   onClose: () => void;
 }) {
   const [isClaimComplete, setIsClaimComplete] = useState(false);
+  const [claimTransactionUrl, setClaimTransactionUrl] = useState<string | null>(
+    null,
+  );
+  const [claimBridgeName, setClaimBridgeName] = useState<string | null>(null);
   const [claimStatus, setClaimStatus] = useState<AuthorizationStatus>("idle");
   const [quote, setQuote] = useState<MarkeeClaimQuoteResponse | null>(null);
   const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [isRecipientCopied, setIsRecipientCopied] = useState(false);
   const { address: connectedAccount, connector } = useAccount();
+  const { chain: connectedChain } = useNetwork();
+  const { switchNetworkAsync } = useSwitchNetwork();
   const claimAmountWei = quote ? BigInt(quote.claimAmount) : 0n;
+  const displayedClaimAmountWei =
+    quote != null ? claimAmountWei
+    : availableRevenueWei != null && /^\d+$/u.test(availableRevenueWei) ?
+      BigInt(availableRevenueWei)
+    : null;
   const bridgeFeeAmountWei = quote ? BigInt(quote.estimatedFeeAmount) : 0n;
-  const isBridgedClaim = quote?.bridged === true;
+  const effectiveMarkeeChainId = quote?.markeeChainId ?? markeeChainId;
+  const isBridgedClaim =
+    quote?.bridged ??
+    (chainId != null &&
+      effectiveMarkeeChainId != null &&
+      chainId !== effectiveMarkeeChainId);
   const claimRecipient = quote?.recipient ?? councilSafe;
   const markeeChainName =
-    quote != null ?
-      chainConfigMap[quote.markeeChainId]?.name ??
-      `chain ${quote.markeeChainId}`
+    effectiveMarkeeChainId != null ?
+      chainConfigMap[effectiveMarkeeChainId]?.name ??
+      `chain ${effectiveMarkeeChainId}`
     : "the Markee chain";
   const communityChainName =
     chainId != null ?
@@ -1862,9 +2033,7 @@ function CommunityRevenueClaimModal({
     : "the community chain";
   const estimatedFeeAmountWei = isBridgedClaim ? bridgeFeeAmountWei : 0n;
   const amountReceivedWei =
-    claimAmountWei > estimatedFeeAmountWei ?
-      claimAmountWei - estimatedFeeAmountWei
-    : 0n;
+    quote != null ? BigInt(quote.expectedAmountOut) : 0n;
   const availableRevenue = quote ? Number(formatEther(claimAmountWei)) : 0;
   const estimatedFee = quote ? Number(formatEther(estimatedFeeAmountWei)) : 0;
   const feePercentage =
@@ -1875,6 +2044,7 @@ function CommunityRevenueClaimModal({
     feePercentage > 100 ? ">100%"
     : Number.isFinite(feePercentage) ? `${feePercentage.toFixed(2)}%`
     : ">100%";
+  const hasClaimableRevenue = claimAmountWei > 0n;
   const areClaimFeesAboveRevenue =
     quote != null && estimatedFeeAmountWei > claimAmountWei;
   const isFeeAboveTenPercent =
@@ -1891,43 +2061,101 @@ function CommunityRevenueClaimModal({
     claimStatus === "requesting" ||
     claimStatus === "signing" ||
     claimStatus === "verifying";
+  const bridgeLiquidityMatch = quoteError?.match(
+    /^Amount is higher than available liquidity\. Max amount is ([0-9.]+) ([A-Za-z0-9]+)\.?$/u,
+  );
+  const isBridgeRelayerUnderfunded =
+    quoteError?.includes(
+      "doesn't have enough funds to support this deposit",
+    ) === true;
+  const isBridgeLiquidityUnavailable =
+    bridgeLiquidityMatch != null || isBridgeRelayerUnderfunded;
+  const quoteErrorTitle =
+    isBridgeLiquidityUnavailable ?
+      "Bridge liquidity temporarily unavailable"
+    : "Claim quote unavailable";
+  const quoteErrorMessage =
+    bridgeLiquidityMatch != null ?
+      `The bridge can currently transfer up to ${bridgeLiquidityMatch[1]} ${bridgeLiquidityMatch[2]}, which is less than this community's available revenue. Try again later when more bridge liquidity is available.`
+    : isBridgeRelayerUnderfunded ?
+      `The testnet bridge does not currently have enough funds to deliver this revenue to ${communityChainName}. Try again later when its liquidity has been replenished.`
+    : quoteError;
 
-  useEffect(() => {
-    if (!isOpen || chainId == null) return;
+  const refreshClaimQuote = useCallback(
+    async (signal: AbortSignal, showLoading: boolean) => {
+      if (chainId == null) return;
 
-    const controller = new AbortController();
-    const params = new URLSearchParams({
-      chainId: chainId.toString(),
-      community,
-    });
+      const params = new URLSearchParams({
+        chainId: chainId.toString(),
+        community,
+      });
 
-    setIsQuoteLoading(true);
-    setQuoteError(null);
-    void fetchMarkeeJson<MarkeeClaimQuoteResponse>(
-      `/api/markee/claim/quote?${params.toString()}`,
-      controller.signal,
-    )
-      .then(setQuote)
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError")
+      if (showLoading) setIsQuoteLoading(true);
+      setQuoteError(null);
+
+      try {
+        const refreshedQuote = await fetchMarkeeJson<MarkeeClaimQuoteResponse>(
+          `/api/markee/claim/quote?${params.toString()}`,
+          signal,
+        );
+        setQuote(refreshedQuote);
+        setClaimError((currentError) =>
+          currentError === CLAIM_QUOTE_CHANGED_MESSAGE ? null : currentError,
+        );
+        return refreshedQuote;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
           return;
+        }
         setQuoteError(
           error instanceof Error ?
             error.message
           : "Unable to load the claim quote.",
         );
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setIsQuoteLoading(false);
-      });
+      } finally {
+        if (showLoading && !signal.aborted) setIsQuoteLoading(false);
+      }
+    },
+    [chainId, community],
+  );
 
-    return () => controller.abort();
-  }, [chainId, community, isOpen]);
+  useEffect(() => {
+    if (!isOpen || chainId == null || isClaimComplete || isAuthorizingClaim) {
+      return;
+    }
+
+    const controller = new AbortController();
+    let refreshTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    const refresh = async (showLoading: boolean) => {
+      const refreshedQuote = await refreshClaimQuote(
+        controller.signal,
+        showLoading,
+      );
+      if (!controller.signal.aborted) {
+        const refreshDelay =
+          refreshedQuote != null ?
+            Math.max(refreshedQuote.expiresAt * 1_000 - Date.now(), 1_000)
+          : 5_000;
+        refreshTimeout = setTimeout(() => void refresh(false), refreshDelay);
+      }
+    };
+
+    void refresh(true);
+
+    return () => {
+      controller.abort();
+      if (refreshTimeout != null) clearTimeout(refreshTimeout);
+    };
+  }, [chainId, isAuthorizingClaim, isClaimComplete, isOpen, refreshClaimQuote]);
 
   const handleClose = () => {
     setIsClaimComplete(false);
+    setClaimBridgeName(null);
+    setClaimTransactionUrl(null);
     setQuote(null);
     setQuoteError(null);
+    setClaimError(null);
     setIsRecipientCopied(false);
     setClaimStatus("idle");
     onClose();
@@ -1940,14 +2168,28 @@ function CommunityRevenueClaimModal({
       chainId == null ||
       councilSafe == null ||
       quote == null ||
+      !hasClaimableRevenue ||
       areClaimFeesAboveRevenue
     ) {
       return;
     }
 
+    const originalChainId = connectedChain?.id;
     setClaimStatus("requesting");
+    setClaimBridgeName(null);
+    setClaimTransactionUrl(null);
+    setClaimError(null);
 
     try {
+      if (connectedChain?.id !== chainId) {
+        if (switchNetworkAsync == null) {
+          throw new Error(
+            `Switch your wallet to ${communityChainName} to continue.`,
+          );
+        }
+        await switchNetworkAsync(chainId);
+      }
+
       const challenge = await postClaimAuthorization<ChallengeResponse>({
         account: connectedAccount,
         action: "challenge",
@@ -1959,15 +2201,40 @@ function CommunityRevenueClaimModal({
           "The claim authorization API returned an invalid challenge.",
         );
       }
+      const challengeClaimAmountValue = challenge.typedData.message.claimAmount;
+      const challengeRecipient = challenge.typedData.message.recipient;
       if (
-        challenge.typedData.message.claimAmount !== quote.claimAmount ||
+        typeof challengeClaimAmountValue !== "string" ||
+        typeof challengeRecipient !== "string"
+      ) {
+        throw new Error(
+          "The claim authorization API returned invalid claim details.",
+        );
+      }
+      const challengeClaimAmount = BigInt(challengeClaimAmountValue);
+      const quotedClaimAmount = BigInt(quote.claimAmount);
+      const isSameChainClaim = quote.markeeChainId === chainId;
+      const claimAmountIsInvalid =
+        isSameChainClaim ?
+          challengeClaimAmount < quotedClaimAmount
+        : challengeClaimAmount !== quotedClaimAmount;
+      if (
+        claimAmountIsInvalid ||
         challenge.typedData.message.maxFeeAmount !== quote.estimatedFeeAmount ||
         challenge.typedData.message.markeeChainId !==
           quote.markeeChainId.toString() ||
-        challenge.typedData.message.recipient !== quote.recipient
+        challengeRecipient.toLowerCase() !== quote.recipient.toLowerCase()
       ) {
-        throw new Error(
-          "The claim quote changed. Reopen the modal and try again.",
+        throw new Error(CLAIM_QUOTE_CHANGED_MESSAGE);
+      }
+      if (isSameChainClaim && challengeClaimAmount > quotedClaimAmount) {
+        setQuote((currentQuote) =>
+          currentQuote == null ? currentQuote : (
+            {
+              ...currentQuote,
+              claimAmount: challengeClaimAmount.toString(),
+            }
+          ),
         );
       }
 
@@ -1977,6 +2244,25 @@ function CommunityRevenueClaimModal({
         connector,
         typedData: challenge.typedData,
       });
+      if (
+        originalChainId != null &&
+        originalChainId !== chainId &&
+        switchNetworkAsync != null
+      ) {
+        try {
+          await switchNetworkAsync(originalChainId);
+        } catch (error) {
+          logOnce(
+            "warn",
+            "[CommunityMarkee] Unable to restore the original wallet chain after claim authorization",
+            error,
+          );
+          toast.warn(
+            "Authorization signed, but your wallet could not switch back to the original network.",
+            { toastId: "markee-network-restore-warning" },
+          );
+        }
+      }
 
       setClaimStatus("verifying");
       const verification = await postClaimAuthorization<VerifyResponse>({
@@ -1988,12 +2274,20 @@ function CommunityRevenueClaimModal({
         throw new Error("The claim authorization was not accepted.");
       }
 
+      setClaimTransactionUrl(verification.transactionUrl ?? null);
+      setClaimBridgeName(verification.bridgeName ?? null);
       setClaimStatus("authorized");
       setIsClaimComplete(true);
     } catch (error) {
       setClaimStatus("idle");
       if (!isUserRejectedTransactionError(error)) {
         logOnce("error", "[CommunityMarkee] Claim authorization failed", error);
+        setClaimError(
+          getTransactionErrorMessage(
+            error,
+            "The community revenue claim could not be completed.",
+          ),
+        );
       }
     }
   };
@@ -2036,16 +2330,21 @@ function CommunityRevenueClaimModal({
                 chainId == null ||
                 quote == null ||
                 isQuoteLoading ||
+                !hasClaimableRevenue ||
                 areClaimFeesAboveRevenue
               }
               isLoading={isAuthorizingClaim}
               onClick={handleClaimAuthorization}
               testId="markee-community-claim-submit"
               tooltip={
-                areClaimFeesAboveRevenue ?
+                !hasClaimableRevenue && quote != null ?
+                  "There is no community revenue available to claim."
+                : areClaimFeesAboveRevenue ?
                   "Claim costs exceed the available community revenue."
                 : undefined
               }
+              tooltipClassName="flex justify-end text-left"
+              tooltipSide="tooltip-top-left"
             >
               Claim to council Safe
             </Button>
@@ -2059,9 +2358,22 @@ function CommunityRevenueClaimModal({
             <h4 className="text-lg text-neutral-content">Revenue claimed</h4>
             <p className="mt-2 max-w-sm text-sm leading-relaxed text-neutral-soft-content">
               {quote?.bridged ?
-                "The claim transaction was confirmed. Across is delivering the revenue to the council Safe."
+                `The claim transaction was confirmed. ${claimBridgeName ?? "The bridge"} is delivering the revenue to the council Safe.`
               : "The community revenue was sent to the council Safe."}
             </p>
+            {claimTransactionUrl && (
+              <a
+                href={claimTransactionUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary-content underline underline-offset-4"
+              >
+                {claimBridgeName != null ?
+                  `View ${claimBridgeName} transaction`
+                : "View transaction"}
+                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+              </a>
+            )}
           </div>
         </div>
       : <div className="flex flex-col gap-5">
@@ -2070,7 +2382,7 @@ function CommunityRevenueClaimModal({
             className="rounded-xl px-4 py-3"
             title="Manual claim"
           >
-            {quote == null ?
+            {quote == null && quoteError == null ?
               <>Checking the route to the community council Safe</>
             : isBridgedClaim ?
               <>
@@ -2124,10 +2436,21 @@ function CommunityRevenueClaimModal({
           {quoteError && (
             <div role="alert">
               <InfoBox
+                infoBoxType={isBridgeLiquidityUnavailable ? "warning" : "error"}
+                className="rounded-xl px-4 py-3"
+                title={quoteErrorTitle}
+                content={quoteErrorMessage ?? undefined}
+              />
+            </div>
+          )}
+
+          {claimError && (
+            <div role="alert">
+              <InfoBox
                 infoBoxType="error"
                 className="rounded-xl px-4 py-3"
-                title="Claim quote unavailable"
-                content={quoteError}
+                title="Claim unsuccessful"
+                content={claimError}
               />
             </div>
           )}
@@ -2140,8 +2463,8 @@ function CommunityRevenueClaimModal({
               Available community revenue
             </p>
             <div className="mt-2 flex min-h-9 items-center justify-center font-mono text-3xl font-semibold text-neutral-content">
-              {quote ?
-                `${formatEthAmount(claimAmountWei)} ${quote.symbol}`
+              {displayedClaimAmountWei != null ?
+                `${formatEthAmount(displayedClaimAmountWei)} ${quote?.symbol ?? "ETH"}`
               : isQuoteLoading ?
                 <div
                   aria-hidden="true"
@@ -2151,36 +2474,38 @@ function CommunityRevenueClaimModal({
             </div>
           </div>
 
-          <div
-            className="flex flex-col gap-3 rounded-xl border border-neutral-content/15 bg-neutral/30 p-4 font-mono text-xs"
-            aria-busy={isQuoteLoading}
-          >
-            {isBridgedClaim && (
-              <>
-                <div className="flex items-center justify-between gap-4 text-neutral-soft-content">
-                  <span>Estimated bridge fees</span>
-                  <span className={feeTextClass}>
-                    {formatEthAmount(estimatedFeeAmountWei)} {quote.symbol} (
-                    {feePercentageLabel})
-                  </span>
-                </div>
-                <div className="border-t border-neutral-content/15" />
-              </>
-            )}
-            <div className="flex items-center justify-between gap-4 text-neutral-soft-content">
-              <span>Council Safe receives</span>
-              <span className="text-sm font-semibold text-primary-content">
-                {quote ?
-                  `${formatEthAmount(amountReceivedWei)} ${quote.symbol}`
-                : isQuoteLoading ?
-                  <span
-                    aria-hidden="true"
-                    className="skeleton block h-5 w-24 rounded-md [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#353535]"
-                  />
-                : "—"}
-              </span>
+          {displayedClaimAmountWei !== 0n && (
+            <div
+              className="flex flex-col gap-3 rounded-xl border border-neutral-content/15 bg-neutral/30 p-4 font-mono text-xs"
+              aria-busy={isQuoteLoading}
+            >
+              {isBridgedClaim && quote != null && (
+                <>
+                  <div className="flex items-center justify-between gap-4 text-neutral-soft-content">
+                    <span>Estimated bridge fees</span>
+                    <span className={feeTextClass}>
+                      {formatEthAmount(estimatedFeeAmountWei)} {quote.symbol} (
+                      {feePercentageLabel})
+                    </span>
+                  </div>
+                  <div className="border-t border-neutral-content/15" />
+                </>
+              )}
+              <div className="flex items-center justify-between gap-4 text-neutral-soft-content">
+                <span>Council Safe receives</span>
+                <span className="text-sm font-semibold text-primary-content">
+                  {quote ?
+                    `${formatEthAmount(amountReceivedWei)} ${quote.destinationSymbol}`
+                  : isQuoteLoading ?
+                    <span
+                      aria-hidden="true"
+                      className="skeleton block h-5 w-24 rounded-md [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#353535]"
+                    />
+                  : "—"}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           {isQuoteLoading && (
             <span className="sr-only" role="status">
@@ -2202,13 +2527,18 @@ export function CommunityMarkeePlaceholder({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isClaimOpen, setIsClaimOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isOptInTransactionModalOpen, setIsOptInTransactionModalOpen] =
+    useState(false);
   const [markee, setMarkee] = useState<CommunityMarkeeResponse | null>(null);
+  const [totalViews, setTotalViews] = useState<number | null>(null);
   const [authorizationStatus, setAuthorizationStatus] =
     useState<AuthorizationStatus>("idle");
-  const [authorizationError, setAuthorizationError] = useState<string | null>(
-    null,
-  );
+  const [optInTransactionNotification, setOptInTransactionNotification] =
+    useState<MarkeeTransactionNotification | null>(null);
+  const optInTransactionAttempt = useRef(0);
   const { address: connectedAccount, connector } = useAccount();
+  const { chain: connectedChain } = useNetwork();
+  const { switchNetworkAsync } = useSwitchNetwork();
   const isConnectedCouncilSafe =
     councilSafe != null &&
     connectedAccount != null &&
@@ -2233,9 +2563,28 @@ export function CommunityMarkeePlaceholder({
       parseEther("0.01")
     : 0n;
   const signHint =
-    hasActiveMarkee && connectedAccount != null && !isConnectedTopMarkeeOwner ?
-      `Stream ${formatEthInput(topMarkeeChallengeRate)} ETH/mo to change`
+    !hasActiveMarkee ? "Integrate markee to this community"
+    : connectedAccount != null && !isConnectedTopMarkeeOwner ?
+      `Stream ${formatEthAmountRoundedUp(topMarkeeChallengeRate, 3)} ETH/mo to change`
     : "Stream to this sign";
+
+  useTransactionNotification({
+    chainId: markee?.markeeChainId ?? chainId,
+    contractName: optInTransactionNotification?.contractName,
+    enabled: optInTransactionNotification != null,
+    fallbackErrorMessage: "Unable to create the community Markee leaderboard.",
+    safeAddress: connectedAccount,
+    targetAddress: optInTransactionNotification?.targetAddress,
+    toastId: optInTransactionNotification?.toastId,
+    transactionData:
+      optInTransactionNotification?.transactionHash != null ?
+        { hash: optInTransactionNotification.transactionHash }
+      : undefined,
+    transactionError: optInTransactionNotification?.error,
+    transactionHash: optInTransactionNotification?.transactionHash,
+    transactionStatus: optInTransactionNotification?.status,
+    watchTransaction: true,
+  });
 
   const refreshMarkee = useCallback(
     async (signal?: AbortSignal) => {
@@ -2249,24 +2598,89 @@ export function CommunityMarkeePlaceholder({
         signal,
       );
       setMarkee(result);
+      return result;
     },
     [chainId, community],
   );
+
+  const refreshMarkeeUntilActive = useCallback(async () => {
+    const maxAttempts = 6;
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      try {
+        const refreshedMarkee = await refreshMarkee();
+        if (refreshedMarkee?.integration.status === "active") return;
+      } catch (error) {
+        lastError = error;
+      }
+      if (attempt < maxAttempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1_000));
+      }
+    }
+
+    if (lastError != null) {
+      throw getTransactionError(
+        lastError,
+        "Unable to refresh the new Markee community integration.",
+      );
+    }
+  }, [refreshMarkee]);
 
   useEffect(() => {
     if (chainId == null) return;
 
     const controller = new AbortController();
-    void refreshMarkee(controller.signal).catch((error: unknown) => {
-      if (!(error instanceof DOMException && error.name === "AbortError")) {
-        console.error("Unable to load Markee community status", error);
-      }
-    });
+    let refreshTimeout: ReturnType<typeof setTimeout> | undefined;
 
-    return () => controller.abort();
+    const refresh = async () => {
+      try {
+        await refreshMarkee(controller.signal);
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          console.error("Unable to load Markee community status", error);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          refreshTimeout = setTimeout(refresh, 5_000);
+        }
+      }
+    };
+
+    void refresh();
+
+    return () => {
+      controller.abort();
+      if (refreshTimeout != null) clearTimeout(refreshTimeout);
+    };
   }, [chainId, refreshMarkee]);
 
-  if (markee == null) return null;
+  useEffect(() => {
+    const topMarkeeAddress = markee?.leaderboard.topMarkeeAddress;
+    const message = markee?.leaderboard.message.trim();
+
+    if (!hasActiveMarkee || topMarkeeAddress == null || !message) {
+      setTotalViews(null);
+      return;
+    }
+
+    let cancelled = false;
+    void recordMarkeeView(topMarkeeAddress, message)
+      .then(({ totalViews: nextTotalViews }) => {
+        if (!cancelled) setTotalViews(nextTotalViews);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    hasActiveMarkee,
+    markee?.leaderboard.message,
+    markee?.leaderboard.topMarkeeAddress,
+  ]);
+
+  if (markee == null || (!hasActiveMarkee && !canOptIn)) return null;
 
   const handleAuthorize = async () => {
     if (
@@ -2278,10 +2692,29 @@ export function CommunityMarkeePlaceholder({
       return;
     }
 
-    setAuthorizationError(null);
+    const originalChainId = connectedChain?.id;
     setAuthorizationStatus("requesting");
+    optInTransactionAttempt.current += 1;
+    const toastId = `markee-opt-in-${optInTransactionAttempt.current}`;
+    let activeStep: "challenge" | "execute" | "sign" = "challenge";
+    let transactionHash: `0x${string}` | undefined;
+    let router: Address | undefined;
+    setOptInTransactionNotification({
+      contractName: "Create Markee leaderboard",
+      status: "waiting",
+      toastId,
+    });
 
     try {
+      if (connectedChain?.id !== chainId) {
+        if (switchNetworkAsync == null) {
+          throw new Error(
+            `Switch your wallet to ${chainConfigMap[chainId]?.name ?? `chain ${chainId}`} to continue.`,
+          );
+        }
+        await switchNetworkAsync(chainId);
+      }
+
       const challenge = await postAuthorization<ChallengeResponse>({
         account: connectedAccount,
         action: "challenge",
@@ -2293,13 +2726,41 @@ export function CommunityMarkeePlaceholder({
       }
 
       setAuthorizationStatus("signing");
+      activeStep = "sign";
       const signature = await signTypedDataWithProvider({
         account: connectedAccount,
         connector,
         typedData: challenge.typedData,
       });
+      if (
+        originalChainId != null &&
+        originalChainId !== chainId &&
+        switchNetworkAsync != null
+      ) {
+        try {
+          await switchNetworkAsync(originalChainId);
+        } catch (error) {
+          logOnce(
+            "warn",
+            "[CommunityMarkee] Unable to restore the original wallet chain after Markee authorization",
+            error,
+          );
+          toast.warn(
+            "Authorization signed, but your wallet could not switch back to the original network.",
+            { toastId: "markee-network-restore-warning" },
+          );
+        }
+      }
 
       setAuthorizationStatus("verifying");
+      activeStep = "execute";
+      setIsOpen(false);
+      setIsOptInTransactionModalOpen(true);
+      setOptInTransactionNotification((current) =>
+        current?.toastId === toastId ?
+          { ...current, status: "loading" }
+        : current,
+      );
       const verification = await postAuthorization<VerifyResponse>({
         action: "verify",
         nonce: challenge.nonce,
@@ -2308,16 +2769,97 @@ export function CommunityMarkeePlaceholder({
       if (!verification.authorized) {
         throw new Error("The council Safe authorization was not accepted.");
       }
+      if (verification.transactionHash == null) {
+        throw new Error(
+          "The Markee creation API did not return a transaction hash.",
+        );
+      }
 
+      transactionHash = verification.transactionHash;
+      router = verification.router;
+      setOptInTransactionNotification((current) =>
+        current?.toastId === toastId ?
+          {
+            ...current,
+            status: "success",
+            targetAddress: router,
+            transactionHash,
+          }
+        : current,
+      );
       setAuthorizationStatus("authorized");
+      void refreshMarkeeUntilActive().catch((error: unknown) => {
+        console.error(
+          "Unable to refresh the new Markee community integration",
+          error,
+        );
+      });
     } catch (error) {
       setAuthorizationStatus("idle");
-      setAuthorizationError(
-        error instanceof Error ?
-          error.message
-        : "Unable to authorize Markee integration.",
+      setOptInTransactionNotification((current) =>
+        current?.toastId === toastId ?
+          {
+            ...current,
+            error: getTransactionError(
+              error,
+              "Unable to create the community Markee leaderboard.",
+            ),
+            status: "error",
+            targetAddress: router,
+            transactionHash,
+          }
+        : current,
       );
+      if (!isUserRejectedTransactionError(error)) {
+        const errorContext = {
+          type: "markee-opt-in-transaction-error",
+          step: activeStep,
+          chainId: markee.markeeChainId,
+          community,
+          connectedAccount,
+          councilSafe,
+          router,
+          transactionHash,
+          tags: {
+            error_type: "markee-opt-in-transaction-error",
+            transaction_step: activeStep,
+            chain_id: markee.markeeChainId,
+          },
+        };
+        logOnce(
+          "error",
+          "[CommunityMarkee] Markee opt-in transaction failed",
+          error,
+          errorContext,
+        );
+        reportClientError(error, errorContext);
+      }
     }
+  };
+
+  const optInTransactionStatus = optInTransactionNotification?.status ?? "idle";
+  const optInTransactionHash = optInTransactionNotification?.transactionHash;
+  const optInTransactionExplorerUrl =
+    optInTransactionHash != null && (markee?.markeeChainId ?? chainId) != null ?
+      `${getExplorerUrl(markee?.markeeChainId ?? chainId).replace(/\/$/u, "")}/tx/${optInTransactionHash}`
+    : null;
+  const optInTransaction: TransactionProps = {
+    auxiliaryLink:
+      optInTransactionExplorerUrl != null ?
+        {
+          href: optInTransactionExplorerUrl,
+          label: "View on block explorer",
+        }
+      : undefined,
+    contractName: "Create community vault and leaderboard",
+    message:
+      optInTransactionStatus === "success" ?
+        "The community vault and Markee leaderboard were created."
+      : optInTransactionStatus === "error" ?
+        optInTransactionNotification?.error?.message ??
+        "Unable to create the community Markee leaderboard."
+      : "Creating the community vault and Markee leaderboard.",
+    status: optInTransactionStatus,
   };
 
   return (
@@ -2326,25 +2868,40 @@ export function CommunityMarkeePlaceholder({
         <button
           type="button"
           className="w-full cursor-pointer rounded-xl text-left focus:outline-none"
-          aria-label="Open this Markee"
-          onClick={() => setIsPreviewOpen(true)}
+          aria-label={
+            hasActiveMarkee ? "Open this Markee" : (
+              "Integrate Markee for this community"
+            )
+          }
+          onClick={() => {
+            if (hasActiveMarkee) setIsPreviewOpen(true);
+            else setIsOpen(true);
+          }}
         >
           <PlaceholderSign
             hint={signHint}
+            isEmpty={
+              hasActiveMarkee && markee.leaderboard.message.trim().length === 0
+            }
             isPlaceholder={!hasActiveMarkee}
             message={displayedMessage}
+            totalViews={totalViews}
           />
         </button>
 
-        {canOptIn && (
+        {canOptIn && hasActiveMarkee && (
           <div className="mt-3 flex flex-col gap-3 rounded-xl border border-neutral-content/15 bg-neutral/30 p-4">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-wider text-neutral-soft-content">
-                  Community revenue
+                  🪧 Markee Revenue
                 </p>
-                <p className="mt-1 font-mono text-lg font-semibold text-neutral-content">
-                  {formatEthAmount(markee.revenue.claimableAmount)}{" "}
+                <p
+                  className="tooltip tooltip-top mt-1 cursor-help font-mono text-lg font-semibold text-neutral-content"
+                  data-tip={`${formatEther(BigInt(markee.revenue.claimableAmount))} ${markee.revenue.symbol}`}
+                  tabIndex={0}
+                >
+                  {formatEthAmountRounded(markee.revenue.claimableAmount, 3)}{" "}
                   {markee.revenue.symbol}
                 </p>
               </div>
@@ -2392,13 +2949,16 @@ export function CommunityMarkeePlaceholder({
         topMarkeeAddress={markee?.leaderboard.topMarkeeAddress ?? undefined}
         topMarkeeName={markee?.leaderboard.name}
         topMarkeeOwner={markee?.leaderboard.topMarkeeOwner ?? undefined}
+        topRatePerSecondWei={markee?.leaderboard.topRate}
       />
 
       <CommunityRevenueClaimModal
+        availableRevenueWei={markee?.revenue.claimableAmount}
         chainId={chainId}
         community={community}
         councilSafe={councilSafe}
         isOpen={isClaimOpen}
+        markeeChainId={markee?.markeeChainId}
         onClose={() => setIsClaimOpen(false)}
       />
 
@@ -2466,46 +3026,13 @@ export function CommunityMarkeePlaceholder({
             </div>
           )}
 
-          {authorizationStatusMessage[authorizationStatus] && (
-            <div role="status" aria-live="polite">
-              <InfoBox
-                infoBoxType="info"
-                className="rounded-xl px-4 py-3"
-                content={authorizationStatusMessage[authorizationStatus]}
-              />
-            </div>
-          )}
-
-          {authorizationStatus === "authorized" && (
-            <div role="status" aria-live="polite">
-              <InfoBox
-                infoBoxType="success"
-                className="rounded-xl px-4 py-3"
-                title="Council Safe authorized"
-                content="The community Markee is being created and will appear here shortly."
-              />
-            </div>
-          )}
-
-          {authorizationError && (
-            <div role="alert">
-              <InfoBox
-                infoBoxType="error"
-                className="rounded-xl px-4 py-3"
-                title="Authorization failed"
-                content={authorizationError}
-              />
-            </div>
-          )}
-
           <div className="rounded-2xl border border-primary-content/20 bg-primary-soft/60 p-5 dark:border-primary-dark-border/30 dark:bg-primary-dark-base/10">
             <p className="text-lg font-semibold text-neutral-content">
               Give your community a sign worth supporting
             </p>
             <p className="mt-2 text-sm leading-relaxed text-neutral-soft-content">
-              Markee is a streaming leaderboard where supporters stream funds
-              toward community messages. The message receiving the most support
-              takes the top position.
+              Create a leaderboard for community messages. The message with the
+              highest stream is promoted to the top.
             </p>
           </div>
 
@@ -2549,6 +3076,17 @@ export function CommunityMarkeePlaceholder({
           </div>
         </div>
       </Modal>
+
+      <TransactionModal
+        isOpen={isOptInTransactionModalOpen}
+        label="Integrate Markee"
+        onClose={() => {
+          setIsOptInTransactionModalOpen(false);
+          void refreshMarkee();
+        }}
+        testId="markee-opt-in-transaction"
+        transactions={[optInTransaction]}
+      />
     </>
   );
 }
