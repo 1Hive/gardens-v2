@@ -393,6 +393,7 @@ const verifyChallenge = async (body: VerifyRequest) => {
       community: challenge.community,
       councilSafe: currentCouncilSafe,
       estimatedFeeAmount: execution.estimatedFeeAmount.toString(),
+      estimatedRouteDurationSeconds: execution.estimatedRouteDurationSeconds,
       expectedAmountOut: execution.expectedAmountOut.toString(),
       markeeChainId: execution.markeeChainId,
       recipient: currentCouncilSafe,

@@ -11,6 +11,7 @@ import {
   CheckIcon,
   ClipboardDocumentIcon,
   EyeIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { getNetwork, getWalletClient } from "@wagmi/core";
 import { toast } from "react-toastify";
@@ -45,6 +46,7 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import {
   CommunityMarkeeResponse,
   fetchMarkeeJson,
+  MarkeeClaimBridgeStatusResponse,
   MarkeeClaimQuoteResponse,
 } from "@/services/markee";
 import { reportClientError } from "@/utils/clientErrorReporter";
@@ -103,10 +105,111 @@ type VerifyResponse = {
   authorized: boolean;
   bridgeName?: string | null;
   bridged?: boolean;
+  estimatedRouteDurationSeconds?: number;
   markeeChainId?: number;
   router?: Address;
   transactionHash?: `0x${string}`;
   transactionUrl?: string;
+};
+
+type PendingMarkeeClaim = {
+  bridgeName: string;
+  createdAt: number;
+  estimatedRouteDurationSeconds: number | null;
+  fromChainId: number;
+  toChainId: number;
+  transactionHash: `0x${string}`;
+  transactionUrl: string | null;
+  version: 1;
+};
+
+const getPendingMarkeeClaimStorageKey = (chainId: number, community: Address) =>
+  `gardens:markee:pending-claim:${chainId}:${community.toLowerCase()}`;
+
+const clearPendingMarkeeClaim = (chainId: number, community: Address) => {
+  try {
+    window.localStorage.removeItem(
+      getPendingMarkeeClaimStorageKey(chainId, community),
+    );
+  } catch (error) {
+    logOnce(
+      "warn",
+      "[CommunityMarkee] Unable to clear the pending claim locally",
+      error,
+    );
+  }
+};
+
+const readPendingMarkeeClaim = (
+  chainId: number | undefined,
+  community: Address,
+): PendingMarkeeClaim | null => {
+  if (chainId == null || typeof window === "undefined") return null;
+
+  const storageKey = getPendingMarkeeClaimStorageKey(chainId, community);
+  try {
+    const value = JSON.parse(
+      window.localStorage.getItem(storageKey) ?? "null",
+    ) as Partial<PendingMarkeeClaim> | null;
+    if (
+      value?.version !== 1 ||
+      value.bridgeName !== "Squid" ||
+      typeof value.createdAt !== "number" ||
+      typeof value.fromChainId !== "number" ||
+      typeof value.toChainId !== "number" ||
+      value.toChainId !== chainId ||
+      typeof value.transactionHash !== "string" ||
+      !/^0x[0-9a-fA-F]{64}$/u.test(value.transactionHash)
+    ) {
+      clearPendingMarkeeClaim(chainId, community);
+      return null;
+    }
+
+    return {
+      bridgeName: value.bridgeName,
+      createdAt: value.createdAt,
+      estimatedRouteDurationSeconds:
+        typeof value.estimatedRouteDurationSeconds === "number" ?
+          value.estimatedRouteDurationSeconds
+        : null,
+      fromChainId: value.fromChainId,
+      toChainId: value.toChainId,
+      transactionHash: value.transactionHash as `0x${string}`,
+      transactionUrl:
+        typeof value.transactionUrl === "string" ? value.transactionUrl : null,
+      version: 1,
+    };
+  } catch {
+    clearPendingMarkeeClaim(chainId, community);
+    return null;
+  }
+};
+
+const writePendingMarkeeClaim = (
+  chainId: number,
+  community: Address,
+  claim: PendingMarkeeClaim,
+) => {
+  try {
+    window.localStorage.setItem(
+      getPendingMarkeeClaimStorageKey(chainId, community),
+      JSON.stringify(claim),
+    );
+    return true;
+  } catch (error) {
+    logOnce(
+      "warn",
+      "[CommunityMarkee] Unable to save the pending claim locally",
+      error,
+    );
+    return false;
+  }
+};
+
+const formatBridgeDuration = (seconds: number) => {
+  if (seconds < 60) return `${Math.max(1, Math.ceil(seconds))} sec`;
+  if (seconds < 3_600) return `~${Math.ceil(seconds / 60)} min`;
+  return `~${Math.ceil(seconds / 3_600)} hr`;
 };
 
 type MarkeeTransactionNotification = {
@@ -1823,7 +1926,7 @@ function CommunityMarkeePreviewModal({
 
             <button
               type="button"
-              className={`w-full rounded-xl border p-4 text-left transition-colors ${streamAmount === presetFundingAmount ? "border-primary-content bg-neutral/60" : "border-neutral-content/20 bg-neutral/30 hover:border-primary-content/50"}`}
+              className="w-full rounded-xl border border-primary-content bg-neutral/60 p-4 text-left transition-colors hover:bg-neutral/80"
               onClick={() => setStreamAmount(presetFundingAmount)}
             >
               <p className="text-sm font-medium text-neutral-soft-content">
@@ -1985,6 +2088,7 @@ function CommunityRevenueClaimModal({
   isOpen,
   markeeChainId,
   onClose,
+  onPendingClaimChange,
 }: {
   availableRevenueWei?: string;
   chainId?: number;
@@ -1993,12 +2097,24 @@ function CommunityRevenueClaimModal({
   isOpen: boolean;
   markeeChainId?: number;
   onClose: () => void;
+  onPendingClaimChange: (isPending: boolean) => void;
 }) {
   const [isClaimComplete, setIsClaimComplete] = useState(false);
   const [claimTransactionUrl, setClaimTransactionUrl] = useState<string | null>(
     null,
   );
   const [claimBridgeName, setClaimBridgeName] = useState<string | null>(null);
+  const [claimTransactionHash, setClaimTransactionHash] = useState<
+    `0x${string}` | null
+  >(null);
+  const [bridgeStatus, setBridgeStatus] =
+    useState<MarkeeClaimBridgeStatusResponse | null>(null);
+  const [bridgeStatusError, setBridgeStatusError] = useState(false);
+  const [estimatedRouteDurationSeconds, setEstimatedRouteDurationSeconds] =
+    useState<number | null>(null);
+  const [claimSourceChainId, setClaimSourceChainId] = useState<number | null>(
+    null,
+  );
   const [claimStatus, setClaimStatus] = useState<AuthorizationStatus>("idle");
   const [quote, setQuote] = useState<MarkeeClaimQuoteResponse | null>(null);
   const [quoteError, setQuoteError] = useState<string | null>(null);
@@ -2015,7 +2131,8 @@ function CommunityRevenueClaimModal({
       BigInt(availableRevenueWei)
     : null;
   const bridgeFeeAmountWei = quote ? BigInt(quote.estimatedFeeAmount) : 0n;
-  const effectiveMarkeeChainId = quote?.markeeChainId ?? markeeChainId;
+  const effectiveMarkeeChainId =
+    claimSourceChainId ?? quote?.markeeChainId ?? markeeChainId;
   const isBridgedClaim =
     quote?.bridged ??
     (chainId != null &&
@@ -2080,6 +2197,26 @@ function CommunityRevenueClaimModal({
     : isBridgeRelayerUnderfunded ?
       `The testnet bridge does not currently have enough funds to deliver this revenue to ${communityChainName}. Try again later when its liquidity has been replenished.`
     : quoteError;
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const pendingClaim = readPendingMarkeeClaim(chainId, community);
+    if (pendingClaim == null) return;
+
+    setClaimBridgeName(pendingClaim.bridgeName);
+    setClaimTransactionHash(pendingClaim.transactionHash);
+    setClaimTransactionUrl(pendingClaim.transactionUrl);
+    setClaimSourceChainId(pendingClaim.fromChainId);
+    setEstimatedRouteDurationSeconds(
+      pendingClaim.estimatedRouteDurationSeconds,
+    );
+    setBridgeStatus(null);
+    setBridgeStatusError(false);
+    setClaimError(null);
+    setClaimStatus("authorized");
+    setIsClaimComplete(true);
+  }, [chainId, community, isOpen]);
 
   const refreshClaimQuote = useCallback(
     async (signal: AbortSignal, showLoading: boolean) => {
@@ -2149,10 +2286,90 @@ function CommunityRevenueClaimModal({
     };
   }, [chainId, isAuthorizingClaim, isClaimComplete, isOpen, refreshClaimQuote]);
 
+  useEffect(() => {
+    if (
+      !isOpen ||
+      !isClaimComplete ||
+      claimBridgeName !== "Squid" ||
+      claimTransactionHash == null ||
+      effectiveMarkeeChainId == null ||
+      chainId == null
+    ) {
+      return;
+    }
+
+    const controller = new AbortController();
+    let refreshTimeout: ReturnType<typeof setTimeout> | undefined;
+    const terminalStatuses = new Set<MarkeeClaimBridgeStatusResponse["status"]>(
+      ["success", "needs_gas", "partial_success", "refund"],
+    );
+
+    const refreshStatus = async () => {
+      let shouldRefresh = true;
+      try {
+        const params = new URLSearchParams({
+          fromChainId: effectiveMarkeeChainId.toString(),
+          toChainId: chainId.toString(),
+          transactionHash: claimTransactionHash,
+        });
+        const nextStatus =
+          await fetchMarkeeJson<MarkeeClaimBridgeStatusResponse>(
+            `/api/markee/claim/status?${params.toString()}`,
+            controller.signal,
+          );
+        setBridgeStatus(nextStatus);
+        setBridgeStatusError(false);
+        if (nextStatus.axelarTransactionUrl != null) {
+          setClaimTransactionUrl(nextStatus.axelarTransactionUrl);
+        }
+        if (nextStatus.status === "success") {
+          clearPendingMarkeeClaim(chainId, community);
+          onPendingClaimChange(false);
+        }
+        shouldRefresh = !terminalStatuses.has(nextStatus.status);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        logOnce(
+          "warn",
+          "[CommunityMarkee] Unable to refresh the Squid bridge status",
+          error,
+        );
+        setBridgeStatusError(true);
+      }
+
+      if (!controller.signal.aborted && shouldRefresh) {
+        refreshTimeout = setTimeout(() => void refreshStatus(), 5_000);
+      }
+    };
+
+    void refreshStatus();
+
+    return () => {
+      controller.abort();
+      if (refreshTimeout != null) clearTimeout(refreshTimeout);
+    };
+  }, [
+    chainId,
+    claimBridgeName,
+    claimTransactionHash,
+    community,
+    effectiveMarkeeChainId,
+    isClaimComplete,
+    isOpen,
+    onPendingClaimChange,
+  ]);
+
   const handleClose = () => {
     setIsClaimComplete(false);
     setClaimBridgeName(null);
+    setClaimTransactionHash(null);
     setClaimTransactionUrl(null);
+    setBridgeStatus(null);
+    setBridgeStatusError(false);
+    setEstimatedRouteDurationSeconds(null);
+    setClaimSourceChainId(null);
     setQuote(null);
     setQuoteError(null);
     setClaimError(null);
@@ -2177,7 +2394,12 @@ function CommunityRevenueClaimModal({
     const originalChainId = connectedChain?.id;
     setClaimStatus("requesting");
     setClaimBridgeName(null);
+    setClaimTransactionHash(null);
     setClaimTransactionUrl(null);
+    setBridgeStatus(null);
+    setBridgeStatusError(false);
+    setEstimatedRouteDurationSeconds(null);
+    setClaimSourceChainId(null);
     setClaimError(null);
 
     try {
@@ -2275,7 +2497,38 @@ function CommunityRevenueClaimModal({
       }
 
       setClaimTransactionUrl(verification.transactionUrl ?? null);
+      setClaimTransactionHash(verification.transactionHash ?? null);
       setClaimBridgeName(verification.bridgeName ?? null);
+      setClaimSourceChainId(quote.markeeChainId);
+      setEstimatedRouteDurationSeconds(
+        verification.estimatedRouteDurationSeconds ??
+          quote.estimatedRouteDurationSeconds ??
+          null,
+      );
+      if (
+        verification.bridgeName === "Squid" &&
+        verification.transactionHash != null &&
+        quote.bridged
+      ) {
+        const wasPendingClaimSaved = writePendingMarkeeClaim(
+          chainId,
+          community,
+          {
+            bridgeName: "Squid",
+            createdAt: Date.now(),
+            estimatedRouteDurationSeconds:
+              verification.estimatedRouteDurationSeconds ??
+              quote.estimatedRouteDurationSeconds ??
+              null,
+            fromChainId: quote.markeeChainId,
+            toChainId: chainId,
+            transactionHash: verification.transactionHash,
+            transactionUrl: verification.transactionUrl ?? null,
+            version: 1,
+          },
+        );
+        onPendingClaimChange(wasPendingClaimSaved);
+      }
       setClaimStatus("authorized");
       setIsClaimComplete(true);
     } catch (error) {
@@ -2291,6 +2544,35 @@ function CommunityRevenueClaimModal({
       }
     }
   };
+
+  const isTrackedSquidClaim =
+    isClaimComplete &&
+    claimBridgeName === "Squid" &&
+    claimTransactionHash != null;
+  const squidDeliveryStatus = bridgeStatus?.status ?? "ongoing";
+  const squidDeliveryIsComplete = squidDeliveryStatus === "success";
+  const squidDeliveryNeedsAttention =
+    squidDeliveryStatus === "needs_gas" ||
+    squidDeliveryStatus === "partial_success" ||
+    squidDeliveryStatus === "refund";
+  const squidStatusTitle =
+    squidDeliveryStatus === "success" ? "Revenue delivered"
+    : squidDeliveryStatus === "needs_gas" ? "Bridge needs gas"
+    : squidDeliveryStatus === "partial_success" ? "Bridge partially completed"
+    : squidDeliveryStatus === "refund" ? "Bridge refunded"
+    : "Bridge in progress";
+  const squidStatusDescription =
+    squidDeliveryStatus === "success" ?
+      "Squid delivered the community revenue to the council Safe."
+    : squidDeliveryStatus === "needs_gas" ?
+      "Destination execution needs more gas. Open the Squid transaction for the available recovery action."
+    : squidDeliveryStatus === "partial_success" ?
+      "The bridge reached the destination chain, but its final action did not complete. Open the Squid transaction for details."
+    : squidDeliveryStatus === "refund" ?
+      "Squid refunded the bridge transaction on the source chain."
+    : squidDeliveryStatus === "not_found" ?
+      "The source transaction is confirmed. Waiting for Squid to index the bridge."
+    : "The source transaction is confirmed. Squid is delivering the revenue to the council Safe.";
 
   return (
     <Modal
@@ -2353,14 +2635,39 @@ function CommunityRevenueClaimModal({
     >
       {isClaimComplete ?
         <div className="flex flex-col items-center gap-4 py-10 text-center">
-          <CheckCircleIcon className="h-16 w-16 text-primary-content" />
+          {isTrackedSquidClaim && !squidDeliveryIsComplete ?
+            squidDeliveryNeedsAttention ?
+              <ExclamationTriangleIcon className="h-16 w-16 text-warning-content" />
+            : <span className="loading loading-spinner loading-lg text-primary-content" />
+
+          : <CheckCircleIcon className="h-16 w-16 text-primary-content" />}
           <div>
-            <h4 className="text-lg text-neutral-content">Revenue claimed</h4>
+            <h4 className="text-lg text-neutral-content">
+              {isTrackedSquidClaim ? squidStatusTitle : "Revenue claimed"}
+            </h4>
             <p className="mt-2 max-w-sm text-sm leading-relaxed text-neutral-soft-content">
-              {quote?.bridged ?
+              {isTrackedSquidClaim ?
+                squidStatusDescription
+              : quote?.bridged ?
                 `The claim transaction was confirmed. ${claimBridgeName ?? "The bridge"} is delivering the revenue to the council Safe.`
               : "The community revenue was sent to the council Safe."}
             </p>
+            {isTrackedSquidClaim &&
+              estimatedRouteDurationSeconds != null &&
+              !squidDeliveryIsComplete && (
+                <p className="mt-2 text-xs text-neutral-soft-content">
+                  Estimated route time:{" "}
+                  {formatBridgeDuration(estimatedRouteDurationSeconds)}
+                  {bridgeStatus?.elapsedTimeSeconds != null ?
+                    ` · ${formatBridgeDuration(bridgeStatus.elapsedTimeSeconds)} elapsed`
+                  : ""}
+                </p>
+              )}
+            {isTrackedSquidClaim && bridgeStatusError && (
+              <p className="mt-2 max-w-sm text-xs text-warning-content">
+                Live status is temporarily unavailable. Retrying automatically…
+              </p>
+            )}
             {claimTransactionUrl && (
               <a
                 href={claimTransactionUrl}
@@ -2374,6 +2681,18 @@ function CommunityRevenueClaimModal({
                 <ArrowTopRightOnSquareIcon className="h-4 w-4" />
               </a>
             )}
+            {isTrackedSquidClaim &&
+              bridgeStatus?.destinationTransactionUrl != null && (
+                <a
+                  href={bridgeStatus.destinationTransactionUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 flex items-center justify-center gap-1.5 text-sm font-medium text-primary-content underline underline-offset-4"
+                >
+                  View destination transaction
+                  <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                </a>
+              )}
           </div>
         </div>
       : <div className="flex flex-col gap-5">
@@ -2526,9 +2845,11 @@ export function CommunityMarkeePlaceholder({
 }: Props) {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isClaimOpen, setIsClaimOpen] = useState(false);
+  const [hasPendingClaim, setHasPendingClaim] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isOptInTransactionModalOpen, setIsOptInTransactionModalOpen] =
     useState(false);
+  const [isCouncilSafeCopied, setIsCouncilSafeCopied] = useState(false);
   const [markee, setMarkee] = useState<CommunityMarkeeResponse | null>(null);
   const [totalViews, setTotalViews] = useState<number | null>(null);
   const [authorizationStatus, setAuthorizationStatus] =
@@ -2567,6 +2888,10 @@ export function CommunityMarkeePlaceholder({
     : connectedAccount != null && !isConnectedTopMarkeeOwner ?
       `Stream ${formatEthAmountRoundedUp(topMarkeeChallengeRate, 3)} ETH/mo to change`
     : "Stream to this sign";
+
+  useEffect(() => {
+    setHasPendingClaim(readPendingMarkeeClaim(chainId, community) != null);
+  }, [chainId, community]);
 
   useTransactionNotification({
     chainId: markee?.markeeChainId ?? chainId,
@@ -2896,14 +3221,23 @@ export function CommunityMarkeePlaceholder({
                 <p className="text-xs uppercase tracking-wider text-neutral-soft-content">
                   🪧 Markee Revenue
                 </p>
-                <p
-                  className="tooltip tooltip-top mt-1 cursor-help font-mono text-lg font-semibold text-neutral-content"
-                  data-tip={`${formatEther(BigInt(markee.revenue.claimableAmount))} ${markee.revenue.symbol}`}
-                  tabIndex={0}
-                >
-                  {formatEthAmountRounded(markee.revenue.claimableAmount, 3)}{" "}
-                  {markee.revenue.symbol}
-                </p>
+                {hasPendingClaim ?
+                  <div
+                    className="mt-2 flex items-center gap-2 text-sm text-primary-content"
+                    role="status"
+                  >
+                    <span className="loading loading-spinner loading-sm" />
+                    <span>Bridge in progress</span>
+                  </div>
+                : <p
+                    className="tooltip tooltip-top mt-1 cursor-help font-mono text-lg font-semibold text-neutral-content"
+                    data-tip={`${formatEther(BigInt(markee.revenue.claimableAmount))} ${markee.revenue.symbol}`}
+                    tabIndex={0}
+                  >
+                    {formatEthAmountRounded(markee.revenue.claimableAmount, 3)}{" "}
+                    {markee.revenue.symbol}
+                  </p>
+                }
               </div>
               <Button
                 btnStyle="outline"
@@ -2912,7 +3246,7 @@ export function CommunityMarkeePlaceholder({
                 onClick={() => setIsClaimOpen(true)}
                 testId="markee-community-claim-open"
               >
-                Claim
+                {hasPendingClaim ? "Open" : "Claim"}
               </Button>
             </div>
           </div>
@@ -2960,6 +3294,7 @@ export function CommunityMarkeePlaceholder({
         isOpen={isClaimOpen}
         markeeChainId={markee?.markeeChainId}
         onClose={() => setIsClaimOpen(false)}
+        onPendingClaimChange={setHasPendingClaim}
       />
 
       <Modal
@@ -3019,8 +3354,43 @@ export function CommunityMarkeePlaceholder({
                   Switch to the council Safe
                 </p>
                 <p className="mt-1 text-sm leading-relaxed text-neutral-soft-content">
-                  Connect with {formatAddress(councilSafe)} to collect the
-                  Safe&apos;s approval and create this leaderboard.
+                  Connect with{" "}
+                  <span className="inline-flex items-center gap-1 whitespace-nowrap font-mono">
+                    {formatAddress(councilSafe)}
+                    <button
+                      type="button"
+                      className="tooltip rounded-md p-1 text-inherit transition-colors hover:bg-neutral/20"
+                      data-tip={isCouncilSafeCopied ? "Copied" : "Copy address"}
+                      aria-label={
+                        isCouncilSafeCopied ?
+                          "Council Safe address copied"
+                        : "Copy council Safe address"
+                      }
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(councilSafe);
+                          setIsCouncilSafeCopied(true);
+                          window.setTimeout(
+                            () => setIsCouncilSafeCopied(false),
+                            1500,
+                          );
+                        } catch (error) {
+                          logOnce(
+                            "warn",
+                            "[CommunityMarkee] Unable to copy the council Safe address",
+                            error,
+                          );
+                        }
+                      }}
+                      data-testid="markee-opt-in-copy-council-safe"
+                    >
+                      {isCouncilSafeCopied ?
+                        <CheckIcon className="h-4 w-4" />
+                      : <ClipboardDocumentIcon className="h-4 w-4" />}
+                    </button>
+                  </span>{" "}
+                  to collect the Safe&apos;s approval and create this
+                  leaderboard.
                 </p>
               </div>
             </div>

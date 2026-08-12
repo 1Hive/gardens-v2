@@ -16,6 +16,7 @@ vi.mock("@/utils/publicClient", () => ({
 import {
   executeMarkeeClaim,
   getMarkeeClaimExecutionQuote,
+  getSquidClaimBridgeStatus,
   markeeAdapter,
 } from "./markeeServer";
 
@@ -28,6 +29,7 @@ const topMarkeeOwner = "0x0000000000000000000000000000000000000008";
 const adapter = "0x0000000000000000000000000000000000000009";
 const receiver = "0x0000000000000000000000000000000000000010";
 const squidRouter = "0x0000000000000000000000000000000000000011";
+const lifiDiamond = "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE";
 
 describe("Markee community revenue", () => {
   beforeEach(() => {
@@ -36,6 +38,8 @@ describe("Markee community revenue", () => {
     delete process.env.MARKEE_KEEPER_ESTIMATION_ADDRESS_SEPOLIA;
     delete process.env.MARKEE_ROUTER_ADDRESS_BASE;
     delete process.env.SQUID_INTEGRATOR_ID;
+    delete process.env.LIFI_GARDENS_API_KEY;
+    delete process.env.LIFI_INTEGRATOR_ID;
     process.env.NEXT_PUBLIC_ENV_GARDENS = "test";
     process.env.MARKEE_ROUTER_ADDRESS_SEPOLIA = router;
     process.env.MARKEE_ROUTER_ADDRESS_BASE = router;
@@ -193,6 +197,7 @@ describe("Markee community revenue", () => {
       json: async () => ({
         route: {
           estimate: {
+            estimatedRouteDuration: 180,
             fromAmountUSD: "3000",
             toAmount: "990000000000000000",
             toAmountMin: "980000000000000000",
@@ -217,6 +222,7 @@ describe("Markee community revenue", () => {
       claimAmount: 1_000_000_000_000_000_000n,
       destinationSymbol: "ETH",
       estimatedFeeAmount: 10_000_000_000_000_000n,
+      estimatedRouteDurationSeconds: 180,
       expectedAmountOut: 980_000_000_000_000_000n,
       markeeChainId: 8453,
       minAmountOut: 980_000_000_000_000_000n,
@@ -249,24 +255,116 @@ describe("Markee community revenue", () => {
     });
   });
 
+  it("normalizes live Squid bridge status and timing", async () => {
+    process.env.SQUID_INTEGRATOR_ID = "gardens-test";
+    const transactionHash = `0x${"12".repeat(32)}` as const;
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: async () => ({
+        axelarTransactionUrl: `https://axelarscan.io/gmp/${transactionHash}`,
+        fromChain: {
+          transactionUrl: `https://basescan.org/tx/${transactionHash}`,
+        },
+        squidTransactionStatus: "SUCCESS",
+        timeSpent: { total: 133 },
+        toChain: {
+          transactionUrl: `https://optimistic.etherscan.io/tx/0x${"34".repeat(32)}`,
+        },
+      }),
+      ok: true,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const status = await getSquidClaimBridgeStatus({
+      fromChainId: 8453,
+      toChainId: 10,
+      transactionHash,
+    });
+
+    expect(status).toEqual({
+      axelarTransactionUrl: `https://axelarscan.io/gmp/${transactionHash}`,
+      destinationTransactionUrl: `https://optimistic.etherscan.io/tx/0x${"34".repeat(32)}`,
+      elapsedTimeSeconds: 133,
+      sourceTransactionUrl: `https://basescan.org/tx/${transactionHash}`,
+      status: "success",
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("https://v2.api.squidrouter.com/v2/status?"),
+      expect.objectContaining({
+        headers: { "x-integrator-id": "gardens-test" },
+      }),
+    );
+  });
+
   it("uses the bridge protocol configured for the destination chain", async () => {
     process.env.NEXT_PUBLIC_ENV_GARDENS = "prod";
     process.env.MARKEE_ROUTER_ADDRESS_BASE = router;
+    process.env.LIFI_GARDENS_API_KEY = "lifi-test-key";
+    process.env.LIFI_INTEGRATOR_ID = "gardens";
     mocks.readContract
       .mockResolvedValueOnce(vault)
       .mockResolvedValueOnce([0n, 0n, 0n, 1_000_000_000_000_000_000n])
       .mockResolvedValueOnce([adapter, 3])
       .mockResolvedValueOnce(receiver);
-
-    await expect(
-      getMarkeeClaimExecutionQuote(100, community, recipient),
-    ).rejects.toMatchObject({
-      message: "LI.FI bridge execution is not configured yet.",
-      status: 503,
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: async () => ({
+        action: {
+          fromAddress: adapter,
+          fromAmount: "1000000000000000000",
+          fromChainId: 8453,
+          toAddress: recipient,
+          toChainId: 100,
+        },
+        estimate: {
+          fromAmount: "1000000000000000000",
+          fromAmountUSD: "3000",
+          toAmount: "2970000000000000000000",
+          toAmountMin: "2940000000000000000000",
+          toAmountUSD: "2940",
+        },
+        transactionRequest: {
+          chainId: 8453,
+          data: "0x12345678",
+          from: adapter,
+          to: lifiDiamond,
+          value: "0xde0b6b3a7640000",
+        },
+      }),
+      ok: true,
     });
-    expect(mocks.readContract).not.toHaveBeenCalledWith(
-      expect.objectContaining({ functionName: "squidRouter" }),
+    vi.stubGlobal("fetch", fetchMock);
+
+    const quote = await getMarkeeClaimExecutionQuote(100, community, recipient);
+
+    expect(quote).toMatchObject({
+      bridgeProtocol: "lifi",
+      bridged: true,
+      claimAmount: 1_000_000_000_000_000_000n,
+      destinationSymbol: "XDAI",
+      estimatedFeeAmount: 20_000_000_000_000_000n,
+      executionValue: 1_000_000_000_000_000_000n,
+      expectedAmountOut: 2_940_000_000_000_000_000_000n,
+      minAmountOut: 2_940_000_000_000_000_000_000n,
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("https://li.quest/v1/quote?"),
+      expect.objectContaining({
+        cache: "no-store",
+        headers: expect.objectContaining({
+          "x-lifi-api-key": "lifi-test-key",
+        }),
+      }),
     );
+    const requestUrl = new URL(fetchMock.mock.calls[0][0] as string);
+    expect(Object.fromEntries(requestUrl.searchParams)).toMatchObject({
+      fromAddress: adapter,
+      fromAmount: "1000000000000000000",
+      fromChain: "8453",
+      fromToken: "0x0000000000000000000000000000000000000000",
+      integrator: "gardens",
+      toAddress: recipient,
+      toChain: "100",
+      toToken: "0x0000000000000000000000000000000000000000",
+    });
   });
 
   it("falls back to WETH when native ETH routing is unavailable", async () => {

@@ -34,6 +34,10 @@ const SQUID_DESTINATION_ETH_TOKENS: Record<number, Address> = {
 };
 const SQUID_NATIVE_ETH_CHAIN_IDS = new Set([1, 10, 42161]);
 const SQUID_ROUTE_URL = "https://v2.api.squidrouter.com/v2/route";
+const SQUID_STATUS_URL = "https://v2.api.squidrouter.com/v2/status";
+const LIFI_QUOTE_URL = "https://li.quest/v1/quote";
+const LIFI_NATIVE_TOKEN: Address = zeroAddress;
+const LIFI_BASE_DIAMOND: Address = "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE";
 const GARDENS_TESTNET_CHAIN_IDS = new Set([421614, 11155420, 11155111]);
 const BRIDGE_PROTOCOL = {
   NONE: 0,
@@ -183,6 +187,7 @@ type SquidRouteResponse = {
   route?: {
     estimate?: {
       aggregateSlippage?: number | string;
+      estimatedRouteDuration?: number | string;
       fromAmountUSD?: string;
       toAmount?: string;
       toAmountMin?: string;
@@ -197,12 +202,39 @@ type SquidRouteResponse = {
   };
 };
 
+type LifiQuoteResponse = {
+  action?: {
+    fromAddress?: string;
+    fromAmount?: string;
+    fromChainId?: number;
+    toAddress?: string;
+    toChainId?: number;
+  };
+  code?: string;
+  estimate?: {
+    fromAmount?: string;
+    fromAmountUSD?: string;
+    toAmount?: string;
+    toAmountMin?: string;
+    toAmountUSD?: string;
+  };
+  message?: string;
+  transactionRequest?: {
+    chainId?: number | string;
+    data?: string;
+    from?: string;
+    to?: string;
+    value?: string;
+  };
+};
+
 export type MarkeeClaimExecutionQuote = {
   bridgeProtocol: "across" | "lifi" | "none" | "squid";
   bridged: boolean;
   claimAmount: bigint;
   destinationSymbol: string;
   estimatedFeeAmount: bigint;
+  estimatedRouteDurationSeconds?: number;
   executionValue: bigint;
   expectedAmountOut: bigint;
   expiresAt: number;
@@ -212,6 +244,101 @@ export type MarkeeClaimExecutionQuote = {
   recipient: Address;
   router: Address;
   symbol: "ETH";
+};
+
+export type MarkeeClaimBridgeStatus = {
+  axelarTransactionUrl: string | null;
+  destinationTransactionUrl: string | null;
+  elapsedTimeSeconds: number | null;
+  sourceTransactionUrl: string | null;
+  status:
+    | "needs_gas"
+    | "not_found"
+    | "ongoing"
+    | "partial_success"
+    | "refund"
+    | "success"
+    | "unknown";
+};
+
+type SquidStatusResponse = {
+  axelarTransactionUrl?: string;
+  fromChain?: { transactionUrl?: string };
+  message?: string;
+  squidTransactionStatus?: string;
+  status?: string;
+  timeSpent?: { total?: number | string };
+  toChain?: { transactionUrl?: string };
+};
+
+const safeExternalUrl = (value: unknown) =>
+  typeof value === "string" && /^https:\/\//u.test(value) ? value : null;
+
+export const getSquidClaimBridgeStatus = async ({
+  fromChainId,
+  toChainId,
+  transactionHash,
+}: {
+  fromChainId: number;
+  toChainId: number;
+  transactionHash: Hex;
+}): Promise<MarkeeClaimBridgeStatus> => {
+  const integratorId = process.env.SQUID_INTEGRATOR_ID?.trim();
+  if (!integratorId) {
+    throw new MarkeeClaimExecutionError(
+      "The Squid integrator ID is not configured.",
+      503,
+    );
+  }
+
+  const params = new URLSearchParams({
+    fromChainId: fromChainId.toString(),
+    toChainId: toChainId.toString(),
+    transactionId: transactionHash,
+  });
+  const response = await fetch(`${SQUID_STATUS_URL}?${params.toString()}`, {
+    cache: "no-store",
+    headers: { "x-integrator-id": integratorId },
+    signal: AbortSignal.timeout(15_000),
+  });
+  const body = (await response.json()) as SquidStatusResponse;
+  if (!response.ok) {
+    console.error("[Markee claim status] Squid status request failed", {
+      fromChainId,
+      message: body.message ?? "No provider error message",
+      status: response.status,
+      toChainId,
+      transactionHash,
+    });
+    throw new MarkeeClaimExecutionError(
+      "The bridge status is temporarily unavailable.",
+      502,
+    );
+  }
+
+  const rawStatus = (
+    body.squidTransactionStatus ??
+    body.status ??
+    "unknown"
+  ).toLowerCase();
+  const status: MarkeeClaimBridgeStatus["status"] =
+    rawStatus === "success" ? "success"
+    : rawStatus === "needs_gas" ? "needs_gas"
+    : rawStatus === "partial_success" ? "partial_success"
+    : rawStatus === "refund" || rawStatus === "refund_status" ? "refund"
+    : rawStatus === "not_found" ? "not_found"
+    : rawStatus === "ongoing" ? "ongoing"
+    : "unknown";
+  const elapsedTime = Number(body.timeSpent?.total);
+
+  return {
+    axelarTransactionUrl: safeExternalUrl(body.axelarTransactionUrl),
+    destinationTransactionUrl: safeExternalUrl(body.toChain?.transactionUrl),
+    elapsedTimeSeconds:
+      Number.isFinite(elapsedTime) && elapsedTime >= 0 ? elapsedTime : null,
+    sourceTransactionUrl: safeExternalUrl(body.fromChain?.transactionUrl),
+    status,
+  };
 };
 
 const getClaimBridgeDetails = ({
@@ -628,6 +755,11 @@ const getSquidRoute = async ({
 
   const fromAmountUsd = parseDecimalToFixed(estimate?.fromAmountUSD ?? "");
   const toAmountUsd = parseDecimalToFixed(estimate?.toAmountUSD ?? "");
+  const estimatedRouteDuration = Number(estimate?.estimatedRouteDuration);
+  const estimatedRouteDurationSeconds =
+    Number.isFinite(estimatedRouteDuration) && estimatedRouteDuration > 0 ?
+      Math.ceil(estimatedRouteDuration)
+    : undefined;
   const estimatedRouteLoss =
     fromAmountUsd != null && fromAmountUsd > 0n && toAmountUsd != null ?
       (amount *
@@ -646,6 +778,159 @@ const getSquidRoute = async ({
       ) ?
         "XDAI"
       : "ETH",
+    estimatedFeeAmount: estimatedRouteLoss + executionValue - amount,
+    estimatedRouteDurationSeconds,
+    executionValue,
+    expectedAmountOut,
+    routerCalldata: transactionRequest.data as Hex,
+  };
+};
+
+const getLifiRoute = async ({
+  adapter,
+  amount,
+  chainId,
+  community,
+  destinationRecipient,
+}: {
+  adapter: Address;
+  amount: bigint;
+  chainId: number;
+  community: Address;
+  destinationRecipient: Address;
+}) => {
+  const integratorId = process.env.LIFI_INTEGRATOR_ID?.trim();
+  if (!integratorId) {
+    throw new MarkeeClaimExecutionError(
+      "The LI.FI integrator ID is not configured.",
+      503,
+    );
+  }
+
+  const params = new URLSearchParams({
+    fromAddress: adapter,
+    fromAmount: amount.toString(),
+    fromChain: MARKEE_BASE_CHAIN_ID.toString(),
+    fromToken: LIFI_NATIVE_TOKEN,
+    integrator: integratorId,
+    order: "CHEAPEST",
+    slippage: "0.01",
+    toAddress: destinationRecipient,
+    toChain: chainId.toString(),
+    toToken: LIFI_NATIVE_TOKEN,
+  });
+  const apiKey = process.env.LIFI_GARDENS_API_KEY?.trim();
+  const response = await fetch(`${LIFI_QUOTE_URL}?${params.toString()}`, {
+    cache: "no-store",
+    headers: {
+      Accept: "application/json",
+      "User-Agent": "Gardens/1.0",
+      ...(apiKey ? { "x-lifi-api-key": apiKey } : {}),
+    },
+    signal: AbortSignal.timeout(20_000),
+  });
+  const body = (await response.json()) as LifiQuoteResponse;
+
+  if (!response.ok) {
+    const providerMessage = body.message ?? "No provider error message";
+    console.error(
+      `[Markee claim quote] LI.FI route request failed: ${providerMessage}`,
+      {
+        chainId,
+        code: body.code ?? null,
+        community,
+        message: providerMessage,
+        status: response.status,
+      },
+    );
+    throw new MarkeeClaimExecutionError(
+      /liquidity|no quote|not found/iu.test(providerMessage) ?
+        "No bridge route currently has enough liquidity for this claim. Please try again later."
+      : "A bridge route is temporarily unavailable. Please try again shortly.",
+      502,
+    );
+  }
+
+  const transactionRequest = body.transactionRequest;
+  const target = requireAddress(
+    transactionRequest?.to,
+    "LI.FI returned an invalid transaction target.",
+  );
+  if (target !== LIFI_BASE_DIAMOND) {
+    throw new MarkeeClaimExecutionError(
+      "LI.FI returned an unexpected transaction target.",
+      502,
+    );
+  }
+  if (
+    typeof transactionRequest?.data !== "string" ||
+    !/^0x[0-9a-fA-F]+$/u.test(transactionRequest.data)
+  ) {
+    throw new MarkeeClaimExecutionError(
+      "LI.FI returned invalid route calldata.",
+      502,
+    );
+  }
+  const actionFromAddress =
+    body.action?.fromAddress != null && isAddress(body.action.fromAddress) ?
+      getAddress(body.action.fromAddress)
+    : null;
+  const actionToAddress =
+    body.action?.toAddress != null && isAddress(body.action.toAddress) ?
+      getAddress(body.action.toAddress)
+    : null;
+  const transactionFromAddress =
+    transactionRequest.from != null && isAddress(transactionRequest.from) ?
+      getAddress(transactionRequest.from)
+    : null;
+  if (
+    Number(transactionRequest.chainId) !== MARKEE_BASE_CHAIN_ID ||
+    Number(body.action?.fromChainId) !== MARKEE_BASE_CHAIN_ID ||
+    Number(body.action?.toChainId) !== chainId ||
+    actionFromAddress !== adapter ||
+    actionToAddress !== destinationRecipient ||
+    transactionFromAddress !== adapter ||
+    body.action?.fromAmount !== amount.toString()
+  ) {
+    throw new MarkeeClaimExecutionError(
+      "LI.FI returned a route that does not match this claim.",
+      502,
+    );
+  }
+
+  let executionValue: bigint;
+  let expectedAmountOut: bigint;
+  try {
+    executionValue = BigInt(transactionRequest.value ?? "0");
+    expectedAmountOut = BigInt(
+      body.estimate?.toAmountMin ?? body.estimate?.toAmount ?? "0",
+    );
+  } catch {
+    throw new MarkeeClaimExecutionError(
+      "LI.FI returned invalid claim amounts.",
+      502,
+    );
+  }
+  if (executionValue < amount || expectedAmountOut <= 0n) {
+    throw new MarkeeClaimExecutionError(
+      "LI.FI returned invalid claim amounts.",
+      502,
+    );
+  }
+
+  const fromAmountUsd = parseDecimalToFixed(body.estimate?.fromAmountUSD ?? "");
+  const toAmountUsd = parseDecimalToFixed(body.estimate?.toAmountUSD ?? "");
+  const estimatedRouteLoss =
+    fromAmountUsd != null && fromAmountUsd > 0n && toAmountUsd != null ?
+      (amount *
+        (fromAmountUsd > toAmountUsd ? fromAmountUsd - toAmountUsd : 0n) +
+        fromAmountUsd -
+        1n) /
+      fromAmountUsd
+    : 0n;
+
+  return {
+    destinationSymbol: getDestinationNativeSymbol(chainId),
     estimatedFeeAmount: estimatedRouteLoss + executionValue - amount,
     executionValue,
     expectedAmountOut,
@@ -770,6 +1055,7 @@ export const getMarkeeClaimExecutionQuote = async (
       claimAmount,
       destinationSymbol: squidQuote.destinationSymbol,
       estimatedFeeAmount: squidQuote.estimatedFeeAmount,
+      estimatedRouteDurationSeconds: squidQuote.estimatedRouteDurationSeconds,
       executionValue: squidQuote.executionValue,
       expectedAmountOut: squidQuote.expectedAmountOut,
       expiresAt: now + 3 * 60,
@@ -803,10 +1089,50 @@ export const getMarkeeClaimExecutionQuote = async (
   }
 
   if (protocol === BRIDGE_PROTOCOL.LIFI) {
-    throw new MarkeeClaimExecutionError(
-      "LI.FI bridge execution is not configured yet.",
-      503,
-    );
+    const lifiQuote = await getLifiRoute({
+      adapter,
+      amount: claimAmount,
+      chainId,
+      community,
+      destinationRecipient: recipient,
+    });
+
+    return {
+      bridgeProtocol: "lifi",
+      bridged: true,
+      claimAmount,
+      destinationSymbol: lifiQuote.destinationSymbol,
+      estimatedFeeAmount: lifiQuote.estimatedFeeAmount,
+      executionValue: lifiQuote.executionValue,
+      expectedAmountOut: lifiQuote.expectedAmountOut,
+      expiresAt: now + 60,
+      markeeChainId,
+      minAmountOut: lifiQuote.expectedAmountOut,
+      quoteData: encodeAbiParameters(
+        [
+          {
+            components: [
+              { name: "inputAmount", type: "uint256" },
+              { name: "expectedAmountOut", type: "uint256" },
+              { name: "executionValue", type: "uint256" },
+              { name: "routerCalldata", type: "bytes" },
+            ],
+            type: "tuple",
+          },
+        ],
+        [
+          {
+            expectedAmountOut: lifiQuote.expectedAmountOut,
+            executionValue: lifiQuote.executionValue,
+            inputAmount: claimAmount,
+            routerCalldata: lifiQuote.routerCalldata,
+          },
+        ],
+      ),
+      recipient,
+      router,
+      symbol: "ETH",
+    };
   }
 
   if (protocol !== BRIDGE_PROTOCOL.ACROSS) {
@@ -1050,6 +1376,7 @@ export const executeMarkeeClaim = async ({
     bridged: quote.bridged,
     claimAmount: quote.claimAmount,
     estimatedFeeAmount: quote.estimatedFeeAmount,
+    estimatedRouteDurationSeconds: quote.estimatedRouteDurationSeconds,
     expectedAmountOut: quote.expectedAmountOut,
     markeeChainId: quote.markeeChainId,
     transactionHash,
@@ -1227,6 +1554,7 @@ export const markeeAdapter = {
       claimAmount: quote.claimAmount,
       destinationSymbol: quote.destinationSymbol,
       estimatedFeeAmount: quote.estimatedFeeAmount,
+      estimatedRouteDurationSeconds: quote.estimatedRouteDurationSeconds,
       estimatedNetworkFeeAmount,
       expectedAmountOut: quote.expectedAmountOut,
       expiresAt: quote.expiresAt,

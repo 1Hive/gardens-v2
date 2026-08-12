@@ -36,12 +36,28 @@ export type MarkeeClaimQuoteResponse = {
   claimAmount: string;
   destinationSymbol: string;
   estimatedFeeAmount: string;
+  estimatedRouteDurationSeconds?: number;
   estimatedNetworkFeeAmount: string;
   expectedAmountOut: string;
   expiresAt: number;
   markeeChainId: number;
   recipient: Address;
   symbol: "ETH";
+};
+
+export type MarkeeClaimBridgeStatusResponse = {
+  axelarTransactionUrl: string | null;
+  destinationTransactionUrl: string | null;
+  elapsedTimeSeconds: number | null;
+  sourceTransactionUrl: string | null;
+  status:
+    | "needs_gas"
+    | "not_found"
+    | "ongoing"
+    | "partial_success"
+    | "refund"
+    | "success"
+    | "unknown";
 };
 
 export async function fetchMarkeeJson<T>(url: string, signal?: AbortSignal) {
