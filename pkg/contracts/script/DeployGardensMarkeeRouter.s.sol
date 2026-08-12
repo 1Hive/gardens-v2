@@ -6,41 +6,47 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 
 import {CommunityRevenueVault} from "../src/MarkeeRevenue/CommunityRevenueVault.sol";
 import {GardensMarkeeRouter} from "../src/MarkeeRevenue/GardensMarkeeRouter.sol";
-import {AcrossBridgeAdapter} from "../src/MarkeeRevenue/AcrossBridgeAdapter.sol";
+import {SquidBridgeAdapter} from "../src/MarkeeRevenue/SquidBridgeAdapter.sol";
+import {IGardensMarkeeRouter} from "../src/MarkeeRevenue/interfaces/IGardensMarkeeRouter.sol";
 
 // Canonical Base ETHx and WETH, per the locked V1 decisions.
 address constant CANONICAL_BASE_ETHX = 0x46fd5cfB4c12D87acD3a13e92BAa53240C661D93;
 address constant CANONICAL_BASE_WETH = 0x4200000000000000000000000000000000000006;
-address constant BASE_ACROSS_SPOKE_POOL = 0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64;
-address constant ETHEREUM_WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-address constant OPTIMISM_WETH = 0x4200000000000000000000000000000000000006;
-address constant ARBITRUM_WETH = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
-address constant POLYGON_WETH = 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619;
+address constant SQUID_ROUTER = 0xce16F69375520ab01377ce7B88f5BA8C48F8D666;
+address constant STREAMING_LEADERBOARD_FACTORY = 0x37f420fdE5c98e611EB7cb9b74ef579D84697039;
+address constant MARKEE_KEEPER = 0xb5f2B971878dD2Bc8A0c53635f33280F34C41F2A;
 
 /// @notice Deploys the Base singleton `GardensMarkeeRouter` (behind an
 /// `ERC1967Proxy`, owned by the network's `PROXY_OWNER`), its
-/// `CommunityRevenueVault` clone implementation, and an `AcrossBridgeAdapter`.
+/// `CommunityRevenueVault` clone implementation, and a `SquidBridgeAdapter`.
 ///
-/// The router requires a non-zero adapter at `initialize`, but the adapter's
-/// `onlyRouter` gate requires knowing the router's proxy address — to break
-/// that cycle, the adapter is first constructed with `router = address(0)`
-/// (safe by default: nothing can call it) and wired to the real router proxy
-/// with `setRouter` right after.
+/// The adapter is first constructed with `router = address(0)` because its
+/// `onlyRouter` gate needs the proxy address. Once the proxy exists, the
+/// deployer wires the adapter and assigns it explicitly to every Squid-enabled
+/// destination chain. Gnosis remains disabled until its LI.FI adapter is set.
 ///
-/// Deployer keeps adapter ownership only long enough to call `setRouter`,
-/// then hands it to `PROXY_OWNER` so on-chain governance matches every other
-/// singleton in this repo. `PROXY_OWNER` must separately call
-/// `router.setKeeper(...)` to authorize the Gardens keeper before any vault
-/// can be created or swept.
+/// The deployer configures the factory, keeper, per-chain bridge protocols,
+/// and remote receiver singletons atomically before handing ownership to the
+/// Base `PROXY_OWNER`.
 contract DeployGardensMarkeeRouter is BaseMultiChain {
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public override {
+        uint256 currentChainId = networkJson.readUint(getKeyNetwork(".chainId"));
+        require(currentChainId == 8453, "Gardens Markee router must deploy on Base");
+
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
         require(proxyOwner != address(0), "proxy owner is zero");
 
+        address ethereumReceiver = vm.envAddress("MARKEE_RECEIVER_ETHEREUM");
+        address optimismReceiver = vm.envAddress("MARKEE_RECEIVER_OPTIMISM");
+        address arbitrumReceiver = vm.envAddress("MARKEE_RECEIVER_ARBITRUM");
+        address polygonReceiver = vm.envAddress("MARKEE_RECEIVER_POLYGON");
+        address gnosisReceiver = vm.envAddress("MARKEE_RECEIVER_GNOSIS");
+        address celoReceiver = vm.envAddress("MARKEE_RECEIVER_CELO");
+
         address vaultImplementation = address(new CommunityRevenueVault());
-        AcrossBridgeAdapter adapter = new AcrossBridgeAdapter(address(0), BASE_ACROSS_SPOKE_POOL, CANONICAL_BASE_WETH);
+        SquidBridgeAdapter adapter = new SquidBridgeAdapter(address(0), SQUID_ROUTER);
         address routerImplementation = address(new GardensMarkeeRouter());
 
         address routerProxy = address(
@@ -48,9 +54,8 @@ contract DeployGardensMarkeeRouter is BaseMultiChain {
                 routerImplementation,
                 abi.encodeWithSelector(
                     GardensMarkeeRouter.initialize.selector,
-                    proxyOwner,
+                    SENDER,
                     vaultImplementation,
-                    address(adapter),
                     CANONICAL_BASE_ETHX,
                     CANONICAL_BASE_WETH
                 )
@@ -58,17 +63,36 @@ contract DeployGardensMarkeeRouter is BaseMultiChain {
         );
 
         adapter.setRouter(routerProxy);
-        adapter.setDestinationToken(1, ETHEREUM_WETH);
-        adapter.setDestinationToken(10, OPTIMISM_WETH);
-        adapter.setDestinationToken(42161, ARBITRUM_WETH);
-        adapter.setDestinationToken(137, POLYGON_WETH);
+        GardensMarkeeRouter router = GardensMarkeeRouter(payable(routerProxy));
+        router.setStreamingLeaderboardFactory(STREAMING_LEADERBOARD_FACTORY);
+        router.setKeeper(MARKEE_KEEPER, true);
+        router.setBridgeConfiguration(1, address(adapter), IGardensMarkeeRouter.BridgeProtocol.Squid);
+        router.setBridgeConfiguration(10, address(adapter), IGardensMarkeeRouter.BridgeProtocol.Squid);
+        router.setBridgeConfiguration(42161, address(adapter), IGardensMarkeeRouter.BridgeProtocol.Squid);
+        router.setBridgeConfiguration(137, address(adapter), IGardensMarkeeRouter.BridgeProtocol.Squid);
+        router.setBridgeConfiguration(42220, address(adapter), IGardensMarkeeRouter.BridgeProtocol.Squid);
+        router.setRemoteReceiver(1, ethereumReceiver);
+        router.setRemoteReceiver(10, optimismReceiver);
+        router.setRemoteReceiver(42161, arbitrumReceiver);
+        router.setRemoteReceiver(137, polygonReceiver);
+        router.setRemoteReceiver(100, gnosisReceiver);
+        router.setRemoteReceiver(42220, celoReceiver);
+
+        router.transferOwnership(proxyOwner);
         adapter.transferOwnership(proxyOwner);
 
         console2.log("Proxy owner", proxyOwner);
         console2.log("CommunityRevenueVault impl", vaultImplementation);
-        console2.log("AcrossBridgeAdapter", address(adapter));
+        console2.log("SquidBridgeAdapter", address(adapter));
+        console2.log("StreamingLeaderboardFactory", STREAMING_LEADERBOARD_FACTORY);
+        console2.log("Keeper", MARKEE_KEEPER);
         console2.log("GardensMarkeeRouter impl", routerImplementation);
         console2.log("GardensMarkeeRouter proxy", routerProxy);
-        console2.log("NOTE: PROXY_OWNER must call router.setKeeper(keeper, true) before use");
+        console2.log("Ethereum receiver", ethereumReceiver);
+        console2.log("Optimism receiver", optimismReceiver);
+        console2.log("Arbitrum receiver", arbitrumReceiver);
+        console2.log("Polygon receiver", polygonReceiver);
+        console2.log("Gnosis receiver", gnosisReceiver);
+        console2.log("Celo receiver", celoReceiver);
     }
 }

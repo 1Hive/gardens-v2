@@ -292,9 +292,7 @@ contract CVPowerFacetTest is Test {
         facet.deactivatePoints();
 
         assertEq(
-            facet.totalPointsActivated(),
-            4,
-            "unactivated custom-registry member must not reduce pool activated power"
+            facet.totalPointsActivated(), 4, "unactivated custom-registry member must not reduce pool activated power"
         );
     }
 

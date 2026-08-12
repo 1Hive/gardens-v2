@@ -6,23 +6,42 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IBridgeAdapter, BridgeRequest} from "./interfaces/IBridgeAdapter.sol";
 
 /// @notice Router-configured, replaceable bridge adapter for Squid. Not
-/// upgradeable itself — the router simply points `bridgeAdapter` at a new
-/// deployment via `setBridgeAdapter` if the adapter needs to change.
+/// upgradeable itself — the router assigns adapter deployments independently
+/// for each destination chain.
 ///
-/// V1 status: parameter validation and access control are fully implemented,
-/// but the outbound Squid call is an explicit stub. Squid's exact entrypoint
-/// address, integrator-ID-gated route/hook encoding, and refund-address
-/// wiring must be confirmed against Squid's real contracts before this can
-/// move funds (see plans/MARKEE_INTEGRATION_PLAN.md, "Supported Destinations").
+/// Squid route calldata is produced by the off-chain Squid v2 API. The
+/// adapter pins the only callable target to Squid's canonical router and
+/// forwards the vault revenue as native value. Route execution remains
+/// keeper-only through GardensMarkeeRouter.
 contract SquidBridgeAdapter is Ownable, IBridgeAdapter {
+    struct SquidQuote {
+        uint256 inputAmount;
+        uint256 expectedAmountOut;
+        uint256 executionValue;
+        bytes routerCalldata;
+    }
+
     address public router;
+    address public immutable squidRouter;
+    uint256 public transferNonce;
 
     event RouterUpdated(address indexed router);
+    event SquidRouteExecuted(
+        bytes32 indexed transferId,
+        uint256 indexed destinationChainId,
+        address indexed destinationReceiver,
+        uint256 inputAmount,
+        uint256 expectedAmountOut,
+        bytes32 routerCalldataHash
+    );
 
     error NotRouter();
     error ZeroAddress();
     error ZeroValue();
-    error SquidIntegrationPending();
+    error InvalidQuote();
+    error InsufficientOutput(uint256 expected, uint256 minimum);
+    error RefundFailed();
+    error SquidCallFailed(bytes reason);
 
     modifier onlyRouter() {
         if (msg.sender != router) {
@@ -36,8 +55,10 @@ contract SquidBridgeAdapter is Ownable, IBridgeAdapter {
     /// non-zero adapter at `initialize`) — `onlyRouter` blocks every caller
     /// until the real router is wired via `setRouter`, so this is safe by
     /// default.
-    constructor(address _router) {
+    constructor(address _router, address _squidRouter) {
+        if (_squidRouter == address(0)) revert ZeroAddress();
         router = _router;
+        squidRouter = _squidRouter;
     }
 
     function setRouter(address _router) external onlyOwner {
@@ -49,14 +70,11 @@ contract SquidBridgeAdapter is Ownable, IBridgeAdapter {
     }
 
     /// @inheritdoc IBridgeAdapter
-    function bridgeETH(
-        BridgeRequest calldata request,
-        bytes calldata /* quoteData */
-    )
+    function bridgeETH(BridgeRequest calldata request, bytes calldata quoteData)
         external
         payable
         onlyRouter
-        returns (bytes32, uint256)
+        returns (bytes32 transferId, uint256 expectedAmountOut)
     {
         if (msg.value == 0) {
             revert ZeroValue();
@@ -65,11 +83,48 @@ contract SquidBridgeAdapter is Ownable, IBridgeAdapter {
             revert ZeroAddress();
         }
 
-        // TODO(markee): wire the real Squid entrypoint once the ABI, route,
-        // and integrator ID are confirmed. quoteData is expected to be
-        // fully-encoded calldata produced by the off-chain Squid quote API,
-        // forwarded verbatim to Squid's router with msg.value and the vault
-        // (request.refundRecipient) as the source-chain refund address.
-        revert SquidIntegrationPending();
+        SquidQuote memory quote = abi.decode(quoteData, (SquidQuote));
+        if (
+            quote.inputAmount == 0 || quote.expectedAmountOut == 0 || quote.executionValue < quote.inputAmount
+                || quote.executionValue > msg.value || quote.routerCalldata.length < 4
+        ) revert InvalidQuote();
+        if (quote.expectedAmountOut < request.minAmountOut) {
+            revert InsufficientOutput(quote.expectedAmountOut, request.minAmountOut);
+        }
+
+        uint256 nonce = transferNonce++;
+        transferId = keccak256(
+            abi.encode(
+                block.chainid,
+                address(this),
+                nonce,
+                request.destinationChainId,
+                request.destinationReceiver,
+                request.communityKey,
+                request.registryCommunity,
+                quote.inputAmount,
+                quote.expectedAmountOut,
+                keccak256(quote.routerCalldata)
+            )
+        );
+
+        uint256 surplus = msg.value - quote.executionValue;
+        if (surplus != 0) {
+            (bool refunded,) = payable(request.refundRecipient).call{value: surplus}("");
+            if (!refunded) revert RefundFailed();
+        }
+
+        (bool success, bytes memory result) = squidRouter.call{value: quote.executionValue}(quote.routerCalldata);
+        if (!success) revert SquidCallFailed(result);
+
+        expectedAmountOut = quote.expectedAmountOut;
+        emit SquidRouteExecuted(
+            transferId,
+            request.destinationChainId,
+            request.destinationReceiver,
+            quote.inputAmount,
+            expectedAmountOut,
+            keccak256(quote.routerCalldata)
+        );
     }
 }

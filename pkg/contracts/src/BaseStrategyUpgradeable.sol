@@ -22,7 +22,6 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// ==========================
     /// === Storage Variables ====
     /// ==========================
-
     IAllo internal allo;
     bytes32 internal strategyId;
     bool internal poolActive;
@@ -57,7 +56,8 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @notice Modifier to check if the 'msg.sender' is the Allo contract.
     /// @dev Reverts if the 'msg.sender' is not the Allo contract.
     modifier onlyAllo() {
-        if (msg.sig == bytes4(0)) revert(); _checkOnlyAllo();
+        if (msg.sig == bytes4(0)) revert();
+        _checkOnlyAllo();
         _;
     }
 
@@ -65,28 +65,32 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// @dev Reverts if the '_sender' is not a pool manager.
     /// @param _sender The address to check if they are a pool manager
     modifier onlyPoolManager(address _sender) {
-        if (msg.sig == bytes4(0)) revert(); _checkOnlyPoolManager(_sender);
+        if (msg.sig == bytes4(0)) revert();
+        _checkOnlyPoolManager(_sender);
         _;
     }
 
     /// @notice Modifier to check if the pool is active.
     /// @dev Reverts if the pool is not active.
     modifier onlyActivePool() {
-        if (msg.sig == bytes4(0)) revert(); _checkOnlyActivePool();
+        if (msg.sig == bytes4(0)) revert();
+        _checkOnlyActivePool();
         _;
     }
 
     /// @notice Modifier to check if the pool is inactive.
     /// @dev Reverts if the pool is active.
     modifier onlyInactivePool() {
-        if (msg.sig == bytes4(0)) revert(); _checkInactivePool();
+        if (msg.sig == bytes4(0)) revert();
+        _checkInactivePool();
         _;
     }
 
     /// @notice Modifier to check if the pool is initialized.
     /// @dev Reverts if the pool is not initialized.
     modifier onlyInitialized() {
-        if (msg.sig == bytes4(0)) revert(); _checkOnlyInitialized();
+        if (msg.sig == bytes4(0)) revert();
+        _checkOnlyInitialized();
         _;
     }
 

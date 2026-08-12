@@ -190,5 +190,4 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
             revert InvalidDisputeId(_disputeID);
         }
     }
-
 }

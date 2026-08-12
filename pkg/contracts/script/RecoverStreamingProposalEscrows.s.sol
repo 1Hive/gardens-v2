@@ -72,12 +72,13 @@ contract RecoverStreamingProposalEscrowsScript is BaseMultiChain {
             _applyFinalStreamingFacet(strategies[i], address(finalStreamingFacet));
         }
 
-        RegistryFactory(payable(registryFactoryProxy)).upsertStrategyFacetCut(
-            STRATEGY_STREAMING_FACET_CUT_INDEX,
-            address(finalStreamingFacet),
-            IDiamond.FacetCutAction.Auto,
-            _streamingSelectors()
-        );
+        RegistryFactory(payable(registryFactoryProxy))
+            .upsertStrategyFacetCut(
+                STRATEGY_STREAMING_FACET_CUT_INDEX,
+                address(finalStreamingFacet),
+                IDiamond.FacetCutAction.Auto,
+                _streamingSelectors()
+            );
         _writeNetworkAddress(".FACETS.CV_STREAMING", address(finalStreamingFacet));
 
         _rebalanceRecoveredStrategies();
@@ -227,18 +228,13 @@ contract RecoverStreamingProposalEscrowsScript is BaseMultiChain {
         _recover(address(bytes20(hex"bd9f40cc8faef45bdc1768304ed8d60468d2bec7")), recoveryFacet, ids, escrows);
     }
 
-    function _recover(
-        address strategy,
-        address recoveryFacet,
-        uint256[] memory ids,
-        address[] memory escrows
-    ) internal {
+    function _recover(address strategy, address recoveryFacet, uint256[] memory ids, address[] memory escrows)
+        internal
+    {
         bytes4[] memory selectors = _streamingSelectorsWithRecovery();
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: recoveryFacet,
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: selectors
+            facetAddress: recoveryFacet, action: IDiamond.FacetCutAction.Auto, functionSelectors: selectors
         });
         IDiamondCut(strategy).diamondCut(cuts, address(0), "");
         IStreamingOpenProposalRecovery(strategy).recoverOpenStreamingProposals(ids, escrows);
@@ -258,9 +254,7 @@ contract RecoverStreamingProposalEscrowsScript is BaseMultiChain {
             bytes4[] memory recoverySelectors = new bytes4[](1);
             recoverySelectors[0] = recoverySelector;
             cuts[1] = IDiamond.FacetCut({
-                facetAddress: address(0),
-                action: IDiamond.FacetCutAction.Remove,
-                functionSelectors: recoverySelectors
+                facetAddress: address(0), action: IDiamond.FacetCutAction.Remove, functionSelectors: recoverySelectors
             });
         }
         IDiamondCut(strategy).diamondCut(cuts, address(0), "");

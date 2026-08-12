@@ -86,9 +86,9 @@ contract CommunityStrategyFacetTest is Test {
     function setUp() public {
         CommunityStrategyFacetHarness impl = new CommunityStrategyFacetHarness();
         facet = CommunityStrategyFacetHarness(
-            payable(
-                address(new ERC1967Proxy(address(impl), abi.encodeWithSelector(impl.initOwner.selector, makeAddr("owner"))))
-            )
+            payable(address(
+                    new ERC1967Proxy(address(impl), abi.encodeWithSelector(impl.initOwner.selector, makeAddr("owner")))
+                ))
         );
         allo = new MockAllo();
         sybil = new MockSybilScorer();

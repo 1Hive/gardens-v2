@@ -128,7 +128,6 @@ contract SafeSetup is Test {
         view
         returns (bytes memory signature)
     {
-
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(councilMemberPK_, getHash(to_, data_, councilSafe_));
 
         signature = abi.encodePacked(r, s, v);

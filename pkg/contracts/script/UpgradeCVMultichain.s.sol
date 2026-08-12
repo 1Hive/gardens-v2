@@ -94,24 +94,15 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         context.registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
 
         if (!_flagEnabled("SKIP_PREFLIGHT")) {
-            _runPreflightChecks(
-                context,
-                networkJson,
-                _shouldDoFactory(),
-                _shouldDoCommunities(),
-                _shouldDoStrategies()
-            );
+            _runPreflightChecks(context, networkJson, _shouldDoFactory(), _shouldDoCommunities(), _shouldDoStrategies());
         }
 
-        context.registryFactoryImplementation = _shouldDeployFactoryImplementation()
-            ? _resolveRegistryFactoryImplementation()
-            : address(0);
-        context.registryImplementation = _shouldDeployRegistryImplementation()
-            ? _resolveRegistryImplementation()
-            : address(0);
-        context.strategyImplementation = _shouldDeployStrategyImplementation()
-            ? _resolveStrategyImplementation()
-            : address(0);
+        context.registryFactoryImplementation =
+            _shouldDeployFactoryImplementation() ? _resolveRegistryFactoryImplementation() : address(0);
+        context.registryImplementation =
+            _shouldDeployRegistryImplementation() ? _resolveRegistryImplementation() : address(0);
+        context.strategyImplementation =
+            _shouldDeployStrategyImplementation() ? _resolveStrategyImplementation() : address(0);
         context = _populateDesiredCuts(context, networkJson);
 
         if (_shouldDoFactory()) {
@@ -166,8 +157,9 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
             context.cvCuts = facetCuts.cvCuts;
             context.communityCuts = facetCuts.communityCuts;
         } else if (doStrategies) {
-            context.cvCuts =
-                skipFacetDeployment ? _buildCVFacetCutsFromSnapshot() : _buildCVCutsWithFreshFacets(_deployDiamondLoupeFacet());
+            context.cvCuts = skipFacetDeployment
+                ? _buildCVFacetCutsFromSnapshot()
+                : _buildCVCutsWithFreshFacets(_deployDiamondLoupeFacet());
         } else if (needFactoryFacetCuts) {
             if (factoryAction == FactoryAction.SetCommunityFacets) {
                 if (useLiveCommunityFacets) {
@@ -196,7 +188,8 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     {
         address[] memory proxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
         if (proxies.length == 0) {
-            RegistryFactory registryFactory = RegistryFactory(payable(networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"))));
+            RegistryFactory registryFactory =
+                RegistryFactory(payable(networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"))));
             (IDiamond.FacetCut[] memory currentCuts,,) = registryFactory.getCommunityFacets();
             require(currentCuts.length > 0, "no live community cuts");
             return _normalizeCommunityPoolFacetCuts(currentCuts);
@@ -204,8 +197,10 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
 
         address referenceProxy = proxies[0];
         address loupeFacet = IDiamondLoupe(referenceProxy).facetAddress(IDiamondLoupe.facets.selector);
-        address adminFacet = IDiamondLoupe(referenceProxy).facetAddress(CommunityAdminFacet.setStrategyTemplate.selector);
-        address memberFacet = IDiamondLoupe(referenceProxy).facetAddress(CommunityMemberFacet.stakeAndRegisterMember.selector);
+        address adminFacet =
+            IDiamondLoupe(referenceProxy).facetAddress(CommunityAdminFacet.setStrategyTemplate.selector);
+        address memberFacet =
+            IDiamondLoupe(referenceProxy).facetAddress(CommunityMemberFacet.stakeAndRegisterMember.selector);
         address pauseFacet =
             IDiamondLoupe(referenceProxy).facetAddress(bytes4(keccak256("setPauseController(address)")));
         address powerFacet =
@@ -235,8 +230,9 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
             action: IDiamond.FacetCutAction.Auto,
             functionSelectors: IDiamondLoupe(referenceProxy).facetFunctionSelectors(pauseFacet)
         });
-        cuts[4] =
-            IDiamond.FacetCut({facetAddress: poolFacet, action: IDiamond.FacetCutAction.Auto, functionSelectors: poolSelectors});
+        cuts[4] = IDiamond.FacetCut({
+            facetAddress: poolFacet, action: IDiamond.FacetCutAction.Auto, functionSelectors: poolSelectors
+        });
         cuts[5] = IDiamond.FacetCut({
             facetAddress: powerFacet,
             action: IDiamond.FacetCutAction.Auto,
@@ -369,7 +365,9 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
             );
             for (uint256 i = communityStartIndex; i < communityEndIndex; i++) {
                 if (registryCommunityProxies[i].code.length == 0) revert("registry community proxy has no code");
-                if (!_isDiamondLoupeCompatible(registryCommunityProxies[i])) revert("registry community loupe mismatch");
+                if (!_isDiamondLoupeCompatible(registryCommunityProxies[i])) {
+                    revert("registry community loupe mismatch");
+                }
             }
         }
 
@@ -496,7 +494,9 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
                     )
             ) {
                 if (splitFactoryFacetWrites) {
-                    _setCommunityFacetsSplit(registryFactory, context.communityCuts, communityInit, communityInitCalldata);
+                    _setCommunityFacetsSplit(
+                        registryFactory, context.communityCuts, communityInit, communityInitCalldata
+                    );
                 } else {
                     registryFactory.setCommunityFacets(context.communityCuts, communityInit, communityInitCalldata);
                 }
@@ -530,7 +530,8 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
             }
             if (
                 context.streamingEscrowFactory != address(0)
-                    && _factoryStreamingEscrowFactoryOrZero(context.registryFactoryProxy) != context.streamingEscrowFactory
+                    && _factoryStreamingEscrowFactoryOrZero(context.registryFactoryProxy)
+                        != context.streamingEscrowFactory
             ) {
                 registryFactory.setStreamingEscrowFactory(context.streamingEscrowFactory);
             }
@@ -568,7 +569,8 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     function _executeCommunityUpgrades(UpgradeContext memory context, string memory networkJson) internal {
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
-        uint256 startIndex = _boundedStartIndex(vm.envOr("COMMUNITY_START_INDEX", uint256(0)), registryCommunityProxies.length);
+        uint256 startIndex =
+            _boundedStartIndex(vm.envOr("COMMUNITY_START_INDEX", uint256(0)), registryCommunityProxies.length);
         uint256 endIndex = _boundedEndIndex(
             vm.envOr("COMMUNITY_END_INDEX", registryCommunityProxies.length), registryCommunityProxies.length
         );
@@ -616,31 +618,42 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     function _syncFactoryCommunityState(UpgradeContext memory context) internal {
         RegistryFactory registryFactory = RegistryFactory(payable(context.registryFactoryProxy));
 
-        if (context.registryImplementation != address(0) && registryFactory.registryCommunityTemplate() != context.registryImplementation) {
+        if (
+            context.registryImplementation != address(0)
+                && registryFactory.registryCommunityTemplate() != context.registryImplementation
+        ) {
             registryFactory.setRegistryCommunityTemplate(context.registryImplementation);
         }
 
         if (context.communityCuts.length > 0) {
             address communityInit = _getOrDeployCommunityDiamondInit();
             bytes memory communityInitCalldata = abi.encodeCall(RegistryCommunityDiamondInit.init, ());
-            if (!_factoryFacetStateMatches(registryFactory, true, context.communityCuts, communityInit, communityInitCalldata)) {
+            if (!_factoryFacetStateMatches(
+                    registryFactory, true, context.communityCuts, communityInit, communityInitCalldata
+                )) {
                 registryFactory.setCommunityFacets(context.communityCuts, communityInit, communityInitCalldata);
             }
-            _writeNetworkString(".FACTORY_STATE.COMMUNITY_CUTS_DIGEST", _bytes32ToHex(_facetCutsDigest(context.communityCuts)));
+            _writeNetworkString(
+                ".FACTORY_STATE.COMMUNITY_CUTS_DIGEST", _bytes32ToHex(_facetCutsDigest(context.communityCuts))
+            );
         }
     }
 
     function _syncFactoryStrategyState(UpgradeContext memory context) internal {
         RegistryFactory registryFactory = RegistryFactory(payable(context.registryFactoryProxy));
 
-        if (context.strategyImplementation != address(0) && registryFactory.strategyTemplate() != context.strategyImplementation) {
+        if (
+            context.strategyImplementation != address(0)
+                && registryFactory.strategyTemplate() != context.strategyImplementation
+        ) {
             registryFactory.setStrategyTemplate(context.strategyImplementation);
         }
 
         if (context.cvCuts.length > 0) {
             address strategyInit = _getOrDeployStrategyDiamondInit();
             bytes memory strategyInitCalldata = abi.encodeCall(CVStrategyDiamondInit.init, ());
-            if (!_factoryFacetStateMatches(registryFactory, false, context.cvCuts, strategyInit, strategyInitCalldata)) {
+            if (!_factoryFacetStateMatches(registryFactory, false, context.cvCuts, strategyInit, strategyInitCalldata))
+            {
                 registryFactory.setStrategyFacets(context.cvCuts, strategyInit, strategyInitCalldata);
             }
             _writeNetworkString(".FACTORY_STATE.STRATEGY_CUTS_DIGEST", _bytes32ToHex(_facetCutsDigest(context.cvCuts)));
@@ -653,7 +666,8 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         CommunityUpgradeOptions memory options
     ) internal {
         RegistryCommunity registryCommunity = RegistryCommunity(payable(proxy));
-        bool needsUpgradeTo = !options.skipUpgradeTo && _proxyImplementationAddress(proxy) != context.registryImplementation;
+        bool needsUpgradeTo =
+            !options.skipUpgradeTo && _proxyImplementationAddress(proxy) != context.registryImplementation;
         if (
             context.strategyImplementation != address(0) && !options.skipStrategyTemplate
                 && registryCommunity.strategyTemplate() != context.strategyImplementation
@@ -662,7 +676,8 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         }
 
         IDiamond.FacetCut[] memory allCuts = _mergeFacetCuts(
-            _buildStaleSelectorRemovalCuts(proxy, context.communityCuts), _buildChangedFacetCuts(proxy, context.communityCuts)
+            _buildStaleSelectorRemovalCuts(proxy, context.communityCuts),
+            _buildChangedFacetCuts(proxy, context.communityCuts)
         );
         bool needsDiamondCut = !options.skipDiamondCut && allCuts.length > 0;
 
@@ -690,7 +705,8 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         StrategyUpgradeOptions memory options
     ) internal {
         CVStrategy cvStrategy = CVStrategy(payable(proxy));
-        bool needsUpgradeTo = !options.skipUpgradeTo && _proxyImplementationAddress(proxy) != context.strategyImplementation;
+        bool needsUpgradeTo =
+            !options.skipUpgradeTo && _proxyImplementationAddress(proxy) != context.strategyImplementation;
         IDiamond.FacetCut[] memory allCuts = _mergeFacetCuts(
             _buildStaleSelectorRemovalCuts(proxy, context.cvCuts), _buildChangedFacetCuts(proxy, context.cvCuts)
         );
@@ -808,7 +824,9 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         _writeNetworkAddress(".IMPLEMENTATIONS.REGISTRY_COMMUNITY", implementation);
     }
 
-    function _syncStrategyFacetSnapshotsFromLive(address[] memory proxies, uint256 startIndex, uint256 endIndex) internal {
+    function _syncStrategyFacetSnapshotsFromLive(address[] memory proxies, uint256 startIndex, uint256 endIndex)
+        internal
+    {
         if (endIndex <= startIndex) return;
 
         address referenceProxy = proxies[startIndex];
@@ -818,10 +836,11 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         bytes4 syncSelector = _strategySyncSelector();
         StrategyFacetSnapshot memory snapshot = _readStrategyFacetSnapshot(referenceProxy, adminSelector, syncSelector);
         require(
-            snapshot.loupeFacet != address(0) && snapshot.adminFacet != address(0) && snapshot.allocationFacet != address(0)
-                && snapshot.disputeFacet != address(0) && snapshot.pauseFacet != address(0)
-                && snapshot.powerFacet != address(0) && snapshot.proposalFacet != address(0)
-                && snapshot.syncPowerFacet != address(0) && snapshot.streamingFacet != address(0),
+            snapshot.loupeFacet != address(0) && snapshot.adminFacet != address(0)
+                && snapshot.allocationFacet != address(0) && snapshot.disputeFacet != address(0)
+                && snapshot.pauseFacet != address(0) && snapshot.powerFacet != address(0)
+                && snapshot.proposalFacet != address(0) && snapshot.syncPowerFacet != address(0)
+                && snapshot.streamingFacet != address(0),
             "strategy facet selector missing"
         );
 
@@ -924,28 +943,22 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
             && IDiamondLoupe(proxy).facetAddress(adminSelector) == snapshot.adminFacet
             && IDiamondLoupe(proxy).facetAddress(CVStrategy.allocate.selector) == snapshot.allocationFacet
             && IDiamondLoupe(proxy).facetAddress(CVStrategy.disputeProposal.selector) == snapshot.disputeFacet
-            && IDiamondLoupe(proxy).facetAddress(bytes4(keccak256("setPauseController(address)"))) == snapshot.pauseFacet
+            && IDiamondLoupe(proxy).facetAddress(bytes4(keccak256("setPauseController(address)")))
+                == snapshot.pauseFacet
             && IDiamondLoupe(proxy).facetAddress(CVStrategy.activatePoints.selector) == snapshot.powerFacet
             && IDiamondLoupe(proxy).facetAddress(CVStrategy.registerRecipient.selector) == snapshot.proposalFacet
             && IDiamondLoupe(proxy).facetAddress(syncSelector) == snapshot.syncPowerFacet
             && IDiamondLoupe(proxy).facetAddress(CVStrategy.rebalance.selector) == snapshot.streamingFacet;
     }
 
-    function _readCommunityFacetSnapshot(address proxy)
-        internal
-        view
-        returns (CommunityFacetSnapshot memory snapshot)
-    {
+    function _readCommunityFacetSnapshot(address proxy) internal view returns (CommunityFacetSnapshot memory snapshot) {
         snapshot.loupeFacet = IDiamondLoupe(proxy).facetAddress(IDiamondLoupe.facets.selector);
         snapshot.adminFacet = IDiamondLoupe(proxy).facetAddress(CommunityAdminFacet.setStrategyTemplate.selector);
-        snapshot.memberFacet =
-            IDiamondLoupe(proxy).facetAddress(CommunityMemberFacet.stakeAndRegisterMember.selector);
+        snapshot.memberFacet = IDiamondLoupe(proxy).facetAddress(CommunityMemberFacet.stakeAndRegisterMember.selector);
         snapshot.pauseFacet = IDiamondLoupe(proxy).facetAddress(bytes4(keccak256("setPauseController(address)")));
         snapshot.poolFacet = IDiamondLoupe(proxy).facetAddress(COMMUNITY_CREATE_POOL_SELECTOR_V0_3);
-        snapshot.powerFacet =
-            IDiamondLoupe(proxy).facetAddress(CommunityPowerFacet.activateMemberInStrategy.selector);
-        snapshot.strategyFacet =
-            IDiamondLoupe(proxy).facetAddress(CommunityStrategyFacet.addStrategyByPoolId.selector);
+        snapshot.powerFacet = IDiamondLoupe(proxy).facetAddress(CommunityPowerFacet.activateMemberInStrategy.selector);
+        snapshot.strategyFacet = IDiamondLoupe(proxy).facetAddress(CommunityStrategyFacet.addStrategyByPoolId.selector);
     }
 
     function _communityFacetSnapshotMatches(address proxy, CommunityFacetSnapshot memory snapshot)
@@ -954,10 +967,12 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         returns (bool)
     {
         return IDiamondLoupe(proxy).facetAddress(IDiamondLoupe.facets.selector) == snapshot.loupeFacet
-            && IDiamondLoupe(proxy).facetAddress(CommunityAdminFacet.setStrategyTemplate.selector) == snapshot.adminFacet
+            && IDiamondLoupe(proxy).facetAddress(CommunityAdminFacet.setStrategyTemplate.selector)
+                == snapshot.adminFacet
             && IDiamondLoupe(proxy).facetAddress(CommunityMemberFacet.stakeAndRegisterMember.selector)
                 == snapshot.memberFacet
-            && IDiamondLoupe(proxy).facetAddress(bytes4(keccak256("setPauseController(address)"))) == snapshot.pauseFacet
+            && IDiamondLoupe(proxy).facetAddress(bytes4(keccak256("setPauseController(address)")))
+                == snapshot.pauseFacet
             && IDiamondLoupe(proxy).facetAddress(COMMUNITY_CREATE_POOL_SELECTOR_V0_3) == snapshot.poolFacet
             && IDiamondLoupe(proxy).facetAddress(CommunityPowerFacet.activateMemberInStrategy.selector)
                 == snapshot.powerFacet

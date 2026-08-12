@@ -6,6 +6,7 @@ import "forge-std/console2.sol";
 
 import {AcrossBridgeAdapter} from "../src/MarkeeRevenue/AcrossBridgeAdapter.sol";
 import {GardensMarkeeRouter} from "../src/MarkeeRevenue/GardensMarkeeRouter.sol";
+import {IGardensMarkeeRouter} from "../src/MarkeeRevenue/interfaces/IGardensMarkeeRouter.sol";
 
 /// @notice Deploys and wires the Ethereum Sepolia Across adapter into the
 /// existing Gardens Markee test router. The broadcaster must own the router.
@@ -32,7 +33,10 @@ contract DeployAcrossSepoliaAdapter is Script {
         adapter.setDestinationToken(OP_SEPOLIA_CHAIN_ID, OP_SEPOLIA_WETH);
 
         GardensMarkeeRouter router = GardensMarkeeRouter(payable(GARDENS_MARKEE_ROUTER));
-        router.setBridgeAdapter(address(adapter));
+        router.setBridgeConfiguration(
+            ARB_SEPOLIA_CHAIN_ID, address(adapter), IGardensMarkeeRouter.BridgeProtocol.Across
+        );
+        router.setBridgeConfiguration(OP_SEPOLIA_CHAIN_ID, address(adapter), IGardensMarkeeRouter.BridgeProtocol.Across);
         router.setRemoteReceiver(ARB_SEPOLIA_CHAIN_ID, arbReceiver);
         router.setRemoteReceiver(OP_SEPOLIA_CHAIN_ID, opReceiver);
 

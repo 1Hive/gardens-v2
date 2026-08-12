@@ -206,9 +206,7 @@ contract CVStrategyBaseFacetTest is Test {
         facet.exposedEnforceNotPaused(selector);
 
         controller.setGlobalPaused(true);
-        vm.expectRevert(
-            abi.encodeWithSelector(CVStrategyBaseFacet.StrategyPaused.selector, address(controller))
-        );
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyBaseFacet.StrategyPaused.selector, address(controller)));
         facet.exposedEnforceNotPaused(selector);
 
         bytes4 pauseSelector = bytes4(keccak256("pause(uint256)"));
@@ -239,9 +237,7 @@ contract CVStrategyBaseFacetTest is Test {
         facet.setPauseController(address(controller));
 
         controller.setGlobalPaused(true);
-        vm.expectRevert(
-            abi.encodeWithSelector(CVStrategyBaseFacet.StrategyPaused.selector, address(controller))
-        );
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyBaseFacet.StrategyPaused.selector, address(controller)));
         facet.guardedWhenNotPaused();
 
         bytes4 selector = bytes4(keccak256("someAction()"));

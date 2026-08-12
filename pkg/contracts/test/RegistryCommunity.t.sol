@@ -282,7 +282,7 @@ contract MockRegistryFactoryWithPause {
 
 contract DiamondInitHarnessRC {
     function callInit(address init) external {
-        (bool ok, ) = init.delegatecall(abi.encodeWithSelector(RegistryCommunityDiamondInit.init.selector));
+        (bool ok,) = init.delegatecall(abi.encodeWithSelector(RegistryCommunityDiamondInit.init.selector));
         require(ok, "init failed");
     }
 
@@ -496,11 +496,7 @@ contract RegistryCommunityTest is Test {
                 new ERC1967Proxy(
                     address(new RegistryCommunity()),
                     abi.encodeWithSelector(
-                        RegistryCommunity.initialize.selector,
-                        params,
-                        address(0x1111),
-                        address(0x2222),
-                        owner
+                        RegistryCommunity.initialize.selector, params, address(0x1111), address(0x2222), owner
                     )
                 )
             )
@@ -571,12 +567,16 @@ contract RegistryCommunityTest is Test {
         params = _defaultParams(address(localAllo));
         params._registryFactory = address(_deployFactoryWithFacets(cuts, emptyCuts, address(0)));
         impl = address(new RegistryCommunity());
-        RegistryCommunity community = RegistryCommunity(payable(address(new ERC1967Proxy(
-            impl,
-            abi.encodeWithSelector(
-                RegistryCommunity.initialize.selector, params, address(0x1111), address(0x2222), owner
-            )
-        ))));
+        RegistryCommunity community = RegistryCommunity(
+            payable(address(
+                    new ERC1967Proxy(
+                        impl,
+                        abi.encodeWithSelector(
+                            RegistryCommunity.initialize.selector, params, address(0x1111), address(0x2222), owner
+                        )
+                    )
+                ))
+        );
         assertEq(community.registryFactory(), params._registryFactory);
 
         params._registerStakeAmount = 0;
@@ -1289,7 +1289,7 @@ contract RegistryCommunityTest is Test {
         (bool ok,) = address(community).call(abi.encodeWithSelector(DummyCommunityFacet.dummy.selector));
         assertTrue(ok);
 
-        (ok, ) = address(community).call(abi.encodeWithSelector(bytes4(0xdeadbeef)));
+        (ok,) = address(community).call(abi.encodeWithSelector(bytes4(0xdeadbeef)));
         assertFalse(ok);
     }
 
@@ -1301,16 +1301,12 @@ contract RegistryCommunityTest is Test {
         selectors0[0] = RegistryCommunity.addStrategy.selector;
         selectors0[1] = RegistryCommunity.removeStrategy.selector;
         initialCuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0xA1),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors0
+            facetAddress: address(0xA1), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors0
         });
         bytes4[] memory selectors1 = new bytes4[](1);
         selectors1[0] = RegistryCommunity.setCommunityFee.selector;
         initialCuts[1] = IDiamond.FacetCut({
-            facetAddress: address(0xA2),
-            action: IDiamond.FacetCutAction.Replace,
-            functionSelectors: selectors1
+            facetAddress: address(0xA2), action: IDiamond.FacetCutAction.Replace, functionSelectors: selectors1
         });
         community.setStrategyFacetCutsForTest(initialCuts);
         assertEq(community.strategyFacetCutsLengthForTest(), 2);
@@ -1322,9 +1318,7 @@ contract RegistryCommunityTest is Test {
         bytes4[] memory replacementSelectors = new bytes4[](1);
         replacementSelectors[0] = RegistryCommunity.addStrategyByPoolId.selector;
         replacementCuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0xB1),
-            action: IDiamond.FacetCutAction.Remove,
-            functionSelectors: replacementSelectors
+            facetAddress: address(0xB1), action: IDiamond.FacetCutAction.Remove, functionSelectors: replacementSelectors
         });
         community.setStrategyFacetCutsForTest(replacementCuts);
         assertEq(community.strategyFacetCutsLengthForTest(), 1);
@@ -1332,5 +1326,4 @@ contract RegistryCommunityTest is Test {
         assertEq(uint256(community.strategyFacetCutActionForTest(0)), uint256(IDiamond.FacetCutAction.Remove));
         assertEq(community.strategyFacetCutSelectorForTest(0, 0), RegistryCommunity.addStrategyByPoolId.selector);
     }
-
 }

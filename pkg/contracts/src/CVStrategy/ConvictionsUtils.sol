@@ -56,7 +56,7 @@ library ConvictionsUtils {
         if (_poolAmount > 0 && _maxRatio * _poolAmount <= _requestedAmount * D) {
             return type(uint256).max;
         }
-        
+
         uint256 requestedAmountRationTerm = _poolAmount == 0 ? 0 : (_requestedAmount * 2 ** 64) / _poolAmount;
         uint256 denom = (_maxRatio * 2 ** 64) / D - requestedAmountRationTerm;
         uint256 weightScaled = (_weight << 128) / D;

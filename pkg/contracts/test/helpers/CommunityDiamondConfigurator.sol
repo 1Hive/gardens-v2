@@ -67,9 +67,7 @@ abstract contract CommunityDiamondConfiguratorBase {
         pauseSelectors[10] = bytes4(keccak256("pausedUntil()"));
         pauseSelectors[11] = bytes4(keccak256("pausedSelectorUntil(bytes4)"));
         cuts[2] = IDiamond.FacetCut({
-            facetAddress: address(_pauseFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: pauseSelectors
+            facetAddress: address(_pauseFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: pauseSelectors
         });
 
         bytes4[] memory poolSelectors = new bytes4[](2);
@@ -204,8 +202,7 @@ contract CommunityDiamondConfigurator is CommunityDiamondConfiguratorBase {
      */
     function configureFacets(address community) external {
         IDiamond.FacetCut[] memory cuts = getFacetCuts();
-        IDiamondCut(community).diamondCut(
-            cuts, address(diamondInit), abi.encodeCall(RegistryCommunityDiamondInit.init, ())
-        );
+        IDiamondCut(community)
+            .diamondCut(cuts, address(diamondInit), abi.encodeCall(RegistryCommunityDiamondInit.init, ()));
     }
 }

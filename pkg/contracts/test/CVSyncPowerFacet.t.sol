@@ -48,13 +48,21 @@ contract MockCommunityForSync {
     }
 
     // Stubs for RegistryCommunity interface compatibility
-    function hasRole(bytes32, address) external pure returns (bool) { return true; }
+    function hasRole(bytes32, address) external pure returns (bool) {
+        return true;
+    }
     function grantRole(bytes32, address) external {}
     function revokeRole(bytes32, address) external {}
     function activateMemberInStrategy(address, address) external {}
     function deactivateMemberInStrategy(address, address) external {}
-    function gardenToken() external view returns (address) { return address(token); }
-    function getMemberStakedAmount(address) external pure returns (uint256) { return 0; }
+
+    function gardenToken() external view returns (address) {
+        return address(token);
+    }
+
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
 }
 
 /// @notice Mock voting power registry that returns configurable live power
@@ -69,9 +77,17 @@ contract MockVotingPowerRegistryForSync {
         return livePower[member];
     }
 
-    function getMemberStakedAmount(address) external pure returns (uint256) { return 0; }
-    function ercAddress() external pure returns (address) { return address(0); }
-    function isMember(address member) external view returns (bool) { return livePower[member] > 0; }
+    function getMemberStakedAmount(address) external pure returns (uint256) {
+        return 0;
+    }
+
+    function ercAddress() external pure returns (address) {
+        return address(0);
+    }
+
+    function isMember(address member) external view returns (bool) {
+        return livePower[member] > 0;
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

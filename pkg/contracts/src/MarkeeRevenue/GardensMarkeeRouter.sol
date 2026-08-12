@@ -12,12 +12,13 @@ import {ICommunityRevenueVault} from "./interfaces/ICommunityRevenueVault.sol";
 import {IGardensMarkeeRouter} from "./interfaces/IGardensMarkeeRouter.sol";
 import {IBridgeAdapter, BridgeRequest} from "./interfaces/IBridgeAdapter.sol";
 import {IRegistryCommunitySafe} from "./interfaces/IRegistryCommunitySafe.sol";
+import {IStreamingLeaderboardFactory} from "./interfaces/IStreamingLeaderboardFactory.sol";
 
 /// @notice Singleton Gardens router, one per deployed network. Deploys and
 /// tracks one deterministic `CommunityRevenueVault` per opted-in community,
 /// and is the only caller authorized to release vault revenue — either paid
 /// locally to a community's council Safe on this same chain, or handed to
-/// the configured bridge adapter for remote delivery.
+/// the destination chain's configured bridge adapter for remote delivery.
 ///
 /// `ethx`/`weth` are configured per deployment rather than hardcoded,
 /// since they're network-specific (e.g. the production Base deployment
@@ -36,19 +37,28 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
         address registryCommunity;
     }
 
+    struct BridgeConfiguration {
+        address adapter;
+        BridgeProtocol protocol;
+    }
+
     address public ethx;
     address public weth;
     address public vaultImplementation;
-    address public bridgeAdapter;
     mapping(address keeper => bool authorized) public keepers;
     mapping(bytes32 communityKey => address vault) public vaults;
     mapping(bytes32 communityKey => CommunityInfo) public communities;
     mapping(uint256 chainId => address receiver) public remoteReceivers;
+    address public streamingLeaderboardFactory;
+    mapping(bytes32 communityKey => CommunityIntegration integration) private _communityIntegrations;
+    mapping(uint256 destinationChainId => BridgeConfiguration configuration) private _bridgeConfigurations;
 
-    uint256[38] private __gap;
+    uint256[36] private __gap;
 
     event KeeperUpdated(address indexed keeper, bool authorized);
-    event BridgeAdapterUpdated(address indexed adapter);
+    event BridgeConfigurationUpdated(
+        uint256 indexed destinationChainId, address indexed adapter, BridgeProtocol protocol
+    );
     event VaultImplementationUpdated(address indexed implementation);
     event TokensUpdated(address indexed ethx, address indexed weth);
     event RemoteReceiverUpdated(uint256 indexed chainId, address indexed receiver);
@@ -59,10 +69,14 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
 
     error NotKeeper();
     error ZeroAddress();
+    error UnexpectedValue();
     error VaultNotFound();
     error BridgeAdapterNotConfigured();
     error RemoteReceiverNotConfigured(uint256 chainId);
     error InsufficientOutput(uint256 expected, uint256 minimum);
+    error StreamingLeaderboardFactoryNotConfigured();
+    error InvalidDestinationChain();
+    error InvalidBridgeProtocol();
 
     modifier onlyKeeper() {
         if (!keepers[msg.sender]) {
@@ -71,17 +85,11 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
         _;
     }
 
-    function initialize(
-        address _owner,
-        address _vaultImplementation,
-        address _bridgeAdapter,
-        address _ethx,
-        address _weth
-    ) external initializer {
-        if (
-            _owner == address(0) || _vaultImplementation == address(0) || _bridgeAdapter == address(0)
-                || _ethx == address(0) || _weth == address(0)
-        ) {
+    function initialize(address _owner, address _vaultImplementation, address _ethx, address _weth)
+        external
+        initializer
+    {
+        if (_owner == address(0) || _vaultImplementation == address(0) || _ethx == address(0) || _weth == address(0)) {
             revert ZeroAddress();
         }
 
@@ -89,7 +97,6 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
         __ReentrancyGuard_init();
 
         vaultImplementation = _vaultImplementation;
-        bridgeAdapter = _bridgeAdapter;
         ethx = _ethx;
         weth = _weth;
     }
@@ -100,6 +107,13 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
     function ensureCommunityVault(uint256 communityChainId, address registryCommunity)
         external
         onlyKeeper
+        returns (address vault)
+    {
+        return _ensureCommunityVault(communityChainId, registryCommunity);
+    }
+
+    function _ensureCommunityVault(uint256 communityChainId, address registryCommunity)
+        internal
         returns (address vault)
     {
         if (registryCommunity == address(0)) {
@@ -121,6 +135,53 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
         emit VaultCreated(key, vault, communityChainId, registryCommunity);
     }
 
+    function createCommunityLeaderboard(
+        uint256 communityChainId,
+        address registryCommunity,
+        string calldata leaderboardName,
+        string calldata platformId
+    ) external onlyKeeper returns (address vault, address leaderboard, address seedMarkee) {
+        if (registryCommunity == address(0)) {
+            revert ZeroAddress();
+        }
+
+        bytes32 key = CommunityKeyLib.communityKey(communityChainId, registryCommunity);
+        CommunityIntegration storage existing = _communityIntegrations[key];
+        if (existing.leaderboard != address(0)) {
+            return (existing.vault, existing.leaderboard, existing.seedMarkee);
+        }
+
+        address factory = streamingLeaderboardFactory;
+        if (factory == address(0)) {
+            revert StreamingLeaderboardFactoryNotConfigured();
+        }
+
+        vault = _ensureCommunityVault(communityChainId, registryCommunity);
+        (leaderboard, seedMarkee) =
+            IStreamingLeaderboardFactory(factory).createLeaderboard(vault, leaderboardName, "Gardens", platformId);
+
+        _communityIntegrations[key] = CommunityIntegration({
+            communityChainId: communityChainId,
+            registryCommunity: registryCommunity,
+            vault: vault,
+            factory: factory,
+            leaderboard: leaderboard,
+            seedMarkee: seedMarkee
+        });
+
+        emit CommunityLeaderboardRegistered(
+            key, communityChainId, registryCommunity, vault, factory, leaderboard, seedMarkee
+        );
+    }
+
+    function communityIntegration(bytes32 communityKey)
+        external
+        view
+        returns (CommunityIntegration memory integration)
+    {
+        return _communityIntegrations[communityKey];
+    }
+
     /// @inheritdoc IGardensMarkeeRouter
     function communityVault(bytes32 communityKey) external view returns (address vault) {
         return vaults[communityKey];
@@ -132,10 +193,11 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
 
     /// @notice Releases a community's accumulated revenue. Base-local
     /// communities are paid directly to their council Safe; remote
-    /// communities are handed to the bridge adapter. `quoteData` and
+    /// communities are handed to that destination's bridge adapter. `quoteData` and
     /// `minAmountOut` are ignored for local payouts.
     function sweep(bytes32 communityKey, bytes calldata quoteData, uint256 minAmountOut)
         external
+        payable
         onlyKeeper
         nonReentrant
     {
@@ -146,6 +208,7 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
         CommunityInfo memory info = communities[communityKey];
 
         if (info.communityChainId == block.chainid) {
+            if (msg.value != 0) revert UnexpectedValue();
             address safe = IRegistryCommunitySafe(info.registryCommunity).councilSafe();
             if (safe == address(0)) {
                 revert ZeroAddress();
@@ -155,7 +218,7 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
             return;
         }
 
-        address adapter = bridgeAdapter;
+        (address adapter,) = bridgeConfiguration(info.communityChainId);
         if (adapter == address(0)) {
             revert BridgeAdapterNotConfigured();
         }
@@ -174,7 +237,7 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
             refundRecipient: vault,
             minAmountOut: minAmountOut
         });
-        (, uint256 expectedAmountOut) = IBridgeAdapter(adapter).bridgeETH{value: amount}(request, quoteData);
+        (, uint256 expectedAmountOut) = IBridgeAdapter(adapter).bridgeETH{value: amount + msg.value}(request, quoteData);
         if (expectedAmountOut < minAmountOut) {
             revert InsufficientOutput(expectedAmountOut, minAmountOut);
         }
@@ -187,12 +250,51 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
         emit KeeperUpdated(keeper, authorized);
     }
 
-    function setBridgeAdapter(address adapter) external onlyOwner {
+    function setStreamingLeaderboardFactory(address newFactory) external onlyOwner {
+        if (newFactory == address(0)) {
+            revert ZeroAddress();
+        }
+        address oldFactory = streamingLeaderboardFactory;
+        streamingLeaderboardFactory = newFactory;
+        emit StreamingLeaderboardFactoryChanged(oldFactory, newFactory);
+    }
+
+    /// @notice Selects the adapter and quote format used for one destination
+    /// chain. Every remote destination must be configured explicitly.
+    function setBridgeConfiguration(uint256 destinationChainId, address adapter, BridgeProtocol protocol)
+        external
+        onlyOwner
+    {
+        if (destinationChainId == 0) {
+            revert InvalidDestinationChain();
+        }
         if (adapter == address(0)) {
             revert ZeroAddress();
         }
-        bridgeAdapter = adapter;
-        emit BridgeAdapterUpdated(adapter);
+        if (protocol == BridgeProtocol.None) {
+            revert InvalidBridgeProtocol();
+        }
+        _bridgeConfigurations[destinationChainId] = BridgeConfiguration({adapter: adapter, protocol: protocol});
+        emit BridgeConfigurationUpdated(destinationChainId, adapter, protocol);
+    }
+
+    /// @notice Disables bridging to a destination until it is configured again.
+    function clearBridgeConfiguration(uint256 destinationChainId) external onlyOwner {
+        if (destinationChainId == 0) {
+            revert InvalidDestinationChain();
+        }
+        delete _bridgeConfigurations[destinationChainId];
+        emit BridgeConfigurationUpdated(destinationChainId, address(0), BridgeProtocol.None);
+    }
+
+    /// @notice Returns the destination-specific bridge configuration.
+    function bridgeConfiguration(uint256 destinationChainId)
+        public
+        view
+        returns (address adapter, BridgeProtocol protocol)
+    {
+        BridgeConfiguration memory configuration = _bridgeConfigurations[destinationChainId];
+        return (configuration.adapter, configuration.protocol);
     }
 
     function setVaultImplementation(address implementation) external onlyOwner {

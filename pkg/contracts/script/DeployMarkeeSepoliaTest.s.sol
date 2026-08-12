@@ -6,7 +6,6 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 
 import {CommunityRevenueVault} from "../src/MarkeeRevenue/CommunityRevenueVault.sol";
 import {GardensMarkeeRouter} from "../src/MarkeeRevenue/GardensMarkeeRouter.sol";
-import {SquidBridgeAdapter} from "../src/MarkeeRevenue/SquidBridgeAdapter.sol";
 import {CommunityKeyLib} from "../src/MarkeeRevenue/libraries/CommunityKeyLib.sol";
 
 interface IMarkeeLeaderboardFactory {
@@ -24,7 +23,7 @@ interface IRegistryCommunitySafeView {
 }
 
 /// @notice One-off Sepolia integration test. Deploys a throwaway
-/// GardensMarkeeRouter + CommunityRevenueVault + SquidBridgeAdapter stack —
+/// GardensMarkeeRouter + CommunityRevenueVault stack —
 /// owned and keepered by the deploying key, not the production Gardens
 /// PROXY_OWNER, since this is manual-test scaffolding, not a production
 /// deployment — resolves that community's vault, and creates a real
@@ -51,7 +50,6 @@ interface IRegistryCommunitySafeView {
 ///     --rpc-url $RPC_URL_SEP_TESTNET --broadcast
 contract DeployMarkeeSepoliaTest is Script {
     address constant MARKEE_FACTORY = 0x974962E400096Fff36D5069576D0C404eE552C05;
-
     // Canonical Sepolia WETH9. Never actually funded in this test — Markee
     // only ever pays the vault in ETHx — but CommunityRevenueVault.initialize
     // requires a real WETH-shaped contract for its normalization path.
@@ -80,24 +78,17 @@ contract DeployMarkeeSepoliaTest is Script {
         vm.startBroadcast(pk);
 
         address vaultImplementation = address(new CommunityRevenueVault());
-        SquidBridgeAdapter adapter = new SquidBridgeAdapter(address(0));
         address routerImplementation = address(new GardensMarkeeRouter());
         address routerProxy = address(
             new ERC1967Proxy(
                 routerImplementation,
                 abi.encodeWithSelector(
-                    GardensMarkeeRouter.initialize.selector,
-                    deployer,
-                    vaultImplementation,
-                    address(adapter),
-                    ethx,
-                    SEPOLIA_WETH
+                    GardensMarkeeRouter.initialize.selector, deployer, vaultImplementation, ethx, SEPOLIA_WETH
                 )
             )
         );
         GardensMarkeeRouter router = GardensMarkeeRouter(payable(routerProxy));
 
-        adapter.setRouter(routerProxy);
         router.setKeeper(deployer, true);
 
         address vault = router.ensureCommunityVault(SEPOLIA_CHAIN_ID, TEST_REGISTRY_COMMUNITY);
@@ -111,7 +102,6 @@ contract DeployMarkeeSepoliaTest is Script {
 
         console2.log("--- Deployed ---");
         console2.log("CommunityRevenueVault impl", vaultImplementation);
-        console2.log("SquidBridgeAdapter", address(adapter));
         console2.log("GardensMarkeeRouter proxy", routerProxy);
         console2.log("Community vault (leaderboard beneficiary)", vault);
         console2.log("Leaderboard", leaderboard);

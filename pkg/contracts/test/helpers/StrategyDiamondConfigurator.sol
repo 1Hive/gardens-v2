@@ -30,10 +30,16 @@ abstract contract StrategyDiamondConfiguratorBase {
         cuts = new IDiamond.FacetCut[](8);
 
         bytes4[] memory adminSelectors = new bytes4[](5);
-        adminSelectors[0] =
-            bytes4(keccak256("setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)"));
-        adminSelectors[1] =
-            bytes4(keccak256("setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address,uint256)"));
+        adminSelectors[0] = bytes4(
+            keccak256(
+                "setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)"
+            )
+        );
+        adminSelectors[1] = bytes4(
+            keccak256(
+                "setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address,uint256)"
+            )
+        );
         adminSelectors[2] = CVAdminFacet.connectSuperfluidGDA.selector;
         adminSelectors[3] = CVAdminFacet.disconnectSuperfluidGDA.selector;
         adminSelectors[4] = CVAdminFacet.setVotingPowerRegistry.selector;
@@ -74,9 +80,7 @@ abstract contract StrategyDiamondConfiguratorBase {
         pauseSelectors[10] = bytes4(keccak256("pausedUntil()"));
         pauseSelectors[11] = bytes4(keccak256("pausedSelectorUntil(bytes4)"));
         cuts[3] = IDiamond.FacetCut({
-            facetAddress: address(_pauseFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: pauseSelectors
+            facetAddress: address(_pauseFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: pauseSelectors
         });
 
         bytes4[] memory powerSelectors = new bytes4[](5);
@@ -105,7 +109,9 @@ abstract contract StrategyDiamondConfiguratorBase {
         syncSelectors[2] = CVSyncPowerFacet.syncPower.selector;
         syncSelectors[3] = CVSyncPowerFacet.batchSyncPower.selector;
         cuts[6] = IDiamond.FacetCut({
-            facetAddress: address(_syncPowerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: syncSelectors
+            facetAddress: address(_syncPowerFacet),
+            action: IDiamond.FacetCutAction.Auto,
+            functionSelectors: syncSelectors
         });
 
         bytes4[] memory streamingSelectors = new bytes4[](5);
@@ -175,17 +181,16 @@ contract StrategyDiamondConfigurator is StrategyDiamondConfiguratorBase {
      * @return cuts Array of FacetCut structs to pass to diamondCut()
      */
     function getFacetCuts() public view returns (IDiamond.FacetCut[] memory cuts) {
-        IDiamond.FacetCut[] memory baseCuts =
-            _buildFacetCuts(
-                adminFacet,
-                allocationFacet,
-                disputeFacet,
-                pauseFacet,
-                powerFacet,
-                proposalFacet,
-                syncPowerFacet,
-                streamingFacet
-            );
+        IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(
+            adminFacet,
+            allocationFacet,
+            disputeFacet,
+            pauseFacet,
+            powerFacet,
+            proposalFacet,
+            syncPowerFacet,
+            streamingFacet
+        );
 
         // Add loupe facet as first cut.
         cuts = new IDiamond.FacetCut[](9);

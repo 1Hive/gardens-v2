@@ -10,10 +10,8 @@ contract PrintRegistryCommunitySelectors is Script {
     using stdJson for string;
 
     function run() external {
-        string memory artifactPath = string.concat(
-            vm.projectRoot(),
-            "/pkg/contracts/out/RegistryCommunity.sol/RegistryCommunity.json"
-        );
+        string memory artifactPath =
+            string.concat(vm.projectRoot(), "/pkg/contracts/out/RegistryCommunity.sol/RegistryCommunity.json");
 
         require(vm.exists(artifactPath), "RegistryCommunity artifact missing. Run `forge build` first.");
 

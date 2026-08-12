@@ -208,7 +208,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     address internal strategyInit;
     /// @dev Deprecated: this should be set in the registry factory and fetched during initialization
     bytes internal strategyInitCalldata;
-    
+
     uint256[46] private __gap;
 
     /*|--------------------------------------------|*/

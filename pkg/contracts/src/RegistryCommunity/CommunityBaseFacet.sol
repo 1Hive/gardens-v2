@@ -5,10 +5,12 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
-import {ReentrancyGuardUpgradeable} from
-    "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
-import {AccessControlUpgradeable} from
-    "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
+import {
+    ReentrancyGuardUpgradeable
+} from "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {
+    AccessControlUpgradeable
+} from "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
 
 import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
@@ -174,14 +176,10 @@ abstract contract CommunityBaseFacet is ProxyOwnableUpgrader, ReentrancyGuardUpg
 
     function _isPauseSelector(bytes4 selector) internal pure returns (bool) {
         return selector == bytes4(keccak256("setPauseController(address)"))
-            || selector == bytes4(keccak256("pause(uint256)"))
-            || selector == bytes4(keccak256("pause(bytes4,uint256)"))
-            || selector == bytes4(keccak256("unpause()"))
-            || selector == bytes4(keccak256("unpause(bytes4)"))
-            || selector == bytes4(keccak256("pauseController()"))
-            || selector == bytes4(keccak256("isPaused()"))
-            || selector == bytes4(keccak256("isPaused(bytes4)"))
-            || selector == bytes4(keccak256("pausedUntil()"))
+            || selector == bytes4(keccak256("pause(uint256)")) || selector == bytes4(keccak256("pause(bytes4,uint256)"))
+            || selector == bytes4(keccak256("unpause()")) || selector == bytes4(keccak256("unpause(bytes4)"))
+            || selector == bytes4(keccak256("pauseController()")) || selector == bytes4(keccak256("isPaused()"))
+            || selector == bytes4(keccak256("isPaused(bytes4)")) || selector == bytes4(keccak256("pausedUntil()"))
             || selector == bytes4(keccak256("pausedSelectorUntil(bytes4)"));
     }
 }

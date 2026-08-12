@@ -53,7 +53,6 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
 
         IAllo.Pool memory pool = allo.getPool(poolId);
 
-
         run(payable(address(pool.strategy)), _comm);
     }
 
@@ -96,7 +95,6 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
             SAFE = address(registryCommunity.councilSafe());
         }
         Safe councilSafeDeploy = Safe(payable(SAFE));
-
 
         assertTrue(address(registryCommunity.councilSafe()) != address(0), "Council Safe not set");
         assertTrue(address(councilSafeDeploy) != address(0), "Council Safe empty");

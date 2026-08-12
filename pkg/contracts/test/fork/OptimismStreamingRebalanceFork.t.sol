@@ -10,8 +10,7 @@ import {IDiamondCut} from "../../src/diamonds/interfaces/IDiamondCut.sol";
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
 import {
     IGeneralDistributionAgreementV1
-} from
-    "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/IGeneralDistributionAgreementV1.sol";
+} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/IGeneralDistributionAgreementV1.sol";
 import {
     ISuperfluidPool
 } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
@@ -66,9 +65,7 @@ contract OptimismStreamingRebalanceForkTest is Test {
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(streamingFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: selectors
+            facetAddress: address(streamingFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: selectors
         });
 
         vm.prank(strategy.owner());
