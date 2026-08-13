@@ -40,6 +40,13 @@ interface ISquidGardensRevenueReceiver {
         bytes32 indexed payoutId, address indexed recipient, address indexed token, uint256 amount
     );
     event SquidMulticallUpdated(address indexed squidMulticall);
+    event TokenRevenueReceived(
+        bytes32 indexed payoutId,
+        bytes32 indexed communityKey,
+        address indexed councilSafe,
+        address token,
+        uint256 amount
+    );
 
     error NotSquidMulticall();
     error ZeroAddress();
@@ -57,6 +64,8 @@ interface ISquidGardensRevenueReceiver {
         address token,
         uint256 amount
     ) external;
+    function receiveTokenRevenue(bytes32 communityKey, address registryCommunity, address token, uint256 amount)
+        external;
     function retryPayout(bytes32 payoutId) external;
     function retryTokenPayout(bytes32 payoutId) external;
     function recoverPayout(bytes32 payoutId, address payable to) external;

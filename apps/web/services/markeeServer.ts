@@ -36,7 +36,10 @@ const SQUID_NATIVE_ETH_CHAIN_IDS = new Set([1, 10, 42161]);
 const SQUID_ROUTE_URL = "https://v2.api.squidrouter.com/v2/route";
 const SQUID_STATUS_URL = "https://v2.api.squidrouter.com/v2/status";
 const LIFI_QUOTE_URL = "https://li.quest/v1/quote";
+const LIFI_CONTRACT_CALL_QUOTE_URL = `${LIFI_QUOTE_URL}/contractCalls`;
 const LIFI_NATIVE_TOKEN: Address = zeroAddress;
+const LIFI_GNOSIS_WETH: Address =
+  "0x6a023ccd1ff6f2045c3309768ead9e68f978f6e1";
 const LIFI_BASE_DIAMOND: Address = "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE";
 const GARDENS_TESTNET_CHAIN_IDS = new Set([421614, 11155420, 11155111]);
 const BRIDGE_PROTOCOL = {
@@ -76,6 +79,7 @@ const squidBridgeAdapterABI = parseAbi([
 const squidGardensRevenueReceiverABI = parseAbi([
   "function receiveSquidRevenue(bytes32 payoutId, bytes32 communityKey, address registryCommunity) payable",
   "function receiveSquidTokenRevenue(bytes32 payoutId, bytes32 communityKey, address registryCommunity, address token, uint256 amount)",
+  "function receiveTokenRevenue(bytes32 communityKey, address registryCommunity, address token, uint256 amount)",
 ]);
 
 const erc20ABI = parseAbi([
@@ -788,18 +792,45 @@ const getSquidRoute = async ({
   };
 };
 
+const throwLifiQuoteError = (
+  response: Response,
+  body: LifiQuoteResponse,
+  chainId: number,
+  community: Address,
+): never => {
+  const providerMessage = body.message ?? "No provider error message";
+  console.error(
+    `[Markee claim quote] LI.FI route request failed: ${providerMessage}`,
+    {
+      chainId,
+      code: body.code ?? null,
+      community,
+      message: providerMessage,
+      status: response.status,
+    },
+  );
+  throw new MarkeeClaimExecutionError(
+    /liquidity|no quote|not found/iu.test(providerMessage) ?
+      "No bridge route currently has enough liquidity for this claim. Please try again later."
+    : "A bridge route is temporarily unavailable. Please try again shortly.",
+    502,
+  );
+};
+
 const getLifiRoute = async ({
   adapter,
   amount,
   chainId,
   community,
-  destinationRecipient,
+  destinationReceiver,
+  fallbackRecipient,
 }: {
   adapter: Address;
   amount: bigint;
   chainId: number;
   community: Address;
-  destinationRecipient: Address;
+  destinationReceiver: Address;
+  fallbackRecipient: Address;
 }) => {
   const integratorId = process.env.LIFI_INTEGRATOR_ID?.trim();
   if (!integratorId) {
@@ -809,7 +840,13 @@ const getLifiRoute = async ({
     );
   }
 
-  const params = new URLSearchParams({
+  const apiKey = process.env.LIFI_GARDENS_API_KEY?.trim();
+  const headers = {
+    Accept: "application/json",
+    "User-Agent": "Gardens/1.0",
+    ...(apiKey ? { "x-lifi-api-key": apiKey } : {}),
+  };
+  const preliminaryParams = new URLSearchParams({
     fromAddress: adapter,
     fromAmount: amount.toString(),
     fromChain: MARKEE_BASE_CHAIN_ID.toString(),
@@ -817,41 +854,72 @@ const getLifiRoute = async ({
     integrator: integratorId,
     order: "CHEAPEST",
     slippage: "0.01",
-    toAddress: destinationRecipient,
+    toAddress: destinationReceiver,
     toChain: chainId.toString(),
-    toToken: LIFI_NATIVE_TOKEN,
+    toToken: LIFI_GNOSIS_WETH,
   });
-  const apiKey = process.env.LIFI_GARDENS_API_KEY?.trim();
-  const response = await fetch(`${LIFI_QUOTE_URL}?${params.toString()}`, {
-    cache: "no-store",
-    headers: {
-      Accept: "application/json",
-      "User-Agent": "Gardens/1.0",
-      ...(apiKey ? { "x-lifi-api-key": apiKey } : {}),
+  const preliminaryResponse = await fetch(
+    `${LIFI_QUOTE_URL}?${preliminaryParams.toString()}`,
+    {
+      cache: "no-store",
+      headers,
+      signal: AbortSignal.timeout(20_000),
     },
+  );
+  const preliminaryBody =
+    (await preliminaryResponse.json()) as LifiQuoteResponse;
+  const destinationAmountValue =
+    preliminaryBody.estimate?.toAmountMin ?? preliminaryBody.estimate?.toAmount;
+  if (
+    !preliminaryResponse.ok ||
+    typeof destinationAmountValue !== "string" ||
+    destinationAmountValue.length === 0
+  ) {
+    throwLifiQuoteError(preliminaryResponse, preliminaryBody, chainId, community);
+  }
+
+  const destinationAmount = BigInt(destinationAmountValue as string);
+  const receiverCalldata = encodeFunctionData({
+    abi: squidGardensRevenueReceiverABI,
+    args: [
+      getCommunityKey(chainId, community),
+      community,
+      LIFI_GNOSIS_WETH,
+      destinationAmount,
+    ],
+    functionName: "receiveTokenRevenue",
+  });
+  const response = await fetch(LIFI_CONTRACT_CALL_QUOTE_URL, {
+    cache: "no-store",
+    body: JSON.stringify({
+      contractCalls: [
+        {
+          fromAmount: destinationAmount.toString(),
+          fromTokenAddress: LIFI_GNOSIS_WETH,
+          toApprovalAddress: destinationReceiver,
+          toContractAddress: destinationReceiver,
+          toContractCallData: receiverCalldata,
+          toContractGasLimit: "300000",
+          toFallbackAddress: fallbackRecipient,
+          toTokenAddress: LIFI_GNOSIS_WETH,
+        },
+      ],
+      fromAddress: adapter,
+      fromChain: MARKEE_BASE_CHAIN_ID,
+      fromToken: LIFI_NATIVE_TOKEN,
+      integrator: integratorId,
+      slippage: 0.01,
+      toAmount: destinationAmount.toString(),
+      toChain: chainId,
+      toToken: LIFI_GNOSIS_WETH,
+    }),
+    headers: { ...headers, "Content-Type": "application/json" },
+    method: "POST",
     signal: AbortSignal.timeout(20_000),
   });
   const body = (await response.json()) as LifiQuoteResponse;
 
-  if (!response.ok) {
-    const providerMessage = body.message ?? "No provider error message";
-    console.error(
-      `[Markee claim quote] LI.FI route request failed: ${providerMessage}`,
-      {
-        chainId,
-        code: body.code ?? null,
-        community,
-        message: providerMessage,
-        status: response.status,
-      },
-    );
-    throw new MarkeeClaimExecutionError(
-      /liquidity|no quote|not found/iu.test(providerMessage) ?
-        "No bridge route currently has enough liquidity for this claim. Please try again later."
-      : "A bridge route is temporarily unavailable. Please try again shortly.",
-      502,
-    );
-  }
+  if (!response.ok) throwLifiQuoteError(response, body, chainId, community);
 
   const transactionRequest = body.transactionRequest;
   const target = requireAddress(
@@ -890,9 +958,8 @@ const getLifiRoute = async ({
     Number(body.action?.fromChainId) !== MARKEE_BASE_CHAIN_ID ||
     Number(body.action?.toChainId) !== chainId ||
     actionFromAddress !== adapter ||
-    actionToAddress !== destinationRecipient ||
-    transactionFromAddress !== adapter ||
-    body.action?.fromAmount !== amount.toString()
+    actionToAddress !== adapter ||
+    transactionFromAddress !== adapter
   ) {
     throw new MarkeeClaimExecutionError(
       "LI.FI returned a route that does not match this claim.",
@@ -901,41 +968,37 @@ const getLifiRoute = async ({
   }
 
   let executionValue: bigint;
-  let expectedAmountOut: bigint;
+  let inputAmount: bigint;
   try {
     executionValue = BigInt(transactionRequest.value ?? "0");
-    expectedAmountOut = BigInt(
-      body.estimate?.toAmountMin ?? body.estimate?.toAmount ?? "0",
-    );
+    inputAmount = BigInt(body.action?.fromAmount ?? "0");
   } catch {
     throw new MarkeeClaimExecutionError(
       "LI.FI returned invalid claim amounts.",
       502,
     );
   }
-  if (executionValue < amount || expectedAmountOut <= 0n) {
+  if (
+    inputAmount <= 0n ||
+    inputAmount > amount ||
+    executionValue < inputAmount ||
+    destinationAmount <= 0n
+  ) {
     throw new MarkeeClaimExecutionError(
       "LI.FI returned invalid claim amounts.",
       502,
     );
   }
 
-  const fromAmountUsd = parseDecimalToFixed(body.estimate?.fromAmountUSD ?? "");
-  const toAmountUsd = parseDecimalToFixed(body.estimate?.toAmountUSD ?? "");
-  const estimatedRouteLoss =
-    fromAmountUsd != null && fromAmountUsd > 0n && toAmountUsd != null ?
-      (amount *
-        (fromAmountUsd > toAmountUsd ? fromAmountUsd - toAmountUsd : 0n) +
-        fromAmountUsd -
-        1n) /
-      fromAmountUsd
-    : 0n;
-
   return {
-    destinationSymbol: getDestinationNativeSymbol(chainId),
-    estimatedFeeAmount: estimatedRouteLoss + executionValue - amount,
+    destinationSymbol: "WETH",
+    estimatedFeeAmount:
+      executionValue > destinationAmount ?
+        executionValue - destinationAmount
+      : 0n,
     executionValue,
-    expectedAmountOut,
+    expectedAmountOut: destinationAmount,
+    inputAmount,
     routerCalldata: transactionRequest.data as Hex,
   };
 };
@@ -1110,7 +1173,8 @@ export const getMarkeeClaimExecutionQuote = async (
       amount: transferAmount,
       chainId,
       community,
-      destinationRecipient: recipient,
+      destinationReceiver: receiver,
+      fallbackRecipient: recipient,
     });
 
     return {
@@ -1141,7 +1205,7 @@ export const getMarkeeClaimExecutionQuote = async (
           {
             expectedAmountOut: lifiQuote.expectedAmountOut,
             executionValue: lifiQuote.executionValue,
-            inputAmount: transferAmount,
+            inputAmount: lifiQuote.inputAmount,
             routerCalldata: lifiQuote.routerCalldata,
           },
         ],
@@ -1254,6 +1318,10 @@ const estimateKeeperNetworkFee = async (
       getAddress(estimationAddressValue)
     : account;
   const client = getEnvPublicClient(quote.markeeChainId);
+  const bridgeExecutionFee =
+    quote.bridged && quote.executionValue > quote.transferAmount ?
+      quote.executionValue - quote.transferAmount
+    : 0n;
   const simulation = await client.simulateContract({
     abi: gardensMarkeeRouterABI,
     account: estimationAccount,
@@ -1265,8 +1333,7 @@ const estimateKeeperNetworkFee = async (
       quote.gasCost,
     ],
     functionName: "sweep",
-    value:
-      quote.bridged ? quote.executionValue - quote.transferAmount : undefined,
+    value: quote.bridged ? bridgeExecutionFee : undefined,
   });
   const [estimatedGas, gasPrice] = await Promise.all([
     client.estimateContractGas(simulation.request),
@@ -1343,6 +1410,10 @@ export const executeMarkeeClaim = async ({
     );
   }
 
+  const bridgeExecutionFee =
+    quote.bridged && quote.executionValue > quote.transferAmount ?
+      quote.executionValue - quote.transferAmount
+    : 0n;
   const simulation = await client.simulateContract({
     abi: gardensMarkeeRouterABI,
     account,
@@ -1354,14 +1425,11 @@ export const executeMarkeeClaim = async ({
       quote.gasCost,
     ],
     functionName: "sweep",
-    value:
-      quote.bridged ? quote.executionValue - quote.transferAmount : undefined,
+    value: quote.bridged ? bridgeExecutionFee : undefined,
   });
   const estimatedGas = await client.estimateContractGas(simulation.request);
   const gas = (estimatedGas * 125n + 99n) / 100n;
   const gasPrice = await client.getGasPrice();
-  const bridgeExecutionFee =
-    quote.bridged ? quote.executionValue - quote.transferAmount : 0n;
   const requiredKeeperBalance =
     bridgeExecutionFee + (gas * gasPrice * 125n + 99n) / 100n;
   const keeperBalance = await client.getBalance({ address: account.address });

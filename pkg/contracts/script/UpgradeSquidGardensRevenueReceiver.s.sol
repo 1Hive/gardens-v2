@@ -6,8 +6,8 @@ import "forge-std/console2.sol";
 
 import {SquidGardensRevenueReceiver} from "../src/MarkeeRevenue/SquidGardensRevenueReceiver.sol";
 
-/// @notice Deploys the current implementation and upgrades an existing UUPS
-/// Squid destination receiver. The broadcaster must be its effective owner.
+/// @notice Upgrades a shared Gardens revenue receiver to accept token payouts
+/// from destination-call bridges such as LI.FI Composer.
 contract UpgradeSquidGardensRevenueReceiver is Script {
     function run() external {
         address receiverProxy = vm.envAddress("GARDENS_SQUID_REVENUE_RECEIVER");
@@ -18,7 +18,7 @@ contract UpgradeSquidGardensRevenueReceiver is Script {
         SquidGardensRevenueReceiver(payable(receiverProxy)).upgradeTo(receiverImplementation);
         vm.stopBroadcast();
 
-        console2.log("SquidGardensRevenueReceiver proxy", receiverProxy);
-        console2.log("SquidGardensRevenueReceiver implementation", receiverImplementation);
+        console2.log("Gardens revenue receiver proxy", receiverProxy);
+        console2.log("Gardens revenue receiver implementation", receiverImplementation);
     }
 }

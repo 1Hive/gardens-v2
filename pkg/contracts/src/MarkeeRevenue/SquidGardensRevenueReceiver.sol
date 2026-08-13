@@ -22,8 +22,9 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
     mapping(bytes32 payoutId => bool processed) public processedPayoutIds;
     mapping(bytes32 payoutId => FailedPayout) public failedPayouts;
     mapping(bytes32 payoutId => FailedTokenPayout) public failedTokenPayouts;
+    uint256 public tokenRevenueNonce;
 
-    uint256[46] private __gap;
+    uint256[45] private __gap;
 
     modifier onlySquidMulticall() {
         if (msg.sender != squidMulticall) revert NotSquidMulticall();
@@ -48,6 +49,47 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
         address safe = IRegistryCommunitySafe(registryCommunity).councilSafe();
         bool delivered = safe != address(0) && _tryTokenTransfer(token, safe, amount);
 
+        if (delivered) {
+            emit TokenRevenueReceived(payoutId, communityKey, safe, token, amount);
+        } else {
+            failedTokenPayouts[payoutId] = FailedTokenPayout({
+                communityKey: communityKey,
+                registryCommunity: registryCommunity,
+                token: token,
+                amount: amount,
+                resolved: false
+            });
+            emit TokenPayoutEscrowed(payoutId, communityKey, token, amount);
+        }
+    }
+
+    /// @notice Receives a token payout from a router such as LI.FI Composer.
+    /// The caller supplies and approves its own tokens, so this permissionless
+    /// entry point cannot move funds already held by the receiver.
+    function receiveTokenRevenue(bytes32 communityKey, address registryCommunity, address token, uint256 amount)
+        external
+        nonReentrant
+    {
+        if (registryCommunity == address(0) || token == address(0)) revert ZeroAddress();
+        if (amount == 0) revert ZeroValue();
+
+        bytes32 payoutId = keccak256(
+            abi.encode(
+                block.chainid,
+                address(this),
+                tokenRevenueNonce++,
+                msg.sender,
+                communityKey,
+                registryCommunity,
+                token,
+                amount
+            )
+        );
+        processedPayoutIds[payoutId] = true;
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+
+        address safe = IRegistryCommunitySafe(registryCommunity).councilSafe();
+        bool delivered = safe != address(0) && _tryTokenTransfer(token, safe, amount);
         if (delivered) {
             emit TokenPayoutDelivered(payoutId, communityKey, safe, token, amount);
         } else {

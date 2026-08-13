@@ -108,6 +108,33 @@ contract SquidGardensRevenueReceiverTest is Test {
         assertEq(token.balanceOf(address(receiver)), 0);
     }
 
+    function test_receiveTokenRevenue_deliversCallerApprovedTokenToLatestSafe() public {
+        address safe = address(0x5AFE);
+        MockRegistryCommunity community = new MockRegistryCommunity(safe);
+        address lifiExecutor = address(0x11F1);
+        token.mint(lifiExecutor, 1 ether);
+
+        vm.startPrank(lifiExecutor);
+        token.approve(address(receiver), 1 ether);
+        receiver.receiveTokenRevenue(keccak256("community"), address(community), address(token), 1 ether);
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(safe), 1 ether);
+        assertEq(token.balanceOf(address(receiver)), 0);
+        assertEq(receiver.tokenRevenueNonce(), 1);
+    }
+
+    function test_receiveTokenRevenue_cannotSpendExistingReceiverBalance() public {
+        MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
+        token.mint(address(receiver), 1 ether);
+
+        vm.expectRevert();
+        receiver.receiveTokenRevenue(keccak256("community"), address(community), address(token), 1 ether);
+
+        assertEq(token.balanceOf(address(receiver)), 1 ether);
+        assertEq(token.balanceOf(address(0x5AFE)), 0);
+    }
+
     function test_receiveSquidTokenRevenue_rejectsDuplicateNativePayoutId() public {
         MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
         bytes32 payoutId = bytes32(uint256(3));

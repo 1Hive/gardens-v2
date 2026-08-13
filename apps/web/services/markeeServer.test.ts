@@ -310,32 +310,35 @@ describe("Markee community revenue", () => {
       .mockResolvedValueOnce([0n, 0n, 0n, 1_000_000_000_000_000_000n])
       .mockResolvedValueOnce([adapter, 3])
       .mockResolvedValueOnce(receiver);
-    const fetchMock = vi.fn().mockResolvedValue({
-      json: async () => ({
-        action: {
-          fromAddress: adapter,
-          fromAmount: "1000000000000000000",
-          fromChainId: 8453,
-          toAddress: recipient,
-          toChainId: 100,
-        },
-        estimate: {
-          fromAmount: "1000000000000000000",
-          fromAmountUSD: "3000",
-          toAmount: "2970000000000000000000",
-          toAmountMin: "2940000000000000000000",
-          toAmountUSD: "2940",
-        },
-        transactionRequest: {
-          chainId: 8453,
-          data: "0x12345678",
-          from: adapter,
-          to: lifiDiamond,
-          value: "0xde0b6b3a7640000",
-        },
-      }),
-      ok: true,
-    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        json: async () => ({
+          estimate: {
+            toAmountMin: "980000000000000000",
+          },
+        }),
+        ok: true,
+      })
+      .mockResolvedValueOnce({
+        json: async () => ({
+          action: {
+            fromAddress: adapter,
+            fromAmount: "990000000000000000",
+            fromChainId: 8453,
+            toAddress: adapter,
+            toChainId: 100,
+          },
+          transactionRequest: {
+            chainId: 8453,
+            data: "0x12345678",
+            from: adapter,
+            to: lifiDiamond,
+            value: "0xdbd2fc137a30000",
+          },
+        }),
+        ok: true,
+      });
     vi.stubGlobal("fetch", fetchMock);
 
     const quote = await getMarkeeClaimExecutionQuote(100, community, recipient);
@@ -344,11 +347,11 @@ describe("Markee community revenue", () => {
       bridgeProtocol: "lifi",
       bridged: true,
       claimAmount: 1_000_000_000_000_000_000n,
-      destinationSymbol: "XDAI",
-      estimatedFeeAmount: 20_000_000_000_000_000n,
-      executionValue: 1_000_000_000_000_000_000n,
-      expectedAmountOut: 2_940_000_000_000_000_000_000n,
-      minAmountOut: 2_940_000_000_000_000_000_000n,
+      destinationSymbol: "WETH",
+      estimatedFeeAmount: 10_000_000_000_000_000n,
+      executionValue: 990_000_000_000_000_000n,
+      expectedAmountOut: 980_000_000_000_000_000n,
+      minAmountOut: 980_000_000_000_000_000n,
     });
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("https://li.quest/v1/quote?"),
@@ -366,9 +369,22 @@ describe("Markee community revenue", () => {
       fromChain: "8453",
       fromToken: "0x0000000000000000000000000000000000000000",
       integrator: "gardens",
-      toAddress: recipient,
+      toAddress: receiver,
       toChain: "100",
-      toToken: "0x0000000000000000000000000000000000000000",
+      toToken: "0x6a023ccd1ff6f2045c3309768ead9e68f978f6e1",
+    });
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      "https://li.quest/v1/quote/contractCalls",
+    );
+    const contractCallRequest = JSON.parse(
+      fetchMock.mock.calls[1][1].body as string,
+    );
+    expect(contractCallRequest.contractCalls[0]).toMatchObject({
+      fromAmount: "980000000000000000",
+      fromTokenAddress: "0x6a023ccd1ff6f2045c3309768ead9e68f978f6e1",
+      toApprovalAddress: receiver,
+      toContractAddress: receiver,
+      toFallbackAddress: recipient,
     });
   });
 
