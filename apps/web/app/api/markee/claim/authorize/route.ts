@@ -42,6 +42,7 @@ const claimAuthorizationTypes = {
     { name: "recipient", type: "address" },
     { name: "markeeChainId", type: "uint256" },
     { name: "claimAmount", type: "uint256" },
+    { name: "gasCost", type: "uint256" },
     { name: "maxFeeAmount", type: "uint256" },
     { name: "nonce", type: "uint256" },
     { name: "deadline", type: "uint256" },
@@ -57,6 +58,7 @@ type ClaimAuthorizationMessage = {
   recipient: Address;
   markeeChainId: bigint;
   claimAmount: bigint;
+  gasCost: bigint;
   maxFeeAmount: bigint;
   nonce: bigint;
   deadline: bigint;
@@ -225,6 +227,7 @@ const createClaimMessage = async ({
 
   return {
     claimAmount: quote.claimAmount,
+    gasCost: quote.estimatedNetworkFeeAmount,
     claimant,
     communityChainId: BigInt(chainId),
     communityKey: keccak256(
@@ -379,6 +382,7 @@ const verifyChallenge = async (body: VerifyRequest) => {
       chainId: challenge.chainId,
       community: challenge.community,
       expectedClaimAmount: challenge.message.claimAmount,
+      gasCost: challenge.message.gasCost,
       maxFeeAmount: challenge.message.maxFeeAmount,
       recipient: currentCouncilSafe,
     });
@@ -393,6 +397,7 @@ const verifyChallenge = async (body: VerifyRequest) => {
       community: challenge.community,
       councilSafe: currentCouncilSafe,
       estimatedFeeAmount: execution.estimatedFeeAmount.toString(),
+      estimatedNetworkFeeAmount: execution.estimatedNetworkFeeAmount.toString(),
       estimatedRouteDurationSeconds: execution.estimatedRouteDurationSeconds,
       expectedAmountOut: execution.expectedAmountOut.toString(),
       markeeChainId: execution.markeeChainId,

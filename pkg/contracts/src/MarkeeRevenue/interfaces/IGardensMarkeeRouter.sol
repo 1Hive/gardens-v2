@@ -32,6 +32,7 @@ interface IGardensMarkeeRouter {
     );
 
     event StreamingLeaderboardFactoryChanged(address indexed oldFactory, address indexed newFactory);
+    event KeeperGasReimbursed(bytes32 indexed communityKey, address indexed keeper, uint256 gasCost);
 
     /// @notice Deploys the deterministic vault for `(communityChainId, registryCommunity)`
     /// if it does not already exist, and returns it either way. Idempotent.
@@ -60,4 +61,11 @@ interface IGardensMarkeeRouter {
     function setBridgeConfiguration(uint256 destinationChainId, address adapter, BridgeProtocol protocol) external;
 
     function clearBridgeConfiguration(uint256 destinationChainId) external;
+
+    /// @notice Releases community revenue, reimburses the authorized keeper's
+    /// Base transaction gas, and sends the remaining revenue locally or via
+    /// the destination's configured bridge.
+    function sweep(bytes32 communityKey, bytes calldata quoteData, uint256 minAmountOut, uint256 gasCost)
+        external
+        payable;
 }

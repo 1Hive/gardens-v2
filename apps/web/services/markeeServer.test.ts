@@ -165,6 +165,10 @@ describe("Markee community revenue", () => {
   it("uses the same live revenue amount in claim quotes", async () => {
     mocks.readContract
       .mockResolvedValueOnce(vault)
+      .mockResolvedValueOnce([0n, 0n, 0n, 5_000_000_000_000_000n])
+      .mockResolvedValueOnce(vault)
+      .mockResolvedValueOnce([0n, 0n, 0n, 5_000_000_000_000_000n])
+      .mockResolvedValueOnce(vault)
       .mockResolvedValueOnce([0n, 0n, 0n, 5_000_000_000_000_000n]);
     mocks.simulateContract.mockResolvedValue({ request: { test: true } });
     mocks.estimateContractGas.mockResolvedValue(100_000n);
@@ -180,6 +184,7 @@ describe("Markee community revenue", () => {
     expect(quote.claimAmount).toBe(5_000_000_000_000_000n);
     expect(quote.estimatedFeeAmount).toBe(0n);
     expect(quote.estimatedNetworkFeeAmount).toBe(1_250_000_000_000_000n);
+    expect(quote.expectedAmountOut).toBe(3_750_000_000_000_000n);
     expect(quote.recipient).toBe(recipient);
   });
 
@@ -700,6 +705,7 @@ describe("Markee community revenue", () => {
         chainId: 11155111,
         community,
         expectedClaimAmount: 5_000_000_000_000_000n,
+        gasCost: 0n,
         maxFeeAmount: 0n,
         recipient,
       }),
@@ -721,6 +727,7 @@ describe("Markee community revenue", () => {
         chainId: 11155111,
         community,
         expectedClaimAmount: 4_000_000_000_000_000n,
+        gasCost: 0n,
         maxFeeAmount: 0n,
         recipient,
       }),
@@ -740,6 +747,7 @@ describe("Markee community revenue", () => {
         chainId: 11155111,
         community,
         expectedClaimAmount: 5_000_000_000_000_000n,
+        gasCost: 0n,
         maxFeeAmount: 0n,
         recipient,
       }),
@@ -765,6 +773,7 @@ describe("Markee community revenue", () => {
         chainId: 11155111,
         community,
         expectedClaimAmount: 5_000_000_000_000_000n,
+        gasCost: 0n,
         maxFeeAmount: 0n,
         recipient,
       }),

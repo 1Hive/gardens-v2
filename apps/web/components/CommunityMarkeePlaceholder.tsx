@@ -2131,6 +2131,8 @@ function CommunityRevenueClaimModal({
       BigInt(availableRevenueWei)
     : null;
   const bridgeFeeAmountWei = quote ? BigInt(quote.estimatedFeeAmount) : 0n;
+  const networkFeeAmountWei =
+    quote ? BigInt(quote.estimatedNetworkFeeAmount) : 0n;
   const effectiveMarkeeChainId =
     claimSourceChainId ?? quote?.markeeChainId ?? markeeChainId;
   const isBridgedClaim =
@@ -2149,6 +2151,7 @@ function CommunityRevenueClaimModal({
       chainConfigMap[chainId]?.name ?? `chain ${chainId}`
     : "the community chain";
   const estimatedFeeAmountWei = isBridgedClaim ? bridgeFeeAmountWei : 0n;
+  const totalFeeAmountWei = estimatedFeeAmountWei + networkFeeAmountWei;
   const amountReceivedWei =
     quote != null ? BigInt(quote.expectedAmountOut) : 0n;
   const availableRevenue = quote ? Number(formatEther(claimAmountWei)) : 0;
@@ -2161,15 +2164,24 @@ function CommunityRevenueClaimModal({
     feePercentage > 100 ? ">100%"
     : Number.isFinite(feePercentage) ? `${feePercentage.toFixed(2)}%`
     : ">100%";
+  const networkFeePercentage =
+    claimAmountWei > 0n ?
+      (Number(networkFeeAmountWei) / Number(claimAmountWei)) * 100
+    : 0;
+  const networkFeePercentageLabel =
+    networkFeePercentage > 100 ? ">100%"
+    : Number.isFinite(networkFeePercentage) ?
+      `${networkFeePercentage.toFixed(2)}%`
+    : ">100%";
   const hasClaimableRevenue = claimAmountWei > 0n;
   const areClaimFeesAboveRevenue =
-    quote != null && estimatedFeeAmountWei > claimAmountWei;
+    quote != null && totalFeeAmountWei >= claimAmountWei;
   const isFeeAboveTenPercent =
     claimAmountWei > 0n ?
-      estimatedFeeAmountWei * 10n > claimAmountWei
-    : estimatedFeeAmountWei > 0n;
+      totalFeeAmountWei * 10n > claimAmountWei
+    : totalFeeAmountWei > 0n;
   const isFeeAtLeastFivePercent =
-    claimAmountWei > 0n && estimatedFeeAmountWei * 20n >= claimAmountWei;
+    claimAmountWei > 0n && totalFeeAmountWei * 20n >= claimAmountWei;
   const feeTextClass =
     isFeeAboveTenPercent ? "text-danger-content"
     : isFeeAtLeastFivePercent ? "text-warning-content"
@@ -2424,9 +2436,11 @@ function CommunityRevenueClaimModal({
         );
       }
       const challengeClaimAmountValue = challenge.typedData.message.claimAmount;
+      const challengeGasCost = challenge.typedData.message.gasCost;
       const challengeRecipient = challenge.typedData.message.recipient;
       if (
         typeof challengeClaimAmountValue !== "string" ||
+        typeof challengeGasCost !== "string" ||
         typeof challengeRecipient !== "string"
       ) {
         throw new Error(
@@ -2442,6 +2456,7 @@ function CommunityRevenueClaimModal({
         : challengeClaimAmount !== quotedClaimAmount;
       if (
         claimAmountIsInvalid ||
+        challengeGasCost !== quote.estimatedNetworkFeeAmount ||
         challenge.typedData.message.maxFeeAmount !== quote.estimatedFeeAmount ||
         challenge.typedData.message.markeeChainId !==
           quote.markeeChainId.toString() ||
@@ -2455,6 +2470,9 @@ function CommunityRevenueClaimModal({
             {
               ...currentQuote,
               claimAmount: challengeClaimAmount.toString(),
+              expectedAmountOut: (
+                challengeClaimAmount - BigInt(challengeGasCost)
+              ).toString(),
             }
           ),
         );
@@ -2798,6 +2816,18 @@ function CommunityRevenueClaimModal({
               className="flex flex-col gap-3 rounded-xl border border-neutral-content/15 bg-neutral/30 p-4 font-mono text-xs"
               aria-busy={isQuoteLoading}
             >
+              {quote != null && (
+                <>
+                  <div className="flex items-center justify-between gap-4 text-neutral-soft-content">
+                    <span>Estimated network fee</span>
+                    <span className={feeTextClass}>
+                      {formatEthAmount(networkFeeAmountWei)} {quote.symbol} (
+                      {networkFeePercentageLabel})
+                    </span>
+                  </div>
+                  <div className="border-t border-neutral-content/15" />
+                </>
+              )}
               {isBridgedClaim && quote != null && (
                 <>
                   <div className="flex items-center justify-between gap-4 text-neutral-soft-content">

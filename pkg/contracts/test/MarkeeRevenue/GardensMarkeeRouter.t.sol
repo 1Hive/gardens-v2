@@ -191,7 +191,7 @@ contract GardensMarkeeRouterTest is Test {
     function test_sweep_revertsForUnknownCommunity() public {
         vm.prank(keeper);
         vm.expectRevert(GardensMarkeeRouter.VaultNotFound.selector);
-        router.sweep(bytes32(uint256(1)), "", 0);
+        router.sweep(bytes32(uint256(1)), "", 0, 0);
     }
 
     function test_sweep_localPaysCouncilSafeDirectly() public {
@@ -203,7 +203,7 @@ contract GardensMarkeeRouterTest is Test {
         vm.deal(vault, 1 ether);
 
         vm.prank(keeper);
-        router.sweep(key, "", 0);
+        router.sweep(key, "", 0, 0);
 
         assertEq(registryCommunity.councilSafe().balance, 1 ether);
         assertEq(vault.balance, 0);
@@ -221,9 +221,41 @@ contract GardensMarkeeRouterTest is Test {
         registryCommunity.setCouncilSafe(newSafe);
 
         vm.prank(keeper);
-        router.sweep(key, "", 0);
+        router.sweep(key, "", 0, 0);
 
         assertEq(newSafe.balance, 1 ether);
+    }
+
+    function test_sweep_localReimbursesKeeperGasFromRevenue() public {
+        MockRegistryCommunity registryCommunity = new MockRegistryCommunity(address(0xC0117));
+        bytes32 key = CommunityKeyLib.communityKey(BASE_CHAIN_ID, address(registryCommunity));
+
+        vm.prank(keeper);
+        address vault = router.ensureCommunityVault(BASE_CHAIN_ID, address(registryCommunity));
+        vm.deal(vault, 1 ether);
+
+        vm.prank(keeper);
+        router.sweep(key, "", 0, 0.1 ether);
+
+        assertEq(keeper.balance, 0.1 ether);
+        assertEq(registryCommunity.councilSafe().balance, 0.9 ether);
+        assertEq(vault.balance, 0);
+    }
+
+    function test_sweep_revertsWhenGasCostConsumesRevenue() public {
+        MockRegistryCommunity registryCommunity = new MockRegistryCommunity(address(0xC0117));
+        bytes32 key = CommunityKeyLib.communityKey(BASE_CHAIN_ID, address(registryCommunity));
+
+        vm.prank(keeper);
+        address vault = router.ensureCommunityVault(BASE_CHAIN_ID, address(registryCommunity));
+        vm.deal(vault, 1 ether);
+
+        vm.prank(keeper);
+        vm.expectRevert(abi.encodeWithSelector(GardensMarkeeRouter.GasCostExceedsRevenue.selector, 1 ether, 1 ether));
+        router.sweep(key, "", 0, 1 ether);
+
+        assertEq(vault.balance, 1 ether);
+        assertEq(keeper.balance, 0);
     }
 
     function test_sweep_remoteRevertsWithoutReceiver() public {
@@ -237,7 +269,7 @@ contract GardensMarkeeRouterTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(GardensMarkeeRouter.RemoteReceiverNotConfigured.selector, REMOTE_CHAIN_ID)
         );
-        router.sweep(key, "", 0);
+        router.sweep(key, "", 0, 0);
     }
 
     function test_sweep_remoteRevertsWithoutChainBridgeConfiguration() public {
@@ -252,7 +284,7 @@ contract GardensMarkeeRouterTest is Test {
 
         vm.prank(keeper);
         vm.expectRevert(GardensMarkeeRouter.BridgeAdapterNotConfigured.selector);
-        router.sweep(key, "", 0);
+        router.sweep(key, "", 0, 0);
     }
 
     function test_bridgeConfiguration_isIndependentPerDestinationChain() public {
@@ -307,7 +339,7 @@ contract GardensMarkeeRouterTest is Test {
         vm.stopPrank();
 
         vm.prank(keeper);
-        router.sweep(key, "", 1 ether);
+        router.sweep(key, "", 1 ether, 0);
 
         assertEq(address(mockAdapter).balance, 1 ether);
         assertEq(vault.balance, 0);
@@ -332,9 +364,33 @@ contract GardensMarkeeRouterTest is Test {
 
         vm.deal(keeper, 0.01 ether);
         vm.prank(keeper);
-        router.sweep{value: 0.01 ether}(key, "", 1 ether);
+        router.sweep{value: 0.01 ether}(key, "", 1 ether, 0);
 
         assertEq(address(mockAdapter).balance, 1.01 ether);
+        assertEq(vault.balance, 0);
+    }
+
+    function test_sweep_remoteReimbursesKeeperBeforeBridgingNetRevenue() public {
+        MockRegistryCommunity registryCommunity = new MockRegistryCommunity(address(0xC0117));
+        bytes32 key = CommunityKeyLib.communityKey(REMOTE_CHAIN_ID, address(registryCommunity));
+
+        vm.prank(keeper);
+        address vault = router.ensureCommunityVault(REMOTE_CHAIN_ID, address(registryCommunity));
+        vm.deal(vault, 1 ether);
+
+        MockBridgeAdapter mockAdapter = new MockBridgeAdapter(address(router));
+        mockAdapter.setReportedAmountOut(0.9 ether);
+
+        vm.startPrank(proxyOwner);
+        router.setBridgeConfiguration(REMOTE_CHAIN_ID, address(mockAdapter), IGardensMarkeeRouter.BridgeProtocol.Squid);
+        router.setRemoteReceiver(REMOTE_CHAIN_ID, address(0x2EC317E7));
+        vm.stopPrank();
+
+        vm.prank(keeper);
+        router.sweep(key, "", 0.9 ether, 0.1 ether);
+
+        assertEq(keeper.balance, 0.1 ether);
+        assertEq(address(mockAdapter).balance, 0.9 ether);
         assertEq(vault.balance, 0);
     }
 
@@ -349,7 +405,7 @@ contract GardensMarkeeRouterTest is Test {
 
         vm.prank(keeper);
         vm.expectRevert(GardensMarkeeRouter.UnexpectedValue.selector);
-        router.sweep{value: 0.01 ether}(key, "", 0);
+        router.sweep{value: 0.01 ether}(key, "", 0, 0);
     }
 
     function test_sweep_remoteRevertsBelowMinAmountOut() public {
@@ -371,7 +427,7 @@ contract GardensMarkeeRouterTest is Test {
 
         vm.prank(keeper);
         vm.expectRevert(abi.encodeWithSelector(GardensMarkeeRouter.InsufficientOutput.selector, 0.9 ether, 1 ether));
-        router.sweep(key, "", 1 ether);
+        router.sweep(key, "", 1 ether, 0);
     }
 
     function test_sweep_remoteRejectsEmptySquidQuote() public {
@@ -387,7 +443,7 @@ contract GardensMarkeeRouterTest is Test {
 
         vm.prank(keeper);
         vm.expectRevert();
-        router.sweep(key, "", 0);
+        router.sweep(key, "", 0, 0);
     }
 
     function test_adminSetters_revertForNonOwner() public {

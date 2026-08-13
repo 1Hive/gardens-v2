@@ -87,6 +87,7 @@ describe("Markee manual claim authorization", () => {
       bridged: true,
       claimAmount: BigInt("420000000000000000"),
       estimatedFeeAmount: BigInt("2000000000000000"),
+      estimatedNetworkFeeAmount: BigInt("1000000000000000"),
       markeeChainId: 11155111,
       recipient: councilSafe,
     });
@@ -95,6 +96,7 @@ describe("Markee manual claim authorization", () => {
       bridged: true,
       claimAmount: BigInt("420000000000000000"),
       estimatedFeeAmount: BigInt("2000000000000000"),
+      estimatedNetworkFeeAmount: BigInt("1000000000000000"),
       expectedAmountOut: BigInt("418000000000000000"),
       markeeChainId: 11155111,
       transactionHash: `0x${"22".repeat(32)}`,
@@ -191,6 +193,7 @@ describe("Markee manual claim authorization", () => {
       community,
       councilSafe,
       estimatedFeeAmount: "2000000000000000",
+      estimatedNetworkFeeAmount: "1000000000000000",
       expectedAmountOut: "418000000000000000",
       markeeChainId: 11155111,
       recipient: councilSafe,
@@ -203,6 +206,7 @@ describe("Markee manual claim authorization", () => {
         message: expect.objectContaining({
           claimAmount: BigInt("420000000000000000"),
           claimant: councilOwner,
+          gasCost: BigInt("1000000000000000"),
           maxFeeAmount: BigInt("2000000000000000"),
           recipient: councilSafe,
         }),
@@ -214,6 +218,7 @@ describe("Markee manual claim authorization", () => {
       chainId: 100,
       community,
       expectedClaimAmount: BigInt("420000000000000000"),
+      gasCost: BigInt("1000000000000000"),
       maxFeeAmount: BigInt("2000000000000000"),
       recipient: councilSafe,
     });

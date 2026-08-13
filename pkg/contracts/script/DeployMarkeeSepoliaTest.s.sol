@@ -108,6 +108,6 @@ contract DeployMarkeeSepoliaTest is Script {
         console2.log("Seed Markee", seedMarkee);
         console2.logBytes32(communityKey);
         console2.log("NEXT: stream ETHx to the leaderboard, then call");
-        console2.log('      router.sweep(communityKey, "", 0) to pay out to councilSafe');
+        console2.log('      router.sweep(communityKey, "", 0, gasCost) to reimburse keeper gas and pay councilSafe');
     }
 }

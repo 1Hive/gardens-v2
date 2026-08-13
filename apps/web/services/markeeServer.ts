@@ -61,7 +61,7 @@ const gardensMarkeeRouterABI = parseAbi([
   "function bridgeConfiguration(uint256 destinationChainId) view returns (address adapter, uint8 protocol)",
   "function keepers(address keeper) view returns (bool)",
   "function remoteReceivers(uint256 chainId) view returns (address)",
-  "function sweep(bytes32 communityKey, bytes quoteData, uint256 minAmountOut) payable",
+  "function sweep(bytes32 communityKey, bytes quoteData, uint256 minAmountOut, uint256 gasCost) payable",
 ]);
 
 const acrossBridgeAdapterABI = parseAbi([
@@ -236,6 +236,7 @@ export type MarkeeClaimExecutionQuote = {
   estimatedFeeAmount: bigint;
   estimatedRouteDurationSeconds?: number;
   executionValue: bigint;
+  gasCost: bigint;
   expectedAmountOut: bigint;
   expiresAt: number;
   markeeChainId: number;
@@ -244,6 +245,7 @@ export type MarkeeClaimExecutionQuote = {
   recipient: Address;
   router: Address;
   symbol: "ETH";
+  transferAmount: bigint;
 };
 
 export type MarkeeClaimBridgeStatus = {
@@ -943,6 +945,7 @@ export const getMarkeeClaimExecutionQuote = async (
   community: Address,
   recipient: Address,
   requestedClaimAmount?: bigint,
+  gasCost = 0n,
 ): Promise<MarkeeClaimExecutionQuote> => {
   const revenue = await getCommunityRevenue(chainId, community);
   if (
@@ -956,6 +959,13 @@ export const getMarkeeClaimExecutionQuote = async (
     );
   }
   const claimAmount = requestedClaimAmount ?? revenue.claimableAmount;
+  if (claimAmount > 0n && gasCost >= claimAmount) {
+    throw new MarkeeClaimExecutionError(
+      "The estimated network fee is greater than the available community revenue.",
+      409,
+    );
+  }
+  const transferAmount = claimAmount - gasCost;
   const markeeChainId = getMarkeeChainId(chainId);
   const router = getMarkeeRouterAddress(chainId);
   if (router == null) {
@@ -977,6 +987,7 @@ export const getMarkeeClaimExecutionQuote = async (
         ),
       estimatedFeeAmount: 0n,
       executionValue: 0n,
+      gasCost: 0n,
       expectedAmountOut: 0n,
       expiresAt: now + 5 * 60,
       markeeChainId,
@@ -985,6 +996,7 @@ export const getMarkeeClaimExecutionQuote = async (
       recipient,
       router,
       symbol: "ETH",
+      transferAmount: 0n,
     };
   }
 
@@ -996,7 +1008,8 @@ export const getMarkeeClaimExecutionQuote = async (
       destinationSymbol: "ETH",
       estimatedFeeAmount: 0n,
       executionValue: 0n,
-      expectedAmountOut: claimAmount,
+      gasCost,
+      expectedAmountOut: transferAmount,
       expiresAt: now + 5 * 60,
       markeeChainId,
       minAmountOut: 0n,
@@ -1004,6 +1017,7 @@ export const getMarkeeClaimExecutionQuote = async (
       recipient,
       router,
       symbol: "ETH",
+      transferAmount,
     };
   }
   const client = getEnvPublicClient(markeeChainId);
@@ -1039,7 +1053,7 @@ export const getMarkeeClaimExecutionQuote = async (
       "The Squid router is not configured.",
     );
     const squidQuote = await getSquidRoute({
-      amount: claimAmount,
+      amount: transferAmount,
       chainId,
       community,
       communityKey,
@@ -1057,6 +1071,7 @@ export const getMarkeeClaimExecutionQuote = async (
       estimatedFeeAmount: squidQuote.estimatedFeeAmount,
       estimatedRouteDurationSeconds: squidQuote.estimatedRouteDurationSeconds,
       executionValue: squidQuote.executionValue,
+      gasCost,
       expectedAmountOut: squidQuote.expectedAmountOut,
       expiresAt: now + 3 * 60,
       markeeChainId,
@@ -1077,7 +1092,7 @@ export const getMarkeeClaimExecutionQuote = async (
           {
             expectedAmountOut: squidQuote.expectedAmountOut,
             executionValue: squidQuote.executionValue,
-            inputAmount: claimAmount,
+            inputAmount: transferAmount,
             routerCalldata: squidQuote.routerCalldata,
           },
         ],
@@ -1085,13 +1100,14 @@ export const getMarkeeClaimExecutionQuote = async (
       recipient,
       router,
       symbol: "ETH",
+      transferAmount,
     };
   }
 
   if (protocol === BRIDGE_PROTOCOL.LIFI) {
     const lifiQuote = await getLifiRoute({
       adapter,
-      amount: claimAmount,
+      amount: transferAmount,
       chainId,
       community,
       destinationRecipient: recipient,
@@ -1104,6 +1120,7 @@ export const getMarkeeClaimExecutionQuote = async (
       destinationSymbol: lifiQuote.destinationSymbol,
       estimatedFeeAmount: lifiQuote.estimatedFeeAmount,
       executionValue: lifiQuote.executionValue,
+      gasCost,
       expectedAmountOut: lifiQuote.expectedAmountOut,
       expiresAt: now + 60,
       markeeChainId,
@@ -1124,7 +1141,7 @@ export const getMarkeeClaimExecutionQuote = async (
           {
             expectedAmountOut: lifiQuote.expectedAmountOut,
             executionValue: lifiQuote.executionValue,
-            inputAmount: claimAmount,
+            inputAmount: transferAmount,
             routerCalldata: lifiQuote.routerCalldata,
           },
         ],
@@ -1132,6 +1149,7 @@ export const getMarkeeClaimExecutionQuote = async (
       recipient,
       router,
       symbol: "ETH",
+      transferAmount,
     };
   }
 
@@ -1165,7 +1183,7 @@ export const getMarkeeClaimExecutionQuote = async (
   );
   const acrossQuote = await getAcrossSuggestedFees({
     adapter,
-    amount: claimAmount,
+    amount: transferAmount,
     chainId,
     community,
     communityKey,
@@ -1180,8 +1198,9 @@ export const getMarkeeClaimExecutionQuote = async (
     bridged: true,
     claimAmount,
     destinationSymbol: getDestinationNativeSymbol(chainId),
-    estimatedFeeAmount: claimAmount - acrossQuote.outputAmount,
-    executionValue: claimAmount,
+    estimatedFeeAmount: transferAmount - acrossQuote.outputAmount,
+    executionValue: transferAmount,
+    gasCost,
     expectedAmountOut: acrossQuote.outputAmount,
     expiresAt: acrossQuote.fillDeadline,
     markeeChainId,
@@ -1206,6 +1225,7 @@ export const getMarkeeClaimExecutionQuote = async (
     recipient,
     router,
     symbol: "ETH",
+    transferAmount,
   };
 };
 
@@ -1242,9 +1262,11 @@ const estimateKeeperNetworkFee = async (
       getCommunityKey(chainId, community),
       quote.quoteData,
       quote.minAmountOut,
+      quote.gasCost,
     ],
     functionName: "sweep",
-    value: quote.bridged ? quote.executionValue - quote.claimAmount : undefined,
+    value:
+      quote.bridged ? quote.executionValue - quote.transferAmount : undefined,
   });
   const [estimatedGas, gasPrice] = await Promise.all([
     client.estimateContractGas(simulation.request),
@@ -1258,12 +1280,14 @@ export const executeMarkeeClaim = async ({
   chainId,
   community,
   expectedClaimAmount,
+  gasCost,
   maxFeeAmount,
   recipient,
 }: {
   chainId: number;
   community: Address;
   expectedClaimAmount: bigint;
+  gasCost: bigint;
   maxFeeAmount: bigint;
   recipient: Address;
 }) => {
@@ -1272,6 +1296,7 @@ export const executeMarkeeClaim = async ({
     community,
     recipient,
     chainId === getMarkeeChainId(chainId) ? undefined : expectedClaimAmount,
+    gasCost,
   );
   const claimAmountIsInvalid =
     quote.bridged ?
@@ -1326,15 +1351,17 @@ export const executeMarkeeClaim = async ({
       getCommunityKey(chainId, community),
       quote.quoteData,
       quote.minAmountOut,
+      quote.gasCost,
     ],
     functionName: "sweep",
-    value: quote.bridged ? quote.executionValue - quote.claimAmount : undefined,
+    value:
+      quote.bridged ? quote.executionValue - quote.transferAmount : undefined,
   });
   const estimatedGas = await client.estimateContractGas(simulation.request);
   const gas = (estimatedGas * 125n + 99n) / 100n;
   const gasPrice = await client.getGasPrice();
   const bridgeExecutionFee =
-    quote.bridged ? quote.executionValue - quote.claimAmount : 0n;
+    quote.bridged ? quote.executionValue - quote.transferAmount : 0n;
   const requiredKeeperBalance =
     bridgeExecutionFee + (gas * gasPrice * 125n + 99n) / 100n;
   const keeperBalance = await client.getBalance({ address: account.address });
@@ -1376,6 +1403,7 @@ export const executeMarkeeClaim = async ({
     bridged: quote.bridged,
     claimAmount: quote.claimAmount,
     estimatedFeeAmount: quote.estimatedFeeAmount,
+    estimatedNetworkFeeAmount: quote.gasCost,
     estimatedRouteDurationSeconds: quote.estimatedRouteDurationSeconds,
     expectedAmountOut: quote.expectedAmountOut,
     markeeChainId: quote.markeeChainId,
@@ -1537,16 +1565,50 @@ export const markeeAdapter = {
   },
 
   async getClaimQuote(chainId: number, community: Address, recipient: Address) {
-    const quote = await getMarkeeClaimExecutionQuote(
+    const preliminaryQuote = await getMarkeeClaimExecutionQuote(
       chainId,
       community,
       recipient,
     );
-    const estimatedNetworkFeeAmount = await estimateKeeperNetworkFee(
+    let estimatedNetworkFeeAmount = await estimateKeeperNetworkFee(
       chainId,
       community,
-      quote,
+      preliminaryQuote,
     );
+    let quote =
+      (
+        preliminaryQuote.claimAmount > 0n &&
+        estimatedNetworkFeeAmount < preliminaryQuote.claimAmount
+      ) ?
+        await getMarkeeClaimExecutionQuote(
+          chainId,
+          community,
+          recipient,
+          preliminaryQuote.claimAmount,
+          estimatedNetworkFeeAmount,
+        )
+      : { ...preliminaryQuote, expectedAmountOut: 0n };
+
+    // The preliminary zero-cost simulation skips the router's keeper payment.
+    // Refine the estimate once with that branch active, then rebuild the route
+    // so only the source-chain gas reimbursement is removed before bridging.
+    if (quote.gasCost > 0n) {
+      estimatedNetworkFeeAmount = await estimateKeeperNetworkFee(
+        chainId,
+        community,
+        quote,
+      );
+      quote =
+        estimatedNetworkFeeAmount < preliminaryQuote.claimAmount ?
+          await getMarkeeClaimExecutionQuote(
+            chainId,
+            community,
+            recipient,
+            preliminaryQuote.claimAmount,
+            estimatedNetworkFeeAmount,
+          )
+        : { ...preliminaryQuote, expectedAmountOut: 0n };
+    }
 
     return {
       bridgeProtocol: quote.bridgeProtocol,

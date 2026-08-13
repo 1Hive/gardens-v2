@@ -77,6 +77,9 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
     error StreamingLeaderboardFactoryNotConfigured();
     error InvalidDestinationChain();
     error InvalidBridgeProtocol();
+    error GasCostExceedsRevenue(uint256 gasCost, uint256 revenue);
+    error KeeperReimbursementFailed();
+    error RevenueTransferFailed();
 
     modifier onlyKeeper() {
         if (!keepers[msg.sender]) {
@@ -195,7 +198,7 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
     /// communities are paid directly to their council Safe; remote
     /// communities are handed to that destination's bridge adapter. `quoteData` and
     /// `minAmountOut` are ignored for local payouts.
-    function sweep(bytes32 communityKey, bytes calldata quoteData, uint256 minAmountOut)
+    function sweep(bytes32 communityKey, bytes calldata quoteData, uint256 minAmountOut, uint256 gasCost)
         external
         payable
         onlyKeeper
@@ -213,7 +216,10 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
             if (safe == address(0)) {
                 revert ZeroAddress();
             }
-            uint256 localAmount = ICommunityRevenueVault(vault).releaseRevenue(payable(safe));
+            uint256 localGrossAmount = ICommunityRevenueVault(vault).releaseRevenue(payable(address(this)));
+            uint256 localAmount = _reimburseKeeper(communityKey, localGrossAmount, gasCost);
+            (bool success,) = payable(safe).call{value: localAmount}("");
+            if (!success) revert RevenueTransferFailed();
             emit RevenueSwept(communityKey, safe, localAmount, false);
             return;
         }
@@ -227,7 +233,8 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
             revert RemoteReceiverNotConfigured(info.communityChainId);
         }
 
-        uint256 amount = ICommunityRevenueVault(vault).releaseRevenue(payable(address(this)));
+        uint256 grossAmount = ICommunityRevenueVault(vault).releaseRevenue(payable(address(this)));
+        uint256 amount = _reimburseKeeper(communityKey, grossAmount, gasCost);
 
         BridgeRequest memory request = BridgeRequest({
             destinationChainId: info.communityChainId,
@@ -243,6 +250,21 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
         }
 
         emit RevenueSwept(communityKey, receiver, amount, true);
+    }
+
+    function _reimburseKeeper(bytes32 communityKey, uint256 grossAmount, uint256 gasCost)
+        internal
+        returns (uint256 netAmount)
+    {
+        if (gasCost >= grossAmount) {
+            revert GasCostExceedsRevenue(gasCost, grossAmount);
+        }
+        netAmount = grossAmount - gasCost;
+        if (gasCost == 0) return netAmount;
+
+        (bool success,) = payable(msg.sender).call{value: gasCost}("");
+        if (!success) revert KeeperReimbursementFailed();
+        emit KeeperGasReimbursed(communityKey, msg.sender, gasCost);
     }
 
     function setKeeper(address keeper, bool authorized) external onlyOwner {
