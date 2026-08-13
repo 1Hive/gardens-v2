@@ -63,11 +63,29 @@ export function RegisterMember({
     [communityAddress],
   );
 
+  // Normalize token address so both wagmi FetchTokenResult shape (address)
+  // and subgraph shape (id) work correctly.
+  const tokenAddress = useMemo(() => {
+    // token may come from the subgraph shape (has `id`) or from wagmi (has `address`).
+    return (token as any)?.address ?? (token as any)?.id;
+  }, [token]);
+
+  const normalizedToken = useMemo(() => {
+    if (!tokenAddress) return undefined;
+    return {
+      address: tokenAddress,
+      decimals: (token as any)?.decimals,
+      symbol: (token as any)?.symbol,
+    } as { address: string; decimals: number; symbol: string };
+  }, [tokenAddress, token]);
+
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
-    token: token.address as Address,
+    token: tokenAddress as Address,
     chainId: urlChainId,
     watch: true,
+    // only enabled when we have both account and token address
+    enabled: !!accountAddress && !!tokenAddress,
   });
 
   const accountHasBalance = useMemo(
@@ -142,7 +160,8 @@ export function RegisterMember({
     resetState: handleAllowanceResetState,
   } = useHandleAllowance(
     accountAddress,
-    token,
+    // pass the normalized token object so useHandleAllowance sees a valid address
+    normalizedToken,
     communityAddress as Address,
     registrationCost,
     handleRegistration,
