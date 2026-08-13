@@ -39,6 +39,24 @@ contract MockBridgeAdapter is IBridgeAdapter {
 
 contract MockSquidRouter {}
 
+contract RejectingReceiver {
+    // No receive/fallback: any plain ETH transfer to this contract reverts.
+}
+
+/// @dev A "keeper" contract that reverts on plain ETH transfers, so gas
+/// reimbursement failure can be exercised.
+contract RejectingKeeper {
+    IGardensMarkeeRouter internal router;
+
+    constructor(IGardensMarkeeRouter _router) {
+        router = _router;
+    }
+
+    function sweep(bytes32 communityKey, bytes calldata quoteData, uint256 minAmountOut, uint256 gasCost) external {
+        router.sweep(communityKey, quoteData, minAmountOut, gasCost);
+    }
+}
+
 contract MockStreamingLeaderboardFactory {
     uint256 public createCount;
     address public lastBeneficiary;
@@ -478,5 +496,125 @@ contract GardensMarkeeRouterTest is Test {
 
         assertEq(router.ethx(), newEthx);
         assertEq(router.weth(), newWeth);
+    }
+
+    function test_setTokens_revertsOnZeroAddress() public {
+        vm.startPrank(proxyOwner);
+        vm.expectRevert(GardensMarkeeRouter.ZeroAddress.selector);
+        router.setTokens(address(0), weth);
+
+        vm.expectRevert(GardensMarkeeRouter.ZeroAddress.selector);
+        router.setTokens(ethx, address(0));
+        vm.stopPrank();
+    }
+
+    function test_ensureCommunityVault_revertsOnZeroRegistryCommunity() public {
+        vm.prank(keeper);
+        vm.expectRevert(GardensMarkeeRouter.ZeroAddress.selector);
+        router.ensureCommunityVault(BASE_CHAIN_ID, address(0));
+    }
+
+    function test_createCommunityLeaderboard_revertsOnZeroRegistryCommunity() public {
+        vm.prank(keeper);
+        vm.expectRevert(GardensMarkeeRouter.ZeroAddress.selector);
+        router.createCommunityLeaderboard(BASE_CHAIN_ID, address(0), "Community", "gardens");
+    }
+
+    function test_createCommunityLeaderboard_revertsWhenFactoryNotConfigured() public {
+        address routerImplementation = address(new GardensMarkeeRouter());
+        address proxy = address(
+            new ERC1967Proxy(
+                routerImplementation,
+                abi.encodeWithSelector(
+                    GardensMarkeeRouter.initialize.selector, proxyOwner, vaultImplementation, ethx, weth
+                )
+            )
+        );
+        GardensMarkeeRouter freshRouter = GardensMarkeeRouter(payable(proxy));
+        vm.prank(proxyOwner);
+        freshRouter.setKeeper(keeper, true);
+
+        vm.prank(keeper);
+        vm.expectRevert(GardensMarkeeRouter.StreamingLeaderboardFactoryNotConfigured.selector);
+        freshRouter.createCommunityLeaderboard(BASE_CHAIN_ID, address(0xC0DE), "Community", "gardens");
+    }
+
+    function test_sweep_localRevertsOnZeroCouncilSafe() public {
+        MockRegistryCommunity registryCommunity = new MockRegistryCommunity(address(0));
+        bytes32 key = CommunityKeyLib.communityKey(BASE_CHAIN_ID, address(registryCommunity));
+
+        vm.prank(keeper);
+        address vault = router.ensureCommunityVault(BASE_CHAIN_ID, address(registryCommunity));
+        vm.deal(vault, 1 ether);
+
+        vm.prank(keeper);
+        vm.expectRevert(GardensMarkeeRouter.ZeroAddress.selector);
+        router.sweep(key, "", 0, 0);
+    }
+
+    function test_sweep_localRevertsOnRevenueTransferFailure() public {
+        RejectingReceiver badSafe = new RejectingReceiver();
+        MockRegistryCommunity registryCommunity = new MockRegistryCommunity(address(badSafe));
+        bytes32 key = CommunityKeyLib.communityKey(BASE_CHAIN_ID, address(registryCommunity));
+
+        vm.prank(keeper);
+        address vault = router.ensureCommunityVault(BASE_CHAIN_ID, address(registryCommunity));
+        vm.deal(vault, 1 ether);
+
+        vm.prank(keeper);
+        vm.expectRevert(GardensMarkeeRouter.RevenueTransferFailed.selector);
+        router.sweep(key, "", 0, 0);
+    }
+
+    function test_sweep_revertsOnKeeperReimbursementFailure() public {
+        MockRegistryCommunity registryCommunity = new MockRegistryCommunity(address(0xC0117));
+        bytes32 key = CommunityKeyLib.communityKey(BASE_CHAIN_ID, address(registryCommunity));
+
+        vm.prank(keeper);
+        address vault = router.ensureCommunityVault(BASE_CHAIN_ID, address(registryCommunity));
+        vm.deal(vault, 1 ether);
+
+        RejectingKeeper badKeeper = new RejectingKeeper(IGardensMarkeeRouter(address(router)));
+        vm.prank(proxyOwner);
+        router.setKeeper(address(badKeeper), true);
+
+        vm.expectRevert(GardensMarkeeRouter.KeeperReimbursementFailed.selector);
+        badKeeper.sweep(key, "", 0, 0.1 ether);
+    }
+
+    function test_setStreamingLeaderboardFactory_revertsOnZeroAddress() public {
+        vm.prank(proxyOwner);
+        vm.expectRevert(GardensMarkeeRouter.ZeroAddress.selector);
+        router.setStreamingLeaderboardFactory(address(0));
+    }
+
+    function test_setBridgeConfiguration_revertsOnZeroDestinationChain() public {
+        vm.prank(proxyOwner);
+        vm.expectRevert(GardensMarkeeRouter.InvalidDestinationChain.selector);
+        router.setBridgeConfiguration(0, address(adapter), IGardensMarkeeRouter.BridgeProtocol.Squid);
+    }
+
+    function test_setBridgeConfiguration_revertsOnZeroAdapter() public {
+        vm.prank(proxyOwner);
+        vm.expectRevert(GardensMarkeeRouter.ZeroAddress.selector);
+        router.setBridgeConfiguration(REMOTE_CHAIN_ID, address(0), IGardensMarkeeRouter.BridgeProtocol.Squid);
+    }
+
+    function test_clearBridgeConfiguration_revertsOnZeroDestinationChain() public {
+        vm.prank(proxyOwner);
+        vm.expectRevert(GardensMarkeeRouter.InvalidDestinationChain.selector);
+        router.clearBridgeConfiguration(0);
+    }
+
+    function test_setVaultImplementation_updatesImplementationAndRevertsOnZeroAddress() public {
+        address newImplementation = address(new CommunityRevenueVault());
+
+        vm.startPrank(proxyOwner);
+        router.setVaultImplementation(newImplementation);
+        assertEq(router.vaultImplementation(), newImplementation);
+
+        vm.expectRevert(GardensMarkeeRouter.ZeroAddress.selector);
+        router.setVaultImplementation(address(0));
+        vm.stopPrank();
     }
 }

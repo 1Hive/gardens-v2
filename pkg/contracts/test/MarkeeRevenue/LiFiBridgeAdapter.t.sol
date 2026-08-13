@@ -16,6 +16,16 @@ contract MockLiFiDiamond {
     }
 }
 
+contract MockRevertingLiFiDiamond {
+    fallback() external payable {
+        revert("lifi route failed");
+    }
+}
+
+contract RejectingRefundRecipient {
+    // No receive/fallback: any plain ETH transfer to this contract reverts.
+}
+
 contract LiFiBridgeAdapterTest is Test {
     MockLiFiDiamond internal liFiDiamond;
     LiFiBridgeAdapter internal adapter;
@@ -87,5 +97,59 @@ contract LiFiBridgeAdapterTest is Test {
         vm.prank(gardensRouter);
         vm.expectRevert(LiFiBridgeAdapter.InvalidQuote.selector);
         adapter.bridgeETH{value: 1 ether}(_request(0), _quote(0.9 ether, 1.01 ether));
+    }
+
+    function test_constructor_revertsOnZeroLiFiDiamond() public {
+        vm.expectRevert(LiFiBridgeAdapter.ZeroAddress.selector);
+        new LiFiBridgeAdapter(gardensRouter, address(0));
+    }
+
+    function test_setRouter_updatesRouterAndRevertsOnZeroAddress() public {
+        adapter.setRouter(address(1));
+        assertEq(adapter.router(), address(1));
+
+        vm.expectRevert(LiFiBridgeAdapter.ZeroAddress.selector);
+        adapter.setRouter(address(0));
+    }
+
+    function test_bridgeETH_revertsOnZeroValue() public {
+        vm.prank(gardensRouter);
+        vm.expectRevert(LiFiBridgeAdapter.ZeroValue.selector);
+        adapter.bridgeETH(_request(0), _quote(0.9 ether, 1 ether));
+    }
+
+    function test_bridgeETH_revertsOnZeroDestinationReceiver() public {
+        BridgeRequest memory request = _request(0);
+        request.destinationReceiver = address(0);
+
+        vm.deal(gardensRouter, 1 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(LiFiBridgeAdapter.ZeroAddress.selector);
+        adapter.bridgeETH{value: 1 ether}(request, _quote(0.9 ether, 1 ether));
+    }
+
+    function test_bridgeETH_revertsOnRefundFailure() public {
+        RejectingRefundRecipient badRefund = new RejectingRefundRecipient();
+        BridgeRequest memory request = _request(0);
+        request.refundRecipient = address(badRefund);
+
+        vm.deal(gardensRouter, 1.01 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(LiFiBridgeAdapter.RefundFailed.selector);
+        adapter.bridgeETH{value: 1.01 ether}(request, _quote(0.9 ether, 1 ether));
+    }
+
+    function test_bridgeETH_revertsOnLiFiCallFailure() public {
+        MockRevertingLiFiDiamond revertingDiamond = new MockRevertingLiFiDiamond();
+        LiFiBridgeAdapter revertingAdapter = new LiFiBridgeAdapter(gardensRouter, address(revertingDiamond));
+
+        vm.deal(gardensRouter, 1 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                LiFiBridgeAdapter.LiFiCallFailed.selector, abi.encodeWithSignature("Error(string)", "lifi route failed")
+            )
+        );
+        revertingAdapter.bridgeETH{value: 1 ether}(_request(0), _quote(0.9 ether, 1 ether));
     }
 }

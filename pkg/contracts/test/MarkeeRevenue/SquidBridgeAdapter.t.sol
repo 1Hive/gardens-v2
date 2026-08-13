@@ -16,6 +16,16 @@ contract MockCanonicalSquidRouter {
     }
 }
 
+contract MockRevertingSquidRouter {
+    fallback() external payable {
+        revert("squid route failed");
+    }
+}
+
+contract RejectingRefundRecipient {
+    // No receive/fallback: any plain ETH transfer to this contract reverts.
+}
+
 contract SquidBridgeAdapterTest is Test {
     MockCanonicalSquidRouter internal squidRouter;
     SquidBridgeAdapter internal adapter;
@@ -120,5 +130,93 @@ contract SquidBridgeAdapterTest is Test {
         assertEq(squidRouter.received(), 1.01 ether);
         assertEq(address(0xCAFE).balance, accruedAfterQuote);
         assertEq(address(adapter).balance, 0);
+    }
+
+    function test_constructor_revertsOnZeroSquidRouter() public {
+        vm.expectRevert(SquidBridgeAdapter.ZeroAddress.selector);
+        new SquidBridgeAdapter(gardensRouter, address(0));
+    }
+
+    function test_setRouter_updatesRouterAndRevertsOnZeroAddress() public {
+        adapter.setRouter(address(1));
+        assertEq(adapter.router(), address(1));
+
+        vm.expectRevert(SquidBridgeAdapter.ZeroAddress.selector);
+        adapter.setRouter(address(0));
+    }
+
+    function test_bridgeETH_revertsOnZeroValue() public {
+        bytes memory quoteData = abi.encode(
+            SquidBridgeAdapter.SquidQuote({
+                inputAmount: 1 ether,
+                expectedAmountOut: 0.9 ether,
+                executionValue: 1 ether,
+                routerCalldata: hex"12345678"
+            })
+        );
+
+        vm.prank(gardensRouter);
+        vm.expectRevert(SquidBridgeAdapter.ZeroValue.selector);
+        adapter.bridgeETH(_request(0), quoteData);
+    }
+
+    function test_bridgeETH_revertsOnZeroDestinationReceiver() public {
+        bytes memory quoteData = abi.encode(
+            SquidBridgeAdapter.SquidQuote({
+                inputAmount: 1 ether,
+                expectedAmountOut: 0.9 ether,
+                executionValue: 1 ether,
+                routerCalldata: hex"12345678"
+            })
+        );
+        BridgeRequest memory request = _request(0);
+        request.destinationReceiver = address(0);
+
+        vm.deal(gardensRouter, 1 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(SquidBridgeAdapter.ZeroAddress.selector);
+        adapter.bridgeETH{value: 1 ether}(request, quoteData);
+    }
+
+    function test_bridgeETH_revertsOnRefundFailure() public {
+        RejectingRefundRecipient badRefund = new RejectingRefundRecipient();
+        bytes memory quoteData = abi.encode(
+            SquidBridgeAdapter.SquidQuote({
+                inputAmount: 1 ether,
+                expectedAmountOut: 0.9 ether,
+                executionValue: 1 ether,
+                routerCalldata: hex"12345678"
+            })
+        );
+        BridgeRequest memory request = _request(0);
+        request.refundRecipient = address(badRefund);
+
+        vm.deal(gardensRouter, 1.01 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(SquidBridgeAdapter.RefundFailed.selector);
+        adapter.bridgeETH{value: 1.01 ether}(request, quoteData);
+    }
+
+    function test_bridgeETH_revertsOnSquidCallFailure() public {
+        MockRevertingSquidRouter revertingRouter = new MockRevertingSquidRouter();
+        SquidBridgeAdapter revertingAdapter = new SquidBridgeAdapter(gardensRouter, address(revertingRouter));
+
+        bytes memory quoteData = abi.encode(
+            SquidBridgeAdapter.SquidQuote({
+                inputAmount: 1 ether,
+                expectedAmountOut: 0.9 ether,
+                executionValue: 1 ether,
+                routerCalldata: hex"12345678"
+            })
+        );
+
+        vm.deal(gardensRouter, 1 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SquidBridgeAdapter.SquidCallFailed.selector, abi.encodeWithSignature("Error(string)", "squid route failed")
+            )
+        );
+        revertingAdapter.bridgeETH{value: 1 ether}(_request(0), quoteData);
     }
 }

@@ -188,4 +188,284 @@ contract SquidGardensRevenueReceiverTest is Test {
         receiver.setSquidMulticall(address(0xBEEF));
         assertEq(receiver.squidMulticall(), address(0xBEEF));
     }
+
+    function test_initialize_revertsOnZeroAddresses() public {
+        address implementation = address(new SquidGardensRevenueReceiver());
+
+        vm.expectRevert(ISquidGardensRevenueReceiver.ZeroAddress.selector);
+        new ERC1967Proxy(
+            implementation, abi.encodeWithSignature("initialize(address,address)", address(0), squidMulticall)
+        );
+
+        vm.expectRevert(ISquidGardensRevenueReceiver.ZeroAddress.selector);
+        new ERC1967Proxy(implementation, abi.encodeWithSignature("initialize(address,address)", proxyOwner, address(0)));
+    }
+
+    function test_setSquidMulticall_revertsOnZeroAddress() public {
+        vm.prank(proxyOwner);
+        vm.expectRevert(ISquidGardensRevenueReceiver.ZeroAddress.selector);
+        receiver.setSquidMulticall(address(0));
+    }
+
+    function test_receiveSquidTokenRevenue_revertsOnZeroRegistryCommunity() public {
+        vm.prank(squidMulticall);
+        vm.expectRevert(ISquidGardensRevenueReceiver.ZeroAddress.selector);
+        receiver.receiveSquidTokenRevenue(bytes32(uint256(1)), bytes32(0), address(0), address(token), 1 ether);
+    }
+
+    function test_receiveSquidTokenRevenue_revertsOnZeroToken() public {
+        MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
+        vm.prank(squidMulticall);
+        vm.expectRevert(ISquidGardensRevenueReceiver.ZeroAddress.selector);
+        receiver.receiveSquidTokenRevenue(bytes32(uint256(1)), bytes32(0), address(community), address(0), 1 ether);
+    }
+
+    function test_receiveSquidTokenRevenue_revertsOnZeroAmount() public {
+        MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
+        vm.prank(squidMulticall);
+        vm.expectRevert(ISquidGardensRevenueReceiver.ZeroValue.selector);
+        receiver.receiveSquidTokenRevenue(bytes32(uint256(1)), bytes32(0), address(community), address(token), 0);
+    }
+
+    function test_receiveTokenRevenue_revertsOnZeroRegistryCommunity() public {
+        vm.expectRevert(ISquidGardensRevenueReceiver.ZeroAddress.selector);
+        receiver.receiveTokenRevenue(bytes32(0), address(0), address(token), 1 ether);
+    }
+
+    function test_receiveTokenRevenue_revertsOnZeroToken() public {
+        MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
+        vm.expectRevert(ISquidGardensRevenueReceiver.ZeroAddress.selector);
+        receiver.receiveTokenRevenue(bytes32(0), address(community), address(0), 1 ether);
+    }
+
+    function test_receiveTokenRevenue_revertsOnZeroAmount() public {
+        MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
+        vm.expectRevert(ISquidGardensRevenueReceiver.ZeroValue.selector);
+        receiver.receiveTokenRevenue(bytes32(0), address(community), address(token), 0);
+    }
+
+    function test_receiveTokenRevenue_escrowsOnSafeTransferFailure() public {
+        address rejectingSafe = address(0xBAD5AFE2);
+        token.setRejectedRecipient(rejectingSafe);
+        MockRegistryCommunity community = new MockRegistryCommunity(rejectingSafe);
+        address caller = address(0x11F2);
+        token.mint(caller, 1 ether);
+
+        vm.startPrank(caller);
+        token.approve(address(receiver), 1 ether);
+        receiver.receiveTokenRevenue(keccak256("community"), address(community), address(token), 1 ether);
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(address(receiver)), 1 ether);
+    }
+
+    function test_receiveSquidRevenue_revertsOnZeroValue() public {
+        MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
+        vm.prank(squidMulticall);
+        vm.expectRevert(ISquidGardensRevenueReceiver.ZeroValue.selector);
+        receiver.receiveSquidRevenue(bytes32(uint256(1)), bytes32(0), address(community));
+    }
+
+    function test_receiveSquidRevenue_revertsOnZeroRegistryCommunity() public {
+        vm.deal(squidMulticall, 1 ether);
+        vm.prank(squidMulticall);
+        vm.expectRevert(ISquidGardensRevenueReceiver.ZeroAddress.selector);
+        receiver.receiveSquidRevenue{value: 1 ether}(bytes32(uint256(1)), bytes32(0), address(0));
+    }
+
+    function test_retryPayout_revertsForUnknownPayout() public {
+        vm.expectRevert(ISquidGardensRevenueReceiver.PayoutNotFound.selector);
+        receiver.retryPayout(bytes32(uint256(999)));
+    }
+
+    function test_retryPayout_revertsIfAlreadyResolved() public {
+        SquidRejectingSafe rejectingSafe = new SquidRejectingSafe();
+        MockRegistryCommunity community = new MockRegistryCommunity(address(rejectingSafe));
+        bytes32 payoutId = bytes32(uint256(1));
+        _deliver(payoutId, community, 1 ether);
+
+        community.setCouncilSafe(address(0x5AFE));
+        receiver.retryPayout(payoutId);
+
+        vm.expectRevert(ISquidGardensRevenueReceiver.PayoutAlreadyResolved.selector);
+        receiver.retryPayout(payoutId);
+    }
+
+    function test_retryPayout_revertsWhenSafeIsZero() public {
+        SquidRejectingSafe rejectingSafe = new SquidRejectingSafe();
+        MockRegistryCommunity community = new MockRegistryCommunity(address(rejectingSafe));
+        bytes32 payoutId = bytes32(uint256(1));
+        _deliver(payoutId, community, 1 ether);
+
+        community.setCouncilSafe(address(0));
+        vm.expectRevert(ISquidGardensRevenueReceiver.TransferFailed.selector);
+        receiver.retryPayout(payoutId);
+    }
+
+    function test_retryPayout_revertsIfStillFailing() public {
+        SquidRejectingSafe rejectingSafe = new SquidRejectingSafe();
+        MockRegistryCommunity community = new MockRegistryCommunity(address(rejectingSafe));
+        bytes32 payoutId = bytes32(uint256(1));
+        _deliver(payoutId, community, 1 ether);
+
+        vm.expectRevert(ISquidGardensRevenueReceiver.TransferFailed.selector);
+        receiver.retryPayout(payoutId);
+    }
+
+    function test_recoverPayout_deliversToRecipient() public {
+        SquidRejectingSafe rejectingSafe = new SquidRejectingSafe();
+        MockRegistryCommunity community = new MockRegistryCommunity(address(rejectingSafe));
+        bytes32 payoutId = bytes32(uint256(1));
+        _deliver(payoutId, community, 1 ether);
+
+        address recoveryTarget = address(0xFEE);
+        vm.prank(proxyOwner);
+        receiver.recoverPayout(payoutId, payable(recoveryTarget));
+
+        assertEq(recoveryTarget.balance, 1 ether);
+        (,,, bool resolved) = receiver.failedPayouts(payoutId);
+        assertTrue(resolved);
+    }
+
+    function test_recoverPayout_revertsForNonOwner() public {
+        SquidRejectingSafe rejectingSafe = new SquidRejectingSafe();
+        MockRegistryCommunity community = new MockRegistryCommunity(address(rejectingSafe));
+        bytes32 payoutId = bytes32(uint256(1));
+        _deliver(payoutId, community, 1 ether);
+
+        vm.expectRevert();
+        receiver.recoverPayout(payoutId, payable(address(0xFEE)));
+    }
+
+    function test_recoverPayout_revertsOnZeroAddress() public {
+        SquidRejectingSafe rejectingSafe = new SquidRejectingSafe();
+        MockRegistryCommunity community = new MockRegistryCommunity(address(rejectingSafe));
+        bytes32 payoutId = bytes32(uint256(1));
+        _deliver(payoutId, community, 1 ether);
+
+        vm.prank(proxyOwner);
+        vm.expectRevert(ISquidGardensRevenueReceiver.ZeroAddress.selector);
+        receiver.recoverPayout(payoutId, payable(address(0)));
+    }
+
+    function test_recoverPayout_revertsForUnknownPayout() public {
+        vm.prank(proxyOwner);
+        vm.expectRevert(ISquidGardensRevenueReceiver.PayoutNotFound.selector);
+        receiver.recoverPayout(bytes32(uint256(999)), payable(address(0xFEE)));
+    }
+
+    function test_recoverPayout_revertsIfAlreadyResolved() public {
+        SquidRejectingSafe rejectingSafe = new SquidRejectingSafe();
+        MockRegistryCommunity community = new MockRegistryCommunity(address(rejectingSafe));
+        bytes32 payoutId = bytes32(uint256(1));
+        _deliver(payoutId, community, 1 ether);
+
+        vm.startPrank(proxyOwner);
+        receiver.recoverPayout(payoutId, payable(address(0xFEE)));
+
+        vm.expectRevert(ISquidGardensRevenueReceiver.PayoutAlreadyResolved.selector);
+        receiver.recoverPayout(payoutId, payable(address(0xFEE)));
+        vm.stopPrank();
+    }
+
+    function test_recoverPayout_revertsOnTransferFailure() public {
+        SquidRejectingSafe rejectingSafe = new SquidRejectingSafe();
+        MockRegistryCommunity community = new MockRegistryCommunity(address(rejectingSafe));
+        bytes32 payoutId = bytes32(uint256(1));
+        _deliver(payoutId, community, 1 ether);
+
+        SquidRejectingSafe badRecoveryTarget = new SquidRejectingSafe();
+        vm.prank(proxyOwner);
+        vm.expectRevert(ISquidGardensRevenueReceiver.TransferFailed.selector);
+        receiver.recoverPayout(payoutId, payable(address(badRecoveryTarget)));
+    }
+
+    function test_retryTokenPayout_revertsForUnknownPayout() public {
+        vm.expectRevert(ISquidGardensRevenueReceiver.PayoutNotFound.selector);
+        receiver.retryTokenPayout(bytes32(uint256(999)));
+    }
+
+    function test_retryTokenPayout_revertsIfAlreadyResolved() public {
+        address rejectingSafe = address(0xBAD5AFE3);
+        token.setRejectedRecipient(rejectingSafe);
+        MockRegistryCommunity community = new MockRegistryCommunity(rejectingSafe);
+        bytes32 payoutId = bytes32(uint256(6));
+        _deliverToken(payoutId, community, 1 ether);
+
+        community.setCouncilSafe(address(0x5AFE));
+        receiver.retryTokenPayout(payoutId);
+
+        vm.expectRevert(ISquidGardensRevenueReceiver.PayoutAlreadyResolved.selector);
+        receiver.retryTokenPayout(payoutId);
+    }
+
+    function test_retryTokenPayout_revertsWhenSafeIsZero() public {
+        address rejectingSafe = address(0xBAD5AFE4);
+        token.setRejectedRecipient(rejectingSafe);
+        MockRegistryCommunity community = new MockRegistryCommunity(rejectingSafe);
+        bytes32 payoutId = bytes32(uint256(7));
+        _deliverToken(payoutId, community, 1 ether);
+
+        community.setCouncilSafe(address(0));
+        vm.expectRevert(ISquidGardensRevenueReceiver.TransferFailed.selector);
+        receiver.retryTokenPayout(payoutId);
+    }
+
+    function test_retryTokenPayout_revertsIfStillFailing() public {
+        address rejectingSafe = address(0xBAD5AFE5);
+        token.setRejectedRecipient(rejectingSafe);
+        MockRegistryCommunity community = new MockRegistryCommunity(rejectingSafe);
+        bytes32 payoutId = bytes32(uint256(8));
+        _deliverToken(payoutId, community, 1 ether);
+
+        vm.expectRevert(ISquidGardensRevenueReceiver.TransferFailed.selector);
+        receiver.retryTokenPayout(payoutId);
+    }
+
+    function test_recoverTokenPayout_revertsOnZeroAddress() public {
+        address rejectingSafe = address(0xBAD5AFE6);
+        token.setRejectedRecipient(rejectingSafe);
+        MockRegistryCommunity community = new MockRegistryCommunity(rejectingSafe);
+        bytes32 payoutId = bytes32(uint256(9));
+        _deliverToken(payoutId, community, 1 ether);
+
+        vm.prank(proxyOwner);
+        vm.expectRevert(ISquidGardensRevenueReceiver.ZeroAddress.selector);
+        receiver.recoverTokenPayout(payoutId, address(0));
+    }
+
+    function test_recoverTokenPayout_revertsForUnknownPayout() public {
+        vm.prank(proxyOwner);
+        vm.expectRevert(ISquidGardensRevenueReceiver.PayoutNotFound.selector);
+        receiver.recoverTokenPayout(bytes32(uint256(999)), address(0xBEEF));
+    }
+
+    function test_recoverTokenPayout_revertsIfAlreadyResolved() public {
+        address rejectingSafe = address(0xBAD5AFE7);
+        token.setRejectedRecipient(rejectingSafe);
+        MockRegistryCommunity community = new MockRegistryCommunity(rejectingSafe);
+        bytes32 payoutId = bytes32(uint256(10));
+        _deliverToken(payoutId, community, 1 ether);
+
+        vm.startPrank(proxyOwner);
+        receiver.recoverTokenPayout(payoutId, address(0xBEEF));
+
+        vm.expectRevert(ISquidGardensRevenueReceiver.PayoutAlreadyResolved.selector);
+        receiver.recoverTokenPayout(payoutId, address(0xBEEF));
+        vm.stopPrank();
+    }
+
+    function test_recoverTokenPayout_revertsOnTransferFailure() public {
+        address rejectingSafe = address(0xBAD5AFE8);
+        token.setRejectedRecipient(rejectingSafe);
+        MockRegistryCommunity community = new MockRegistryCommunity(rejectingSafe);
+        bytes32 payoutId = bytes32(uint256(11));
+        _deliverToken(payoutId, community, 1 ether);
+
+        address badRecoveryTarget = address(0xBAD5AFE9);
+        token.setRejectedRecipient(badRecoveryTarget);
+        vm.prank(proxyOwner);
+        vm.expectRevert(ISquidGardensRevenueReceiver.TransferFailed.selector);
+        receiver.recoverTokenPayout(payoutId, badRecoveryTarget);
+    }
 }

@@ -141,4 +141,57 @@ contract AcrossBridgeAdapterTest is Test {
         adapter.setRouter(address(1));
         assertEq(adapter.router(), address(1));
     }
+
+    function test_constructor_revertsOnZeroSpokePool() public {
+        vm.expectRevert(AcrossBridgeAdapter.ZeroAddress.selector);
+        new AcrossBridgeAdapter(router, address(0), wrappedNativeToken);
+    }
+
+    function test_constructor_revertsOnZeroWrappedNativeToken() public {
+        vm.expectRevert(AcrossBridgeAdapter.ZeroAddress.selector);
+        new AcrossBridgeAdapter(router, address(spokePool), address(0));
+    }
+
+    function test_setRouter_revertsOnZeroAddress() public {
+        vm.expectRevert(AcrossBridgeAdapter.ZeroAddress.selector);
+        adapter.setRouter(address(0));
+    }
+
+    function test_setDestinationToken_revertsOnZeroAddress() public {
+        vm.expectRevert(AcrossBridgeAdapter.ZeroAddress.selector);
+        adapter.setDestinationToken(DESTINATION_CHAIN_ID, address(0));
+    }
+
+    function test_bridgeETH_revertsOnZeroValue() public {
+        vm.prank(router);
+        vm.expectRevert(AcrossBridgeAdapter.ZeroValue.selector);
+        adapter.bridgeETH(_request(1), _quote(1));
+    }
+
+    function test_bridgeETH_revertsOnZeroDestinationReceiver() public {
+        BridgeRequest memory request = _request(1);
+        request.destinationReceiver = address(0);
+
+        vm.deal(router, 1 ether);
+        vm.prank(router);
+        vm.expectRevert(AcrossBridgeAdapter.ZeroAddress.selector);
+        adapter.bridgeETH{value: 1 ether}(request, _quote(0.9 ether));
+    }
+
+    function test_bridgeETH_revertsOnZeroRefundRecipient() public {
+        BridgeRequest memory request = _request(1);
+        request.refundRecipient = address(0);
+
+        vm.deal(router, 1 ether);
+        vm.prank(router);
+        vm.expectRevert(AcrossBridgeAdapter.ZeroAddress.selector);
+        adapter.bridgeETH{value: 1 ether}(request, _quote(0.9 ether));
+    }
+
+    function test_bridgeETH_revertsOnInvalidQuote() public {
+        vm.deal(router, 1 ether);
+        vm.prank(router);
+        vm.expectRevert(AcrossBridgeAdapter.InvalidQuote.selector);
+        adapter.bridgeETH{value: 1 ether}(_request(0), _quote(0));
+    }
 }
