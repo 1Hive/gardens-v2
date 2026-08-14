@@ -524,6 +524,30 @@ contract UpgradeCVMultichainScript is Test {
         strategy.reinitializeV2MigrateThresholdSnapshots();
     }
 
+    function test_runCurrentNetwork_strategy_phase_skips_migration_when_already_initialized() public {
+        _useFixture("strategies-already-migrated");
+        _setDefaultScriptEnv();
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
+
+        vm.prank(address(script));
+        strategy.reinitializeV2MigrateThresholdSnapshots();
+
+        script.setPhaseForTest(3);
+        script.setFactoryActionForTest(0);
+        script.setFlagForTest("MIGRATE_THRESHOLD_SNAPSHOTS", true);
+        script.executeCurrentNetworkForTest();
+
+        string memory updated = vm.readFile(fixturePath);
+        assertEq(
+            _implementation(address(strategy)), updated.readAddress("$.networks[0].IMPLEMENTATIONS.CV_STRATEGY")
+        );
+        vm.prank(address(script));
+        vm.expectRevert();
+        strategy.reinitializeV2MigrateThresholdSnapshots();
+    }
+
     function test_runCurrentNetwork_communities_phase_only_upgrades_community_proxy_and_syncs_live_impl() public {
         _useFixture("communities-only");
         _setDefaultScriptEnv();

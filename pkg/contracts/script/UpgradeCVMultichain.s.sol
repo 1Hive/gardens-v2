@@ -15,6 +15,7 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     using stdJson for string;
     uint256 internal constant EXPECTED_COMMUNITY_FACET_COUNT = 7;
     uint256 internal constant EXPECTED_STRATEGY_FACET_COUNT = 9;
+    uint8 internal constant THRESHOLD_MIGRATION_VERSION = 2;
     bytes4 internal constant COMMUNITY_CREATE_POOL_SELECTOR_V0_2 = bytes4(
         keccak256(
             "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))"
@@ -698,6 +699,8 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         CVStrategy cvStrategy = CVStrategy(payable(proxy));
         bool implementationIsCurrent = _proxyImplementationAddress(proxy) == context.strategyImplementation;
         bool needsUpgradeTo = !options.skipUpgradeTo && !implementationIsCurrent;
+        bool needsThresholdMigration =
+            options.migrateThresholdSnapshots && _initializerVersion(proxy) < THRESHOLD_MIGRATION_VERSION;
         IDiamond.FacetCut[] memory allCuts = _mergeFacetCuts(
             _buildStaleSelectorRemovalCuts(proxy, context.cvCuts), _buildChangedFacetCuts(proxy, context.cvCuts)
         );
@@ -708,16 +711,16 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
                 IDiamondCut(proxy).diamondCut(allCuts, options.strategyInit, options.strategyInitCalldata);
             }
             if (needsUpgradeTo) {
-                _upgradeStrategyImplementation(cvStrategy, context.strategyImplementation, options);
-            } else if (options.migrateThresholdSnapshots && implementationIsCurrent) {
+                _upgradeStrategyImplementation(cvStrategy, context.strategyImplementation, needsThresholdMigration);
+            } else if (needsThresholdMigration && implementationIsCurrent) {
                 cvStrategy.reinitializeV2MigrateThresholdSnapshots();
             }
             return;
         }
 
         if (needsUpgradeTo) {
-            _upgradeStrategyImplementation(cvStrategy, context.strategyImplementation, options);
-        } else if (options.migrateThresholdSnapshots && implementationIsCurrent) {
+            _upgradeStrategyImplementation(cvStrategy, context.strategyImplementation, needsThresholdMigration);
+        } else if (needsThresholdMigration && implementationIsCurrent) {
             cvStrategy.reinitializeV2MigrateThresholdSnapshots();
         }
         if (needsDiamondCut) {
@@ -728,15 +731,19 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     function _upgradeStrategyImplementation(
         CVStrategy cvStrategy,
         address strategyImplementation,
-        StrategyUpgradeOptions memory options
+        bool migrateThresholdSnapshots
     ) internal {
-        if (options.migrateThresholdSnapshots) {
+        if (migrateThresholdSnapshots) {
             cvStrategy.upgradeToAndCall(
                 strategyImplementation, abi.encodeCall(CVStrategy.reinitializeV2MigrateThresholdSnapshots, ())
             );
         } else {
             cvStrategy.upgradeTo(strategyImplementation);
         }
+    }
+
+    function _initializerVersion(address proxy) internal view returns (uint8) {
+        return uint8(uint256(vm.load(proxy, bytes32(0))));
     }
 
     function _boundedStartIndex(uint256 requestedStart, uint256 length) internal pure returns (uint256) {
