@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ClientPage from "./client-page";
+import { parseCommunityAddressRedirects } from "@/utils/communityRedirects";
 
 const TITLE = "Gardens";
 const DESCRIPTION = "Create, govern, and fund communities together.";
@@ -24,6 +25,10 @@ export function generateMetadata(): Metadata {
 }
 
 export default function Page() {
-  return <ClientPage />;
+  const redirectedCommunityKeys = Array.from(
+    parseCommunityAddressRedirects().keys(),
+  );
+
+  return <ClientPage redirectedCommunityKeys={redirectedCommunityKeys} />;
 }
 

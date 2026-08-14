@@ -42,7 +42,9 @@ import {
 } from "@/utils/numbers";
 import {
   buildUpgradeAndStreamBatch,
+  getBufferedMaxStreamAmount,
   getStreamFundingAmounts,
+  MAX_STREAM_SIGNING_BUFFER_SECONDS,
   shouldBatchUpgradeAndStream,
   superfluidHostBatchAbi,
 } from "@/utils/superfluidBatch";
@@ -77,6 +79,9 @@ interface PoolMetricsProps {
   streamSender?: Address;
 }
 
+const trimTrailingFractionZeros = (value: string) =>
+  value.includes(".") ? trimEnd(trimEnd(value, "0"), ".") : value;
+
 export const PoolMetrics: FC<PoolMetricsProps> = ({
   strategy,
   poolToken,
@@ -94,6 +99,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const [isTransferModalOpened, setIsTransferModalOpened] = useState(false);
   const [isAddFundsMenuOpen, setIsAddFundsMenuOpen] = useState(false);
   const [forceAllBalanceUsage, setForceAllBalanceUsage] = useState(false);
+  const [useMaxStreamAmount, setUseMaxStreamAmount] = useState(false);
   const addFundsDropdownRef = useRef<HTMLDivElement>(null);
 
   const showUseSuperTokenBalance = useFlag("showUseSuperTokenBalance");
@@ -157,9 +163,21 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     superToken &&
     scaleTo(requestedAmountBn, poolToken.decimals, superToken.decimals);
   const streamDurationScaledBn = parsePositiveUnitsFloor(streamDuration, 18);
+  const streamDurationSecondsScaledBn =
+    streamDurationScaledBn * BigInt(SEC_TO_MONTH);
+  const streamSigningBufferScaledBn =
+    MAX_STREAM_SIGNING_BUFFER_SECONDS * TEN(18);
+  const streamExecutionAmountBnScaledUpBn =
+    requestedAmountBnScaledUpBn != null && useMaxStreamAmount ?
+      getBufferedMaxStreamAmount({
+        availableBalance: requestedAmountBnScaledUpBn,
+        duration: streamDurationSecondsScaledBn,
+        bufferDuration: streamSigningBufferScaledBn,
+      })
+    : requestedAmountBnScaledUpBn;
   const streamRequestedAmountPerSecScaledUpBn =
-    requestedAmountBnScaledUpBn != null && streamDurationScaledBn > 0n ?
-      (requestedAmountBnScaledUpBn * TEN(18)) /
+    streamExecutionAmountBnScaledUpBn != null && streamDurationScaledBn > 0n ?
+      (streamExecutionAmountBnScaledUpBn * TEN(18)) /
       (streamDurationScaledBn * BigInt(SEC_TO_MONTH))
     : undefined;
 
@@ -181,13 +199,13 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     : 0n;
 
   const streamFundingAmounts =
-    requestedAmountBnScaledUpBn != null ?
+    streamExecutionAmountBnScaledUpBn != null ?
       getStreamFundingAmounts({
-        requestedAmount: requestedAmountBnScaledUpBn,
+        requestedAmount: streamExecutionAmountBnScaledUpBn,
         availableSuperTokenBalance:
           forceAllBalanceUsage ?
-            superToken?.value ?? 0n
-          : userSuperTokenAvailableBudgetBn ?? 0n,
+            (superToken?.value ?? 0n)
+          : (userSuperTokenAvailableBudgetBn ?? 0n),
         superTokenDecimals: superToken?.decimals ?? 0,
         underlyingTokenDecimals: poolToken.decimals,
       })
@@ -379,6 +397,14 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       formatUnits(effectiveAvailableBalanceInputBn, poolToken.decimals)
     : null;
 
+  useEffect(() => {
+    if (!useMaxStreamAmount || effectiveAvailableBalance == null) {
+      return;
+    }
+
+    setAmount(trimTrailingFractionZeros(effectiveAvailableBalance));
+  }, [effectiveAvailableBalance, useMaxStreamAmount]);
+
   const hasInsufficientStreamBalance =
     effectiveAvailableBalanceScaledBn != null &&
     requestedAmountBnScaledUpBn != null &&
@@ -438,7 +464,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   } = useDisableButtons([
     {
       message: `Insufficient ${poolToken.symbol} balance`,
-      condition: hasInsufficientStreamBalance,
+      condition: !useMaxStreamAmount && hasInsufficientStreamBalance,
     },
     {
       message: "Amount must be greater than 0",
@@ -535,6 +561,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
         onChange={(e) => {
           const value = e.target.value;
           if (/^\d*(?:\.\d*)?$/.test(value)) {
+            setUseMaxStreamAmount(false);
             setAmount(value);
           }
         }}
@@ -547,15 +574,9 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     </label>
   );
 
-  const trimTrailingFractionZeros = (value: string) =>
-    value.includes(".") ? trimEnd(trimEnd(value, "0"), ".") : value;
-
   const fillTransferAmountWithWalletBalance = () => {
+    setUseMaxStreamAmount(false);
     setAmount(trimTrailingFractionZeros(transferWalletBalanceExact));
-  };
-
-  const fillStreamAmountWithAvailableBalance = () => {
-    setAmount(trimTrailingFractionZeros(effectiveAvailableBalance ?? "0"));
   };
 
   const availableBalanceTooltipMessage = [
@@ -583,9 +604,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     .filter(Boolean)
     .join(" + ")
     .replace(" + -", " - ");
-  const canUseAvailableBalance =
-    effectiveAvailableBalanceScaledBn != null &&
-    effectiveAvailableBalanceScaledBn > 0n;
   const formattedAvailableBalance = roundToSignificant(
     effectiveAvailableBalance ?? 0,
     4,
@@ -594,23 +612,33 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const availableBalanceControls = (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3 text-sm">
-        <span className="whitespace-nowrap">Available balance:</span>
-        <div
-          className="tooltip tooltip-top-left"
-          data-tip={
-            availableBalanceTooltipMessage.length ?
-              availableBalanceTooltipMessage
-            : "No available balance"
-          }
-        >
-          <button
-            type="button"
-            onClick={fillStreamAmountWithAvailableBalance}
-            disabled={!canUseAvailableBalance}
-            className="text-sm text-primary-content hover:underline disabled:cursor-not-allowed disabled:text-neutral-content disabled:no-underline"
+        <span className="whitespace-nowrap">Balance:</span>
+        <div className="flex items-center gap-3">
+          <div
+            className="tooltip tooltip-top-left"
+            data-tip={
+              availableBalanceTooltipMessage.length ?
+                availableBalanceTooltipMessage
+              : "No available balance"
+            }
           >
-            {formattedAvailableBalance} {poolToken.symbol}
-          </button>
+            <span className="text-sm text-primary-content">
+              {formattedAvailableBalance} {poolToken.symbol}
+            </span>
+          </div>
+          <label
+            className="tooltip tooltip-top-left flex cursor-pointer items-center gap-2"
+            data-tip="Keep the amount synced with your live available balance. The transaction reserves one minute of streaming for signing time."
+          >
+            <span className="whitespace-nowrap">Use max</span>
+            <input
+              type="checkbox"
+              className="toggle toggle-sm !border-neutral-button !text-neutral-button opacity-30 [--tglbg:theme(colors.neutral)] checked:!border-neutral-button checked:!text-neutral-button checked:opacity-100 checked:[--tglbg:theme(colors.neutral)] disabled:!opacity-30 dark:[--tglbg:theme(colors.primary)] dark:checked:[--tglbg:theme(colors.primary)]"
+              checked={useMaxStreamAmount}
+              disabled={effectiveAvailableBalanceScaledBn == null}
+              onChange={(e) => setUseMaxStreamAmount(e.target.checked)}
+            />
+          </label>
         </div>
       </div>
       {showUseSuperTokenBalance && !isPureSuperfluidToken && (
