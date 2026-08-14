@@ -66,6 +66,7 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
         bytes32 indexed communityKey, address indexed vault, uint256 communityChainId, address registryCommunity
     );
     event RevenueSwept(bytes32 indexed communityKey, address indexed destination, uint256 amount, bool bridged);
+    event BridgeTransferStarted(bytes32 indexed communityKey, bytes32 indexed transferId);
 
     error NotKeeper();
     error ZeroAddress();
@@ -110,6 +111,7 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
     function ensureCommunityVault(uint256 communityChainId, address registryCommunity)
         external
         onlyKeeper
+        nonReentrant
         returns (address vault)
     {
         return _ensureCommunityVault(communityChainId, registryCommunity);
@@ -130,10 +132,9 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
         }
 
         vault = Clones.cloneDeterministic(vaultImplementation, key);
-        ICommunityRevenueVault(vault).initialize(key, communityChainId, registryCommunity, ethx, weth);
-
         vaults[key] = vault;
         communities[key] = CommunityInfo({communityChainId: communityChainId, registryCommunity: registryCommunity});
+        ICommunityRevenueVault(vault).initialize(key, communityChainId, registryCommunity, ethx, weth);
 
         emit VaultCreated(key, vault, communityChainId, registryCommunity);
     }
@@ -143,7 +144,7 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
         address registryCommunity,
         string calldata leaderboardName,
         string calldata platformId
-    ) external onlyKeeper returns (address vault, address leaderboard, address seedMarkee) {
+    ) external onlyKeeper nonReentrant returns (address vault, address leaderboard, address seedMarkee) {
         if (registryCommunity == address(0)) {
             revert ZeroAddress();
         }
@@ -244,12 +245,21 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
             refundRecipient: vault,
             minAmountOut: minAmountOut
         });
-        (, uint256 expectedAmountOut) = IBridgeAdapter(adapter).bridgeETH{value: amount + msg.value}(request, quoteData);
+        uint256 expectedAmountOut = _executeBridge(adapter, request, quoteData, amount + msg.value);
         if (expectedAmountOut < minAmountOut) {
             revert InsufficientOutput(expectedAmountOut, minAmountOut);
         }
 
         emit RevenueSwept(communityKey, receiver, amount, true);
+    }
+
+    function _executeBridge(address adapter, BridgeRequest memory request, bytes calldata quoteData, uint256 value)
+        internal
+        returns (uint256 expectedAmountOut)
+    {
+        bytes32 transferId;
+        (transferId, expectedAmountOut) = IBridgeAdapter(adapter).bridgeETH{value: value}(request, quoteData);
+        emit BridgeTransferStarted(request.communityKey, transferId);
     }
 
     function _reimburseKeeper(bytes32 communityKey, uint256 grossAmount, uint256 gasCost)

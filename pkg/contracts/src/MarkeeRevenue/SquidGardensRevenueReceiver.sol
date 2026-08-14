@@ -130,7 +130,7 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
         processedPayoutIds[payoutId] = true;
 
         address safe = IRegistryCommunitySafe(registryCommunity).councilSafe();
-        bool delivered;
+        bool delivered = false;
         if (safe != address(0)) {
             (delivered,) = payable(safe).call{value: msg.value}("");
         }

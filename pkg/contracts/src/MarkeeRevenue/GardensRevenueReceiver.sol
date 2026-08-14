@@ -98,6 +98,7 @@ contract GardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpgradea
         }
 
         address safe = IRegistryCommunitySafe(payout.registryCommunity).councilSafe();
+        payout.resolved = true;
         bool delivered = false;
         if (safe != address(0)) {
             (delivered,) = payable(safe).call{value: payout.amount}("");
@@ -106,7 +107,6 @@ contract GardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpgradea
             revert TransferFailed();
         }
 
-        payout.resolved = true;
         emit PayoutRetried(payoutId, safe, payout.amount);
     }
 

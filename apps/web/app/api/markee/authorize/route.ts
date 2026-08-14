@@ -15,6 +15,10 @@ import {
   zeroAddress,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import {
+  readLimitedJsonBody,
+  RequestBodyTooLargeError,
+} from "../../../../utils/readLimitedJsonBody";
 import { chainConfigMap } from "@/configs/chains";
 import { registryCommunityABI } from "@/src/generated";
 import {
@@ -319,9 +323,11 @@ const createAuthorizationMessage = ({
 });
 
 const issueChallenge = async (body: ChallengeRequest) => {
+  // Fail closed until production has a shared, atomic single-use nonce store.
+  // An in-memory Map cannot prevent replay across serverless instances.
   if (process.env.NODE_ENV === "production") {
     return jsonError(
-      "Markee authorization nonce storage is not configured.",
+      "Markee integration is temporarily unavailable in this deployment.",
       503,
     );
   }
@@ -486,15 +492,13 @@ const verifyChallenge = async (body: VerifyRequest) => {
 };
 
 export async function POST(request: Request) {
-  const contentLength = Number(request.headers.get("content-length") ?? "0");
-  if (Number.isFinite(contentLength) && contentLength > MAX_REQUEST_BYTES) {
-    return jsonError("Request body is too large.", 413);
-  }
-
   let rawBody: unknown;
   try {
-    rawBody = await request.json();
-  } catch {
+    rawBody = await readLimitedJsonBody(request, MAX_REQUEST_BYTES);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return jsonError(error.message, 413);
+    }
     return jsonError("Invalid JSON body.", 400);
   }
 
@@ -509,5 +513,5 @@ export async function POST(request: Request) {
 }
 
 export const clearMarkeeAuthorizationChallengesForTests = () => {
-  challenges.clear();
+  if (process.env.NODE_ENV === "test") challenges.clear();
 };

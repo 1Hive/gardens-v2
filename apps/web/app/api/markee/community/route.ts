@@ -25,12 +25,17 @@ export async function GET(request: NextRequest) {
     return jsonError("Invalid Markee community request.", 400);
   }
 
-  const result = await markeeAdapter.getCommunityIntegration(
-    chainId,
-    getAddress(community),
-  );
+  try {
+    const result = await markeeAdapter.getCommunityIntegration(
+      chainId,
+      getAddress(community),
+    );
 
-  return NextResponse.json(result, {
-    headers: { "Cache-Control": "no-store" },
-  });
+    return NextResponse.json(result, {
+      headers: { "Cache-Control": "no-store" },
+    });
+  } catch (error) {
+    console.error("[Markee community] Integration lookup failed", error);
+    return jsonError("Unable to load the Markee community integration.", 502);
+  }
 }
