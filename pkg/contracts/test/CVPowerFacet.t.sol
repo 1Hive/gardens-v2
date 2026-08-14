@@ -121,7 +121,7 @@ contract CVPowerFacetHarness is CVPowerFacet {
         totalPointsActivated = amount;
     }
 
-    function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
+    function setTotalPointsActivatedDirect(uint256 amount) external {
         totalPointsActivated = amount;
     }
 
@@ -221,7 +221,7 @@ contract CVPowerFacetTest is Test {
         facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
         registry.setMemberPower(member, 20);
         registry.setActivated(member, true);
-        facet.setTotalPointsActivatedWithCheckpoint(100);
+        facet.setTotalPointsActivatedDirect(100);
 
         vm.roll(block.number + 10);
         vm.expectEmit();
@@ -320,7 +320,7 @@ contract CVPowerFacetTest is Test {
     function test_deactivatePoints_updates_totals() public {
         registry.setMemberPower(member, 4);
         registry.setActivated(member, true);
-        facet.setTotalPointsActivatedWithCheckpoint(4);
+        facet.setTotalPointsActivatedDirect(4);
 
         vm.roll(block.number + 3);
         vm.prank(member);

@@ -107,7 +107,7 @@ contract CVSyncPowerFacetHarness is CVSyncPowerFacet {
         totalPointsActivated = amount;
     }
 
-    function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
+    function setTotalPointsActivatedDirect(uint256 amount) external {
         totalPointsActivated = amount;
     }
 
@@ -310,7 +310,7 @@ contract CVSyncPowerFacetTest is Test {
         community.setCachedPower(member, 100);
         community.setActivated(member, true);
         registry.setLivePower(member, 150);
-        facet.setTotalPointsActivatedWithCheckpoint(100);
+        facet.setTotalPointsActivatedDirect(100);
 
         vm.roll(block.number + 3);
         vm.prank(syncCaller);

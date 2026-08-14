@@ -146,6 +146,7 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
 
     // Sig: 0xc69271ec
     function disconnectSuperfluidGDA(address gda) external {
+        // Members may connect incoming streams, but only the council/owner or keeper may disrupt them.
         if (!_isRegistryFactoryAuthorizedWallet(msg.sender)) {
             onlyCouncilSafe();
         }

@@ -207,7 +207,7 @@ contract CVAllocationFacetHarness is CVAllocationFacet {
         totalPointsActivated = amount;
     }
 
-    function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
+    function setTotalPointsActivatedDirect(uint256 amount) external {
         totalPointsActivated = amount;
     }
 
@@ -520,7 +520,7 @@ contract CVAllocationFacetTest is Test {
 
     function test_timeWeightedThreshold_initializes_newProposalCheckpoint() public {
         vm.roll(100);
-        facet.setTotalPointsActivatedWithCheckpoint(42);
+        facet.setTotalPointsActivatedDirect(42);
         facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, block.number, 0, 0);
         facet.initializeProposalThresholdSnapshot(1);
 
@@ -532,15 +532,15 @@ contract CVAllocationFacetTest is Test {
         uint256 decay = 9_000_000;
         facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
         vm.roll(100);
-        facet.setTotalPointsActivatedWithCheckpoint(100);
+        facet.setTotalPointsActivatedDirect(100);
         facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, block.number, 0, 0);
         facet.initializeProposalThresholdSnapshot(1);
 
         vm.roll(110);
-        facet.setTotalPointsActivatedWithCheckpoint(1000);
+        facet.setTotalPointsActivatedDirect(1000);
         facet.checkpointProposalThreshold(1);
         vm.roll(111);
-        facet.setTotalPointsActivatedWithCheckpoint(100);
+        facet.setTotalPointsActivatedDirect(100);
 
         uint256 oneBlockWeighted = ConvictionsUtils.weightedAverage(1000, 100, 1, decay);
         assertEq(facet.exposedGetThresholdPoints(1), oneBlockWeighted);
@@ -553,7 +553,7 @@ contract CVAllocationFacetTest is Test {
         uint256 decay = 9_000_000;
         facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
         vm.roll(100);
-        facet.setTotalPointsActivatedWithCheckpoint(100);
+        facet.setTotalPointsActivatedDirect(100);
         facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, block.number, 0, 0);
         facet.initializeProposalThresholdSnapshot(1);
 
@@ -572,11 +572,11 @@ contract CVAllocationFacetTest is Test {
         uint256 decay = 9_000_000;
         facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
         vm.roll(100);
-        facet.setTotalPointsActivatedWithCheckpoint(100);
+        facet.setTotalPointsActivatedDirect(100);
         facet.setProposal(1, ProposalStatus.Active, 0, address(token), beneficiary, member, block.number, 0, 0);
         facet.initializeProposalThresholdSnapshot(1);
 
-        facet.setTotalPointsActivatedWithCheckpoint(0);
+        facet.setTotalPointsActivatedDirect(0);
         assertEq(facet.exposedGetThresholdPoints(1), 100);
     }
 
@@ -732,17 +732,17 @@ contract CVAllocationFacetTest is Test {
         facet.setCvParams(CVParams({maxRatio: maxRatio, weight: weight, decay: decay, minThresholdPoints: 0}));
 
         vm.roll(100);
-        facet.setTotalPointsActivatedWithCheckpoint(100 ether);
+        facet.setTotalPointsActivatedDirect(100 ether);
         facet.setProposal(
             1, ProposalStatus.Active, requestedAmount, facet.nativeToken(), beneficiary, member, block.number, 0, 0
         );
         facet.initializeProposalThresholdSnapshot(1);
 
         vm.roll(110);
-        facet.setTotalPointsActivatedWithCheckpoint(1000 ether);
+        facet.setTotalPointsActivatedDirect(1000 ether);
         facet.checkpointProposalThreshold(1);
         vm.roll(111);
-        facet.setTotalPointsActivatedWithCheckpoint(100 ether);
+        facet.setTotalPointsActivatedDirect(100 ether);
         vm.roll(200);
 
         uint256 weightedPoints = facet.exposedGetThresholdPoints(1);

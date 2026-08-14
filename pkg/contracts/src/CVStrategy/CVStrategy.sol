@@ -180,6 +180,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     uint256 public proposalCounter;
     uint256 public currentArbitrableConfigVersion;
     uint256 public totalStaked;
+    /// @dev All mutations must use `_checkpointTotalPointsActivated` to preserve the pool threshold history.
     // slither-disable-next-line uninitialized-state
     uint256 public totalPointsActivated;
     CVParams public cvParams;
@@ -227,12 +228,15 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         collateralVaultTemplate = _collateralVaultTemplate;
     }
 
-    /// @notice Initialize time-weighted threshold state for proposals created before this upgrade.
+    /// @notice Initialize state required by proposals created before this upgrade.
     /// @dev Intended for an atomic UUPS upgradeToAndCall and removable in the next implementation.
-    ///      Upgrade tooling must verify the proposal count fits the destination chain's block gas limit.
+    ///      Gas scales with `proposalCounter`, including empty proposal IDs. Operators must simulate the
+    ///      complete upgrade on each destination chain and verify it fits that chain's block gas limit.
     function reinitializeV2MigrateThresholdSnapshots() external reinitializer(2) onlyOwner {
         uint256 currentTotalPointsActivated = totalPointsActivated;
         uint256 currentProposalCounter = proposalCounter;
+        bool migrateOpenStreamingProposals =
+            proposalType == ProposalType.Streaming && !openStreamingProposalsInitialized;
 
         for (uint256 proposalId = 1; proposalId <= currentProposalCounter; proposalId++) {
             Proposal storage proposal = proposals[proposalId];
@@ -241,6 +245,20 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
             }
             proposal.thresholdSnapshot = currentTotalPointsActivated;
             proposal.thresholdUpdatedAtBlock = block.number;
+
+            if (
+                migrateOpenStreamingProposals && openStreamingProposalIndex[proposalId] == 0
+                    && proposal.proposalStatus != ProposalStatus.Cancelled
+                    && proposal.proposalStatus != ProposalStatus.Rejected
+                    && proposal.proposalStatus != ProposalStatus.Executed
+            ) {
+                openStreamingProposalIds.push(proposalId);
+                openStreamingProposalIndex[proposalId] = openStreamingProposalIds.length;
+            }
+        }
+
+        if (migrateOpenStreamingProposals) {
+            openStreamingProposalsInitialized = true;
         }
 
         emit ThresholdSnapshotsMigrated(currentProposalCounter, currentTotalPointsActivated, block.number);
@@ -685,12 +703,15 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     function _getThresholdPoints(Proposal storage _proposal) internal view returns (uint256) {
         uint256 updatedAtBlock = _proposal.thresholdUpdatedAtBlock;
         uint256 proposalThresholdPoints = _proposal.thresholdSnapshot;
+        uint256 poolThresholdPoints = _getPoolThresholdPoints();
+        if (updatedAtBlock == 0) {
+            return proposalThresholdPoints > poolThresholdPoints ? proposalThresholdPoints : poolThresholdPoints;
+        }
         if (proposalThresholdPoints > totalPointsActivated) {
             proposalThresholdPoints = ConvictionsUtils.weightedAverage(
                 proposalThresholdPoints, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
             );
         }
-        uint256 poolThresholdPoints = _getPoolThresholdPoints();
         return proposalThresholdPoints > poolThresholdPoints ? proposalThresholdPoints : poolThresholdPoints;
     }
 

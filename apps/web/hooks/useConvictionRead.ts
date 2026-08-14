@@ -17,6 +17,21 @@ import { getRemainingBlocksToPassWithThresholdAdjustment } from "@/utils/convict
 import { logOnce } from "@/utils/log";
 import { calculatePercentageBigInt, CV_SCALE_PRECISION } from "@/utils/numbers";
 
+type ProposalContractResult = readonly [
+  submitter: Address,
+  beneficiary: Address,
+  requestedToken: Address,
+  requestedAmount: bigint,
+  stakedAmount: bigint,
+  proposalStatus: number,
+  blockLast: bigint,
+  convictionLast: bigint,
+  threshold: bigint,
+  voterStakedPoints: bigint,
+  arbitrableConfigVersion: bigint,
+  protocol: bigint,
+];
+
 export type ProposalDataLight = Maybe<
   Pick<
     CVProposal,
@@ -138,12 +153,13 @@ export const useConvictionRead = ({
     }
 
     if (proposalResult.status === "fulfilled") {
-      const proposal = proposalResult.value as readonly unknown[];
-      setUpdatedStakedAmount(proposal[4] as bigint);
+      const proposal = proposalResult.value as ProposalContractResult;
+      const [, , , , stakedAmount, , , , threshold] = proposal;
+      setUpdatedStakedAmount(stakedAmount);
       setErrorStakedAmount(undefined);
 
       if (shouldReadThreshold) {
-        setProposalThreshold(proposal[8] as bigint);
+        setProposalThreshold(threshold);
         setThresholdReadError(undefined);
       } else {
         setProposalThreshold(undefined);
@@ -313,12 +329,7 @@ export const useConvictionRead = ({
       initialized && resolvedStableThreshold != null ?
         calculatePercentageBigInt(resolvedStableThreshold, resolvedMaxCVSupply)
       : undefined,
-    [
-      initialized,
-      resolvedMaxCVSupply,
-      resolvedStableThreshold,
-      token?.decimals,
-    ],
+    [initialized, resolvedMaxCVSupply, resolvedStableThreshold],
   );
 
   const isThresholdBelowDisplayPrecision = useMemo(() => {

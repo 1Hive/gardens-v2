@@ -139,6 +139,7 @@ abstract contract CVStrategyBaseFacet {
     uint256 public totalStaked;
 
     /// @notice Total voting power activated in this strategy - Slot 113
+    /// @dev All mutations must use `_checkpointTotalPointsActivated` to preserve the pool threshold history.
     // slither-disable-next-line uninitialized-state
     uint256 public totalPointsActivated;
 
@@ -526,12 +527,15 @@ abstract contract CVStrategyBaseFacet {
     function _getThresholdPoints(Proposal storage _proposal) internal view returns (uint256) {
         uint256 updatedAtBlock = _proposal.thresholdUpdatedAtBlock;
         uint256 proposalThresholdPoints = _proposal.thresholdSnapshot;
+        uint256 poolThresholdPoints = _getPoolThresholdPoints();
+        if (updatedAtBlock == 0) {
+            return proposalThresholdPoints > poolThresholdPoints ? proposalThresholdPoints : poolThresholdPoints;
+        }
         if (proposalThresholdPoints > totalPointsActivated) {
             proposalThresholdPoints = ConvictionsUtils.weightedAverage(
                 proposalThresholdPoints, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
             );
         }
-        uint256 poolThresholdPoints = _getPoolThresholdPoints();
         return proposalThresholdPoints > poolThresholdPoints ? proposalThresholdPoints : poolThresholdPoints;
     }
 

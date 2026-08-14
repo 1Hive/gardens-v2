@@ -115,7 +115,7 @@ contract CVProposalFacetTest is Test {
             CreateProposal(1, beneficiary, 10, poolToken, Metadata({protocol: 1, pointer: "p"}));
 
         vm.roll(100);
-        facet.setTotalPointsActivatedWithCheckpoint(77);
+        facet.setTotalPointsActivatedDirect(77);
 
         vm.deal(address(allo), 2 ether);
         vm.prank(address(allo));
@@ -342,13 +342,13 @@ contract CVProposalFacetTest is Test {
             CreateProposal(1, beneficiary, 10, poolToken, Metadata({protocol: 1, pointer: "p"}));
 
         vm.roll(100);
-        facet.setTotalPointsActivatedWithCheckpoint(100);
+        facet.setTotalPointsActivatedDirect(100);
         vm.deal(address(allo), 2 ether);
         vm.prank(address(allo));
         facet.registerRecipient{value: 1 ether}(abi.encode(proposal), member);
 
         vm.roll(110);
-        facet.setTotalPointsActivatedWithCheckpoint(50);
+        facet.setTotalPointsActivatedDirect(50);
         vm.prank(member);
         facet.editProposal(1, Metadata({protocol: 1, pointer: "p"}), beneficiary, 11);
 

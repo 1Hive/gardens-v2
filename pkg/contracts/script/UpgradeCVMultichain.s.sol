@@ -456,15 +456,15 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     function _syncCVUtilLibFromStrategyImplementation(address implementation) internal {
         require(implementation != address(0), "strategy implementation missing");
         bytes memory runtimeCode = implementation.code;
-        require(runtimeCode.length > 14004, "strategy implementation code too short");
+        require(runtimeCode.length > 17112, "strategy implementation code too short");
 
-        address linkedLibrary = _readLinkedAddress(runtimeCode, 6798);
+        address linkedLibrary = _readLinkedAddress(runtimeCode, 7066);
         require(linkedLibrary != address(0), "CV_UTIL_LIB link missing");
-        require(_readLinkedAddress(runtimeCode, 6955) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 8737) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 13358) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 14089) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 16806) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 7223) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 9005) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 13664) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 14376) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 17093) == linkedLibrary, "CV_UTIL_LIB link mismatch");
         require(linkedLibrary.code.length != 0, "CV_UTIL_LIB has no code");
 
         _writeNetworkAddress(".IMPLEMENTATIONS.CV_UTIL_LIB", linkedLibrary);
@@ -696,7 +696,8 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         StrategyUpgradeOptions memory options
     ) internal {
         CVStrategy cvStrategy = CVStrategy(payable(proxy));
-        bool needsUpgradeTo = !options.skipUpgradeTo && _proxyImplementationAddress(proxy) != context.strategyImplementation;
+        bool implementationIsCurrent = _proxyImplementationAddress(proxy) == context.strategyImplementation;
+        bool needsUpgradeTo = !options.skipUpgradeTo && !implementationIsCurrent;
         IDiamond.FacetCut[] memory allCuts = _mergeFacetCuts(
             _buildStaleSelectorRemovalCuts(proxy, context.cvCuts), _buildChangedFacetCuts(proxy, context.cvCuts)
         );
@@ -708,12 +709,16 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
             }
             if (needsUpgradeTo) {
                 _upgradeStrategyImplementation(cvStrategy, context.strategyImplementation, options);
+            } else if (options.migrateThresholdSnapshots && implementationIsCurrent) {
+                cvStrategy.reinitializeV2MigrateThresholdSnapshots();
             }
             return;
         }
 
         if (needsUpgradeTo) {
             _upgradeStrategyImplementation(cvStrategy, context.strategyImplementation, options);
+        } else if (options.migrateThresholdSnapshots && implementationIsCurrent) {
+            cvStrategy.reinitializeV2MigrateThresholdSnapshots();
         }
         if (needsDiamondCut) {
             IDiamondCut(proxy).diamondCut(allCuts, options.strategyInit, options.strategyInitCalldata);

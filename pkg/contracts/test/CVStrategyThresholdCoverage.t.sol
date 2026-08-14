@@ -4,8 +4,7 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import {ProposalStatus} from "../src/CVStrategy/ICVStrategy.sol";
-import {CVParams} from "../src/CVStrategy/ICVStrategy.sol";
+import {ProposalStatus, ProposalType, CVParams} from "../src/CVStrategy/ICVStrategy.sol";
 import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
 import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
 import {CVStrategyHarness} from "./helpers/CVStrategyHelpers.sol";
@@ -22,13 +21,13 @@ contract CVStrategyThresholdCoverage is Test {
         strategy.setProposal(1, member, 0, ProposalStatus.Active, block.number, 0);
         uint256 decay = 9_000_000;
         strategy.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
-        strategy.setTotalPointsActivatedWithCheckpoint(100);
+        strategy.setTotalPointsActivatedDirect(100);
         strategy.exposedInitializeThresholdSnapshot(1);
         (uint256 updatedAtBlock, uint256 thresholdSnapshot) = strategy.getProposalThresholdState(1);
         assertEq(updatedAtBlock, block.number);
         assertEq(thresholdSnapshot, 100);
 
-        strategy.setTotalPointsActivatedWithCheckpoint(0);
+        strategy.setTotalPointsActivatedDirect(0);
         assertEq(strategy.exposedGetThresholdPoints(1), 100);
         vm.roll(block.number + 1);
         assertEq(strategy.exposedGetThresholdPoints(1), ConvictionsUtils.weightedAverage(100, 0, 1, decay));
@@ -37,7 +36,7 @@ contract CVStrategyThresholdCoverage is Test {
         strategy.exposedSetThresholdSnapshot(3);
         assertEq(strategy.exposedGetThresholdPoints(3), 0);
 
-        strategy.setTotalPointsActivatedWithCheckpoint(21);
+        strategy.setTotalPointsActivatedDirect(21);
         strategy.exposedSetThresholdSnapshot(3);
         assertEq(strategy.exposedGetThresholdPoints(3), 21);
 
@@ -57,8 +56,20 @@ contract CVStrategyThresholdCoverage is Test {
         assertEq(thresholdSnapshot, 21);
     }
 
+    function test_standaloneStrategy_unmigratedProposalKeepsLegacyMonotonicThreshold() public {
+        strategy.setProposal(1, member, 0, ProposalStatus.Active, block.number, 0);
+        strategy.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: 9_000_000, minThresholdPoints: 0}));
+        strategy.setTotalPointsActivatedDirect(50);
+        strategy.setProposalThresholdState(1, 0, 100);
+
+        vm.roll(block.number + 1_000_000);
+
+        assertEq(strategy.exposedGetThresholdPoints(1), 100);
+    }
+
     function test_reinitializeV2MigrateThresholdSnapshots_bulkInitializesExistingProposals() public {
         CVStrategyHarness localStrategy = _newInitializedStrategy(address(this));
+        localStrategy.setProposalType(ProposalType.Streaming);
         localStrategy.setTotalPointsActivated(77);
         localStrategy.setProposal(1, member, 0, ProposalStatus.Active, block.number, 0);
         localStrategy.setProposal(3, member, 0, ProposalStatus.Executed, block.number, 0);
@@ -75,6 +86,12 @@ contract CVStrategyThresholdCoverage is Test {
         assertEq(missingSnapshot, 0);
         assertEq(thirdUpdatedAt, block.number);
         assertEq(thirdSnapshot, 77);
+        assertTrue(localStrategy.openStreamingProposalsInitialized());
+        assertEq(localStrategy.openStreamingProposalIds(0), 1);
+        assertEq(localStrategy.openStreamingProposalIndex(1), 1);
+        assertEq(localStrategy.openStreamingProposalIndex(3), 0);
+        vm.expectRevert();
+        localStrategy.openStreamingProposalIds(1);
     }
 
     function test_reinitializeV2MigrateThresholdSnapshots_onlyOwnerAndOnce() public {

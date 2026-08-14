@@ -170,23 +170,23 @@ contract CVStrategyBaseFacetTest is Test {
         facet.setProposal(1, member, block.number, 0);
         uint256 decay = 9_000_000;
         facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
-        facet.setTotalPointsActivatedWithCheckpoint(100);
+        facet.setTotalPointsActivatedDirect(100);
         facet.exposedInitializeThresholdSnapshot(1);
         (uint256 updatedAtBlock, uint256 thresholdSnapshot) = facet.getProposalThresholdState(1);
         assertEq(updatedAtBlock, block.number);
         assertEq(thresholdSnapshot, 100);
 
-        facet.setTotalPointsActivatedWithCheckpoint(0);
+        facet.setTotalPointsActivatedDirect(0);
         assertEq(facet.exposedGetThresholdPoints(1), 100, "same-block decrease must not lower threshold");
 
         vm.roll(block.number + 1);
         assertEq(facet.exposedGetThresholdPoints(1), ConvictionsUtils.weightedAverage(100, 0, 1, decay));
 
-        facet.setTotalPointsActivatedWithCheckpoint(200);
+        facet.setTotalPointsActivatedDirect(200);
         assertEq(facet.exposedGetThresholdPoints(1), 200, "increases apply immediately");
         facet.exposedSetThresholdSnapshot(1);
 
-        facet.setTotalPointsActivatedWithCheckpoint(0);
+        facet.setTotalPointsActivatedDirect(0);
         assertEq(facet.exposedGetThresholdPoints(1), 200, "checkpointed peak must not fall in the same block");
 
         facet.setProposalThresholdState(3, 0, 99);
@@ -202,7 +202,7 @@ contract CVStrategyBaseFacetTest is Test {
         assertEq(updatedAtBlock, block.number);
         assertEq(thresholdSnapshot, 0);
 
-        facet.setTotalPointsActivatedWithCheckpoint(123);
+        facet.setTotalPointsActivatedDirect(123);
         facet.setProposalThresholdState(5, 0, 0);
         facet.exposedSetThresholdSnapshot(5);
         (, thresholdSnapshot) = facet.getProposalThresholdState(5);

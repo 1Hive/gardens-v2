@@ -330,7 +330,7 @@ contract CVAdminFacetHarness is CVAdminFacet {
         totalPointsActivated = amount;
     }
 
-    function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
+    function setTotalPointsActivatedDirect(uint256 amount) external {
         totalPointsActivated = amount;
     }
 
@@ -470,7 +470,7 @@ contract CVAdminFacetTest is Test {
         registry.grantRole(allowlistRole, member);
         registry.setMemberPower(member, 10);
         registry.setActivated(member, true);
-        facet.setTotalPointsActivatedWithCheckpoint(4);
+        facet.setTotalPointsActivatedDirect(4);
         vm.roll(block.number + 5);
 
         ArbitrableConfig memory arb = ArbitrableConfig({

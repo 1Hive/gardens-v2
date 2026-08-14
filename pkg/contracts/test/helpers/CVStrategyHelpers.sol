@@ -249,7 +249,7 @@ contract CVProposalFacetHarness is CVProposalFacet {
         arbitrableConfigs[version] = config;
     }
 
-    function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
+    function setTotalPointsActivatedDirect(uint256 amount) external {
         totalPointsActivated = amount;
     }
 
@@ -347,7 +347,7 @@ contract CVStrategyBaseFacetHarness is CVStrategyBaseFacet {
         pointSystem = system;
     }
 
-    function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
+    function setTotalPointsActivatedDirect(uint256 amount) external {
         totalPointsActivated = amount;
     }
 
@@ -553,8 +553,13 @@ contract CVStrategyHarness is CVStrategy {
         totalPointsActivated = amount;
     }
 
-    function setTotalPointsActivatedWithCheckpoint(uint256 amount) external {
+    function setTotalPointsActivatedDirect(uint256 amount) external {
         totalPointsActivated = amount;
+    }
+
+    function setProposalThresholdState(uint256 proposalId, uint256 updatedAtBlock, uint256 thresholdSnapshot) external {
+        proposals[proposalId].thresholdUpdatedAtBlock = updatedAtBlock;
+        proposals[proposalId].thresholdSnapshot = thresholdSnapshot;
     }
 
     function exposedInitializeThresholdSnapshot(uint256 proposalId) external {

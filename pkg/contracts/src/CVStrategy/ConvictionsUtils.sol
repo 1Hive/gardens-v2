@@ -81,7 +81,8 @@ library ConvictionsUtils {
     /**
      * @notice Move an active-points snapshot toward the current value with the same decay used by conviction.
      * @dev The remaining difference is rounded up so integer truncation cannot make the weighted value
-     *      move away from the snapshot faster than the conviction decay factor.
+     *      move away from the snapshot faster than the conviction decay factor. This function is public
+     *      so off-chain tools can reproduce the value. Callers must provide `_decay < D`.
      */
     function weightedAverage(
         uint256 _thresholdPointsSnapshot,
