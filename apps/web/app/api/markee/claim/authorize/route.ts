@@ -248,7 +248,8 @@ const createClaimMessage = async ({
 };
 
 const issueChallenge = async (body: ChallengeRequest) => {
-  // Fail closed until production has a shared, atomic single-use nonce store.
+  // TODO(#953): Replace this with a shared, atomic single-use nonce store.
+  // Fail closed until production has that durable store.
   // An in-memory Map cannot prevent replay across serverless instances.
   if (process.env.NODE_ENV === "production") {
     return jsonError(

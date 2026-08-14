@@ -110,6 +110,8 @@ contract SquidBridgeAdapter is Ownable, IBridgeAdapter {
 
         uint256 surplus = msg.value - quote.executionValue;
         if (surplus != 0) {
+            // The router always supplies its registered CommunityRevenueVault,
+            // whose payable receive function makes this push refund reliable.
             (bool refunded,) = payable(request.refundRecipient).call{value: surplus}("");
             if (!refunded) revert RefundFailed();
         }

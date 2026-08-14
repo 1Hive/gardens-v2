@@ -275,8 +275,9 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
         netAmount = grossAmount - gasCost;
         if (gasCost == 0) return netAmount;
 
-        // msg.sender is constrained by onlyKeeper on sweep; reimbursing that
-        // owner-authorized caller is the intended destination.
+        // msg.sender is constrained by onlyKeeper on sweep. Operationally,
+        // keepers must be EOAs; reimbursing that owner-authorized caller is the
+        // intended destination and a reverting receiver must fail the sweep.
         // slither-disable-next-line arbitrary-send-eth
         (bool success,) = payable(msg.sender).call{value: gasCost}("");
         if (!success) revert KeeperReimbursementFailed();
