@@ -35,6 +35,7 @@ import {
 import { Button } from "@/components/Button";
 import { CommunityStreamingMarkeeModal } from "@/components/CommunityStreamingMarkeeModal";
 import { InfoBox } from "@/components/InfoBox";
+import { InfoWrapper } from "@/components/InfoWrapper";
 import { Modal } from "@/components/Modal";
 import {
   TransactionModal,
@@ -65,9 +66,7 @@ import {
   getMarkeeRequiredNativeBalance,
   getMarkeeStreamAmounts,
   getMarkeeStreamFunding,
-  MARKEE_BUFFER_PERIOD,
   MARKEE_SECONDS_IN_MONTH,
-  MarkeeFundingUnit,
   markeeOwnerABI,
   streamingLeaderboardRuntimeABI,
   superfluidHostABI,
@@ -435,7 +434,15 @@ function CommunityMarkeePreviewModal({
   const minimumMonthlyRateAmount = BigInt(
     minimumMonthlyRateWei ?? "10000000000000000",
   );
-  const minimumMonthlyRate = Number(formatEther(minimumMonthlyRateAmount));
+  const effectiveMinimumMonthlyRateAmount =
+    getMarkeeStreamAmounts(minimumMonthlyRateAmount, 10n ** 18n).ratePerSecond *
+    MARKEE_SECONDS_IN_MONTH;
+  const effectiveMinimumMonthlyRate = formatEthFundingInput(
+    effectiveMinimumMonthlyRateAmount,
+  );
+  const effectiveMinimumMonthlyRateInputAmount = parseEther(
+    effectiveMinimumMonthlyRate,
+  );
   const topMonthlyRateAmount =
     BigInt(topRatePerSecondWei ?? "0") * MARKEE_SECONDS_IN_MONTH;
   const hasTopStream = topMonthlyRateAmount > 0n;
@@ -443,16 +450,15 @@ function CommunityMarkeePreviewModal({
     hasTopStream ?
       [
         topMonthlyRateAmount + parseEther("0.01"),
-        minimumMonthlyRateAmount,
+        effectiveMinimumMonthlyRateAmount,
       ].reduce((highest, amount) => (amount > highest ? amount : highest))
-    : minimumMonthlyRateAmount;
-  const challengeMonthlyRate = formatEthInput(challengeMonthlyRateAmount);
-  const presetOneMonthFundingAmount = formatEthFundingInput(
-    getMarkeeStreamAmounts(challengeMonthlyRateAmount, 10n ** 18n).value,
+    : effectiveMinimumMonthlyRateAmount;
+  const challengeMonthlyRate = formatEthFundingInput(
+    challengeMonthlyRateAmount,
   );
-  const [streamAmount, setStreamAmount] = useState(presetOneMonthFundingAmount);
+  const [monthlyRate, setMonthlyRate] = useState(challengeMonthlyRate);
+  const [isMonthlyRateFocused, setIsMonthlyRateFocused] = useState(false);
   const [fundDuration, setFundDuration] = useState("1");
-  const [fundUnit, setFundUnit] = useState<MarkeeFundingUnit>("month");
   const [streamValidationError, setStreamValidationError] = useState<
     string | null
   >(null);
@@ -475,6 +481,8 @@ function CommunityMarkeePreviewModal({
     null,
   );
   const [activeStreamRate, setActiveStreamRate] = useState(0n);
+  const [ethxWalletBalance, setEthxWalletBalance] = useState(0n);
+  const [existingStreamDeposit, setExistingStreamDeposit] = useState(0n);
   const [isStreamPositionLoading, setIsStreamPositionLoading] = useState(false);
   const [transactionNotification, setTransactionNotification] =
     useState<MarkeeTransactionNotification | null>(null);
@@ -536,6 +544,11 @@ function CommunityMarkeePreviewModal({
     connectedAccount.toLowerCase() === topMarkeeOwner.toLowerCase();
   const ownedMarkeeAddress =
     isTopMarkeeOwner ? topMarkeeAddress : connectedMarkeeAddress;
+  const isOwnedMarkeeWinning =
+    isTopMarkeeOwner ||
+    (ownedMarkeeAddress != null &&
+      topMarkeeAddress != null &&
+      ownedMarkeeAddress.toLowerCase() === topMarkeeAddress.toLowerCase());
   const ownedMarkeeMessage =
     isTopMarkeeOwner ? message : connectedMarkeeMessage;
   const ownedMarkeeName =
@@ -572,77 +585,75 @@ function CommunityMarkeePreviewModal({
       watch: true,
     },
   );
-  const streamSummary = useMemo(() => {
-    const total = Number(streamAmount) || 0;
-    const duration = Number(fundDuration) || 0;
-    const months =
-      fundUnit === "hour" ? duration / 730
-      : fundUnit === "day" ? duration / (365 / 12)
-      : fundUnit === "year" ? duration * 12
-      : duration;
-    const bufferMonths = Number(MARKEE_BUFFER_PERIOD) / 2_628_000;
-    const monthly = months > 0 ? total / (months + bufferMonths) : 0;
-
-    return {
-      duration,
-      months,
-      monthly,
-      total,
-    };
-  }, [fundDuration, fundUnit, streamAmount]);
-  const presetFundingAmount = useMemo(() => {
-    try {
-      return formatEthFundingInput(
-        getMarkeeStreamAmounts(
-          challengeMonthlyRateAmount,
-          getMarkeeFundingMonths(fundDuration, fundUnit),
-        ).value,
-      );
-    } catch {
-      return presetOneMonthFundingAmount;
-    }
-  }, [
-    challengeMonthlyRateAmount,
-    fundDuration,
-    fundUnit,
-    presetOneMonthFundingAmount,
-  ]);
+  const monthsFixed18 = useMemo(
+    () => getMarkeeFundingMonths(fundDuration, "month"),
+    [fundDuration],
+  );
   const derivedMonthlyRateAmount = useMemo(() => {
     try {
-      return getMarkeeMonthlyAmountForFundingValue(
-        parseEther(streamAmount),
-        getMarkeeFundingMonths(fundDuration, fundUnit),
-      );
+      return parseEther(monthlyRate);
     } catch {
       return 0n;
     }
-  }, [fundDuration, fundUnit, streamAmount]);
+  }, [monthlyRate]);
+  const streamAmounts = useMemo(
+    () => getMarkeeStreamAmounts(derivedMonthlyRateAmount, monthsFixed18),
+    [derivedMonthlyRateAmount, monthsFixed18],
+  );
+  const streamAmount = formatEthFundingInput(streamAmounts.value);
+  const combinedWalletBalance =
+    (walletBalance?.value ?? 0n) + ethxWalletBalance;
+  const streamDepositTopUp =
+    streamAmounts.buffer > existingStreamDeposit ?
+      streamAmounts.buffer - existingStreamDeposit
+    : 0n;
+  const additionalStreamFundingRequired =
+    streamAmounts.prefund + streamDepositTopUp;
+  const estimatedGasReserve = parseEther("0.0002");
+  const nativeFundingRequired =
+    additionalStreamFundingRequired > ethxWalletBalance ?
+      additionalStreamFundingRequired - ethxWalletBalance
+    : 0n;
+  const previewNativeBalanceRequired =
+    nativeFundingRequired + estimatedGasReserve;
+  const hasInsufficientWalletBalance =
+    isLive &&
+    connectedAccount != null &&
+    !isWalletBalanceLoading &&
+    !isStreamPositionLoading &&
+    walletBalance != null &&
+    walletBalance.value < previewNativeBalanceRequired;
+  const insufficientBalanceMessage =
+    hasInsufficientWalletBalance ?
+      `Funding needs ${formatEthAmount(additionalStreamFundingRequired)} ETH + ETHx, plus about ${formatEthAmount(estimatedGasReserve)} ETH for gas.`
+    : null;
+  const maxMonthlyRateAmount = useMemo(() => {
+    if (monthsFixed18 <= 0n) return 0n;
+    const nativeBalance = walletBalance?.value ?? 0n;
+    const spendableBalance =
+      nativeBalance > estimatedGasReserve ?
+        nativeBalance - estimatedGasReserve
+      : 0n;
+    return getMarkeeMonthlyAmountForFundingValue(
+      spendableBalance + ethxWalletBalance,
+      monthsFixed18,
+      existingStreamDeposit,
+    );
+  }, [
+    estimatedGasReserve,
+    ethxWalletBalance,
+    existingStreamDeposit,
+    monthsFixed18,
+    walletBalance,
+  ]);
   const isBelowMinimum =
     derivedMonthlyRateAmount > 0n &&
     derivedMonthlyRateAmount < minimumMonthlyRateAmount;
-  const fundingDurationError =
-    streamSummary.months > 0 && streamSummary.months <= 4 / 730 ?
-      "Fund the stream for more than four hours to cover its refundable buffer."
-    : null;
-  const streamFormError = fundingDurationError ?? streamValidationError;
-  const handleFundingUnitChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    const nextUnit = event.target.value as MarkeeFundingUnit;
-    if (nextUnit === "hour") {
-      const minimumFundingHours = Number(MARKEE_BUFFER_PERIOD / 3_600n) + 1;
-      const currentDuration = Number(fundDuration) || 0;
-      setFundDuration(
-        Math.max(minimumFundingHours, currentDuration).toString(),
-      );
-    }
-    setFundUnit(nextUnit);
-  };
+  const streamFormError = streamValidationError;
   const canStartPreview =
     derivedMonthlyRateAmount >= minimumMonthlyRateAmount &&
-    streamSummary.total > 0 &&
-    streamSummary.months > 0 &&
-    fundingDurationError == null &&
+    streamAmounts.value > 0n &&
+    monthsFixed18 > 0n &&
     (!shouldCreateMarkee ||
       (newMarkeeMessage.trim().length > 0 &&
         newMarkeeMessageByteLength <= messageByteLimit &&
@@ -652,6 +663,11 @@ function CommunityMarkeePreviewModal({
       (editedMessage.trim().length > 0 &&
         messageByteLength <= messageByteLimit &&
         nameByteLength <= nameByteLimit));
+  const isMarkeeMessageMissing =
+    (shouldCreateMarkee && newMarkeeMessage.trim().length === 0) ||
+    (!shouldCreateMarkee &&
+      shouldShowOwnedMarkeeEditor &&
+      editedMessage.trim().length === 0);
   const newMarkeeMessageInput = (
     <div className="flex flex-col gap-4">
       <label className="flex flex-col gap-2">
@@ -696,18 +712,17 @@ function CommunityMarkeePreviewModal({
 
   useEffect(() => {
     if (isOpen) {
-      setStreamAmount(presetOneMonthFundingAmount);
+      setMonthlyRate(challengeMonthlyRate);
       setFundDuration("1");
-      setFundUnit("month");
       setStreamValidationError(null);
       setNewMarkeeMessage("");
       setNewMarkeeName("");
     }
-  }, [isOpen, presetOneMonthFundingAmount]);
+  }, [challengeMonthlyRate, isOpen]);
 
   useEffect(() => {
     setStreamValidationError(null);
-  }, [fundDuration, fundUnit, streamAmount, walletBalance?.value]);
+  }, [ethxWalletBalance, fundDuration, monthlyRate, walletBalance?.value]);
 
   useEffect(() => {
     if (isOpen) {
@@ -726,41 +741,60 @@ function CommunityMarkeePreviewModal({
     ) {
       setActiveStreamMarkee(null);
       setActiveStreamRate(0n);
+      setEthxWalletBalance(0n);
+      setExistingStreamDeposit(0n);
       setIsStreamPositionLoading(false);
       return;
     }
 
     let cancelled = false;
     setIsStreamPositionLoading(true);
+    setEthxWalletBalance(0n);
+    setExistingStreamDeposit(0n);
 
     void (async () => {
-      const [ethxResult, activeMarkeeResult] = await Promise.all([
-        publicClient.readContract({
-          abi: streamingLeaderboardRuntimeABI,
-          address: leaderboardAddress,
-          functionName: "ETHX",
-        }),
-        publicClient.readContract({
-          abi: streamingLeaderboardRuntimeABI,
-          address: leaderboardAddress,
-          args: [connectedAccount],
-          functionName: "backerMarkee",
-        }),
-      ]);
+      const ethxResult = await publicClient.readContract({
+        abi: streamingLeaderboardRuntimeABI,
+        address: leaderboardAddress,
+        functionName: "ETHX",
+      });
       if (!isAddress(ethxResult)) {
         throw new Error("The Markee stream token is unavailable.");
       }
-
-      const flowRate = await publicClient.readContract({
-        abi: cfaV1ForwarderABI,
-        address: CFA_V1_FORWARDER_ADDRESS,
-        args: [getAddress(ethxResult), connectedAccount, leaderboardAddress],
-        functionName: "getFlowrate",
-      });
+      const ethx = getAddress(ethxResult);
+      const [activeMarkeeResult, flowRate, wrappedBalance, streamDeposit] =
+        await Promise.all([
+          publicClient.readContract({
+            abi: streamingLeaderboardRuntimeABI,
+            address: leaderboardAddress,
+            args: [connectedAccount],
+            functionName: "backerMarkee",
+          }),
+          publicClient.readContract({
+            abi: cfaV1ForwarderABI,
+            address: CFA_V1_FORWARDER_ADDRESS,
+            args: [ethx, connectedAccount, leaderboardAddress],
+            functionName: "getFlowrate",
+          }),
+          publicClient.readContract({
+            abi: ethxApproveABI,
+            address: ethx,
+            args: [connectedAccount],
+            functionName: "balanceOf",
+          }),
+          publicClient.readContract({
+            abi: streamingLeaderboardRuntimeABI,
+            address: leaderboardAddress,
+            args: [connectedAccount],
+            functionName: "backerDeposit",
+          }),
+        ]);
       if (cancelled) return;
 
       const liveRate = flowRate > 0n ? flowRate : 0n;
       setActiveStreamRate(liveRate);
+      setEthxWalletBalance(wrappedBalance);
+      setExistingStreamDeposit(streamDeposit);
       setActiveStreamMarkee(
         (
           liveRate > 0n &&
@@ -771,14 +805,7 @@ function CommunityMarkeePreviewModal({
         : null,
       );
       if (liveRate > 0n) {
-        setStreamAmount(
-          formatEthFundingInput(
-            getMarkeeStreamAmounts(
-              liveRate * MARKEE_SECONDS_IN_MONTH,
-              10n ** 18n,
-            ).value,
-          ),
-        );
+        setMonthlyRate(formatEthInput(liveRate * MARKEE_SECONDS_IN_MONTH));
       }
     })()
       .catch((error: unknown) => {
@@ -1099,13 +1126,7 @@ function CommunityMarkeePreviewModal({
     let streamTransactionHash: `0x${string}` | undefined;
     let notificationToastId: string | undefined;
     try {
-      const monthsFixed18 = getMarkeeFundingMonths(fundDuration, fundUnit);
-      const fundingValue = parseEther(streamAmount);
-      const monthlyWei = getMarkeeMonthlyAmountForFundingValue(
-        fundingValue,
-        monthsFixed18,
-      );
-      const amounts = getMarkeeStreamAmounts(monthlyWei, monthsFixed18);
+      const amounts = streamAmounts;
       if (amounts.ratePerSecond <= 0n || amounts.prefund <= amounts.buffer) {
         throw new Error("Fund the stream for longer than its required buffer.");
       }
@@ -1552,8 +1573,9 @@ function CommunityMarkeePreviewModal({
           nameTransactionHash,
           streamTransactionHash,
           streamAmount,
+          monthlyRate,
           fundDuration,
-          fundUnit,
+          fundUnit: "month",
           tags: {
             error_type: "markee-transaction-error",
             transaction_step: activeStep,
@@ -1788,12 +1810,20 @@ function CommunityMarkeePreviewModal({
                   isStoppingStream ||
                   isConnectedMarkeeLoading ||
                   isStreamPositionLoading ||
+                  hasInsufficientWalletBalance ||
                   streamFormError != null ||
                   (isLive && connectedAccount == null)
                 }
                 isLoading={isStreaming}
                 onClick={handleStartStream}
                 testId="markee-stream-preview-submit"
+                tooltip={
+                  isMarkeeMessageMissing ?
+                    "Add a message for your Markee."
+                  : streamFormError ?? insufficientBalanceMessage ?? undefined
+                }
+                tooltipClassName="flex justify-end text-left"
+                tooltipSide="tooltip-top-left"
               >
                 {isConnectedMarkeeLoading || isStreamPositionLoading ?
                   "Checking your stream…"
@@ -1924,133 +1954,153 @@ function CommunityMarkeePreviewModal({
               )
             }
 
-            <button
-              type="button"
-              className="w-full rounded-xl border border-primary-content bg-neutral/60 p-4 text-left transition-colors hover:bg-neutral/80"
-              onClick={() => setStreamAmount(presetFundingAmount)}
-            >
-              <p className="text-sm font-medium text-neutral-soft-content">
-                {hasTopStream ? "Stream to beat the top Markee" : "Minimum"}
-              </p>
-              <p className="mt-1 font-mono text-lg font-semibold text-neutral-content">
-                {challengeMonthlyRate} ETH / mo
-              </p>
-              <p className="mt-1 text-xs text-neutral-soft-content">
-                {hasTopStream ?
-                  "Top stream rate plus 0.01 ETH per month"
-                : "Stream at the lowest rate"}
-              </p>
-            </button>
-
-            <label className="flex flex-col gap-2">
-              <span className="flex items-center justify-between gap-3 text-xs font-medium uppercase tracking-wider text-neutral-soft-content">
-                <span>Stream</span>
+            <div className="flex flex-col gap-3 rounded-xl border border-primary-content bg-neutral/60 p-4">
+              <div className="flex items-center justify-between gap-3 text-xs text-neutral-soft-content">
+                <span className="font-medium uppercase tracking-wider">
+                  Monthly rate
+                </span>
                 {isLive && (
-                  <span className="normal-case tracking-normal">
-                    Wallet balance:{" "}
-                    <span className="font-mono font-semibold text-neutral-content">
+                  <span>
+                    Balance:{" "}
+                    <span
+                      className={`font-mono font-semibold ${hasInsufficientWalletBalance || streamFormError != null ? "tooltip tooltip-top-left cursor-help text-danger-content" : "text-neutral-content"}`}
+                      data-tip={
+                        streamFormError ??
+                        insufficientBalanceMessage ??
+                        undefined
+                      }
+                      tabIndex={
+                        (
+                          hasInsufficientWalletBalance ||
+                          streamFormError != null
+                        ) ?
+                          0
+                        : undefined
+                      }
+                    >
                       {connectedAccount == null ?
                         "Connect wallet"
-                      : isWalletBalanceLoading ?
+                      : isWalletBalanceLoading || isStreamPositionLoading ?
                         "Loading…"
                       : walletBalance ?
-                        `${formatEthAmount(walletBalance.value)} ${walletBalance.symbol}`
+                        <span
+                          title={`${formatEthAmount(walletBalance.value)} native ETH + ${formatEthAmount(ethxWalletBalance)} ETHx`}
+                        >
+                          {formatEthAmount(combinedWalletBalance)} ETH + ETHx
+                        </span>
                       : "Unavailable"}
                     </span>
                   </span>
                 )}
-              </span>
-              <span className="input input-bordered input-info flex items-center gap-2 dark:bg-primary-soft-dark">
-                <input
-                  inputMode="decimal"
-                  className="w-full flex-1 bg-transparent font-mono outline-none"
-                  value={streamAmount}
-                  onChange={(event) =>
-                    setStreamAmount(sanitizeAmount(event.target.value))
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div
+                  className="tooltip tooltip-top-left min-w-0 flex-1 text-left"
+                  data-tip={`${formatEther(derivedMonthlyRateAmount)} ETH / mo`}
+                >
+                  <input
+                    inputMode="decimal"
+                    className="w-full min-w-0 bg-transparent font-mono text-2xl font-semibold text-neutral-content outline-none"
+                    value={
+                      isMonthlyRateFocused ? monthlyRate : (
+                        formatEthAmountRounded(derivedMonthlyRateAmount, 6)
+                      )
+                    }
+                    onFocus={() => setIsMonthlyRateFocused(true)}
+                    onBlur={() => setIsMonthlyRateFocused(false)}
+                    onChange={(event) =>
+                      setMonthlyRate(sanitizeAmount(event.target.value))
+                    }
+                    aria-label="Monthly streaming rate"
+                  />
+                </div>
+                <span className="shrink-0 font-mono text-sm text-neutral-soft-content">
+                  ETH / mo
+                </span>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  className={`h-8 rounded-lg border px-4 text-xs font-medium tracking-wide transition-colors ${derivedMonthlyRateAmount === effectiveMinimumMonthlyRateInputAmount ? "border-primary-content bg-primary-content/15 text-primary-content" : "border-neutral-content/30 text-neutral-soft-content hover:border-primary-content/60 hover:text-primary-content"}`}
+                  onClick={() => setMonthlyRate(effectiveMinimumMonthlyRate)}
+                >
+                  MIN
+                </button>
+                <button
+                  type="button"
+                  className={`h-8 rounded-lg border px-4 text-xs font-medium tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${maxMonthlyRateAmount > 0n && derivedMonthlyRateAmount === maxMonthlyRateAmount ? "border-primary-content bg-primary-content/15 text-primary-content" : "border-neutral-content/30 text-neutral-soft-content hover:border-primary-content/60 hover:text-primary-content"}`}
+                  disabled={maxMonthlyRateAmount <= 0n}
+                  onClick={() =>
+                    setMonthlyRate(formatEthInput(maxMonthlyRateAmount))
                   }
-                  aria-label="Total streaming amount"
-                />
-                <span className="text-sm text-neutral-soft-content">ETH</span>
-              </span>
+                >
+                  MAX
+                </button>
+                {hasTopStream && !isOwnedMarkeeWinning && (
+                  <button
+                    type="button"
+                    className={`h-8 rounded-lg border border-primary-content bg-primary-content px-4 text-xs font-semibold tracking-wide text-neutral-inverted-content shadow-sm transition-all hover:bg-primary-hover-content ${derivedMonthlyRateAmount === challengeMonthlyRateAmount ? "ring-2 ring-primary-content/30 ring-offset-2 ring-offset-neutral" : ""}`}
+                    onClick={() => setMonthlyRate(challengeMonthlyRate)}
+                  >
+                    WIN
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-3 text-xs text-neutral-soft-content">
+                <span
+                  className="tooltip tooltip-top cursor-help text-left"
+                  data-tip={
+                    hasTopStream && !isOwnedMarkeeWinning ?
+                      `${challengeMonthlyRate} ETH/mo`
+                    : `${effectiveMinimumMonthlyRate} ETH/mo`
+                  }
+                >
+                  {hasTopStream && !isOwnedMarkeeWinning ?
+                    `WIN streams ${formatEthAmountRounded(challengeMonthlyRateAmount, 6)} ETH/mo`
+                  : `Minimum ${formatEthAmountRounded(effectiveMinimumMonthlyRateInputAmount, 6)} ETH/mo`
+                  }
+                </span>
+                <span>You can stop anytime</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 border-t border-neutral-content/15 pt-3">
+                <p className="shrink-0 text-xs font-medium uppercase tracking-wider text-neutral-soft-content">
+                  Fund for
+                </p>
+                <div className="flex justify-end gap-2">
+                  {["1", "2", "3"].map((month) => (
+                    <button
+                      key={month}
+                      type="button"
+                      className={`h-8 rounded-lg border px-4 text-xs font-medium transition-colors ${fundDuration === month ? "border-primary-content bg-primary-content/15 text-primary-content" : "border-neutral-content/30 text-neutral-soft-content hover:border-primary-content/60 hover:text-primary-content"}`}
+                      onClick={() => setFundDuration(month)}
+                    >
+                      {month} mo
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 border-t border-neutral-content/15 pt-3 font-mono text-xs text-neutral-soft-content">
+                <span>Total to fund</span>
+                <span
+                  className="tooltip tooltip-top cursor-help text-sm font-semibold text-primary-content"
+                  data-tip={`${formatEther(streamAmounts.value)} ETH`}
+                >
+                  {formatEthAmountRounded(streamAmounts.value, 6)} ETH
+                </span>
+              </div>
+
               {isBelowMinimum && (
                 <span className="text-xs text-danger-content">
-                  This amount results in a rate below the {minimumMonthlyRate}{" "}
-                  ETH per month minimum.
+                  The minimum rate is {effectiveMinimumMonthlyRate} ETH per
+                  month.
                 </span>
               )}
-            </label>
-
-            <label className="flex flex-col gap-2">
-              <span className="text-xs font-medium uppercase tracking-wider text-neutral-soft-content">
-                For
-              </span>
-              <span className="join w-full">
-                <input
-                  inputMode="decimal"
-                  className="input join-item input-bordered input-info min-w-0 flex-1 bg-transparent font-mono dark:bg-primary-soft-dark"
-                  value={fundDuration}
-                  onChange={(event) =>
-                    setFundDuration(sanitizeAmount(event.target.value))
-                  }
-                  aria-label="Streaming funding duration"
-                  aria-invalid={streamFormError != null}
-                />
-                <select
-                  className="select join-item select-bordered select-info shrink-0 bg-transparent text-sm text-neutral-soft-content dark:bg-primary-soft-dark"
-                  value={fundUnit}
-                  onChange={handleFundingUnitChange}
-                  aria-label="Funding duration unit"
-                >
-                  <option value="hour">hours</option>
-                  <option value="day">days</option>
-                  <option value="month">months</option>
-                  <option value="year">years</option>
-                </select>
-              </span>
-              <span className="text-xs text-neutral-soft-content">
-                You can top up or stop your stream whenever you like.
-              </span>
-            </label>
-
-            {streamFormError && (
-              <div role="alert" aria-live="polite">
-                <InfoBox
-                  infoBoxType="error"
-                  className="rounded-xl px-4 py-3"
-                  title={
-                    fundingDurationError ?
-                      "Funding period too short"
-                    : "Insufficient balance"
-                  }
-                  content={streamFormError}
-                />
-              </div>
-            )}
-
-            {streamSummary.total > 0 && (
-              <div className="flex flex-col gap-2 rounded-xl border border-neutral-content/15 bg-neutral/30 p-4 font-mono text-xs">
-                <div className="flex items-center justify-between gap-4 text-neutral-soft-content">
-                  <span>Stream rate</span>
-                  <span className="text-neutral-content">
-                    {streamSummary.monthly.toFixed(4)} ETH / mo
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-4 text-neutral-soft-content">
-                  <span>Runs for</span>
-                  <span className="text-neutral-content">
-                    {streamSummary.duration} {fundUnit}
-                    {streamSummary.duration === 1 ? "" : "s"}
-                  </span>
-                </div>
-                <div className="my-1 border-t border-neutral-content/15" />
-                <div className="flex items-center justify-between gap-4 text-neutral-soft-content">
-                  <span>Total to stream</span>
-                  <span className="text-sm font-semibold text-primary-content">
-                    {streamSummary.total.toFixed(5)} ETH
-                  </span>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         }
       </CommunityStreamingMarkeeModal>
@@ -2088,6 +2138,7 @@ function CommunityRevenueClaimModal({
   isOpen,
   markeeChainId,
   onClose,
+  onClaimSuccess,
   onPendingClaimChange,
 }: {
   availableRevenueWei?: string;
@@ -2097,6 +2148,7 @@ function CommunityRevenueClaimModal({
   isOpen: boolean;
   markeeChainId?: number;
   onClose: () => void;
+  onClaimSuccess: () => Promise<unknown>;
   onPendingClaimChange: (isPending: boolean) => void;
 }) {
   const [isClaimComplete, setIsClaimComplete] = useState(false);
@@ -2117,9 +2169,9 @@ function CommunityRevenueClaimModal({
   );
   const [claimStatus, setClaimStatus] = useState<AuthorizationStatus>("idle");
   const [quote, setQuote] = useState<MarkeeClaimQuoteResponse | null>(null);
-  const [quoteError, setQuoteError] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
+  const [isQuoteTimedOut, setIsQuoteTimedOut] = useState(false);
   const [isRecipientCopied, setIsRecipientCopied] = useState(false);
   const { address: connectedAccount, connector } = useAccount();
   const { chain: connectedChain } = useNetwork();
@@ -2141,11 +2193,6 @@ function CommunityRevenueClaimModal({
       effectiveMarkeeChainId != null &&
       chainId !== effectiveMarkeeChainId);
   const claimRecipient = quote?.recipient ?? councilSafe;
-  const markeeChainName =
-    effectiveMarkeeChainId != null ?
-      chainConfigMap[effectiveMarkeeChainId]?.name ??
-      `chain ${effectiveMarkeeChainId}`
-    : "the Markee chain";
   const communityChainName =
     chainId != null ?
       chainConfigMap[chainId]?.name ?? `chain ${chainId}`
@@ -2154,24 +2201,14 @@ function CommunityRevenueClaimModal({
   const totalFeeAmountWei = estimatedFeeAmountWei + networkFeeAmountWei;
   const amountReceivedWei =
     quote != null ? BigInt(quote.expectedAmountOut) : 0n;
-  const availableRevenue = quote ? Number(formatEther(claimAmountWei)) : 0;
-  const estimatedFee = quote ? Number(formatEther(estimatedFeeAmountWei)) : 0;
-  const feePercentage =
-    availableRevenue > 0 ? (estimatedFee / availableRevenue) * 100
-    : estimatedFee > 0 ? Number.POSITIVE_INFINITY
-    : 0;
-  const feePercentageLabel =
-    feePercentage > 100 ? ">100%"
-    : Number.isFinite(feePercentage) ? `${feePercentage.toFixed(2)}%`
-    : ">100%";
-  const networkFeePercentage =
+  const transactionFeePercentage =
     claimAmountWei > 0n ?
-      (Number(networkFeeAmountWei) / Number(claimAmountWei)) * 100
+      (Number(totalFeeAmountWei) / Number(claimAmountWei)) * 100
     : 0;
-  const networkFeePercentageLabel =
-    networkFeePercentage > 100 ? ">100%"
-    : Number.isFinite(networkFeePercentage) ?
-      `${networkFeePercentage.toFixed(2)}%`
+  const transactionFeePercentageLabel =
+    transactionFeePercentage > 100 ? ">100%"
+    : Number.isFinite(transactionFeePercentage) ?
+      `${transactionFeePercentage.toFixed(2)}%`
     : ">100%";
   const hasClaimableRevenue = claimAmountWei > 0n;
   const areClaimFeesAboveRevenue =
@@ -2190,25 +2227,7 @@ function CommunityRevenueClaimModal({
     claimStatus === "requesting" ||
     claimStatus === "signing" ||
     claimStatus === "verifying";
-  const bridgeLiquidityMatch = quoteError?.match(
-    /^Amount is higher than available liquidity\. Max amount is ([0-9.]+) ([A-Za-z0-9]+)\.?$/u,
-  );
-  const isBridgeRelayerUnderfunded =
-    quoteError?.includes(
-      "doesn't have enough funds to support this deposit",
-    ) === true;
-  const isBridgeLiquidityUnavailable =
-    bridgeLiquidityMatch != null || isBridgeRelayerUnderfunded;
-  const quoteErrorTitle =
-    isBridgeLiquidityUnavailable ?
-      "Bridge liquidity temporarily unavailable"
-    : "Claim quote unavailable";
-  const quoteErrorMessage =
-    bridgeLiquidityMatch != null ?
-      `The bridge can currently transfer up to ${bridgeLiquidityMatch[1]} ${bridgeLiquidityMatch[2]}, which is less than this community's available revenue. Try again later when more bridge liquidity is available.`
-    : isBridgeRelayerUnderfunded ?
-      `The testnet bridge does not currently have enough funds to deliver this revenue to ${communityChainName}. Try again later when its liquidity has been replenished.`
-    : quoteError;
+  const isQuotePending = quote == null && !isQuoteTimedOut;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -2240,14 +2259,13 @@ function CommunityRevenueClaimModal({
       });
 
       if (showLoading) setIsQuoteLoading(true);
-      setQuoteError(null);
-
       try {
         const refreshedQuote = await fetchMarkeeJson<MarkeeClaimQuoteResponse>(
           `/api/markee/claim/quote?${params.toString()}`,
           signal,
         );
         setQuote(refreshedQuote);
+        setIsQuoteTimedOut(false);
         setClaimError((currentError) =>
           currentError === CLAIM_QUOTE_CHANGED_MESSAGE ? null : currentError,
         );
@@ -2256,10 +2274,10 @@ function CommunityRevenueClaimModal({
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
-        setQuoteError(
-          error instanceof Error ?
-            error.message
-          : "Unable to load the claim quote.",
+        logOnce(
+          "warn",
+          "[CommunityMarkee] Unable to load the claim quote",
+          error,
         );
       } finally {
         if (showLoading && !signal.aborted) setIsQuoteLoading(false);
@@ -2267,6 +2285,18 @@ function CommunityRevenueClaimModal({
     },
     [chainId, community],
   );
+
+  useEffect(() => {
+    if (!isOpen || isClaimComplete || quote != null) return;
+
+    setIsQuoteTimedOut(false);
+    const quoteTimeout = window.setTimeout(
+      () => setIsQuoteTimedOut(true),
+      60_000,
+    );
+
+    return () => window.clearTimeout(quoteTimeout);
+  }, [isClaimComplete, isOpen, quote]);
 
   useEffect(() => {
     if (!isOpen || chainId == null || isClaimComplete || isAuthorizingClaim) {
@@ -2383,8 +2413,8 @@ function CommunityRevenueClaimModal({
     setEstimatedRouteDurationSeconds(null);
     setClaimSourceChainId(null);
     setQuote(null);
-    setQuoteError(null);
     setClaimError(null);
+    setIsQuoteTimedOut(false);
     setIsRecipientCopied(false);
     setClaimStatus("idle");
     onClose();
@@ -2549,6 +2579,13 @@ function CommunityRevenueClaimModal({
       }
       setClaimStatus("authorized");
       setIsClaimComplete(true);
+      void onClaimSuccess().catch((error: unknown) => {
+        logOnce(
+          "warn",
+          "[CommunityMarkee] Unable to refresh community revenue after claim",
+          error,
+        );
+      });
     } catch (error) {
       setClaimStatus("idle");
       if (!isUserRejectedTransactionError(error)) {
@@ -2714,29 +2751,19 @@ function CommunityRevenueClaimModal({
           </div>
         </div>
       : <div className="flex flex-col gap-5">
-          <InfoBox
-            infoBoxType="info"
-            className="rounded-xl px-4 py-3"
-            title="Manual claim"
-          >
-            {quote == null && quoteError == null ?
-              <>Checking the route to the community council Safe</>
-            : isBridgedClaim ?
-              <>
-                Bridge Markee community revenue from {markeeChainName} to{" "}
-                {communityChainName} directly to the council Safe
-              </>
-            : <>
-                Claim Markee community revenue directly on {markeeChainName} to
-                the council Safe
-              </>
-            }{" "}
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-neutral-content/15 bg-neutral/30 px-4 py-3 text-sm">
+            <span className="text-neutral-soft-content">Recipient</span>
             {claimRecipient != null ?
-              <span className="inline-flex items-center gap-1 whitespace-nowrap font-mono">
-                {formatAddress(claimRecipient)}
+              <span className="flex items-center gap-2 text-neutral-content">
+                <span className="inline-flex items-baseline gap-2">
+                  <span>Council Safe</span>
+                  <span className="font-mono text-xs">
+                    {formatAddress(claimRecipient)}
+                  </span>
+                </span>
                 <button
                   type="button"
-                  className="tooltip rounded-md p-1 text-inherit transition-colors hover:bg-neutral/20"
+                  className="tooltip rounded-md p-1 text-neutral-soft-content transition-colors hover:bg-neutral/20 hover:text-neutral-content"
                   data-tip={isRecipientCopied ? "Copied" : "Copy address"}
                   aria-label={
                     isRecipientCopied ?
@@ -2766,20 +2793,8 @@ function CommunityRevenueClaimModal({
                   : <ClipboardDocumentIcon className="h-4 w-4" />}
                 </button>
               </span>
-            : "(unavailable)"}
-            .
-          </InfoBox>
-
-          {quoteError && (
-            <div role="alert">
-              <InfoBox
-                infoBoxType={isBridgeLiquidityUnavailable ? "warning" : "error"}
-                className="rounded-xl px-4 py-3"
-                title={quoteErrorTitle}
-                content={quoteErrorMessage ?? undefined}
-              />
-            </div>
-          )}
+            : <span className="text-neutral-soft-content">Unavailable</span>}
+          </div>
 
           {claimError && (
             <div role="alert">
@@ -2794,7 +2809,7 @@ function CommunityRevenueClaimModal({
 
           <div
             className="rounded-xl border border-neutral-content/15 bg-neutral/30 p-5 text-center"
-            aria-busy={isQuoteLoading}
+            aria-busy={isQuotePending}
           >
             <p className="text-xs uppercase tracking-wider text-neutral-soft-content">
               Available community revenue
@@ -2802,7 +2817,7 @@ function CommunityRevenueClaimModal({
             <div className="mt-2 flex min-h-9 items-center justify-center font-mono text-3xl font-semibold text-neutral-content">
               {displayedClaimAmountWei != null ?
                 `${formatEthAmount(displayedClaimAmountWei)} ${quote?.symbol ?? "ETH"}`
-              : isQuoteLoading ?
+              : isQuotePending ?
                 <div
                   aria-hidden="true"
                   className="skeleton h-9 w-36 rounded-md [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#353535]"
@@ -2814,38 +2829,48 @@ function CommunityRevenueClaimModal({
           {displayedClaimAmountWei !== 0n && (
             <div
               className="flex flex-col gap-3 rounded-xl border border-neutral-content/15 bg-neutral/30 p-4 font-mono text-xs"
-              aria-busy={isQuoteLoading}
+              aria-busy={isQuotePending}
             >
-              {quote != null && (
-                <>
-                  <div className="flex items-center justify-between gap-4 text-neutral-soft-content">
-                    <span>Estimated network fee</span>
-                    <span className={feeTextClass}>
-                      {formatEthAmount(networkFeeAmountWei)} {quote.symbol} (
-                      {networkFeePercentageLabel})
+              <div className="flex items-center justify-between gap-4 text-neutral-soft-content">
+                <div className="-mx-1">
+                  <InfoWrapper
+                    tooltip={
+                      quote != null && isBridgedClaim ?
+                        `Transaction: ${formatEthAmount(networkFeeAmountWei)} ${quote.symbol} · Bridge: ${formatEthAmount(estimatedFeeAmountWei)} ${quote.symbol}`
+                      : quote != null ?
+                        `Transaction: ${formatEthAmount(networkFeeAmountWei)} ${quote.symbol}`
+                      : isBridgedClaim ?
+                        "Includes the source-chain transaction fee and the estimated bridge cost."
+                      : "Includes the source-chain transaction fee."
+                    }
+                    size="sm"
+                    className="tooltip-top"
+                  >
+                    <span>
+                      {isBridgedClaim ?
+                        "Bridge + Transaction fee"
+                      : "Transaction fee"}
                     </span>
-                  </div>
-                  <div className="border-t border-neutral-content/15" />
-                </>
-              )}
-              {isBridgedClaim && quote != null && (
-                <>
-                  <div className="flex items-center justify-between gap-4 text-neutral-soft-content">
-                    <span>Estimated bridge fees</span>
-                    <span className={feeTextClass}>
-                      {formatEthAmount(estimatedFeeAmountWei)} {quote.symbol} (
-                      {feePercentageLabel})
-                    </span>
-                  </div>
-                  <div className="border-t border-neutral-content/15" />
-                </>
-              )}
+                  </InfoWrapper>
+                </div>
+                <span className={quote != null ? feeTextClass : undefined}>
+                  {quote != null ?
+                    `${formatEthAmount(totalFeeAmountWei)} ${quote.symbol} (${transactionFeePercentageLabel})`
+                  : isQuotePending ?
+                    <span
+                      aria-hidden="true"
+                      className="skeleton block h-4 w-28 rounded-md [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#353535]"
+                    />
+                  : <span className="text-danger-content">No quote found</span>}
+                </span>
+              </div>
+              <div className="border-t border-neutral-content/15" />
               <div className="flex items-center justify-between gap-4 text-neutral-soft-content">
                 <span>Council Safe receives</span>
                 <span className="text-sm font-semibold text-primary-content">
                   {quote ?
                     `${formatEthAmount(amountReceivedWei)} ${quote.destinationSymbol}`
-                  : isQuoteLoading ?
+                  : isQuotePending ?
                     <span
                       aria-hidden="true"
                       className="skeleton block h-5 w-24 rounded-md [--fallback-b3:#f0f0f0] dark:[--fallback-b1:#353535]"
@@ -2856,7 +2881,7 @@ function CommunityRevenueClaimModal({
             </div>
           )}
 
-          {isQuoteLoading && (
+          {isQuotePending && (
             <span className="sr-only" role="status">
               Loading claim quote
             </span>
@@ -3324,6 +3349,7 @@ export function CommunityMarkeePlaceholder({
         isOpen={isClaimOpen}
         markeeChainId={markee?.markeeChainId}
         onClose={() => setIsClaimOpen(false)}
+        onClaimSuccess={refreshMarkee}
         onPendingClaimChange={setHasPendingClaim}
       />
 

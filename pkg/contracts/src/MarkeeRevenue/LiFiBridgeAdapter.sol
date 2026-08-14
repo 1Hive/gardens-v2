@@ -50,6 +50,11 @@ contract LiFiBridgeAdapter is Ownable, IBridgeAdapter {
         liFiDiamond = _liFiDiamond;
     }
 
+    /// @notice Accepts unused native-token value refunded by LI.FI while a
+    /// route is executing. Any balance left after the call is returned to the
+    /// community vault below.
+    receive() external payable {}
+
     function setRouter(address _router) external onlyOwner {
         if (_router == address(0)) revert ZeroAddress();
         router = _router;
@@ -101,6 +106,12 @@ contract LiFiBridgeAdapter is Ownable, IBridgeAdapter {
 
         (bool success, bytes memory result) = liFiDiamond.call{value: quote.executionValue}(quote.routerCalldata);
         if (!success) revert LiFiCallFailed(result);
+
+        uint256 routeRefund = address(this).balance;
+        if (routeRefund != 0) {
+            (bool refunded,) = payable(request.refundRecipient).call{value: routeRefund}("");
+            if (!refunded) revert RefundFailed();
+        }
 
         expectedAmountOut = quote.expectedAmountOut;
         emit LiFiRouteExecuted(

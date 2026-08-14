@@ -231,7 +231,7 @@ export function CommunityStreamingMarkeeModal({
           </button>
         </header>
 
-        <div className="overflow-y-auto px-6 py-5">
+        <div className="overflow-x-hidden overflow-y-auto px-6 py-5">
           <section className="mb-5 rounded-lg border border-neutral-content/20 bg-neutral-focus px-4 py-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">

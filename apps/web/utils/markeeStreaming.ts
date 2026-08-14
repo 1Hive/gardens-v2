@@ -147,17 +147,20 @@ export function getMarkeeStreamAmounts(
 export function getMarkeeMonthlyAmountForFundingValue(
   fundingValue: bigint,
   monthsFixed18: bigint,
+  existingDeposit = 0n,
 ) {
   if (fundingValue <= 0n || monthsFixed18 <= 0n) return 0n;
 
   let lowerBound = 0n;
-  let upperBound = (fundingValue * 10n ** 18n) / monthsFixed18 + 1n;
+  let upperBound =
+    ((fundingValue + existingDeposit) * 10n ** 18n) / monthsFixed18 + 1n;
 
   while (lowerBound < upperBound) {
     const candidate = (lowerBound + upperBound + 1n) / 2n;
-    if (
-      getMarkeeStreamAmounts(candidate, monthsFixed18).value <= fundingValue
-    ) {
+    const amounts = getMarkeeStreamAmounts(candidate, monthsFixed18);
+    const depositTopUp =
+      amounts.buffer > existingDeposit ? amounts.buffer - existingDeposit : 0n;
+    if (amounts.prefund + depositTopUp <= fundingValue) {
       lowerBound = candidate;
     } else {
       upperBound = candidate - 1n;

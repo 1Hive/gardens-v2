@@ -388,6 +388,116 @@ describe("Markee community revenue", () => {
     });
   });
 
+  it("explains when Gnosis revenue is too small for the LI.FI route", async () => {
+    process.env.NEXT_PUBLIC_ENV_GARDENS = "prod";
+    process.env.MARKEE_ROUTER_ADDRESS_BASE = router;
+    process.env.LIFI_INTEGRATOR_ID = "gardens";
+    mocks.readContract
+      .mockResolvedValueOnce(vault)
+      .mockResolvedValueOnce([0n, 0n, 0n, 10_000_000_000_000n])
+      .mockResolvedValueOnce([adapter, 3])
+      .mockResolvedValueOnce(receiver);
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: async () => ({
+            estimate: { toAmountMin: "9500000000000" },
+          }),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: async () => ({
+            action: {
+              fromAddress: adapter,
+              fromAmount: "11000000000000",
+              fromChainId: 8453,
+              toAddress: adapter,
+              toChainId: 100,
+            },
+            transactionRequest: {
+              chainId: 8453,
+              data: "0x12345678",
+              from: adapter,
+              to: lifiDiamond,
+              value: "12000000000000",
+            },
+          }),
+          ok: true,
+        }),
+    );
+
+    await expect(
+      getMarkeeClaimExecutionQuote(100, community, recipient),
+    ).rejects.toMatchObject({
+      message:
+        "Revenue is currently too small to cover the Gnosis bridge costs. Let more Markee revenue accumulate before claiming.",
+      status: 409,
+    });
+  });
+
+  it("rejects a Gnosis claim when LI.FI's excluded fee exceeds its revenue", async () => {
+    process.env.NEXT_PUBLIC_ENV_GARDENS = "prod";
+    process.env.MARKEE_ROUTER_ADDRESS_BASE = router;
+    process.env.LIFI_INTEGRATOR_ID = "gardens";
+    mocks.readContract
+      .mockResolvedValueOnce(vault)
+      .mockResolvedValueOnce([0n, 0n, 0n, 10_000_000_000_000n])
+      .mockResolvedValueOnce([adapter, 3])
+      .mockResolvedValueOnce(receiver);
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: async () => ({
+        estimate: {
+          feeCosts: [{ amount: "40000000000000", included: false }],
+          toAmountMin: "9500000000000",
+        },
+      }),
+      ok: true,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      getMarkeeClaimExecutionQuote(100, community, recipient),
+    ).rejects.toMatchObject({
+      message:
+        "Revenue is currently too small to cover the Gnosis bridge costs. Let more Markee revenue accumulate before claiming.",
+      status: 409,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("explains when LI.FI cannot generate a Gnosis transaction for a tiny claim", async () => {
+    process.env.NEXT_PUBLIC_ENV_GARDENS = "prod";
+    process.env.MARKEE_ROUTER_ADDRESS_BASE = router;
+    process.env.LIFI_INTEGRATOR_ID = "gardens";
+    mocks.readContract
+      .mockResolvedValueOnce(vault)
+      .mockResolvedValueOnce([0n, 0n, 0n, 10_000_000_000_000n])
+      .mockResolvedValueOnce([adapter, 3])
+      .mockResolvedValueOnce(receiver);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        json: async () => ({
+          code: 1001,
+          message:
+            "None of the available routes could successfully generate a tx",
+        }),
+        ok: false,
+        status: 422,
+      }),
+    );
+
+    await expect(
+      getMarkeeClaimExecutionQuote(100, community, recipient),
+    ).rejects.toMatchObject({
+      message:
+        "Revenue is currently too small to cover the Gnosis bridge costs. Let more Markee revenue accumulate before claiming.",
+      status: 409,
+    });
+  });
+
   it("falls back to WETH when native ETH routing is unavailable", async () => {
     process.env.NEXT_PUBLIC_ENV_GARDENS = "prod";
     process.env.MARKEE_ROUTER_ADDRESS_BASE = router;

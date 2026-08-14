@@ -93,6 +93,36 @@ describe("Markee streaming transaction builder", () => {
     ).toBeGreaterThan(fundingValue);
   });
 
+  it("reuses an existing stream deposit when deriving the maximum rate", () => {
+    const months = getMarkeeFundingMonths("1", "month");
+    const originalMonthlyAmount = parseEther("0.01");
+    const originalAmounts = getMarkeeStreamAmounts(
+      originalMonthlyAmount,
+      months,
+    );
+    const fundingValue = originalAmounts.prefund;
+    const derivedMonthlyAmount = getMarkeeMonthlyAmountForFundingValue(
+      fundingValue,
+      months,
+      originalAmounts.buffer,
+    );
+    const requiredFunding = (monthlyAmount: bigint) => {
+      const amounts = getMarkeeStreamAmounts(monthlyAmount, months);
+      const depositTopUp =
+        amounts.buffer > originalAmounts.buffer ?
+          amounts.buffer - originalAmounts.buffer
+        : 0n;
+      return amounts.prefund + depositTopUp;
+    };
+
+    expect(requiredFunding(derivedMonthlyAmount)).toBeLessThanOrEqual(
+      fundingValue,
+    );
+    expect(requiredFunding(derivedMonthlyAmount + 1n)).toBeGreaterThan(
+      fundingValue,
+    );
+  });
+
   it("builds wrap, approval, deposit, flow, and pool-connect operations", () => {
     const operations = buildMarkeeOpenStreamOperations({
       approvalAmount: 10n,

@@ -38,8 +38,7 @@ const SQUID_STATUS_URL = "https://v2.api.squidrouter.com/v2/status";
 const LIFI_QUOTE_URL = "https://li.quest/v1/quote";
 const LIFI_CONTRACT_CALL_QUOTE_URL = `${LIFI_QUOTE_URL}/contractCalls`;
 const LIFI_NATIVE_TOKEN: Address = zeroAddress;
-const LIFI_GNOSIS_WETH: Address =
-  "0x6a023ccd1ff6f2045c3309768ead9e68f978f6e1";
+const LIFI_GNOSIS_WETH: Address = "0x6a023ccd1ff6f2045c3309768ead9e68f978f6e1";
 const LIFI_BASE_DIAMOND: Address = "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE";
 const GARDENS_TESTNET_CHAIN_IDS = new Set([421614, 11155420, 11155111]);
 const BRIDGE_PROTOCOL = {
@@ -60,6 +59,7 @@ export const getMarkeeChainId = (communityChainId?: number) =>
   : MARKEE_BASE_CHAIN_ID;
 
 const gardensMarkeeRouterABI = parseAbi([
+  "error LiFiCallFailed(bytes reason)",
   "function communityVault(bytes32 communityKey) view returns (address vault)",
   "function bridgeConfiguration(uint256 destinationChainId) view returns (address adapter, uint8 protocol)",
   "function keepers(address keeper) view returns (bool)",
@@ -214,8 +214,12 @@ type LifiQuoteResponse = {
     toAddress?: string;
     toChainId?: number;
   };
-  code?: string;
+  code?: number | string;
   estimate?: {
+    feeCosts?: Array<{
+      amount?: string;
+      included?: boolean;
+    }>;
     fromAmount?: string;
     fromAmountUSD?: string;
     toAmount?: string;
@@ -231,6 +235,9 @@ type LifiQuoteResponse = {
     value?: string;
   };
 };
+
+const LIFI_GNOSIS_REVENUE_TOO_SMALL_MESSAGE =
+  "Revenue is currently too small to cover the Gnosis bridge costs. Let more Markee revenue accumulate before claiming.";
 
 export type MarkeeClaimExecutionQuote = {
   bridgeProtocol: "across" | "lifi" | "none" | "squid";
@@ -809,6 +816,19 @@ const throwLifiQuoteError = (
       status: response.status,
     },
   );
+  if (
+    chainId === GNOSIS_CHAIN_ID &&
+    (String(body.code) === "1001" ||
+      String(body.code) === "1003" ||
+      /match expected output|none of the available routes could successfully generate a tx/iu.test(
+        providerMessage,
+      ))
+  ) {
+    throw new MarkeeClaimExecutionError(
+      LIFI_GNOSIS_REVENUE_TOO_SMALL_MESSAGE,
+      409,
+    );
+  }
   throw new MarkeeClaimExecutionError(
     /liquidity|no quote|not found/iu.test(providerMessage) ?
       "No bridge route currently has enough liquidity for this claim. Please try again later."
@@ -875,10 +895,32 @@ const getLifiRoute = async ({
     typeof destinationAmountValue !== "string" ||
     destinationAmountValue.length === 0
   ) {
-    throwLifiQuoteError(preliminaryResponse, preliminaryBody, chainId, community);
+    throwLifiQuoteError(
+      preliminaryResponse,
+      preliminaryBody,
+      chainId,
+      community,
+    );
   }
 
   const destinationAmount = BigInt(destinationAmountValue as string);
+  const excludedBridgeFee =
+    preliminaryBody.estimate?.feeCosts?.reduce((total, fee) => {
+      if (fee.included !== false || typeof fee.amount !== "string") {
+        return total;
+      }
+      try {
+        return total + BigInt(fee.amount);
+      } catch {
+        return total;
+      }
+    }, 0n) ?? 0n;
+  if (excludedBridgeFee >= amount) {
+    throw new MarkeeClaimExecutionError(
+      LIFI_GNOSIS_REVENUE_TOO_SMALL_MESSAGE,
+      409,
+    );
+  }
   const receiverCalldata = encodeFunctionData({
     abi: squidGardensRevenueReceiverABI,
     args: [
@@ -980,13 +1022,18 @@ const getLifiRoute = async ({
   }
   if (
     inputAmount <= 0n ||
-    inputAmount > amount ||
     executionValue < inputAmount ||
     destinationAmount <= 0n
   ) {
     throw new MarkeeClaimExecutionError(
       "LI.FI returned invalid claim amounts.",
       502,
+    );
+  }
+  if (inputAmount > amount) {
+    throw new MarkeeClaimExecutionError(
+      LIFI_GNOSIS_REVENUE_TOO_SMALL_MESSAGE,
+      409,
     );
   }
 

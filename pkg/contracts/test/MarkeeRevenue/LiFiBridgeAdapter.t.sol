@@ -9,10 +9,20 @@ import {BridgeRequest} from "../../src/MarkeeRevenue/interfaces/IBridgeAdapter.s
 contract MockLiFiDiamond {
     uint256 public received;
     bytes public receivedData;
+    uint256 public refundAmount;
+
+    function setRefundAmount(uint256 amount) external {
+        refundAmount = amount;
+    }
 
     fallback() external payable {
         received = msg.value;
         receivedData = msg.data;
+        uint256 amount = refundAmount;
+        if (amount != 0) {
+            (bool success,) = payable(msg.sender).call{value: amount}("");
+            require(success, "refund failed");
+        }
     }
 }
 
@@ -77,6 +87,18 @@ contract LiFiBridgeAdapterTest is Test {
 
         assertEq(liFiDiamond.received(), 1.01 ether);
         assertEq(address(0xCAFE).balance, accruedAfterQuote);
+        assertEq(address(adapter).balance, 0);
+    }
+
+    function test_bridgeETH_returnsLiFiNativeRefundToCommunityVault() public {
+        uint256 routeRefund = 0.002 ether;
+        liFiDiamond.setRefundAmount(routeRefund);
+        vm.deal(gardensRouter, 1.01 ether);
+
+        vm.prank(gardensRouter);
+        adapter.bridgeETH{value: 1.01 ether}(_request(0), _quote(0.9 ether, 1.01 ether));
+
+        assertEq(address(0xCAFE).balance, routeRefund);
         assertEq(address(adapter).balance, 0);
     }
 
