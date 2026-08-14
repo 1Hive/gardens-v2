@@ -139,6 +139,9 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
         emit VaultCreated(key, vault, communityChainId, registryCommunity);
     }
 
+    // nonReentrant protects the integration write from callbacks through the
+    // initialized vault or the configured leaderboard factory.
+    // slither-disable-next-line reentrancy-no-eth
     function createCommunityLeaderboard(
         uint256 communityChainId,
         address registryCommunity,
@@ -272,6 +275,9 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
         netAmount = grossAmount - gasCost;
         if (gasCost == 0) return netAmount;
 
+        // msg.sender is constrained by onlyKeeper on sweep; reimbursing that
+        // owner-authorized caller is the intended destination.
+        // slither-disable-next-line arbitrary-send-eth
         (bool success,) = payable(msg.sender).call{value: gasCost}("");
         if (!success) revert KeeperReimbursementFailed();
         emit KeeperGasReimbursed(communityKey, msg.sender, gasCost);

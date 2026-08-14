@@ -23,6 +23,9 @@ contract GardensMarkeeRouterRevenueRecovery is ProxyOwnableUpgrader, ReentrancyG
     address public vaultImplementation;
     address public bridgeAdapter;
     mapping(address keeper => bool authorized) public keepers;
+    // This temporary implementation reads vault entries initialized by the
+    // retired router through the proxy. It must not initialize new storage.
+    // slither-disable-next-line uninitialized-state
     mapping(bytes32 communityKey => address vault) public vaults;
     mapping(bytes32 communityKey => CommunityInfo) public communities;
     mapping(uint256 chainId => address receiver) public remoteReceivers;
@@ -30,10 +33,7 @@ contract GardensMarkeeRouterRevenueRecovery is ProxyOwnableUpgrader, ReentrancyG
     uint256[38] private __gap;
 
     event CommunityRevenueRecovered(
-        bytes32 indexed communityKey,
-        address indexed vault,
-        address indexed recipient,
-        uint256 amount
+        bytes32 indexed communityKey, address indexed vault, address indexed recipient, uint256 amount
     );
 
     error VaultNotFound();
