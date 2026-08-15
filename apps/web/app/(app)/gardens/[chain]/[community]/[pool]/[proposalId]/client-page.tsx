@@ -682,28 +682,6 @@ export default function ClientPage({ params }: ClientPageProps) {
     routerSearchParams.get(QUERY_PARAMS.proposalPage.pendingProposal) ??
     initialSearchParams?.[QUERY_PARAMS.proposalPage.pendingProposal] ??
     undefined;
-  const pendingProposalTitleParam =
-    collectedParams[QUERY_PARAMS.proposalPage.pendingProposalTitle] ??
-    routerSearchParams.get(QUERY_PARAMS.proposalPage.pendingProposalTitle) ??
-    initialSearchParams?.[QUERY_PARAMS.proposalPage.pendingProposalTitle] ??
-    undefined;
-  const pendingProposalTitle =
-    pendingProposalTitleParam ?
-      (() => {
-        try {
-          return decodeURIComponent(pendingProposalTitleParam);
-        } catch (error) {
-          console.warn("Unable to decode pending proposal title", {
-            pendingProposalTitleParam,
-            error,
-          });
-          return pendingProposalTitleParam;
-        }
-      })()
-    : undefined;
-  const pendingProposalDisplayTitle =
-    metadata?.title ?? ipfsResult?.title ?? pendingProposalTitle;
-
   const proposalType = proposalData?.strategy?.config?.proposalType;
   const isSignalingType = PoolTypes[proposalType] === "signaling";
   const isStreamingType = PoolTypes[proposalType] === "streaming";
@@ -859,8 +837,10 @@ export default function ClientPage({ params }: ClientPageProps) {
   const {
     currentConvictionPct,
     thresholdPct,
+    stableThresholdPct,
     isThresholdBelowDisplayPrecision,
     hasReachedThreshold,
+    willReachThreshold,
     totalSupportPct,
     timeToPass,
     triggerConvictionRefetch,
@@ -1010,10 +990,7 @@ export default function ClientPage({ params }: ClientPageProps) {
         message: "Insufficient funds in the pool to execute this proposal.",
       },
       {
-        condition:
-          currentConvictionPct == null ||
-          thresholdPct === undefined ||
-          currentConvictionPct <= thresholdPct,
+        condition: hasReachedThreshold !== true,
         message: "Proposal has not reached the threshold yet.",
       },
       {
@@ -1021,12 +998,7 @@ export default function ClientPage({ params }: ClientPageProps) {
         message: "Proposal is being disputed",
       },
     ],
-    [
-      thresholdPct,
-      currentConvictionPct,
-      proposalStatus,
-      hasInsufficientPoolFunds,
-    ],
+    [hasReachedThreshold, proposalStatus, hasInsufficientPoolFunds],
   );
 
   const {
@@ -1222,24 +1194,6 @@ export default function ClientPage({ params }: ClientPageProps) {
     isConnected: isUnwrapConnected,
     missmatchUrl: isUnwrapWrongNetwork,
   } = useDisableButtons(disableUnwrapBtnConditions);
-  if (isAwaitingProposal) {
-    return (
-      <div className="col-span-12 flex min-h-[60vh] flex-col items-center justify-center gap-6">
-        <InfoBox
-          infoBoxType="info"
-          title="Finalizing proposal creation"
-          className="max-w-2xl"
-        >
-          <div className="flex flex-col gap-3">
-            <p>
-              {`Waiting for "${pendingProposalDisplayTitle ?? "newly created proposal"}" to be indexed...`}
-            </p>
-          </div>
-        </InfoBox>
-      </div>
-    );
-  }
-
   if (!isProposalCoreReady) {
     return (
       <div className="col-span-12 flex min-h-[40vh] items-center justify-center">
@@ -1274,8 +1228,8 @@ export default function ClientPage({ params }: ClientPageProps) {
   const proposalWillPass =
     isStreamingType &&
     hasThreshold &&
-    Number((thresholdPct - (totalSupportPct ?? 0)).toFixed(2)) < 0 &&
-    (currentConvictionPct ?? 0) < thresholdPct &&
+    willReachThreshold === true &&
+    hasReachedThreshold !== true &&
     !alreadyStreaming;
 
   return (
@@ -1368,6 +1322,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                               }
                               currentConvictionPct={currentConvictionPct}
                               thresholdPct={thresholdPct ?? 0}
+                              stableThresholdPct={stableThresholdPct}
                               proposalSupportPct={totalSupportPct ?? 0}
                               isSignalingType={isSignalingType}
                               proposalNumber={Number(proposalIdNumber)}
@@ -1384,6 +1339,8 @@ export default function ClientPage({ params }: ClientPageProps) {
                               isThresholdBelowDisplayPrecision={
                                 isThresholdBelowDisplayPrecision
                               }
+                              hasReachedThreshold={hasReachedThreshold}
+                              willReachThreshold={willReachThreshold}
                             />
                           </div>
                         </div>
@@ -1935,6 +1892,7 @@ export default function ClientPage({ params }: ClientPageProps) {
                                   }
                                   currentConvictionPct={currentConvictionPct}
                                   thresholdPct={thresholdPct ?? 0}
+                                  stableThresholdPct={stableThresholdPct}
                                   proposalSupportPct={totalSupportPct ?? 0}
                                   isSignalingType={isSignalingType}
                                   proposalNumber={Number(proposalIdNumber)}
@@ -1951,6 +1909,8 @@ export default function ClientPage({ params }: ClientPageProps) {
                                   isThresholdBelowDisplayPrecision={
                                     isThresholdBelowDisplayPrecision
                                   }
+                                  hasReachedThreshold={hasReachedThreshold}
+                                  willReachThreshold={willReachThreshold}
                                 />
                               </div>
                             </div>

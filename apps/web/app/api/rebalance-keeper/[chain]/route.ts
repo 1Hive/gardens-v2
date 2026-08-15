@@ -102,6 +102,7 @@ const REBALANCE_KEEPER_ABI = parseAbi([
   "function isAuthorizedRebalanceCaller(address) view returns (bool)",
   "function proposalCounter() view returns (uint256)",
   "function getPoolAmount() view returns (uint256)",
+  "function getPoolThresholdPoints() view returns (uint256)",
   "function totalPointsActivated() view returns (uint256)",
   "function cvParams() view returns (uint256 maxRatio, uint256 weight, uint256 decay, uint256 minThresholdPoints)",
   "function calculateThreshold(uint256 requestedAmount) view returns (uint256)",
@@ -267,6 +268,11 @@ const getProposalStatus = (proposal: unknown) => {
   return Number(tuple.proposalStatus ?? tuple[5] ?? -1);
 };
 
+const getProposalThreshold = (proposal: unknown) => {
+  const tuple = proposal as Record<string, unknown> & Array<unknown>;
+  return BigInt((tuple.threshold ?? tuple[8] ?? 0) as bigint | number | string);
+};
+
 type MulticallResult = {
   status: "success" | "failure";
   result?: unknown;
@@ -348,6 +354,11 @@ async function shouldRunRebalance({
         {
           address: strategy,
           abi: REBALANCE_KEEPER_ABI,
+          functionName: "getPoolThresholdPoints",
+        },
+        {
+          address: strategy,
+          abi: REBALANCE_KEEPER_ABI,
           functionName: "totalPointsActivated",
         },
         {
@@ -381,9 +392,10 @@ async function shouldRunRebalance({
     const [
       proposalCounterResult,
       poolAmountResult,
+      poolThresholdPointsResult,
       totalPointsActivatedResult,
       cvParamsResult,
-      thresholdResult,
+      legacyThresholdResult,
       streamingRatePerSecondResult,
       superfluidTokenResult,
       superfluidGDAResult,
@@ -397,8 +409,16 @@ async function shouldRunRebalance({
       totalPointsActivatedResult,
       "total_points_activated",
     );
+    const weightedStreamingSupported =
+      optionalMulticallBigInt(poolThresholdPointsResult) != null;
+    const poolThresholdPoints =
+      optionalMulticallBigInt(poolThresholdPointsResult) ??
+      BigInt(totalPointsActivated as bigint);
     const cvParams = requireMulticallResult(cvParamsResult, "cv_params");
-    const threshold = requireMulticallResult(thresholdResult, "threshold");
+    const legacyThreshold = requireMulticallResult(
+      legacyThresholdResult,
+      "legacy_threshold",
+    );
     const streamingRatePerSecond = requireMulticallResult(
       streamingRatePerSecondResult,
       "streaming_rate",
@@ -485,6 +505,7 @@ async function shouldRunRebalance({
       escrow: Address;
       status: number;
       conviction: bigint;
+      threshold: bigint;
     }> = [];
 
     for (let index = 0; index < proposalCount; index++) {
@@ -508,6 +529,7 @@ async function shouldRunRebalance({
         escrow,
         status: getProposalStatus(proposal),
         conviction: BigInt(conviction as bigint),
+        threshold: getProposalThreshold(proposal),
       });
     }
 
@@ -582,9 +604,8 @@ async function shouldRunRebalance({
         isStrategyEnabled: true,
         proposalCount,
         poolAmount: BigInt(poolAmount as bigint),
-        totalPointsActivated: BigInt(totalPointsActivated as bigint),
+        poolThresholdPoints,
         decay,
-        threshold: BigInt(threshold as bigint),
         streamingRatePerSecond: BigInt(streamingRatePerSecond as bigint),
         superTokenBalance,
         currentTotalFlowRate,
@@ -608,6 +629,10 @@ async function shouldRunRebalance({
           return {
             status: proposal.status,
             conviction: proposal.conviction,
+            threshold:
+              weightedStreamingSupported ?
+                proposal.threshold
+              : BigInt(legacyThreshold as bigint),
             currentUnits:
               optionalMulticallBigInt(memberResults[index * 2]) ?? 0n,
             currentFlowRate:

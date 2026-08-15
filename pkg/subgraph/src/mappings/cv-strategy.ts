@@ -47,7 +47,8 @@ import {
   SuperfluidStreamingRateUpdated,
   SuperfluidGDAConnected,
   SuperfluidGDADisconnected,
-  StreamRateUpdated
+  StreamRateUpdated,
+  PoolThresholdUpdated
 } from "../../generated/templates/CVStrategy/CVStrategy";
 import {
   CVStrategyLegacy as LegacyCVStrategyContract,
@@ -576,6 +577,31 @@ export function handlePowerDecreased(event: PowerDecreased): void {
     : BigInt.fromI32(0);
 
   memberStrategy.save();
+}
+
+export function handlePoolThresholdUpdated(event: PoolThresholdUpdated): void {
+  const strategyId = event.address.toHexString();
+  const strategy = CVStrategy.load(strategyId);
+  if (strategy == null) {
+    log.warning("CVStrategy: handlePoolThresholdUpdated strategy not found: {}", [
+      strategyId
+    ]);
+    return;
+  }
+
+  strategy.thresholdSnapshot = event.params.thresholdSnapshot;
+  strategy.thresholdUpdatedAtBlock = event.params.thresholdUpdatedAtBlock;
+  strategy.totalEffectiveActivePoints = event.params.totalPointsActivated;
+
+  const config = CVStrategyConfig.load(strategy.config);
+  if (config != null) {
+    strategy.maxCVSupply = getMaxConviction(
+      event.params.totalPointsActivated,
+      config.decay
+    );
+  }
+
+  strategy.save();
 }
 
 export function handleCVParamsUpdated(event: CVParamsUpdated): void {

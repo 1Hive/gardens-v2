@@ -7285,6 +7285,11 @@ tasks:
 
           echo "All networks succeeded."
 
+  upgrade-time-weighted-threshold-mainnets:
+    desc: One-time mainnet strategy upgrade with threshold and legacy streaming proposal migration
+    cmds:
+      - cmd: MIGRATE_THRESHOLD_SNAPSHOTS=true PHASE=strategies task upgrade-all-mainnets
+
   sync-community-facets-from-factory-ethsep:
     desc: Sync .FACETS.COMMUNITY_* from live factory state on ethsepolia
     cmds:

@@ -1207,6 +1207,13 @@
     },
     {
       "type": "function",
+      "name": "reinitializeV2MigrateThresholdSnapshots",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
       "name": "renounceOwnership",
       "inputs": [],
       "outputs": [],
@@ -2680,6 +2687,31 @@
     },
     {
       "type": "event",
+      "name": "PoolThresholdUpdated",
+      "inputs": [
+        {
+          "name": "thresholdSnapshot",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalPointsActivated",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "thresholdUpdatedAtBlock",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
       "name": "PowerDecreased",
       "inputs": [
         {
@@ -3057,6 +3089,31 @@
           "type": "address",
           "indexed": false,
           "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "ThresholdSnapshotsMigrated",
+      "inputs": [
+        {
+          "name": "proposalCount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "totalPointsActivated",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "blockNumber",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
         }
       ],
       "anonymous": false
@@ -4691,6 +4748,19 @@
           "internalType": "address"
         }
       ]
+    },
+    {
+      "type": "function",
+      "name": "getPoolThresholdPoints",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
     },
     {
       "type": "function",

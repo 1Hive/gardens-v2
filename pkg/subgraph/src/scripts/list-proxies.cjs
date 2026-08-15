@@ -93,13 +93,13 @@ async function extractProxies(chainId) {
   }
 
   const query = `{
-  registryFactories {
+  registryFactories(first: 1000) {
     id
   }
-  registryCommunities {
+  registryCommunities(first: 1000) {
     id
   }
-  cvstrategies {
+  cvstrategies(first: 1000) {
     id
   }
 }`;

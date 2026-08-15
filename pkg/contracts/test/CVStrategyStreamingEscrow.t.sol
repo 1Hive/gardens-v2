@@ -329,4 +329,15 @@ contract CVStrategyStreamingEscrowTest is Test {
         vm.expectRevert(CVProposalFacet.StreamingEscrowFactoryNotSet.selector);
         harness.registerRecipient(data, address(0xCAFE));
     }
+
+    function test_streamingEscrow_readsDeployedNamespacedStorageSlot() public {
+        uint256 proposalId = 7;
+        bytes32 layoutSlot = keccak256("cvstrategy.storage.streaming.v1");
+        bytes32 proposalEscrowSlot = bytes32(uint256(layoutSlot) + 3);
+        bytes32 escrowStorageKey = keccak256(abi.encode(proposalId, proposalEscrowSlot));
+
+        vm.store(address(harness), escrowStorageKey, bytes32(uint256(uint160(beneficiary))));
+
+        assertEq(harness.streamingEscrow(proposalId), beneficiary);
+    }
 }

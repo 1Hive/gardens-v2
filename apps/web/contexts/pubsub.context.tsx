@@ -23,6 +23,7 @@ import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useFlag } from "@/hooks/useFlag";
 import { queryByChain } from "@/providers/queryByChain";
 import { ChainId } from "@/types";
+import { releaseIndexedPendingPublishes } from "@/utils/pendingIndexedPublishes";
 import { getEnvPublicClient } from "@/utils/publicClient";
 
 // Define the shape of your context data
@@ -61,7 +62,7 @@ interface PubSubContextData {
    */
   subscribe: (
     scope: ChangeEventScope[] | ChangeEventScope,
-    onChangeEvent: (payload: ChangeEventPayload) => void,
+    onChangeEvent: ChangeEventSubscriber,
   ) => string;
   unsubscribe: (subscriptionId: string) => void;
   publish: (payload: ChangeEventPayload) => void;
@@ -80,6 +81,9 @@ interface IndexingLagContextData {
 }
 
 export type SubscriptionId = string;
+type ChangeEventSubscriber = (
+  payload: ChangeEventPayload,
+) => void | Promise<unknown>;
 
 export type ChangeEventTopic =
   | "community"
@@ -238,6 +242,7 @@ export type RouteIndexingLagStatus = {
 const INDEXING_STORAGE_KEY = "gardens.pending-indexed-publishes.v1";
 const INDEXING_TOAST_ID = "gardens-indexing-toast";
 const INDEXING_PROBLEM_TOAST_ID = "gardens-indexing-problem-toast";
+const INDEXING_PUBLISHER_ID_FIELD = "_publisherId";
 const INDEXING_TOAST_CLASS_NAME = "no-icon hidden opacity-50 md:block";
 const INDEXING_TOAST_SUCCESS_DURATION_MS = 1000;
 const INDEXING_TOAST_STYLE: React.CSSProperties = {
@@ -760,6 +765,11 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   const isProgrammaticIndexingToastDismiss = useRef(false);
   const shownIndexingProblemEpisodeByChain = useRef<Record<number, string>>({});
   const [indexingProblemCheckTick, setIndexingProblemCheckTick] = useState(0);
+  const [publisherId] = useState(
+    () =>
+      globalThis.crypto?.randomUUID?.() ??
+      `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
+  );
 
   const ablyClient = useMemo(
     () =>
@@ -776,28 +786,10 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       SubscriptionId,
       {
         scopes: ChangeEventScope[];
-        onChangeEvent: (payload: ChangeEventPayload) => void;
+        onChangeEvent: ChangeEventSubscriber;
       }
     >(),
   );
-
-  useEffect(() => {
-    ablyClient.channels.get(CHANGE_EVENT_CHANNEL_NAME).subscribe((message) => {
-      console.debug("⚡ WS: sub message", {
-        message,
-        reDispatch: () => {
-          dispatch(message.data as ChangeEventPayload);
-        },
-      });
-      const data = message.data as ChangeEventPayload;
-      setMessages((prevMessages) => [...prevMessages, data]);
-      dispatch(data);
-    });
-
-    return () => {
-      ablyClient.channels.get(CHANGE_EVENT_CHANNEL_NAME).unsubscribe();
-    };
-  }, []);
 
   const subMap = subscriptionsMap.current;
 
@@ -870,16 +862,18 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const dispatch = (pubPayload: ChangeEventPayload) => {
+  const dispatch = useCallback(async (pubPayload: ChangeEventPayload) => {
+    const subscriberPromises: Promise<unknown>[] = [];
     subMap.forEach(({ scopes, onChangeEvent }) => {
       if (
         scopes.find((scopeObj) => {
           return Object.keys(scopeObj).every((key) => {
-            if (!Array.isArray(scopeObj[key])) {
-              scopeObj[key] = [scopeObj[key] as Native];
-            }
+            const scopeValues =
+              Array.isArray(scopeObj[key]) ?
+                (scopeObj[key] as Native[])
+              : [scopeObj[key] as Native];
 
-            return (scopeObj[key] as Native[]).find((scopeItem) => {
+            return scopeValues.find((scopeItem) => {
               return (
                 pubPayload[key] === undefined ||
                 scopeItem?.toString().toLowerCase() ===
@@ -889,15 +883,20 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
           });
         })
       ) {
-        onChangeEvent(pubPayload);
+        try {
+          subscriberPromises.push(Promise.resolve(onChangeEvent(pubPayload)));
+        } catch (error) {
+          subscriberPromises.push(Promise.reject(error));
+        }
       }
     });
-  };
+    await Promise.allSettled(subscriberPromises);
+  }, []);
 
   const subscribe = useCallback(
     (
       scope: ChangeEventScope[] | ChangeEventScope,
-      onChangeEvent: (payload: ChangeEventPayload) => void,
+      onChangeEvent: ChangeEventSubscriber,
     ) => {
       const subscriptionId = uniqueId();
       console.debug(`⚡ WS: subscribe ${subscriptionId}`, scope);
@@ -918,19 +917,61 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
     subMap.delete(subscriptionId);
   }, []);
 
-  const publish = useCallback(
+  const preparePublishedPayload = useCallback(
     (payload: ChangeEventPayload) => {
-      payload = {
+      return {
         ...payload,
         chainId: +(payload.chainId ?? chainId ?? "NaN"),
+        [INDEXING_PUBLISHER_ID_FIELD]: publisherId,
       };
-      console.debug("⚡ WS: publish", payload);
-      ablyClient.channels
-        .get(CHANGE_EVENT_CHANNEL_NAME)
-        .publish(payload.topic, payload);
     },
-    [ablyClient.channels, chainId],
+    [chainId, publisherId],
   );
+
+  const publishRemote = useCallback(
+    (payload: ChangeEventPayload) => {
+      console.debug("⚡ WS: publish", payload);
+      void ablyClient.channels
+        .get(CHANGE_EVENT_CHANNEL_NAME)
+        .publish(payload.topic, payload)
+        .catch((error) => {
+          console.warn("⚡ WS: publish failed", { payload, error });
+        });
+    },
+    [ablyClient.channels],
+  );
+
+  const publish = useCallback(
+    (payload: ChangeEventPayload) => {
+      const publishedPayload = preparePublishedPayload(payload);
+      setMessages((prevMessages) => [...prevMessages, publishedPayload]);
+      void dispatch(publishedPayload);
+      publishRemote(publishedPayload);
+    },
+    [dispatch, preparePublishedPayload, publishRemote],
+  );
+
+  useEffect(() => {
+    const channel = ablyClient.channels.get(CHANGE_EVENT_CHANNEL_NAME);
+    channel.subscribe((message) => {
+      const data = message.data as ChangeEventPayload;
+      const isPublisherEcho = data[INDEXING_PUBLISHER_ID_FIELD] === publisherId;
+      console.debug("⚡ WS: sub message", {
+        message,
+        isPublisherEcho,
+        reDispatch: () => {
+          void dispatch(data);
+        },
+      });
+      if (isPublisherEcho) return;
+      setMessages((prevMessages) => [...prevMessages, data]);
+      void dispatch(data);
+    });
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [ablyClient.channels, dispatch, publisherId]);
 
   const publishAfterIndexed = useCallback(
     (
@@ -1300,55 +1341,55 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
           return next;
         });
 
-        setAndPersistPendingIndexedPublishes((records) => {
-          const remaining: PendingIndexedPublish[] = [];
-
-          records.forEach((record) => {
-            const indexedBlock = indexedBlocks.get(record.chainId);
-            if (
-              indexedBlock == null ||
-              indexedBlock < BigInt(record.blockNumber)
-            ) {
-              console.info(`${INDEXING_LOG_PREFIX} record still waiting`, {
-                record: summarizePendingRecord(record),
-                indexedBlock: indexedBlock?.toString(),
-                targetBlock: record.blockNumber,
-              });
-              remaining.push(record);
-              return;
-            }
-
-            console.info(`${INDEXING_LOG_PREFIX} record indexed`, {
+        pendingIndexedPublishesSnapshot.forEach((record) => {
+          const indexedBlock = indexedBlocks.get(record.chainId);
+          const isIndexed =
+            indexedBlock != null && indexedBlock >= BigInt(record.blockNumber);
+          console.info(
+            `${INDEXING_LOG_PREFIX} record ${isIndexed ? "indexed" : "still waiting"}`,
+            {
               record: summarizePendingRecord(record),
-              indexedBlock: indexedBlock.toString(),
+              indexedBlock: indexedBlock?.toString(),
               targetBlock: record.blockNumber,
-            });
-            if (record.publishPayload) {
-              console.info(`${INDEXING_LOG_PREFIX} releasing silent publish`, {
-                record: summarizePendingRecord(record),
-                payload: {
-                  ...record.publishPayload,
-                  chainId: record.chainId,
-                  silent: true,
-                },
-              });
-              publish({
-                ...record.publishPayload,
-                chainId: record.chainId,
-                silent: true,
-              });
-            } else {
+            },
+          );
+        });
+
+        const indexedRecords = await releaseIndexedPendingPublishes(
+          pendingIndexedPublishesSnapshot,
+          indexedBlocks,
+          async (record) => {
+            if (!record.publishPayload) {
               console.debug(
                 `${INDEXING_LOG_PREFIX} indexed record has no payload`,
                 {
                   record: summarizePendingRecord(record),
                 },
               );
+              return;
             }
-          });
 
-          return remaining;
-        });
+            const payload = preparePublishedPayload({
+              ...record.publishPayload,
+              chainId: record.chainId,
+              silent: true,
+            });
+            console.info(`${INDEXING_LOG_PREFIX} releasing silent publish`, {
+              record: summarizePendingRecord(record),
+              payload,
+            });
+            setMessages((prevMessages) => [...prevMessages, payload]);
+            publishRemote(payload);
+            await dispatch(payload);
+          },
+        );
+
+        if (cancelled) return;
+
+        const releasedKeys = new Set(indexedRecords.map(pendingKey));
+        setAndPersistPendingIndexedPublishes((records) =>
+          records.filter((record) => !releasedKeys.has(pendingKey(record))),
+        );
       } catch (error) {
         console.warn(
           `${INDEXING_LOG_PREFIX} failed to poll latest indexed block`,
@@ -1380,9 +1421,11 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       }
     };
   }, [
+    dispatch,
     hasPendingIndexedPublishes,
-    publish,
     fetchLatestIndexedBlockForChain,
+    preparePublishedPayload,
+    publishRemote,
     setAndPersistPendingIndexedPublishes,
   ]);
 

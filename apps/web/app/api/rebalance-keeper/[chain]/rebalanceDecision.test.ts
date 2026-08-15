@@ -14,9 +14,8 @@ const baseInput = (
   isStrategyEnabled: true,
   proposalCount: 1,
   poolAmount: 1_000_000n,
-  totalPointsActivated: 1_000n,
+  poolThresholdPoints: 1_000n,
   decay: 9_000_000n,
-  threshold: 100n,
   streamingRatePerSecond: 1_000n,
   superTokenBalance: 10_000n,
   currentTotalFlowRate: 0n,
@@ -26,6 +25,7 @@ const baseInput = (
     {
       status: ACTIVE_STATUS,
       conviction: 500n,
+      threshold: 100n,
       currentUnits: 0n,
       currentFlowRate: 0n,
       hasEscrow: true,
@@ -51,6 +51,7 @@ describe("rebalance decision", () => {
             {
               status: ACTIVE_STATUS,
               conviction: 15_000n,
+              threshold: 100n,
               currentUnits: 1_000n,
               currentFlowRate: 1_000n,
               hasEscrow: true,
@@ -74,6 +75,7 @@ describe("rebalance decision", () => {
             {
               status: ACTIVE_STATUS,
               conviction: 500n,
+              threshold: 100n,
               currentUnits: 50n,
               currentFlowRate: 50n,
               hasEscrow: true,
@@ -81,6 +83,7 @@ describe("rebalance decision", () => {
             {
               status: DISPUTED_STATUS,
               conviction: 500n,
+              threshold: 100n,
               currentUnits: 50n,
               currentFlowRate: 50n,
               hasEscrow: true,
@@ -103,6 +106,7 @@ describe("rebalance decision", () => {
             {
               status: ACTIVE_STATUS,
               conviction: 600n,
+              threshold: 100n,
               currentUnits: 50n,
               currentFlowRate: 50n,
               hasEscrow: true,
@@ -110,6 +114,7 @@ describe("rebalance decision", () => {
             {
               status: ACTIVE_STATUS,
               conviction: 400n,
+              threshold: 100n,
               currentUnits: 50n,
               currentFlowRate: 50n,
               hasEscrow: true,
@@ -131,6 +136,7 @@ describe("rebalance decision", () => {
             {
               status: ACTIVE_STATUS,
               conviction: 100n,
+              threshold: 100n,
               currentUnits: 0n,
               currentFlowRate: 0n,
               hasEscrow: true,
@@ -181,6 +187,7 @@ describe("rebalance decision", () => {
             {
               status: ACTIVE_STATUS,
               conviction: 15_000n,
+              threshold: 100n,
               currentUnits: 1_000n,
               currentFlowRate: 1_000n,
               currentOutflowRate: 0n,
@@ -205,6 +212,7 @@ describe("rebalance decision", () => {
             {
               status: DISPUTED_STATUS,
               conviction: 15_000n,
+              threshold: 100n,
               currentUnits: 1_000n,
               currentFlowRate: 1_000n,
               currentOutflowRate: 1_000n,
@@ -244,6 +252,7 @@ describe("rebalance decision", () => {
             {
               status: 4,
               conviction: 500n,
+              threshold: 100n,
               currentUnits: 10n,
               currentFlowRate: 0n,
               hasEscrow: true,
@@ -254,6 +263,53 @@ describe("rebalance decision", () => {
     ).toEqual({
       shouldRun: true,
       reason: "inactive_proposal_units_need_clear",
+    });
+  });
+
+  it("runs to stop a stream below its proposal weighted threshold", () => {
+    expect(
+      evaluateRebalanceDecision(
+        baseInput({
+          currentTotalFlowRate: 50n,
+          proposals: [
+            {
+              status: ACTIVE_STATUS,
+              conviction: 500n,
+              threshold: 600n,
+              currentUnits: 50n,
+              currentFlowRate: 50n,
+              hasEscrow: true,
+            },
+          ],
+        }),
+      ),
+    ).toEqual({
+      shouldRun: true,
+      reason: "significant_rate_change_50bps",
+    });
+  });
+
+  it("uses pool weighted points for the aggregate stream rate", () => {
+    expect(
+      evaluateRebalanceDecision(
+        baseInput({
+          poolThresholdPoints: 2_000n,
+          currentTotalFlowRate: 500n,
+          proposals: [
+            {
+              status: ACTIVE_STATUS,
+              conviction: 10_000n,
+              threshold: 100n,
+              currentUnits: 500n,
+              currentFlowRate: 500n,
+              hasEscrow: true,
+            },
+          ],
+        }),
+      ),
+    ).toEqual({
+      shouldRun: false,
+      reason: "insignificant_rate_change_50bps",
     });
   });
 

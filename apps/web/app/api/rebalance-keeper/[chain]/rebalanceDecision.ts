@@ -8,9 +8,8 @@ export type RebalanceDecisionInput = {
   isStrategyEnabled: boolean;
   proposalCount: number;
   poolAmount: bigint;
-  totalPointsActivated: bigint;
+  poolThresholdPoints: bigint;
   decay: bigint;
-  threshold: bigint;
   streamingRatePerSecond: bigint;
   superTokenBalance: bigint;
   currentTotalFlowRate: bigint;
@@ -19,6 +18,7 @@ export type RebalanceDecisionInput = {
   proposals: Array<{
     status: number;
     conviction: bigint;
+    threshold: bigint;
     currentUnits: bigint;
     currentFlowRate: bigint;
     currentOutflowRate?: bigint;
@@ -57,9 +57,8 @@ export function evaluateRebalanceDecision({
   isStrategyEnabled,
   proposalCount,
   poolAmount,
-  totalPointsActivated,
+  poolThresholdPoints,
   decay,
-  threshold,
   streamingRatePerSecond,
   superTokenBalance,
   currentTotalFlowRate,
@@ -89,7 +88,7 @@ export function evaluateRebalanceDecision({
 
   const maxConviction =
     decay >= CONVICTION_D ? 0n : (
-      (totalPointsActivated * CONVICTION_D) / (CONVICTION_D - decay)
+      (poolThresholdPoints * CONVICTION_D) / (CONVICTION_D - decay)
     );
 
   let totalEligibleConviction = 0n;
@@ -108,7 +107,7 @@ export function evaluateRebalanceDecision({
     }
 
     activeOrDisputedWithEscrow += 1;
-    if (proposal.conviction > threshold) {
+    if (proposal.conviction > proposal.threshold) {
       totalEligibleConviction += proposal.conviction;
     }
     return true;
@@ -138,7 +137,7 @@ export function evaluateRebalanceDecision({
   let targetTotalUnits = 0n;
   const targetUnitsByIndex = activeProposals.map((proposal) => {
     let units = 0n;
-    if (proposal.conviction > threshold) {
+    if (proposal.conviction > proposal.threshold) {
       if (canStartStream) {
         units =
           (proposal.conviction * streamingUnitBudget) / totalEligibleConviction;

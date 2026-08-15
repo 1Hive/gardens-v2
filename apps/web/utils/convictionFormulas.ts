@@ -88,3 +88,43 @@ export function getRemainingBlocksToPass(
 
   return blocksToPass;
 }
+
+export function getRemainingBlocksToPassWithThresholdAdjustment(
+  currentThreshold: number,
+  stableThreshold: number,
+  conviction: number,
+  amount: number,
+  alpha: number,
+) {
+  if (
+    ![currentThreshold, stableThreshold, conviction, amount, alpha].every(
+      Number.isFinite,
+    ) ||
+    currentThreshold < 0 ||
+    stableThreshold < 0 ||
+    conviction < 0 ||
+    amount < 0
+  ) {
+    return 0;
+  }
+
+  // Execution requires conviction to be strictly greater than the threshold.
+  if (conviction > currentThreshold) return 0;
+  if (alpha <= 0) return amount > stableThreshold ? 1 : 0;
+  // At alpha >= 1 conviction does not accumulate toward a passing value.
+  if (alpha >= 1) return 0;
+
+  const maxConviction = amount / (1 - alpha);
+  const stableGap = maxConviction - stableThreshold;
+  if (stableGap <= 0) return 0;
+
+  const currentDelta = conviction - currentThreshold;
+  const decayRatio = stableGap / (stableGap - currentDelta);
+  const blocksToPass = Math.log(decayRatio) / Math.log(alpha);
+
+  if (!Number.isFinite(blocksToPass) || blocksToPass < 0) {
+    return 0;
+  }
+
+  return Math.max(1, Math.ceil(blocksToPass));
+}
