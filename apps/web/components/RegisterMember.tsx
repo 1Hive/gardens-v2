@@ -9,6 +9,7 @@ import {
   isMemberQuery,
 } from "#/subgraph/.graphclient";
 import { BtnStyle, Button, Color } from "./Button";
+import { CitizenWalletRegistrationButton } from "./CitizenWalletRegistrationButton";
 import { TransactionModal } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
@@ -101,30 +102,33 @@ export function RegisterMember({
     ...registryContractCallConfig,
     functionName: "unregisterMember",
     fallbackErrorMessage: "Error unregistering member, please report a bug.",
-    onConfirmations: useCallback((receipt: TransactionReceipt) => {
-      publishAfterIndexed(
-        receipt,
-        {
-          topic: "member",
-          type: "delete",
-          containerId: communityAddress,
-          function: "unregisterMember",
-          id: accountAddress,
-          chainId: urlChainId,
-        },
-        accountAddress ?
+    onConfirmations: useCallback(
+      (receipt: TransactionReceipt) => {
+        publishAfterIndexed(
+          receipt,
           {
-            optimistic: {
-              kind: "community-member",
-              communityId: communityAddress,
-              memberAddress: accountAddress,
-              isRegistered: false,
-              stakedTokens: "0",
-            },
-          }
-        : undefined,
-      );
-    }, [publishAfterIndexed, communityAddress, urlChainId, accountAddress]),
+            topic: "member",
+            type: "delete",
+            containerId: communityAddress,
+            function: "unregisterMember",
+            id: accountAddress,
+            chainId: urlChainId,
+          },
+          accountAddress ?
+            {
+              optimistic: {
+                kind: "community-member",
+                communityId: communityAddress,
+                memberAddress: accountAddress,
+                isRegistered: false,
+                stakedTokens: "0",
+              },
+            }
+          : undefined,
+        );
+      },
+      [publishAfterIndexed, communityAddress, urlChainId, accountAddress],
+    ),
   });
 
   useErrorDetails(unregisterMemberError, "unregisterMember");
@@ -241,6 +245,13 @@ export function RegisterMember({
       >
         {isMember ? "Leave" : "Join"}
       </Button>
+      {!isMember && (
+        <CitizenWalletRegistrationButton
+          chainId={urlChainId}
+          communityAddress={communityAddress as Address}
+          tokenAddress={tokenAddress}
+        />
+      )}
     </>
   );
 }
