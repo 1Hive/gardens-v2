@@ -3,13 +3,20 @@
 import React, {
   Suspense,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 import { AddrethConfig } from "addreth";
-import { ConnectKitProvider, getDefaultConnectors, useModal } from "connectkit";
+import {
+  ConnectKitProvider,
+  Context as ConnectKitContext,
+  getDefaultConnectors,
+  useModal,
+} from "connectkit";
+import { usePathname } from "next/navigation";
 import { Bounce, ToastContainer } from "react-toastify";
 import { Address, createWalletClient, custom, isAddress } from "viem";
 import { base } from "viem/chains";
@@ -29,11 +36,20 @@ import { MockConnector } from "wagmi/connectors/mock";
 import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
 import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 import { publicProvider } from "wagmi/providers/public";
+import {
+  CITIZEN_WALLET_CONNECTOR_ID,
+  CitizenWalletConnector,
+} from "./CitizenWalletConnector";
 import ThemeProvider from "./ThemeProvider";
 import { TransactionNotificationProvider } from "./TransactionNotificationProvider";
 import { UrqlProvider } from "./UrqlProvider";
+import { CitizenWalletRegistrationDialog } from "@/components/CitizenWalletRegistrationButton";
 import { CHAINS, getConfigByChain } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
+import {
+  CitizenWalletConnectionProvider,
+  useCitizenWalletConnection,
+} from "@/contexts/citizenWalletConnection.context";
 import {
   QueryParamsProvider,
   useCollectQueryParams,
@@ -42,6 +58,7 @@ import { PubSubProvider } from "@/contexts/pubsub.context";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useTheme } from "@/providers/ThemeProvider";
+import { getBreadCitizenCommunityFromPath } from "@/utils/citizenWallet";
 import { logOnce } from "@/utils/log";
 import {
   getWalletConnectDeepLinkChoice,
@@ -273,6 +290,8 @@ const getWalletConnectApprovedChainIds = (provider: any) => {
 };
 
 class RequiredChainWalletConnectConnector extends WalletConnectConnector {
+  readonly id = "walletConnect";
+
   private readonly requiredChainId?: number;
 
   constructor({
@@ -357,6 +376,7 @@ class RequiredChainWalletConnectConnector extends WalletConnectConnector {
 const createCustomConfig = (
   preferredChain: Chain | undefined,
   preferredSimulatedChain: Chain | undefined,
+  showCitizenWallet: boolean,
   simulatedWallet?: Address,
 ) => {
   const configuredChains = getConfiguredChains(preferredChain);
@@ -431,8 +451,13 @@ const createCustomConfig = (
     });
   }
 
-  const resolvedConnectors =
-    simulatedConnector ? [simulatedConnector, ...connectors] : connectors;
+  const citizenWalletConnector =
+    showCitizenWallet ? new CitizenWalletConnector(chains) : null;
+  const resolvedConnectors = [
+    ...(simulatedConnector ? [simulatedConnector] : []),
+    ...connectors,
+    ...(citizenWalletConnector ? [citizenWalletConnector] : []),
+  ];
 
   return {
     config: createConfig({
@@ -463,7 +488,12 @@ const Providers = ({ children }: Props) => {
 const ProvidersWithQueryParams = ({ children }: Props) => {
   const [mounted, setMounted] = useState(false);
   const chain = useChainFromPath() as Chain | undefined;
+  const pathname = usePathname();
   const queryParams = useCollectQueryParams();
+  const citizenCommunityAddress = useMemo(
+    () => getBreadCitizenCommunityFromPath(pathname),
+    [pathname],
+  );
 
   const simulatedWallet = useMemo(() => {
     const walletFromQuery = queryParams?.[QUERY_PARAMS.simulatedWallet];
@@ -510,11 +540,21 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
     });
 
     const { config, simulatedConnector: newSimulatedConnector } =
-      createCustomConfig(chain, preferredSimulatedChain, simulatedWallet);
+      createCustomConfig(
+        chain,
+        preferredSimulatedChain,
+        citizenCommunityAddress != null,
+        simulatedWallet,
+      );
     setWagmiConfig(config);
     setSimulatedConnector(newSimulatedConnector ?? null);
     setMounted(true);
-  }, [chain, simulatedWallet, preferredSimulatedChain]);
+  }, [
+    chain,
+    citizenCommunityAddress,
+    simulatedWallet,
+    preferredSimulatedChain,
+  ]);
 
   useEffect(() => {
     if (!wagmiConfig) {
@@ -608,12 +648,15 @@ const ThemeAware = ({ children }: { children: React.ReactNode }) => {
           initialChainId: chainFromPath?.id,
         }}
       >
-        <MobileWalletConnectStatus />
-        <WalletConnectRouteChainSync />
-        <WalletConnectDebugLogger />
-        <TransactionNotificationProvider>
-          {children}
-        </TransactionNotificationProvider>
+        <CitizenWalletConnectionProvider>
+          <CitizenWalletConnectKitBridge />
+          <MobileWalletConnectStatus />
+          <WalletConnectRouteChainSync />
+          <WalletConnectDebugLogger />
+          <TransactionNotificationProvider>
+            {children}
+          </TransactionNotificationProvider>
+        </CitizenWalletConnectionProvider>
       </ConnectKitProvider>
       <ToastContainer
         style={{ zIndex: 1000 }}
@@ -630,6 +673,62 @@ const ThemeAware = ({ children }: { children: React.ReactNode }) => {
         transition={Bounce}
       />
     </>
+  );
+};
+
+const CitizenWalletConnectKitBridge = () => {
+  const pathname = usePathname();
+  const connectKit = useContext(ConnectKitContext);
+  const { connectors } = useConnect();
+  const { startCitizenWalletConnect } = useCitizenWalletConnection();
+  const [isCitizenModalOpen, setIsCitizenModalOpen] = useState(false);
+  const communityAddress = useMemo(
+    () => getBreadCitizenCommunityFromPath(pathname),
+    [pathname],
+  );
+
+  useEffect(() => {
+    if (
+      communityAddress == null ||
+      connectKit?.connector.id !== CITIZEN_WALLET_CONNECTOR_ID ||
+      connectKit.route !== "connect"
+    ) {
+      return;
+    }
+
+    connectKit.setOpen(false);
+    connectKit.setRoute("connectors");
+    connectKit.setConnector({ id: "", name: "" });
+    setIsCitizenModalOpen(true);
+  }, [communityAddress, connectKit]);
+
+  if (communityAddress == null) return null;
+
+  const connectWebWallet = () => {
+    const walletConnectConnector = connectors.find(
+      (connector) =>
+        connector.id === "walletConnect" ||
+        connector.id === "walletConnectLegacy",
+    );
+    if (!connectKit || !walletConnectConnector) return;
+
+    startCitizenWalletConnect();
+    setIsCitizenModalOpen(false);
+    connectKit.setConnector({
+      id: walletConnectConnector.id,
+      name: walletConnectConnector.name,
+    });
+    connectKit.setRoute("connect");
+    connectKit.setOpen(true);
+  };
+
+  return (
+    <CitizenWalletRegistrationDialog
+      communityAddress={communityAddress}
+      isOpen={isCitizenModalOpen}
+      onClose={() => setIsCitizenModalOpen(false)}
+      onConnectWebWallet={connectWebWallet}
+    />
   );
 };
 

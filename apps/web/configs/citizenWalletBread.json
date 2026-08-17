@@ -1,0 +1,66 @@
+{
+  "community": {
+    "name": "Breadchain Community Token",
+    "description": "BREAD is a digital community token and solidarity primitive developed by Breadchain Cooperative.",
+    "url": "https://breadchain.xyz/",
+    "alias": "bread",
+    "logo": "https://assets.citizenwallet.xyz/wallet-config/_images/bread.svg",
+    "profile": {
+      "address": "0x6b3a1f4277391526413F583c23D5B9EF4d2fE986",
+      "chain_id": 100
+    },
+    "primary_token": {
+      "address": "0xa555d5344f6fb6c65da19e403cb4c1ec4a1a5ee3",
+      "chain_id": 100
+    },
+    "primary_account_factory": {
+      "address": "0xAE76B1C6818c1DD81E20ccefD3e72B773068ABc9",
+      "chain_id": 100
+    }
+  },
+  "tokens": {
+    "100:0xa555d5344f6fb6c65da19e403cb4c1ec4a1a5ee3": {
+      "standard": "erc20",
+      "name": "Breadchain Community Token",
+      "address": "0xa555d5344f6fb6c65da19e403cb4c1ec4a1a5ee3",
+      "symbol": "BREAD",
+      "decimals": 18,
+      "chain_id": 100
+    }
+  },
+  "scan": {
+    "url": "https://gnosisscan.io",
+    "name": "Gnosis Explorer"
+  },
+  "accounts": {
+    "100:0xAE76B1C6818c1DD81E20ccefD3e72B773068ABc9": {
+      "chain_id": 100,
+      "entrypoint_address": "0xcA0a75EF803a364C83c5EAE7Eb889aE7419c9dF2",
+      "paymaster_address": "0xbE2Cb3358aa14621134e923B68b8429315368E32",
+      "account_factory_address": "0xAE76B1C6818c1DD81E20ccefD3e72B773068ABc9",
+      "paymaster_type": "cw"
+    },
+    "100:0x940Cbb155161dc0C4aade27a4826a16Ed8ca0cb2": {
+      "chain_id": 100,
+      "entrypoint_address": "0x7079253c0358eF9Fd87E16488299Ef6e06F403B6",
+      "paymaster_address": "0x5C41F1114AB13aF5d66bac485924D03556d0cd51",
+      "account_factory_address": "0x940Cbb155161dc0C4aade27a4826a16Ed8ca0cb2",
+      "paymaster_type": "cw-safe"
+    }
+  },
+  "chains": {
+    "100": {
+      "id": 100,
+      "node": {
+        "url": "https://100.engine.citizenwallet.xyz",
+        "ws_url": "wss://100.engine.citizenwallet.xyz"
+      }
+    }
+  },
+  "ipfs": {
+    "url": "https://ipfs.internal.citizenwallet.xyz"
+  },
+  "plugins": [],
+  "config_location": "https://config.internal.citizenwallet.xyz/v4/bread.citizenwallet.xyz.json",
+  "version": 4
+}
