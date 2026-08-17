@@ -2,6 +2,7 @@ import { Address, encodeFunctionData, getAddress, parseAbi } from "viem";
 
 export const CITIZEN_WALLET_CHAIN_ID = 100;
 export const CITIZEN_WALLET_ALIAS = "bread";
+export const CITIZEN_BREAD_WEB_WALLET_URL = "https://bread.citizenwallet.xyz/";
 export const BREAD_TOKEN_ADDRESS = getAddress(
   "0xa555d5344f6fb6c65da19e403cb4c1ec4a1a5ee3",
 );
@@ -29,6 +30,14 @@ export type CitizenConnectionParams = {
   sigAuthSignature: string;
   sigAuthRedirect: string;
 };
+
+export function isCitizenWalletConnectConnector(
+  connectorId: string | undefined,
+) {
+  return (
+    connectorId === "walletConnect" || connectorId === "walletConnectLegacy"
+  );
+}
 
 export function isBreadCitizenRegistration(args: {
   chainId: number | undefined;

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { Address, decodeFunctionData, getAddress, parseAbi } from "viem";
+import { describe, expect, it } from "vitest";
 import {
   BREAD_TOKEN_ADDRESS,
   BREAD_COMMUNITY_ADDRESS,
@@ -11,6 +11,7 @@ import {
   encodeCitizenRegistration,
   getCitizenRegistrationAction,
   getBreadCitizenCommunityFromPath,
+  isCitizenWalletConnectConnector,
   isAllowedCitizenRedirect,
   isBreadCitizenRegistration,
 } from "./citizenWallet";
@@ -63,6 +64,13 @@ describe("Citizen Wallet registration eligibility", () => {
         `/gardens/10/${BREAD_COMMUNITY_ADDRESS}`,
       ),
     ).toBeNull();
+  });
+
+  it("recognizes both WalletConnect connector ids used by Citizen web wallet", () => {
+    expect(isCitizenWalletConnectConnector("walletConnect")).toBe(true);
+    expect(isCitizenWalletConnectConnector("walletConnectLegacy")).toBe(true);
+    expect(isCitizenWalletConnectConnector("injected")).toBe(false);
+    expect(isCitizenWalletConnectConnector(undefined)).toBe(false);
   });
 });
 

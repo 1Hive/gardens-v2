@@ -7,6 +7,7 @@ import { Button } from "./Button";
 import { Modal } from "./Modal";
 import {
   buildCitizenRegistrationPath,
+  CITIZEN_BREAD_WEB_WALLET_URL,
   isBreadCitizenRegistration,
 } from "@/utils/citizenWallet";
 
@@ -20,12 +21,14 @@ type DialogProps = {
   communityAddress: Address;
   isOpen: boolean;
   onClose: () => void;
+  onConnectWebWallet?: () => void;
 };
 
 export function CitizenWalletRegistrationDialog({
   communityAddress,
   isOpen,
   onClose,
+  onConnectWebWallet,
 }: DialogProps) {
   const [registrationUrl, setRegistrationUrl] = useState("");
   const registrationPath = useMemo(
@@ -45,27 +48,58 @@ export function CitizenWalletRegistrationDialog({
       size="small"
       testId="citizen-wallet-registration"
     >
-      <div className="flex flex-col items-center gap-5 text-center">
-        <p>
-          Open the BREAD community in Citizen Wallet, select its QR scanner, and
-          scan this code.
-        </p>
-        {registrationUrl && (
+      <div className="flex flex-col gap-5 text-center">
+        <div className="flex flex-col items-center gap-4">
+          <h3>Native Citizen Wallet app</h3>
+          <p>
+            Open the BREAD community in the native app, select its QR scanner,
+            and scan this code.
+          </p>
+          {registrationUrl && (
+            <div
+              className="rounded-xl bg-white p-4"
+              data-testid="citizen-wallet-qr"
+            >
+              <QRCodeSVG
+                value={registrationUrl}
+                size={220}
+                title="Gardens Citizen Wallet registration link"
+              />
+            </div>
+          )}
+          <p className="text-sm text-neutral-content">
+            Gardens opens inside the native app and requests the BREAD approval
+            and registration there.
+          </p>
+        </div>
+
+        {onConnectWebWallet && (
           <div
-            className="rounded-xl bg-white p-4"
-            data-testid="citizen-wallet-qr"
+            className="flex flex-col items-center gap-4 border-t border-border-neutral pt-5"
+            data-testid="citizen-web-wallet-option"
           >
-            <QRCodeSVG
-              value={registrationUrl}
-              size={220}
-              title="Gardens Citizen Wallet registration link"
-            />
+            <h3>Citizen web wallet</h3>
+            <p>
+              Open the BREAD web wallet on your phone, select its QR scanner,
+              then scan the WalletConnect code Gardens shows next.
+            </p>
+            <Button
+              onClick={onConnectWebWallet}
+              testId="citizen-web-wallet-connect"
+            >
+              Show WalletConnect QR
+            </Button>
+            <a
+              className="text-sm text-primary-content underline"
+              href={CITIZEN_BREAD_WEB_WALLET_URL}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open BREAD web wallet
+            </a>
           </div>
         )}
-        <p className="text-sm text-neutral-content">
-          Gardens will open inside Citizen Wallet. Citizen will ask you to
-          confirm the BREAD approval when required and then the registration.
-        </p>
+
         <a
           className="text-sm text-primary-content underline"
           href={registrationPath}

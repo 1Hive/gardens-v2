@@ -11,6 +11,7 @@ import {
 import { BtnStyle, Button, Color } from "./Button";
 import { CitizenWalletRegistrationButton } from "./CitizenWalletRegistrationButton";
 import { TransactionModal } from "./TransactionModal";
+import { useCitizenWalletConnection } from "@/contexts/citizenWalletConnection.context";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -46,6 +47,7 @@ export function RegisterMember({
     covenantIpfsHash,
   } = registryCommunity;
   const { address: accountAddress } = useAccount();
+  const { isCitizenWalletConnect } = useCitizenWalletConnection();
   const urlChainId = useChainIdFromPath();
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { publishAfterIndexed } = usePubSubContext();
@@ -179,6 +181,7 @@ export function RegisterMember({
       chainId: urlChainId,
       communityAddress: communityAddress as Address,
       covenant: covenantIpfsHash,
+      bypassSignature: isCitizenWalletConnect,
     });
 
   const handleClick = useCallback(() => {

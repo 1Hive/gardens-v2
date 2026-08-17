@@ -10,8 +10,8 @@ import {
   getCovenantSignatureKey,
   setCovenantSignature,
 } from "@/utils/covenantSignatureStorage";
-import { getTxMessage } from "@/utils/transactionMessages";
 import { signMessageWithProvider } from "@/utils/signMessageWithProvider";
+import { getTxMessage } from "@/utils/transactionMessages";
 
 interface CustomError extends Error {
   details?: string;
@@ -24,10 +24,12 @@ export function useCovenantAgreementSignature(
     chainId,
     communityAddress,
     covenant,
+    bypassSignature = false,
   }: {
     chainId: number | undefined;
     communityAddress: Address;
     covenant: string | null | undefined;
+    bypassSignature?: boolean;
   },
 ): {
   covenantAgreementTxProps: TransactionProps;
@@ -73,7 +75,7 @@ export function useCovenantAgreementSignature(
     setIsSigning(true);
 
     try {
-      if (bypassCovenantSignature) {
+      if (bypassCovenantSignature || bypassSignature) {
         setCovenantAgreementTxProps({
           contractName: CovenantTitle,
           message: getTxMessage("success"),
@@ -142,6 +144,7 @@ export function useCovenantAgreementSignature(
     }
   }, [
     address,
+    bypassSignature,
     bypassCovenantSignature,
     chainId,
     communityAddress,

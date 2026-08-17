@@ -36,16 +36,20 @@ import { MockConnector } from "wagmi/connectors/mock";
 import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
 import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 import { publicProvider } from "wagmi/providers/public";
-import ThemeProvider from "./ThemeProvider";
 import {
   CITIZEN_WALLET_CONNECTOR_ID,
   CitizenWalletConnector,
 } from "./CitizenWalletConnector";
+import ThemeProvider from "./ThemeProvider";
 import { TransactionNotificationProvider } from "./TransactionNotificationProvider";
 import { UrqlProvider } from "./UrqlProvider";
 import { CitizenWalletRegistrationDialog } from "@/components/CitizenWalletRegistrationButton";
 import { CHAINS, getConfigByChain } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
+import {
+  CitizenWalletConnectionProvider,
+  useCitizenWalletConnection,
+} from "@/contexts/citizenWalletConnection.context";
 import {
   QueryParamsProvider,
   useCollectQueryParams,
@@ -286,6 +290,8 @@ const getWalletConnectApprovedChainIds = (provider: any) => {
 };
 
 class RequiredChainWalletConnectConnector extends WalletConnectConnector {
+  readonly id = "walletConnect";
+
   private readonly requiredChainId?: number;
 
   constructor({
@@ -642,13 +648,15 @@ const ThemeAware = ({ children }: { children: React.ReactNode }) => {
           initialChainId: chainFromPath?.id,
         }}
       >
-        <CitizenWalletConnectKitBridge />
-        <MobileWalletConnectStatus />
-        <WalletConnectRouteChainSync />
-        <WalletConnectDebugLogger />
-        <TransactionNotificationProvider>
-          {children}
-        </TransactionNotificationProvider>
+        <CitizenWalletConnectionProvider>
+          <CitizenWalletConnectKitBridge />
+          <MobileWalletConnectStatus />
+          <WalletConnectRouteChainSync />
+          <WalletConnectDebugLogger />
+          <TransactionNotificationProvider>
+            {children}
+          </TransactionNotificationProvider>
+        </CitizenWalletConnectionProvider>
       </ConnectKitProvider>
       <ToastContainer
         style={{ zIndex: 1000 }}
@@ -671,6 +679,8 @@ const ThemeAware = ({ children }: { children: React.ReactNode }) => {
 const CitizenWalletConnectKitBridge = () => {
   const pathname = usePathname();
   const connectKit = useContext(ConnectKitContext);
+  const { connectors } = useConnect();
+  const { startCitizenWalletConnect } = useCitizenWalletConnection();
   const [isCitizenModalOpen, setIsCitizenModalOpen] = useState(false);
   const communityAddress = useMemo(
     () => getBreadCitizenCommunityFromPath(pathname),
@@ -694,11 +704,30 @@ const CitizenWalletConnectKitBridge = () => {
 
   if (communityAddress == null) return null;
 
+  const connectWebWallet = () => {
+    const walletConnectConnector = connectors.find(
+      (connector) =>
+        connector.id === "walletConnect" ||
+        connector.id === "walletConnectLegacy",
+    );
+    if (!connectKit || !walletConnectConnector) return;
+
+    startCitizenWalletConnect();
+    setIsCitizenModalOpen(false);
+    connectKit.setConnector({
+      id: walletConnectConnector.id,
+      name: walletConnectConnector.name,
+    });
+    connectKit.setRoute("connect");
+    connectKit.setOpen(true);
+  };
+
   return (
     <CitizenWalletRegistrationDialog
       communityAddress={communityAddress}
       isOpen={isCitizenModalOpen}
       onClose={() => setIsCitizenModalOpen(false)}
+      onConnectWebWallet={connectWebWallet}
     />
   );
 };
