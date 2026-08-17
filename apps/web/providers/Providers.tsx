@@ -449,8 +449,8 @@ const createCustomConfig = (
     showCitizenWallet ? new CitizenWalletConnector(chains) : null;
   const resolvedConnectors = [
     ...(simulatedConnector ? [simulatedConnector] : []),
-    ...(citizenWalletConnector ? [citizenWalletConnector] : []),
     ...connectors,
+    ...(citizenWalletConnector ? [citizenWalletConnector] : []),
   ];
 
   return {
