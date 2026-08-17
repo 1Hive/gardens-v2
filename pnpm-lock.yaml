@@ -88,6 +88,9 @@ patchedDependencies:
   '@synthetixio/synpress-metamask@0.0.14':
     hash: klj2zdg32j2ncpqt2rx3pjprbu
     path: patches/@synthetixio__synpress-metamask@0.0.14.patch
+  connectkit@1.6.0:
+    hash: c5fritp6dlokgjfykafdtzrxkm
+    path: patches/connectkit@1.6.0.patch
 
 importers:
 
@@ -219,7 +222,7 @@ importers:
         version: 2.5.1
       connectkit:
         specifier: 1.6.0
-        version: 1.6.0(@babel/core@7.28.4)(bufferutil@4.1.0)(react-dom@18.2.0(react@18.2.0))(react-is@18.3.1)(react@18.2.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(viem@1.21.4(bufferutil@4.1.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(zod@3.25.76))(wagmi@1.4.13(@types/react@18.3.3)(bufferutil@4.1.0)(encoding@0.1.13)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(viem@1.21.4(bufferutil@4.1.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(zod@3.25.76))(zod@3.25.76))(zod@3.25.76)
+        version: 1.6.0(patch_hash=c5fritp6dlokgjfykafdtzrxkm)(@babel/core@7.28.4)(bufferutil@4.1.0)(react-dom@18.2.0(react@18.2.0))(react-is@18.3.1)(react@18.2.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(viem@1.21.4(bufferutil@4.1.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(zod@3.25.76))(wagmi@1.4.13(@types/react@18.3.3)(bufferutil@4.1.0)(encoding@0.1.13)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(viem@1.21.4(bufferutil@4.1.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(zod@3.25.76))(zod@3.25.76))(zod@3.25.76)
       daisyui:
         specifier: ^4.4.20
         version: 4.12.2(postcss@8.5.24)
@@ -22110,7 +22113,7 @@ snapshots:
 
   confusing-browser-globals@1.0.11: {}
 
-  connectkit@1.6.0(@babel/core@7.28.4)(bufferutil@4.1.0)(react-dom@18.2.0(react@18.2.0))(react-is@18.3.1)(react@18.2.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(viem@1.21.4(bufferutil@4.1.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(zod@3.25.76))(wagmi@1.4.13(@types/react@18.3.3)(bufferutil@4.1.0)(encoding@0.1.13)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(viem@1.21.4(bufferutil@4.1.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(zod@3.25.76))(zod@3.25.76))(zod@3.25.76):
+  connectkit@1.6.0(patch_hash=c5fritp6dlokgjfykafdtzrxkm)(@babel/core@7.28.4)(bufferutil@4.1.0)(react-dom@18.2.0(react@18.2.0))(react-is@18.3.1)(react@18.2.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(viem@1.21.4(bufferutil@4.1.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(zod@3.25.76))(wagmi@1.4.13(@types/react@18.3.3)(bufferutil@4.1.0)(encoding@0.1.13)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(viem@1.21.4(bufferutil@4.1.0)(typescript@5.2.2)(utf-8-validate@5.0.10)(zod@3.25.76))(zod@3.25.76))(zod@3.25.76):
     dependencies:
       buffer: 6.0.3
       detect-browser: 5.3.0

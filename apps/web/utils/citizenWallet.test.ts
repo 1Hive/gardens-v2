@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Address, decodeFunctionData, getAddress, parseAbi } from "viem";
 import {
   BREAD_TOKEN_ADDRESS,
+  BREAD_COMMUNITY_ADDRESS,
   buildCitizenCalldataUrl,
   buildCitizenConnectedUrl,
   buildCitizenRegistrationPath,
@@ -9,6 +10,7 @@ import {
   encodeCitizenApproval,
   encodeCitizenRegistration,
   getCitizenRegistrationAction,
+  getBreadCitizenCommunityFromPath,
   isAllowedCitizenRedirect,
   isBreadCitizenRegistration,
 } from "./citizenWallet";
@@ -38,6 +40,29 @@ describe("Citizen Wallet registration eligibility", () => {
     expect(buildCitizenRegistrationPath(community)).toBe(
       `/gardens/100/${community}/citizen`,
     );
+  });
+
+  it("recognizes the BREAD community and its nested routes", () => {
+    expect(
+      getBreadCitizenCommunityFromPath(
+        `/gardens/100/${BREAD_COMMUNITY_ADDRESS}`,
+      ),
+    ).toBe(BREAD_COMMUNITY_ADDRESS);
+    expect(
+      getBreadCitizenCommunityFromPath(
+        `/gardens/100/${BREAD_COMMUNITY_ADDRESS}/pool/1`,
+      ),
+    ).toBe(BREAD_COMMUNITY_ADDRESS);
+    expect(
+      getBreadCitizenCommunityFromPath(
+        "/gardens/100/0x1111111111111111111111111111111111111111",
+      ),
+    ).toBeNull();
+    expect(
+      getBreadCitizenCommunityFromPath(
+        `/gardens/10/${BREAD_COMMUNITY_ADDRESS}`,
+      ),
+    ).toBeNull();
   });
 });
 

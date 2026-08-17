@@ -5,6 +5,9 @@ export const CITIZEN_WALLET_ALIAS = "bread";
 export const BREAD_TOKEN_ADDRESS = getAddress(
   "0xa555d5344f6fb6c65da19e403cb4c1ec4a1a5ee3",
 );
+export const BREAD_COMMUNITY_ADDRESS = getAddress(
+  "0xe33e18b5887cf16ad4e351e98980eb5f50727c31",
+);
 export const CITIZEN_COVENANT_BYPASS = "0x0";
 
 const erc20ApproveAbi = parseAbi([
@@ -47,6 +50,22 @@ export function buildCitizenRegistrationPath(
   chainId = CITIZEN_WALLET_CHAIN_ID,
 ) {
   return `/gardens/${chainId}/${getAddress(communityAddress)}/citizen`;
+}
+
+export function getBreadCitizenCommunityFromPath(pathname: string) {
+  const [root, chain, community] = pathname
+    .split("/")
+    .filter((segment) => segment !== "");
+  if (root !== "gardens" || Number(chain) !== CITIZEN_WALLET_CHAIN_ID) {
+    return null;
+  }
+
+  try {
+    const address = getAddress(community ?? "");
+    return address === BREAD_COMMUNITY_ADDRESS ? address : null;
+  } catch {
+    return null;
+  }
 }
 
 export function buildCitizenConnectedUrl(
