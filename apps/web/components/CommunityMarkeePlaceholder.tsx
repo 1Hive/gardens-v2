@@ -517,6 +517,11 @@ function CommunityMarkeePreviewModal({
   const [ethxAddress, setEthxAddress] = useState<Address | null>(null);
   const [existingStreamDeposit, setExistingStreamDeposit] = useState(0n);
   const [isStreamPositionLoading, setIsStreamPositionLoading] = useState(false);
+  const [estimatedStreamGasCost, setEstimatedStreamGasCost] = useState<
+    bigint | null
+  >(null);
+  const [isStreamGasEstimateLoading, setIsStreamGasEstimateLoading] =
+    useState(false);
   const [transactionNotification, setTransactionNotification] =
     useState<MarkeeTransactionNotification | null>(null);
   const transactionNotificationAttempt = useRef(0);
@@ -661,7 +666,9 @@ function CommunityMarkeePreviewModal({
     : 0n;
   const additionalStreamFundingRequired =
     streamAmounts.prefund + streamDepositTopUp;
-  const estimatedGasReserve = parseEther("0.0002");
+  const estimatedGasReserve = estimatedStreamGasCost ?? parseEther("0.0002");
+  const isStreamGasEstimatePending =
+    ownedMarkeeAddress != null && estimatedStreamGasCost == null;
   const hasInsufficientTopUpBalance =
     walletBalance != null &&
     streamFundingAmountWei + estimatedGasReserve > walletBalance.value;
@@ -682,7 +689,7 @@ function CommunityMarkeePreviewModal({
     walletBalance.value < previewNativeBalanceRequired;
   const insufficientBalanceMessage =
     hasInsufficientWalletBalance ?
-      `Funding needs ${formatEthAmount(additionalStreamFundingRequired)} ETH + ETHx, plus about ${formatEthAmount(estimatedGasReserve)} ETH for gas.${ethxWalletDeficit > 0n ? ` Your Superfluid account also has a ${formatEthAmount(ethxWalletDeficit)} ETHx deficit from existing streams.` : ""}`
+      `Your wallet needs ${formatEthAmount(previewNativeBalanceRequired)} ETH, including an estimated ${formatEthAmount(estimatedGasReserve)} ETH gas buffer. You currently have ${formatEthAmount(walletBalance?.value ?? 0n)} ETH.${ethxWalletDeficit > 0n ? ` Your Superfluid account also has a ${formatEthAmount(ethxWalletDeficit)} ETHx deficit from existing streams.` : ""}`
     : null;
   const maxMonthlyRateAmount = useMemo(() => {
     if (monthsFixed18 <= 0n) return 0n;
@@ -1033,6 +1040,194 @@ function CommunityMarkeePreviewModal({
     isTopMarkeeOwner,
     leaderboardAddress,
     publicClient,
+  ]);
+
+  useEffect(() => {
+    if (
+      !isOpen ||
+      !isLive ||
+      connectedAccount == null ||
+      leaderboardAddress == null ||
+      ownedMarkeeAddress == null ||
+      publicClient == null ||
+      isConnectedMarkeeLoading ||
+      isStreamPositionLoading ||
+      streamAmounts.ratePerSecond <= 0n ||
+      streamAmounts.prefund <= streamAmounts.buffer
+    ) {
+      setEstimatedStreamGasCost(null);
+      setIsStreamGasEstimateLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setEstimatedStreamGasCost(null);
+    setIsStreamGasEstimateLoading(true);
+
+    const timeout = window.setTimeout(() => {
+      void (async () => {
+        const [ethxResult, hostResult, poolResult] = await Promise.all([
+          publicClient.readContract({
+            abi: streamingLeaderboardRuntimeABI,
+            address: leaderboardAddress,
+            functionName: "ETHX",
+          }),
+          publicClient.readContract({
+            abi: streamingLeaderboardRuntimeABI,
+            address: leaderboardAddress,
+            functionName: "HOST",
+          }),
+          publicClient.readContract({
+            abi: streamingLeaderboardRuntimeABI,
+            address: leaderboardAddress,
+            args: [ownedMarkeeAddress],
+            functionName: "poolOf",
+          }),
+        ]);
+        if (
+          !isAddress(ethxResult) ||
+          !isAddress(hostResult) ||
+          !isAddress(poolResult) ||
+          poolResult === zeroAddress
+        ) {
+          throw new Error("The Markee stream configuration is unavailable.");
+        }
+
+        const ethx = getAddress(ethxResult);
+        const host = getAddress(hostResult);
+        const [
+          cfaResult,
+          gdaResult,
+          realtimeBalance,
+          allowance,
+          existingMarkeeResult,
+          existingDeposit,
+          existingFlowRate,
+        ] = await Promise.all([
+          publicClient.readContract({
+            abi: superfluidHostABI,
+            address: host,
+            args: [CFA_AGREEMENT_ID],
+            functionName: "getAgreementClass",
+          }),
+          publicClient.readContract({
+            abi: superfluidHostABI,
+            address: host,
+            args: [GDA_AGREEMENT_ID],
+            functionName: "getAgreementClass",
+          }),
+          publicClient.readContract({
+            abi: ethxApproveABI,
+            address: ethx,
+            args: [connectedAccount],
+            functionName: "realtimeBalanceOfNow",
+          }),
+          publicClient.readContract({
+            abi: ethxApproveABI,
+            address: ethx,
+            args: [connectedAccount, leaderboardAddress],
+            functionName: "allowance",
+          }),
+          publicClient.readContract({
+            abi: streamingLeaderboardRuntimeABI,
+            address: leaderboardAddress,
+            args: [connectedAccount],
+            functionName: "backerMarkee",
+          }),
+          publicClient.readContract({
+            abi: streamingLeaderboardRuntimeABI,
+            address: leaderboardAddress,
+            args: [connectedAccount],
+            functionName: "backerDeposit",
+          }),
+          publicClient.readContract({
+            abi: cfaV1ForwarderABI,
+            address: CFA_V1_FORWARDER_ADDRESS,
+            args: [ethx, connectedAccount, leaderboardAddress],
+            functionName: "getFlowrate",
+          }),
+        ]);
+        if (!isAddress(cfaResult) || !isAddress(gdaResult)) {
+          throw new Error("The Superfluid agreements are unavailable.");
+        }
+
+        const depositTopUp =
+          streamAmounts.buffer > existingDeposit ?
+            streamAmounts.buffer - existingDeposit
+          : 0n;
+        const { requiresApproval, wrapValue } = getMarkeeStreamFunding({
+          ethxAllowance: allowance,
+          ethxAvailableBalance: realtimeBalance[0],
+          requiredBuffer: depositTopUp,
+          totalRequired: depositTopUp + streamAmounts.prefund,
+        });
+        const existingMarkee =
+          (
+            isAddress(existingMarkeeResult) &&
+            existingMarkeeResult !== zeroAddress
+          ) ?
+            getAddress(existingMarkeeResult)
+          : undefined;
+        const operations = buildMarkeeOpenStreamOperations({
+          approvalAmount: requiresApproval ? depositTopUp : 0n,
+          backer: connectedAccount,
+          board: leaderboardAddress,
+          buffer: depositTopUp,
+          cfaAgreement: getAddress(cfaResult),
+          ethx,
+          existingMarkee,
+          existingRatePerSecond:
+            existingFlowRate > 0n ? existingFlowRate : undefined,
+          gdaAgreement: getAddress(gdaResult),
+          markee: ownedMarkeeAddress,
+          pool: getAddress(poolResult),
+          ratePerSecond: streamAmounts.ratePerSecond,
+          wrapValue,
+        });
+        const [gasEstimate, gasPrice] = await Promise.all([
+          publicClient.estimateContractGas({
+            abi: superfluidHostABI,
+            account: connectedAccount,
+            address: host,
+            args: [operations],
+            functionName: "batchCall",
+            value: wrapValue,
+          }),
+          publicClient.getGasPrice(),
+        ]);
+        const { estimatedGasCost } = getMarkeeRequiredNativeBalance({
+          gasEstimate,
+          gasPrice,
+          wrapValue,
+        });
+        if (!cancelled) setEstimatedStreamGasCost(estimatedGasCost);
+      })()
+        .catch((error: unknown) => {
+          logOnce(
+            "warn",
+            "[CommunityMarkee] Unable to estimate the stream transaction fee",
+            error,
+          );
+        })
+        .finally(() => {
+          if (!cancelled) setIsStreamGasEstimateLoading(false);
+        });
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [
+    connectedAccount,
+    isConnectedMarkeeLoading,
+    isLive,
+    isOpen,
+    isStreamPositionLoading,
+    leaderboardAddress,
+    ownedMarkeeAddress,
+    publicClient,
+    streamAmounts,
   ]);
 
   const handleClose = () => {
@@ -2159,6 +2354,8 @@ function CommunityMarkeePreviewModal({
                   isWithdrawingStreamDeposit ||
                   isConnectedMarkeeLoading ||
                   isStreamPositionLoading ||
+                  isStreamGasEstimateLoading ||
+                  isStreamGasEstimatePending ||
                   hasInsufficientWalletBalance ||
                   streamFormError != null ||
                   (isLive && connectedAccount == null)
@@ -2167,14 +2364,19 @@ function CommunityMarkeePreviewModal({
                 onClick={handleStartStream}
                 testId="markee-stream-preview-submit"
                 tooltip={
-                  isMarkeeMessageMissing ?
-                    "Add a message for your Markee."
+                  isMarkeeMessageMissing ? "Add a message for your Markee."
+                  : isStreamGasEstimatePending ?
+                    "Estimating the network fee…"
                   : streamFormError ?? insufficientBalanceMessage ?? undefined
                 }
                 tooltipClassName="flex justify-end text-left"
                 tooltipSide="tooltip-top-left"
               >
-                {isConnectedMarkeeLoading || isStreamPositionLoading ?
+                {(
+                  isConnectedMarkeeLoading ||
+                  isStreamPositionLoading ||
+                  isStreamGasEstimatePending
+                ) ?
                   "Checking your stream…"
                 : isLive && connectedAccount == null ?
                   "Connect wallet"
