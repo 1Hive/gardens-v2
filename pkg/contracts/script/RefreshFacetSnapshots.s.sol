@@ -65,9 +65,7 @@ contract RefreshFacetSnapshots is BaseMultiChain {
             FacetKind.CVSyncPower
         );
         _refreshFacet(
-            ".FACETS.CV_STREAMING",
-            "src/CVStrategy/facets/CVStreamingFacet.sol:CVStreamingFacet",
-            FacetKind.CVStreaming
+            ".FACETS.CV_STREAMING", "src/CVStrategy/facets/CVStreamingFacet.sol:CVStreamingFacet", FacetKind.CVStreaming
         );
 
         _refreshFacet(
@@ -103,6 +101,9 @@ contract RefreshFacetSnapshots is BaseMultiChain {
     }
 
     function _refreshFacet(string memory key, string memory artifactId, FacetKind kind) internal {
+        string memory facetFilter = vm.envOr("REFRESH_FACET_KEY", string(""));
+        if (bytes(facetFilter).length != 0 && keccak256(bytes(facetFilter)) != keccak256(bytes(key))) return;
+
         address cached = _readAddressOrZero(key);
         bytes32 expectedCodeHash = _deployedCodeHash(artifactId);
         bool needsRedeploy =
@@ -152,5 +153,4 @@ contract RefreshFacetSnapshots is BaseMultiChain {
         if (kind == FacetKind.CommunityStrategy) return "CommunityStrategyFacet";
         revert("unknown facet kind");
     }
-
 }
