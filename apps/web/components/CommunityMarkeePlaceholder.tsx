@@ -599,6 +599,13 @@ function CommunityMarkeePreviewModal({
   const shouldShowOwnedMarkeeEditor =
     isEditingMessage || ownedMarkeeHasEmptyMessage;
   const hasActiveStream = activeStreamRate > 0n;
+  const doubleWinningMonthlyRateAmount =
+    (hasActiveStream ?
+      activeStreamRate * MARKEE_SECONDS_IN_MONTH
+    : topMonthlyRateAmount) * 2n;
+  const doubleWinningMonthlyRate = formatEthFundingInput(
+    doubleWinningMonthlyRateAmount,
+  );
   const streamRunwaySeconds = getMarkeeRunwaySeconds(
     ethxWalletBalance,
     activeStreamRate,
@@ -2707,13 +2714,19 @@ function CommunityMarkeePreviewModal({
                 >
                   MAX
                 </button>
-                {hasTopStream && !isOwnedMarkeeWinning && (
+                {hasTopStream && (
                   <button
                     type="button"
-                    className={`h-8 rounded-lg border border-primary-content bg-primary-content px-4 text-xs font-semibold tracking-wide text-neutral-inverted-content shadow-sm transition-all hover:bg-primary-hover-content ${derivedMonthlyRateAmount === challengeMonthlyRateAmount ? "ring-2 ring-primary-content/30 ring-offset-2 ring-offset-neutral" : ""}`}
-                    onClick={() => setMonthlyRate(challengeMonthlyRate)}
+                    className={`h-8 rounded-lg border border-primary-content bg-primary-content px-4 text-xs font-semibold tracking-wide text-neutral-inverted-content shadow-sm transition-all hover:bg-primary-hover-content ${derivedMonthlyRateAmount === (isOwnedMarkeeWinning ? doubleWinningMonthlyRateAmount : challengeMonthlyRateAmount) ? "ring-2 ring-primary-content/30 ring-offset-2 ring-offset-neutral" : ""}`}
+                    onClick={() =>
+                      setMonthlyRate(
+                        isOwnedMarkeeWinning ?
+                          doubleWinningMonthlyRate
+                        : challengeMonthlyRate,
+                      )
+                    }
                   >
-                    WIN
+                    {isOwnedMarkeeWinning ? "2x" : "WIN"}
                   </button>
                 )}
               </div>
@@ -2722,13 +2735,16 @@ function CommunityMarkeePreviewModal({
                 <span
                   className="tooltip tooltip-top cursor-help text-left"
                   data-tip={
-                    hasTopStream && !isOwnedMarkeeWinning ?
-                      `${challengeMonthlyRate} ETH/mo`
+                    hasTopStream ?
+                      `${isOwnedMarkeeWinning ? doubleWinningMonthlyRate : challengeMonthlyRate} ETH/mo`
                     : `${effectiveMinimumMonthlyRate} ETH/mo`
                   }
                 >
-                  {hasTopStream && !isOwnedMarkeeWinning ?
-                    `WIN streams ${formatEthAmountRounded(challengeMonthlyRateAmount, 6)} ETH/mo`
+                  {hasTopStream ?
+                    isOwnedMarkeeWinning ?
+                      `2x streams ${formatEthAmountRounded(doubleWinningMonthlyRateAmount, 6)} ETH/mo`
+                    : `WIN streams ${formatEthAmountRounded(challengeMonthlyRateAmount, 6)} ETH/mo`
+
                   : `Minimum ${formatEthAmountRounded(effectiveMinimumMonthlyRateInputAmount, 6)} ETH/mo`
                   }
                 </span>
