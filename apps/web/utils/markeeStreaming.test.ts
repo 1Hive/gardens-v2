@@ -6,8 +6,11 @@ import {
   getMarkeeFundingMonths,
   getMarkeeMonthlyAmountForFundingValue,
   getMarkeeRequiredNativeBalance,
+  getMarkeeRunwaySeconds,
   getMarkeeStreamAmounts,
   getMarkeeStreamFunding,
+  getMarkeeWithdrawableDeposit,
+  MARKEE_BUFFER_PERIOD,
   MARKEE_SECONDS_IN_MONTH,
   superfluidHostABI,
   waitForMarkeeRegistration,
@@ -60,6 +63,26 @@ describe("Markee streaming transaction builder", () => {
     expect(amounts.ratePerSecond).toBeGreaterThan(0n);
     expect(amounts.buffer).toBe(amounts.ratePerSecond * 14_400n);
     expect(amounts.value).toBe(amounts.prefund + amounts.buffer);
+  });
+
+  it("calculates stream runway from the live ETHx balance", () => {
+    expect(getMarkeeRunwaySeconds(86_400n, 1n)).toBe(86_400n);
+    expect(getMarkeeRunwaySeconds(86_400n, 0n)).toBe(0n);
+  });
+
+  it("only exposes stream deposits that are not required as buffer", () => {
+    const ratePerSecond = 10n;
+    const requiredDeposit = ratePerSecond * MARKEE_BUFFER_PERIOD;
+
+    expect(
+      getMarkeeWithdrawableDeposit(requiredDeposit + 5n, ratePerSecond),
+    ).toBe(5n);
+    expect(getMarkeeWithdrawableDeposit(requiredDeposit, ratePerSecond)).toBe(
+      0n,
+    );
+    expect(getMarkeeWithdrawableDeposit(requiredDeposit, 0n)).toBe(
+      requiredDeposit,
+    );
   });
 
   it("converts funding durations to fixed-point months", () => {

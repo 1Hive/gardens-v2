@@ -51,6 +51,7 @@ export const streamingLeaderboardRuntimeABI = parseAbi([
   "function poolOf(address markee) view returns (address)",
   "function updateMessage(address markee, string newMessage)",
   "function updateName(address markee, string newName)",
+  "function withdrawDeposit()",
   "event MarkeeCreated(address indexed markeeAddress, address indexed owner, string message, string name)",
   "event MarkeeRegistered(address indexed markeeAddress, address indexed pool)",
 ]);
@@ -71,6 +72,7 @@ export const ethxApproveABI = parseAbi([
   "function approve(address spender, uint256 amount) returns (bool)",
   "function allowance(address owner, address spender) view returns (uint256)",
   "function balanceOf(address account) view returns (uint256)",
+  "function upgradeByETHTo(address to) payable",
 ]);
 
 export const cfaV1ForwarderABI = parseAbi([
@@ -195,6 +197,23 @@ export function getMarkeeStreamFunding({
     requiresApproval: ethxAllowance < requiredBuffer,
     wrapValue: ethxBalance < totalRequired ? totalRequired - ethxBalance : 0n,
   };
+}
+
+export function getMarkeeWithdrawableDeposit(
+  deposit: bigint,
+  ratePerSecond: bigint,
+) {
+  const requiredDeposit =
+    ratePerSecond > 0n ? ratePerSecond * MARKEE_BUFFER_PERIOD : 0n;
+
+  return deposit > requiredDeposit ? deposit - requiredDeposit : 0n;
+}
+
+export function getMarkeeRunwaySeconds(
+  ethxBalance: bigint,
+  ratePerSecond: bigint,
+) {
+  return ratePerSecond > 0n ? ethxBalance / ratePerSecond : 0n;
 }
 
 export function getBufferedMarkeeGasEstimate(gasEstimate: bigint) {

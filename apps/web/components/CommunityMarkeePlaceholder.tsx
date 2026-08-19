@@ -64,8 +64,10 @@ import {
   getMarkeeFundingMonths,
   getMarkeeMonthlyAmountForFundingValue,
   getMarkeeRequiredNativeBalance,
+  getMarkeeRunwaySeconds,
   getMarkeeStreamAmounts,
   getMarkeeStreamFunding,
+  getMarkeeWithdrawableDeposit,
   MARKEE_SECONDS_IN_MONTH,
   markeeOwnerABI,
   streamingLeaderboardRuntimeABI,
@@ -477,11 +479,16 @@ function CommunityMarkeePreviewModal({
   const [isPreviewComplete, setIsPreviewComplete] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isStoppingStream, setIsStoppingStream] = useState(false);
+  const [isAddingStreamFunding, setIsAddingStreamFunding] = useState(false);
+  const [isWithdrawingStreamDeposit, setIsWithdrawingStreamDeposit] =
+    useState(false);
+  const [streamFundingAmount, setStreamFundingAmount] = useState("");
   const [activeStreamMarkee, setActiveStreamMarkee] = useState<Address | null>(
     null,
   );
   const [activeStreamRate, setActiveStreamRate] = useState(0n);
   const [ethxWalletBalance, setEthxWalletBalance] = useState(0n);
+  const [ethxAddress, setEthxAddress] = useState<Address | null>(null);
   const [existingStreamDeposit, setExistingStreamDeposit] = useState(0n);
   const [isStreamPositionLoading, setIsStreamPositionLoading] = useState(false);
   const [transactionNotification, setTransactionNotification] =
@@ -561,6 +568,24 @@ function CommunityMarkeePreviewModal({
   const shouldShowOwnedMarkeeEditor =
     isEditingMessage || ownedMarkeeHasEmptyMessage;
   const hasActiveStream = activeStreamRate > 0n;
+  const streamRunwaySeconds = getMarkeeRunwaySeconds(
+    ethxWalletBalance,
+    activeStreamRate,
+  );
+  const streamRunwayDays = Number(streamRunwaySeconds) / 86_400;
+  const hasLowStreamRunway =
+    hasActiveStream && streamRunwaySeconds < 7n * 86_400n;
+  const withdrawableStreamDeposit = getMarkeeWithdrawableDeposit(
+    existingStreamDeposit,
+    activeStreamRate,
+  );
+  const streamFundingAmountWei = useMemo(() => {
+    try {
+      return parseEther(streamFundingAmount);
+    } catch {
+      return 0n;
+    }
+  }, [streamFundingAmount]);
   const messageByteLength = new TextEncoder().encode(editedMessage).length;
   const newMarkeeMessageByteLength = new TextEncoder().encode(
     newMarkeeMessage,
@@ -610,6 +635,9 @@ function CommunityMarkeePreviewModal({
   const additionalStreamFundingRequired =
     streamAmounts.prefund + streamDepositTopUp;
   const estimatedGasReserve = parseEther("0.0002");
+  const hasInsufficientTopUpBalance =
+    walletBalance != null &&
+    streamFundingAmountWei + estimatedGasReserve > walletBalance.value;
   const nativeFundingRequired =
     additionalStreamFundingRequired > ethxWalletBalance ?
       additionalStreamFundingRequired - ethxWalletBalance
@@ -717,6 +745,7 @@ function CommunityMarkeePreviewModal({
       setStreamValidationError(null);
       setNewMarkeeMessage("");
       setNewMarkeeName("");
+      setStreamFundingAmount("");
     }
   }, [challengeMonthlyRate, isOpen]);
 
@@ -742,6 +771,7 @@ function CommunityMarkeePreviewModal({
       setActiveStreamMarkee(null);
       setActiveStreamRate(0n);
       setEthxWalletBalance(0n);
+      setEthxAddress(null);
       setExistingStreamDeposit(0n);
       setIsStreamPositionLoading(false);
       return;
@@ -750,6 +780,7 @@ function CommunityMarkeePreviewModal({
     let cancelled = false;
     setIsStreamPositionLoading(true);
     setEthxWalletBalance(0n);
+    setEthxAddress(null);
     setExistingStreamDeposit(0n);
 
     void (async () => {
@@ -792,6 +823,7 @@ function CommunityMarkeePreviewModal({
       if (cancelled) return;
 
       const liveRate = flowRate > 0n ? flowRate : 0n;
+      setEthxAddress(ethx);
       setActiveStreamRate(liveRate);
       setEthxWalletBalance(wrappedBalance);
       setExistingStreamDeposit(streamDeposit);
@@ -1693,7 +1725,6 @@ function CommunityMarkeePreviewModal({
         transactionHash: stopTransactionHash,
       });
       await restoreOriginalChain(originalChainId);
-      onClose();
       const receipt = await publicClient.waitForTransactionReceipt({
         hash: stopTransactionHash,
       });
@@ -1703,6 +1734,14 @@ function CommunityMarkeePreviewModal({
 
       setActiveStreamMarkee(null);
       setActiveStreamRate(0n);
+      setExistingStreamDeposit(
+        await publicClient.readContract({
+          abi: streamingLeaderboardRuntimeABI,
+          address: leaderboardAddress,
+          args: [connectedAccount],
+          functionName: "backerDeposit",
+        }),
+      );
       onStreamUpdated();
       updateTransactionNotification(notificationToastId, {
         status: "success",
@@ -1745,6 +1784,249 @@ function CommunityMarkeePreviewModal({
       }
     } finally {
       setIsStoppingStream(false);
+    }
+  };
+
+  const handleAddStreamFunding = async () => {
+    if (
+      !isLive ||
+      !hasActiveStream ||
+      connectedAccount == null ||
+      ethxAddress == null ||
+      markeeChainId == null ||
+      streamFundingAmountWei <= 0n
+    ) {
+      return;
+    }
+    if (hasInsufficientTopUpBalance) {
+      setStreamValidationError(
+        `Your wallet needs ${formatEthAmount(streamFundingAmountWei)} ETH plus gas to add this funding.`,
+      );
+      return;
+    }
+
+    const originalChainId = connectedChain?.id;
+    let actionWalletClient = walletClient;
+    if (connectedChain?.id !== markeeChainId) {
+      if (switchNetworkAsync == null) {
+        showStreamError(null, "Switch to the Markee network to add funding.");
+        return;
+      }
+      try {
+        await switchNetworkAsync(markeeChainId);
+        actionWalletClient = await getWalletClient({ chainId: markeeChainId });
+      } catch (error) {
+        showStreamError(error, "Unable to switch to the Markee network.");
+        return;
+      }
+    }
+    if (publicClient == null || actionWalletClient == null) {
+      showStreamError(null, "The Markee wallet client is not ready yet.");
+      return;
+    }
+
+    setIsAddingStreamFunding(true);
+    setStreamValidationError(null);
+    toast.dismiss("markee-stream-error");
+    let transactionHash: `0x${string}` | undefined;
+    let notificationToastId: string | undefined;
+    try {
+      notificationToastId = beginTransactionNotification(
+        "Add Markee stream funding",
+        ethxAddress,
+      );
+      transactionHash = await actionWalletClient.writeContract({
+        abi: ethxApproveABI,
+        address: ethxAddress,
+        args: [connectedAccount],
+        functionName: "upgradeByETHTo",
+        value: streamFundingAmountWei,
+      });
+      updateTransactionNotification(notificationToastId, {
+        status: "loading",
+        transactionHash,
+      });
+      await restoreOriginalChain(originalChainId);
+      const receipt = await publicClient.waitForTransactionReceipt({
+        hash: transactionHash,
+      });
+      if (receipt.status !== "success") {
+        throw new Error("The stream-funding transaction reverted.");
+      }
+
+      setEthxWalletBalance(
+        await publicClient.readContract({
+          abi: ethxApproveABI,
+          address: ethxAddress,
+          args: [connectedAccount],
+          functionName: "balanceOf",
+        }),
+      );
+      setStreamFundingAmount("");
+      updateTransactionNotification(notificationToastId, {
+        status: "success",
+      });
+    } catch (error) {
+      if (notificationToastId != null) {
+        updateTransactionNotification(notificationToastId, {
+          error: getTransactionError(
+            error,
+            "Unable to add funding to the Markee stream.",
+          ),
+          status: "error",
+        });
+      }
+      if (!isUserRejectedTransactionError(error)) {
+        const errorContext = {
+          type: "markee-transaction-error",
+          step: "top-up-stream",
+          chainId: markeeChainId,
+          connectedAccount,
+          leaderboardAddress,
+          targetMarkeeAddress: activeStreamMarkee,
+          transactionHash,
+          tags: {
+            error_type: "markee-transaction-error",
+            transaction_step: "top-up-stream",
+            chain_id: markeeChainId,
+          },
+        };
+        logOnce(
+          "error",
+          "[CommunityMarkee] Markee stream top-up failed",
+          error,
+          errorContext,
+        );
+        reportClientError(error, errorContext);
+      }
+      if (notificationToastId == null) {
+        showStreamError(error, "Unable to add funding to the Markee stream.");
+      }
+    } finally {
+      setIsAddingStreamFunding(false);
+    }
+  };
+
+  const handleWithdrawStreamDeposit = async () => {
+    if (
+      !isLive ||
+      connectedAccount == null ||
+      leaderboardAddress == null ||
+      markeeChainId == null ||
+      withdrawableStreamDeposit <= 0n
+    ) {
+      return;
+    }
+
+    const originalChainId = connectedChain?.id;
+    let actionWalletClient = walletClient;
+    if (connectedChain?.id !== markeeChainId) {
+      if (switchNetworkAsync == null) {
+        showStreamError(
+          null,
+          "Switch to the Markee network to withdraw your deposit.",
+        );
+        return;
+      }
+      try {
+        await switchNetworkAsync(markeeChainId);
+        actionWalletClient = await getWalletClient({ chainId: markeeChainId });
+      } catch (error) {
+        showStreamError(error, "Unable to switch to the Markee network.");
+        return;
+      }
+    }
+    if (publicClient == null || actionWalletClient == null) {
+      showStreamError(null, "The Markee wallet client is not ready yet.");
+      return;
+    }
+
+    setIsWithdrawingStreamDeposit(true);
+    toast.dismiss("markee-stream-error");
+    let transactionHash: `0x${string}` | undefined;
+    let notificationToastId: string | undefined;
+    try {
+      notificationToastId = beginTransactionNotification(
+        "Withdraw Markee stream deposit",
+        leaderboardAddress,
+      );
+      transactionHash = await actionWalletClient.writeContract({
+        abi: streamingLeaderboardRuntimeABI,
+        address: leaderboardAddress,
+        functionName: "withdrawDeposit",
+      });
+      updateTransactionNotification(notificationToastId, {
+        status: "loading",
+        transactionHash,
+      });
+      await restoreOriginalChain(originalChainId);
+      const receipt = await publicClient.waitForTransactionReceipt({
+        hash: transactionHash,
+      });
+      if (receipt.status !== "success") {
+        throw new Error("The deposit-withdrawal transaction reverted.");
+      }
+
+      const [updatedDeposit, updatedEthxBalance] = await Promise.all([
+        publicClient.readContract({
+          abi: streamingLeaderboardRuntimeABI,
+          address: leaderboardAddress,
+          args: [connectedAccount],
+          functionName: "backerDeposit",
+        }),
+        ethxAddress == null ?
+          Promise.resolve(ethxWalletBalance)
+        : publicClient.readContract({
+            abi: ethxApproveABI,
+            address: ethxAddress,
+            args: [connectedAccount],
+            functionName: "balanceOf",
+          }),
+      ]);
+      setExistingStreamDeposit(updatedDeposit);
+      setEthxWalletBalance(updatedEthxBalance);
+      onStreamUpdated();
+      updateTransactionNotification(notificationToastId, {
+        status: "success",
+      });
+    } catch (error) {
+      if (notificationToastId != null) {
+        updateTransactionNotification(notificationToastId, {
+          error: getTransactionError(
+            error,
+            "Unable to withdraw the Markee stream deposit.",
+          ),
+          status: "error",
+        });
+      }
+      if (!isUserRejectedTransactionError(error)) {
+        const errorContext = {
+          type: "markee-transaction-error",
+          step: "withdraw-stream-deposit",
+          chainId: markeeChainId,
+          connectedAccount,
+          leaderboardAddress,
+          targetMarkeeAddress: activeStreamMarkee,
+          transactionHash,
+          tags: {
+            error_type: "markee-transaction-error",
+            transaction_step: "withdraw-stream-deposit",
+            chain_id: markeeChainId,
+          },
+        };
+        logOnce(
+          "error",
+          "[CommunityMarkee] Markee stream deposit withdrawal failed",
+          error,
+          errorContext,
+        );
+        reportClientError(error, errorContext);
+      }
+      if (notificationToastId == null) {
+        showStreamError(error, "Unable to withdraw the Markee stream deposit.");
+      }
+    } finally {
+      setIsWithdrawingStreamDeposit(false);
     }
   };
 
@@ -1792,7 +2074,12 @@ function CommunityMarkeePreviewModal({
                     btnStyle="outline"
                     color="danger"
                     className="w-full sm:w-auto"
-                    disabled={isStreaming || isStoppingStream}
+                    disabled={
+                      isStreaming ||
+                      isStoppingStream ||
+                      isAddingStreamFunding ||
+                      isWithdrawingStreamDeposit
+                    }
                     isLoading={isStoppingStream}
                     onClick={handleStopStream}
                   >
@@ -1808,6 +2095,8 @@ function CommunityMarkeePreviewModal({
                   !canStartPreview ||
                   isStreaming ||
                   isStoppingStream ||
+                  isAddingStreamFunding ||
+                  isWithdrawingStreamDeposit ||
                   isConnectedMarkeeLoading ||
                   isStreamPositionLoading ||
                   hasInsufficientWalletBalance ||
@@ -1953,6 +2242,124 @@ function CommunityMarkeePreviewModal({
                 </div>
               )
             }
+
+            {isLive &&
+              connectedAccount != null &&
+              (hasActiveStream || withdrawableStreamDeposit > 0n) && (
+                <div className="flex flex-col gap-3 rounded-xl border border-neutral-content/15 bg-neutral/40 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-medium uppercase tracking-wider text-neutral-soft-content">
+                      Stream status
+                    </span>
+                    <span
+                      className={`rounded-full border px-2.5 py-1 text-xs font-medium ${hasActiveStream ? "border-primary-content/60 bg-primary-content/10 text-primary-content" : "border-neutral-content/30 text-neutral-soft-content"}`}
+                    >
+                      {hasActiveStream ?
+                        isOwnedMarkeeWinning ?
+                          "Winning"
+                        : "Streaming"
+                      : "Stopped"}
+                    </span>
+                  </div>
+
+                  {hasActiveStream && (
+                    <>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-xs text-neutral-soft-content">
+                            ETHx balance
+                          </p>
+                          <p
+                            className={`mt-1 font-mono ${hasLowStreamRunway ? "text-danger-content" : "text-neutral-content"}`}
+                            title={`${formatEther(ethxWalletBalance)} ETHx`}
+                          >
+                            {formatEthAmountRounded(ethxWalletBalance, 6)} ETHx
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-neutral-soft-content">
+                            Estimated runway
+                          </p>
+                          <p
+                            className={`mt-1 font-mono ${hasLowStreamRunway ? "text-danger-content" : "text-neutral-content"}`}
+                          >
+                            {streamRunwayDays < 0.1 ?
+                              "<0.1"
+                            : streamRunwayDays.toFixed(1)}{" "}
+                            days
+                          </p>
+                        </div>
+                      </div>
+
+                      {hasLowStreamRunway && (
+                        <p className="text-xs text-danger-content">
+                          Add ETHx funding soon to keep this stream active.
+                        </p>
+                      )}
+
+                      <div className="join flex w-full">
+                        <input
+                          inputMode="decimal"
+                          className="input join-item input-bordered input-info min-w-0 flex-1 bg-primary-soft-dark font-mono outline-none"
+                          value={streamFundingAmount}
+                          onChange={(event) => {
+                            setStreamFundingAmount(
+                              sanitizeAmount(event.target.value),
+                            );
+                            setStreamValidationError(null);
+                          }}
+                          placeholder="Add funding"
+                          aria-label="Additional Markee stream funding"
+                        />
+                        <button
+                          type="button"
+                          className="btn join-item btn-outline btn-primary min-h-0 px-4 text-xs"
+                          disabled={
+                            isAddingStreamFunding ||
+                            streamFundingAmountWei <= 0n ||
+                            hasInsufficientTopUpBalance
+                          }
+                          onClick={handleAddStreamFunding}
+                          title={
+                            hasInsufficientTopUpBalance ?
+                              "Keep enough native ETH for the funding amount and gas."
+                            : "Wrap native ETH into ETHx for this stream."
+                          }
+                        >
+                          {isAddingStreamFunding ? "Adding…" : "Add funding"}
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {withdrawableStreamDeposit > 0n && (
+                    <div className="flex items-center justify-between gap-3 border-t border-neutral-content/15 pt-3">
+                      <div className="min-w-0">
+                        <p className="text-xs text-neutral-soft-content">
+                          Refundable deposit
+                        </p>
+                        <p
+                          className="mt-1 truncate font-mono text-sm text-neutral-content"
+                          title={`${formatEther(withdrawableStreamDeposit)} ETHx`}
+                        >
+                          {formatEthAmountRounded(withdrawableStreamDeposit, 6)}{" "}
+                          ETHx
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-primary min-h-0 px-4 text-xs"
+                        disabled={isWithdrawingStreamDeposit}
+                        onClick={handleWithdrawStreamDeposit}
+                      >
+                        {isWithdrawingStreamDeposit ?
+                          "Withdrawing…"
+                        : "Withdraw deposit"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
             <div className="flex flex-col gap-3 rounded-xl border border-primary-content bg-neutral/60 p-4">
               <div className="flex items-center justify-between gap-3 text-xs text-neutral-soft-content">
