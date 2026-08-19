@@ -2506,6 +2506,151 @@
     },
     {
       "type": "function",
+      "name": "approvePendingCommunityParams",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "cancelPendingCommunityParams",
+      "inputs": [
+        {
+          "name": "fields",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "getPendingCommunityParams",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct PendingCommunityParams",
+          "components": [
+            {
+              "name": "fields",
+              "type": "uint8",
+              "internalType": "uint8"
+            },
+            {
+              "name": "registerStakeAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "isKickEnabled",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "covenantIpfsHash",
+              "type": "string",
+              "internalType": "string"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "event",
+      "name": "PendingCommunityParamsApproved",
+      "inputs": [
+        {
+          "name": "fields",
+          "type": "uint8",
+          "indexed": true,
+          "internalType": "uint8"
+        },
+        {
+          "name": "approver",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "PendingCommunityParamsCleared",
+      "inputs": [
+        {
+          "name": "clearedFields",
+          "type": "uint8",
+          "indexed": true,
+          "internalType": "uint8"
+        },
+        {
+          "name": "remainingFields",
+          "type": "uint8",
+          "indexed": true,
+          "internalType": "uint8"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "PendingCommunityParamsUpdated",
+      "inputs": [
+        {
+          "name": "fields",
+          "type": "uint8",
+          "indexed": true,
+          "internalType": "uint8"
+        },
+        {
+          "name": "registerStakeAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "isKickEnabled",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        },
+        {
+          "name": "covenantIpfsHash",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "InvalidPendingCommunityParamsFields",
+      "inputs": [
+        {
+          "name": "fields",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "pendingFields",
+          "type": "uint8",
+          "internalType": "uint8"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "NoPendingCommunityParams",
+      "inputs": []
+    },
+    {
+      "type": "function",
       "name": "registerMember",
       "inputs": [],
       "outputs": [],

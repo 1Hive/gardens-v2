@@ -828,7 +828,8 @@ contract ForkLifecycleHealthcheck is Test {
         for (uint256 i = 0; i < chains.length; i++) {
             string memory chain = chains[i];
             string memory json = _selectFork(chain);
-            RegistryFactory factory = RegistryFactory(payable(json.readAddress(_networkKey(chain, ".PROXIES.REGISTRY_FACTORY"))));
+            RegistryFactory factory =
+                RegistryFactory(payable(json.readAddress(_networkKey(chain, ".PROXIES.REGISTRY_FACTORY"))));
 
             assertTrue(factory.owner() != address(0), chain);
             assertTrue(factory.gardensFeeReceiver() != address(0), chain);
@@ -840,9 +841,8 @@ contract ForkLifecycleHealthcheck is Test {
             assertGt(communityCuts.length, 0, chain);
             assertGt(strategyCuts.length, 0, chain);
 
-            (bool success, bytes memory data) = address(factory).staticcall(
-                abi.encodeWithSelector(RegistryFactory.isAuthorizedWallet.selector, address(0))
-            );
+            (bool success, bytes memory data) = address(factory)
+                .staticcall(abi.encodeWithSelector(RegistryFactory.isAuthorizedWallet.selector, address(0)));
             assertTrue(success, string.concat(chain, ": factory missing authorized wallet selector"));
             assertFalse(abi.decode(data, (bool)), chain);
         }
@@ -1175,6 +1175,8 @@ contract ForkLifecycleHealthcheck is Test {
     }
 
     function _assertStrategyDeploymentMatchesConfig(string memory communityName, address strategy) internal {
+        if (_skipStrategyConfigChecks()) return;
+
         string memory chain = _chainFromCommunityName(communityName);
         string memory json = vm.readFile(_networksJsonPath());
         if (!_skipImplementationChecks()) {
@@ -1225,6 +1227,10 @@ contract ForkLifecycleHealthcheck is Test {
 
     function _skipImplementationChecks() internal view returns (bool) {
         return vm.envOr("FORK_HEALTHCHECK_SKIP_IMPLEMENTATION_CHECKS", false);
+    }
+
+    function _skipStrategyConfigChecks() internal view returns (bool) {
+        return vm.envOr("FORK_HEALTHCHECK_SKIP_STRATEGY_CONFIG_CHECKS", false);
     }
 
     function _chainFromCommunityName(string memory communityName) internal pure returns (string memory) {

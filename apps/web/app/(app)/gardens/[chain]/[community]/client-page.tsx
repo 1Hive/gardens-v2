@@ -798,8 +798,7 @@ export default function ClientPage({
                   </div>
 
                   <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:flex-shrink-0 md:justify-end">
-                    {(isCouncilMember || isCouncilSafe) &&
-                      effectiveCouncilSafe && (
+                    {effectiveCouncilSafe && (
                         <EditCommunityModal
                           communityAddress={registryCommunity.id as Address}
                           communityName={communityName ?? "Community"}
@@ -815,7 +814,7 @@ export default function ClientPage({
                           isCouncilSafe={isCouncilSafe}
                           isCouncilMember={isCouncilMember}
                         />
-                      )}
+                    )}
                     {(isCouncilMember || isCouncilSafe) && (
                       <Button
                         btnStyle="outline"
@@ -1165,8 +1164,7 @@ export default function ClientPage({
 
                     {/* Action Buttons */}
                     <div className="flex flex-col gap-2 mt-4">
-                      {(isCouncilMember || isCouncilSafe) &&
-                        effectiveCouncilSafe && (
+                      {effectiveCouncilSafe && (
                           <EditCommunityModal
                             communityAddress={registryCommunity.id as Address}
                             communityName={communityName ?? "Community"}
@@ -1183,7 +1181,7 @@ export default function ClientPage({
                             isCouncilMember={isCouncilMember}
                             className="w-full"
                           />
-                        )}
+                      )}
                       {(isCouncilMember || isCouncilSafe) && (
                         <Button
                           btnStyle="outline"

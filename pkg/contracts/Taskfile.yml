@@ -310,6 +310,10 @@ tasks:
           fi
           SCRIPT_VERBOSITY="${REHEARSE_SCRIPT_VERBOSITY:-}"
           SMOKE_VERBOSITY="${REHEARSE_SMOKE_VERBOSITY:--vvv}"
+          SMOKE_MATCH_TEST_FLAG=""
+          if [ -n "${REHEARSE_SMOKE_MATCH_TEST:-}" ]; then
+            SMOKE_MATCH_TEST_FLAG="--match-test ${REHEARSE_SMOKE_MATCH_TEST}"
+          fi
 
           SIG="run(string)"
           case "${PHASE:-all}" in
@@ -388,7 +392,7 @@ tasks:
           }
 
           if [ "${SKIP_SMOKE:-false}" != "true" ]; then
-            NETWORKS_JSON_PATH="${TMP_NETWORKS_JSON}" FORK_HEALTHCHECK_CHAIN="${CHAIN}" FORK_HEALTHCHECK_RPC_URL="${LOCAL_RPC_URL}" forge test --match-contract ForkLifecycleHealthcheck ${SMOKE_VERBOSITY} || {
+            NETWORKS_JSON_PATH="${TMP_NETWORKS_JSON}" FORK_HEALTHCHECK_CHAIN="${CHAIN}" FORK_HEALTHCHECK_RPC_URL="${LOCAL_RPC_URL}" forge test --match-contract ForkLifecycleHealthcheck ${SMOKE_MATCH_TEST_FLAG} ${SMOKE_VERBOSITY} || {
               kill "${ANVIL_PID}" >/dev/null 2>&1 || true
               exit 1
             }
