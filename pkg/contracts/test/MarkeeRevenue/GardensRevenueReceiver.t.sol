@@ -14,6 +14,12 @@ contract RejectingReceiver {
 
     }
 
+contract RevertingRegistryCommunity {
+    function councilSafe() external pure returns (address) {
+        revert("safe lookup failed");
+    }
+}
+
 contract GardensRevenueReceiverTest is Test {
     GardensRevenueReceiver internal receiver;
     address internal proxyOwner = address(0xA11CE);
@@ -122,6 +128,30 @@ contract GardensRevenueReceiverTest is Test {
         assertEq(amount, 1 ether);
         assertFalse(resolved);
         assertEq(address(receiver).balance, 1 ether);
+    }
+
+    function test_handleV3AcrossMessage_escrowsOnSafeLookupFailure() public {
+        RevertingRegistryCommunity registryCommunity = new RevertingRegistryCommunity();
+        bytes32 payoutId = bytes32(uint256(1));
+        uint256 amount = 1 ether;
+
+        vm.deal(address(this), amount);
+        wrappedNativeToken.mint{value: amount}(address(receiver));
+        vm.prank(acrossSpokePool);
+        receiver.handleV3AcrossMessage(
+            address(wrappedNativeToken),
+            amount,
+            address(0xBEEF),
+            abi.encode(payoutId, keccak256("key"), address(registryCommunity))
+        );
+
+        (bytes32 communityKey, address regCommunity, uint256 escrowedAmount, bool resolved) =
+            receiver.failedPayouts(payoutId);
+        assertEq(communityKey, keccak256("key"));
+        assertEq(regCommunity, address(registryCommunity));
+        assertEq(escrowedAmount, amount);
+        assertFalse(resolved);
+        assertEq(address(receiver).balance, amount);
     }
 
     function test_retryPayout_succeedsAfterSafeRotation() public {

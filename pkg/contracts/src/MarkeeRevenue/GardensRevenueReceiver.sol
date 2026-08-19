@@ -71,7 +71,7 @@ contract GardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpgradea
         }
         processedPayoutIds[payoutId] = true;
 
-        address safe = IRegistryCommunitySafe(registryCommunity).councilSafe();
+        address safe = _resolveCouncilSafe(registryCommunity);
         bool delivered = false;
         if (safe != address(0)) {
             (delivered,) = payable(safe).call{value: amount}("");
@@ -97,7 +97,7 @@ contract GardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpgradea
             revert PayoutAlreadyResolved();
         }
 
-        address safe = IRegistryCommunitySafe(payout.registryCommunity).councilSafe();
+        address safe = _resolveCouncilSafe(payout.registryCommunity);
         payout.resolved = true;
         bool delivered = false;
         if (safe != address(0)) {
@@ -130,5 +130,13 @@ contract GardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpgradea
         }
 
         emit PayoutRecovered(payoutId, to, payout.amount);
+    }
+
+    function _resolveCouncilSafe(address registryCommunity) internal view returns (address safe) {
+        try IRegistryCommunitySafe(registryCommunity).councilSafe() returns (address resolvedSafe) {
+            safe = resolvedSafe;
+        } catch {
+            safe = address(0);
+        }
     }
 }

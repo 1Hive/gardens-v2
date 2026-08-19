@@ -33,8 +33,12 @@ const SQUID_DESTINATION_ETH_TOKENS: Record<number, Address> = {
   42220: "0x2def4285787d58a2f811af24755a8150622f4361",
 };
 const SQUID_NATIVE_ETH_CHAIN_IDS = new Set([1, 10, 42161]);
-const SQUID_ROUTE_URL = "https://v2.api.squidrouter.com/v2/route";
-const SQUID_STATUS_URL = "https://v2.api.squidrouter.com/v2/status";
+const SQUID_ROUTE_URL =
+  process.env.MARKEE_SQUID_ROUTE_URL?.trim() ||
+  "https://v2.api.squidrouter.com/v2/route";
+const SQUID_STATUS_URL =
+  process.env.MARKEE_SQUID_STATUS_URL?.trim() ||
+  "https://v2.api.squidrouter.com/v2/status";
 const LIFI_QUOTE_URL = "https://li.quest/v1/quote";
 const LIFI_CONTRACT_CALL_QUOTE_URL = `${LIFI_QUOTE_URL}/contractCalls`;
 const LIFI_NATIVE_TOKEN: Address = zeroAddress;
@@ -1507,15 +1511,10 @@ export const executeMarkeeClaim = async ({
   };
 };
 
-const getCommunityLeaderboard = async (
-  chainId: number,
-  community: Address,
-) => {
+const getCommunityLeaderboard = async (chainId: number, community: Address) => {
   const router = getMarkeeRouterAddress(chainId);
   if (router == null) {
-    throw new Error(
-      "Markee router is not configured for this environment",
-    );
+    throw new Error("Markee router is not configured for this environment");
   }
 
   const client = getEnvPublicClient(getMarkeeChainId(chainId));
@@ -1528,31 +1527,39 @@ const getCommunityLeaderboard = async (
   const leaderboardAddress = integration.leaderboard;
   if (leaderboardAddress === zeroAddress) return null;
 
-  const minimumMonthlyRate = await client.readContract({
-    abi: streamingLeaderboardABI,
-    address: leaderboardAddress,
-    functionName: "minimumMonthlyRate",
-  });
-  const maxMessageLength = await client.readContract({
-    abi: streamingLeaderboardABI,
-    address: leaderboardAddress,
-    functionName: "maxMessageLength",
-  });
-  const maxNameLength = await client.readContract({
-    abi: streamingLeaderboardABI,
-    address: leaderboardAddress,
-    functionName: "maxNameLength",
-  });
-  const topMarkeeResult = await client.readContract({
-    abi: streamingLeaderboardABI,
-    address: leaderboardAddress,
-    functionName: "topMarkee",
-  });
-  const topRate = await client.readContract({
-    abi: streamingLeaderboardABI,
-    address: leaderboardAddress,
-    functionName: "topRate",
-  });
+  const [
+    minimumMonthlyRate,
+    maxMessageLength,
+    maxNameLength,
+    topMarkeeResult,
+    topRate,
+  ] = await Promise.all([
+    client.readContract({
+      abi: streamingLeaderboardABI,
+      address: leaderboardAddress,
+      functionName: "minimumMonthlyRate",
+    }),
+    client.readContract({
+      abi: streamingLeaderboardABI,
+      address: leaderboardAddress,
+      functionName: "maxMessageLength",
+    }),
+    client.readContract({
+      abi: streamingLeaderboardABI,
+      address: leaderboardAddress,
+      functionName: "maxNameLength",
+    }),
+    client.readContract({
+      abi: streamingLeaderboardABI,
+      address: leaderboardAddress,
+      functionName: "topMarkee",
+    }),
+    client.readContract({
+      abi: streamingLeaderboardABI,
+      address: leaderboardAddress,
+      functionName: "topRate",
+    }),
+  ]);
   const topMarkeeAddress =
     (
       typeof topMarkeeResult === "string" &&
