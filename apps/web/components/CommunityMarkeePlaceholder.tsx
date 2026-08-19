@@ -310,16 +310,19 @@ function sanitizeAmount(value: string) {
 }
 
 function getTransactionError(error: unknown, fallback: string) {
-  if (error instanceof Error) return error;
-  return new Error(typeof error === "string" ? error : fallback);
+  return new Error(getTransactionErrorMessage(error, fallback));
 }
 
 function getTransactionErrorMessage(error: unknown, fallback: string) {
   let cause: unknown = error;
+  let isContractRevert = false;
   for (let depth = 0; depth < 6 && cause != null; depth += 1) {
     const contractError = cause as {
       cause?: unknown;
       data?: { errorName?: unknown };
+      message?: unknown;
+      name?: unknown;
+      shortMessage?: unknown;
       signature?: unknown;
     };
     if (
@@ -328,8 +331,30 @@ function getTransactionErrorMessage(error: unknown, fallback: string) {
     ) {
       return "Your Markee is still being confirmed. Please try again in a moment.";
     }
+    if (
+      contractError.signature === "0x2f4cb941" ||
+      contractError.data?.errorName === "SF_TOKEN_MOVE_INSUFFICIENT_BALANCE"
+    ) {
+      return "Your ETHx balance is too low to start this stream. Reduce the amount or add funds and try again.";
+    }
+    const contractErrorMessage = [
+      contractError.message,
+      contractError.shortMessage,
+    ]
+      .filter((value): value is string => typeof value === "string")
+      .join(" ");
+    if (
+      contractError.name === "ContractFunctionExecutionError" ||
+      /(?:contract function|execution) .*revert|reverted with/iu.test(
+        contractErrorMessage,
+      )
+    ) {
+      isContractRevert = true;
+    }
     cause = contractError.cause;
   }
+
+  if (isContractRevert) return fallback;
 
   const shortMessage = (error as { shortMessage?: unknown })?.shortMessage;
   return (
@@ -488,6 +513,7 @@ function CommunityMarkeePreviewModal({
   );
   const [activeStreamRate, setActiveStreamRate] = useState(0n);
   const [ethxWalletBalance, setEthxWalletBalance] = useState(0n);
+  const [ethxWalletDeficit, setEthxWalletDeficit] = useState(0n);
   const [ethxAddress, setEthxAddress] = useState<Address | null>(null);
   const [existingStreamDeposit, setExistingStreamDeposit] = useState(0n);
   const [isStreamPositionLoading, setIsStreamPositionLoading] = useState(false);
@@ -530,7 +556,7 @@ function CommunityMarkeePreviewModal({
   useTransactionNotification({
     chainId: markeeChainId,
     contractName: transactionNotification?.contractName,
-    enabled: transactionNotification != null,
+    enabled: transactionNotification != null && !isTransactionModalOpen,
     fallbackErrorMessage: "The Markee transaction failed.",
     safeAddress: connectedAccount,
     targetAddress: transactionNotification?.targetAddress,
@@ -626,8 +652,9 @@ function CommunityMarkeePreviewModal({
     [derivedMonthlyRateAmount, monthsFixed18],
   );
   const streamAmount = formatEthFundingInput(streamAmounts.value);
+  const ethxAvailableBalance = ethxWalletBalance - ethxWalletDeficit;
   const combinedWalletBalance =
-    (walletBalance?.value ?? 0n) + ethxWalletBalance;
+    (walletBalance?.value ?? 0n) + ethxAvailableBalance;
   const streamDepositTopUp =
     streamAmounts.buffer > existingStreamDeposit ?
       streamAmounts.buffer - existingStreamDeposit
@@ -638,9 +665,11 @@ function CommunityMarkeePreviewModal({
   const hasInsufficientTopUpBalance =
     walletBalance != null &&
     streamFundingAmountWei + estimatedGasReserve > walletBalance.value;
+  const totalFundingRequired =
+    additionalStreamFundingRequired + ethxWalletDeficit;
   const nativeFundingRequired =
-    additionalStreamFundingRequired > ethxWalletBalance ?
-      additionalStreamFundingRequired - ethxWalletBalance
+    totalFundingRequired > ethxWalletBalance ?
+      totalFundingRequired - ethxWalletBalance
     : 0n;
   const previewNativeBalanceRequired =
     nativeFundingRequired + estimatedGasReserve;
@@ -653,7 +682,7 @@ function CommunityMarkeePreviewModal({
     walletBalance.value < previewNativeBalanceRequired;
   const insufficientBalanceMessage =
     hasInsufficientWalletBalance ?
-      `Funding needs ${formatEthAmount(additionalStreamFundingRequired)} ETH + ETHx, plus about ${formatEthAmount(estimatedGasReserve)} ETH for gas.`
+      `Funding needs ${formatEthAmount(additionalStreamFundingRequired)} ETH + ETHx, plus about ${formatEthAmount(estimatedGasReserve)} ETH for gas.${ethxWalletDeficit > 0n ? ` Your Superfluid account also has a ${formatEthAmount(ethxWalletDeficit)} ETHx deficit from existing streams.` : ""}`
     : null;
   const maxMonthlyRateAmount = useMemo(() => {
     if (monthsFixed18 <= 0n) return 0n;
@@ -662,14 +691,19 @@ function CommunityMarkeePreviewModal({
       nativeBalance > estimatedGasReserve ?
         nativeBalance - estimatedGasReserve
       : 0n;
+    const availableFunding =
+      spendableBalance + ethxWalletBalance > ethxWalletDeficit ?
+        spendableBalance + ethxWalletBalance - ethxWalletDeficit
+      : 0n;
     return getMarkeeMonthlyAmountForFundingValue(
-      spendableBalance + ethxWalletBalance,
+      availableFunding,
       monthsFixed18,
       existingStreamDeposit,
     );
   }, [
     estimatedGasReserve,
     ethxWalletBalance,
+    ethxWalletDeficit,
     existingStreamDeposit,
     monthsFixed18,
     walletBalance,
@@ -751,7 +785,13 @@ function CommunityMarkeePreviewModal({
 
   useEffect(() => {
     setStreamValidationError(null);
-  }, [ethxWalletBalance, fundDuration, monthlyRate, walletBalance?.value]);
+  }, [
+    ethxWalletBalance,
+    ethxWalletDeficit,
+    fundDuration,
+    monthlyRate,
+    walletBalance?.value,
+  ]);
 
   useEffect(() => {
     if (isOpen) {
@@ -771,6 +811,7 @@ function CommunityMarkeePreviewModal({
       setActiveStreamMarkee(null);
       setActiveStreamRate(0n);
       setEthxWalletBalance(0n);
+      setEthxWalletDeficit(0n);
       setEthxAddress(null);
       setExistingStreamDeposit(0n);
       setIsStreamPositionLoading(false);
@@ -780,6 +821,7 @@ function CommunityMarkeePreviewModal({
     let cancelled = false;
     setIsStreamPositionLoading(true);
     setEthxWalletBalance(0n);
+    setEthxWalletDeficit(0n);
     setEthxAddress(null);
     setExistingStreamDeposit(0n);
 
@@ -793,7 +835,7 @@ function CommunityMarkeePreviewModal({
         throw new Error("The Markee stream token is unavailable.");
       }
       const ethx = getAddress(ethxResult);
-      const [activeMarkeeResult, flowRate, wrappedBalance, streamDeposit] =
+      const [activeMarkeeResult, flowRate, realtimeBalance, streamDeposit] =
         await Promise.all([
           publicClient.readContract({
             abi: streamingLeaderboardRuntimeABI,
@@ -811,7 +853,7 @@ function CommunityMarkeePreviewModal({
             abi: ethxApproveABI,
             address: ethx,
             args: [connectedAccount],
-            functionName: "balanceOf",
+            functionName: "realtimeBalanceOfNow",
           }),
           publicClient.readContract({
             abi: streamingLeaderboardRuntimeABI,
@@ -823,9 +865,11 @@ function CommunityMarkeePreviewModal({
       if (cancelled) return;
 
       const liveRate = flowRate > 0n ? flowRate : 0n;
+      const availableBalance = realtimeBalance[0];
       setEthxAddress(ethx);
       setActiveStreamRate(liveRate);
-      setEthxWalletBalance(wrappedBalance);
+      setEthxWalletBalance(availableBalance > 0n ? availableBalance : 0n);
+      setEthxWalletDeficit(availableBalance < 0n ? -availableBalance : 0n);
       setExistingStreamDeposit(streamDeposit);
       setActiveStreamMarkee(
         (
@@ -1183,7 +1227,7 @@ function CommunityMarkeePreviewModal({
       const [
         cfaResult,
         gdaResult,
-        ethxBalance,
+        ethxRealtimeBalance,
         ethxAllowance,
         existingMarkeeResult,
         existingDeposit,
@@ -1205,7 +1249,7 @@ function CommunityMarkeePreviewModal({
           abi: ethxApproveABI,
           address: ethx,
           args: [connectedAccount],
-          functionName: "balanceOf",
+          functionName: "realtimeBalanceOfNow",
         }),
         publicClient.readContract({
           abi: ethxApproveABI,
@@ -1242,7 +1286,7 @@ function CommunityMarkeePreviewModal({
         : 0n;
       const { requiresApproval, wrapValue } = getMarkeeStreamFunding({
         ethxAllowance,
-        ethxBalance,
+        ethxAvailableBalance: ethxRealtimeBalance[0],
         requiredBuffer: depositTopUp,
         totalRequired: depositTopUp + amounts.prefund,
       });
@@ -1854,13 +1898,18 @@ function CommunityMarkeePreviewModal({
         throw new Error("The stream-funding transaction reverted.");
       }
 
+      const updatedRealtimeBalance = await publicClient.readContract({
+        abi: ethxApproveABI,
+        address: ethxAddress,
+        args: [connectedAccount],
+        functionName: "realtimeBalanceOfNow",
+      });
+      const updatedAvailableBalance = updatedRealtimeBalance[0];
       setEthxWalletBalance(
-        await publicClient.readContract({
-          abi: ethxApproveABI,
-          address: ethxAddress,
-          args: [connectedAccount],
-          functionName: "balanceOf",
-        }),
+        updatedAvailableBalance > 0n ? updatedAvailableBalance : 0n,
+      );
+      setEthxWalletDeficit(
+        updatedAvailableBalance < 0n ? -updatedAvailableBalance : 0n,
       );
       setStreamFundingAmount("");
       updateTransactionNotification(notificationToastId, {
@@ -1967,7 +2016,7 @@ function CommunityMarkeePreviewModal({
         throw new Error("The deposit-withdrawal transaction reverted.");
       }
 
-      const [updatedDeposit, updatedEthxBalance] = await Promise.all([
+      const [updatedDeposit, updatedRealtimeBalance] = await Promise.all([
         publicClient.readContract({
           abi: streamingLeaderboardRuntimeABI,
           address: leaderboardAddress,
@@ -1975,16 +2024,27 @@ function CommunityMarkeePreviewModal({
           functionName: "backerDeposit",
         }),
         ethxAddress == null ?
-          Promise.resolve(ethxWalletBalance)
+          Promise.resolve([
+            ethxWalletBalance - ethxWalletDeficit,
+            0n,
+            0n,
+            0n,
+          ] as const)
         : publicClient.readContract({
             abi: ethxApproveABI,
             address: ethxAddress,
             args: [connectedAccount],
-            functionName: "balanceOf",
+            functionName: "realtimeBalanceOfNow",
           }),
       ]);
+      const updatedAvailableBalance = updatedRealtimeBalance[0];
       setExistingStreamDeposit(updatedDeposit);
-      setEthxWalletBalance(updatedEthxBalance);
+      setEthxWalletBalance(
+        updatedAvailableBalance > 0n ? updatedAvailableBalance : 0n,
+      );
+      setEthxWalletDeficit(
+        updatedAvailableBalance < 0n ? -updatedAvailableBalance : 0n,
+      );
       onStreamUpdated();
       updateTransactionNotification(notificationToastId, {
         status: "success",
@@ -2271,7 +2331,7 @@ function CommunityMarkeePreviewModal({
                           </p>
                           <p
                             className={`mt-1 font-mono ${hasLowStreamRunway ? "text-danger-content" : "text-neutral-content"}`}
-                            title={`${formatEther(ethxWalletBalance)} ETHx`}
+                            title={`${formatEther(ethxAvailableBalance)} ETHx available`}
                           >
                             {formatEthAmountRounded(ethxWalletBalance, 6)} ETHx
                           </p>
@@ -2391,7 +2451,7 @@ function CommunityMarkeePreviewModal({
                         "Loading…"
                       : walletBalance ?
                         <span
-                          title={`${formatEthAmount(walletBalance.value)} native ETH + ${formatEthAmount(ethxWalletBalance)} ETHx`}
+                          title={`${formatEthAmount(walletBalance.value)} native ETH + ${formatEther(ethxAvailableBalance)} ETHx available`}
                         >
                           {formatEthAmount(combinedWalletBalance)} ETH + ETHx
                         </span>
@@ -2523,7 +2583,10 @@ function CommunityMarkeePreviewModal({
             "Replace stream"
           : "Start stream"
         }
-        onClose={() => setIsTransactionModalOpen(false)}
+        onClose={() => {
+          setIsTransactionModalOpen(false);
+          setTransactionNotification(null);
+        }}
         showTransactionCount
         testId="markee-stream-transactions"
         transactions={[

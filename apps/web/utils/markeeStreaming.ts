@@ -63,6 +63,7 @@ export const markeeOwnerABI = parseAbi([
 ]);
 
 export const superfluidHostABI = parseAbi([
+  "error SF_TOKEN_MOVE_INSUFFICIENT_BALANCE()",
   "error UnknownMarkee()",
   "function batchCall((uint32 operationType,address target,bytes data)[] operations) payable",
   "function getAgreementClass(bytes32 agreementType) view returns (address)",
@@ -72,6 +73,7 @@ export const ethxApproveABI = parseAbi([
   "function approve(address spender, uint256 amount) returns (bool)",
   "function allowance(address owner, address spender) view returns (uint256)",
   "function balanceOf(address account) view returns (uint256)",
+  "function realtimeBalanceOfNow(address account) view returns (int256 availableBalance, uint256 deposit, uint256 owedDeposit, uint256 timestamp)",
   "function upgradeByETHTo(address to) payable",
 ]);
 
@@ -184,18 +186,21 @@ export function getMarkeeFundingMonths(
 
 export function getMarkeeStreamFunding({
   ethxAllowance,
-  ethxBalance,
+  ethxAvailableBalance,
   requiredBuffer,
   totalRequired,
 }: {
   ethxAllowance: bigint;
-  ethxBalance: bigint;
+  ethxAvailableBalance: bigint;
   requiredBuffer: bigint;
   totalRequired: bigint;
 }) {
   return {
     requiresApproval: ethxAllowance < requiredBuffer,
-    wrapValue: ethxBalance < totalRequired ? totalRequired - ethxBalance : 0n,
+    wrapValue:
+      ethxAvailableBalance < totalRequired ?
+        totalRequired - ethxAvailableBalance
+      : 0n,
   };
 }
 

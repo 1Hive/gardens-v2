@@ -21,9 +21,20 @@ const address = (suffix: string) => getAddress(`0x${suffix.padStart(40, "0")}`);
 describe("Markee streaming transaction builder", () => {
   it("decodes a nested UnknownMarkee batch revert", () => {
     expect(
-      decodeErrorResult({ abi: superfluidHostABI, data: "0x6663ccf3" })
-        .errorName,
+      decodeErrorResult({
+        abi: superfluidHostABI,
+        data: "0x6663ccf3",
+      }).errorName,
     ).toBe("UnknownMarkee");
+  });
+
+  it("decodes a nested insufficient Super Token balance revert", () => {
+    expect(
+      decodeErrorResult({
+        abi: superfluidHostABI,
+        data: "0x2f4cb941",
+      }).errorName,
+    ).toBe("SF_TOKEN_MOVE_INSUFFICIENT_BALANCE");
   });
 
   it("retries until a newly created Markee is visible", async () => {
@@ -250,7 +261,7 @@ describe("Markee streaming transaction builder", () => {
     expect(
       getMarkeeStreamFunding({
         ethxAllowance: 10n,
-        ethxBalance: 18n,
+        ethxAvailableBalance: 18n,
         requiredBuffer: 10n,
         totalRequired: 18n,
       }),
@@ -259,7 +270,7 @@ describe("Markee streaming transaction builder", () => {
     expect(
       getMarkeeStreamFunding({
         ethxAllowance: 10n,
-        ethxBalance: 6n,
+        ethxAvailableBalance: 6n,
         requiredBuffer: 10n,
         totalRequired: 18n,
       }),
@@ -268,11 +279,22 @@ describe("Markee streaming transaction builder", () => {
     expect(
       getMarkeeStreamFunding({
         ethxAllowance: 9n,
-        ethxBalance: 18n,
+        ethxAvailableBalance: 18n,
         requiredBuffer: 10n,
         totalRequired: 18n,
       }),
     ).toEqual({ requiresApproval: true, wrapValue: 0n });
+  });
+
+  it("includes a negative Super Token available balance in the wrap amount", () => {
+    expect(
+      getMarkeeStreamFunding({
+        ethxAllowance: 10n,
+        ethxAvailableBalance: -7n,
+        requiredBuffer: 10n,
+        totalRequired: 18n,
+      }),
+    ).toEqual({ requiresApproval: false, wrapValue: 25n });
   });
 
   it("adds a 25% gas buffer to the required native balance", () => {
