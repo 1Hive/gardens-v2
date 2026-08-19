@@ -658,12 +658,13 @@ contract DeployCoreContracts is BaseMultiChain {
             functionSelectors: syncSelectors
         });
 
-        bytes4[] memory streamingSelectors = new bytes4[](5);
+        bytes4[] memory streamingSelectors = new bytes4[](6);
         streamingSelectors[0] = CVStreamingFacet.rebalance.selector;
         streamingSelectors[1] = CVStreamingFacet.stopEscrowStream.selector;
         streamingSelectors[2] = CVStreamingFacet.setAuthorizedRebalanceCaller.selector;
         streamingSelectors[3] = CVStreamingFacet.isAuthorizedRebalanceCaller.selector;
         streamingSelectors[4] = CVStreamingFacet.wrapIfNeeded.selector;
+        streamingSelectors[5] = CVStreamingFacet.getPoolThresholdPoints.selector;
         baseCuts[7] = IDiamond.FacetCut({
             facetAddress: address(streamingFacet),
             action: IDiamond.FacetCutAction.Auto,

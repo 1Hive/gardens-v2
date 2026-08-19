@@ -1,6 +1,6 @@
 {
-  "VERSION_ARBSEP": "0.7.0",
-  "VERSION_OPSEP": "0.7.0",
-  "VERSION_ETHSEP": "0.7.0",
+  "VERSION_ARBSEP": "0.7.1",
+  "VERSION_OPSEP": "0.7.1",
+  "VERSION_ETHSEP": "0.7.1",
   "VERSION_PROD": "0.4.2"
 }

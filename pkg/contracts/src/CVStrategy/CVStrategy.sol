@@ -37,6 +37,7 @@ import {ConvictionsUtils} from "./ConvictionsUtils.sol";
 import {PowerManagementUtils} from "./PowerManagementUtils.sol";
 import {CVStreamingBase} from "./CVStreamingStorage.sol";
 import {DecimalScalingUtils} from "./DecimalScalingUtils.sol";
+import {CVThresholdStorage} from "./CVThresholdStorage.sol";
 
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
@@ -153,6 +154,10 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     event SuperfluidPoolCreated(address indexed gda, address indexed superfluidToken, uint256 maxStreamingRate);
     event SuperfluidGDAConnected(address indexed gda, address indexed by);
     event SuperfluidGDADisconnected(address indexed gda, address indexed by);
+    event ThresholdSnapshotsMigrated(uint256 proposalCount, uint256 totalPointsActivated, uint256 blockNumber);
+    event PoolThresholdUpdated(
+        uint256 thresholdSnapshot, uint256 totalPointsActivated, uint256 thresholdUpdatedAtBlock
+    );
     // event Logger(string message, uint256 value);
 
     /*|-------------------------------------/-------|*o
@@ -171,9 +176,11 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     uint256 internal surpressStateMutabilityWarning;
     uint256 public cloneNonce;
     uint64 public disputeCount;
+    // slither-disable-next-line uninitialized-state
     uint256 public proposalCounter;
     uint256 public currentArbitrableConfigVersion;
     uint256 public totalStaked;
+    /// @dev All mutations must use `_checkpointTotalPointsActivated` to preserve the pool threshold history.
     // slither-disable-next-line uninitialized-state
     uint256 public totalPointsActivated;
     CVParams public cvParams;
@@ -200,6 +207,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     uint256[] public openStreamingProposalIds;
     mapping(uint256 => uint256) public openStreamingProposalIndex;
     bool public openStreamingProposalsInitialized;
+    // slither-disable-next-line shadowing-state
     uint256[41] private __gap;
 
     // Constants (also defined in CVStrategyBaseFacet for facet access)
@@ -218,6 +226,42 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         super.init(_allo, "CVStrategy", _owner);
         LibDiamond.setContractOwner(_owner);
         collateralVaultTemplate = _collateralVaultTemplate;
+    }
+
+    /// @notice Initialize state required by proposals created before this upgrade.
+    /// @dev Intended for an atomic UUPS upgradeToAndCall and removable in the next implementation.
+    ///      Gas scales with `proposalCounter`, including empty proposal IDs. Operators must simulate the
+    ///      complete upgrade on each destination chain and verify it fits that chain's block gas limit.
+    function reinitializeV2MigrateThresholdSnapshots() external reinitializer(2) onlyOwner {
+        uint256 currentTotalPointsActivated = totalPointsActivated;
+        uint256 currentProposalCounter = proposalCounter;
+        bool migrateOpenStreamingProposals =
+            proposalType == ProposalType.Streaming && !openStreamingProposalsInitialized;
+
+        for (uint256 proposalId = 1; proposalId <= currentProposalCounter; proposalId++) {
+            Proposal storage proposal = proposals[proposalId];
+            if (proposal.proposalId == 0) {
+                continue;
+            }
+            proposal.thresholdSnapshot = currentTotalPointsActivated;
+            proposal.thresholdUpdatedAtBlock = block.number;
+
+            if (
+                migrateOpenStreamingProposals && openStreamingProposalIndex[proposalId] == 0
+                    && proposal.proposalStatus != ProposalStatus.Cancelled
+                    && proposal.proposalStatus != ProposalStatus.Rejected
+                    && proposal.proposalStatus != ProposalStatus.Executed
+            ) {
+                openStreamingProposalIds.push(proposalId);
+                openStreamingProposalIndex[proposalId] = openStreamingProposalIds.length;
+            }
+        }
+
+        if (migrateOpenStreamingProposals) {
+            openStreamingProposalsInitialized = true;
+        }
+
+        emit ThresholdSnapshotsMigrated(currentProposalCounter, currentTotalPointsActivated, block.number);
     }
 
     // Sig: 0xedd146cc
@@ -642,19 +686,44 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         // emit Logger("Conviction set", conviction);
     }
 
+    function _initializeThresholdSnapshot(Proposal storage _proposal) internal {
+        _proposal.thresholdSnapshot = totalPointsActivated;
+        _proposal.thresholdUpdatedAtBlock = block.number;
+    }
+
+    function _rebaselineThresholdSnapshot(Proposal storage _proposal) internal {
+        _initializeThresholdSnapshot(_proposal);
+    }
+
     function _setThresholdSnapshot(Proposal storage _proposal) internal {
-        uint256 snapshot = _proposal.thresholdSnapshot;
-        if (snapshot == 0 || totalPointsActivated > snapshot) {
-            _proposal.thresholdSnapshot = totalPointsActivated;
-        }
+        _proposal.thresholdSnapshot = _getThresholdPoints(_proposal);
+        _proposal.thresholdUpdatedAtBlock = block.number;
     }
 
     function _getThresholdPoints(Proposal storage _proposal) internal view returns (uint256) {
-        uint256 snapshot = _proposal.thresholdSnapshot;
-        if (snapshot == 0 || totalPointsActivated > snapshot) {
+        uint256 updatedAtBlock = _proposal.thresholdUpdatedAtBlock;
+        uint256 proposalThresholdPoints = _proposal.thresholdSnapshot;
+        uint256 poolThresholdPoints = _getPoolThresholdPoints();
+        if (updatedAtBlock == 0) {
+            return proposalThresholdPoints > poolThresholdPoints ? proposalThresholdPoints : poolThresholdPoints;
+        }
+        if (proposalThresholdPoints > totalPointsActivated) {
+            proposalThresholdPoints = ConvictionsUtils.weightedAverage(
+                proposalThresholdPoints, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
+            );
+        }
+        return proposalThresholdPoints > poolThresholdPoints ? proposalThresholdPoints : poolThresholdPoints;
+    }
+
+    function _getPoolThresholdPoints() internal view returns (uint256) {
+        CVThresholdStorage.Layout storage thresholdLayout = CVThresholdStorage.layout();
+        uint256 updatedAtBlock = thresholdLayout.thresholdUpdatedAtBlock;
+        if (updatedAtBlock == 0) {
             return totalPointsActivated;
         }
-        return snapshot;
+        return ConvictionsUtils.weightedAverage(
+            thresholdLayout.thresholdSnapshot, totalPointsActivated, block.number - updatedAtBlock, cvParams.decay
+        );
     }
 
     function _checkBlockAndCalculateConviction(Proposal storage _proposal, uint256 _oldStaked)

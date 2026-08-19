@@ -79,6 +79,32 @@ library ConvictionsUtils {
     }
 
     /**
+     * @notice Move an active-points snapshot toward the current value with the same decay used by conviction.
+     * @dev The remaining difference is rounded up so integer truncation cannot make the weighted value
+     *      move away from the snapshot faster than the conviction decay factor. This function is public
+     *      so off-chain tools can reproduce the value. Callers must provide `_decay < D`.
+     */
+    function weightedAverage(
+        uint256 _thresholdPointsSnapshot,
+        uint256 _currentTotalPointsActivated,
+        uint256 _elapsedBlocks,
+        uint256 _decay
+    ) public pure returns (uint256) {
+        uint256 decayFactor = _pow((_decay << 128) / D, _elapsedBlocks);
+        if (_currentTotalPointsActivated >= _thresholdPointsSnapshot) {
+            uint256 weightedDifference = Math.mulDiv(
+                _currentTotalPointsActivated - _thresholdPointsSnapshot, decayFactor, TWO_128, Math.Rounding.Up
+            );
+            return _currentTotalPointsActivated - weightedDifference;
+        } else {
+            uint256 weightedDifference = Math.mulDiv(
+                _thresholdPointsSnapshot - _currentTotalPointsActivated, decayFactor, TWO_128, Math.Rounding.Up
+            );
+            return _currentTotalPointsActivated + weightedDifference;
+        }
+    }
+
+    /**
      * Calculate (_a / 2^128)^_b * 2^128.  Parameter _a should be less than 2^128.
      *
      * @param _a left argument

@@ -78,8 +78,14 @@ NODE
 )"
 CHUNK_SIZE="${CHUNK_SIZE:-10}"
 SCRIPT_TIMEOUT="${SCRIPT_TIMEOUT:-300s}"
+PHASE="${PHASE:-all}"
 
-echo "chain=$CHAIN chain_id=$CHAIN_ID communities=$COMMUNITY_COUNT strategies=$STRATEGY_COUNT chunk_size=$CHUNK_SIZE"
+case "$PHASE" in
+  all|communities|strategies) ;;
+  *) echo "unsupported PHASE: $PHASE" >&2; exit 1 ;;
+esac
+
+echo "chain=$CHAIN chain_id=$CHAIN_ID phase=$PHASE communities=$COMMUNITY_COUNT strategies=$STRATEGY_COUNT chunk_size=$CHUNK_SIZE"
 
 ANVIL_PID=""
 cleanup() {
@@ -147,33 +153,39 @@ NETWORKS_JSON_PATH="$TMP_NETWORKS_JSON" ETH_PASSWORD= DEPLOYER_ADDRESS="$DEPLOYE
   run_forge_script "runFactory(string)"
 echo "factory ok"
 
-start=0
-while [[ "$start" -lt "$COMMUNITY_COUNT" ]]; do
-  end=$((start + CHUNK_SIZE))
-  if [[ "$end" -gt "$COMMUNITY_COUNT" ]]; then
-    end="$COMMUNITY_COUNT"
-  fi
-  echo "communities ${start}-${end}"
-  NETWORKS_JSON_PATH="$TMP_NETWORKS_JSON" ETH_PASSWORD= DEPLOYER_ADDRESS="$DEPLOYER_ADDRESS" \
-    COMMUNITY_START_INDEX="$start" COMMUNITY_END_INDEX="$end" \
-    run_forge_script "runCommunities(string)"
-  echo "communities ${start}-${end} ok"
-  start="$end"
-done
+if [[ "$PHASE" == "all" || "$PHASE" == "communities" ]]; then
+  start=0
+  while [[ "$start" -lt "$COMMUNITY_COUNT" ]]; do
+    end=$((start + CHUNK_SIZE))
+    if [[ "$end" -gt "$COMMUNITY_COUNT" ]]; then
+      end="$COMMUNITY_COUNT"
+    fi
+    echo "communities ${start}-${end}"
+    NETWORKS_JSON_PATH="$TMP_NETWORKS_JSON" ETH_PASSWORD= DEPLOYER_ADDRESS="$DEPLOYER_ADDRESS" \
+      REUSE_CONFIGURED_IMPLEMENTATIONS=true SKIP_FACET_DEPLOYMENT=true \
+      COMMUNITY_START_INDEX="$start" COMMUNITY_END_INDEX="$end" \
+      run_forge_script "runCommunities(string)"
+    echo "communities ${start}-${end} ok"
+    start="$end"
+  done
+fi
 
-start=0
-while [[ "$start" -lt "$STRATEGY_COUNT" ]]; do
-  end=$((start + CHUNK_SIZE))
-  if [[ "$end" -gt "$STRATEGY_COUNT" ]]; then
-    end="$STRATEGY_COUNT"
-  fi
-  echo "strategies ${start}-${end}"
-  NETWORKS_JSON_PATH="$TMP_NETWORKS_JSON" ETH_PASSWORD= DEPLOYER_ADDRESS="$DEPLOYER_ADDRESS" \
-    STRATEGY_START_INDEX="$start" STRATEGY_END_INDEX="$end" \
-    run_forge_script "runStrategies(string)"
-  echo "strategies ${start}-${end} ok"
-  start="$end"
-done
+if [[ "$PHASE" == "all" || "$PHASE" == "strategies" ]]; then
+  start=0
+  while [[ "$start" -lt "$STRATEGY_COUNT" ]]; do
+    end=$((start + CHUNK_SIZE))
+    if [[ "$end" -gt "$STRATEGY_COUNT" ]]; then
+      end="$STRATEGY_COUNT"
+    fi
+    echo "strategies ${start}-${end}"
+    NETWORKS_JSON_PATH="$TMP_NETWORKS_JSON" ETH_PASSWORD= DEPLOYER_ADDRESS="$DEPLOYER_ADDRESS" \
+      REUSE_CONFIGURED_IMPLEMENTATIONS=true SKIP_FACET_DEPLOYMENT=true \
+      STRATEGY_START_INDEX="$start" STRATEGY_END_INDEX="$end" \
+      run_forge_script "runStrategies(string)"
+    echo "strategies ${start}-${end} ok"
+    start="$end"
+  done
+fi
 
 echo "smoke"
 NETWORKS_JSON_PATH="$TMP_NETWORKS_JSON" FORK_HEALTHCHECK_CHAIN="$CHAIN" FORK_HEALTHCHECK_RPC_URL="$LOCAL_RPC_URL" \

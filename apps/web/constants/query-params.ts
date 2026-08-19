@@ -16,6 +16,5 @@ export const QUERY_PARAMS = {
   },
   proposalPage: {
     pendingProposal: "pendingProposal",
-    pendingProposalTitle: "pendingProposalTitle",
   },
 } as const;

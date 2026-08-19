@@ -79,7 +79,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         uint256 totalEligibleConviction = _totalEligibleConviction(poolAmount);
 
         // Start/update/stop stream based on pool conviction share.
-        uint256 maxConviction = ConvictionsUtils.getMaxConviction(totalPointsActivated, cvParams.decay);
+        uint256 maxConviction = ConvictionsUtils.getMaxConviction(_getPoolThresholdPoints(), cvParams.decay);
         bool shouldStartStream = _shouldStartStream(totalEligibleConviction, maxConviction);
         uint256 requestedFlowRate = 0;
         if (shouldStartStream) {
@@ -219,6 +219,11 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         return _isAuthorizedRebalanceCaller(_caller);
     }
 
+    /// @notice Returns the active-points denominator protected by the pool-level decay checkpoint.
+    function getPoolThresholdPoints() external view returns (uint256) {
+        return _getPoolThresholdPoints();
+    }
+
     /**
      * @notice Wrap unwrapped pool tokens into supertokens if needed
      * @dev Checks the balance of the underlying pool token and wraps it to supertoken
@@ -299,7 +304,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         uint256 threshold = ConvictionsUtils.calculateThreshold(
             0, // Streaming proposals use zero requestedAmount; calculateThreshold should still run its normal math for that input.
             poolAmount,
-            totalPointsActivated,
+            _getThresholdPoints(proposal),
             cvParams.decay,
             cvParams.weight,
             cvParams.maxRatio,

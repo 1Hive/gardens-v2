@@ -41,6 +41,7 @@ import {
 } from "../src/CVStrategy/CVStrategy.sol";
 
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
+import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol";
 import {CVStrategyBaseFacet} from "../src/CVStrategy/CVStrategyBaseFacet.sol";
 import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
 
@@ -3178,6 +3179,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // recipients[0] = address(1);
         bytes memory dataProposal = abi.encode(PROPOSAL_ID);
 
+        vm.expectRevert(
+            abi.encodeWithSelector(CVAllocationFacet.ProposalTypeNotSupported.selector, ProposalType.Signaling)
+        );
         allo().distribute(poolId, new address[](0), dataProposal);
         _assertProposalStatus(cv, PROPOSAL_ID, ProposalStatus.Active);
     }

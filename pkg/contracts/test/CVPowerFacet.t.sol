@@ -5,7 +5,8 @@ import "forge-std/Test.sol";
 
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVStrategyBaseFacet} from "../src/CVStrategy/CVStrategyBaseFacet.sol";
-import {Proposal, ProposalStatus, PointSystem, PointSystemConfig} from "../src/CVStrategy/ICVStrategy.sol";
+import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
+import {CVParams, Proposal, ProposalStatus, PointSystem, PointSystemConfig} from "../src/CVStrategy/ICVStrategy.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
@@ -120,6 +121,10 @@ contract CVPowerFacetHarness is CVPowerFacet {
         totalPointsActivated = amount;
     }
 
+    function setTotalPointsActivatedDirect(uint256 amount) external {
+        totalPointsActivated = amount;
+    }
+
     function setTotalStaked(uint256 amount) external {
         totalStaked = amount;
     }
@@ -143,9 +148,34 @@ contract CVPowerFacetHarness is CVPowerFacet {
     function setProposalSubmitter(uint256 proposalId, address submitter) external {
         proposals[proposalId].submitter = submitter;
     }
+
+    function setCvParams(CVParams memory params) external {
+        cvParams = params;
+    }
+
+    function setProposalConvictionState(uint256 proposalId, uint256 blockLast, uint256 convictionLast) external {
+        proposals[proposalId].blockLast = blockLast;
+        proposals[proposalId].convictionLast = convictionLast;
+    }
+
+    function initializeProposalThreshold(uint256 proposalId) external {
+        _initializeThresholdSnapshot(proposals[proposalId]);
+    }
+
+    function checkpointProposalThreshold(uint256 proposalId) external {
+        _setThresholdSnapshot(proposals[proposalId]);
+    }
+
+    function getProposalThresholdPoints(uint256 proposalId) external view returns (uint256) {
+        return _getThresholdPoints(proposals[proposalId]);
+    }
 }
 
 contract CVPowerFacetTest is Test {
+    event PoolThresholdUpdated(
+        uint256 thresholdSnapshot, uint256 totalPointsActivated, uint256 thresholdUpdatedAtBlock
+    );
+
     CVPowerFacetHarness internal facet;
     MockRegistryCommunityPower internal registry;
     MockExternalVotingPowerRegistry internal externalRegistry;
@@ -177,11 +207,57 @@ contract CVPowerFacetTest is Test {
         sybil.setCanExecute(member, true);
         registry.setMemberPower(member, 7);
 
+        vm.expectEmit();
+        emit PoolThresholdUpdated(0, 7, block.number);
         vm.prank(member);
         facet.activatePoints();
 
         assertEq(facet.totalPointsActivated(), 7);
         assertEq(registry.lastActivated(), member);
+    }
+
+    function test_deactivatePoints_emitsDecayingThresholdCheckpoint() public {
+        uint256 decay = 9_000_000;
+        facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
+        registry.setMemberPower(member, 20);
+        registry.setActivated(member, true);
+        facet.setTotalPointsActivatedDirect(100);
+
+        vm.roll(block.number + 10);
+        vm.expectEmit();
+        emit PoolThresholdUpdated(100, 80, block.number);
+        vm.prank(member);
+        facet.deactivatePoints();
+
+        assertEq(facet.totalPointsActivated(), 80);
+    }
+
+    function test_powerMutations_updateActivatedPointTotals() public {
+        sybil.setCanExecute(member, true);
+        registry.setMemberPower(member, 7);
+
+        vm.roll(block.number + 10);
+        vm.prank(member);
+        facet.activatePoints();
+
+        assertEq(facet.totalPointsActivated(), 7);
+
+        vm.roll(block.number + 5);
+        registry.setActivated(member, true);
+        registry.setMemberStaked(member, 10);
+        vm.prank(address(registry));
+        uint256 increased = facet.increasePower(member, 3);
+
+        assertEq(increased, 3);
+        assertEq(facet.totalPointsActivated(), 10);
+
+        vm.roll(block.number + 2);
+        registry.setMemberPower(member, 10);
+        vm.prank(address(registry));
+        uint256 decreased = facet.decreasePower(member, 2);
+
+        assertEq(decreased, 2);
+        assertEq(facet.totalPointsActivated(), 8);
     }
 
     function test_increasePower_only_registry_community() public {
@@ -244,8 +320,9 @@ contract CVPowerFacetTest is Test {
     function test_deactivatePoints_updates_totals() public {
         registry.setMemberPower(member, 4);
         registry.setActivated(member, true);
-        facet.setTotalPointsActivated(4);
+        facet.setTotalPointsActivatedDirect(4);
 
+        vm.roll(block.number + 3);
         vm.prank(member);
         facet.deactivatePoints();
 
@@ -325,6 +402,159 @@ contract CVPowerFacetTest is Test {
         assertEq(facet.totalVoterStakePct(member), 0);
     }
 
+    function test_deactivatePoints_almostPassingProposalRemainsBelowThresholdThroughTouchpoints() public {
+        uint256 decay = 9_000_000;
+        uint256 maxRatio = 3_656_188;
+        uint256 weight = 133_677;
+        uint256 poolAmount = 10_000 ether;
+        uint256 requestedAmount = 1_000 ether;
+        uint256 initialTotalPoints = 100 ether;
+        uint256 memberPoints = 20 ether;
+        uint256 stableTotalPoints = initialTotalPoints - memberPoints;
+
+        facet.setCvParams(CVParams({maxRatio: maxRatio, weight: weight, decay: decay, minThresholdPoints: 0}));
+        registry.setMemberPower(member, memberPoints);
+        registry.setActivated(member, true);
+        facet.setTotalPointsActivated(initialTotalPoints);
+        facet.setTotalStaked(memberPoints);
+        facet.setVoterStake(member, memberPoints);
+        facet.pushVoterProposal(member, 1);
+        facet.setProposal(1, member, memberPoints, memberPoints);
+        facet.setProposalSubmitter(1, member);
+
+        vm.roll(100);
+        facet.initializeProposalThreshold(1);
+        uint256 initialThreshold = ConvictionsUtils.calculateThreshold(
+            requestedAmount, poolAmount, initialTotalPoints, decay, weight, maxRatio, 0
+        );
+        facet.setProposalConvictionState(1, block.number, initialThreshold - 1);
+
+        vm.prank(member);
+        facet.deactivatePoints();
+
+        assertEq(facet.totalPointsActivated(), stableTotalPoints);
+        assertEq(facet.getProposalThresholdPoints(1), initialTotalPoints);
+        _assertProposalBelowThreshold(requestedAmount, poolAmount, decay, weight, maxRatio);
+
+        vm.roll(101);
+        _assertProposalBelowThreshold(requestedAmount, poolAmount, decay, weight, maxRatio);
+        facet.checkpointProposalThreshold(1);
+
+        vm.roll(110);
+        _assertProposalBelowThreshold(requestedAmount, poolAmount, decay, weight, maxRatio);
+        facet.checkpointProposalThreshold(1);
+
+        vm.roll(200);
+        _assertProposalBelowThreshold(requestedAmount, poolAmount, decay, weight, maxRatio);
+        facet.checkpointProposalThreshold(1);
+
+        vm.roll(10_000);
+        assertEq(facet.getProposalThresholdPoints(1), stableTotalPoints);
+        _assertProposalBelowThreshold(requestedAmount, poolAmount, decay, weight, maxRatio);
+    }
+
+    function test_activationIncrease_isTimeWeightedAndConvergesToHigherThreshold() public {
+        uint256 decay = 9_000_000;
+        uint256 basePoints = 100 ether;
+        uint256 activatedPoints = 20 ether;
+        uint256 peakPoints = basePoints + activatedPoints;
+        facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
+        facet.setTotalPointsActivated(basePoints);
+        facet.setProposal(1, address(0), 0, 0);
+        facet.setProposalSubmitter(1, address(0xBEEF));
+
+        vm.roll(100);
+        facet.initializeProposalThreshold(1);
+
+        sybil.setCanExecute(member, true);
+        registry.setMemberPower(member, activatedPoints);
+        vm.prank(member);
+        facet.activatePoints();
+
+        assertEq(facet.totalPointsActivated(), peakPoints);
+        assertEq(facet.getProposalThresholdPoints(1), basePoints);
+
+        vm.roll(101);
+        uint256 oneBlockWeighted = ConvictionsUtils.weightedAverage(basePoints, peakPoints, 1, decay);
+        assertEq(facet.getProposalThresholdPoints(1), oneBlockWeighted);
+        assertGt(oneBlockWeighted, basePoints);
+        assertLt(oneBlockWeighted, peakPoints);
+
+        vm.roll(10_000);
+        assertEq(facet.getProposalThresholdPoints(1), peakPoints);
+    }
+
+    function test_activationSpike_immediateDeactivationOnlyRetainsTimeWeightedIncrease() public {
+        uint256 decay = 9_000_000;
+        uint256 basePoints = 100 ether;
+        uint256 activatedPoints = 20 ether;
+        facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
+        facet.setTotalPointsActivated(basePoints);
+        facet.setProposal(1, address(0), 0, 0);
+        facet.setProposalSubmitter(1, address(0xBEEF));
+
+        vm.roll(100);
+        facet.initializeProposalThreshold(1);
+
+        sybil.setCanExecute(member, true);
+        registry.setMemberPower(member, activatedPoints);
+        vm.roll(110);
+        vm.prank(member);
+        facet.activatePoints();
+
+        uint256 peakPoints = basePoints + activatedPoints;
+        assertEq(facet.getProposalThresholdPoints(1), basePoints);
+
+        vm.roll(111);
+        uint256 oneBlockIncrease = ConvictionsUtils.weightedAverage(basePoints, peakPoints, 1, decay);
+        vm.prank(member);
+        facet.deactivatePoints();
+
+        assertEq(facet.totalPointsActivated(), basePoints);
+        assertEq(
+            facet.getProposalThresholdPoints(1),
+            oneBlockIncrease,
+            "deactivation must retain only the time-weighted increase"
+        );
+        assertLt(facet.getProposalThresholdPoints(1), peakPoints);
+
+        vm.roll(112);
+        assertEq(
+            facet.getProposalThresholdPoints(1),
+            ConvictionsUtils.weightedAverage(oneBlockIncrease, basePoints, 1, decay)
+        );
+
+        vm.roll(10_000);
+        assertEq(facet.getProposalThresholdPoints(1), basePoints);
+    }
+
+    function test_activationSpike_sameBlockDeactivationLeavesThresholdUnchanged() public {
+        uint256 decay = 9_000_000;
+        uint256 basePoints = 100 ether;
+        uint256 activatedPoints = 20 ether;
+        facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: decay, minThresholdPoints: 0}));
+        facet.setTotalPointsActivated(basePoints);
+        facet.setProposal(1, address(0), 0, 0);
+        facet.setProposalSubmitter(1, address(0xBEEF));
+
+        vm.roll(100);
+        facet.initializeProposalThreshold(1);
+
+        sybil.setCanExecute(member, true);
+        registry.setMemberPower(member, activatedPoints);
+        vm.roll(110);
+        vm.prank(member);
+        facet.activatePoints();
+        vm.prank(member);
+        facet.deactivatePoints();
+
+        assertEq(facet.totalPointsActivated(), basePoints);
+        assertEq(facet.getProposalThresholdPoints(1), basePoints);
+
+        vm.roll(111);
+        assertEq(facet.getProposalThresholdPoints(1), basePoints);
+    }
+
     function test_increasePower_custom_usesDeltaNotAbsolute() public {
         sybil.setCanExecute(member, true);
         facet.setPointSystem(PointSystem.Custom);
@@ -367,5 +597,18 @@ contract CVPowerFacetTest is Test {
         facet.activatePoints();
 
         assertEq(facet.totalPointsActivated(), 7);
+    }
+
+    function _assertProposalBelowThreshold(
+        uint256 requestedAmount,
+        uint256 poolAmount,
+        uint256 decay,
+        uint256 weight,
+        uint256 maxRatio
+    ) internal view {
+        uint256 threshold = ConvictionsUtils.calculateThreshold(
+            requestedAmount, poolAmount, facet.getProposalThresholdPoints(1), decay, weight, maxRatio, 0
+        );
+        assertLt(facet.calculateProposalConviction(1), threshold);
     }
 }

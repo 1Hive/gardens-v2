@@ -24,7 +24,7 @@ contract OptimismStreamingRebalanceForkTest is Test {
         vm.createSelectFork(vm.envString("RPC_URL_OPT"), INVESTIGATED_BLOCK);
     }
 
-    function test_upgrade_streaming_facet_then_rebalance_starts_stream() public {
+    function test_upgrade_and_migrate_then_rebalance_starts_stream() public {
         CVStrategy strategy = CVStrategy(payable(STRATEGY));
         ISuperToken token = strategy.superfluidToken();
         ISuperfluidPool pool = strategy.superfluidGDA();
@@ -33,7 +33,13 @@ contract OptimismStreamingRebalanceForkTest is Test {
         int96 flowBefore = gda.getFlowRate(token, STRATEGY, pool);
         uint128 totalUnitsBefore = pool.getTotalUnits();
 
+        _upgradeImplementationAndMigrate(strategy);
         _upgradeStreamingFacet(strategy);
+
+        assertTrue(strategy.openStreamingProposalsInitialized(), "streaming proposal migration should run");
+        assertGt(strategy.openStreamingProposalIds(0), 0, "migration should index the open proposal");
+        assertGt(strategy.openStreamingProposalIds(1), 0, "migration should index every open proposal");
+        assertTrue(strategy.streamingEscrow(1) != address(0), "indexed proposal should retain its escrow");
 
         vm.warp(block.timestamp + 1 days);
         vm.prank(_resolvedOwner(strategy));
@@ -54,14 +60,23 @@ contract OptimismStreamingRebalanceForkTest is Test {
         assertLe(totalUnitsAfter, uint128(uint96(flowAfter)), "units should be bounded by active flow");
     }
 
+    function _upgradeImplementationAndMigrate(CVStrategy strategy) internal {
+        CVStrategy implementation = new CVStrategy();
+        vm.prank(_resolvedOwner(strategy));
+        strategy.upgradeToAndCall(
+            address(implementation), abi.encodeCall(CVStrategy.reinitializeV2MigrateThresholdSnapshots, ())
+        );
+    }
+
     function _upgradeStreamingFacet(CVStrategy strategy) internal {
         CVStreamingFacet streamingFacet = new CVStreamingFacet();
-        bytes4[] memory selectors = new bytes4[](5);
+        bytes4[] memory selectors = new bytes4[](6);
         selectors[0] = CVStreamingFacet.rebalance.selector;
         selectors[1] = CVStreamingFacet.stopEscrowStream.selector;
         selectors[2] = CVStreamingFacet.setAuthorizedRebalanceCaller.selector;
         selectors[3] = CVStreamingFacet.isAuthorizedRebalanceCaller.selector;
         selectors[4] = CVStreamingFacet.wrapIfNeeded.selector;
+        selectors[5] = CVStreamingFacet.getPoolThresholdPoints.selector;
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({

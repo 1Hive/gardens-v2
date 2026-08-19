@@ -35,6 +35,7 @@ VERIFY_RPC_MAX_ATTEMPTS=${VERIFY_RPC_MAX_ATTEMPTS:-4}
 VERIFY_RPC_INITIAL_DELAY=${VERIFY_RPC_INITIAL_DELAY:-8}
 VERIFY_RPC_SUCCESS_DELAY=${VERIFY_RPC_SUCCESS_DELAY:-2}
 VERIFY_COMMAND_TIMEOUT=${VERIFY_COMMAND_TIMEOUT:-300}
+VERIFY_BLOCK_TAG=${VERIFY_BLOCK_TAG:-finalized}
 STRICT_FACET_MATCH=${STRICT_FACET_MATCH:-true}
 ALLOW_POOL_TYPE_SCOPED_STALE_FACETS=${ALLOW_POOL_TYPE_SCOPED_STALE_FACETS:-true}
 
@@ -198,7 +199,7 @@ resolve_contract_for_bytecode() {
     return 0
   fi
 
-  if ! bytecode=$(verify_with_retry "bytecode for $facet" cast code --rpc-url "$rpc_url" "$facet"); then
+  if ! bytecode=$(verify_with_retry "bytecode for $facet" cast code --rpc-url "$rpc_url" --block "$VERIFY_BLOCK_TAG" "$facet"); then
     return 1
   fi
 
@@ -547,7 +548,7 @@ verify_network() {
       seen["$facet_lc"]="$facet"
 
       echo "    - Fetching codehash for $facet"
-      codehash=$(verify_with_retry "codehash for $facet on $display_name" cast codehash --rpc-url "$rpc_url" "$facet")
+      codehash=$(verify_with_retry "codehash for $facet on $display_name" cast codehash --rpc-url "$rpc_url" --block "$VERIFY_BLOCK_TAG" "$facet")
       if ! resolve_contract_for_bytecode "$facet" "$rpc_url" "$codehash"; then
         if [[ ${#expected_facets[@]} -gt 0 && -z "${expected_facets[$facet_lc]:-}" ]]; then
           if is_pool_type_scoped_stale_facet "$proxy" "$facet"; then
@@ -593,7 +594,7 @@ verify_network() {
       fi
 
       echo "    - Fetching codehash for declared facet $facet"
-      codehash=$(verify_with_retry "declared facet codehash for $facet on $display_name" cast codehash --rpc-url "$rpc_url" "$facet")
+      codehash=$(verify_with_retry "declared facet codehash for $facet on $display_name" cast codehash --rpc-url "$rpc_url" --block "$VERIFY_BLOCK_TAG" "$facet")
       if ! resolve_contract_for_bytecode "$facet" "$rpc_url" "$codehash"; then
         unknown_codehash_count=$((unknown_codehash_count + 1))
         unknown_codehash_messages+=("declared facet $facet")

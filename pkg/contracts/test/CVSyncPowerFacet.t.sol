@@ -107,6 +107,10 @@ contract CVSyncPowerFacetHarness is CVSyncPowerFacet {
         totalPointsActivated = amount;
     }
 
+    function setTotalPointsActivatedDirect(uint256 amount) external {
+        totalPointsActivated = amount;
+    }
+
     function setTotalStaked(uint256 amount) external {
         totalStaked = amount;
     }
@@ -299,6 +303,27 @@ contract CVSyncPowerFacetTest is Test {
         facet.syncPower(member);
 
         assertEq(facet.totalPointsActivated(), 60); // 100 - 40 decrease
+    }
+
+    function test_syncPower_updatesActivatedPointsAcrossIncreaseAndDecrease() public {
+        _authorizeSyncCaller();
+        community.setCachedPower(member, 100);
+        community.setActivated(member, true);
+        registry.setLivePower(member, 150);
+        facet.setTotalPointsActivatedDirect(100);
+
+        vm.roll(block.number + 3);
+        vm.prank(syncCaller);
+        facet.syncPower(member);
+
+        assertEq(facet.totalPointsActivated(), 150);
+
+        vm.roll(block.number + 2);
+        registry.setLivePower(member, 125);
+        vm.prank(syncCaller);
+        facet.syncPower(member);
+
+        assertEq(facet.totalPointsActivated(), 125);
     }
 
     function test_syncPower_doesNotReapplyDecreaseOnRepeatedCalls() public {

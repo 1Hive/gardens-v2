@@ -265,20 +265,21 @@ contract RecoverStreamingProposalEscrowsScript is BaseMultiChain {
     }
 
     function _streamingSelectorsWithRecovery() internal pure returns (bytes4[] memory selectors) {
-        selectors = new bytes4[](6);
+        selectors = new bytes4[](7);
         bytes4[] memory streamingSelectors = _streamingSelectors();
         for (uint256 i = 0; i < streamingSelectors.length; i++) {
             selectors[i] = streamingSelectors[i];
         }
-        selectors[5] = IStreamingOpenProposalRecovery.recoverOpenStreamingProposals.selector;
+        selectors[6] = IStreamingOpenProposalRecovery.recoverOpenStreamingProposals.selector;
     }
 
     function _streamingSelectors() internal pure returns (bytes4[] memory selectors) {
-        selectors = new bytes4[](5);
+        selectors = new bytes4[](6);
         selectors[0] = CVStreamingFacet.rebalance.selector;
         selectors[1] = CVStreamingFacet.stopEscrowStream.selector;
         selectors[2] = CVStreamingFacet.setAuthorizedRebalanceCaller.selector;
         selectors[3] = CVStreamingFacet.isAuthorizedRebalanceCaller.selector;
         selectors[4] = CVStreamingFacet.wrapIfNeeded.selector;
+        selectors[5] = CVStreamingFacet.getPoolThresholdPoints.selector;
     }
 }

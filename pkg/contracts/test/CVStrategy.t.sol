@@ -199,7 +199,7 @@ contract CVStrategyCoverageHarness is CVStrategyHarness {
     }
 }
 
-contract CVStrategyTest is Test {
+contract CVStrategyCoverageTest is Test {
     CVStrategyHarness internal strategy;
     MockAlloWithPool internal allo;
     MockRegistryCommunity internal registryCommunity;
