@@ -61,6 +61,7 @@ export const getMarkeeChainId = (communityChainId?: number) =>
 const gardensMarkeeRouterABI = parseAbi([
   "error LiFiCallFailed(bytes reason)",
   "function communityVault(bytes32 communityKey) view returns (address vault)",
+  "function communityIntegration(bytes32 communityKey) view returns ((uint256 communityChainId, address registryCommunity, address vault, address factory, address leaderboard, address seedMarkee) integration)",
   "function bridgeConfiguration(uint256 destinationChainId) view returns (address adapter, uint8 protocol)",
   "function keepers(address keeper) view returns (bool)",
   "function remoteReceivers(uint256 chainId) view returns (address)",
@@ -90,10 +91,6 @@ const communityRevenueVaultABI = parseAbi([
   "function availableRevenue() view returns (uint256 nativeETH, uint256 ethxBalance, uint256 wethBalance, uint256 combinedETH)",
 ]);
 
-const streamingLeaderboardFactoryABI = parseAbi([
-  "function getLeaderboards(uint256 offset, uint256 limit) view returns (address[] result)",
-]);
-
 const streamingLeaderboardABI = parseAbi([
   "function beneficiaryAddress() view returns (address)",
   "function maxMessageLength() view returns (uint256)",
@@ -115,22 +112,6 @@ export const getMarkeeRouterAddress = (communityChainId?: number) => {
     markeeChainId === MARKEE_BASE_CHAIN_ID ?
       process.env.MARKEE_ROUTER_ADDRESS_BASE
     : process.env.MARKEE_ROUTER_ADDRESS_SEPOLIA)?.trim();
-
-  return value && isAddress(value) ? getAddress(value) : null;
-};
-
-const getStreamingLeaderboardFactoryAddress = (communityChainId?: number) => {
-  const markeeChainId = getMarkeeChainId(communityChainId);
-  const environmentValue = (
-    markeeChainId === MARKEE_BASE_CHAIN_ID ?
-      process.env.MARKEE_STREAMING_LEADERBOARD_FACTORY_ADDRESS_BASE
-    : process.env.MARKEE_STREAMING_LEADERBOARD_FACTORY_ADDRESS_SEPOLIA)?.trim();
-  const fallbackValue =
-    process.env.MARKEE_STREAMING_LEADERBOARD_FACTORY_ADDRESS?.trim();
-  const value =
-    environmentValue != null && environmentValue.length > 0 ?
-      environmentValue
-    : fallbackValue;
 
   return value && isAddress(value) ? getAddress(value) : null;
 };
@@ -1528,46 +1509,24 @@ export const executeMarkeeClaim = async ({
 
 const getCommunityLeaderboard = async (
   chainId: number,
-  vaultAddress: Address | null,
+  community: Address,
 ) => {
-  if (vaultAddress == null) return null;
-
-  const factory = getStreamingLeaderboardFactoryAddress(chainId);
-  if (factory == null) {
+  const router = getMarkeeRouterAddress(chainId);
+  if (router == null) {
     throw new Error(
-      "Markee streaming leaderboard factory is not configured for this environment",
+      "Markee router is not configured for this environment",
     );
   }
 
   const client = getEnvPublicClient(getMarkeeChainId(chainId));
-  const leaderboardResults = await client.readContract({
-    abi: streamingLeaderboardFactoryABI,
-    address: factory,
-    args: [0n, 1_000n],
-    functionName: "getLeaderboards",
+  const integration = await client.readContract({
+    abi: gardensMarkeeRouterABI,
+    address: router,
+    args: [getCommunityKey(chainId, community)],
+    functionName: "communityIntegration",
   });
-  const leaderboards = leaderboardResults.filter(
-    (value): value is Address => typeof value === "string" && isAddress(value),
-  );
-
-  let leaderboardAddress: Address | null = null;
-  for (const candidate of leaderboards) {
-    const beneficiary = await client.readContract({
-      abi: streamingLeaderboardABI,
-      address: candidate,
-      functionName: "beneficiaryAddress",
-    });
-    if (
-      typeof beneficiary === "string" &&
-      isAddress(beneficiary) &&
-      getAddress(beneficiary) === vaultAddress
-    ) {
-      leaderboardAddress = getAddress(candidate);
-      break;
-    }
-  }
-
-  if (leaderboardAddress == null) return null;
+  const leaderboardAddress = integration.leaderboard;
+  if (leaderboardAddress === zeroAddress) return null;
 
   const minimumMonthlyRate = await client.readContract({
     abi: streamingLeaderboardABI,
@@ -1646,10 +1605,7 @@ const getCommunityLeaderboard = async (
 export const markeeAdapter = {
   async getCommunityIntegration(chainId: number, community: Address) {
     const revenue = await getCommunityRevenue(chainId, community);
-    const leaderboard = await getCommunityLeaderboard(
-      chainId,
-      revenue.vaultAddress,
-    );
+    const leaderboard = await getCommunityLeaderboard(chainId, community);
 
     return {
       integration: {

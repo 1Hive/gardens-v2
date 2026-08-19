@@ -29,7 +29,11 @@ contract CommunityRevenueVault is ReentrancyGuard, ICommunityRevenueVault {
         _;
     }
 
-    constructor() {}
+    /// @dev Lock the implementation instance while leaving clone storage at
+    /// its zeroed defaults so every clone can still be initialized once.
+    constructor() {
+        router = address(1);
+    }
 
     /// @dev Called by the router immediately after cloning, so `msg.sender`
     /// at initialization time is the router itself — mirrors

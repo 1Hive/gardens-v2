@@ -77,6 +77,11 @@ contract CommunityRevenueVaultTest is Test {
         assertEq(address(vault.weth()), address(weth));
     }
 
+    function test_initialize_revertsOnImplementation() public {
+        vm.expectRevert(ICommunityRevenueVault.AlreadyInitialized.selector);
+        implementation.initialize(communityKey, COMMUNITY_CHAIN_ID, registryCommunity, address(ethx), address(weth));
+    }
+
     function test_initialize_revertsIfAlreadyInitialized() public {
         vm.prank(router);
         vm.expectRevert(ICommunityRevenueVault.AlreadyInitialized.selector);

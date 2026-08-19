@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 import {CommunityRevenueVault} from "../../src/MarkeeRevenue/CommunityRevenueVault.sol";
 import {GardensMarkeeRouterRevenueRecovery} from "../../src/MarkeeRevenue/GardensMarkeeRouterRevenueRecovery.sol";
@@ -51,15 +52,13 @@ contract GardensMarkeeRouterRevenueRecoveryTest is Test {
         communityKey = CommunityKeyLib.communityKey(BASE_CHAIN_ID, address(registryCommunity));
 
         address vaultImplementation = address(new CommunityRevenueVault());
-        vault = address(new CommunityRevenueVault());
+        vault = Clones.clone(vaultImplementation);
         vm.prank(proxy);
         ICommunityRevenueVault(vault).initialize(communityKey, BASE_CHAIN_ID, address(registryCommunity), ethx, weth);
         vm.deal(vault, 1 ether);
 
         bytes32 slot = keccak256(abi.encode(communityKey, VAULTS_SLOT));
         vm.store(proxy, slot, bytes32(uint256(uint160(vault))));
-
-        vaultImplementation; // silence unused-var warning; kept for clarity of intent
     }
 
     function test_recoverCommunityRevenue_sendsVaultBalanceToRecipient() public {
