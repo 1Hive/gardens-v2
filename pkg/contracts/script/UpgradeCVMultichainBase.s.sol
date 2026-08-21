@@ -182,14 +182,15 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
             communityCuts = facetCuts.communityCuts;
         } else if (needFactoryFacetCuts) {
             if (factoryAction == FactoryAction.SetCommunityFacets) {
-                communityCuts =
-                    skipFacetDeployment ? _buildCommunityFacetCutsFromSnapshot() : _buildCommunityCutsWithFreshFacets(_deployDiamondLoupeFacet());
+                communityCuts = skipFacetDeployment
+                    ? _buildCommunityFacetCutsFromSnapshot()
+                    : _buildCommunityCutsWithFreshFacets(_deployDiamondLoupeFacet());
             } else if (factoryAction == FactoryAction.SetStrategyFacets) {
-                cvCuts =
-                    skipFacetDeployment ? _buildCVFacetCutsFromSnapshot() : _buildCVCutsWithFreshFacets(_deployDiamondLoupeFacet());
+                cvCuts = skipFacetDeployment
+                    ? _buildCVFacetCutsFromSnapshot()
+                    : _buildCVCutsWithFreshFacets(_deployDiamondLoupeFacet());
             } else {
-                FacetCuts memory facetCuts =
-                    skipFacetDeployment ? _buildFacetCutsFromSnapshot() : _buildFacetCuts();
+                FacetCuts memory facetCuts = skipFacetDeployment ? _buildFacetCutsFromSnapshot() : _buildFacetCuts();
                 cvCuts = facetCuts.cvCuts;
                 communityCuts = facetCuts.communityCuts;
             }
@@ -255,8 +256,7 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
             splitFactoryFacetWrites
                 && (factoryAction == FactoryAction.SetCommunityFacets
                     || factoryAction == FactoryAction.SetStrategyFacets)
-        ) {
-        }
+        ) {}
 
         if (factoryAction == FactoryAction.All || factoryAction == FactoryAction.UpgradeImpl) {
             if (registryFactoryImplementation == address(0)) revert("missing registry factory implementation");
@@ -269,9 +269,10 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
             bytes32 communityCutsDigest = _facetCutsDigest(communityCuts);
             string memory communityCutsDigestHex = _bytes32ToHex(communityCutsDigest);
             string memory previousCommunityCutsDigest = _readStringOrEmpty(".FACTORY_STATE.COMMUNITY_CUTS_DIGEST");
-            if (!forceFacets && keccak256(bytes(previousCommunityCutsDigest)) == keccak256(bytes(communityCutsDigestHex)))
-            {
-            } else {
+            if (
+                !forceFacets
+                    && keccak256(bytes(previousCommunityCutsDigest)) == keccak256(bytes(communityCutsDigestHex))
+            ) {} else {
                 address communityInit = _getOrDeployCommunityDiamondInit();
                 bytes memory communityInitCalldata = abi.encodeCall(RegistryCommunityDiamondInit.init, ());
                 if (_flagEnabled("ESTIMATE_FACTORY_GAS")) {
@@ -293,9 +294,7 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
             bytes32 strategyCutsDigest = _facetCutsDigest(cvCuts);
             string memory strategyCutsDigestHex = _bytes32ToHex(strategyCutsDigest);
             string memory previousStrategyCutsDigest = _readStringOrEmpty(".FACTORY_STATE.STRATEGY_CUTS_DIGEST");
-            if (!forceFacets && keccak256(bytes(previousStrategyCutsDigest)) == keccak256(bytes(strategyCutsDigestHex)))
-            {
-            } else {
+            if (!forceFacets && keccak256(bytes(previousStrategyCutsDigest)) == keccak256(bytes(strategyCutsDigestHex))) {} else {
                 address strategyInit = _getOrDeployStrategyDiamondInit();
                 bytes memory strategyInitCalldata = abi.encodeCall(CVStrategyDiamondInit.init, ());
                 if (_flagEnabled("ESTIMATE_FACTORY_GAS")) {
@@ -316,7 +315,8 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
             registryFactory.setGlobalPauseController(pauseController);
         }
 
-        if (streamingEscrowFactory != address(0) && registryFactory.streamingEscrowFactory() != streamingEscrowFactory) {
+        if (streamingEscrowFactory != address(0) && registryFactory.streamingEscrowFactory() != streamingEscrowFactory)
+        {
             registryFactory.setStreamingEscrowFactory(streamingEscrowFactory);
         }
 
@@ -370,8 +370,7 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
                         address(new RegistryCommunityDiamondInit()),
                         abi.encodeCall(RegistryCommunityDiamondInit.init, ())
                     );
-            } else {
-            }
+            } else {}
         }
     }
 
@@ -387,8 +386,7 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
 
             IDiamond.FacetCut[] memory staleStrategyRemovals =
                 _buildStaleSelectorRemovalCuts(cvStrategyProxies[i], cvCuts);
-            IDiamond.FacetCut[] memory changedStrategyCuts =
-                _buildChangedFacetCuts(cvStrategyProxies[i], cvCuts);
+            IDiamond.FacetCut[] memory changedStrategyCuts = _buildChangedFacetCuts(cvStrategyProxies[i], cvCuts);
 
             uint256 totalCuts = staleStrategyRemovals.length + changedStrategyCuts.length;
             if (totalCuts > 0) {
@@ -403,13 +401,11 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
                     cutIndex++;
                 }
 
-                IDiamondCut(cvStrategyProxies[i]).diamondCut(
-                    allCuts,
-                    address(new CVStrategyDiamondInit()),
-                    abi.encodeCall(CVStrategyDiamondInit.init, ())
-                );
-            } else {
-            }
+                IDiamondCut(cvStrategyProxies[i])
+                    .diamondCut(
+                        allCuts, address(new CVStrategyDiamondInit()), abi.encodeCall(CVStrategyDiamondInit.init, ())
+                    );
+            } else {}
         }
     }
 
@@ -637,9 +633,7 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
             }
 
             removalCuts[removalCount] = IDiamond.FacetCut({
-                facetAddress: address(0),
-                action: IDiamond.FacetCutAction.Remove,
-                functionSelectors: selectorsToRemove
+                facetAddress: address(0), action: IDiamond.FacetCutAction.Remove, functionSelectors: selectorsToRemove
             });
             removalCount++;
         }
@@ -653,7 +647,11 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
         return trimmed;
     }
 
-    function _selectorInDesiredCuts(bytes4 selector, IDiamond.FacetCut[] memory desiredCuts) internal pure returns (bool) {
+    function _selectorInDesiredCuts(bytes4 selector, IDiamond.FacetCut[] memory desiredCuts)
+        internal
+        pure
+        returns (bool)
+    {
         for (uint256 i = 0; i < desiredCuts.length; i++) {
             bytes4[] memory selectors = desiredCuts[i].functionSelectors;
             for (uint256 j = 0; j < selectors.length; j++) {
@@ -673,7 +671,11 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
         }
     }
 
-    function _cloneFacetCuts(IDiamond.FacetCut[] memory source) internal pure returns (IDiamond.FacetCut[] memory copy) {
+    function _cloneFacetCuts(IDiamond.FacetCut[] memory source)
+        internal
+        pure
+        returns (IDiamond.FacetCut[] memory copy)
+    {
         copy = new IDiamond.FacetCut[](source.length);
         for (uint256 i = 0; i < source.length; i++) {
             bytes4[] memory selectors = new bytes4[](source[i].functionSelectors.length);
@@ -681,9 +683,7 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
                 selectors[j] = source[i].functionSelectors[j];
             }
             copy[i] = IDiamond.FacetCut({
-                facetAddress: source[i].facetAddress,
-                action: source[i].action,
-                functionSelectors: selectors
+                facetAddress: source[i].facetAddress, action: source[i].action, functionSelectors: selectors
             });
         }
     }
@@ -704,7 +704,6 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
     }
 
     function _buildFacetCutsFromSnapshot() internal returns (FacetCuts memory cuts) {
-
         DiamondLoupeFacet loupeFacet = DiamondLoupeFacet(
             _requireExistingSnapshotFacet(
                 ".FACETS.DIAMOND_LOUPE", "DIAMOND_LOUPE", "src/diamonds/facets/DiamondLoupeFacet.sol:DiamondLoupeFacet"
@@ -1331,7 +1330,6 @@ contract UpgradeCVMultichainBase is BaseMultiChain, StrategyDiamondConfiguratorB
         if (bytes(value).length == 0) {
             return;
         }
-
     }
 
     function _rpcUrlForCurrentNetwork() internal view returns (string memory) {

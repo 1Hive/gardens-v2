@@ -54,7 +54,9 @@ contract MockRegistryFactoryPause {
         pauseController = controller;
     }
 
-    function setStrategyFacets(IDiamondCut.FacetCut[] memory cuts, address initAddr, bytes memory initCalldata_) external {
+    function setStrategyFacets(IDiamondCut.FacetCut[] memory cuts, address initAddr, bytes memory initCalldata_)
+        external
+    {
         delete strategyFacetCuts;
         for (uint256 i = 0; i < cuts.length; i++) {
             strategyFacetCuts.push();
@@ -115,11 +117,7 @@ contract MockStrategyTemplate {
         lastPauseController = controller;
     }
 
-    function diamondCut(
-        IDiamondCut.FacetCut[] calldata cuts,
-        address initAddr,
-        bytes calldata initCalldata
-    ) external {
+    function diamondCut(IDiamondCut.FacetCut[] calldata cuts, address initAddr, bytes calldata initCalldata) external {
         delete lastCuts;
         for (uint256 i = 0; i < cuts.length; i++) {
             lastCuts.push();
@@ -188,7 +186,9 @@ contract CommunityPoolFacetTest is Test {
     function setUp() public {
         CommunityPoolFacetHarness impl = new CommunityPoolFacetHarness();
         facet = CommunityPoolFacetHarness(
-            payable(address(new ERC1967Proxy(address(impl), abi.encodeWithSelector(impl.initializeHarness.selector, owner))))
+            payable(address(
+                    new ERC1967Proxy(address(impl), abi.encodeWithSelector(impl.initializeHarness.selector, owner))
+                ))
         );
 
         allo = new MockAlloPool();
@@ -269,9 +269,7 @@ contract CommunityPoolFacetTest is Test {
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = bytes4(0x12345678);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0xBEEF),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(0xBEEF), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
 
         registryFactory.setStrategyFacets(cuts, address(0xCAFE), "init");

@@ -107,5 +107,4 @@ contract GoodDollarSybil is ISybilScorer, ProxyOwnableUpgrader {
     function canExecuteAction(address _user, address) external view override returns (bool isUserValid) {
         isUserValid = userValidity[_user];
     }
-
 }

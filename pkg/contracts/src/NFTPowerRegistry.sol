@@ -21,17 +21,17 @@ contract NFTPowerRegistry is IVotingPowerRegistry {
     /*|--------------------------------------------|*/
 
     enum NFTType {
-        ERC721,  // balanceOf() count
+        ERC721, // balanceOf() count
         ERC1155, // balanceOf(account, tokenId) count
-        HAT      // isWearerOfHat() binary (0 or 1)
+        HAT // isWearerOfHat() binary (0 or 1)
     }
 
     struct NFTPowerSource {
-        address token;     // NFT contract or Hats Protocol address
-        NFTType nftType;   // How to read the balance
-        uint256 weight;    // Basis points multiplier (10000 = 1x)
-        uint256 tokenId;   // ERC1155 token ID (ignored for ERC721/HAT)
-        uint256 hatId;     // Hats Protocol hat ID (ignored for ERC721/ERC1155)
+        address token; // NFT contract or Hats Protocol address
+        NFTType nftType; // How to read the balance
+        uint256 weight; // Basis points multiplier (10000 = 1x)
+        uint256 tokenId; // ERC1155 token ID (ignored for ERC721/HAT)
+        uint256 hatId; // Hats Protocol hat ID (ignored for ERC721/ERC1155)
     }
 
     /*|--------------------------------------------|*/
@@ -79,7 +79,15 @@ contract NFTPowerRegistry is IVotingPowerRegistry {
     /// @dev For Custom PointSystem, this value is used directly as voting power
     /// @param _member The member address
     /// @return power The total voting power (weighted sum)
-    function getMemberPowerInStrategy(address _member, address /*_strategy*/) external view override returns (uint256 power) {
+    function getMemberPowerInStrategy(
+        address _member,
+        address /*_strategy*/
+    )
+        external
+        view
+        override
+        returns (uint256 power)
+    {
         for (uint256 i = 0; i < powerSources.length; i++) {
             NFTPowerSource storage source = powerSources[i];
             uint256 balance;
@@ -98,7 +106,14 @@ contract NFTPowerRegistry is IVotingPowerRegistry {
     }
 
     /// @notice Returns 0 for NFT-based registries (no staking)
-    function getMemberStakedAmount(address /*_member*/) external pure override returns (uint256) {
+    function getMemberStakedAmount(
+        address /*_member*/
+    )
+        external
+        pure
+        override
+        returns (uint256)
+    {
         return 0;
     }
 

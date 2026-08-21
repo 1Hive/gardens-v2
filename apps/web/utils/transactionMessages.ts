@@ -1,5 +1,27 @@
 import { UserRejectedRequestError } from "viem";
 
+export function isUserRejectedTransactionError(error: unknown) {
+  const seen = new Set<unknown>();
+  let current = error;
+
+  while (current != null && typeof current === "object" && !seen.has(current)) {
+    if (current instanceof UserRejectedRequestError) return true;
+
+    const errorLike = current as {
+      cause?: unknown;
+      code?: number | string;
+    };
+    if (errorLike.code === 4001 || errorLike.code === "ACTION_REJECTED") {
+      return true;
+    }
+
+    seen.add(current);
+    current = errorLike.cause;
+  }
+
+  return false;
+}
+
 export const getTxMessage = (
   transactionStatus: string | undefined,
   transactionError?: Error | null | undefined,
@@ -30,7 +52,7 @@ export const getTxMessage = (
 };
 
 function parseErrorMessage(error: Error, fallbackErrorMessage?: string) {
-  if (error?.cause instanceof UserRejectedRequestError) {
+  if (isUserRejectedTransactionError(error)) {
     return "User rejected the request";
   } else if (fallbackErrorMessage) {
     return fallbackErrorMessage;

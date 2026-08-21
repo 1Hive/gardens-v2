@@ -41,9 +41,11 @@ contract CommunityBaseFacetTest is Test {
     function setUp() public {
         CommunityBaseFacetHarness impl = new CommunityBaseFacetHarness();
         facet = CommunityBaseFacetHarness(
-            payable(
-                address(new ERC1967Proxy(address(impl), abi.encodeWithSelector(impl.initializeHarness.selector, address(this))))
-            )
+            payable(address(
+                    new ERC1967Proxy(
+                        address(impl), abi.encodeWithSelector(impl.initializeHarness.selector, address(this))
+                    )
+                ))
         );
         controller = new MockPauseController();
     }
@@ -90,9 +92,7 @@ contract CommunityBaseFacetTest is Test {
         facet.setPauseController(address(controller));
         controller.setGlobalPaused(true);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(CommunityBaseFacet.CommunityPaused.selector, address(controller))
-        );
+        vm.expectRevert(abi.encodeWithSelector(CommunityBaseFacet.CommunityPaused.selector, address(controller)));
         facet.exposedEnforceNotPaused(bytes4(0xdeadbeef));
     }
 
@@ -110,11 +110,7 @@ contract CommunityBaseFacetTest is Test {
         controller.setSelectorPaused(selector, true);
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                CommunityBaseFacet.CommunitySelectorPaused.selector,
-                selector,
-                address(controller)
-            )
+            abi.encodeWithSelector(CommunityBaseFacet.CommunitySelectorPaused.selector, selector, address(controller))
         );
         facet.exposedEnforceSelectorNotPaused(selector);
     }
@@ -143,9 +139,7 @@ contract CommunityBaseFacetTest is Test {
         facet.setPauseController(address(controller));
         controller.setGlobalPaused(true);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(CommunityBaseFacet.CommunityPaused.selector, address(controller))
-        );
+        vm.expectRevert(abi.encodeWithSelector(CommunityBaseFacet.CommunityPaused.selector, address(controller)));
         facet.guardedWhenNotPaused();
     }
 
@@ -155,11 +149,7 @@ contract CommunityBaseFacetTest is Test {
         controller.setSelectorPaused(selector, true);
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                CommunityBaseFacet.CommunitySelectorPaused.selector,
-                selector,
-                address(controller)
-            )
+            abi.encodeWithSelector(CommunityBaseFacet.CommunitySelectorPaused.selector, selector, address(controller))
         );
         facet.guardedWhenSelectorNotPaused(selector);
     }

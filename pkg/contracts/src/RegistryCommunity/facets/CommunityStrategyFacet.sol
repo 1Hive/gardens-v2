@@ -41,29 +41,39 @@ contract CommunityStrategyFacet is CommunityBaseFacet {
     /*|--------------------------------------------|*/
 
     // Sig: 0x82d6a1e7
-    function addStrategyByPoolId(uint256 poolId) public { if (msg.sig == bytes4(0)) revert(); onlyCouncilSafe();
+    function addStrategyByPoolId(uint256 poolId) public {
+        if (msg.sig == bytes4(0)) revert();
+        onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
         _addStrategy(strategy);
     }
 
     // Sig: 0x223e5479
-    function addStrategy(address _newStrategy) public { if (msg.sig == bytes4(0)) revert(); onlyCouncilSafe();
+    function addStrategy(address _newStrategy) public {
+        if (msg.sig == bytes4(0)) revert();
+        onlyCouncilSafe();
         _addStrategy(_newStrategy);
     }
 
     // Sig: 0x73265c37
-    function removeStrategyByPoolId(uint256 poolId) public { if (msg.sig == bytes4(0)) revert(); onlyCouncilSafe();
+    function removeStrategyByPoolId(uint256 poolId) public {
+        if (msg.sig == bytes4(0)) revert();
+        onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
         _removeStrategy(strategy);
     }
 
     // Sig: 0x175188e8
-    function removeStrategy(address _strategy) public { if (msg.sig == bytes4(0)) revert(); onlyCouncilSafe();
+    function removeStrategy(address _strategy) public {
+        if (msg.sig == bytes4(0)) revert();
+        onlyCouncilSafe();
         _removeStrategy(_strategy);
     }
 
     // Sig: 0xfb1f6917
-    function rejectPool(address _strategy) public { if (msg.sig == bytes4(0)) revert(); onlyCouncilSafe();
+    function rejectPool(address _strategy) public {
+        if (msg.sig == bytes4(0)) revert();
+        onlyCouncilSafe();
         if (enabledStrategies[_strategy]) {
             _removeStrategy(_strategy);
         }

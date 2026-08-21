@@ -39,6 +39,7 @@ export function useSubgraphQueryMultiChain<
   chainIds,
   modifier,
   enabled = true,
+  refreshKey,
 }: {
   query: DocumentInput<any, Variables>;
   variables?: Variables;
@@ -47,6 +48,7 @@ export function useSubgraphQueryMultiChain<
   chainIds?: ChainId[];
   modifier?: (data: (Data & { chain: ChainData })[]) => any[] | Promise<any[]>;
   enabled?: boolean;
+  refreshKey?: boolean | number | string;
 }) {
   const { connected, subscribe, unsubscribe } = usePubSubContext();
   const mounted = useIsMounted();
@@ -70,13 +72,22 @@ export function useSubgraphQueryMultiChain<
 
   useEffect(() => {
     if (!enabled) return;
+
+    responseMap.current.clear();
+    errorsMap.current.clear();
+    setResponse(undefined);
+
     const init = async () => {
       setFetching(true);
       fetchingRef.current = true;
       await fetchDebounce();
     };
     init();
-  }, [enabled]);
+
+    return () => {
+      fetchDebounce.cancel();
+    };
+  }, [enabled, isQueryAllChains, refreshKey, skipPublished]);
 
   useEffect(() => {
     if (!connected || !changeScope || changeScope.length === 0) {

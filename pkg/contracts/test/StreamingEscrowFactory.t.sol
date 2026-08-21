@@ -100,8 +100,9 @@ contract StreamingEscrowFactoryTest is Test {
     }
 
     function test_deployEscrow_registersAppAndInitializes() public {
-        address escrow =
-            factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, address(this));
+        address escrow = factory.deployEscrow(
+            ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, address(this)
+        );
 
         assertEq(host.lastApp(), escrow);
         assertTrue(factory.isSuperAppRegistered(escrow));
@@ -113,8 +114,9 @@ contract StreamingEscrowFactoryTest is Test {
     function test_deployEscrow_continues_when_superApp_registration_fails() public {
         host.setRevertOnRegister(true);
 
-        address escrow =
-            factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, address(this));
+        address escrow = factory.deployEscrow(
+            ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, address(this)
+        );
 
         assertEq(host.lastApp(), address(0));
         assertFalse(factory.isSuperAppRegistered(escrow));

@@ -40,7 +40,6 @@ contract DiamondUpgradeTest is CVStrategyTest {
         uint256 totalStakedBefore = strategy.totalStaked();
         uint256 proposalCounterBefore = strategy.proposalCounter();
 
-
         // Deploy upgraded facet
         adminFacetV2 = new CVAdminFacetV2();
 
@@ -70,16 +69,13 @@ contract DiamondUpgradeTest is CVStrategyTest {
 
         // Add new VERSION function
         cuts[1] = IDiamond.FacetCut({
-            facetAddress: address(adminFacetV2),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectorsToAdd
+            facetAddress: address(adminFacetV2), action: IDiamond.FacetCutAction.Add, functionSelectors: selectorsToAdd
         });
 
         // Execute upgrade as owner
         vm.startPrank(strategy.owner());
         strategy.diamondCut(cuts, address(0), "");
         vm.stopPrank();
-
 
         // Verify storage is intact after upgrade
         assertEq(strategy.totalStaked(), totalStakedBefore, "Total staked changed after upgrade");
@@ -92,7 +88,6 @@ contract DiamondUpgradeTest is CVStrategyTest {
         // Test new V2 function is callable
         string memory version = CVAdminFacetV2(payable(address(strategy))).VERSION();
         assertEq(version, "v2", "VERSION function not working");
-
     }
 
     /**
@@ -123,16 +118,13 @@ contract DiamondUpgradeTest is CVStrategyTest {
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(testFacet),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: newSelectors
+            facetAddress: address(testFacet), action: IDiamond.FacetCutAction.Add, functionSelectors: newSelectors
         });
 
         // Execute upgrade
         vm.startPrank(strategy.owner());
         strategy.diamondCut(cuts, address(0), "");
         vm.stopPrank();
-
 
         // Test new facet is callable
         uint256 result = CVTestFacet(payable(address(strategy))).testFunction();
@@ -146,7 +138,6 @@ contract DiamondUpgradeTest is CVStrategyTest {
         // Verify proposal counter still valid
         assertTrue(proposalId > 0 && proposalId <= strategy.proposalCounter(), "Existing proposal check broken");
         assertEq(strategy.proposalCounter(), proposalCounterBefore, "Existing storage corrupted");
-
     }
 
     /**
@@ -181,7 +172,6 @@ contract DiamondUpgradeTest is CVStrategyTest {
         strategy.diamondCut(cuts, address(0), "");
         vm.stopPrank();
 
-
         // Verify removed function reverts
         vm.expectRevert();
         CVAdminFacet(payable(address(strategy))).connectSuperfluidGDA(address(0x123));
@@ -194,6 +184,5 @@ contract DiamondUpgradeTest is CVStrategyTest {
         assertEq(strategy.proposalCounter(), proposalCounterBefore, "Storage corrupted");
         // Verify proposal counter still valid
         assertTrue(proposalId > 0 && proposalId <= strategy.proposalCounter(), "Proposal lost");
-
     }
 }

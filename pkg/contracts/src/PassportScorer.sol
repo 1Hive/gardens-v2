@@ -152,5 +152,4 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
 
         return userScore >= strategy.threshold;
     }
-
 }

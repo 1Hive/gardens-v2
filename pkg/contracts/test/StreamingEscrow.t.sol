@@ -705,5 +705,4 @@ contract StreamingEscrowTest is Test {
         escrow.exposedSetOutflow(1, address(0));
         assertEq(token.flowCallCount(), 0);
     }
-
 }

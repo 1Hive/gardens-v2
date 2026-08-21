@@ -43,7 +43,6 @@ contract DiamondUpgradeFork is Test {
         string memory rpcUrl = vm.envOr("RPC_URL_OP_TESTNET", RPC_URL);
         vm.createSelectFork(rpcUrl);
 
-
         // Initialize registry communities
         registryCommunities.push(0x1F786ad20046a55651AD66Fb456Ab2ef2596727B);
         registryCommunities.push(0x394542fc04478AB3F8C7D9abb25d192eF60EC675);
@@ -104,7 +103,6 @@ contract DiamondUpgradeFork is Test {
         for (uint256 i = 0; i < cvStrategies.length; i++) {
             CVStrategy strategy = CVStrategy(payable(cvStrategies[i]));
 
-
             // Verify the contract exists
             address strategyAddr = cvStrategies[i];
             uint256 codeSize;
@@ -127,7 +125,6 @@ contract DiamondUpgradeFork is Test {
      */
     function test_facet_functions_delegatecall() public view {
         for (uint256 i = 0; i < cvStrategies.length; i++) {
-
             address strategyAddr = cvStrategies[i];
 
             // Test CVAdminFacet functions are callable (we'll just check they don't revert on view functions)
@@ -155,7 +152,6 @@ contract DiamondUpgradeFork is Test {
         for (uint256 i = 0; i < cvStrategies.length; i++) {
             CVStrategy strategy = CVStrategy(payable(cvStrategies[i]));
 
-
             // Check poolId is valid
             uint256 poolId = strategy.getPoolId();
             assertTrue(poolId > 0, "Pool ID should be valid");
@@ -171,8 +167,7 @@ contract DiamondUpgradeFork is Test {
             assertTrue(owner != address(0), "Owner should be set");
 
             // If there are proposals, verify we can read proposal data
-            if (proposalCounter > 0) {
-            }
+            if (proposalCounter > 0) {}
         }
     }
 
@@ -180,14 +175,12 @@ contract DiamondUpgradeFork is Test {
      * @notice Test that facets have correct code deployed
      */
     function test_facets_deployed_correctly() public view {
-
         address[5] memory facets = [ADMIN_FACET, ALLOCATION_FACET, DISPUTE_FACET, POWER_FACET, PROPOSAL_FACET];
 
         string[5] memory facetNames =
             ["CVAdminFacet", "CVAllocationFacet", "CVDisputeFacet", "CVPowerFacet", "CVProposalFacet"];
 
         for (uint256 i = 0; i < facets.length; i++) {
-
             // Verify facet has code deployed
             address facetAddr = facets[i];
             uint256 codeSize;
@@ -203,7 +196,6 @@ contract DiamondUpgradeFork is Test {
      * @notice Comprehensive test that runs all verification checks
      */
     function test_comprehensive_upgrade_verification() public view {
-
         // 1. Verify facets are deployed
         this.test_facets_deployed_correctly();
 
@@ -218,6 +210,5 @@ contract DiamondUpgradeFork is Test {
 
         // 5. Verify storage integrity
         this.test_storage_integrity_after_upgrade();
-
     }
 }
