@@ -13,6 +13,9 @@ import {
 export const MARKEE_SECONDS_IN_MONTH = 2_628_000n;
 export const MARKEE_BUFFER_PERIOD = 14_400n;
 export const MARKEE_GAS_BUFFER_BPS = 12_500n;
+export const MARKEE_AUTO_FUNDING_MONTHS = 3n;
+export const MARKEE_ETH_GAS_RESERVE = 10n ** 15n;
+const MARKEE_THOUSANDTH_ETH = 10n ** 15n;
 
 export type MarkeeFundingUnit = "hour" | "day" | "month" | "year";
 
@@ -73,6 +76,7 @@ export const ethxApproveABI = parseAbi([
   "function approve(address spender, uint256 amount) returns (bool)",
   "function allowance(address owner, address spender) view returns (uint256)",
   "function balanceOf(address account) view returns (uint256)",
+  "function downgrade(uint256 amount)",
   "function realtimeBalanceOfNow(address account) view returns (int256 availableBalance, uint256 deposit, uint256 owedDeposit, uint256 timestamp)",
   "function upgradeByETHTo(address to) payable",
 ]);
@@ -134,9 +138,16 @@ export async function waitForMarkeeRegistration({
 export function getMarkeeStreamAmounts(
   monthlyWei: bigint,
   monthsFixed18: bigint,
+  minimumMonthlyRate?: bigint,
 ) {
+  const floorRatePerSecond = monthlyWei / MARKEE_SECONDS_IN_MONTH;
   const ratePerSecond =
-    (monthlyWei + MARKEE_SECONDS_IN_MONTH - 1n) / MARKEE_SECONDS_IN_MONTH;
+    (
+      minimumMonthlyRate != null &&
+      floorRatePerSecond * MARKEE_SECONDS_IN_MONTH >= minimumMonthlyRate
+    ) ?
+      floorRatePerSecond
+    : (monthlyWei + MARKEE_SECONDS_IN_MONTH - 1n) / MARKEE_SECONDS_IN_MONTH;
   const buffer = ratePerSecond * MARKEE_BUFFER_PERIOD;
   const prefund = (monthlyWei * monthsFixed18) / 10n ** 18n;
 
@@ -146,6 +157,14 @@ export function getMarkeeStreamAmounts(
     ratePerSecond,
     value: buffer + prefund,
   };
+}
+
+export function roundUpMarkeeMonthlyMinimum(monthlyWei: bigint) {
+  if (monthlyWei <= 0n) return 0n;
+  return (
+    ((monthlyWei + MARKEE_THOUSANDTH_ETH - 1n) / MARKEE_THOUSANDTH_ETH) *
+    MARKEE_THOUSANDTH_ETH
+  );
 }
 
 export function getMarkeeMonthlyAmountForFundingValue(
@@ -219,6 +238,95 @@ export function getMarkeeRunwaySeconds(
   ratePerSecond: bigint,
 ) {
   return ratePerSecond > 0n ? ethxBalance / ratePerSecond : 0n;
+}
+
+export function formatMarkeeRunway(seconds: bigint) {
+  const safeSeconds = seconds > 0n ? seconds : 0n;
+  const months = safeSeconds / MARKEE_SECONDS_IN_MONTH;
+  const days = (safeSeconds % MARKEE_SECONDS_IN_MONTH) / 86_400n;
+  const hours = (safeSeconds % 86_400n) / 3_600n;
+  const minutes = (safeSeconds % 3_600n) / 60n;
+  const remainingSeconds = safeSeconds % 60n;
+  const pad = (value: bigint) => value.toString().padStart(2, "0");
+  const parts: string[] = [];
+
+  if (months > 0n) parts.push(`${months}mo`);
+  if (months > 0n || days > 0n) parts.push(`${days}d`);
+  parts.push(`${pad(hours)}h`, `${pad(minutes)}m`, `${pad(remainingSeconds)}s`);
+  return parts.join(" ");
+}
+
+export function formatMarkeeRunwayShort(seconds: bigint) {
+  const safeSeconds = seconds > 0n ? seconds : 0n;
+  const months = safeSeconds / MARKEE_SECONDS_IN_MONTH;
+  const days = (safeSeconds % MARKEE_SECONDS_IN_MONTH) / 86_400n;
+  const hours = (safeSeconds % 86_400n) / 3_600n;
+  return `${months}mo ${days}d ${hours}h`;
+}
+
+export function getMarkeeRunwayProgress(seconds: bigint) {
+  const cap = MARKEE_SECONDS_IN_MONTH * MARKEE_AUTO_FUNDING_MONTHS;
+  if (seconds <= 0n) return 0;
+  if (seconds >= cap) return 100;
+  return Number((seconds * 100n) / cap);
+}
+
+export function getMarkeeAutoFunding({
+  ethxAvailableBalance,
+  existingDeposit = 0n,
+  nativeBalance,
+  nativeReserve = MARKEE_ETH_GAS_RESERVE,
+  ratePerSecond,
+}: {
+  ethxAvailableBalance: bigint;
+  existingDeposit?: bigint;
+  nativeBalance: bigint;
+  nativeReserve?: bigint;
+  ratePerSecond: bigint;
+}) {
+  if (ratePerSecond <= 0n) {
+    return {
+      depositTopUp: 0n,
+      prefund: 0n,
+      runwaySeconds: 0n,
+      wrapValue: 0n,
+    };
+  }
+
+  const buffer = ratePerSecond * MARKEE_BUFFER_PERIOD;
+  const depositTopUp = buffer > existingDeposit ? buffer - existingDeposit : 0n;
+  const availableBalance =
+    ethxAvailableBalance > 0n ? ethxAvailableBalance : 0n;
+  const balanceAfterDeposit =
+    availableBalance > depositTopUp ? availableBalance - depositTopUp : 0n;
+
+  // Match Markee's automatic funding policy: keep existing ETHx when it can
+  // clear the board deposit and the sender-side Superfluid buffer. Otherwise,
+  // wrap up to three months of runway while preserving native ETH for gas.
+  if (balanceAfterDeposit > buffer) {
+    return {
+      depositTopUp,
+      prefund: balanceAfterDeposit,
+      runwaySeconds: balanceAfterDeposit / ratePerSecond,
+      wrapValue: 0n,
+    };
+  }
+
+  const affordable =
+    nativeBalance > nativeReserve ? nativeBalance - nativeReserve : 0n;
+  const targetWrap =
+    ratePerSecond * MARKEE_SECONDS_IN_MONTH * MARKEE_AUTO_FUNDING_MONTHS;
+  const wrapValue = targetWrap < affordable ? targetWrap : affordable;
+  const fundedBalance = availableBalance + wrapValue;
+  const prefund =
+    fundedBalance > depositTopUp ? fundedBalance - depositTopUp : 0n;
+
+  return {
+    depositTopUp,
+    prefund,
+    runwaySeconds: prefund > 0n ? prefund / ratePerSecond : 0n,
+    wrapValue,
+  };
 }
 
 export function getBufferedMarkeeGasEstimate(gasEstimate: bigint) {

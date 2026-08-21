@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   buildMarkeeOpenStreamOperations,
   getBufferedMarkeeGasEstimate,
+  getMarkeeAutoFunding,
   getMarkeeFundingMonths,
   getMarkeeMonthlyAmountForFundingValue,
   getMarkeeRequiredNativeBalance,
@@ -12,6 +13,7 @@ import {
   getMarkeeWithdrawableDeposit,
   MARKEE_BUFFER_PERIOD,
   MARKEE_SECONDS_IN_MONTH,
+  roundUpMarkeeMonthlyMinimum,
   superfluidHostABI,
   waitForMarkeeRegistration,
 } from "./markeeStreaming";
@@ -76,9 +78,74 @@ describe("Markee streaming transaction builder", () => {
     expect(amounts.value).toBe(amounts.prefund + amounts.buffer);
   });
 
+  it("uses a floor rate when it still clears the board minimum", () => {
+    const enteredMonthlyRate = parseEther("0.001");
+    const floorRate = enteredMonthlyRate / MARKEE_SECONDS_IN_MONTH;
+    const boardMinimum = floorRate * MARKEE_SECONDS_IN_MONTH;
+
+    expect(
+      getMarkeeStreamAmounts(
+        enteredMonthlyRate,
+        parseUnits("1", 18),
+        boardMinimum,
+      ).ratePerSecond,
+    ).toBe(floorRate);
+  });
+
+  it("falls back to a ceiling rate when flooring would miss the minimum", () => {
+    const enteredMonthlyRate = parseEther("0.001");
+    const floorRate = enteredMonthlyRate / MARKEE_SECONDS_IN_MONTH;
+
+    expect(
+      getMarkeeStreamAmounts(
+        enteredMonthlyRate,
+        parseUnits("1", 18),
+        floorRate * MARKEE_SECONDS_IN_MONTH + 1n,
+      ).ratePerSecond,
+    ).toBe(floorRate + 1n);
+  });
+
+  it("rounds the displayed minimum up to a clean 0.001 ETH step", () => {
+    expect(roundUpMarkeeMonthlyMinimum(999_999_997_884_000n)).toBe(
+      parseEther("0.001"),
+    );
+    expect(roundUpMarkeeMonthlyMinimum(parseEther("0.0011"))).toBe(
+      parseEther("0.002"),
+    );
+  });
+
   it("calculates stream runway from the live ETHx balance", () => {
     expect(getMarkeeRunwaySeconds(86_400n, 1n)).toBe(86_400n);
     expect(getMarkeeRunwaySeconds(86_400n, 0n)).toBe(0n);
+  });
+
+  it("reuses sufficient ETHx without wrapping native ETH", () => {
+    const ratePerSecond = 10n;
+    const buffer = ratePerSecond * MARKEE_BUFFER_PERIOD;
+    const funding = getMarkeeAutoFunding({
+      ethxAvailableBalance: buffer * 3n,
+      nativeBalance: parseEther("1"),
+      ratePerSecond,
+    });
+
+    expect(funding.depositTopUp).toBe(buffer);
+    expect(funding.wrapValue).toBe(0n);
+    expect(funding.prefund).toBe(buffer * 2n);
+  });
+
+  it("auto-wraps up to three months while preserving native ETH for gas", () => {
+    const ratePerSecond = 10n;
+    const nativeReserve = 1_000n;
+    const funding = getMarkeeAutoFunding({
+      ethxAvailableBalance: 0n,
+      nativeBalance: 10_000n,
+      nativeReserve,
+      ratePerSecond,
+    });
+
+    expect(funding.wrapValue).toBe(9_000n);
+    expect(funding.depositTopUp).toBe(ratePerSecond * MARKEE_BUFFER_PERIOD);
+    expect(funding.prefund).toBe(0n);
   });
 
   it("only exposes stream deposits that are not required as buffer", () => {
