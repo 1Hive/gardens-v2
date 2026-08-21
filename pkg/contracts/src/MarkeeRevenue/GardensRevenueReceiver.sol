@@ -101,6 +101,7 @@ contract GardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpgradea
         payout.resolved = true;
         bool delivered = false;
         if (safe != address(0)) {
+            // slither-disable-next-line arbitrary-send-eth
             (delivered,) = payable(safe).call{value: payout.amount}("");
         }
         if (!delivered) {

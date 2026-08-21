@@ -575,6 +575,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
             returndatacopy(0, 0, returndatasize())
             switch result
             case 0 { revert(0, returndatasize()) }
+            // slither-disable-next-line incorrect-return
             default { return(0, returndatasize()) }
         }
     }
