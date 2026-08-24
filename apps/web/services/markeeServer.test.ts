@@ -33,7 +33,7 @@ const lifiDiamond = "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE";
 
 describe("Markee community revenue", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     delete process.env.MARKEE_KEEPER_ESTIMATION_ADDRESS_BASE;
     delete process.env.MARKEE_KEEPER_ESTIMATION_ADDRESS_SEPOLIA;
     delete process.env.MARKEE_ROUTER_ADDRESS_BASE;
@@ -111,8 +111,9 @@ describe("Markee community revenue", () => {
         3_000_000_000_000_000n,
         6_000_000_000_000_000n,
       ])
-      .mockResolvedValueOnce(["0x0000000000000000000000000000000000000005"])
-      .mockResolvedValueOnce(vault)
+      .mockResolvedValueOnce({
+        leaderboard: "0x0000000000000000000000000000000000000005",
+      })
       .mockResolvedValueOnce(1_000_000_000_000_000n)
       .mockResolvedValueOnce(280n)
       .mockResolvedValueOnce(22n)
@@ -141,14 +142,14 @@ describe("Markee community revenue", () => {
       topRate: "0",
     });
     expect(mocks.readContract).toHaveBeenNthCalledWith(
-      10,
+      9,
       expect.objectContaining({
         address: "0x0000000000000000000000000000000000000006",
         functionName: "message",
       }),
     );
     expect(mocks.readContract).toHaveBeenNthCalledWith(
-      11,
+      10,
       expect.objectContaining({
         address: "0x0000000000000000000000000000000000000006",
         functionName: "name",
