@@ -14,13 +14,14 @@ import {
 import { Button } from "@/components/Button";
 import { InfoWrapper } from "@/components/InfoWrapper";
 import { Modal } from "@/components/Modal";
-import { chainConfigMap } from "@/configs/chains";
+import { chainConfigMap, getExplorerUrl } from "@/configs/chains";
 import { ComputedStatus } from "@/hooks/useContractWriteWithConfirmations";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { reportClientError } from "@/utils/clientErrorReporter";
 import { logOnce } from "@/utils/log";
 import {
   ethxApproveABI,
+  formatMarkeeEthxBalance,
   formatMarkeeRunway,
   getMarkeeRunwayProgress,
   getMarkeeRunwaySeconds,
@@ -76,6 +77,12 @@ export function CommunityMarkeeDepositManagerModal({
   const [action, setAction] = useState<Action>(null);
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [depositPercentage, setDepositPercentage] = useState(50);
+  const [withdrawPercentage, setWithdrawPercentage] = useState(50);
+  const [lastTransaction, setLastTransaction] = useState<{
+    action: Exclude<Action, null>;
+    hash: `0x${string}`;
+  } | null>(null);
   const [transactionHash, setTransactionHash] = useState<
     `0x${string}` | undefined
   >();
@@ -114,12 +121,14 @@ export function CommunityMarkeeDepositManagerModal({
     setTransactionError(null);
     setTransactionHash(undefined);
     setTransactionStatus(undefined);
+    setLastTransaction(null);
   }, [isOpen]);
 
   const prepareAction = (nextAction: Exclude<Action, null>) => {
     setAction((current) => (current === nextAction ? null : nextAction));
     setAmount("");
     setError(null);
+    setLastTransaction(null);
   };
 
   const setDepositMonths = (months: number) => {
@@ -132,7 +141,16 @@ export function CommunityMarkeeDepositManagerModal({
     setError(null);
   };
 
-  const setWithdrawPercentage = (percentage: number) => {
+  const setDepositWalletPercentage = (percentage: number) => {
+    setDepositPercentage(percentage);
+    setAmount(
+      formatEther(((nativeBalance?.value ?? 0n) * BigInt(percentage)) / 100n),
+    );
+    setError(null);
+  };
+
+  const setWithdrawBalancePercentage = (percentage: number) => {
+    setWithdrawPercentage(percentage);
     setAmount(formatEther((ethxBalance * BigInt(percentage)) / 100n));
     setError(null);
   };
@@ -176,7 +194,7 @@ export function CommunityMarkeeDepositManagerModal({
             abi: ethxApproveABI,
             account: address,
             address: ethxAddress,
-            functionName: "downgrade",
+            functionName: "downgradeToETH",
             args: [amountWei],
           });
       setTransactionHash(hash);
@@ -186,6 +204,7 @@ export function CommunityMarkeeDepositManagerModal({
         throw new Error("The balance transaction reverted.");
       }
       setTransactionStatus("success");
+      setLastTransaction({ action, hash });
       setAction(null);
       setAmount("");
       onBalancesChanged();
@@ -240,32 +259,34 @@ export function CommunityMarkeeDepositManagerModal({
       </button>
 
       <div className="flex flex-col gap-5">
-        <section>
-          <div className="mb-2 flex items-center justify-between gap-4">
-            <InfoWrapper
-              tooltip="If your ETHx runs out, your active Markee streams can be liquidated."
-              size="sm"
-              className="tooltip-top-left"
-            >
-              <span className="text-xs font-medium uppercase tracking-wider text-neutral-soft-content">
-                Runs out in
+        {activeRatePerSecond > 0n && (
+          <section>
+            <div className="mb-2 flex items-center justify-between gap-4">
+              <InfoWrapper
+                tooltip="If your ETHx runs out, your active Markee streams can be liquidated."
+                size="sm"
+                className="tooltip-top-left"
+              >
+                <span className="text-xs font-medium uppercase tracking-wider text-neutral-soft-content">
+                  Runs out in
+                </span>
+              </InfoWrapper>
+              <span className="font-mono text-sm font-semibold text-neutral-content">
+                {activeRatePerSecond > 0n ? formatMarkeeRunway(runway) : "—"}
               </span>
-            </InfoWrapper>
-            <span className="font-mono text-sm font-semibold text-neutral-content">
-              {activeRatePerSecond > 0n ? formatMarkeeRunway(runway) : "—"}
-            </span>
-          </div>
-          <div className="h-2 overflow-hidden rounded-full bg-neutral-content/10">
-            <div
-              className={`h-full rounded-full transition-all ${runwayIsLow ? "bg-danger-content" : "bg-primary-content"}`}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </section>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-neutral-content/10">
+              <div
+                className={`h-full rounded-full transition-all ${runwayIsLow ? "bg-danger-content" : "bg-primary-content"}`}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </section>
+        )}
 
         <section className="rounded-xl border border-neutral-content/15 bg-neutral/30 p-4">
           <InfoWrapper
-            tooltip="ETHx is the streamable version of ETH used by Superfluid."
+            tooltip="Markee uses Superfluid for payment streaming. Deposit ETH to get ETHx you can use for payments."
             size="sm"
             className="tooltip-top-left"
           >
@@ -274,10 +295,7 @@ export function CommunityMarkeeDepositManagerModal({
             </span>
           </InfoWrapper>
           <p className="mt-2 font-mono text-3xl font-semibold text-neutral-content">
-            {Number(formatEther(ethxBalance)).toLocaleString("en-US", {
-              maximumFractionDigits: 6,
-              useGrouping: false,
-            })}{" "}
+            {formatMarkeeEthxBalance(ethxBalance)}{" "}
             <span className="text-sm text-neutral-soft-content">ETHx</span>
           </p>
           <div className="mt-4 grid grid-cols-2 gap-3">
@@ -289,14 +307,37 @@ export function CommunityMarkeeDepositManagerModal({
               Deposit
             </Button>
             <Button
-              btnStyle="outline"
-              color="secondary"
+              btnStyle={action === "withdraw" ? "filled" : "outline"}
+              color="primary"
               disabled={ethxBalance <= 0n}
+              tooltip={
+                ethxBalance <= 0n ? "You have no ETHx to withdraw." : undefined
+              }
               onClick={() => prepareAction("withdraw")}
             >
               Withdraw
             </Button>
           </div>
+
+          {lastTransaction != null && (
+            <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs">
+              <span className="text-primary-content">
+                ✓{" "}
+                {lastTransaction.action === "deposit" ?
+                  "Deposit"
+                : "Withdrawal"}{" "}
+                confirmed
+              </span>
+              <a
+                className="text-primary-content underline decoration-dotted underline-offset-4"
+                href={`${getExplorerUrl(chainId).replace(/\/$/u, "")}/tx/${lastTransaction.hash}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View transaction ↗
+              </a>
+            </div>
+          )}
 
           {action != null && (
             <div className="mt-4 flex flex-col gap-3 border-t border-neutral-content/15 pt-4">
@@ -332,27 +373,56 @@ export function CommunityMarkeeDepositManagerModal({
                   {action === "deposit" ? "Deposit" : "Withdraw"}
                 </Button>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                {(action === "deposit" ? [1, 2, 3] : [25, 50, 75]).map(
-                  (shortcut) => (
+              {action === "deposit" && activeRatePerSecond > 0n ?
+                <div className="grid grid-cols-3 gap-2">
+                  {[1, 2, 3].map((shortcut) => (
                     <button
                       type="button"
                       key={shortcut}
                       className="h-8 rounded-lg border border-neutral-content/25 text-xs text-neutral-soft-content transition-colors hover:border-primary-content hover:text-primary-content disabled:opacity-40"
-                      disabled={
-                        action === "deposit" && activeRatePerSecond <= 0n
-                      }
-                      onClick={() =>
-                        action === "deposit" ?
-                          setDepositMonths(shortcut)
-                        : setWithdrawPercentage(shortcut)
-                      }
+                      onClick={() => setDepositMonths(shortcut)}
                     >
-                      {action === "deposit" ? `${shortcut}mo` : `${shortcut}%`}
+                      {shortcut}mo
                     </button>
-                  ),
-                )}
-              </div>
+                  ))}
+                </div>
+              : <label className="flex flex-col gap-1.5">
+                  <span className="flex items-center justify-between text-xs text-neutral-soft-content">
+                    <span>
+                      {action === "deposit" ?
+                        "% of wallet balance"
+                      : "% of ETHx balance"}
+                    </span>
+                    <span className="font-mono font-semibold text-neutral-content">
+                      {action === "deposit" ?
+                        depositPercentage
+                      : withdrawPercentage}
+                      %
+                    </span>
+                  </span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="100"
+                    className="range range-primary range-xs"
+                    disabled={
+                      action === "deposit" ?
+                        (nativeBalance?.value ?? 0n) <= 0n
+                      : ethxBalance <= 0n
+                    }
+                    value={
+                      action === "deposit" ? depositPercentage : (
+                        withdrawPercentage
+                      )
+                    }
+                    onChange={(event) =>
+                      action === "deposit" ?
+                        setDepositWalletPercentage(Number(event.target.value))
+                      : setWithdrawBalancePercentage(Number(event.target.value))
+                    }
+                  />
+                </label>
+              }
               {error != null && (
                 <p className="text-xs text-danger-content">{error}</p>
               )}

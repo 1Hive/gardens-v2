@@ -2,6 +2,7 @@ import {
   Address,
   encodeAbiParameters,
   encodeFunctionData,
+  formatUnits,
   Hex,
   keccak256,
   parseAbi,
@@ -15,6 +16,8 @@ export const MARKEE_BUFFER_PERIOD = 14_400n;
 export const MARKEE_GAS_BUFFER_BPS = 12_500n;
 export const MARKEE_AUTO_FUNDING_MONTHS = 3n;
 export const MARKEE_ETH_GAS_RESERVE = 10n ** 15n;
+export const MARKEE_SMALL_BALANCE_THRESHOLD = 2n * 10n ** 15n;
+export const MARKEE_SMALL_BALANCE_WRAP_PERCENT = 90n;
 const MARKEE_THOUSANDTH_ETH = 10n ** 15n;
 
 export type MarkeeFundingUnit = "hour" | "day" | "month" | "year";
@@ -39,19 +42,33 @@ export const GDA_AGREEMENT_ID = keccak256(
 export const CFA_V1_FORWARDER_ADDRESS =
   "0xcfA132E353cB4E398080B9700609bb008eceB125" as Address;
 
+const MARKEE_ETHX_BY_CHAIN_ID: Record<number, Address> = {
+  8453: "0x46fd5cfB4c12D87acD3a13e92BAa53240C661D93",
+  11155111: "0x30a6933Ca9230361972E413a15dC8114c952414e",
+};
+
+export const getMarkeeEthxAddress = (chainId: number | undefined) =>
+  chainId == null ? undefined : MARKEE_ETHX_BY_CHAIN_ID[chainId];
+
 export const streamingLeaderboardRuntimeABI = parseAbi([
   "error UnknownMarkee()",
   "function ETHX() view returns (address)",
   "function HOST() view returns (address)",
   "function backerDeposit(address backer) view returns (uint256)",
   "function backerMarkee(address backer) view returns (address)",
+  "function aggregateRate(address markee) view returns (uint256)",
+  "function beneficiaryAddress() view returns (address)",
   "function createMarkee(string message, string name) returns (address markeeAddress)",
   "function getTopMarkees(uint256 limit) view returns (address[] topAddresses, uint256[] topRates)",
   "function getMarkees(uint256 offset, uint256 limit) view returns (address[] result)",
   "function isMarkeeOnLeaderboard(address markee) view returns (bool)",
   "function markeeCount() view returns (uint256)",
   "function maxNameLength() view returns (uint256)",
+  "function pendingSettlement(address backer) view returns (uint256)",
+  "function percentToPlatformFeeReceiver() view returns (uint256)",
   "function poolOf(address markee) view returns (address)",
+  "function revNetEnabled() view returns (bool)",
+  "function topRate() view returns (uint256)",
   "function updateMessage(address markee, string newMessage)",
   "function updateName(address markee, string newName)",
   "function withdrawDeposit()",
@@ -76,7 +93,7 @@ export const ethxApproveABI = parseAbi([
   "function approve(address spender, uint256 amount) returns (bool)",
   "function allowance(address owner, address spender) view returns (uint256)",
   "function balanceOf(address account) view returns (uint256)",
-  "function downgrade(uint256 amount)",
+  "function downgradeToETH(uint256 wad)",
   "function realtimeBalanceOfNow(address account) view returns (int256 availableBalance, uint256 deposit, uint256 owedDeposit, uint256 timestamp)",
   "function upgradeByETHTo(address to) payable",
 ]);
@@ -84,6 +101,10 @@ export const ethxApproveABI = parseAbi([
 export const cfaV1ForwarderABI = parseAbi([
   "function getFlowrate(address token, address sender, address receiver) view returns (int96)",
   "function setFlowrate(address token, address receiver, int96 flowrate) returns (bool)",
+]);
+
+export const markeeSuperfluidPoolABI = parseAbi([
+  "function getUnits(address member) view returns (uint128)",
 ]);
 
 const ethxUpgradeABI = parseAbi([
@@ -264,6 +285,11 @@ export function formatMarkeeRunwayShort(seconds: bigint) {
   return `${months}mo ${days}d ${hours}h`;
 }
 
+export function formatMarkeeEthxBalance(value: bigint) {
+  const amount = Number(formatUnits(value, 18));
+  return amount.toFixed(amount < 0.001 ? 4 : 3);
+}
+
 export function getMarkeeRunwayProgress(seconds: bigint) {
   const cap = MARKEE_SECONDS_IN_MONTH * MARKEE_AUTO_FUNDING_MONTHS;
   if (seconds <= 0n) return 0;
@@ -287,6 +313,7 @@ export function getMarkeeAutoFunding({
   if (ratePerSecond <= 0n) {
     return {
       depositTopUp: 0n,
+      insufficientEth: false,
       prefund: 0n,
       runwaySeconds: 0n,
       wrapValue: 0n,
@@ -306,6 +333,7 @@ export function getMarkeeAutoFunding({
   if (balanceAfterDeposit > buffer) {
     return {
       depositTopUp,
+      insufficientEth: false,
       prefund: balanceAfterDeposit,
       runwaySeconds: balanceAfterDeposit / ratePerSecond,
       wrapValue: 0n,
@@ -313,7 +341,10 @@ export function getMarkeeAutoFunding({
   }
 
   const affordable =
-    nativeBalance > nativeReserve ? nativeBalance - nativeReserve : 0n;
+    nativeBalance < MARKEE_SMALL_BALANCE_THRESHOLD ?
+      (nativeBalance * MARKEE_SMALL_BALANCE_WRAP_PERCENT) / 100n
+    : nativeBalance > nativeReserve ? nativeBalance - nativeReserve
+    : 0n;
   const targetWrap =
     ratePerSecond * MARKEE_SECONDS_IN_MONTH * MARKEE_AUTO_FUNDING_MONTHS;
   const wrapValue = targetWrap < affordable ? targetWrap : affordable;
@@ -323,6 +354,7 @@ export function getMarkeeAutoFunding({
 
   return {
     depositTopUp,
+    insufficientEth: prefund <= buffer,
     prefund,
     runwaySeconds: prefund > 0n ? prefund / ratePerSecond : 0n,
     wrapValue,

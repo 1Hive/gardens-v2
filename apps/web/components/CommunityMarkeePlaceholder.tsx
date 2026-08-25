@@ -12,6 +12,7 @@ import {
   ClipboardDocumentIcon,
   EyeIcon,
   ExclamationTriangleIcon,
+  PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 import { getNetwork, getWalletClient } from "@wagmi/core";
 import { toast } from "react-toastify";
@@ -34,6 +35,8 @@ import {
 } from "wagmi";
 import { Button } from "@/components/Button";
 import { CommunityMarkeeDepositManagerModal } from "@/components/CommunityMarkeeDepositManagerModal";
+import { CommunityMarkeePaymentReview } from "@/components/CommunityMarkeePaymentReview";
+import { CommunityMarkeeStreamStats } from "@/components/CommunityMarkeeStreamStats";
 import { CommunityStreamingMarkeeModal } from "@/components/CommunityStreamingMarkeeModal";
 import { InfoBox } from "@/components/InfoBox";
 import { InfoWrapper } from "@/components/InfoWrapper";
@@ -61,12 +64,12 @@ import {
   CFA_V1_FORWARDER_ADDRESS,
   cfaV1ForwarderABI,
   ethxApproveABI,
+  formatMarkeeEthxBalance,
   formatMarkeeRunwayShort,
   GDA_AGREEMENT_ID,
   getMarkeeAutoFunding,
-  getMarkeeMonthlyAmountForFundingValue,
+  getMarkeeEthxAddress,
   getMarkeeRequiredNativeBalance,
-  getMarkeeRunwaySeconds,
   getMarkeeStreamAmounts,
   getMarkeeStreamFunding,
   getMarkeeWithdrawableDeposit,
@@ -489,6 +492,7 @@ function CommunityMarkeePreviewModal({
   const [monthlyRate, setMonthlyRate] = useState(challengeMonthlyRate);
   const [isMonthlyRateFocused, setIsMonthlyRateFocused] = useState(false);
   const [isDepositManagerOpen, setIsDepositManagerOpen] = useState(false);
+  const [isReviewingPayment, setIsReviewingPayment] = useState(false);
   const [streamPositionRefreshKey, setStreamPositionRefreshKey] = useState(0);
   const [streamValidationError, setStreamValidationError] = useState<
     string | null
@@ -508,10 +512,8 @@ function CommunityMarkeePreviewModal({
   const [isPreviewComplete, setIsPreviewComplete] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isStoppingStream, setIsStoppingStream] = useState(false);
-  const [isAddingStreamFunding, setIsAddingStreamFunding] = useState(false);
   const [isWithdrawingStreamDeposit, setIsWithdrawingStreamDeposit] =
     useState(false);
-  const [streamFundingAmount, setStreamFundingAmount] = useState("");
   const [activeStreamMarkee, setActiveStreamMarkee] = useState<Address | null>(
     null,
   );
@@ -580,6 +582,8 @@ function CommunityMarkeePreviewModal({
     watchTransaction: true,
   });
   const isLive = leaderboardAddress != null && markeeChainId != null;
+  const resolvedEthxAddress =
+    ethxAddress ?? getMarkeeEthxAddress(markeeChainId) ?? null;
   const isTopMarkeeOwner =
     connectedAccount != null &&
     topMarkeeOwner != null &&
@@ -610,24 +614,10 @@ function CommunityMarkeePreviewModal({
   const doubleWinningMonthlyRate = formatEthFundingInput(
     doubleWinningMonthlyRateAmount,
   );
-  const streamRunwaySeconds = getMarkeeRunwaySeconds(
-    ethxWalletBalance,
-    activeStreamRate,
-  );
-  const streamRunwayDays = Number(streamRunwaySeconds) / 86_400;
-  const hasLowStreamRunway =
-    hasActiveStream && streamRunwaySeconds < 7n * 86_400n;
   const withdrawableStreamDeposit = getMarkeeWithdrawableDeposit(
     existingStreamDeposit,
     activeStreamRate,
   );
-  const streamFundingAmountWei = useMemo(() => {
-    try {
-      return parseEther(streamFundingAmount);
-    } catch {
-      return 0n;
-    }
-  }, [streamFundingAmount]);
   const messageByteLength = new TextEncoder().encode(editedMessage).length;
   const newMarkeeMessageByteLength = new TextEncoder().encode(
     newMarkeeMessage,
@@ -676,6 +666,7 @@ function CommunityMarkeePreviewModal({
     return {
       ...baseAmounts,
       depositTopUp: autoFunding.depositTopUp,
+      insufficientEth: autoFunding.insufficientEth,
       prefund: autoFunding.prefund,
       runwaySeconds: autoFunding.runwaySeconds,
       value: autoFunding.wrapValue,
@@ -689,9 +680,6 @@ function CommunityMarkeePreviewModal({
   const streamAmount = formatEthFundingInput(streamAmounts.value);
   const isStreamGasEstimatePending =
     ownedMarkeeAddress != null && estimatedStreamGasCost == null;
-  const hasInsufficientTopUpBalance =
-    walletBalance != null &&
-    streamFundingAmountWei + estimatedGasReserve > walletBalance.value;
   const previewNativeBalanceRequired =
     streamAmounts.value + estimatedGasReserve;
   const hasInsufficientWalletBalance =
@@ -705,35 +693,18 @@ function CommunityMarkeePreviewModal({
     hasInsufficientWalletBalance ?
       `Your wallet needs ${formatEthAmount(previewNativeBalanceRequired)} native ETH, including an estimated ${formatEthAmount(estimatedGasReserve)} ETH gas buffer. You currently have ${formatEthAmount(walletBalance?.value ?? 0n)} native ETH. ETHx can fund the stream but cannot pay network gas.${ethxWalletDeficit > 0n ? ` Your Superfluid account also has a ${formatEthAmount(ethxWalletDeficit)} ETHx deficit from existing streams.` : ""}`
     : null;
-  const maxMonthlyRateAmount = useMemo(() => {
-    const nativeBalance = walletBalance?.value ?? 0n;
-    const spendableBalance =
-      nativeBalance > estimatedGasReserve ?
-        nativeBalance - estimatedGasReserve
-      : 0n;
-    const availableFunding =
-      spendableBalance + ethxWalletBalance > ethxWalletDeficit ?
-        spendableBalance + ethxWalletBalance - ethxWalletDeficit
-      : 0n;
-    return getMarkeeMonthlyAmountForFundingValue(
-      availableFunding,
-      3n * 10n ** 18n,
-      existingStreamDeposit,
-    );
-  }, [
-    estimatedGasReserve,
-    ethxWalletBalance,
-    ethxWalletDeficit,
-    existingStreamDeposit,
-    walletBalance,
-  ]);
   const isBelowMinimum =
     derivedMonthlyRateAmount > 0n &&
     derivedMonthlyRateAmount < minimumMonthlyRateAmount;
   const streamFormError = streamValidationError;
+  const autoFundingError =
+    streamAmounts.insufficientEth ?
+      "Your ETH and ETHx balances cannot cover the required streaming buffer. Add funds in Deposit Manager."
+    : null;
   const canStartPreview =
     derivedMonthlyRateAmount >= minimumMonthlyRateAmount &&
     streamAmounts.ratePerSecond > 0n &&
+    !streamAmounts.insufficientEth &&
     streamAmounts.prefund > streamAmounts.buffer &&
     (!shouldCreateMarkee ||
       (newMarkeeMessage.trim().length > 0 &&
@@ -749,6 +720,16 @@ function CommunityMarkeePreviewModal({
     (!shouldCreateMarkee &&
       shouldShowOwnedMarkeeEditor &&
       editedMessage.trim().length === 0);
+  const paymentReviewMessage =
+    shouldCreateMarkee ? newMarkeeMessage.trim()
+    : shouldShowOwnedMarkeeEditor ? editedMessage.trim()
+    : displayedMarkeeMessage;
+  const paymentReviewWillWin =
+    !hasTopStream || derivedMonthlyRateAmount >= challengeMonthlyRateAmount;
+  const additionalMonthlyRateToWin =
+    challengeMonthlyRateAmount > derivedMonthlyRateAmount ?
+      challengeMonthlyRateAmount - derivedMonthlyRateAmount
+    : 0n;
   const newMarkeeMessageInput = (
     <div className="flex flex-col gap-4">
       <label className="flex flex-col gap-2">
@@ -794,10 +775,10 @@ function CommunityMarkeePreviewModal({
   useEffect(() => {
     if (isOpen) {
       setMonthlyRate(challengeMonthlyRate);
+      setIsReviewingPayment(false);
       setStreamValidationError(null);
       setNewMarkeeMessage("");
       setNewMarkeeName("");
-      setStreamFundingAmount("");
     }
   }, [challengeMonthlyRate, isOpen]);
 
@@ -847,6 +828,7 @@ function CommunityMarkeePreviewModal({
         throw new Error("The Markee stream token is unavailable.");
       }
       const ethx = getAddress(ethxResult);
+      if (!cancelled) setEthxAddress(ethx);
       const [activeMarkeeResult, flowRate, realtimeBalance, streamDeposit] =
         await Promise.all([
           publicClient.readContract({
@@ -1246,6 +1228,7 @@ function CommunityMarkeePreviewModal({
     setIsPreviewComplete(false);
     setIsStreaming(false);
     setIsEditingMessage(false);
+    setIsReviewingPayment(false);
     onClose();
   };
 
@@ -2038,131 +2021,6 @@ function CommunityMarkeePreviewModal({
     }
   };
 
-  const handleAddStreamFunding = async () => {
-    if (
-      !isLive ||
-      !hasActiveStream ||
-      connectedAccount == null ||
-      ethxAddress == null ||
-      markeeChainId == null ||
-      streamFundingAmountWei <= 0n
-    ) {
-      return;
-    }
-    if (hasInsufficientTopUpBalance) {
-      setStreamValidationError(
-        `Your wallet needs ${formatEthAmount(streamFundingAmountWei)} ETH plus gas to add this funding.`,
-      );
-      return;
-    }
-
-    const originalChainId = connectedChain?.id;
-    let actionWalletClient = walletClient;
-    if (connectedChain?.id !== markeeChainId) {
-      if (switchNetworkAsync == null) {
-        showStreamError(null, "Switch to the Markee network to add funding.");
-        return;
-      }
-      try {
-        await switchNetworkAsync(markeeChainId);
-        actionWalletClient = await getWalletClient({ chainId: markeeChainId });
-      } catch (error) {
-        showStreamError(error, "Unable to switch to the Markee network.");
-        return;
-      }
-    }
-    if (publicClient == null || actionWalletClient == null) {
-      showStreamError(null, "The Markee wallet client is not ready yet.");
-      return;
-    }
-
-    setIsAddingStreamFunding(true);
-    setStreamValidationError(null);
-    toast.dismiss("markee-stream-error");
-    let transactionHash: `0x${string}` | undefined;
-    let notificationToastId: string | undefined;
-    try {
-      notificationToastId = beginTransactionNotification(
-        "Add Markee stream funding",
-        ethxAddress,
-      );
-      transactionHash = await actionWalletClient.writeContract({
-        abi: ethxApproveABI,
-        address: ethxAddress,
-        args: [connectedAccount],
-        functionName: "upgradeByETHTo",
-        value: streamFundingAmountWei,
-      });
-      updateTransactionNotification(notificationToastId, {
-        status: "loading",
-        transactionHash,
-      });
-      await restoreOriginalChain(originalChainId);
-      const receipt = await publicClient.waitForTransactionReceipt({
-        hash: transactionHash,
-      });
-      if (receipt.status !== "success") {
-        throw new Error("The stream-funding transaction reverted.");
-      }
-
-      const updatedRealtimeBalance = await publicClient.readContract({
-        abi: ethxApproveABI,
-        address: ethxAddress,
-        args: [connectedAccount],
-        functionName: "realtimeBalanceOfNow",
-      });
-      const updatedAvailableBalance = updatedRealtimeBalance[0];
-      setEthxWalletBalance(
-        updatedAvailableBalance > 0n ? updatedAvailableBalance : 0n,
-      );
-      setEthxWalletDeficit(
-        updatedAvailableBalance < 0n ? -updatedAvailableBalance : 0n,
-      );
-      setStreamFundingAmount("");
-      updateTransactionNotification(notificationToastId, {
-        status: "success",
-      });
-    } catch (error) {
-      if (notificationToastId != null) {
-        updateTransactionNotification(notificationToastId, {
-          error: getTransactionError(
-            error,
-            "Unable to add funding to the Markee stream.",
-          ),
-          status: "error",
-        });
-      }
-      if (!isUserRejectedTransactionError(error)) {
-        const errorContext = {
-          type: "markee-transaction-error",
-          step: "top-up-stream",
-          chainId: markeeChainId,
-          connectedAccount,
-          leaderboardAddress,
-          targetMarkeeAddress: activeStreamMarkee,
-          transactionHash,
-          tags: {
-            error_type: "markee-transaction-error",
-            transaction_step: "top-up-stream",
-            chain_id: markeeChainId,
-          },
-        };
-        logOnce(
-          "error",
-          "[CommunityMarkee] Markee stream top-up failed",
-          error,
-          errorContext,
-        );
-        reportClientError(error, errorContext);
-      }
-      if (notificationToastId == null) {
-        showStreamError(error, "Unable to add funding to the Markee stream.");
-      }
-    } finally {
-      setIsAddingStreamFunding(false);
-    }
-  };
-
   const handleWithdrawStreamDeposit = async () => {
     if (
       !isLive ||
@@ -2308,7 +2166,9 @@ function CommunityMarkeePreviewModal({
         isOpen={isOpen}
         onClose={handleClose}
         title={
-          shouldCreateMarkee ? "Create your Markee"
+          isReviewingPayment ? "Review payment"
+          : shouldCreateMarkee ?
+            "Create your Markee"
           : hasActiveStream ?
             "Manage your Markee stream"
           : "Stream to your Markee"
@@ -2324,6 +2184,41 @@ function CommunityMarkeePreviewModal({
             >
               Done
             </Button>
+          : isReviewingPayment ?
+            <div className="flex w-full gap-3 sm:justify-end">
+              <Button
+                btnStyle="outline"
+                color="secondary"
+                className="w-full sm:w-auto"
+                disabled={isStreaming}
+                onClick={() => setIsReviewingPayment(false)}
+              >
+                Back
+              </Button>
+              <Button
+                btnStyle="filled"
+                color="primary"
+                className="w-full sm:w-auto"
+                disabled={
+                  isStreaming ||
+                  !canStartPreview ||
+                  hasInsufficientWalletBalance ||
+                  streamFormError != null ||
+                  autoFundingError != null
+                }
+                isLoading={isStreaming}
+                onClick={handleStartStream}
+                tooltip={
+                  streamFormError ??
+                  autoFundingError ??
+                  insufficientBalanceMessage ??
+                  undefined
+                }
+                tooltipSide="tooltip-top-left"
+              >
+                Confirm payment
+              </Button>
+            </div>
           : <div className="flex w-full flex-col-reverse gap-3 sm:flex-row sm:justify-between">
               <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row">
                 {canIntegrate && (
@@ -2344,7 +2239,6 @@ function CommunityMarkeePreviewModal({
                     disabled={
                       isStreaming ||
                       isStoppingStream ||
-                      isAddingStreamFunding ||
                       isWithdrawingStreamDeposit
                     }
                     isLoading={isStoppingStream}
@@ -2362,7 +2256,6 @@ function CommunityMarkeePreviewModal({
                   !canStartPreview ||
                   isStreaming ||
                   isStoppingStream ||
-                  isAddingStreamFunding ||
                   isWithdrawingStreamDeposit ||
                   isConnectedMarkeeLoading ||
                   isStreamPositionLoading ||
@@ -2370,16 +2263,21 @@ function CommunityMarkeePreviewModal({
                   isStreamGasEstimatePending ||
                   hasInsufficientWalletBalance ||
                   streamFormError != null ||
+                  autoFundingError != null ||
                   (isLive && connectedAccount == null)
                 }
                 isLoading={isStreaming}
-                onClick={handleStartStream}
+                onClick={() => setIsReviewingPayment(true)}
                 testId="markee-stream-preview-submit"
                 tooltip={
                   isMarkeeMessageMissing ? "Add a message for your Markee."
                   : isStreamGasEstimatePending ?
                     "Estimating the network fee…"
-                  : streamFormError ?? insufficientBalanceMessage ?? undefined
+                  : streamFormError ??
+                    autoFundingError ??
+                    insufficientBalanceMessage ??
+                    undefined
+
                 }
                 tooltipClassName="flex justify-end text-left"
                 tooltipSide="tooltip-top-left"
@@ -2392,21 +2290,10 @@ function CommunityMarkeePreviewModal({
                   "Checking your stream…"
                 : isLive && connectedAccount == null ?
                   "Connect wallet"
-                : shouldCreateMarkee ?
-                  "Create and start streaming"
-                : (
-                  ownedMarkeeHasEmptyMessage ||
-                  hasPendingMessageUpdate ||
-                  hasPendingNameUpdate
-                ) ?
-                  hasActiveStream ?
-                    "Save and replace stream"
-                  : "Save and start streaming"
-                : hasActiveStream ?
-                  "Replace stream"
-                : "Start stream"}
+                : "Review payment info"}
               </Button>
             </div>
+
         }
       >
         {isPreviewComplete ?
@@ -2428,11 +2315,28 @@ function CommunityMarkeePreviewModal({
               </p>
             </div>
           </div>
+        : isReviewingPayment ?
+          <CommunityMarkeePaymentReview
+            additionalToWin={
+              additionalMonthlyRateToWin > 0n ?
+                formatEthAmountRounded(additionalMonthlyRateToWin, 6)
+              : undefined
+            }
+            depositAmount={
+              streamAmounts.value > 0n ?
+                formatEthAmountRounded(streamAmounts.value, 6)
+              : undefined
+            }
+            message={paymentReviewMessage}
+            monthlyRate={formatEthAmountRounded(derivedMonthlyRateAmount, 6)}
+            runway={formatMarkeeRunwayShort(streamAmounts.runwaySeconds)}
+            willWin={paymentReviewWillWin}
+          />
         : <div className="flex flex-col gap-5">
             {shouldCreateMarkee ?
               newMarkeeMessageInput
             : ownedMarkeeAddress != null && (
-                <div className="rounded-xl border border-neutral-content/15 bg-neutral/40 p-4">
+                <div className="relative rounded-xl border border-neutral-content/15 bg-neutral/40 p-4">
                   {shouldShowOwnedMarkeeEditor ?
                     <div className="flex flex-col gap-3">
                       <label className="flex flex-col gap-2">
@@ -2492,6 +2396,15 @@ function CommunityMarkeePreviewModal({
                       </div>
                     </div>
                   : <div>
+                      <button
+                        type="button"
+                        className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-lg text-primary-content transition-colors hover:bg-primary-content/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-content"
+                        aria-label="Edit Markee message"
+                        title="Edit message"
+                        onClick={() => setIsEditingMessage(true)}
+                      >
+                        <PencilSquareIcon className="h-4 w-4" />
+                      </button>
                       <p className="text-xs uppercase tracking-wider text-neutral-soft-content">
                         Your Markee
                       </p>
@@ -2503,14 +2416,25 @@ function CommunityMarkeePreviewModal({
                           {ownedMarkeeName}
                         </p>
                       )}
-                      <Button
-                        btnStyle="ghost"
-                        color="primary"
-                        className="mt-3 px-0"
-                        onClick={() => setIsEditingMessage(true)}
-                      >
-                        Edit message
-                      </Button>
+                      {isLive &&
+                        isOpen &&
+                        connectedAccount != null &&
+                        leaderboardAddress != null &&
+                        markeeChainId != null &&
+                        resolvedEthxAddress != null &&
+                        ownedMarkeeAddress != null && (
+                          <CommunityMarkeeStreamStats
+                            activeRatePerSecond={activeStreamRate}
+                            chainId={markeeChainId}
+                            connectedAccount={connectedAccount}
+                            ethxAddress={resolvedEthxAddress}
+                            ethxBalance={ethxAvailableBalance}
+                            isOpen={isOpen}
+                            isWinning={isOwnedMarkeeWinning}
+                            leaderboardAddress={leaderboardAddress}
+                            markeeAddress={ownedMarkeeAddress}
+                          />
+                        )}
                     </div>
                   }
                 </div>
@@ -2519,119 +2443,32 @@ function CommunityMarkeePreviewModal({
 
             {isLive &&
               connectedAccount != null &&
-              (hasActiveStream || withdrawableStreamDeposit > 0n) && (
+              withdrawableStreamDeposit > 0n && (
                 <div className="flex flex-col gap-3 rounded-xl border border-neutral-content/15 bg-neutral/40 p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs font-medium uppercase tracking-wider text-neutral-soft-content">
-                      Stream status
-                    </span>
-                    <span
-                      className={`rounded-full border px-2.5 py-1 text-xs font-medium ${hasActiveStream ? "border-primary-content/60 bg-primary-content/10 text-primary-content" : "border-neutral-content/30 text-neutral-soft-content"}`}
-                    >
-                      {hasActiveStream ?
-                        isOwnedMarkeeWinning ?
-                          "Winning"
-                        : "Streaming"
-                      : "Stopped"}
-                    </span>
-                  </div>
-
-                  {hasActiveStream && (
-                    <>
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <p className="text-xs text-neutral-soft-content">
-                            ETHx balance
-                          </p>
-                          <p
-                            className={`mt-1 font-mono ${hasLowStreamRunway ? "text-danger-content" : "text-neutral-content"}`}
-                            title={`${formatEther(ethxAvailableBalance)} ETHx available`}
-                          >
-                            {formatEthAmountRounded(ethxWalletBalance, 6)} ETHx
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-neutral-soft-content">
-                            Estimated runway
-                          </p>
-                          <p
-                            className={`mt-1 font-mono ${hasLowStreamRunway ? "text-danger-content" : "text-neutral-content"}`}
-                          >
-                            {streamRunwayDays < 0.1 ?
-                              "<0.1"
-                            : streamRunwayDays.toFixed(1)}{" "}
-                            days
-                          </p>
-                        </div>
-                      </div>
-
-                      {hasLowStreamRunway && (
-                        <p className="text-xs text-danger-content">
-                          Add ETHx funding soon to keep this stream active.
-                        </p>
-                      )}
-
-                      <div className="join flex w-full">
-                        <input
-                          inputMode="decimal"
-                          className="input join-item input-bordered input-info min-w-0 flex-1 bg-primary-soft-dark font-mono outline-none"
-                          value={streamFundingAmount}
-                          onChange={(event) => {
-                            setStreamFundingAmount(
-                              sanitizeAmount(event.target.value),
-                            );
-                            setStreamValidationError(null);
-                          }}
-                          placeholder="Add funding"
-                          aria-label="Additional Markee stream funding"
-                        />
-                        <button
-                          type="button"
-                          className="btn join-item btn-outline btn-primary min-h-0 px-4 text-xs"
-                          disabled={
-                            isAddingStreamFunding ||
-                            streamFundingAmountWei <= 0n ||
-                            hasInsufficientTopUpBalance
-                          }
-                          onClick={handleAddStreamFunding}
-                          title={
-                            hasInsufficientTopUpBalance ?
-                              "Keep enough native ETH for the funding amount and gas."
-                            : "Wrap native ETH into ETHx for this stream."
-                          }
-                        >
-                          {isAddingStreamFunding ? "Adding…" : "Add funding"}
-                        </button>
-                      </div>
-                    </>
-                  )}
-
-                  {withdrawableStreamDeposit > 0n && (
-                    <div className="flex items-center justify-between gap-3 border-t border-neutral-content/15 pt-3">
-                      <div className="min-w-0">
-                        <p className="text-xs text-neutral-soft-content">
-                          Refundable deposit
-                        </p>
-                        <p
-                          className="mt-1 truncate font-mono text-sm text-neutral-content"
-                          title={`${formatEther(withdrawableStreamDeposit)} ETHx`}
-                        >
-                          {formatEthAmountRounded(withdrawableStreamDeposit, 6)}{" "}
-                          ETHx
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn-outline btn-primary min-h-0 px-4 text-xs"
-                        disabled={isWithdrawingStreamDeposit}
-                        onClick={handleWithdrawStreamDeposit}
+                    <div className="min-w-0">
+                      <p className="text-xs text-neutral-soft-content">
+                        Refundable deposit
+                      </p>
+                      <p
+                        className="mt-1 truncate font-mono text-sm text-neutral-content"
+                        title={`${formatEther(withdrawableStreamDeposit)} ETHx`}
                       >
-                        {isWithdrawingStreamDeposit ?
-                          "Withdrawing…"
-                        : "Withdraw deposit"}
-                      </button>
+                        {formatEthAmountRounded(withdrawableStreamDeposit, 6)}{" "}
+                        ETHx
+                      </p>
                     </div>
-                  )}
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-primary min-h-0 px-4 text-xs"
+                      disabled={isWithdrawingStreamDeposit}
+                      onClick={handleWithdrawStreamDeposit}
+                    >
+                      {isWithdrawingStreamDeposit ?
+                        "Withdrawing…"
+                      : "Withdraw deposit"}
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -2644,16 +2481,18 @@ function CommunityMarkeePreviewModal({
                   <span>
                     Balance:{" "}
                     <span
-                      className={`font-mono font-semibold ${hasInsufficientWalletBalance || streamFormError != null ? "tooltip tooltip-top-left cursor-help" : "text-neutral-content"}`}
+                      className={`font-mono font-semibold ${hasInsufficientWalletBalance || streamFormError != null || autoFundingError != null ? "tooltip tooltip-top-left cursor-help" : "text-neutral-content"}`}
                       data-tip={
                         streamFormError ??
+                        autoFundingError ??
                         insufficientBalanceMessage ??
                         undefined
                       }
                       tabIndex={
                         (
                           hasInsufficientWalletBalance ||
-                          streamFormError != null
+                          streamFormError != null ||
+                          autoFundingError != null
                         ) ?
                           0
                         : undefined
@@ -2671,14 +2510,15 @@ function CommunityMarkeePreviewModal({
                             className={
                               (
                                 hasInsufficientWalletBalance ||
-                                streamFormError != null
+                                streamFormError != null ||
+                                autoFundingError != null
                               ) ?
                                 "text-danger-content"
                               : undefined
                             }
                           >
                             {ethxAvailableBalance > 0n ?
-                              `${formatEthAmount(ethxAvailableBalance)} ETHx`
+                              `${formatMarkeeEthxBalance(ethxAvailableBalance)} ETHx`
                             : `${formatEthAmount(walletBalance.value)} ETH`}
                           </span>{" "}
                         </span>
@@ -2721,16 +2561,6 @@ function CommunityMarkeePreviewModal({
                   onClick={() => setMonthlyRate(effectiveMinimumMonthlyRate)}
                 >
                   MIN
-                </button>
-                <button
-                  type="button"
-                  className={`h-8 rounded-lg border px-4 text-xs font-medium tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${maxMonthlyRateAmount > 0n && derivedMonthlyRateAmount === maxMonthlyRateAmount ? "border-primary-content bg-primary-content/15 text-primary-content" : "border-neutral-content/30 text-neutral-soft-content hover:border-primary-content/60 hover:text-primary-content"}`}
-                  disabled={maxMonthlyRateAmount <= 0n}
-                  onClick={() =>
-                    setMonthlyRate(formatEthInput(maxMonthlyRateAmount))
-                  }
-                >
-                  MAX
                 </button>
                 {hasTopStream && (
                   <button
@@ -2787,7 +2617,7 @@ function CommunityMarkeePreviewModal({
                   </span>
                 : <span
                     className="tooltip tooltip-top-left cursor-help text-right text-sm font-semibold text-neutral-content"
-                    data-tip={`${formatEther(streamAmounts.prefund)} ETHx available for this stream.`}
+                    data-tip={`This ETHx balance gives the stream approximately ${formatMarkeeRunwayShort(streamAmounts.runwaySeconds)} of runway. Use Deposit Manager to add more.`}
                   >
                     {formatMarkeeRunwayShort(streamAmounts.runwaySeconds)}
                   </span>
@@ -3552,20 +3382,20 @@ function CommunityRevenueClaimModal({
                   <InfoWrapper
                     tooltip={
                       quote != null && isBridgedClaim ?
-                        `Transaction: ${formatEthAmount(networkFeeAmountWei)} ${quote.symbol} · Bridge: ${formatEthAmount(estimatedFeeAmountWei)} ${quote.symbol}`
+                        `Transaction gas: ${formatEthAmount(networkFeeAmountWei)} ${quote.symbol} · Bridge fee: ${formatEthAmount(estimatedFeeAmountWei)} ${quote.symbol}`
                       : quote != null ?
-                        `Transaction: ${formatEthAmount(networkFeeAmountWei)} ${quote.symbol}`
+                        `Transaction gas: ${formatEthAmount(networkFeeAmountWei)} ${quote.symbol}`
                       : isBridgedClaim ?
-                        "Includes the source-chain transaction fee and the estimated bridge cost."
-                      : "Includes the source-chain transaction fee."
+                        "Includes the source-chain transaction gas and the estimated bridge fee."
+                      : "Includes the source-chain transaction gas."
                     }
                     size="sm"
                     className="tooltip-top"
                   >
                     <span>
                       {isBridgedClaim ?
-                        "Bridge + Transaction fee"
-                      : "Transaction fee"}
+                        "Transaction gas + Bridge fee"
+                      : "Transaction gas"}
                     </span>
                   </InfoWrapper>
                 </div>

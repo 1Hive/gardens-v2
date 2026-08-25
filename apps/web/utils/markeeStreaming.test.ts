@@ -4,6 +4,7 @@ import {
   buildMarkeeOpenStreamOperations,
   getBufferedMarkeeGasEstimate,
   getMarkeeAutoFunding,
+  formatMarkeeEthxBalance,
   getMarkeeFundingMonths,
   getMarkeeMonthlyAmountForFundingValue,
   getMarkeeRequiredNativeBalance,
@@ -133,7 +134,7 @@ describe("Markee streaming transaction builder", () => {
     expect(funding.prefund).toBe(buffer * 2n);
   });
 
-  it("auto-wraps up to three months while preserving native ETH for gas", () => {
+  it("uses 90% of a small native balance instead of stranding it", () => {
     const ratePerSecond = 10n;
     const nativeReserve = 1_000n;
     const funding = getMarkeeAutoFunding({
@@ -146,6 +147,25 @@ describe("Markee streaming transaction builder", () => {
     expect(funding.wrapValue).toBe(9_000n);
     expect(funding.depositTopUp).toBe(ratePerSecond * MARKEE_BUFFER_PERIOD);
     expect(funding.prefund).toBe(0n);
+    expect(funding.insufficientEth).toBe(true);
+  });
+
+  it("preserves the fixed gas reserve for larger native balances", () => {
+    const nativeBalance = parseEther("0.003");
+    const nativeReserve = parseEther("0.001");
+    const funding = getMarkeeAutoFunding({
+      ethxAvailableBalance: 0n,
+      nativeBalance,
+      nativeReserve,
+      ratePerSecond: 10n ** 9n,
+    });
+
+    expect(funding.wrapValue).toBe(nativeBalance - nativeReserve);
+  });
+
+  it("keeps small non-zero ETHx balances visible", () => {
+    expect(formatMarkeeEthxBalance(parseEther("0.0004"))).toBe("0.0004");
+    expect(formatMarkeeEthxBalance(parseEther("0.0044"))).toBe("0.004");
   });
 
   it("only exposes stream deposits that are not required as buffer", () => {
