@@ -15,10 +15,11 @@ import {
   streamingLeaderboardRuntimeABI,
 } from "@/utils/markeeStreaming";
 
-type LeaderboardEntry = {
+export type StreamingMarkeeLeaderboardEntry = {
   address: Address;
   message: string;
   name: string;
+  rank: number;
   rate: bigint;
   views?: number;
 };
@@ -26,13 +27,13 @@ type LeaderboardEntry = {
 type Props = {
   chainId?: number;
   children: ReactNode;
-  currentMessage: string;
-  currentName?: string;
-  currentRatePerSecondWei?: string;
   footer: ReactNode;
   isOpen: boolean;
   leaderboardAddress?: Address;
+  onFundMarkee?: (entry: StreamingMarkeeLeaderboardEntry) => void;
   onClose: () => void;
+  ownedMarkeeAddress?: Address | null;
+  selectedMarkeeAddress?: Address | null;
   title: string;
   topMarkeeAddress?: Address;
 };
@@ -55,27 +56,25 @@ const formatMonthlyRate = (rate: bigint) => {
 export function CommunityStreamingMarkeeModal({
   chainId,
   children,
-  currentMessage,
-  currentName,
-  currentRatePerSecondWei,
   footer,
   isOpen,
   leaderboardAddress,
+  onFundMarkee,
   onClose,
+  ownedMarkeeAddress,
+  selectedMarkeeAddress,
   title,
   topMarkeeAddress,
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const publicClient = usePublicClient({ chainId });
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboard, setLeaderboard] = useState<
+    StreamingMarkeeLeaderboardEntry[]
+  >([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
   const [totalViews, setTotalViews] = useState<number | null>(null);
-  const currentRate =
-    currentRatePerSecondWei != null && /^\d+$/u.test(currentRatePerSecondWei) ?
-      BigInt(currentRatePerSecondWei)
-    : null;
 
   const markeeAppUrl = useMemo(
     () =>
@@ -84,16 +83,36 @@ export function CommunityStreamingMarkeeModal({
       ),
     [chainId, leaderboardAddress],
   );
-  const challengerLeaderboard = useMemo(
-    () =>
-      leaderboard.filter(
-        ({ address, message }) =>
-          message.trim().length > 0 &&
-          (topMarkeeAddress == null ||
-            address.toLowerCase() !== topMarkeeAddress.toLowerCase()),
+  const displayedLeaderboard = useMemo(() => {
+    const visibleEntries = leaderboard.filter(
+      ({ message }) => message.trim().length > 0,
+    );
+    const ownedEntry = visibleEntries.find(
+      ({ address }) =>
+        ownedMarkeeAddress != null &&
+        address.toLowerCase() === ownedMarkeeAddress.toLowerCase(),
+    );
+    const promotedEntry = visibleEntries.find(
+      ({ address }) =>
+        topMarkeeAddress != null &&
+        address.toLowerCase() === topMarkeeAddress.toLowerCase(),
+    );
+    const pinnedAddresses = new Set(
+      [ownedEntry?.address, promotedEntry?.address]
+        .filter((address): address is Address => address != null)
+        .map((address) => address.toLowerCase()),
+    );
+
+    return [
+      ...(ownedEntry == null ? [] : [ownedEntry]),
+      ...(promotedEntry == null || promotedEntry === ownedEntry ?
+        []
+      : [promotedEntry]),
+      ...visibleEntries.filter(
+        ({ address }) => !pinnedAddresses.has(address.toLowerCase()),
       ),
-    [leaderboard, topMarkeeAddress],
-  );
+    ];
+  }, [leaderboard, ownedMarkeeAddress, topMarkeeAddress]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -134,10 +153,15 @@ export function CommunityStreamingMarkeeModal({
     setLeaderboardLoading(true);
     setLeaderboardError(null);
     void (async () => {
+      const markeeCount = await publicClient.readContract({
+        abi: streamingLeaderboardRuntimeABI,
+        address: leaderboardAddress,
+        functionName: "markeeCount",
+      });
       const [addresses, rates] = await publicClient.readContract({
         abi: streamingLeaderboardRuntimeABI,
         address: leaderboardAddress,
-        args: [11n],
+        args: [markeeCount],
         functionName: "getTopMarkees",
       });
       const validAddresses = addresses.filter((address): address is Address =>
@@ -172,6 +196,7 @@ export function CommunityStreamingMarkeeModal({
             markeeReads[index * 2 + 1]?.status === "success" ?
               String(markeeReads[index * 2 + 1].result ?? "")
             : "",
+          rank: index + 1,
           rate: rates[index] ?? 0n,
           views: views[address.toLowerCase()]?.totalViews,
         })),
@@ -233,49 +258,29 @@ export function CommunityStreamingMarkeeModal({
 
         <div className="overflow-x-hidden overflow-y-auto px-6 py-5">
           <section className="mb-5 rounded-lg border border-neutral-content/20 bg-neutral-focus px-4 py-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="mb-1 text-xs text-neutral-content/50">
-                  Current message
-                </p>
-                <p className="break-words font-mono text-sm text-neutral-content">
-                  {currentMessage}
-                </p>
-                {currentName && (
-                  <p className="mt-1 text-xs text-neutral-content/40">
-                    {currentName}
-                  </p>
-                )}
-              </div>
-              <div className="flex shrink-0 flex-col items-end gap-2">
-                {markeeAppUrl && (
-                  <a
-                    href={markeeAppUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-primary-content underline underline-offset-2"
-                  >
-                    Open in Markee
-                  </a>
-                )}
-                {currentRate != null && (
-                  <p className="font-mono text-xs text-neutral-content/60">
-                    {formatMonthlyRate(currentRate)} ETH/mo
-                  </p>
-                )}
-              </div>
+            <div className="flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setLeaderboardOpen((open) => !open)}
+                className="flex items-center gap-1.5 text-xs font-medium text-neutral-content/60 transition-colors hover:text-neutral-content"
+                aria-expanded={leaderboardOpen}
+              >
+                <ChevronDownIcon
+                  className={`h-3.5 w-3.5 transition-transform ${leaderboardOpen ? "rotate-180" : ""}`}
+                />
+                Leaderboard
+              </button>
+              {markeeAppUrl && (
+                <a
+                  href={markeeAppUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-primary-content underline underline-offset-2"
+                >
+                  Open in Markee
+                </a>
+              )}
             </div>
-
-            <button
-              type="button"
-              onClick={() => setLeaderboardOpen((open) => !open)}
-              className="mt-3 flex items-center gap-1 text-xs text-neutral-content/50 transition-colors hover:text-neutral-content/80"
-            >
-              <ChevronDownIcon
-                className={`h-3.5 w-3.5 transition-transform ${leaderboardOpen ? "rotate-180" : ""}`}
-              />
-              {leaderboardOpen ? "Hide leaderboard" : "Show leaderboard"}
-            </button>
 
             {leaderboardOpen && (
               <div className="mt-3 space-y-3 border-t border-neutral-content/10 pt-3">
@@ -288,43 +293,80 @@ export function CommunityStreamingMarkeeModal({
                   <p className="text-xs text-danger-content">
                     {leaderboardError}
                   </p>
-                : challengerLeaderboard.length === 0 ?
+                : displayedLeaderboard.length === 0 ?
                   <p className="text-xs text-neutral-content/40">
-                    No other Markees yet.
+                    No Markees yet.
                   </p>
-                : challengerLeaderboard.map((entry, index) => (
-                    <div
-                      key={entry.address}
-                      className="flex items-start justify-between gap-3"
-                    >
-                      <div className="flex min-w-0 gap-2">
-                        <span className="font-mono text-xs text-neutral-content/30">
-                          {index + 2}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="break-words font-mono text-xs text-neutral-content">
-                            {entry.message}
-                          </p>
-                          {entry.name && (
-                            <p className="mt-0.5 text-xs text-neutral-content/40">
-                              {entry.name}
+                : displayedLeaderboard.map((entry) => {
+                    const isOwned =
+                      ownedMarkeeAddress != null &&
+                      entry.address.toLowerCase() ===
+                        ownedMarkeeAddress.toLowerCase();
+                    const isPromoted =
+                      topMarkeeAddress != null &&
+                      entry.address.toLowerCase() ===
+                        topMarkeeAddress.toLowerCase();
+                    const isSelected =
+                      selectedMarkeeAddress != null &&
+                      entry.address.toLowerCase() ===
+                        selectedMarkeeAddress.toLowerCase();
+                    return (
+                      <div
+                        key={entry.address}
+                        className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 ${isPromoted ? "border-primary-content bg-primary-content/5" : "border-neutral-content/10"}`}
+                      >
+                        <div className="flex min-w-0 gap-2">
+                          <span className="font-mono text-xs text-neutral-content/30">
+                            #{entry.rank}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <p className="break-words font-mono text-xs text-neutral-content">
+                                {entry.message}
+                              </p>
+                              {isPromoted && (
+                                <span className="rounded-full border border-primary-content/40 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary-content">
+                                  Promoted
+                                </span>
+                              )}
+                              {isOwned && (
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-neutral-content/40">
+                                  Yours
+                                </span>
+                              )}
+                            </div>
+                            {entry.name && (
+                              <p className="mt-0.5 text-xs text-neutral-content/40">
+                                {entry.name}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2 text-right">
+                          <div>
+                            <p className="font-mono text-xs text-neutral-content/60">
+                              {formatMonthlyRate(entry.rate)} ETH/mo
                             </p>
+                            {entry.views != null && (
+                              <p className="mt-0.5 flex items-center justify-end gap-1 font-mono text-xs text-neutral-content/30">
+                                <EyeIcon className="h-2.5 w-2.5" />
+                                {entry.views.toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                          {!isOwned && onFundMarkee != null && (
+                            <button
+                              type="button"
+                              className={`h-7 rounded-lg border px-2.5 text-xs font-medium transition-colors ${isSelected ? "border-primary-content bg-primary-content text-neutral-inverted-content" : "border-primary-content/50 text-primary-content hover:bg-primary-content/10"}`}
+                              onClick={() => onFundMarkee(entry)}
+                            >
+                              {isSelected ? "Selected" : "Fund"}
+                            </button>
                           )}
                         </div>
                       </div>
-                      <div className="shrink-0 text-right">
-                        <p className="font-mono text-xs text-neutral-content/60">
-                          {formatMonthlyRate(entry.rate)} ETH/mo
-                        </p>
-                        {entry.views != null && (
-                          <p className="mt-0.5 flex items-center justify-end gap-1 font-mono text-xs text-neutral-content/30">
-                            <EyeIcon className="h-2.5 w-2.5" />
-                            {entry.views.toLocaleString()}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 }
               </div>
             )}

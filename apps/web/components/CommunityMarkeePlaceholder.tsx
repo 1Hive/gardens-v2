@@ -37,7 +37,10 @@ import { Button } from "@/components/Button";
 import { CommunityMarkeeDepositManagerModal } from "@/components/CommunityMarkeeDepositManagerModal";
 import { CommunityMarkeePaymentReview } from "@/components/CommunityMarkeePaymentReview";
 import { CommunityMarkeeStreamStats } from "@/components/CommunityMarkeeStreamStats";
-import { CommunityStreamingMarkeeModal } from "@/components/CommunityStreamingMarkeeModal";
+import {
+  CommunityStreamingMarkeeModal,
+  type StreamingMarkeeLeaderboardEntry,
+} from "@/components/CommunityStreamingMarkeeModal";
 import { InfoBox } from "@/components/InfoBox";
 import { InfoWrapper } from "@/components/InfoWrapper";
 import { Modal } from "@/components/Modal";
@@ -73,7 +76,6 @@ import {
   getMarkeeRequiredNativeBalance,
   getMarkeeStreamAmounts,
   getMarkeeStreamFunding,
-  getMarkeeWithdrawableDeposit,
   MARKEE_SECONDS_IN_MONTH,
   roundUpMarkeeMonthlyMinimum,
   markeeOwnerABI,
@@ -419,13 +421,13 @@ function CommunityMarkeePreviewModal({
   const [connectedMarkeeName, setConnectedMarkeeName] = useState<string | null>(
     null,
   );
+  const [selectedFundingMarkee, setSelectedFundingMarkee] =
+    useState<StreamingMarkeeLeaderboardEntry | null>(null);
   const [isConnectedMarkeeLoading, setIsConnectedMarkeeLoading] =
     useState(false);
   const [isPreviewComplete, setIsPreviewComplete] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isStoppingStream, setIsStoppingStream] = useState(false);
-  const [isWithdrawingStreamDeposit, setIsWithdrawingStreamDeposit] =
-    useState(false);
   const [activeStreamMarkee, setActiveStreamMarkee] = useState<Address | null>(
     null,
   );
@@ -502,6 +504,13 @@ function CommunityMarkeePreviewModal({
     connectedAccount.toLowerCase() === topMarkeeOwner.toLowerCase();
   const ownedMarkeeAddress =
     isTopMarkeeOwner ? topMarkeeAddress : connectedMarkeeAddress;
+  const isFundingAnotherMarkee =
+    selectedFundingMarkee != null &&
+    (ownedMarkeeAddress == null ||
+      selectedFundingMarkee.address.toLowerCase() !==
+        ownedMarkeeAddress.toLowerCase());
+  const streamTargetMarkeeAddress =
+    selectedFundingMarkee?.address ?? ownedMarkeeAddress;
   const isOwnedMarkeeWinning =
     isTopMarkeeOwner ||
     (ownedMarkeeAddress != null &&
@@ -511,9 +520,12 @@ function CommunityMarkeePreviewModal({
     isTopMarkeeOwner ? message : connectedMarkeeMessage;
   const ownedMarkeeName =
     isTopMarkeeOwner ? topMarkeeName ?? "" : connectedMarkeeName ?? "";
-  const displayedMarkeeMessage = ownedMarkeeMessage ?? message;
+  const displayedMarkeeMessage =
+    selectedFundingMarkee?.message ?? ownedMarkeeMessage ?? message;
   const shouldCreateMarkee =
-    !isTopMarkeeOwner && connectedMarkeeAddress == null;
+    selectedFundingMarkee == null &&
+    !isTopMarkeeOwner &&
+    connectedMarkeeAddress == null;
   const ownedMarkeeHasEmptyMessage =
     ownedMarkeeAddress != null && ownedMarkeeMessage?.trim().length === 0;
   const shouldShowOwnedMarkeeEditor =
@@ -526,10 +538,6 @@ function CommunityMarkeePreviewModal({
   const doubleWinningMonthlyRate = formatEthFundingInput(
     doubleWinningMonthlyRateAmount,
   );
-  const withdrawableStreamDeposit = getMarkeeWithdrawableDeposit(
-    existingStreamDeposit,
-    activeStreamRate,
-  );
   const messageByteLength = new TextEncoder().encode(editedMessage).length;
   const newMarkeeMessageByteLength = new TextEncoder().encode(
     newMarkeeMessage,
@@ -541,11 +549,14 @@ function CommunityMarkeePreviewModal({
   const messageByteLimit = Number(maxMessageLength ?? "0") || 280;
   const nameByteLimit = Number(maxNameLength ?? "0") || 22;
   const hasPendingMessageUpdate =
+    !isFundingAnotherMarkee &&
     ownedMarkeeAddress != null &&
     ownedMarkeeMessage != null &&
     editedMessage !== ownedMarkeeMessage;
   const hasPendingNameUpdate =
-    ownedMarkeeAddress != null && editedName !== ownedMarkeeName;
+    !isFundingAnotherMarkee &&
+    ownedMarkeeAddress != null &&
+    editedName !== ownedMarkeeName;
   const { data: walletBalance, isLoading: isWalletBalanceLoading } = useBalance(
     {
       address: connectedAccount,
@@ -591,7 +602,9 @@ function CommunityMarkeePreviewModal({
   ]);
   const streamAmount = formatEthFundingInput(streamAmounts.value);
   const isStreamGasEstimatePending =
-    ownedMarkeeAddress != null && estimatedStreamGasCost == null;
+    connectedAccount != null &&
+    streamTargetMarkeeAddress != null &&
+    estimatedStreamGasCost == null;
   const previewNativeBalanceRequired =
     streamAmounts.value + estimatedGasReserve;
   const hasInsufficientWalletBalance =
@@ -623,6 +636,7 @@ function CommunityMarkeePreviewModal({
         newMarkeeMessageByteLength <= messageByteLimit &&
         newMarkeeNameByteLength <= nameByteLimit)) &&
     (shouldCreateMarkee ||
+      isFundingAnotherMarkee ||
       !shouldShowOwnedMarkeeEditor ||
       (editedMessage.trim().length > 0 &&
         messageByteLength <= messageByteLimit &&
@@ -630,10 +644,12 @@ function CommunityMarkeePreviewModal({
   const isMarkeeMessageMissing =
     (shouldCreateMarkee && newMarkeeMessage.trim().length === 0) ||
     (!shouldCreateMarkee &&
+      !isFundingAnotherMarkee &&
       shouldShowOwnedMarkeeEditor &&
       editedMessage.trim().length === 0);
   const paymentReviewMessage =
-    shouldCreateMarkee ? newMarkeeMessage.trim()
+    selectedFundingMarkee != null ? selectedFundingMarkee.message
+    : shouldCreateMarkee ? newMarkeeMessage.trim()
     : shouldShowOwnedMarkeeEditor ? editedMessage.trim()
     : displayedMarkeeMessage;
   const paymentReviewWillWin =
@@ -954,7 +970,7 @@ function CommunityMarkeePreviewModal({
       !isLive ||
       connectedAccount == null ||
       leaderboardAddress == null ||
-      ownedMarkeeAddress == null ||
+      streamTargetMarkeeAddress == null ||
       publicClient == null ||
       isConnectedMarkeeLoading ||
       isStreamPositionLoading ||
@@ -986,7 +1002,7 @@ function CommunityMarkeePreviewModal({
           publicClient.readContract({
             abi: streamingLeaderboardRuntimeABI,
             address: leaderboardAddress,
-            args: [ownedMarkeeAddress],
+            args: [streamTargetMarkeeAddress],
             functionName: "poolOf",
           }),
         ]);
@@ -1085,7 +1101,7 @@ function CommunityMarkeePreviewModal({
           existingRatePerSecond:
             existingFlowRate > 0n ? existingFlowRate : undefined,
           gdaAgreement: getAddress(gdaResult),
-          markee: ownedMarkeeAddress,
+          markee: streamTargetMarkeeAddress,
           pool: getAddress(poolResult),
           ratePerSecond: streamAmounts.ratePerSecond,
           wrapValue,
@@ -1131,7 +1147,7 @@ function CommunityMarkeePreviewModal({
     isOpen,
     isStreamPositionLoading,
     leaderboardAddress,
-    ownedMarkeeAddress,
+    streamTargetMarkeeAddress,
     publicClient,
     streamAmounts,
   ]);
@@ -1141,7 +1157,18 @@ function CommunityMarkeePreviewModal({
     setIsStreaming(false);
     setIsEditingMessage(false);
     setIsReviewingPayment(false);
+    setSelectedFundingMarkee(null);
     onClose();
+  };
+
+  const handleSelectFundingMarkee = (
+    entry: StreamingMarkeeLeaderboardEntry,
+  ) => {
+    setSelectedFundingMarkee(entry);
+    setMonthlyRate(challengeMonthlyRate);
+    setIsEditingMessage(false);
+    setIsReviewingPayment(false);
+    setStreamValidationError(null);
   };
 
   const beginTransactionNotification = (
@@ -1245,20 +1272,29 @@ function CommunityMarkeePreviewModal({
     }
     if (
       !shouldCreateMarkee &&
+      !isFundingAnotherMarkee &&
       shouldShowOwnedMarkeeEditor &&
       editedMessage.trim().length === 0
     ) {
       showStreamError(null, "Add a message for your Markee.");
       return;
     }
-    if (!shouldCreateMarkee && messageByteLength > messageByteLimit) {
+    if (
+      !shouldCreateMarkee &&
+      !isFundingAnotherMarkee &&
+      messageByteLength > messageByteLimit
+    ) {
       showStreamError(
         null,
         `Keep your Markee message within ${messageByteLimit} bytes.`,
       );
       return;
     }
-    if (!shouldCreateMarkee && nameByteLength > nameByteLimit) {
+    if (
+      !shouldCreateMarkee &&
+      !isFundingAnotherMarkee &&
+      nameByteLength > nameByteLimit
+    ) {
       showStreamError(null, `Keep your name within ${nameByteLimit} bytes.`);
       return;
     }
@@ -1296,7 +1332,7 @@ function CommunityMarkeePreviewModal({
       | "update-message"
       | "update-name" = "preflight";
     let showsTransactionModal = false;
-    let targetMarkeeAddress = ownedMarkeeAddress;
+    let targetMarkeeAddress = streamTargetMarkeeAddress;
     let targetPoolAddress: Address | undefined;
     let createTransactionHash: `0x${string}` | undefined;
     let messageTransactionHash: `0x${string}` | undefined;
@@ -2024,152 +2060,20 @@ function CommunityMarkeePreviewModal({
     }
   };
 
-  const handleWithdrawStreamDeposit = async () => {
-    if (
-      !isLive ||
-      connectedAccount == null ||
-      leaderboardAddress == null ||
-      markeeChainId == null ||
-      withdrawableStreamDeposit <= 0n
-    ) {
-      return;
-    }
-
-    const originalChainId = connectedChain?.id;
-    let actionWalletClient = walletClient;
-    if (connectedChain?.id !== markeeChainId) {
-      if (switchNetworkAsync == null) {
-        showStreamError(
-          null,
-          "Switch to the Markee network to withdraw your deposit.",
-        );
-        return;
-      }
-      try {
-        await switchNetworkAsync(markeeChainId);
-        actionWalletClient = await getWalletClient({ chainId: markeeChainId });
-      } catch (error) {
-        showStreamError(error, "Unable to switch to the Markee network.");
-        return;
-      }
-    }
-    if (publicClient == null || actionWalletClient == null) {
-      showStreamError(null, "The Markee wallet client is not ready yet.");
-      return;
-    }
-
-    setIsWithdrawingStreamDeposit(true);
-    toast.dismiss("markee-stream-error");
-    let transactionHash: `0x${string}` | undefined;
-    let notificationToastId: string | undefined;
-    try {
-      notificationToastId = beginTransactionNotification(
-        "Withdraw Markee stream deposit",
-        leaderboardAddress,
-      );
-      transactionHash = await actionWalletClient.writeContract({
-        abi: streamingLeaderboardRuntimeABI,
-        address: leaderboardAddress,
-        functionName: "withdrawDeposit",
-      });
-      updateTransactionNotification(notificationToastId, {
-        status: "loading",
-        transactionHash,
-      });
-      await restoreOriginalChain(originalChainId);
-      const receipt = await publicClient.waitForTransactionReceipt({
-        hash: transactionHash,
-      });
-      if (receipt.status !== "success") {
-        throw new Error("The deposit-withdrawal transaction reverted.");
-      }
-
-      const [updatedDeposit, updatedRealtimeBalance] = await Promise.all([
-        publicClient.readContract({
-          abi: streamingLeaderboardRuntimeABI,
-          address: leaderboardAddress,
-          args: [connectedAccount],
-          functionName: "backerDeposit",
-        }),
-        ethxAddress == null ?
-          Promise.resolve([
-            ethxWalletBalance - ethxWalletDeficit,
-            0n,
-            0n,
-            0n,
-          ] as const)
-        : publicClient.readContract({
-            abi: ethxApproveABI,
-            address: ethxAddress,
-            args: [connectedAccount],
-            functionName: "realtimeBalanceOfNow",
-          }),
-      ]);
-      const updatedAvailableBalance = updatedRealtimeBalance[0];
-      setExistingStreamDeposit(updatedDeposit);
-      setEthxWalletBalance(
-        updatedAvailableBalance > 0n ? updatedAvailableBalance : 0n,
-      );
-      setEthxWalletDeficit(
-        updatedAvailableBalance < 0n ? -updatedAvailableBalance : 0n,
-      );
-      onStreamUpdated();
-      updateTransactionNotification(notificationToastId, {
-        status: "success",
-      });
-    } catch (error) {
-      if (notificationToastId != null) {
-        updateTransactionNotification(notificationToastId, {
-          error: getTransactionError(
-            error,
-            "Unable to withdraw the Markee stream deposit.",
-          ),
-          status: "error",
-        });
-      }
-      if (!isUserRejectedTransactionError(error)) {
-        const errorContext = {
-          type: "markee-transaction-error",
-          step: "withdraw-stream-deposit",
-          chainId: markeeChainId,
-          connectedAccount,
-          leaderboardAddress,
-          targetMarkeeAddress: activeStreamMarkee,
-          transactionHash,
-          tags: {
-            error_type: "markee-transaction-error",
-            transaction_step: "withdraw-stream-deposit",
-            chain_id: markeeChainId,
-          },
-        };
-        logOnce(
-          "error",
-          "[CommunityMarkee] Markee stream deposit withdrawal failed",
-          error,
-          errorContext,
-        );
-        reportClientError(error, errorContext);
-      }
-      if (notificationToastId == null) {
-        showStreamError(error, "Unable to withdraw the Markee stream deposit.");
-      }
-    } finally {
-      setIsWithdrawingStreamDeposit(false);
-    }
-  };
-
   return (
     <>
       <CommunityStreamingMarkeeModal
         chainId={markeeChainId}
-        currentMessage={message}
-        currentName={topMarkeeName}
-        currentRatePerSecondWei={topRatePerSecondWei}
         leaderboardAddress={leaderboardAddress}
         isOpen={isOpen}
+        onFundMarkee={handleSelectFundingMarkee}
         onClose={handleClose}
+        ownedMarkeeAddress={ownedMarkeeAddress}
+        selectedMarkeeAddress={selectedFundingMarkee?.address}
         title={
           isReviewingPayment ? "Review payment"
+          : isFundingAnotherMarkee ?
+            "Fund a Markee"
           : shouldCreateMarkee ?
             "Create your Markee"
           : hasActiveStream ?
@@ -2239,11 +2143,7 @@ function CommunityMarkeePreviewModal({
                     btnStyle="outline"
                     color="danger"
                     className="w-full sm:w-auto"
-                    disabled={
-                      isStreaming ||
-                      isStoppingStream ||
-                      isWithdrawingStreamDeposit
-                    }
+                    disabled={isStreaming || isStoppingStream}
                     isLoading={isStoppingStream}
                     onClick={handleStopStream}
                   >
@@ -2259,7 +2159,6 @@ function CommunityMarkeePreviewModal({
                   !canStartPreview ||
                   isStreaming ||
                   isStoppingStream ||
-                  isWithdrawingStreamDeposit ||
                   isConnectedMarkeeLoading ||
                   isStreamPositionLoading ||
                   isStreamGasEstimateLoading ||
@@ -2336,7 +2235,30 @@ function CommunityMarkeePreviewModal({
             willWin={paymentReviewWillWin}
           />
         : <div className="flex flex-col gap-5">
-            {shouldCreateMarkee ?
+            {selectedFundingMarkee != null ?
+              <div className="relative rounded-xl border border-primary-content/40 bg-primary-content/5 p-4">
+                <p className="text-xs font-medium uppercase tracking-wider text-primary-content">
+                  Markee you’re funding
+                </p>
+                <p className="mt-2 break-words font-mono text-lg text-neutral-content">
+                  {selectedFundingMarkee.message}
+                </p>
+                {selectedFundingMarkee.name && (
+                  <p className="mt-1 text-sm text-neutral-soft-content">
+                    {selectedFundingMarkee.name}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  className="mt-3 text-xs font-medium text-primary-content underline decoration-dotted underline-offset-4"
+                  onClick={() => setSelectedFundingMarkee(null)}
+                >
+                  {ownedMarkeeAddress != null ?
+                    "Back to your Markee"
+                  : "Create your own Markee"}
+                </button>
+              </div>
+            : shouldCreateMarkee ?
               newMarkeeMessageInput
             : ownedMarkeeAddress != null && (
                 <div className="relative rounded-xl border border-neutral-content/15 bg-neutral/40 p-4">
@@ -2443,37 +2365,6 @@ function CommunityMarkeePreviewModal({
                 </div>
               )
             }
-
-            {isLive &&
-              connectedAccount != null &&
-              withdrawableStreamDeposit > 0n && (
-                <div className="flex flex-col gap-3 rounded-xl border border-neutral-content/15 bg-neutral/40 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-xs text-neutral-soft-content">
-                        Refundable deposit
-                      </p>
-                      <p
-                        className="mt-1 truncate font-mono text-sm text-neutral-content"
-                        title={`${formatEther(withdrawableStreamDeposit)} ETHx`}
-                      >
-                        {formatEthAmountRounded(withdrawableStreamDeposit, 6)}{" "}
-                        ETHx
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-outline btn-primary min-h-0 px-4 text-xs"
-                      disabled={isWithdrawingStreamDeposit}
-                      onClick={handleWithdrawStreamDeposit}
-                    >
-                      {isWithdrawingStreamDeposit ?
-                        "Withdrawing…"
-                      : "Withdraw deposit"}
-                    </button>
-                  </div>
-                </div>
-              )}
 
             <div className="flex flex-col gap-3 rounded-xl border border-primary-content bg-neutral/60 p-4">
               <div className="flex items-center justify-between gap-3 text-xs text-neutral-soft-content">

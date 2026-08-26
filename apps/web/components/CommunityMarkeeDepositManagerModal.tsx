@@ -29,7 +29,7 @@ import {
 } from "@/utils/markeeStreaming";
 import { isUserRejectedTransactionError } from "@/utils/transactionMessages";
 
-type Action = "deposit" | "withdraw" | null;
+type Action = "deposit" | null;
 
 type Props = {
   activeRatePerSecond: bigint;
@@ -78,9 +78,7 @@ export function CommunityMarkeeDepositManagerModal({
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [depositPercentage, setDepositPercentage] = useState(50);
-  const [withdrawPercentage, setWithdrawPercentage] = useState(50);
   const [lastTransaction, setLastTransaction] = useState<{
-    action: Exclude<Action, null>;
     hash: `0x${string}`;
   } | null>(null);
   const [transactionHash, setTransactionHash] = useState<
@@ -99,8 +97,7 @@ export function CommunityMarkeeDepositManagerModal({
 
   useTransactionNotification({
     chainId,
-    contractName:
-      action === "withdraw" ? "Withdraw ETHx" : "Deposit ETH for streaming",
+    contractName: "Deposit ETH for streaming",
     enabled: transactionStatus != null,
     fallbackErrorMessage: "Unable to update your streamable balance.",
     safeAddress: address,
@@ -149,12 +146,6 @@ export function CommunityMarkeeDepositManagerModal({
     setError(null);
   };
 
-  const setWithdrawBalancePercentage = (percentage: number) => {
-    setWithdrawPercentage(percentage);
-    setAmount(formatEther((ethxBalance * BigInt(percentage)) / 100n));
-    setError(null);
-  };
-
   const submit = async () => {
     if (address == null || publicClient == null || action == null) return;
     setError(null);
@@ -164,12 +155,8 @@ export function CommunityMarkeeDepositManagerModal({
       setError(`Enter an amount to ${action}.`);
       return;
     }
-    if (action === "deposit" && (nativeBalance?.value ?? 0n) < amountWei) {
+    if ((nativeBalance?.value ?? 0n) < amountWei) {
       setError("Your wallet does not have enough native ETH.");
-      return;
-    }
-    if (action === "withdraw" && ethxBalance < amountWei) {
-      setError("Your wallet does not have enough ETHx.");
       return;
     }
 
@@ -180,23 +167,14 @@ export function CommunityMarkeeDepositManagerModal({
       if (walletClient == null)
         throw new Error("Connect your wallet to continue.");
 
-      const hash =
-        action === "deposit" ?
-          await walletClient.writeContract({
-            abi: ethxApproveABI,
-            account: address,
-            address: ethxAddress,
-            functionName: "upgradeByETHTo",
-            args: [address],
-            value: amountWei,
-          })
-        : await walletClient.writeContract({
-            abi: ethxApproveABI,
-            account: address,
-            address: ethxAddress,
-            functionName: "downgradeToETH",
-            args: [amountWei],
-          });
+      const hash = await walletClient.writeContract({
+        abi: ethxApproveABI,
+        account: address,
+        address: ethxAddress,
+        functionName: "upgradeByETHTo",
+        args: [address],
+        value: amountWei,
+      });
       setTransactionHash(hash);
       setTransactionStatus("loading");
       const receipt = await publicClient.waitForTransactionReceipt({ hash });
@@ -204,7 +182,7 @@ export function CommunityMarkeeDepositManagerModal({
         throw new Error("The balance transaction reverted.");
       }
       setTransactionStatus("success");
-      setLastTransaction({ action, hash });
+      setLastTransaction({ hash });
       setAction(null);
       setAmount("");
       onBalancesChanged();
@@ -298,36 +276,20 @@ export function CommunityMarkeeDepositManagerModal({
             {formatMarkeeEthxBalance(ethxBalance)}{" "}
             <span className="text-sm text-neutral-soft-content">ETHx</span>
           </p>
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="mt-4">
             <Button
               btnStyle={action === "deposit" ? "filled" : "outline"}
               color="primary"
+              className="w-full"
               onClick={() => prepareAction("deposit")}
             >
               Deposit
-            </Button>
-            <Button
-              btnStyle={action === "withdraw" ? "filled" : "outline"}
-              color="primary"
-              disabled={ethxBalance <= 0n}
-              tooltip={
-                ethxBalance <= 0n ? "You have no ETHx to withdraw." : undefined
-              }
-              onClick={() => prepareAction("withdraw")}
-            >
-              Withdraw
             </Button>
           </div>
 
           {lastTransaction != null && (
             <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs">
-              <span className="text-primary-content">
-                ✓{" "}
-                {lastTransaction.action === "deposit" ?
-                  "Deposit"
-                : "Withdrawal"}{" "}
-                confirmed
-              </span>
+              <span className="text-primary-content">✓ Deposit confirmed</span>
               <a
                 className="text-primary-content underline decoration-dotted underline-offset-4"
                 href={`${getExplorerUrl(chainId).replace(/\/$/u, "")}/tx/${lastTransaction.hash}`}
@@ -358,9 +320,7 @@ export function CommunityMarkeeDepositManagerModal({
                     setAmount(sanitizeAmount(event.target.value));
                     setError(null);
                   }}
-                  placeholder={
-                    action === "deposit" ? "Amount in ETH" : "Amount in ETHx"
-                  }
+                  placeholder="Amount in ETH"
                 />
                 <Button
                   btnStyle="filled"
@@ -370,10 +330,10 @@ export function CommunityMarkeeDepositManagerModal({
                   isLoading={isBusy}
                   onClick={submit}
                 >
-                  {action === "deposit" ? "Deposit" : "Withdraw"}
+                  Deposit
                 </Button>
               </div>
-              {action === "deposit" && activeRatePerSecond > 0n ?
+              {activeRatePerSecond > 0n ?
                 <div className="grid grid-cols-3 gap-2">
                   {[1, 2, 3].map((shortcut) => (
                     <button
@@ -388,16 +348,9 @@ export function CommunityMarkeeDepositManagerModal({
                 </div>
               : <label className="flex flex-col gap-1.5">
                   <span className="flex items-center justify-between text-xs text-neutral-soft-content">
-                    <span>
-                      {action === "deposit" ?
-                        "% of wallet balance"
-                      : "% of ETHx balance"}
-                    </span>
+                    <span>% of wallet balance</span>
                     <span className="font-mono font-semibold text-neutral-content">
-                      {action === "deposit" ?
-                        depositPercentage
-                      : withdrawPercentage}
-                      %
+                      {depositPercentage}%
                     </span>
                   </span>
                   <input
@@ -405,20 +358,10 @@ export function CommunityMarkeeDepositManagerModal({
                     min="1"
                     max="100"
                     className="range range-primary range-xs"
-                    disabled={
-                      action === "deposit" ?
-                        (nativeBalance?.value ?? 0n) <= 0n
-                      : ethxBalance <= 0n
-                    }
-                    value={
-                      action === "deposit" ? depositPercentage : (
-                        withdrawPercentage
-                      )
-                    }
+                    disabled={(nativeBalance?.value ?? 0n) <= 0n}
+                    value={depositPercentage}
                     onChange={(event) =>
-                      action === "deposit" ?
-                        setDepositWalletPercentage(Number(event.target.value))
-                      : setWithdrawBalancePercentage(Number(event.target.value))
+                      setDepositWalletPercentage(Number(event.target.value))
                     }
                   />
                 </label>
