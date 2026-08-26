@@ -382,6 +382,18 @@ export class MarkeeClaimExecutionError extends Error {
   }
 }
 
+const CLAIM_QUOTE_DEADLINE_MS = 45_000;
+const PROVIDER_REQUEST_TIMEOUT_MS = 20_000;
+
+const getProviderRequestSignal = (signal?: AbortSignal) =>
+  signal == null ?
+    AbortSignal.timeout(PROVIDER_REQUEST_TIMEOUT_MS)
+  : (
+      AbortSignal as typeof AbortSignal & {
+        any(signals: AbortSignal[]): AbortSignal;
+      }
+    ).any([signal, AbortSignal.timeout(PROVIDER_REQUEST_TIMEOUT_MS)]);
+
 const requireAddress = (value: unknown, message: string) => {
   if (typeof value !== "string" || !isAddress(value)) {
     throw new MarkeeClaimExecutionError(message, 503);
@@ -436,6 +448,7 @@ const getAcrossSuggestedFees = async ({
   originChainId,
   outputToken,
   receiver,
+  signal,
 }: {
   adapter: Address;
   amount: bigint;
@@ -446,6 +459,7 @@ const getAcrossSuggestedFees = async ({
   originChainId: number;
   outputToken: Address;
   receiver: Address;
+  signal?: AbortSignal;
 }) => {
   const payoutId = keccak256(
     encodeAbiParameters(
@@ -473,7 +487,7 @@ const getAcrossSuggestedFees = async ({
     : "https://app.across.to/api";
   const response = await fetch(
     `${acrossApi}/suggested-fees?${params.toString()}`,
-    { cache: "no-store", signal: AbortSignal.timeout(15_000) },
+    { cache: "no-store", signal: getProviderRequestSignal(signal) },
   );
   const body = (await response.json()) as AcrossSuggestedFeesResponse;
 
@@ -540,6 +554,7 @@ const getSquidRoute = async ({
   receiver,
   refundRecipient,
   squidRouter,
+  signal,
 }: {
   amount: bigint;
   chainId: number;
@@ -549,6 +564,7 @@ const getSquidRoute = async ({
   receiver: Address;
   refundRecipient: Address;
   squidRouter: Address;
+  signal?: AbortSignal;
 }) => {
   const integratorId = process.env.SQUID_INTEGRATOR_ID?.trim();
   if (!integratorId) {
@@ -654,7 +670,7 @@ const getSquidRoute = async ({
         "x-integrator-id": integratorId,
       },
       method: "POST",
-      signal: AbortSignal.timeout(20_000),
+      signal: getProviderRequestSignal(signal),
     });
     body = (await response.json()) as SquidRouteResponse;
     const aggregateSlippage = Number(
@@ -829,6 +845,7 @@ const getLifiRoute = async ({
   community,
   destinationReceiver,
   fallbackRecipient,
+  signal,
 }: {
   adapter: Address;
   amount: bigint;
@@ -836,6 +853,7 @@ const getLifiRoute = async ({
   community: Address;
   destinationReceiver: Address;
   fallbackRecipient: Address;
+  signal?: AbortSignal;
 }) => {
   const integratorId = process.env.LIFI_INTEGRATOR_ID?.trim();
   if (!integratorId) {
@@ -868,7 +886,7 @@ const getLifiRoute = async ({
     {
       cache: "no-store",
       headers,
-      signal: AbortSignal.timeout(20_000),
+      signal: getProviderRequestSignal(signal),
     },
   );
   const preliminaryBody =
@@ -942,7 +960,7 @@ const getLifiRoute = async ({
     }),
     headers: { ...headers, "Content-Type": "application/json" },
     method: "POST",
-    signal: AbortSignal.timeout(20_000),
+    signal: getProviderRequestSignal(signal),
   });
   const body = (await response.json()) as LifiQuoteResponse;
 
@@ -1041,6 +1059,7 @@ export const getMarkeeClaimExecutionQuote = async (
   recipient: Address,
   requestedClaimAmount?: bigint,
   gasCost = 0n,
+  signal?: AbortSignal,
 ): Promise<MarkeeClaimExecutionQuote> => {
   const revenue = await getCommunityRevenue(chainId, community);
   if (
@@ -1156,6 +1175,7 @@ export const getMarkeeClaimExecutionQuote = async (
       receiver,
       refundRecipient: revenue.vaultAddress,
       squidRouter,
+      signal,
     });
 
     return {
@@ -1207,6 +1227,7 @@ export const getMarkeeClaimExecutionQuote = async (
       community,
       destinationReceiver: receiver,
       fallbackRecipient: recipient,
+      signal,
     });
 
     return {
@@ -1287,6 +1308,7 @@ export const getMarkeeClaimExecutionQuote = async (
     originChainId: markeeChainId,
     outputToken,
     receiver,
+    signal,
   });
 
   return {
@@ -1643,64 +1665,85 @@ export const markeeAdapter = {
   },
 
   async getClaimQuote(chainId: number, community: Address, recipient: Address) {
-    const preliminaryQuote = await getMarkeeClaimExecutionQuote(
-      chainId,
-      community,
-      recipient,
-    );
-    let estimatedNetworkFeeAmount = await estimateKeeperNetworkFee(
-      chainId,
-      community,
-      preliminaryQuote,
-    );
-    let quote =
-      (
-        preliminaryQuote.claimAmount > 0n &&
-        estimatedNetworkFeeAmount < preliminaryQuote.claimAmount
-      ) ?
-        await getMarkeeClaimExecutionQuote(
-          chainId,
-          community,
-          recipient,
-          preliminaryQuote.claimAmount,
-          estimatedNetworkFeeAmount,
-        )
-      : { ...preliminaryQuote, expectedAmountOut: 0n };
-
-    // The preliminary zero-cost simulation skips the router's keeper payment.
-    // Refine the estimate once with that branch active, then rebuild the route
-    // so only the source-chain gas reimbursement is removed before bridging.
-    if (quote.gasCost > 0n) {
-      estimatedNetworkFeeAmount = await estimateKeeperNetworkFee(
+    const signal = AbortSignal.timeout(CLAIM_QUOTE_DEADLINE_MS);
+    try {
+      const preliminaryQuote = await getMarkeeClaimExecutionQuote(
         chainId,
         community,
-        quote,
+        recipient,
+        undefined,
+        0n,
+        signal,
       );
-      quote =
-        estimatedNetworkFeeAmount < preliminaryQuote.claimAmount ?
+      let estimatedNetworkFeeAmount = await estimateKeeperNetworkFee(
+        chainId,
+        community,
+        preliminaryQuote,
+      );
+      let quote =
+        (
+          preliminaryQuote.claimAmount > 0n &&
+          estimatedNetworkFeeAmount < preliminaryQuote.claimAmount
+        ) ?
           await getMarkeeClaimExecutionQuote(
             chainId,
             community,
             recipient,
             preliminaryQuote.claimAmount,
             estimatedNetworkFeeAmount,
+            signal,
           )
         : { ...preliminaryQuote, expectedAmountOut: 0n };
-    }
 
-    return {
-      bridgeProtocol: quote.bridgeProtocol,
-      bridged: quote.bridged,
-      claimAmount: quote.claimAmount,
-      destinationSymbol: quote.destinationSymbol,
-      estimatedFeeAmount: quote.estimatedFeeAmount,
-      estimatedRouteDurationSeconds: quote.estimatedRouteDurationSeconds,
-      estimatedNetworkFeeAmount,
-      expectedAmountOut: quote.expectedAmountOut,
-      expiresAt: quote.expiresAt,
-      markeeChainId: quote.markeeChainId,
-      recipient: quote.recipient,
-      symbol: quote.symbol,
-    };
+      // The preliminary zero-cost simulation skips the router's keeper payment.
+      // Refine the estimate once with that branch active, then rebuild the route
+      // so only the source-chain gas reimbursement is removed before bridging.
+      if (quote.gasCost > 0n) {
+        estimatedNetworkFeeAmount = await estimateKeeperNetworkFee(
+          chainId,
+          community,
+          quote,
+        );
+        quote =
+          estimatedNetworkFeeAmount < preliminaryQuote.claimAmount ?
+            await getMarkeeClaimExecutionQuote(
+              chainId,
+              community,
+              recipient,
+              preliminaryQuote.claimAmount,
+              estimatedNetworkFeeAmount,
+              signal,
+            )
+          : { ...preliminaryQuote, expectedAmountOut: 0n };
+      }
+
+      return {
+        bridgeProtocol: quote.bridgeProtocol,
+        bridged: quote.bridged,
+        claimAmount: quote.claimAmount,
+        destinationSymbol: quote.destinationSymbol,
+        estimatedFeeAmount: quote.estimatedFeeAmount,
+        estimatedRouteDurationSeconds: quote.estimatedRouteDurationSeconds,
+        estimatedNetworkFeeAmount,
+        expectedAmountOut: quote.expectedAmountOut,
+        expiresAt: quote.expiresAt,
+        markeeChainId: quote.markeeChainId,
+        recipient: quote.recipient,
+        symbol: quote.symbol,
+      };
+    } catch (error) {
+      if (signal.aborted) {
+        console.error("[Markee claim quote] Quote deadline exceeded", {
+          chainId,
+          community,
+          deadlineMs: CLAIM_QUOTE_DEADLINE_MS,
+        });
+        throw new MarkeeClaimExecutionError(
+          "The bridge quote took too long. Please try again.",
+          504,
+        );
+      }
+      throw error;
+    }
   },
 };

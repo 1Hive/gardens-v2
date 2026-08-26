@@ -82,6 +82,11 @@ import {
   waitForMarkeeRegistration,
 } from "@/utils/markeeStreaming";
 import {
+  clearPendingMarkeeClaim,
+  readPendingMarkeeClaim,
+  writePendingMarkeeClaim,
+} from "@/utils/pendingMarkeeClaim";
+import {
   Eip712TypedData,
   signTypedDataWithProvider,
 } from "@/utils/signTypedDataWithProvider";
@@ -118,100 +123,6 @@ type VerifyResponse = {
   router?: Address;
   transactionHash?: `0x${string}`;
   transactionUrl?: string;
-};
-
-type PendingMarkeeClaim = {
-  bridgeName: string;
-  createdAt: number;
-  estimatedRouteDurationSeconds: number | null;
-  fromChainId: number;
-  toChainId: number;
-  transactionHash: `0x${string}`;
-  transactionUrl: string | null;
-  version: 1;
-};
-
-const getPendingMarkeeClaimStorageKey = (chainId: number, community: Address) =>
-  `gardens:markee:pending-claim:${chainId}:${community.toLowerCase()}`;
-
-const clearPendingMarkeeClaim = (chainId: number, community: Address) => {
-  try {
-    window.localStorage.removeItem(
-      getPendingMarkeeClaimStorageKey(chainId, community),
-    );
-  } catch (error) {
-    logOnce(
-      "warn",
-      "[CommunityMarkee] Unable to clear the pending claim locally",
-      error,
-    );
-  }
-};
-
-const readPendingMarkeeClaim = (
-  chainId: number | undefined,
-  community: Address,
-): PendingMarkeeClaim | null => {
-  if (chainId == null || typeof window === "undefined") return null;
-
-  const storageKey = getPendingMarkeeClaimStorageKey(chainId, community);
-  try {
-    const value = JSON.parse(
-      window.localStorage.getItem(storageKey) ?? "null",
-    ) as Partial<PendingMarkeeClaim> | null;
-    if (
-      value?.version !== 1 ||
-      value.bridgeName !== "Squid" ||
-      typeof value.createdAt !== "number" ||
-      typeof value.fromChainId !== "number" ||
-      typeof value.toChainId !== "number" ||
-      value.toChainId !== chainId ||
-      typeof value.transactionHash !== "string" ||
-      !/^0x[0-9a-fA-F]{64}$/u.test(value.transactionHash)
-    ) {
-      clearPendingMarkeeClaim(chainId, community);
-      return null;
-    }
-
-    return {
-      bridgeName: value.bridgeName,
-      createdAt: value.createdAt,
-      estimatedRouteDurationSeconds:
-        typeof value.estimatedRouteDurationSeconds === "number" ?
-          value.estimatedRouteDurationSeconds
-        : null,
-      fromChainId: value.fromChainId,
-      toChainId: value.toChainId,
-      transactionHash: value.transactionHash as `0x${string}`,
-      transactionUrl:
-        typeof value.transactionUrl === "string" ? value.transactionUrl : null,
-      version: 1,
-    };
-  } catch {
-    clearPendingMarkeeClaim(chainId, community);
-    return null;
-  }
-};
-
-const writePendingMarkeeClaim = (
-  chainId: number,
-  community: Address,
-  claim: PendingMarkeeClaim,
-) => {
-  try {
-    window.localStorage.setItem(
-      getPendingMarkeeClaimStorageKey(chainId, community),
-      JSON.stringify(claim),
-    );
-    return true;
-  } catch (error) {
-    logOnce(
-      "warn",
-      "[CommunityMarkee] Unable to save the pending claim locally",
-      error,
-    );
-    return false;
-  }
 };
 
 const formatBridgeDuration = (seconds: number) => {

@@ -32,9 +32,8 @@ contract MockRevertingLiFiDiamond {
     }
 }
 
-contract RejectingRefundRecipient {
-    // No receive/fallback: any plain ETH transfer to this contract reverts.
-}
+// No receive/fallback: any plain ETH transfer to this contract reverts.
+contract RejectingRefundRecipient {}
 
 contract LiFiBridgeAdapterTest is Test {
     MockLiFiDiamond internal liFiDiamond;
@@ -102,6 +101,20 @@ contract LiFiBridgeAdapterTest is Test {
         assertEq(address(adapter).balance, 0);
     }
 
+    function test_bridgeETH_doesNotGivePreexistingBalanceToAnotherCommunityVault() public {
+        uint256 unsolicitedBalance = 0.25 ether;
+        uint256 routeRefund = 0.002 ether;
+        vm.deal(address(adapter), unsolicitedBalance);
+        liFiDiamond.setRefundAmount(routeRefund);
+        vm.deal(gardensRouter, 1.01 ether);
+
+        vm.prank(gardensRouter);
+        adapter.bridgeETH{value: 1.01 ether}(_request(0), _quote(0.9 ether, 1.01 ether));
+
+        assertEq(address(0xCAFE).balance, routeRefund);
+        assertEq(address(adapter).balance, unsolicitedBalance);
+    }
+
     function test_bridgeETH_revertsBelowMinimumOutput() public {
         vm.deal(gardensRouter, 1 ether);
         vm.prank(gardensRouter);
@@ -132,6 +145,43 @@ contract LiFiBridgeAdapterTest is Test {
 
         vm.expectRevert(LiFiBridgeAdapter.ZeroAddress.selector);
         adapter.setRouter(address(0));
+    }
+
+    function test_recoverNative_sendsUnsolicitedBalanceToOwnerSelectedRecipient() public {
+        address payable recipient = payable(address(0xFEE));
+        vm.deal(address(adapter), 0.25 ether);
+
+        vm.expectEmit(true, false, false, true, address(adapter));
+        emit LiFiBridgeAdapter.NativeRecovered(recipient, 0.25 ether);
+        adapter.recoverNative(recipient);
+
+        assertEq(recipient.balance, 0.25 ether);
+        assertEq(address(adapter).balance, 0);
+    }
+
+    function test_recoverNative_revertsForNonOwner() public {
+        vm.deal(address(adapter), 1 ether);
+        vm.prank(address(0xBAD));
+        vm.expectRevert();
+        adapter.recoverNative(payable(address(0xFEE)));
+    }
+
+    function test_recoverNative_revertsForZeroRecipientOrBalance() public {
+        vm.deal(address(adapter), 1 ether);
+        vm.expectRevert(LiFiBridgeAdapter.ZeroAddress.selector);
+        adapter.recoverNative(payable(address(0)));
+
+        adapter.recoverNative(payable(address(0xFEE)));
+        vm.expectRevert(LiFiBridgeAdapter.NoNativeBalance.selector);
+        adapter.recoverNative(payable(address(0xFEE)));
+    }
+
+    function test_recoverNative_revertsWhenRecipientRejectsTransfer() public {
+        RejectingRefundRecipient recipient = new RejectingRefundRecipient();
+        vm.deal(address(adapter), 1 ether);
+
+        vm.expectRevert(LiFiBridgeAdapter.RefundFailed.selector);
+        adapter.recoverNative(payable(address(recipient)));
     }
 
     function test_bridgeETH_revertsOnZeroValue() public {

@@ -22,6 +22,7 @@ contract LiFiBridgeAdapter is Ownable, IBridgeAdapter {
     uint256 public transferNonce;
 
     event RouterUpdated(address indexed router);
+    event NativeRecovered(address indexed recipient, uint256 amount);
     event LiFiRouteExecuted(
         bytes32 indexed transferId,
         uint256 indexed destinationChainId,
@@ -37,6 +38,7 @@ contract LiFiBridgeAdapter is Ownable, IBridgeAdapter {
     error InvalidQuote();
     error InsufficientOutput(uint256 expected, uint256 minimum);
     error RefundFailed();
+    error NoNativeBalance();
     error LiFiCallFailed(bytes reason);
 
     modifier onlyRouter() {
@@ -61,6 +63,20 @@ contract LiFiBridgeAdapter is Ownable, IBridgeAdapter {
         emit RouterUpdated(_router);
     }
 
+    /// @notice Recovers native value sent outside an active LI.FI route.
+    /// Route-scoped refunds are still returned to the originating community
+    /// vault by `bridgeETH`; this escape hatch only prevents unsolicited or
+    /// delayed native transfers from becoming permanently trapped.
+    function recoverNative(address payable recipient) external onlyOwner {
+        if (recipient == address(0)) revert ZeroAddress();
+        uint256 amount = address(this).balance;
+        if (amount == 0) revert NoNativeBalance();
+
+        (bool recovered,) = recipient.call{value: amount}("");
+        if (!recovered) revert RefundFailed();
+        emit NativeRecovered(recipient, amount);
+    }
+
     /// @inheritdoc IBridgeAdapter
     function bridgeETH(BridgeRequest calldata request, bytes calldata quoteData)
         external
@@ -69,6 +85,7 @@ contract LiFiBridgeAdapter is Ownable, IBridgeAdapter {
         returns (bytes32 transferId, uint256 expectedAmountOut)
     {
         if (msg.value == 0) revert ZeroValue();
+        uint256 preexistingBalance = address(this).balance - msg.value;
         if (request.destinationReceiver == address(0) || request.refundRecipient == address(0)) {
             revert ZeroAddress();
         }
@@ -107,7 +124,7 @@ contract LiFiBridgeAdapter is Ownable, IBridgeAdapter {
         (bool success, bytes memory result) = liFiDiamond.call{value: quote.executionValue}(quote.routerCalldata);
         if (!success) revert LiFiCallFailed(result);
 
-        uint256 routeRefund = address(this).balance;
+        uint256 routeRefund = address(this).balance - preexistingBalance;
         if (routeRefund != 0) {
             (bool refunded,) = payable(request.refundRecipient).call{value: routeRefund}("");
             if (!refunded) revert RefundFailed();
