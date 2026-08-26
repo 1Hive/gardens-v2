@@ -60,6 +60,7 @@ import { logOnce } from "@/utils/log";
 import { recordMarkeeView } from "@/utils/markee";
 import {
   buildMarkeeOpenStreamOperations,
+  buildMarkeeStopStreamOperations,
   CFA_AGREEMENT_ID,
   CFA_V1_FORWARDER_ADDRESS,
   cfaV1ForwarderABI,
@@ -1935,24 +1936,115 @@ function CommunityMarkeePreviewModal({
     let stopTransactionHash: `0x${string}` | undefined;
     let notificationToastId: string | undefined;
     try {
-      const ethxResult = await publicClient.readContract({
-        abi: streamingLeaderboardRuntimeABI,
-        address: leaderboardAddress,
-        functionName: "ETHX",
-      });
-      if (!isAddress(ethxResult)) {
-        throw new Error("The Markee stream token is unavailable.");
+      const [ethxResult, hostResult] = await Promise.all([
+        publicClient.readContract({
+          abi: streamingLeaderboardRuntimeABI,
+          address: leaderboardAddress,
+          functionName: "ETHX",
+        }),
+        publicClient.readContract({
+          abi: streamingLeaderboardRuntimeABI,
+          address: leaderboardAddress,
+          functionName: "HOST",
+        }),
+      ]);
+      if (!isAddress(ethxResult) || !isAddress(hostResult)) {
+        throw new Error("The Markee stream configuration is unavailable.");
       }
+      const ethx = getAddress(ethxResult);
+      const host = getAddress(hostResult);
+      const [cfaResult, currentFlowRate, topMarkeeResult, rankedMarkeesResult] =
+        await Promise.all([
+          publicClient.readContract({
+            abi: superfluidHostABI,
+            address: host,
+            args: [CFA_AGREEMENT_ID],
+            functionName: "getAgreementClass",
+          }),
+          publicClient.readContract({
+            abi: cfaV1ForwarderABI,
+            address: CFA_V1_FORWARDER_ADDRESS,
+            args: [ethx, connectedAccount, leaderboardAddress],
+            functionName: "getFlowrate",
+          }),
+          publicClient.readContract({
+            abi: streamingLeaderboardRuntimeABI,
+            address: leaderboardAddress,
+            functionName: "topMarkee",
+          }),
+          publicClient.readContract({
+            abi: streamingLeaderboardRuntimeABI,
+            address: leaderboardAddress,
+            args: [2n],
+            functionName: "getTopMarkees",
+          }),
+        ]);
+      if (!isAddress(cfaResult)) {
+        throw new Error("The Markee stream agreement is unavailable.");
+      }
+
+      let challenger: Address | undefined;
+      if (
+        activeStreamMarkee != null &&
+        isAddress(topMarkeeResult) &&
+        activeStreamMarkee.toLowerCase() === topMarkeeResult.toLowerCase()
+      ) {
+        const [rankedAddresses, rankedRates] = rankedMarkeesResult;
+        const challengerIndex = rankedAddresses.findIndex(
+          (address) => address.toLowerCase() !== topMarkeeResult.toLowerCase(),
+        );
+        const challengerAddress = rankedAddresses[challengerIndex];
+        const challengerRate = rankedRates[challengerIndex] ?? 0n;
+
+        if (challengerAddress != null && challengerRate > 0n) {
+          const [topAggregateRate, currentLegacyFloor] = await Promise.all([
+            publicClient.readContract({
+              abi: streamingLeaderboardRuntimeABI,
+              address: leaderboardAddress,
+              args: [getAddress(topMarkeeResult)],
+              functionName: "aggregateRate",
+            }),
+            publicClient
+              .readContract({
+                abi: streamingLeaderboardRuntimeABI,
+                address: leaderboardAddress,
+                args: [getAddress(topMarkeeResult)],
+                functionName: "currentLegacyFloor",
+              })
+              .catch(() => 0n),
+          ]);
+          const stoppedRate = currentFlowRate > 0n ? currentFlowRate : 0n;
+          const remainingAggregateRate =
+            topAggregateRate > stoppedRate ?
+              topAggregateRate - stoppedRate
+            : 0n;
+          const remainingTopThreshold =
+            currentLegacyFloor > remainingAggregateRate ? currentLegacyFloor : (
+              remainingAggregateRate
+            );
+          if (challengerRate > remainingTopThreshold) {
+            challenger = getAddress(challengerAddress);
+          }
+        }
+      }
+
+      const operations = buildMarkeeStopStreamOperations({
+        backer: connectedAccount,
+        board: leaderboardAddress,
+        cfaAgreement: getAddress(cfaResult),
+        challenger,
+        ethx,
+      });
 
       notificationToastId = beginTransactionNotification(
         "Stop Markee stream",
-        CFA_V1_FORWARDER_ADDRESS,
+        host,
       );
       stopTransactionHash = await actionWalletClient.writeContract({
-        abi: cfaV1ForwarderABI,
-        address: CFA_V1_FORWARDER_ADDRESS,
-        args: [getAddress(ethxResult), leaderboardAddress, 0n],
-        functionName: "setFlowrate",
+        abi: superfluidHostABI,
+        address: host,
+        args: [operations],
+        functionName: "batchCall",
       });
       updateTransactionNotification(notificationToastId, {
         status: "loading",

@@ -51,6 +51,8 @@ export const getMarkeeEthxAddress = (chainId: number | undefined) =>
   chainId == null ? undefined : MARKEE_ETHX_BY_CHAIN_ID[chainId];
 
 export const streamingLeaderboardRuntimeABI = parseAbi([
+  "error AlreadyTop()",
+  "error NotHigherThanTop()",
   "error UnknownMarkee()",
   "function ETHX() view returns (address)",
   "function HOST() view returns (address)",
@@ -58,7 +60,9 @@ export const streamingLeaderboardRuntimeABI = parseAbi([
   "function backerMarkee(address backer) view returns (address)",
   "function aggregateRate(address markee) view returns (uint256)",
   "function beneficiaryAddress() view returns (address)",
+  "function claimTop(address challenger)",
   "function createMarkee(string message, string name) returns (address markeeAddress)",
+  "function currentLegacyFloor(address markee) view returns (uint256)",
   "function getTopMarkees(uint256 limit) view returns (address[] topAddresses, uint256[] topRates)",
   "function getMarkees(uint256 offset, uint256 limit) view returns (address[] result)",
   "function isMarkeeOnLeaderboard(address markee) view returns (bool)",
@@ -69,6 +73,7 @@ export const streamingLeaderboardRuntimeABI = parseAbi([
   "function poolOf(address markee) view returns (address)",
   "function revNetEnabled() view returns (bool)",
   "function topRate() view returns (uint256)",
+  "function topMarkee() view returns (address)",
   "function updateMessage(address markee, string newMessage)",
   "function updateName(address markee, string newName)",
   "function withdrawDeposit()",
@@ -83,6 +88,8 @@ export const markeeOwnerABI = parseAbi([
 ]);
 
 export const superfluidHostABI = parseAbi([
+  "error AlreadyTop()",
+  "error NotHigherThanTop()",
   "error SF_TOKEN_MOVE_INSUFFICIENT_BALANCE()",
   "error UnknownMarkee()",
   "function batchCall((uint32 operationType,address target,bytes data)[] operations) payable",
@@ -122,6 +129,7 @@ const cfaUpdateFlowABI = parseAbi([
 const cfaDeleteFlowABI = parseAbi([
   "function deleteFlow(address token, address sender, address receiver, bytes ctx) returns (bytes)",
 ]);
+const claimTopABI = parseAbi(["function claimTop(address challenger)"]);
 const gdaConnectPoolABI = parseAbi([
   "function connectPool(address pool, bytes ctx) returns (bytes)",
 ]);
@@ -506,6 +514,50 @@ export function buildMarkeeOpenStreamOperations({
     operationType: OP_CALL_AGREEMENT,
     target: gdaAgreement,
   });
+
+  return operations;
+}
+
+export function buildMarkeeStopStreamOperations({
+  backer,
+  board,
+  cfaAgreement,
+  challenger,
+  ethx,
+}: {
+  backer: Address;
+  board: Address;
+  cfaAgreement: Address;
+  challenger?: Address;
+  ethx: Address;
+}): MarkeeStreamOperation[] {
+  const deleteFlowCall = encodeFunctionData({
+    abi: cfaDeleteFlowABI,
+    args: [ethx, backer, board, "0x"],
+    functionName: "deleteFlow",
+  });
+  const operations: MarkeeStreamOperation[] = [
+    {
+      data: encodeAbiParameters(
+        [{ type: "bytes" }, { type: "bytes" }],
+        [deleteFlowCall, "0x"],
+      ),
+      operationType: OP_CALL_AGREEMENT,
+      target: cfaAgreement,
+    },
+  ];
+
+  if (challenger != null) {
+    operations.push({
+      data: encodeFunctionData({
+        abi: claimTopABI,
+        args: [challenger],
+        functionName: "claimTop",
+      }),
+      operationType: OP_SIMPLE_FORWARD_CALL,
+      target: board,
+    });
+  }
 
   return operations;
 }

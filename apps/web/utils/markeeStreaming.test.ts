@@ -1,7 +1,14 @@
-import { decodeErrorResult, getAddress, parseEther, parseUnits } from "viem";
+import {
+  decodeErrorResult,
+  decodeFunctionData,
+  getAddress,
+  parseEther,
+  parseUnits,
+} from "viem";
 import { describe, expect, it, vi } from "vitest";
 import {
   buildMarkeeOpenStreamOperations,
+  buildMarkeeStopStreamOperations,
   getBufferedMarkeeGasEstimate,
   getMarkeeAutoFunding,
   formatMarkeeEthxBalance,
@@ -15,6 +22,7 @@ import {
   MARKEE_BUFFER_PERIOD,
   MARKEE_SECONDS_IN_MONTH,
   roundUpMarkeeMonthlyMinimum,
+  streamingLeaderboardRuntimeABI,
   superfluidHostABI,
   waitForMarkeeRegistration,
 } from "./markeeStreaming";
@@ -342,6 +350,40 @@ describe("Markee streaming transaction builder", () => {
     expect(operations.map(({ operationType }) => operationType)).toEqual([
       301, 201, 201, 201,
     ]);
+  });
+
+  it("builds a single delete-flow operation when no runner-up can take the top", () => {
+    const operations = buildMarkeeStopStreamOperations({
+      backer: address("1"),
+      board: address("2"),
+      cfaAgreement: address("3"),
+      ethx: address("4"),
+    });
+
+    expect(operations.map(({ operationType }) => operationType)).toEqual([201]);
+  });
+
+  it("claims the top for the eligible runner-up after deleting the flow", () => {
+    const board = address("2");
+    const challenger = address("5");
+    const operations = buildMarkeeStopStreamOperations({
+      backer: address("1"),
+      board,
+      cfaAgreement: address("3"),
+      challenger,
+      ethx: address("4"),
+    });
+
+    expect(operations.map(({ operationType }) => operationType)).toEqual([
+      201, 301,
+    ]);
+    expect(operations[1]?.target).toBe(board);
+    expect(
+      decodeFunctionData({
+        abi: streamingLeaderboardRuntimeABI,
+        data: operations[1]!.data,
+      }),
+    ).toEqual({ args: [challenger], functionName: "claimTop" });
   });
 
   it("reuses ETHx and skips approval only when the existing allowance covers the buffer", () => {
