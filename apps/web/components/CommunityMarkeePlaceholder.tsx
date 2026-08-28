@@ -406,6 +406,8 @@ function CommunityMarkeePreviewModal({
     challengeMonthlyRateAmount,
   );
   const [monthlyRate, setMonthlyRate] = useState(challengeMonthlyRate);
+  const [initialMonthlyRate, setInitialMonthlyRate] =
+    useState(challengeMonthlyRate);
   const [isMonthlyRateFocused, setIsMonthlyRateFocused] = useState(false);
   const [isDepositManagerOpen, setIsDepositManagerOpen] = useState(false);
   const [isReviewingPayment, setIsReviewingPayment] = useState(false);
@@ -577,6 +579,13 @@ function CommunityMarkeePreviewModal({
       return 0n;
     }
   }, [monthlyRate]);
+  const initialMonthlyRateAmount = useMemo(() => {
+    try {
+      return parseEther(initialMonthlyRate);
+    } catch {
+      return 0n;
+    }
+  }, [initialMonthlyRate]);
   const ethxAvailableBalance = ethxWalletBalance - ethxWalletDeficit;
   const estimatedGasReserve = estimatedStreamGasCost ?? parseEther("0.0002");
   const streamAmounts = useMemo(() => {
@@ -646,6 +655,12 @@ function CommunityMarkeePreviewModal({
       (editedMessage.trim().length > 0 &&
         messageByteLength <= messageByteLimit &&
         nameByteLength <= nameByteLimit));
+  const isStreamFormDirty =
+    !hasActiveStream ||
+    derivedMonthlyRateAmount !== initialMonthlyRateAmount ||
+    hasPendingMessageUpdate ||
+    hasPendingNameUpdate ||
+    isFundingAnotherMarkee;
   const isMarkeeMessageMissing =
     (shouldCreateMarkee && newMarkeeMessage.trim().length === 0) ||
     (!shouldCreateMarkee &&
@@ -708,6 +723,7 @@ function CommunityMarkeePreviewModal({
   useEffect(() => {
     if (isOpen) {
       setMonthlyRate(challengeMonthlyRate);
+      setInitialMonthlyRate(challengeMonthlyRate);
       setIsReviewingPayment(false);
       setStreamValidationError(null);
       setNewMarkeeMessage("");
@@ -808,7 +824,11 @@ function CommunityMarkeePreviewModal({
         : null,
       );
       if (liveRate > 0n) {
-        setMonthlyRate(formatEthInput(liveRate * MARKEE_SECONDS_IN_MONTH));
+        const liveMonthlyRate = formatEthInput(
+          liveRate * MARKEE_SECONDS_IN_MONTH,
+        );
+        setMonthlyRate(liveMonthlyRate);
+        setInitialMonthlyRate(liveMonthlyRate);
       }
     })()
       .catch((error: unknown) => {
@@ -2164,6 +2184,7 @@ function CommunityMarkeePreviewModal({
                   connectedAccount != null &&
                   !needsMarkeeNetworkSwitch &&
                   (!canStartPreview ||
+                    !isStreamFormDirty ||
                     isStreaming ||
                     isStoppingStream ||
                     isConnectedMarkeeLoading ||
@@ -2189,6 +2210,8 @@ function CommunityMarkeePreviewModal({
                 testId="markee-stream-preview-submit"
                 tooltip={
                   isMarkeeMessageMissing ? "Add a message for your Markee."
+                  : !isStreamFormDirty ?
+                    "Change the stream, message, name, or funded Markee to continue."
                   : isStreamGasEstimatePending ?
                     "Estimating the network fee…"
                   : streamFormError ??
