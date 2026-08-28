@@ -611,7 +611,7 @@ export function CommunityMarkeeStreamStats({
           <span
             className={
               totalStreamedTooltip == null ? "" : (
-                "tooltip tooltip-top cursor-help"
+                "tooltip tooltip-top-right cursor-help"
               )
             }
             data-tip={totalStreamedTooltip}
