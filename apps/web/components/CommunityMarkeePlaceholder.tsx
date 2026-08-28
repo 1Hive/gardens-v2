@@ -15,6 +15,7 @@ import {
   PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 import { getNetwork, getWalletClient } from "@wagmi/core";
+import { useModal } from "connectkit";
 import { toast } from "react-toastify";
 import {
   decodeEventLog,
@@ -49,6 +50,7 @@ import {
   TransactionProps,
 } from "@/components/TransactionModal";
 import { chainConfigMap, getExplorerUrl } from "@/configs/chains";
+import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
 import { ComputedStatus } from "@/hooks/useContractWriteWithConfirmations";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import {
@@ -475,7 +477,8 @@ function CommunityMarkeePreviewModal({
   const [editedName, setEditedName] = useState(topMarkeeName ?? "");
   const { address: connectedAccount } = useAccount();
   const { chain: connectedChain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { switchNetworkAsync } = useAppSwitchNetwork();
+  const { setOpen: setConnectModalOpen } = useModal();
   const publicClient = usePublicClient({ chainId: markeeChainId });
   const { data: walletClient } = useWalletClient({ chainId: markeeChainId });
   useTransactionNotification({
@@ -496,6 +499,8 @@ function CommunityMarkeePreviewModal({
     watchTransaction: true,
   });
   const isLive = leaderboardAddress != null && markeeChainId != null;
+  const needsMarkeeNetworkSwitch =
+    isLive && connectedAccount != null && connectedChain?.id !== markeeChainId;
   const resolvedEthxAddress =
     ethxAddress ?? getMarkeeEthxAddress(markeeChainId) ?? null;
   const isTopMarkeeOwner =
@@ -2156,20 +2161,31 @@ function CommunityMarkeePreviewModal({
                 color="primary"
                 className="w-full sm:ml-auto sm:w-auto"
                 disabled={
-                  !canStartPreview ||
-                  isStreaming ||
-                  isStoppingStream ||
-                  isConnectedMarkeeLoading ||
-                  isStreamPositionLoading ||
-                  isStreamGasEstimateLoading ||
-                  isStreamGasEstimatePending ||
-                  hasInsufficientWalletBalance ||
-                  streamFormError != null ||
-                  autoFundingError != null ||
-                  (isLive && connectedAccount == null)
+                  connectedAccount != null &&
+                  !needsMarkeeNetworkSwitch &&
+                  (!canStartPreview ||
+                    isStreaming ||
+                    isStoppingStream ||
+                    isConnectedMarkeeLoading ||
+                    isStreamPositionLoading ||
+                    isStreamGasEstimateLoading ||
+                    isStreamGasEstimatePending ||
+                    hasInsufficientWalletBalance ||
+                    streamFormError != null ||
+                    autoFundingError != null)
                 }
                 isLoading={isStreaming}
-                onClick={() => setIsReviewingPayment(true)}
+                onClick={async () => {
+                  if (isLive && connectedAccount == null) {
+                    setConnectModalOpen(true);
+                    return;
+                  }
+                  if (needsMarkeeNetworkSwitch && markeeChainId != null) {
+                    await switchNetworkAsync?.(markeeChainId);
+                    return;
+                  }
+                  setIsReviewingPayment(true);
+                }}
                 testId="markee-stream-preview-submit"
                 tooltip={
                   isMarkeeMessageMissing ? "Add a message for your Markee."
@@ -2192,6 +2208,8 @@ function CommunityMarkeePreviewModal({
                   "Checking your stream…"
                 : isLive && connectedAccount == null ?
                   "Connect wallet"
+                : needsMarkeeNetworkSwitch ?
+                  "Switch network"
                 : "Review payment info"}
               </Button>
             </div>
@@ -2496,7 +2514,7 @@ function CommunityMarkeePreviewModal({
               <div className="flex items-center justify-between gap-4 border-t border-neutral-content/15 pt-3 font-mono text-xs text-neutral-soft-content">
                 <button
                   type="button"
-                  className="font-semibold text-primary-content transition-colors hover:text-primary-hover-content"
+                  className="text-xs font-semibold text-primary-content transition-colors hover:text-primary-hover-content"
                   disabled={ethxAddress == null || connectedAccount == null}
                   onClick={() => setIsDepositManagerOpen(true)}
                 >
@@ -2504,13 +2522,13 @@ function CommunityMarkeePreviewModal({
                 </button>
                 {streamAmounts.value > 0n ?
                   <span
-                    className="tooltip tooltip-top-left cursor-help text-right text-sm font-semibold text-neutral-content"
+                    className="tooltip tooltip-top-left cursor-help text-right text-xs font-semibold text-neutral-content"
                     data-tip={`This transaction deposits ${formatEther(streamAmounts.value)} ETH as ETHx, giving the stream approximately ${formatMarkeeRunwayShort(streamAmounts.runwaySeconds)} of runway.`}
                   >
                     {formatEthAmountRounded(streamAmounts.value, 6)} ETH deposit
                   </span>
                 : <span
-                    className="tooltip tooltip-top-left cursor-help text-right text-sm font-semibold text-neutral-content"
+                    className="tooltip tooltip-top-left cursor-help text-right text-xs font-semibold text-neutral-content"
                     data-tip={`This ETHx balance gives the stream approximately ${formatMarkeeRunwayShort(streamAmounts.runwaySeconds)} of runway. Use Deposit Manager to add more.`}
                   >
                     {formatMarkeeRunwayShort(streamAmounts.runwaySeconds)}

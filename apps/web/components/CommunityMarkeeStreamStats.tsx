@@ -1,10 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getWalletClient } from "@wagmi/core";
 import { Address, formatEther, getAddress, isAddress, zeroAddress } from "viem";
-import { useBalance, usePublicClient } from "wagmi";
+import { useBalance, useNetwork, usePublicClient } from "wagmi";
 import { LiveFlowingAmount } from "@/components/LiveFlowingAmount";
+import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
+import { ComputedStatus } from "@/hooks/useContractWriteWithConfirmations";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { reportClientError } from "@/utils/clientErrorReporter";
 import { logOnce } from "@/utils/log";
 import {
   CFA_V1_FORWARDER_ADDRESS,
@@ -12,6 +17,7 @@ import {
   markeeSuperfluidPoolABI,
   streamingLeaderboardRuntimeABI,
 } from "@/utils/markeeStreaming";
+import { isUserRejectedTransactionError } from "@/utils/transactionMessages";
 
 type SettlementSnapshot = {
   feeBps: number;
@@ -72,11 +78,11 @@ function Stat({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-w-0">
-      <p className="text-[10px] uppercase tracking-wider text-neutral-soft-content">
+    <div className="flex min-w-0 flex-col">
+      <p className="min-h-6 text-[10px] uppercase leading-3 tracking-wider text-neutral-soft-content">
         {label}
       </p>
-      <div className="mt-1 break-words text-xs font-semibold text-neutral-content">
+      <div className="mt-1 break-words text-xs font-semibold leading-tight text-neutral-content">
         {children}
       </div>
     </div>
@@ -95,6 +101,8 @@ export function CommunityMarkeeStreamStats({
   markeeAddress,
 }: Props) {
   const publicClient = usePublicClient({ chainId });
+  const { chain } = useNetwork();
+  const { switchNetworkAsync } = useAppSwitchNetwork();
   const { data: liveEthxBalance } = useBalance({
     address: connectedAccount,
     chainId,
@@ -103,6 +111,34 @@ export function CommunityMarkeeStreamStats({
     watch: true,
   });
   const [settlement, setSettlement] = useState<SettlementSnapshot | null>(null);
+  const [settlementRefreshKey, setSettlementRefreshKey] = useState(0);
+  const [settlementTransactionHash, setSettlementTransactionHash] = useState<
+    `0x${string}` | undefined
+  >();
+  const [settlementTransactionError, setSettlementTransactionError] =
+    useState<Error | null>(null);
+  const [settlementTransactionStatus, setSettlementTransactionStatus] =
+    useState<ComputedStatus>(undefined);
+  const isSettling =
+    settlementTransactionStatus === "waiting" ||
+    settlementTransactionStatus === "loading";
+
+  useTransactionNotification({
+    chainId,
+    contractName: "Claim Markee earnings",
+    enabled: settlementTransactionStatus != null,
+    fallbackErrorMessage: "Unable to claim your Markee earnings.",
+    safeAddress: connectedAccount,
+    targetAddress: leaderboardAddress,
+    transactionData:
+      settlementTransactionHash != null ?
+        { hash: settlementTransactionHash }
+      : undefined,
+    transactionError: settlementTransactionError,
+    transactionHash: settlementTransactionHash,
+    transactionStatus: settlementTransactionStatus,
+    watchTransaction: true,
+  });
   const {
     currentUserFlowRateBn,
     currentUserOtherFlowRateBn,
@@ -242,7 +278,73 @@ export function CommunityMarkeeStreamStats({
     leaderboardAddress,
     markeeAddress,
     publicClient,
+    settlementRefreshKey,
   ]);
+
+  const claimEarnings = async () => {
+    if (
+      publicClient == null ||
+      settlement == null ||
+      settlement.pendingWei <= 0n ||
+      isSettling
+    ) {
+      return;
+    }
+
+    setSettlementTransactionError(null);
+    setSettlementTransactionHash(undefined);
+    try {
+      setSettlementTransactionStatus("waiting");
+      if (chain?.id !== chainId) await switchNetworkAsync?.(chainId);
+      const walletClient = await getWalletClient({ chainId });
+      if (walletClient == null) {
+        throw new Error("Connect your wallet to claim your earnings.");
+      }
+
+      const hash = await walletClient.writeContract({
+        abi: streamingLeaderboardRuntimeABI,
+        account: connectedAccount,
+        address: leaderboardAddress,
+        args: [[connectedAccount]],
+        functionName: "settle",
+      });
+      setSettlementTransactionHash(hash);
+      setSettlementTransactionStatus("loading");
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      if (receipt.status !== "success") {
+        throw new Error("The earnings claim transaction reverted.");
+      }
+
+      setSettlementTransactionStatus("success");
+      setSettlementRefreshKey((current) => current + 1);
+    } catch (cause) {
+      if (isUserRejectedTransactionError(cause)) {
+        setSettlementTransactionStatus(undefined);
+        return;
+      }
+      const error =
+        cause instanceof Error ? cause : new Error("The claim failed.");
+      setSettlementTransactionError(error);
+      setSettlementTransactionStatus("error");
+      const context = {
+        type: "markee-settlement-error",
+        chainId,
+        connectedAccount,
+        leaderboardAddress,
+        tags: {
+          error_type: "markee-settlement-error",
+          chain_id: chainId,
+        },
+      };
+      logOnce(
+        "error",
+        "[CommunityMarkee] Markee settlement failed",
+        cause,
+        context,
+      );
+      reportClientError(cause, context);
+    }
+  };
 
   const effectiveRatePerSecond =
     activeRatePerSecond > 0n ? activeRatePerSecond : (
@@ -324,18 +426,33 @@ export function CommunityMarkeeStreamStats({
             fractionDigits={1}
           />
         </Stat>
-        <Stat
-          label={
-            settlement?.mintsMarkee === false ? "ETH earned" : "MARKEE earned"
-          }
-        >
-          <LiveFlowingAmount
-            value={earnedValue}
-            ratePerSecond={earnedRate}
-            fractionDigits={7}
-            className="text-primary-content"
-          />
-        </Stat>
+        <div className="flex min-w-0 flex-col">
+          <p className="min-h-6 text-[10px] uppercase leading-3 tracking-wider text-neutral-soft-content">
+            {settlement?.mintsMarkee === false ? "ETH earned" : "MARKEE earned"}
+          </p>
+          <div className="mt-1 break-words text-xs font-semibold leading-tight text-primary-content">
+            <LiveFlowingAmount
+              value={earnedValue}
+              ratePerSecond={earnedRate}
+              fractionDigits={7}
+            />
+          </div>
+          <button
+            type="button"
+            className="mt-2 w-fit rounded-md border border-primary-content/50 px-2 py-1 text-[10px] font-medium text-primary-content transition-colors enabled:hover:bg-primary-content/10 disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={
+              settlement == null || settlement.pendingWei <= 0n || isSettling
+            }
+            onClick={claimEarnings}
+            title={
+              settlement != null && settlement.pendingWei <= 0n ?
+                "No earnings available to claim yet."
+              : "Claim your accumulated Markee earnings"
+            }
+          >
+            {isSettling ? "Claiming…" : "Claim"}
+          </button>
+        </div>
       </div>
     </div>
   );

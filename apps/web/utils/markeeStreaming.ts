@@ -72,6 +72,7 @@ export const streamingLeaderboardRuntimeABI = parseAbi([
   "function percentToPlatformFeeReceiver() view returns (uint256)",
   "function poolOf(address markee) view returns (address)",
   "function revNetEnabled() view returns (bool)",
+  "function settle(address[] backers)",
   "function topRate() view returns (uint256)",
   "function topMarkee() view returns (address)",
   "function updateMessage(address markee, string newMessage)",
