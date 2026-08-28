@@ -2092,9 +2092,18 @@ function CommunityMarkeePreviewModal({
         leaderboardAddress={leaderboardAddress}
         isOpen={isOpen}
         onFundMarkee={handleSelectFundingMarkee}
+        onSelectOwnedMarkee={() => {
+          setSelectedFundingMarkee(null);
+          setMonthlyRate(challengeMonthlyRate);
+          setIsEditingMessage(false);
+          setIsReviewingPayment(false);
+          setStreamValidationError(null);
+        }}
         onClose={handleClose}
         ownedMarkeeAddress={ownedMarkeeAddress}
-        selectedMarkeeAddress={selectedFundingMarkee?.address}
+        selectedMarkeeAddress={
+          selectedFundingMarkee?.address ?? ownedMarkeeAddress
+        }
         title={
           isReviewingPayment ? "Review payment"
           : isFundingAnotherMarkee ?

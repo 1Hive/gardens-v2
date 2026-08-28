@@ -31,6 +31,7 @@ type Props = {
   isOpen: boolean;
   leaderboardAddress?: Address;
   onFundMarkee?: (entry: StreamingMarkeeLeaderboardEntry) => void;
+  onSelectOwnedMarkee?: () => void;
   onClose: () => void;
   ownedMarkeeAddress?: Address | null;
   selectedMarkeeAddress?: Address | null;
@@ -60,6 +61,7 @@ export function CommunityStreamingMarkeeModal({
   isOpen,
   leaderboardAddress,
   onFundMarkee,
+  onSelectOwnedMarkee,
   onClose,
   ownedMarkeeAddress,
   selectedMarkeeAddress,
@@ -313,7 +315,7 @@ export function CommunityStreamingMarkeeModal({
                     return (
                       <div
                         key={entry.address}
-                        className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 ${isPromoted ? "border-primary-content bg-primary-content/5" : "border-neutral-content/10"}`}
+                        className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 ${isSelected ? "border-primary-content" : "border-neutral-content/10"} ${isPromoted ? "bg-primary-content/5" : ""}`}
                       >
                         <div className="flex min-w-0 gap-2">
                           <span className="font-mono text-xs text-neutral-content/30">
@@ -354,15 +356,30 @@ export function CommunityStreamingMarkeeModal({
                               </p>
                             )}
                           </div>
-                          {!isOwned && onFundMarkee != null && (
+                          {(
+                            isOwned &&
+                            selectedMarkeeAddress != null &&
+                            !isSelected &&
+                            onSelectOwnedMarkee != null
+                          ) ?
                             <button
                               type="button"
-                              className={`h-7 rounded-lg border px-2.5 text-xs font-medium transition-colors ${isSelected ? "border-primary-content bg-primary-content text-neutral-inverted-content" : "border-primary-content/50 text-primary-content hover:bg-primary-content/10"}`}
-                              onClick={() => onFundMarkee(entry)}
+                              className="h-7 rounded-lg border border-primary-content/50 px-2.5 text-xs font-medium text-primary-content transition-colors hover:bg-primary-content/10"
+                              onClick={onSelectOwnedMarkee}
                             >
-                              {isSelected ? "Selected" : "Fund"}
+                              Fund
                             </button>
-                          )}
+                          : !isOwned &&
+                            onFundMarkee != null && (
+                              <button
+                                type="button"
+                                className={`h-7 rounded-lg border px-2.5 text-xs font-medium transition-colors ${isSelected ? "border-primary-content bg-primary-content text-neutral-inverted-content" : "border-primary-content/50 text-primary-content hover:bg-primary-content/10"}`}
+                                onClick={() => onFundMarkee(entry)}
+                              >
+                                {isSelected ? "Selected" : "Fund"}
+                              </button>
+                            )
+                          }
                         </div>
                       </div>
                     );
