@@ -6,6 +6,7 @@ import {
   buildCitizenRegistrationPath,
   CITIZEN_WALLET_CHAIN_ID,
 } from "@/utils/citizenWallet";
+import { getCitizenSubmittedAction } from "@/utils/citizenWalletConfirmation";
 import {
   CitizenSearchParams,
   getCitizenConnectionParams,
@@ -162,6 +163,7 @@ export default async function CitizenRegistrationPage({
         tokenSymbol={tokenSymbol}
         tokenDecimals={tokenDecimals}
         connectionParams={connectionParams}
+        submittedAction={getCitizenSubmittedAction(query.citizenAction)}
         transactionHash={
           typeof query.tx === "string" ? query.tx : query.tx?.[0]
         }

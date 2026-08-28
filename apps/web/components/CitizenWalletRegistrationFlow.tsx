@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Address, formatUnits, isHash } from "viem";
+import { Address, formatUnits, parseAbi } from "viem";
 import { Button } from "./Button";
 import {
   BREAD_TOKEN_ADDRESS,
@@ -13,7 +13,19 @@ import {
   encodeCitizenRegistration,
   getCitizenRegistrationAction,
 } from "@/utils/citizenWallet";
+import {
+  type CitizenSubmittedAction,
+  waitForCitizenActionConfirmation,
+} from "@/utils/citizenWalletConfirmation";
+import { reportClientError } from "@/utils/clientErrorReporter";
 import { getEnvPublicClient } from "@/utils/publicClient";
+
+const erc20AllowanceAbi = parseAbi([
+  "function allowance(address owner, address spender) view returns (uint256)",
+]);
+const registryMemberAbi = parseAbi([
+  "function isMember(address account) view returns (bool)",
+]);
 
 type Props = {
   account: Address;
@@ -27,6 +39,7 @@ type Props = {
   tokenSymbol: string;
   tokenDecimals: number;
   connectionParams: CitizenConnectionParams;
+  submittedAction?: CitizenSubmittedAction;
   transactionHash?: string;
 };
 
@@ -50,22 +63,50 @@ export function CitizenWalletRegistrationFlow(props: Props) {
   );
 
   useEffect(() => {
-    if (!transactionHash || !isHash(transactionHash)) return;
+    if (!props.submittedAction) return;
 
     let cancelled = false;
     setIsWaiting(true);
     setError(undefined);
-    getEnvPublicClient(100)
-      .waitForTransactionReceipt({ hash: transactionHash })
-      .then((receipt) => {
+    const client = getEnvPublicClient(100);
+
+    waitForCitizenActionConfirmation({
+      action: props.submittedAction,
+      registrationCost,
+      readAllowance: () =>
+        client.readContract({
+          address: BREAD_TOKEN_ADDRESS,
+          abi: erc20AllowanceAbi,
+          functionName: "allowance",
+          args: [props.account, props.communityAddress],
+        }),
+      readIsMember: () =>
+        client.readContract({
+          address: props.communityAddress,
+          abi: registryMemberAbi,
+          functionName: "isMember",
+          args: [props.account],
+        }),
+    })
+      .then(() => {
         if (cancelled) return;
-        if (receipt.status !== "success") {
-          throw new Error("Citizen Wallet transaction reverted.");
-        }
         window.location.replace(buildConnectedGardensUrl().toString());
       })
       .catch((cause: unknown) => {
         if (cancelled) return;
+        reportClientError(cause, {
+          type: "citizen-native-confirmation-error",
+          submittedAction: props.submittedAction,
+          citizenSubmissionHash: transactionHash,
+          chainId: 100,
+          connectedAddress: props.account,
+          communityAddress: props.communityAddress,
+          tags: {
+            error_type: "citizen-native-confirmation-error",
+            chain_id: 100,
+            citizen_action: props.submittedAction,
+          },
+        });
         setError(
           cause instanceof Error ?
             cause.message
@@ -79,7 +120,14 @@ export function CitizenWalletRegistrationFlow(props: Props) {
     return () => {
       cancelled = true;
     };
-  }, [buildConnectedGardensUrl, transactionHash]);
+  }, [
+    buildConnectedGardensUrl,
+    props.account,
+    props.communityAddress,
+    props.submittedAction,
+    registrationCost,
+    transactionHash,
+  ]);
 
   const buttonLabel = useMemo(() => {
     if (isWaiting) return "Waiting for confirmation…";
