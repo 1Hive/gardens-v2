@@ -10,12 +10,11 @@ import {
   getCovenantSignatureKey,
   setCovenantSignature,
 } from "@/utils/covenantSignatureStorage";
-import { signMessageWithProvider } from "@/utils/signMessageWithProvider";
+import {
+  getCovenantSignatureErrorAction,
+  signMessageWithProvider,
+} from "@/utils/signMessageWithProvider";
 import { getTxMessage } from "@/utils/transactionMessages";
-
-interface CustomError extends Error {
-  details?: string;
-}
 
 export function useCovenantAgreementSignature(
   message: string,
@@ -86,19 +85,19 @@ export function useCovenantAgreementSignature(
       }
 
       const storageKey =
-        chainId == null || covenant == null || !address
-          ? undefined
-          : getCovenantSignatureKey({
-              chainId,
-              communityAddress,
-              accountAddress: address,
-              covenant,
-            });
+        chainId == null || covenant == null || !address ?
+          undefined
+        : getCovenantSignatureKey({
+            chainId,
+            communityAddress,
+            accountAddress: address,
+            covenant,
+          });
 
       const cachedSignature =
-        storageKey == null
-          ? { found: false as const }
-          : getCovenantSignature(storageKey);
+        storageKey == null ?
+          { found: false as const }
+        : getCovenantSignature(storageKey);
 
       if (cachedSignature.found) {
         setCovenantAgreementTxProps({
@@ -131,14 +130,21 @@ export function useCovenantAgreementSignature(
       });
       triggerNextTx({ covenantSignature: signature });
     } catch (error) {
-      const customError = error as CustomError;
-      if (error instanceof Error) {
+      if (getCovenantSignatureErrorAction(error) === "block") {
         setCovenantAgreementTxProps({
           contractName: CovenantTitle,
-          message: getTxMessage("error", error, customError?.details),
+          message: "User rejected the request",
           status: "error",
         });
+        return;
       }
+
+      setCovenantAgreementTxProps({
+        contractName: CovenantTitle,
+        message: "Skipped",
+        status: "success",
+      });
+      triggerNextTx({ covenantSignature: "" });
     } finally {
       setIsSigning(false);
     }
