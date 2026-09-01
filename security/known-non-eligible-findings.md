@@ -102,6 +102,8 @@ Duplicate reports are not eligible. Before submitting, review:
 
 Reports with the same root cause as an existing advisory or previously submitted finding are treated as duplicates, even if they use a different PoC or describe a different symptom.
 
+The conviction-collapse report in GHSA-94f2-r637-wcpv duplicates the accepted `GDN-02` finding in GHSA-f2mf-mf7h-6jqv. Both rely on the former `_withdraw()` behavior using the departing member's stake instead of the proposal's pre-withdraw total stake when accruing conviction. This root cause is patched; equivalent reports are duplicates.
+
 ## What Makes a Report Eligible
 
 A strong eligible report should show:

@@ -243,7 +243,7 @@ export function handleAuthorizedWalletSet(
 }
 
 export function handleProtopianDelegated(event: ProtopianDelegated): void {
-  const from = event.params.from.toHexString();
+  const from = event.params.holder.toHexString();
   const to = event.params.to.toHexString();
 
   let delegationIndex = ProtopianDelegationIndex.load(from);

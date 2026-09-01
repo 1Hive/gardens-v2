@@ -266,13 +266,6 @@ export const ProposalForm = ({
           QUERY_PARAMS.proposalPage.pendingProposal,
           proposalId.toString(),
         );
-        const titleValue = getValues("title");
-        if (titleValue) {
-          searchParams.set(
-            QUERY_PARAMS.proposalPage.pendingProposalTitle,
-            encodeURIComponent(titleValue),
-          );
-        }
         router.push(`${newPath}?${searchParams.toString()}`);
       }
     },

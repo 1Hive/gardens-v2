@@ -15,6 +15,7 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     using stdJson for string;
     uint256 internal constant EXPECTED_COMMUNITY_FACET_COUNT = 7;
     uint256 internal constant EXPECTED_STRATEGY_FACET_COUNT = 9;
+    uint8 internal constant THRESHOLD_MIGRATION_VERSION = 2;
     bytes4 internal constant COMMUNITY_CREATE_POOL_SELECTOR_V0_2 = bytes4(
         keccak256(
             "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))"
@@ -60,6 +61,7 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         bool skipUpgradeTo;
         bool skipDiamondCut;
         bool diamondCutBeforeUpgrade;
+        bool migrateThresholdSnapshots;
         address strategyInit;
         bytes strategyInitCalldata;
     }
@@ -129,7 +131,9 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         }
         if (_shouldDoStrategies()) {
             _executeStrategyUpgrades(context, networkJson);
-            _syncFactoryStrategyState(context);
+            if (!_flagEnabled("SKIP_FACTORY_STRATEGY_SYNC")) {
+                _syncFactoryStrategyState(context);
+            }
             if (_isFullStrategySelection(networkJson)) {
                 _syncStrategyImplementationFromLive(networkJson);
             }
@@ -453,13 +457,15 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     function _syncCVUtilLibFromStrategyImplementation(address implementation) internal {
         require(implementation != address(0), "strategy implementation missing");
         bytes memory runtimeCode = implementation.code;
-        require(runtimeCode.length > 13642, "strategy implementation code too short");
+        require(runtimeCode.length > 17112, "strategy implementation code too short");
 
-        address linkedLibrary = _readLinkedAddress(runtimeCode, 6488);
+        address linkedLibrary = _readLinkedAddress(runtimeCode, 7066);
         require(linkedLibrary != address(0), "CV_UTIL_LIB link missing");
-        require(_readLinkedAddress(runtimeCode, 6645) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 8427) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 13618) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 7223) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 9005) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 13664) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 14376) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        require(_readLinkedAddress(runtimeCode, 17093) == linkedLibrary, "CV_UTIL_LIB link mismatch");
         require(linkedLibrary.code.length != 0, "CV_UTIL_LIB has no code");
 
         _writeNetworkAddress(".IMPLEMENTATIONS.CV_UTIL_LIB", linkedLibrary);
@@ -600,6 +606,7 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
             skipUpgradeTo: _flagEnabled("SKIP_STRATEGY_UPGRADE_TO"),
             skipDiamondCut: _flagEnabled("SKIP_STRATEGY_DIAMOND_CUT"),
             diamondCutBeforeUpgrade: _flagEnabled("STRATEGY_DCUT_BEFORE_UPGRADE"),
+            migrateThresholdSnapshots: _flagEnabled("MIGRATE_THRESHOLD_SNAPSHOTS"),
             strategyInit: address(0),
             strategyInitCalldata: bytes("")
         });
@@ -690,7 +697,10 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         StrategyUpgradeOptions memory options
     ) internal {
         CVStrategy cvStrategy = CVStrategy(payable(proxy));
-        bool needsUpgradeTo = !options.skipUpgradeTo && _proxyImplementationAddress(proxy) != context.strategyImplementation;
+        bool implementationIsCurrent = _proxyImplementationAddress(proxy) == context.strategyImplementation;
+        bool needsUpgradeTo = !options.skipUpgradeTo && !implementationIsCurrent;
+        bool needsThresholdMigration =
+            options.migrateThresholdSnapshots && _initializerVersion(proxy) < THRESHOLD_MIGRATION_VERSION;
         IDiamond.FacetCut[] memory allCuts = _mergeFacetCuts(
             _buildStaleSelectorRemovalCuts(proxy, context.cvCuts), _buildChangedFacetCuts(proxy, context.cvCuts)
         );
@@ -701,17 +711,39 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
                 IDiamondCut(proxy).diamondCut(allCuts, options.strategyInit, options.strategyInitCalldata);
             }
             if (needsUpgradeTo) {
-                cvStrategy.upgradeTo(context.strategyImplementation);
+                _upgradeStrategyImplementation(cvStrategy, context.strategyImplementation, needsThresholdMigration);
+            } else if (needsThresholdMigration && implementationIsCurrent) {
+                cvStrategy.reinitializeV2MigrateThresholdSnapshots();
             }
             return;
         }
 
         if (needsUpgradeTo) {
-            cvStrategy.upgradeTo(context.strategyImplementation);
+            _upgradeStrategyImplementation(cvStrategy, context.strategyImplementation, needsThresholdMigration);
+        } else if (needsThresholdMigration && implementationIsCurrent) {
+            cvStrategy.reinitializeV2MigrateThresholdSnapshots();
         }
         if (needsDiamondCut) {
             IDiamondCut(proxy).diamondCut(allCuts, options.strategyInit, options.strategyInitCalldata);
         }
+    }
+
+    function _upgradeStrategyImplementation(
+        CVStrategy cvStrategy,
+        address strategyImplementation,
+        bool migrateThresholdSnapshots
+    ) internal {
+        if (migrateThresholdSnapshots) {
+            cvStrategy.upgradeToAndCall(
+                strategyImplementation, abi.encodeCall(CVStrategy.reinitializeV2MigrateThresholdSnapshots, ())
+            );
+        } else {
+            cvStrategy.upgradeTo(strategyImplementation);
+        }
+    }
+
+    function _initializerVersion(address proxy) internal view returns (uint8) {
+        return uint8(uint256(vm.load(proxy, bytes32(0))));
     }
 
     function _boundedStartIndex(uint256 requestedStart, uint256 length) internal pure returns (uint256) {

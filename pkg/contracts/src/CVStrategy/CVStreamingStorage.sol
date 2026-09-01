@@ -8,7 +8,8 @@ library CVStreamingStorage {
     struct Layout {
         uint256 lastRebalanceAt;
         uint256 rebalanceCooldown;
-        // Do not insert fields before proposalEscrow: deployed pools store that mapping at STORAGE_SLOT + 2.
+        // Reserved to preserve the deployed proposalEscrow mapping at STORAGE_SLOT + 3.
+        bool __deprecated_disabledConvictionSnapshotTaken;
         mapping(uint256 => address) proposalEscrow;
         mapping(address => bool) authorizedRebalanceCallers;
     }

@@ -1,6 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { PendingIndexedPublish } from "./pubsub.context";
-import { normalizePendingIndexedPublishRecord } from "../utils/pendingIndexedPublishes";
+import {
+  normalizePendingIndexedPublishRecord,
+  releaseIndexedPendingPublishes,
+} from "../utils/pendingIndexedPublishes";
 
 const baseStoredRecord: PendingIndexedPublish = {
   txHash: "0x3333333333333333333333333333333333333333333333333333333333333333",
@@ -94,5 +97,48 @@ describe("pending indexed publish normalization", () => {
       chainId: baseStoredRecord.chainId,
     });
     expect(normalized?.optimistic).toBeUndefined();
+  });
+});
+
+describe("indexed optimistic publish release", () => {
+  it("keeps the release pending until subscribers finish refreshing", async () => {
+    let finishRefresh: (() => void) | undefined;
+    const refresh = new Promise<void>((resolve) => {
+      finishRefresh = resolve;
+    });
+    const releaseEvents: string[] = [];
+
+    const releasePromise = releaseIndexedPendingPublishes(
+      [baseStoredRecord],
+      new Map([
+        [baseStoredRecord.chainId, BigInt(baseStoredRecord.blockNumber)],
+      ]),
+      async () => {
+        releaseEvents.push("refresh-started");
+        await refresh;
+        releaseEvents.push("refresh-finished");
+      },
+    );
+
+    await Promise.resolve();
+    expect(releaseEvents).toEqual(["refresh-started"]);
+
+    finishRefresh?.();
+    const released = await releasePromise;
+
+    expect(releaseEvents).toEqual(["refresh-started", "refresh-finished"]);
+    expect(released).toEqual([baseStoredRecord]);
+  });
+
+  it("does not release records from chains that have not indexed them", async () => {
+    const release = vi.fn();
+    const released = await releaseIndexedPendingPublishes(
+      [baseStoredRecord],
+      new Map([[baseStoredRecord.chainId, 122n]]),
+      release,
+    );
+
+    expect(release).not.toHaveBeenCalled();
+    expect(released).toEqual([]);
   });
 });

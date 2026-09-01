@@ -135,6 +135,8 @@ const DEFAULT_GARDENS_GDA_ID = "0x5f86aeb40ea66373c7ce337f777c37951fdaaeea";
 const GARDENS_GDA_ID_BY_CAMPAIGN: Record<string, string | undefined> = {
   "510": "0x9E3889A48dee1c55e67A5828b1766157ADE564b6",
   "607": "0x7A93cfa2420C8823a6564567F86DB3D1f4Ef1d40",
+  // TODO: Fill in the Season 7 GDA once it is available.
+  "706": undefined,
 };
 const SUPERFLUID_POOL_TOTALS_QUERY = gql`
   query poolTotals($id: ID!) {
@@ -155,6 +157,7 @@ const DEFAULT_TARGET_STREAM_SUP = 847_000;
 const TARGET_STREAM_SUP_BY_CAMPAIGN: Record<string, number> = {
   "510": 519_000,
   "607": 510_000,
+  "706": 545_945,
 };
 
 const fetchSuperfluidTotals = async (

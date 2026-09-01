@@ -506,6 +506,18 @@ contract CVStreamingFacetHarness is CVStreamingFacet {
         totalPointsActivated = points;
     }
 
+    function initializeProposalThresholdSnapshot(uint256 proposalId) external {
+        _initializeThresholdSnapshot(proposals[proposalId]);
+    }
+
+    function checkpointTotalPointsActivated(uint256 points) external {
+        _checkpointTotalPointsActivated(points);
+    }
+
+    function exposedGetThresholdPoints(uint256 proposalId) external view returns (uint256) {
+        return _getThresholdPoints(proposals[proposalId]);
+    }
+
     function setupProposal(
         uint256 proposalId,
         ProposalStatus status,
@@ -892,6 +904,78 @@ contract CVStreamingFacetTest is Test {
 
         assertEq(gdaPool.updateCount(), 1);
         assertGt(gdaPool.memberUnits(escrow1), 0);
+    }
+
+    function test_rebalance_keeps_deactivatedProposalBelowWeightedThresholdAcrossTouchpoints() public {
+        uint256 decay = 9_000_000;
+        uint256 initialPoints = 1_000 ether;
+        uint256 remainingPoints = 100 ether;
+
+        facet.setupCVParams(decay);
+        facet.setupTotalPointsActivated(initialPoints);
+        facet.setupProposal(1, ProposalStatus.Active, 0, 0, block.number);
+        facet.initializeProposalThresholdSnapshot(1);
+        facet.setStreamingEscrowExternal(1, escrow1);
+
+        facet.checkpointTotalPointsActivated(remainingPoints);
+        vm.roll(block.number + 1);
+
+        uint256 rawThreshold = ConvictionsUtils.calculateThreshold(
+            0, 1_000 ether, remainingPoints, decay, 1_000_000, 9_000_000, 0
+        );
+        uint256 weightedThreshold = ConvictionsUtils.calculateThreshold(
+            0, 1_000 ether, facet.exposedGetThresholdPoints(1), decay, 1_000_000, 9_000_000, 0
+        );
+        uint256 almostPassingConviction = (rawThreshold + weightedThreshold) / 2;
+        assertGt(almostPassingConviction, rawThreshold);
+        assertLt(almostPassingConviction, weightedThreshold);
+
+        facet.setupProposal(1, ProposalStatus.Active, 0, almostPassingConviction, block.number);
+        gdaPool.updateMemberUnits(escrow1, 123);
+
+        for (uint256 i = 0; i < 8; i++) {
+            facet.rebalance();
+            assertEq(gdaPool.memberUnits(escrow1), 0);
+
+            uint256 conviction = facet.exposedCalculateProposalConviction(1);
+            uint256 threshold = ConvictionsUtils.calculateThreshold(
+                0, 1_000 ether, facet.exposedGetThresholdPoints(1), decay, 1_000_000, 9_000_000, 0
+            );
+            assertLt(conviction, threshold, "conviction must remain below the weighted threshold");
+            vm.roll(block.number + 100);
+        }
+
+        vm.roll(block.number + 10_000);
+        assertEq(facet.getPoolThresholdPoints(), remainingPoints);
+        assertEq(facet.exposedGetThresholdPoints(1), remainingPoints);
+    }
+
+    function test_rebalance_usesPoolWeightedPointsForStreamingRate() public {
+        uint256 decay = 9_000_000;
+        uint256 initialPoints = 1_000 ether;
+        uint256 remainingPoints = 500 ether;
+        uint256 streamingRate = 1_000_000_000;
+
+        token.setBalance(address(facet), 0);
+        superToken.mint(address(facet), 1_000 ether);
+        facet.useRealShouldStartStream();
+        facet.setupCVParams(decay);
+        facet.setupThresholdParams(9_000_000, 0, 0);
+        facet.setupStreamingRatePerSecond(streamingRate);
+        facet.setupTotalPointsActivated(initialPoints);
+        facet.checkpointTotalPointsActivated(remainingPoints);
+        vm.roll(block.number + 1);
+
+        uint256 weightedPoints = facet.getPoolThresholdPoints();
+        uint256 maxConviction = ConvictionsUtils.getMaxConviction(weightedPoints, decay);
+        uint256 conviction = maxConviction / 2;
+        facet.setupProposal(1, ProposalStatus.Active, 0, conviction, block.number);
+        facet.setStreamingEscrowExternal(1, escrow1);
+
+        facet.rebalance();
+
+        assertGt(weightedPoints, remainingPoints);
+        assertEq(gdaAgreement.flowRate(), int96(uint96(streamingRate / 2)));
     }
 
     function test_getPoolAmount_scales_six_decimal_pool_token_and_eighteen_decimal_super_token() public {

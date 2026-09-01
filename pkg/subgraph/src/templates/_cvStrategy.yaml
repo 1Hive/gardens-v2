@@ -27,4 +27,6 @@
           handler: handleProposalCreatedWithEscrow
         - event: SupportAdded(address,uint256,uint256,uint256)
           handler: handleSupportAdded
+        - event: PoolThresholdUpdated(uint256,uint256,uint256)
+          handler: handlePoolThresholdUpdated
       file: ./src/mappings/cv-strategy.ts

@@ -12,6 +12,10 @@ import {
   HandRaisedIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
+import {
+  ArrowDownRightIcon,
+  ArrowUpRightIcon,
+} from "@heroicons/react/24/solid";
 
 import { usePathname } from "next/navigation";
 import { Address, formatUnits } from "viem";
@@ -26,6 +30,7 @@ import {
 import { Countdown } from "./Countdown";
 import { DisplayNumber } from "./DisplayNumber";
 import { Divider } from "./Divider";
+import { InfoWrapper } from "./InfoWrapper";
 import { ProposalInputItem } from "./Proposals";
 import TooltipIfOverflow from "./TooltipIfOverflow";
 import { Badge, Card, EthAddress, LiveFlowingAmount } from "@/components";
@@ -51,6 +56,10 @@ import {
 } from "@/utils/numbers";
 import { formatProposalSlug } from "@/utils/proposals";
 import { prettyTimestamp } from "@/utils/text";
+import {
+  formatThresholdAdjustmentTooltip,
+  getThresholdAdjustment,
+} from "@/utils/thresholdAdjustment";
 
 export type ProposalCardProps = {
   proposalData: Pick<
@@ -201,8 +210,10 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
     const {
       currentConvictionPct,
       thresholdPct,
+      stableThresholdPct,
       isThresholdBelowDisplayPrecision,
       hasReachedThreshold,
+      willReachThreshold,
       totalSupportPct,
       timeToPass,
       triggerConvictionRefetch,
@@ -439,6 +450,14 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
     const hasThreshold = thresholdPct != null;
     const thresholdValue = thresholdPct ?? 0;
+    const thresholdAdjustment = getThresholdAdjustment(
+      thresholdPct,
+      stableThresholdPct,
+    );
+    const thresholdAdjustmentTooltip =
+      thresholdAdjustment == null ? undefined : (
+        formatThresholdAdjustmentTooltip(thresholdAdjustment)
+      );
     const supportNeededToPass = (
       thresholdValue - (totalSupportPct ?? 0)
     ).toFixed(2);
@@ -452,8 +471,8 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
     const proposalWillPass =
       hasThreshold &&
-      Number(supportNeededToPass) < 0 &&
-      (currentConvictionPct ?? 0) < thresholdValue &&
+      willReachThreshold === true &&
+      hasReachedThreshold !== true &&
       !alreadyExecuted;
 
     const hasProposalPassCountdown =
@@ -723,10 +742,36 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
 
                           {!isSignalingType && hasThreshold && (
                             <li>
-                              <span className="text-xs text-neutral-soft-content">
-                                threshold:{" "}
-                                {impossibleToPass ? "too high" : `${thresholdPct} VP`}
-                              </span>
+                              <InfoWrapper
+                                tooltip={
+                                  thresholdAdjustmentTooltip ??
+                                  `The current conviction required for this proposal to ${isStreamingType ? "stream" : "pass"}.`
+                                }
+                                size="sm"
+                                className="tooltip-left"
+                              >
+                                <span className="flex items-center gap-0.5 text-xs text-neutral-soft-content">
+                                  threshold:{" "}
+                                  {impossibleToPass ?
+                                    "too high"
+                                  : <>
+                                      {thresholdPct} VP
+                                      {thresholdAdjustment != null &&
+                                        ((
+                                          thresholdAdjustment.direction === "up"
+                                        ) ?
+                                          <ArrowUpRightIcon
+                                            className="h-3 w-3 shrink-0"
+                                            aria-label="Threshold adjusting upward"
+                                          />
+                                        : <ArrowDownRightIcon
+                                            className="h-3 w-3 shrink-0"
+                                            aria-label="Threshold adjusting downward"
+                                          />)}
+                                    </>
+                                  }
+                                </span>
+                              </InfoWrapper>
                             </li>
                           )}
                         </ul>
@@ -737,6 +782,7 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           compact
                           currentConvictionPct={currentConvictionPct}
                           thresholdPct={thresholdPct ?? 0}
+                          stableThresholdPct={stableThresholdPct}
                           proposalSupportPct={totalSupportPct ?? 0}
                           isSignalingType={isSignalingType}
                           proposalNumber={proposalNumber}
@@ -750,6 +796,8 @@ export const ProposalCard = forwardRef<ProposalHandle, ProposalCardProps>(
                           isThresholdBelowDisplayPrecision={
                             isThresholdBelowDisplayPrecision
                           }
+                          hasReachedThreshold={hasReachedThreshold}
+                          willReachThreshold={willReachThreshold}
                         />
                       </div>
                     </div>

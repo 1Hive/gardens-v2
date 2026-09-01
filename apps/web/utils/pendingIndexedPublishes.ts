@@ -17,7 +17,9 @@ const toFiniteChainId = (chainId: unknown): number | null => {
   return Number.isFinite(parsedChainId) ? parsedChainId : null;
 };
 
-function isSerializablePayload(payload: unknown): payload is ChangeEventPayload {
+function isSerializablePayload(
+  payload: unknown,
+): payload is ChangeEventPayload {
   if (!payload || typeof payload !== "object") return false;
   const candidate = payload as ChangeEventPayload;
   return typeof candidate.topic === "string";
@@ -123,4 +125,18 @@ export function normalizePendingIndexedPublishRecord(
         candidate.optimistic
       : undefined,
   };
+}
+
+export async function releaseIndexedPendingPublishes(
+  records: PendingIndexedPublish[],
+  indexedBlocks: ReadonlyMap<number, bigint>,
+  release: (record: PendingIndexedPublish) => void | Promise<unknown>,
+) {
+  const released = records.filter((record) => {
+    const indexedBlock = indexedBlocks.get(record.chainId);
+    return indexedBlock != null && indexedBlock >= BigInt(record.blockNumber);
+  });
+
+  await Promise.all(released.map(release));
+  return released;
 }
