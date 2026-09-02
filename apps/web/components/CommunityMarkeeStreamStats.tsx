@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getWalletClient } from "@wagmi/core";
 import {
   Address,
   formatEther,
@@ -10,13 +9,9 @@ import {
   parseAbi,
   zeroAddress,
 } from "viem";
-import { useBalance, useNetwork, usePublicClient } from "wagmi";
+import { useBalance, usePublicClient } from "wagmi";
 import { LiveFlowingAmount } from "@/components/LiveFlowingAmount";
-import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
-import { ComputedStatus } from "@/hooks/useContractWriteWithConfirmations";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { reportClientError } from "@/utils/clientErrorReporter";
 import { logOnce } from "@/utils/log";
 import {
   CFA_V1_FORWARDER_ADDRESS,
@@ -24,7 +19,6 @@ import {
   markeeSuperfluidPoolABI,
   streamingLeaderboardRuntimeABI,
 } from "@/utils/markeeStreaming";
-import { isUserRejectedTransactionError } from "@/utils/transactionMessages";
 
 type SettlementSnapshot = {
   claimableMarkeeWei: bigint | null;
@@ -127,8 +121,6 @@ export function CommunityMarkeeStreamStats({
   markeeAddress,
 }: Props) {
   const publicClient = usePublicClient({ chainId });
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useAppSwitchNetwork();
   const { data: liveEthxBalance } = useBalance({
     address: connectedAccount,
     chainId,
@@ -142,34 +134,6 @@ export function CommunityMarkeeStreamStats({
   );
   const [refundedTotals, setRefundedTotals] =
     useState<StreamTotalsSnapshot | null>(null);
-  const [settlementRefreshKey, setSettlementRefreshKey] = useState(0);
-  const [settlementTransactionHash, setSettlementTransactionHash] = useState<
-    `0x${string}` | undefined
-  >();
-  const [settlementTransactionError, setSettlementTransactionError] =
-    useState<Error | null>(null);
-  const [settlementTransactionStatus, setSettlementTransactionStatus] =
-    useState<ComputedStatus>(undefined);
-  const isSettling =
-    settlementTransactionStatus === "waiting" ||
-    settlementTransactionStatus === "loading";
-
-  useTransactionNotification({
-    chainId,
-    contractName: "Claim Markee earnings",
-    enabled: settlementTransactionStatus != null,
-    fallbackErrorMessage: "Unable to claim your Markee earnings.",
-    safeAddress: connectedAccount,
-    targetAddress: leaderboardAddress,
-    transactionData:
-      settlementTransactionHash != null ?
-        { hash: settlementTransactionHash }
-      : undefined,
-    transactionError: settlementTransactionError,
-    transactionHash: settlementTransactionHash,
-    transactionStatus: settlementTransactionStatus,
-    watchTransaction: true,
-  });
   const {
     currentUserFlowRateBn,
     currentUserOtherFlowRateBn,
@@ -393,73 +357,7 @@ export function CommunityMarkeeStreamStats({
     leaderboardAddress,
     markeeAddress,
     publicClient,
-    settlementRefreshKey,
   ]);
-
-  const claimEarnings = async () => {
-    if (
-      publicClient == null ||
-      settlement == null ||
-      settlement.pendingWei <= 0n ||
-      isSettling
-    ) {
-      return;
-    }
-
-    setSettlementTransactionError(null);
-    setSettlementTransactionHash(undefined);
-    try {
-      setSettlementTransactionStatus("waiting");
-      if (chain?.id !== chainId) await switchNetworkAsync?.(chainId);
-      const walletClient = await getWalletClient({ chainId });
-      if (walletClient == null) {
-        throw new Error("Connect your wallet to claim your earnings.");
-      }
-
-      const hash = await walletClient.writeContract({
-        abi: streamingLeaderboardRuntimeABI,
-        account: connectedAccount,
-        address: leaderboardAddress,
-        args: [[connectedAccount]],
-        functionName: "settle",
-      });
-      setSettlementTransactionHash(hash);
-      setSettlementTransactionStatus("loading");
-      const receipt = await publicClient.waitForTransactionReceipt({ hash });
-      if (receipt.status !== "success") {
-        throw new Error("The earnings claim transaction reverted.");
-      }
-
-      setSettlementTransactionStatus("success");
-      setSettlementRefreshKey((current) => current + 1);
-    } catch (cause) {
-      if (isUserRejectedTransactionError(cause)) {
-        setSettlementTransactionStatus(undefined);
-        return;
-      }
-      const error =
-        cause instanceof Error ? cause : new Error("The claim failed.");
-      setSettlementTransactionError(error);
-      setSettlementTransactionStatus("error");
-      const context = {
-        type: "markee-settlement-error",
-        chainId,
-        connectedAccount,
-        leaderboardAddress,
-        tags: {
-          error_type: "markee-settlement-error",
-          chain_id: chainId,
-        },
-      };
-      logOnce(
-        "error",
-        "[CommunityMarkee] Markee settlement failed",
-        cause,
-        context,
-      );
-      reportClientError(cause, context);
-    }
-  };
 
   const effectiveRatePerSecond =
     activeRatePerSecond > 0n ? activeRatePerSecond : (
@@ -651,7 +549,7 @@ export function CommunityMarkeeStreamStats({
               "Claimable ETH"
             : "Claimable MARKEE"}
           </p>
-          <div className="mt-1 flex min-w-0 items-center gap-2 text-xs font-semibold leading-tight text-primary-content">
+          <div className="mt-1 flex min-w-0 items-center text-xs font-semibold leading-tight text-primary-content">
             <span
               className={
                 earningsTooltip == null ? "" : "tooltip tooltip-top cursor-help"
@@ -664,21 +562,6 @@ export function CommunityMarkeeStreamStats({
                 fractionDigits={7}
               />
             </span>
-            <button
-              type="button"
-              className="shrink-0 px-1 text-[10px] font-medium text-primary-content transition-colors enabled:hover:text-primary-hover-content disabled:cursor-not-allowed disabled:opacity-40"
-              disabled={
-                settlement == null || settlement.pendingWei <= 0n || isSettling
-              }
-              onClick={claimEarnings}
-              title={
-                settlement != null && settlement.pendingWei <= 0n ?
-                  "No earnings available to claim yet."
-                : "Claim your accumulated Markee earnings"
-              }
-            >
-              {isSettling ? "Claiming…" : "Claim"}
-            </button>
           </div>
         </div>
       </div>

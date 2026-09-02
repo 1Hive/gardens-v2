@@ -35,6 +35,7 @@ import {
   useWalletClient,
 } from "wagmi";
 import { Button } from "@/components/Button";
+import { CommunityMarkeeClaimCard } from "@/components/CommunityMarkeeClaimCard";
 import { CommunityMarkeeDepositManagerModal } from "@/components/CommunityMarkeeDepositManagerModal";
 import { CommunityMarkeePaymentReview } from "@/components/CommunityMarkeePaymentReview";
 import { CommunityMarkeeStreamStats } from "@/components/CommunityMarkeeStreamStats";
@@ -52,6 +53,7 @@ import {
 import { chainConfigMap, getExplorerUrl } from "@/configs/chains";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
 import { ComputedStatus } from "@/hooks/useContractWriteWithConfirmations";
+import { useEthUsdPrice } from "@/hooks/useEthUsdPrice";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import {
   CommunityMarkeeResponse,
@@ -315,6 +317,19 @@ function formatEthAmountRounded(value: string | bigint, decimals: number) {
   return `${whole}.${fraction}`;
 }
 
+function formatEthAmountCompact(value: string | bigint, decimals: number) {
+  return formatEthAmountRounded(value, decimals).replace(/\.?0+$/u, "");
+}
+
+function formatUsd(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    currency: "USD",
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+    style: "currency",
+  }).format(value);
+}
+
 function formatEthInput(value: bigint) {
   const [whole, fraction = ""] = formatEther(value).split(".");
   const visibleFraction = fraction.slice(0, 12).replace(/0+$/u, "");
@@ -406,6 +421,7 @@ function CommunityMarkeePreviewModal({
     challengeMonthlyRateAmount,
   );
   const [monthlyRate, setMonthlyRate] = useState(challengeMonthlyRate);
+  const ethUsdPrice = useEthUsdPrice();
   const [initialMonthlyRate, setInitialMonthlyRate] =
     useState(challengeMonthlyRate);
   const [isMonthlyRateFocused, setIsMonthlyRateFocused] = useState(false);
@@ -635,6 +651,14 @@ function CommunityMarkeePreviewModal({
   const isBelowMinimum =
     derivedMonthlyRateAmount > 0n &&
     derivedMonthlyRateAmount < minimumMonthlyRateAmount;
+  const displayedMonthlyRate =
+    isMonthlyRateFocused ? monthlyRate : (
+      formatEthAmountCompact(derivedMonthlyRateAmount, 6)
+    );
+  const monthlyRateUsd =
+    ethUsdPrice != null && derivedMonthlyRateAmount > 0n ?
+      Number(formatEther(derivedMonthlyRateAmount)) * ethUsdPrice
+    : null;
   const streamFormError = streamValidationError;
   const autoFundingError =
     streamAmounts.insufficientEth ?
@@ -2271,16 +2295,16 @@ function CommunityMarkeePreviewModal({
           <CommunityMarkeePaymentReview
             additionalToWin={
               additionalMonthlyRateToWin > 0n ?
-                formatEthAmountRounded(additionalMonthlyRateToWin, 6)
+                formatEthAmountCompact(additionalMonthlyRateToWin, 6)
               : undefined
             }
             depositAmount={
               streamAmounts.value > 0n ?
-                formatEthAmountRounded(streamAmounts.value, 6)
+                formatEthAmountCompact(streamAmounts.value, 6)
               : undefined
             }
             message={paymentReviewMessage}
-            monthlyRate={formatEthAmountRounded(derivedMonthlyRateAmount, 6)}
+            monthlyRate={formatEthAmountCompact(derivedMonthlyRateAmount, 6)}
             runway={formatMarkeeRunwayShort(streamAmounts.runwaySeconds)}
             willWin={paymentReviewWillWin}
           />
@@ -2416,134 +2440,103 @@ function CommunityMarkeePreviewModal({
               )
             }
 
-            <div className="flex flex-col gap-3 rounded-xl border border-primary-content bg-neutral/60 p-4">
-              <div className="flex items-center justify-between gap-3 text-xs text-neutral-soft-content">
-                <span className="font-medium uppercase tracking-wider">
-                  Monthly rate
-                </span>
-                {isLive && (
-                  <span>
-                    Balance:{" "}
-                    <span
-                      className={`font-mono font-semibold ${hasInsufficientWalletBalance || streamFormError != null || autoFundingError != null ? "tooltip tooltip-top-left cursor-help" : "text-neutral-content"}`}
-                      data-tip={
-                        streamFormError ??
-                        autoFundingError ??
-                        insufficientBalanceMessage ??
-                        undefined
+            <div className="flex flex-col rounded-xl border border-primary-content bg-neutral/60 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-baseline gap-2">
+                  <div
+                    className="tooltip tooltip-top-left min-w-0 text-left"
+                    data-tip={`${formatEther(derivedMonthlyRateAmount)} ETH / mo`}
+                  >
+                    <input
+                      inputMode="decimal"
+                      className="min-w-0 bg-transparent font-mono text-2xl font-semibold text-neutral-content outline-none"
+                      style={{
+                        width: `${Math.max(5, displayedMonthlyRate.length + 0.5)}ch`,
+                      }}
+                      value={displayedMonthlyRate}
+                      onFocus={() => setIsMonthlyRateFocused(true)}
+                      onBlur={() => setIsMonthlyRateFocused(false)}
+                      onChange={(event) =>
+                        setMonthlyRate(sanitizeAmount(event.target.value))
                       }
-                      tabIndex={
-                        (
-                          hasInsufficientWalletBalance ||
-                          streamFormError != null ||
-                          autoFundingError != null
-                        ) ?
-                          0
-                        : undefined
+                      aria-label="Monthly streaming rate"
+                    />
+                  </div>
+                  <span className="shrink-0 font-mono text-xs text-neutral-soft-content">
+                    ETHx/mo
+                  </span>
+                </div>
+
+                <div className="flex shrink-0 justify-end gap-2">
+                  <button
+                    type="button"
+                    className={`h-7 rounded-md border px-3 font-mono text-[11px] font-semibold tracking-wide transition-colors ${derivedMonthlyRateAmount === effectiveMinimumMonthlyRateInputAmount ? "border-primary-content text-primary-content" : "border-neutral-content/30 text-neutral-soft-content hover:border-primary-content/60 hover:text-primary-content"}`}
+                    onClick={() => setMonthlyRate(effectiveMinimumMonthlyRate)}
+                  >
+                    MIN
+                  </button>
+                  {hasTopStream && (
+                    <button
+                      type="button"
+                      className={`h-7 rounded-md border border-primary-content px-3 font-mono text-[11px] font-semibold tracking-wide text-primary-content transition-colors hover:bg-primary-content/10 ${derivedMonthlyRateAmount === (isOwnedMarkeeWinning ? doubleWinningMonthlyRateAmount : challengeMonthlyRateAmount) ? "bg-primary-content/10" : ""}`}
+                      onClick={() =>
+                        setMonthlyRate(
+                          isOwnedMarkeeWinning ?
+                            doubleWinningMonthlyRate
+                          : challengeMonthlyRate,
+                        )
                       }
                     >
-                      {connectedAccount == null ?
-                        "Connect wallet"
-                      : isWalletBalanceLoading || isStreamPositionLoading ?
-                        "Loading…"
-                      : walletBalance ?
-                        <span
-                          title={`${formatEthAmount(walletBalance.value)} native ETH + ${formatEther(ethxAvailableBalance)} ETHx available`}
-                        >
-                          <span
-                            className={
-                              (
-                                hasInsufficientWalletBalance ||
-                                streamFormError != null ||
-                                autoFundingError != null
-                              ) ?
-                                "text-danger-content"
-                              : undefined
-                            }
-                          >
-                            {ethxAvailableBalance > 0n ?
-                              `${formatMarkeeEthxBalance(ethxAvailableBalance)} ETHx`
-                            : `${formatEthAmount(walletBalance.value)} ETH`}
-                          </span>{" "}
-                        </span>
-                      : "Unavailable"}
-                    </span>
+                      {isOwnedMarkeeWinning ? "2x" : "WIN"}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-2 flex items-center justify-between gap-3 font-mono text-xs text-neutral-soft-content">
+                <span aria-live="polite">
+                  {monthlyRateUsd != null ?
+                    `≈ ${formatUsd(monthlyRateUsd)}/mo`
+                  : "\u00a0"}
+                </span>
+                {isLive && (
+                  <span
+                    className={`font-semibold ${hasInsufficientWalletBalance || streamFormError != null || autoFundingError != null ? "tooltip tooltip-top-left cursor-help text-danger-content" : "text-neutral-content"}`}
+                    data-tip={
+                      streamFormError ??
+                      autoFundingError ??
+                      insufficientBalanceMessage ??
+                      undefined
+                    }
+                    tabIndex={
+                      (
+                        hasInsufficientWalletBalance ||
+                        streamFormError != null ||
+                        autoFundingError != null
+                      ) ?
+                        0
+                      : undefined
+                    }
+                    title={
+                      walletBalance ?
+                        `${formatEthAmount(walletBalance.value)} native ETH + ${formatEther(ethxAvailableBalance)} ETHx available`
+                      : undefined
+                    }
+                  >
+                    {connectedAccount == null ?
+                      "Connect wallet"
+                    : isWalletBalanceLoading || isStreamPositionLoading ?
+                      "Loading…"
+                    : walletBalance ?
+                      ethxAvailableBalance > 0n ?
+                        `ETHx Balance ${formatMarkeeEthxBalance(ethxAvailableBalance)}`
+                      : `ETH Balance ${formatEthAmount(walletBalance.value)}`
+                    : "Unavailable"}
                   </span>
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
-                <div
-                  className="tooltip tooltip-top-left min-w-0 flex-1 text-left"
-                  data-tip={`${formatEther(derivedMonthlyRateAmount)} ETH / mo`}
-                >
-                  <input
-                    inputMode="decimal"
-                    className="w-full min-w-0 bg-transparent font-mono text-2xl font-semibold text-neutral-content outline-none"
-                    value={
-                      isMonthlyRateFocused ? monthlyRate : (
-                        formatEthAmountRounded(derivedMonthlyRateAmount, 6)
-                      )
-                    }
-                    onFocus={() => setIsMonthlyRateFocused(true)}
-                    onBlur={() => setIsMonthlyRateFocused(false)}
-                    onChange={(event) =>
-                      setMonthlyRate(sanitizeAmount(event.target.value))
-                    }
-                    aria-label="Monthly streaming rate"
-                  />
-                </div>
-                <span className="shrink-0 font-mono text-sm text-neutral-soft-content">
-                  ETHx / mo
-                </span>
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  className={`h-8 rounded-lg border px-4 text-xs font-medium tracking-wide transition-colors ${derivedMonthlyRateAmount === effectiveMinimumMonthlyRateInputAmount ? "border-primary-content bg-primary-content/15 text-primary-content" : "border-neutral-content/30 text-neutral-soft-content hover:border-primary-content/60 hover:text-primary-content"}`}
-                  onClick={() => setMonthlyRate(effectiveMinimumMonthlyRate)}
-                >
-                  MIN
-                </button>
-                {hasTopStream && (
-                  <button
-                    type="button"
-                    className={`h-8 rounded-lg border border-primary-content bg-primary-content px-4 text-xs font-semibold tracking-wide text-neutral-inverted-content shadow-sm transition-all hover:bg-primary-hover-content ${derivedMonthlyRateAmount === (isOwnedMarkeeWinning ? doubleWinningMonthlyRateAmount : challengeMonthlyRateAmount) ? "ring-2 ring-primary-content/30 ring-offset-2 ring-offset-neutral" : ""}`}
-                    onClick={() =>
-                      setMonthlyRate(
-                        isOwnedMarkeeWinning ?
-                          doubleWinningMonthlyRate
-                        : challengeMonthlyRate,
-                      )
-                    }
-                  >
-                    {isOwnedMarkeeWinning ? "2x" : "WIN"}
-                  </button>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between gap-3 text-xs text-neutral-soft-content">
-                <span
-                  className="tooltip tooltip-top cursor-help text-left"
-                  data-tip={
-                    hasTopStream ?
-                      `${isOwnedMarkeeWinning ? doubleWinningMonthlyRate : challengeMonthlyRate} ETH/mo`
-                    : `${effectiveMinimumMonthlyRate} ETH/mo`
-                  }
-                >
-                  {hasTopStream ?
-                    isOwnedMarkeeWinning ?
-                      `2x streams ${formatEthAmountRounded(doubleWinningMonthlyRateAmount, 6)} ETH/mo`
-                    : `WIN streams ${formatEthAmountRounded(challengeMonthlyRateAmount, 6)} ETH/mo`
-
-                  : `Minimum ${formatEthAmountRounded(effectiveMinimumMonthlyRateInputAmount, 6)} ETH/mo`
-                  }
-                </span>
-                <span>You can stop anytime</span>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 border-t border-neutral-content/15 pt-3 font-mono text-xs text-neutral-soft-content">
+              <div className="mt-3 flex items-center justify-between gap-4 border-t border-neutral-content/15 pt-3 font-mono text-xs text-neutral-soft-content">
                 <button
                   type="button"
                   className="text-xs font-semibold text-primary-content transition-colors hover:text-primary-hover-content"
@@ -2557,7 +2550,7 @@ function CommunityMarkeePreviewModal({
                     className="tooltip tooltip-top-left cursor-help text-right text-xs font-semibold text-neutral-content"
                     data-tip={`This transaction deposits ${formatEther(streamAmounts.value)} ETH as ETHx, giving the stream approximately ${formatMarkeeRunwayShort(streamAmounts.runwaySeconds)} of runway.`}
                   >
-                    {formatEthAmountRounded(streamAmounts.value, 6)} ETH deposit
+                    {formatEthAmountCompact(streamAmounts.value, 6)} ETH
                   </span>
                 : <span
                     className="tooltip tooltip-top-left cursor-help text-right text-xs font-semibold text-neutral-content"
@@ -3758,6 +3751,17 @@ export function CommunityMarkeePlaceholder({
             totalViews={totalViews}
           />
         </button>
+
+        {hasActiveMarkee &&
+          connectedAccount != null &&
+          markee.integration.leaderboardAddress != null && (
+            <CommunityMarkeeClaimCard
+              chainId={markee.markeeChainId}
+              leaderboardAddress={getAddress(
+                markee.integration.leaderboardAddress,
+              )}
+            />
+          )}
 
         {canOptIn && hasActiveMarkee && (
           <div className="mt-3 flex flex-col gap-3 rounded-xl border border-neutral-content/15 bg-neutral/30 p-4">

@@ -1,7 +1,5 @@
 "use client";
 
-import { InfoWrapper } from "@/components/InfoWrapper";
-
 type Props = {
   additionalToWin?: string;
   depositAmount?: string;
@@ -64,23 +62,13 @@ export function CommunityMarkeePaymentReview({
             Stream {additionalToWin} ETHx/mo more to take the top position.
           </p>
         )}
-        <div className="mt-3">
-          <InfoWrapper
-            tooltip={
-              willWin ?
-                "Your payment streams while your message is promoted. If another message overtakes it, the outgoing stream is refunded until yours is promoted again."
-              : "You will see an outgoing stream, but it is refunded while your message is not promoted. You can update or stop it at any time."
-            }
-            hoverOnChildren
-            hideIcon
-            className="tooltip-top text-center"
-          >
-            <span className="cursor-help text-xs leading-relaxed text-neutral-soft-content underline decoration-dotted underline-offset-4">
-              {willWin ?
-                "Anyone can overtake your message by streaming more."
-              : "You do not pay while another message is promoted."}
-            </span>
-          </InfoWrapper>
+        <div
+          className={`mt-3 rounded-lg border px-3 py-2 text-xs leading-relaxed ${willWin ? "border-primary-content/25 bg-primary-content/10 text-primary-content" : "border-warning-content/25 bg-warning-content/10 text-warning-content"}`}
+        >
+          {willWin ?
+            "This Markee can be overtaken by a larger stream. If that happens, its outgoing stream is refunded until it is promoted again."
+          : "You do not pay while another message is promoted. Its outgoing stream is refunded until it takes the promoted position."
+          }
         </div>
       </section>
     </div>
