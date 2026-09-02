@@ -6,6 +6,7 @@ import {
   EyeIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { useModal } from "connectkit";
 import { Address, formatEther, getAddress, isAddress } from "viem";
 import { usePublicClient } from "wagmi";
 import { fetchMarkeeViews } from "@/utils/markee";
@@ -69,6 +70,8 @@ export function CommunityStreamingMarkeeModal({
   topMarkeeAddress,
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const suspendedForConnectRef = useRef(false);
+  const { open: connectModalOpen } = useModal();
   const publicClient = usePublicClient({ chainId });
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [leaderboard, setLeaderboard] = useState<
@@ -118,9 +121,27 @@ export function CommunityStreamingMarkeeModal({
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (isOpen) dialog?.showModal();
-    else dialog?.close();
-  }, [isOpen]);
+    if (!isOpen) {
+      dialog?.close();
+      return;
+    }
+
+    if (connectModalOpen) {
+      if (dialog?.open) {
+        suspendedForConnectRef.current = true;
+        dialog.close();
+      }
+      return;
+    }
+
+    if (!dialog?.open) dialog?.showModal();
+    suspendedForConnectRef.current = false;
+  }, [connectModalOpen, isOpen]);
+
+  const handleDialogClose = () => {
+    if (suspendedForConnectRef.current) return;
+    onClose();
+  };
 
   useEffect(() => {
     if (!isOpen || topMarkeeAddress == null) {
@@ -220,7 +241,7 @@ export function CommunityStreamingMarkeeModal({
     <dialog
       ref={dialogRef}
       className={`${isOpen ? "" : "hidden"} modal max-sm:modal-bottom`}
-      onClose={onClose}
+      onClose={handleDialogClose}
     >
       <div className="modal-box flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border-neutral bg-neutral p-0 dark:border-white/15">
         <header className="flex items-start justify-between border-b border-border-neutral px-6 py-4 dark:border-white/15">

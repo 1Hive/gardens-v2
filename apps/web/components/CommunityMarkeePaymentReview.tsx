@@ -6,6 +6,7 @@ type Props = {
   message: string;
   monthlyRate: string;
   runway: string;
+  staysPromoted?: boolean;
   willWin: boolean;
 };
 
@@ -26,6 +27,7 @@ export function CommunityMarkeePaymentReview({
   message,
   monthlyRate,
   runway,
+  staysPromoted = false,
   willWin,
 }: Props) {
   return (
@@ -54,7 +56,9 @@ export function CommunityMarkeePaymentReview({
           className={`font-mono text-sm font-semibold ${willWin ? "text-primary-content" : "text-warning-content"}`}
         >
           {willWin ?
-            "Your message will take the promoted position"
+            staysPromoted ?
+              "Your message will remain promoted"
+            : "Your message will take the promoted position"
           : "Your message will not be promoted yet"}
         </p>
         {!willWin && additionalToWin != null && (
@@ -66,7 +70,7 @@ export function CommunityMarkeePaymentReview({
 
       <section className="rounded-xl border border-warning-content/40 bg-warning-content/5 px-4 py-3 text-xs leading-relaxed text-warning-content">
         {willWin ?
-          "This Markee can be overtaken by a larger stream. If that happens, its outgoing stream is refunded until it is promoted again."
+          "This Markee can be later overtaken by a larger stream. If that happens, you will be stream refunded for all the time not being promoted."
         : "You do not pay while another message is promoted. Its outgoing stream is refunded until it takes the promoted position."
         }
       </section>

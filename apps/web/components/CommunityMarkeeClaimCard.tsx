@@ -5,6 +5,7 @@ import { BanknotesIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
 import {
   Address,
+  decodeEventLog,
   formatEther,
   getAddress,
   isAddress,
@@ -26,17 +27,23 @@ type Props = {
 };
 
 type ClaimSnapshot = {
+  buybackHookAddress: Address | null;
+  expectedRoute: MarkeeSettlementRoute | null;
   pendingMarkee: bigint;
   pendingSettlement: bigint;
+  projectId: bigint;
   tokenAddress: Address;
   tokenBalance: bigint;
 };
+
+type MarkeeSettlementRoute = "revnet-mint" | "uniswap-buyback";
 
 const REVNET_NATIVE_TOKEN =
   "0x000000000000000000000000000000000000EEEe" as Address;
 const revnetTerminalABI = parseAbi([
   "function TOKENS() view returns (address)",
   "function pay(uint256 projectId, address token, uint256 amount, address beneficiary, uint256 minReturnedTokens, string memo, bytes metadata) payable returns (uint256 beneficiaryTokenCount)",
+  "function previewPayFor(uint256 projectId, address token, uint256 amount, address beneficiary, bytes metadata) view returns ((uint48 cycleNumber, uint48 id, uint48 basedOnId, uint48 start, uint32 duration, uint112 weight, uint32 weightCutPercent, address approvalHook, uint256 metadata) ruleset, uint256 beneficiaryTokenCount, uint256 reservedTokenCount, (address hook, bool noop, uint256 amount, bytes metadata)[] hookSpecifications)",
 ]);
 const revnetTokensABI = parseAbi([
   "function tokenOf(uint256 projectId) view returns (address)",
@@ -44,6 +51,13 @@ const revnetTokensABI = parseAbi([
 const markeeTokenABI = parseAbi([
   "function balanceOf(address account) view returns (uint256)",
 ]);
+const buybackHookEventsABI = parseAbi([
+  "event Mint(uint256 indexed projectId, uint256 leftoverAmount, uint256 tokenCount, address caller)",
+  "event Swap(uint256 indexed projectId, uint256 amountToSwapWith, bytes32 indexed poolId, uint256 amountReceived, address caller)",
+]);
+
+const formatSettlementRoute = (route: MarkeeSettlementRoute) =>
+  route === "uniswap-buyback" ? "Uniswap buyback" : "Revnet mint";
 
 function formatAmount(value: bigint, maximumFractionDigits = 6) {
   return Number(formatEther(value)).toLocaleString(undefined, {
@@ -66,6 +80,8 @@ export function CommunityMarkeeClaimCard({
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [claimedMarkee, setClaimedMarkee] = useState(0n);
+  const [actualRoute, setActualRoute] =
+    useState<MarkeeSettlementRoute | null>(null);
 
   const load = useCallback(async () => {
     if (connectedAccount == null || publicClient == null) {
@@ -142,6 +158,8 @@ export function CommunityMarkeeClaimCard({
       const feeAmount = (pendingSettlement * feeBps) / 10_000n;
       const buyerAmount = pendingSettlement - feeAmount;
       let pendingMarkee = 0n;
+      let expectedRoute: MarkeeSettlementRoute | null = null;
+      let buybackHookAddress: Address | null = null;
       if (buyerAmount > 0n) {
         try {
           const simulation = await publicClient.simulateContract({
@@ -168,10 +186,49 @@ export function CommunityMarkeeClaimCard({
             error,
           );
         }
+        try {
+          const [, , , hookSpecifications] =
+            await publicClient.readContract({
+              abi: revnetTerminalABI,
+              account: connectedAccount,
+              address: terminal,
+              args: [
+                projectId,
+                REVNET_NATIVE_TOKEN,
+                buyerAmount,
+                connectedAccount,
+                "0x",
+              ],
+              functionName: "previewPayFor",
+            });
+          const swapSpecification = hookSpecifications.find(
+            ({ amount, noop }) => !noop && amount > 0n,
+          );
+          const noopSpecification = hookSpecifications.find(
+            ({ noop }) => noop,
+          );
+          const hookResult =
+            swapSpecification?.hook ?? noopSpecification?.hook;
+          buybackHookAddress =
+            hookResult != null && isAddress(hookResult) ?
+              getAddress(hookResult)
+            : null;
+          expectedRoute =
+            swapSpecification == null ? "revnet-mint" : "uniswap-buyback";
+        } catch (error) {
+          logOnce(
+            "warn",
+            "[CommunityMarkee] Unable to preview the Revnet settlement route",
+            error,
+          );
+        }
       }
       const next = {
+        buybackHookAddress,
+        expectedRoute,
         pendingMarkee,
         pendingSettlement,
+        projectId,
         tokenAddress,
         tokenBalance,
       };
@@ -230,6 +287,30 @@ export function CommunityMarkeeClaimCard({
       if (settleReceipt.status !== "success") {
         throw new Error("Your MARKEE earnings could not be settled.");
       }
+
+      const usedUniswap = settleReceipt.logs.some((log) => {
+        if (
+          snapshot.buybackHookAddress != null &&
+          log.address.toLowerCase() !==
+            snapshot.buybackHookAddress.toLowerCase()
+        ) {
+          return false;
+        }
+        try {
+          const event = decodeEventLog({
+            abi: buybackHookEventsABI,
+            data: log.data,
+            topics: log.topics,
+          });
+          return (
+            event.eventName === "Swap" &&
+            event.args.projectId === snapshot.projectId
+          );
+        } catch {
+          return false;
+        }
+      });
+      setActualRoute(usedUniswap ? "uniswap-buyback" : "revnet-mint");
 
       const tokenBalance = await publicClient.readContract({
         abi: markeeTokenABI,
@@ -295,6 +376,7 @@ export function CommunityMarkeeClaimCard({
             onClick={() => {
               setIsSuccess(false);
               setClaimedMarkee(0n);
+              setActualRoute(null);
               setIsOpen(true);
             }}
           >
@@ -345,6 +427,11 @@ export function CommunityMarkeeClaimCard({
               <p className="mt-2 text-sm text-neutral-soft-content">
                 {formatAmount(claimedMarkee)} MARKEE was sent to your wallet.
               </p>
+              {actualRoute != null && (
+                <p className="mt-2 text-sm text-neutral-soft-content">
+                  Settlement route: {formatSettlementRoute(actualRoute)}
+                </p>
+              )}
             </div>
           </div>
         : <div className="flex flex-col gap-4">
@@ -369,8 +456,14 @@ export function CommunityMarkeeClaimCard({
             </div>
             <div className="rounded-xl border border-neutral-content/15 bg-neutral/30 p-4 text-sm">
               <div className="flex items-center justify-between gap-4">
-                <span className="text-neutral-soft-content">Settlement</span>
-                <span className="font-medium text-neutral-content">Revnet</span>
+                <span className="text-neutral-soft-content">
+                  Expected route
+                </span>
+                <span className="font-medium text-neutral-content">
+                  {snapshot?.expectedRoute != null ?
+                    formatSettlementRoute(snapshot.expectedRoute)
+                  : "Unavailable"}
+                </span>
               </div>
               <div className="mt-3 flex items-center justify-between gap-4 border-t border-neutral-content/15 pt-3">
                 <span className="text-neutral-soft-content">
@@ -381,8 +474,9 @@ export function CommunityMarkeeClaimCard({
                 </span>
               </div>
               <p className="mt-3 text-xs text-neutral-soft-content">
-                The leaderboard settles through Revnet. Its buyback hook may use
-                Uniswap when that mints more MARKEE for the accumulated ETH.
+                The Revnet buyback hook currently expects this route. Market
+                conditions may change before execution; the confirmed route is
+                read from the settlement receipt.
               </p>
             </div>
           </div>

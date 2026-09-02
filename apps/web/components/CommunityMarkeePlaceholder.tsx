@@ -696,8 +696,14 @@ function CommunityMarkeePreviewModal({
     : shouldCreateMarkee ? newMarkeeMessage.trim()
     : shouldShowOwnedMarkeeEditor ? editedMessage.trim()
     : displayedMarkeeMessage;
+  const isStreamTargetPromoted =
+    streamTargetMarkeeAddress != null &&
+    topMarkeeAddress != null &&
+    streamTargetMarkeeAddress.toLowerCase() === topMarkeeAddress.toLowerCase();
   const paymentReviewWillWin =
-    !hasTopStream || derivedMonthlyRateAmount >= challengeMonthlyRateAmount;
+    isStreamTargetPromoted ||
+    !hasTopStream ||
+    derivedMonthlyRateAmount >= challengeMonthlyRateAmount;
   const additionalMonthlyRateToWin =
     challengeMonthlyRateAmount > derivedMonthlyRateAmount ?
       challengeMonthlyRateAmount - derivedMonthlyRateAmount
@@ -2306,6 +2312,7 @@ function CommunityMarkeePreviewModal({
             message={paymentReviewMessage}
             monthlyRate={formatEthAmountCompact(derivedMonthlyRateAmount, 6)}
             runway={formatMarkeeRunwayShort(streamAmounts.runwaySeconds)}
+            staysPromoted={isStreamTargetPromoted}
             willWin={paymentReviewWillWin}
           />
         : <div className="flex flex-col gap-5">
