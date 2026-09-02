@@ -29,6 +29,7 @@ type Props = {
   chainId?: number;
   children: ReactNode;
   footer: ReactNode;
+  hideLeaderboard?: boolean;
   isOpen: boolean;
   leaderboardAddress?: Address;
   onFundMarkee?: (entry: StreamingMarkeeLeaderboardEntry) => void;
@@ -59,6 +60,7 @@ export function CommunityStreamingMarkeeModal({
   chainId,
   children,
   footer,
+  hideLeaderboard = false,
   isOpen,
   leaderboardAddress,
   onFundMarkee,
@@ -280,135 +282,137 @@ export function CommunityStreamingMarkeeModal({
         </header>
 
         <div className="overflow-x-hidden overflow-y-auto px-6 py-5">
-          <section className="mb-5 rounded-lg border border-neutral-content/20 bg-neutral-focus px-4 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => setLeaderboardOpen((open) => !open)}
-                className="flex items-center gap-1.5 text-xs font-medium text-neutral-content/60 transition-colors hover:text-neutral-content"
-                aria-expanded={leaderboardOpen}
-              >
-                <ChevronDownIcon
-                  className={`h-3.5 w-3.5 transition-transform ${leaderboardOpen ? "rotate-180" : ""}`}
-                />
-                Leaderboard
-              </button>
-              {markeeAppUrl && (
-                <a
-                  href={markeeAppUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs text-primary-content underline underline-offset-2"
+          {!hideLeaderboard && (
+            <section className="mb-5 rounded-lg border border-neutral-content/20 bg-neutral-focus px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => setLeaderboardOpen((open) => !open)}
+                  className="flex items-center gap-1.5 text-xs font-medium text-neutral-content/60 transition-colors hover:text-neutral-content"
+                  aria-expanded={leaderboardOpen}
                 >
-                  Open in Markee
-                </a>
-              )}
-            </div>
+                  <ChevronDownIcon
+                    className={`h-3.5 w-3.5 transition-transform ${leaderboardOpen ? "rotate-180" : ""}`}
+                  />
+                  Leaderboard
+                </button>
+                {markeeAppUrl && (
+                  <a
+                    href={markeeAppUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-primary-content underline underline-offset-2"
+                  >
+                    Open in Markee
+                  </a>
+                )}
+              </div>
 
-            {leaderboardOpen && (
-              <div className="mt-3 space-y-3 border-t border-neutral-content/10 pt-3">
-                {leaderboardLoading ?
-                  <div className="space-y-2" aria-label="Loading leaderboard">
-                    <div className="skeleton h-9 w-full rounded" />
-                    <div className="skeleton h-9 w-full rounded" />
-                  </div>
-                : leaderboardError ?
-                  <p className="text-xs text-danger-content">
-                    {leaderboardError}
-                  </p>
-                : displayedLeaderboard.length === 0 ?
-                  <p className="text-xs text-neutral-content/40">
-                    No Markees yet.
-                  </p>
-                : displayedLeaderboard.map((entry) => {
-                    const isOwned =
-                      ownedMarkeeAddress != null &&
-                      entry.address.toLowerCase() ===
-                        ownedMarkeeAddress.toLowerCase();
-                    const isPromoted =
-                      topMarkeeAddress != null &&
-                      entry.address.toLowerCase() ===
-                        topMarkeeAddress.toLowerCase();
-                    const isSelected =
-                      selectedMarkeeAddress != null &&
-                      entry.address.toLowerCase() ===
-                        selectedMarkeeAddress.toLowerCase();
-                    return (
-                      <div
-                        key={entry.address}
-                        className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 ${isSelected ? "border-primary-content" : "border-neutral-content/10"} ${isPromoted ? "bg-primary-content/5" : ""}`}
-                      >
-                        <div className="flex min-w-0 gap-2">
-                          <span className="font-mono text-xs text-neutral-content/30">
-                            #{entry.rank}
-                          </span>
-                          <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <p className="break-words font-mono text-xs text-neutral-content">
-                                {entry.message}
-                              </p>
-                              {isPromoted && (
-                                <span className="rounded-full border border-primary-content/40 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary-content">
-                                  Promoted
-                                </span>
-                              )}
-                              {isOwned && (
-                                <span className="text-[10px] font-medium uppercase tracking-wide text-neutral-content/40">
-                                  Yours
-                                </span>
+              {leaderboardOpen && (
+                <div className="mt-3 space-y-3 border-t border-neutral-content/10 pt-3">
+                  {leaderboardLoading ?
+                    <div className="space-y-2" aria-label="Loading leaderboard">
+                      <div className="skeleton h-9 w-full rounded" />
+                      <div className="skeleton h-9 w-full rounded" />
+                    </div>
+                  : leaderboardError ?
+                    <p className="text-xs text-danger-content">
+                      {leaderboardError}
+                    </p>
+                  : displayedLeaderboard.length === 0 ?
+                    <p className="text-xs text-neutral-content/40">
+                      No Markees yet.
+                    </p>
+                  : displayedLeaderboard.map((entry) => {
+                      const isOwned =
+                        ownedMarkeeAddress != null &&
+                        entry.address.toLowerCase() ===
+                          ownedMarkeeAddress.toLowerCase();
+                      const isPromoted =
+                        topMarkeeAddress != null &&
+                        entry.address.toLowerCase() ===
+                          topMarkeeAddress.toLowerCase();
+                      const isSelected =
+                        selectedMarkeeAddress != null &&
+                        entry.address.toLowerCase() ===
+                          selectedMarkeeAddress.toLowerCase();
+                      return (
+                        <div
+                          key={entry.address}
+                          className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 ${isSelected ? "border-primary-content" : "border-neutral-content/10"} ${isPromoted ? "bg-primary-content/5" : ""}`}
+                        >
+                          <div className="flex min-w-0 gap-2">
+                            <span className="font-mono text-xs text-neutral-content/30">
+                              #{entry.rank}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <p className="break-words font-mono text-xs text-neutral-content">
+                                  {entry.message}
+                                </p>
+                                {isPromoted && (
+                                  <span className="rounded-full border border-primary-content/40 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary-content">
+                                    Promoted
+                                  </span>
+                                )}
+                                {isOwned && (
+                                  <span className="text-[10px] font-medium uppercase tracking-wide text-neutral-content/40">
+                                    Yours
+                                  </span>
+                                )}
+                              </div>
+                              {entry.name && (
+                                <p className="mt-0.5 text-xs text-neutral-content/40">
+                                  {entry.name}
+                                </p>
                               )}
                             </div>
-                            {entry.name && (
-                              <p className="mt-0.5 text-xs text-neutral-content/40">
-                                {entry.name}
-                              </p>
-                            )}
                           </div>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2 text-right">
-                          <div>
-                            <p className="font-mono text-xs text-neutral-content/60">
-                              {formatMonthlyRate(entry.rate)} ETH/mo
-                            </p>
-                            {entry.views != null && (
-                              <p className="mt-0.5 flex items-center justify-end gap-1 font-mono text-xs text-neutral-content/30">
-                                <EyeIcon className="h-2.5 w-2.5" />
-                                {entry.views.toLocaleString()}
+                          <div className="flex shrink-0 items-center gap-2 text-right">
+                            <div>
+                              <p className="font-mono text-xs text-neutral-content/60">
+                                {formatMonthlyRate(entry.rate)} ETH/mo
                               </p>
-                            )}
-                          </div>
-                          {(
-                            isOwned &&
-                            selectedMarkeeAddress != null &&
-                            !isSelected &&
-                            onSelectOwnedMarkee != null
-                          ) ?
-                            <button
-                              type="button"
-                              className="h-7 rounded-lg border border-primary-content/50 px-2.5 text-xs font-medium text-primary-content transition-colors hover:bg-primary-content/10"
-                              onClick={onSelectOwnedMarkee}
-                            >
-                              Fund
-                            </button>
-                          : !isOwned &&
-                            onFundMarkee != null && (
+                              {entry.views != null && (
+                                <p className="mt-0.5 flex items-center justify-end gap-1 font-mono text-xs text-neutral-content/30">
+                                  <EyeIcon className="h-2.5 w-2.5" />
+                                  {entry.views.toLocaleString()}
+                                </p>
+                              )}
+                            </div>
+                            {(
+                              isOwned &&
+                              selectedMarkeeAddress != null &&
+                              !isSelected &&
+                              onSelectOwnedMarkee != null
+                            ) ?
                               <button
                                 type="button"
-                                className={`h-7 rounded-lg border px-2.5 text-xs font-medium transition-colors ${isSelected ? "border-primary-content bg-primary-content text-neutral-inverted-content" : "border-primary-content/50 text-primary-content hover:bg-primary-content/10"}`}
-                                onClick={() => onFundMarkee(entry)}
+                                className="h-7 rounded-lg border border-primary-content/50 px-2.5 text-xs font-medium text-primary-content transition-colors hover:bg-primary-content/10"
+                                onClick={onSelectOwnedMarkee}
                               >
-                                {isSelected ? "Selected" : "Fund"}
+                                Fund
                               </button>
-                            )
-                          }
+                            : !isOwned &&
+                              onFundMarkee != null && (
+                                <button
+                                  type="button"
+                                  className={`h-7 rounded-lg border px-2.5 text-xs font-medium transition-colors ${isSelected ? "border-primary-content bg-primary-content text-neutral-inverted-content" : "border-primary-content/50 text-primary-content hover:bg-primary-content/10"}`}
+                                  onClick={() => onFundMarkee(entry)}
+                                >
+                                  {isSelected ? "Selected" : "Fund"}
+                                </button>
+                              )
+                            }
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })
-                }
-              </div>
-            )}
-          </section>
+                      );
+                    })
+                  }
+                </div>
+              )}
+            </section>
+          )}
 
           {children}
         </div>

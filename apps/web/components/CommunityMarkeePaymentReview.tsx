@@ -2,7 +2,9 @@
 
 type Props = {
   additionalToWin?: string;
+  amountUsd?: string;
   depositAmount?: string;
+  markeeEarned: string;
   message: string;
   monthlyRate: string;
   runway: string;
@@ -23,7 +25,9 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
 
 export function CommunityMarkeePaymentReview({
   additionalToWin,
+  amountUsd,
   depositAmount,
+  markeeEarned,
   message,
   monthlyRate,
   runway,
@@ -32,21 +36,21 @@ export function CommunityMarkeePaymentReview({
 }: Props) {
   return (
     <div className="flex flex-col gap-4">
-      <section className="rounded-xl border border-neutral-content/15 bg-neutral/40 p-4">
-        <p className="text-xs font-medium uppercase tracking-wider text-neutral-soft-content">
-          Your message
-        </p>
-        <p className="mt-2 break-words font-mono text-sm text-neutral-content">
+      <section className="rounded-xl border border-neutral-content/15 bg-neutral/40 p-4 dark:bg-primary-soft-dark">
+        <p className="break-words font-mono text-sm text-neutral-content">
           {message}
         </p>
       </section>
 
-      <section className="rounded-xl border border-neutral-content/15 bg-neutral/30 px-4 py-1">
-        <ReviewRow label="Streaming" value={`${monthlyRate} ETHx/mo`} />
-        {depositAmount != null && (
+      <section className="px-1">
+        <ReviewRow
+          label="Paying"
+          value={`${monthlyRate} ETHx/mo${amountUsd == null ? "" : ` (≈ ${amountUsd})`}`}
+        />
+        {depositAmount != null ?
           <ReviewRow label="Depositing now" value={`${depositAmount} ETH`} />
-        )}
-        <ReviewRow label="Estimated runway" value={runway} />
+        : <ReviewRow label="Payment balance time remaining" value={runway} />}
+        <ReviewRow label="You'll earn" value={`${markeeEarned} MARKEE/mo`} />
       </section>
 
       <section
@@ -58,21 +62,20 @@ export function CommunityMarkeePaymentReview({
           {willWin ?
             staysPromoted ?
               "Your message will remain promoted"
-            : "Your message will take the promoted position"
+            : "Your payment only streams while your message is winning"
           : "Your message will not be promoted yet"}
         </p>
         {!willWin && additionalToWin != null && (
-          <p className="mt-2 text-sm text-neutral-content">
-            Stream {additionalToWin} ETHx/mo more to take the top position.
+          <p className="mt-1 text-sm font-medium text-neutral-content">
+            Add {additionalToWin} ETHx/mo to take the top position.
           </p>
         )}
-      </section>
-
-      <section className="rounded-xl border border-warning-content/40 bg-warning-content/5 px-4 py-3 text-xs leading-relaxed text-warning-content">
-        {willWin ?
-          "This Markee can be later overtaken by a larger stream. If that happens, you will be stream refunded for all the time not being promoted."
-        : "You do not pay while another message is promoted. Its outgoing stream is refunded until it takes the promoted position."
-        }
+        <p className="mt-1 text-xs leading-relaxed text-neutral-soft-content">
+          {willWin ?
+            "Anyone can overtake your message by bidding more, pausing your payment until you're winning again. You can cancel at any time."
+          : "You won't pay for time your message isn't winning, although you'll see an outgoing stream that's fully refunded to your wallet."
+          }
+        </p>
       </section>
     </div>
   );

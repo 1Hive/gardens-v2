@@ -19,6 +19,11 @@ export const MARKEE_ETH_GAS_RESERVE = 10n ** 15n;
 export const MARKEE_SMALL_BALANCE_THRESHOLD = 2n * 10n ** 15n;
 export const MARKEE_SMALL_BALANCE_WRAP_PERCENT = 90n;
 const MARKEE_THOUSANDTH_ETH = 10n ** 15n;
+const MARKEE_SEASON_MS = 91.31 * 24 * 60 * 60 * 1000;
+const MARKEE_SCHEDULE_START_MS = Date.parse("2025-12-21T00:00:00Z");
+const MARKEE_LEADERBOARD_REVNET_SHARE = 0.38;
+const MARKEE_REVNET_BUYER_ETH_SHARE = 0.62;
+const MARKEE_REVNET_BUYER_TOKEN_SHARE = 0.62;
 
 export type MarkeeFundingUnit = "hour" | "day" | "month" | "year";
 
@@ -49,6 +54,45 @@ const MARKEE_ETHX_BY_CHAIN_ID: Record<number, Address> = {
 
 export const getMarkeeEthxAddress = (chainId: number | undefined) =>
   chainId == null ? undefined : MARKEE_ETHX_BY_CHAIN_ID[chainId];
+
+function getCurrentGrossMarkeeRate(now = Date.now()) {
+  const phaseIndex = Math.min(
+    17,
+    Math.max(
+      0,
+      Math.floor((now - MARKEE_SCHEDULE_START_MS) / MARKEE_SEASON_MS),
+    ),
+  );
+  const stages = [
+    { cut: 0.5, seasons: 4 },
+    { cut: 0.2, seasons: 8 },
+    { cut: 0.1, seasons: 6 },
+  ];
+  let rate = 100_000;
+  let remaining = phaseIndex;
+
+  for (const stage of stages) {
+    const elapsed = Math.min(remaining, stage.seasons);
+    rate *= (1 - stage.cut) ** elapsed;
+    remaining -= elapsed;
+    if (remaining <= 0) break;
+  }
+
+  return Math.round(rate);
+}
+
+export function estimateLeaderboardPurchaseMarkeeTokens(
+  ethAmount: number,
+  now = Date.now(),
+) {
+  return (
+    ethAmount *
+    MARKEE_LEADERBOARD_REVNET_SHARE *
+    MARKEE_REVNET_BUYER_ETH_SHARE *
+    getCurrentGrossMarkeeRate(now) *
+    MARKEE_REVNET_BUYER_TOKEN_SHARE
+  );
+}
 
 export const streamingLeaderboardRuntimeABI = parseAbi([
   "error AlreadyTop()",

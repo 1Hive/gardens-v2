@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { BanknotesIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import { BanknotesIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
 import {
   Address,
@@ -14,8 +14,11 @@ import {
 } from "viem";
 import { useAccount, useNetwork, usePublicClient } from "wagmi";
 import { Button } from "@/components/Button";
+import { InfoBox } from "@/components/InfoBox";
 import { Modal } from "@/components/Modal";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
+import type { ComputedStatus } from "@/hooks/useContractWriteWithConfirmations";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { reportClientError } from "@/utils/clientErrorReporter";
 import { logOnce } from "@/utils/log";
 import { streamingLeaderboardRuntimeABI } from "@/utils/markeeStreaming";
@@ -32,8 +35,6 @@ type ClaimSnapshot = {
   pendingMarkee: bigint;
   pendingSettlement: bigint;
   projectId: bigint;
-  tokenAddress: Address;
-  tokenBalance: bigint;
 };
 
 type MarkeeSettlementRoute = "revnet-mint" | "uniswap-buyback";
@@ -41,15 +42,8 @@ type MarkeeSettlementRoute = "revnet-mint" | "uniswap-buyback";
 const REVNET_NATIVE_TOKEN =
   "0x000000000000000000000000000000000000EEEe" as Address;
 const revnetTerminalABI = parseAbi([
-  "function TOKENS() view returns (address)",
   "function pay(uint256 projectId, address token, uint256 amount, address beneficiary, uint256 minReturnedTokens, string memo, bytes metadata) payable returns (uint256 beneficiaryTokenCount)",
   "function previewPayFor(uint256 projectId, address token, uint256 amount, address beneficiary, bytes metadata) view returns ((uint48 cycleNumber, uint48 id, uint48 basedOnId, uint48 start, uint32 duration, uint112 weight, uint32 weightCutPercent, address approvalHook, uint256 metadata) ruleset, uint256 beneficiaryTokenCount, uint256 reservedTokenCount, (address hook, bool noop, uint256 amount, bytes metadata)[] hookSpecifications)",
-]);
-const revnetTokensABI = parseAbi([
-  "function tokenOf(uint256 projectId) view returns (address)",
-]);
-const markeeTokenABI = parseAbi([
-  "function balanceOf(address account) view returns (uint256)",
 ]);
 const buybackHookEventsABI = parseAbi([
   "event Mint(uint256 indexed projectId, uint256 leftoverAmount, uint256 tokenCount, address caller)",
@@ -77,11 +71,34 @@ export function CommunityMarkeeClaimCard({
   const [snapshot, setSnapshot] = useState<ClaimSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [claimedMarkee, setClaimedMarkee] = useState(0n);
-  const [actualRoute, setActualRoute] =
-    useState<MarkeeSettlementRoute | null>(null);
+  const [actualRoute, setActualRoute] = useState<MarkeeSettlementRoute | null>(
+    null,
+  );
+  const [transactionHash, setTransactionHash] = useState<
+    `0x${string}` | undefined
+  >();
+  const [transactionError, setTransactionError] = useState<Error | null>(null);
+  const [transactionStatus, setTransactionStatus] =
+    useState<ComputedStatus>(undefined);
+
+  useTransactionNotification({
+    chainId,
+    contractName:
+      actualRoute == null ? "Claim MARKEE" : (
+        `Claim MARKEE via ${formatSettlementRoute(actualRoute)}`
+      ),
+    enabled: transactionStatus != null,
+    fallbackErrorMessage: "Unable to claim MARKEE.",
+    safeAddress: connectedAccount,
+    targetAddress: leaderboardAddress,
+    transactionData:
+      transactionHash == null ? undefined : { hash: transactionHash },
+    transactionError,
+    transactionHash,
+    transactionStatus,
+    watchTransaction: true,
+  });
 
   const load = useCallback(async () => {
     if (connectedAccount == null || publicClient == null) {
@@ -133,28 +150,6 @@ export function CommunityMarkeeClaimCard({
         return null;
       }
       const terminal = getAddress(terminalResult);
-      const tokensAddress = await publicClient.readContract({
-        abi: revnetTerminalABI,
-        address: terminal,
-        functionName: "TOKENS",
-      });
-      const tokenResult = await publicClient.readContract({
-        abi: revnetTokensABI,
-        address: getAddress(tokensAddress),
-        args: [projectId],
-        functionName: "tokenOf",
-      });
-      if (!isAddress(tokenResult) || tokenResult === zeroAddress) {
-        setSnapshot(null);
-        return null;
-      }
-      const tokenAddress = getAddress(tokenResult);
-      const tokenBalance = await publicClient.readContract({
-        abi: markeeTokenABI,
-        address: tokenAddress,
-        args: [connectedAccount],
-        functionName: "balanceOf",
-      });
       const feeAmount = (pendingSettlement * feeBps) / 10_000n;
       const buyerAmount = pendingSettlement - feeAmount;
       let pendingMarkee = 0n;
@@ -187,28 +182,24 @@ export function CommunityMarkeeClaimCard({
           );
         }
         try {
-          const [, , , hookSpecifications] =
-            await publicClient.readContract({
-              abi: revnetTerminalABI,
-              account: connectedAccount,
-              address: terminal,
-              args: [
-                projectId,
-                REVNET_NATIVE_TOKEN,
-                buyerAmount,
-                connectedAccount,
-                "0x",
-              ],
-              functionName: "previewPayFor",
-            });
+          const [, , , hookSpecifications] = await publicClient.readContract({
+            abi: revnetTerminalABI,
+            account: connectedAccount,
+            address: terminal,
+            args: [
+              projectId,
+              REVNET_NATIVE_TOKEN,
+              buyerAmount,
+              connectedAccount,
+              "0x",
+            ],
+            functionName: "previewPayFor",
+          });
           const swapSpecification = hookSpecifications.find(
             ({ amount, noop }) => !noop && amount > 0n,
           );
-          const noopSpecification = hookSpecifications.find(
-            ({ noop }) => noop,
-          );
-          const hookResult =
-            swapSpecification?.hook ?? noopSpecification?.hook;
+          const noopSpecification = hookSpecifications.find(({ noop }) => noop);
+          const hookResult = swapSpecification?.hook ?? noopSpecification?.hook;
           buybackHookAddress =
             hookResult != null && isAddress(hookResult) ?
               getAddress(hookResult)
@@ -229,8 +220,6 @@ export function CommunityMarkeeClaimCard({
         pendingMarkee,
         pendingSettlement,
         projectId,
-        tokenAddress,
-        tokenBalance,
       };
       setSnapshot(next);
       setErrorMessage(null);
@@ -265,6 +254,11 @@ export function CommunityMarkeeClaimCard({
     }
     setIsSubmitting(true);
     setErrorMessage(null);
+    setActualRoute(null);
+    setTransactionError(null);
+    setTransactionHash(undefined);
+    setTransactionStatus(undefined);
+    let settleHash: `0x${string}` | undefined;
     try {
       if (chain?.id !== chainId) await switchNetworkAsync?.(chainId);
       const walletClient = await getWalletClient({ chainId });
@@ -274,13 +268,16 @@ export function CommunityMarkeeClaimCard({
       if (snapshot.pendingSettlement <= 0n) {
         throw new Error("There is no MARKEE available to claim.");
       }
-      const settleHash = await walletClient.writeContract({
+      settleHash = await walletClient.writeContract({
         abi: streamingLeaderboardRuntimeABI,
         account: connectedAccount,
         address: leaderboardAddress,
         args: [[connectedAccount]],
         functionName: "settle",
       });
+      setTransactionHash(settleHash);
+      setTransactionStatus("loading");
+      setIsOpen(false);
       const settleReceipt = await publicClient.waitForTransactionReceipt({
         hash: settleHash,
       });
@@ -311,28 +308,21 @@ export function CommunityMarkeeClaimCard({
         }
       });
       setActualRoute(usedUniswap ? "uniswap-buyback" : "revnet-mint");
-
-      const tokenBalance = await publicClient.readContract({
-        abi: markeeTokenABI,
-        address: snapshot.tokenAddress,
-        args: [connectedAccount],
-        functionName: "balanceOf",
-      });
-      const claimedTokenCount =
-        tokenBalance > snapshot.tokenBalance ?
-          tokenBalance - snapshot.tokenBalance
-        : 0n;
-      if (claimedTokenCount <= 0n) {
-        throw new Error("No new MARKEE was received from settlement.");
-      }
-      setClaimedMarkee(claimedTokenCount);
-      setIsSuccess(true);
+      setTransactionStatus("success");
       await load();
     } catch (cause) {
-      if (isUserRejectedTransactionError(cause)) return;
+      if (isUserRejectedTransactionError(cause)) {
+        setTransactionStatus(undefined);
+        return;
+      }
       const error =
         cause instanceof Error ? cause : new Error("Unable to claim MARKEE.");
-      setErrorMessage("Unable to claim MARKEE right now. Please try again.");
+      if (settleHash == null) {
+        setErrorMessage("Unable to claim MARKEE right now. Please try again.");
+      } else {
+        setTransactionError(error);
+        setTransactionStatus("error");
+      }
       const context = {
         type: "markee-settlement-error",
         chainId,
@@ -374,9 +364,7 @@ export function CommunityMarkeeClaimCard({
             color="primary"
             disabled={snapshot == null || totalMarkee <= 0n}
             onClick={() => {
-              setIsSuccess(false);
-              setClaimedMarkee(0n);
-              setActualRoute(null);
+              setErrorMessage(null);
               setIsOpen(true);
             }}
           >
@@ -393,94 +381,68 @@ export function CommunityMarkeeClaimCard({
         testId="markee-token-claim"
         title="🪧 Claim MARKEE"
         footer={
-          isSuccess ?
-            <Button onClick={() => setIsOpen(false)}>Close</Button>
-          : <div className="flex w-full justify-end gap-3">
-              <Button
-                btnStyle="ghost"
-                color="secondary"
-                onClick={() => setIsOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                disabled={
-                  snapshot == null ||
-                  snapshot.pendingSettlement <= 0n ||
-                  totalMarkee <= 0n
-                }
-                isLoading={isSubmitting}
-                onClick={handleClaim}
-              >
-                Claim
-              </Button>
-            </div>
+          <div className="flex w-full justify-end gap-3">
+            <Button
+              btnStyle="ghost"
+              color="secondary"
+              onClick={() => setIsOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={
+                snapshot == null ||
+                snapshot.pendingSettlement <= 0n ||
+                totalMarkee <= 0n
+              }
+              isLoading={isSubmitting}
+              onClick={handleClaim}
+            >
+              Claim
+            </Button>
+          </div>
         }
       >
-        {isSuccess ?
-          <div className="flex flex-col items-center gap-4 py-8 text-center">
-            <CheckCircleIcon className="h-14 w-14 text-primary-content" />
-            <div>
-              <h4 className="text-lg font-semibold text-neutral-content">
-                MARKEE claimed
-              </h4>
-              <p className="mt-2 text-sm text-neutral-soft-content">
-                {formatAmount(claimedMarkee)} MARKEE was sent to your wallet.
+        <div className="flex flex-col gap-4">
+          {errorMessage != null && (
+            <InfoBox infoBoxType="error" content={errorMessage} />
+          )}
+          <div className="rounded-xl border border-neutral-content/15 bg-neutral/30 p-4">
+            <p className="text-xs uppercase tracking-wider text-neutral-soft-content">
+              Available
+            </p>
+            <p className="mt-2 font-mono text-2xl font-semibold text-neutral-content">
+              {formatAmount(totalMarkee)} MARKEE
+            </p>
+            {snapshot != null && snapshot.pendingSettlement > 0n && (
+              <p className="mt-2 text-xs text-neutral-soft-content">
+                Estimated from {formatAmount(snapshot.pendingSettlement)} ETH
+                accumulated by your stream.
               </p>
-              {actualRoute != null && (
-                <p className="mt-2 text-sm text-neutral-soft-content">
-                  Settlement route: {formatSettlementRoute(actualRoute)}
-                </p>
-              )}
-            </div>
-          </div>
-        : <div className="flex flex-col gap-4">
-            {errorMessage != null && (
-              <div className="rounded-xl border border-danger-content/30 bg-danger-soft/50 p-4 text-sm text-danger-content">
-                {errorMessage}
-              </div>
             )}
-            <div className="rounded-xl border border-neutral-content/15 bg-neutral/30 p-4">
-              <p className="text-xs uppercase tracking-wider text-neutral-soft-content">
-                Available
-              </p>
-              <p className="mt-2 font-mono text-2xl font-semibold text-neutral-content">
-                {formatAmount(totalMarkee)} MARKEE
-              </p>
-              {snapshot != null && snapshot.pendingSettlement > 0n && (
-                <p className="mt-2 text-xs text-neutral-soft-content">
-                  Estimated from {formatAmount(snapshot.pendingSettlement)} ETH
-                  accumulated by your stream.
-                </p>
-              )}
-            </div>
-            <div className="rounded-xl border border-neutral-content/15 bg-neutral/30 p-4 text-sm">
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-neutral-soft-content">
-                  Expected route
-                </span>
-                <span className="font-medium text-neutral-content">
-                  {snapshot?.expectedRoute != null ?
-                    formatSettlementRoute(snapshot.expectedRoute)
-                  : "Unavailable"}
-                </span>
-              </div>
-              <div className="mt-3 flex items-center justify-between gap-4 border-t border-neutral-content/15 pt-3">
-                <span className="text-neutral-soft-content">
-                  MARKEE received
-                </span>
-                <span className="font-mono font-semibold text-primary-content">
-                  {formatAmount(totalMarkee)} MARKEE
-                </span>
-              </div>
-              <p className="mt-3 text-xs text-neutral-soft-content">
-                The Revnet buyback hook currently expects this route. Market
-                conditions may change before execution; the confirmed route is
-                read from the settlement receipt.
-              </p>
-            </div>
           </div>
-        }
+          <div className="rounded-xl border border-neutral-content/15 bg-neutral/30 p-4 text-sm">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-neutral-soft-content">Expected route</span>
+              <span className="font-medium text-neutral-content">
+                {snapshot?.expectedRoute != null ?
+                  formatSettlementRoute(snapshot.expectedRoute)
+                : "Unavailable"}
+              </span>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-4 border-t border-neutral-content/15 pt-3">
+              <span className="text-neutral-soft-content">MARKEE received</span>
+              <span className="font-mono font-semibold text-primary-content">
+                {formatAmount(totalMarkee)} MARKEE
+              </span>
+            </div>
+            <p className="mt-3 text-xs text-neutral-soft-content">
+              The Revnet buyback hook currently expects this route. Market
+              conditions may change before execution; the confirmed route is
+              read from the settlement receipt.
+            </p>
+          </div>
+        </div>
       </Modal>
     </>
   );

@@ -72,6 +72,7 @@ import {
   CFA_V1_FORWARDER_ADDRESS,
   cfaV1ForwarderABI,
   ethxApproveABI,
+  estimateLeaderboardPurchaseMarkeeTokens,
   formatMarkeeEthxBalance,
   formatMarkeeRunwayShort,
   GDA_AGREEMENT_ID,
@@ -2119,6 +2120,7 @@ function CommunityMarkeePreviewModal({
     <>
       <CommunityStreamingMarkeeModal
         chainId={markeeChainId}
+        hideLeaderboard={isReviewingPayment}
         leaderboardAddress={leaderboardAddress}
         isOpen={isOpen}
         onFundMarkee={handleSelectFundingMarkee}
@@ -2309,6 +2311,14 @@ function CommunityMarkeePreviewModal({
                 formatEthAmountCompact(streamAmounts.value, 6)
               : undefined
             }
+            amountUsd={
+              monthlyRateUsd == null ? undefined : formatUsd(monthlyRateUsd)
+            }
+            markeeEarned={estimateLeaderboardPurchaseMarkeeTokens(
+              Number(formatEther(derivedMonthlyRateAmount)),
+            ).toLocaleString(undefined, {
+              maximumFractionDigits: 3,
+            })}
             message={paymentReviewMessage}
             monthlyRate={formatEthAmountCompact(derivedMonthlyRateAmount, 6)}
             runway={formatMarkeeRunwayShort(streamAmounts.runwaySeconds)}
@@ -2342,7 +2352,7 @@ function CommunityMarkeePreviewModal({
             : shouldCreateMarkee ?
               newMarkeeMessageInput
             : ownedMarkeeAddress != null && (
-                <div className="relative rounded-xl border border-neutral-content/15 bg-neutral/40 p-4">
+                <div className="relative rounded-xl border border-neutral-content/15 bg-neutral/40 p-4 dark:bg-primary-soft-dark">
                   {shouldShowOwnedMarkeeEditor ?
                     <div className="flex flex-col gap-3">
                       <label className="flex flex-col gap-2">
@@ -2447,7 +2457,7 @@ function CommunityMarkeePreviewModal({
               )
             }
 
-            <div className="flex flex-col rounded-xl border border-primary-content bg-neutral/60 p-4">
+            <div className="flex flex-col rounded-xl border border-primary-content bg-neutral/60 p-4 shadow-inner dark:bg-primary-soft-dark">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-baseline gap-2">
                   <div
