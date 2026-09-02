@@ -729,7 +729,7 @@ function CommunityMarkeePreviewModal({
           </span>
         </span>
         <input
-          className="input input-bordered input-info w-full bg-primary-soft-dark outline-none"
+          className="input input-bordered w-full border-primary-content bg-primary-soft-dark outline-none focus:border-primary-content"
           value={newMarkeeName}
           onChange={(event) => setNewMarkeeName(event.target.value)}
           placeholder="Your name"
@@ -2364,7 +2364,7 @@ function CommunityMarkeePreviewModal({
                           </span>
                         </span>
                         <input
-                          className="input input-bordered input-info w-full bg-primary-soft-dark outline-none"
+                          className="input input-bordered w-full border-primary-content bg-primary-soft-dark outline-none focus:border-primary-content"
                           value={editedName}
                           onChange={(event) =>
                             setEditedName(event.target.value)
@@ -2444,7 +2444,7 @@ function CommunityMarkeePreviewModal({
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-baseline gap-2">
                   <div
-                    className="tooltip tooltip-top-left min-w-0 text-left"
+                    className="tooltip tooltip-top-right min-w-0 text-right"
                     data-tip={`${formatEther(derivedMonthlyRateAmount)} ETH / mo`}
                   >
                     <input
@@ -3768,7 +3768,7 @@ export function CommunityMarkeePlaceholder({
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-wider text-neutral-soft-content">
-                  🪧 Markee Revenue
+                  🪧 Markee community revenue
                 </p>
                 {hasPendingClaim ?
                   <div

@@ -62,14 +62,13 @@ export function CommunityMarkeePaymentReview({
             Stream {additionalToWin} ETHx/mo more to take the top position.
           </p>
         )}
-        <div
-          className={`mt-3 rounded-lg border px-3 py-2 text-xs leading-relaxed ${willWin ? "border-primary-content/25 bg-primary-content/10 text-primary-content" : "border-warning-content/25 bg-warning-content/10 text-warning-content"}`}
-        >
-          {willWin ?
-            "This Markee can be overtaken by a larger stream. If that happens, its outgoing stream is refunded until it is promoted again."
-          : "You do not pay while another message is promoted. Its outgoing stream is refunded until it takes the promoted position."
-          }
-        </div>
+      </section>
+
+      <section className="rounded-xl border border-warning-content/40 bg-warning-content/5 px-4 py-3 text-xs leading-relaxed text-warning-content">
+        {willWin ?
+          "This Markee can be overtaken by a larger stream. If that happens, its outgoing stream is refunded until it is promoted again."
+        : "You do not pay while another message is promoted. Its outgoing stream is refunded until it takes the promoted position."
+        }
       </section>
     </div>
   );

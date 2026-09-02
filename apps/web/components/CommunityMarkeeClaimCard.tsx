@@ -397,7 +397,7 @@ export function CommunityMarkeeClaimCard({
         onClose={() => setIsOpen(false)}
         size="small"
         testId="markee-token-claim"
-        title="Claim MARKEE"
+        title="🪧 Claim MARKEE"
         footer={
           isSuccess ?
             <Button onClick={() => setIsOpen(false)}>Close</Button>
@@ -465,11 +465,11 @@ export function CommunityMarkeeClaimCard({
                 </span>
               </div>
               <div className="mt-3 flex items-center justify-between gap-4 border-t border-neutral-content/15 pt-3">
-                <span className="text-neutral-soft-content">You receive</span>
+                <span className="text-neutral-soft-content">
+                  MARKEE received
+                </span>
                 <span className="font-mono font-semibold text-primary-content">
-                  {snapshot?.quote != null ?
-                    `${formatAmount(snapshot.quote.expectedReturn)} ETH`
-                  : "—"}
+                  {formatAmount(totalMarkee)} MARKEE
                 </span>
               </div>
               {snapshot?.quote != null && (

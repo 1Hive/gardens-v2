@@ -543,27 +543,29 @@ export function CommunityMarkeeStreamStats({
             }
           />
         </Stat>
-        <div className="flex min-w-0 flex-col">
-          <p className="min-h-6 text-[10px] uppercase leading-3 tracking-wider text-neutral-soft-content">
-            {settlement?.mintsMarkee === false ?
-              "Claimable ETH"
-            : "Claimable MARKEE"}
-          </p>
-          <div className="mt-1 flex min-w-0 items-center text-xs font-semibold leading-tight text-primary-content">
-            <span
-              className={
-                earningsTooltip == null ? "" : "tooltip tooltip-top cursor-help"
-              }
-              data-tip={earningsTooltip}
-            >
-              <LiveFlowingAmount
-                value={claimableValue}
-                ratePerSecond={earnedRate}
-                fractionDigits={7}
-              />
-            </span>
+        {settlement != null && (
+          <div className="flex min-w-0 flex-col">
+            <p className="min-h-6 text-[10px] uppercase leading-3 tracking-wider text-neutral-soft-content">
+              {settlement.mintsMarkee ? "Claimable MARKEE" : "Claimable ETH"}
+            </p>
+            <div className="mt-1 flex min-w-0 items-center text-xs font-semibold leading-tight text-primary-content">
+              <span
+                className={
+                  earningsTooltip == null ? "" : (
+                    "tooltip tooltip-top cursor-help"
+                  )
+                }
+                data-tip={earningsTooltip}
+              >
+                <LiveFlowingAmount
+                  value={claimableValue}
+                  ratePerSecond={earnedRate}
+                  fractionDigits={7}
+                />
+              </span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
