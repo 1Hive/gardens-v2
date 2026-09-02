@@ -17,15 +17,6 @@ import { Modal } from "@/components/Modal";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
 import { reportClientError } from "@/utils/clientErrorReporter";
 import { logOnce } from "@/utils/log";
-import {
-  getMarkeeCashOutQuote,
-  markeeTokenABI,
-  MarkeeCashOutQuote,
-  prepareMarkeeCashOut,
-  REVNET_NATIVE_TOKEN,
-  revnetTerminalCashOutABI,
-  revnetTokensABI,
-} from "@/utils/markeeCashOut";
 import { streamingLeaderboardRuntimeABI } from "@/utils/markeeStreaming";
 import { isUserRejectedTransactionError } from "@/utils/transactionMessages";
 
@@ -37,15 +28,21 @@ type Props = {
 type ClaimSnapshot = {
   pendingMarkee: bigint;
   pendingSettlement: bigint;
-  projectId: bigint;
-  quote: MarkeeCashOutQuote | null;
-  terminal: Address;
   tokenAddress: Address;
   tokenBalance: bigint;
 };
 
-const revnetTerminalPayABI = parseAbi([
+const REVNET_NATIVE_TOKEN =
+  "0x000000000000000000000000000000000000EEEe" as Address;
+const revnetTerminalABI = parseAbi([
+  "function TOKENS() view returns (address)",
   "function pay(uint256 projectId, address token, uint256 amount, address beneficiary, uint256 minReturnedTokens, string memo, bytes metadata) payable returns (uint256 beneficiaryTokenCount)",
+]);
+const revnetTokensABI = parseAbi([
+  "function tokenOf(uint256 projectId) view returns (address)",
+]);
+const markeeTokenABI = parseAbi([
+  "function balanceOf(address account) view returns (uint256)",
 ]);
 
 function formatAmount(value: bigint, maximumFractionDigits = 6) {
@@ -68,26 +65,7 @@ export function CommunityMarkeeClaimCard({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [recoverableMarkee, setRecoverableMarkee] = useState(0n);
-
-  const recoveryKey =
-    connectedAccount == null ? null : (
-      `markee-claim:${chainId}:${leaderboardAddress.toLowerCase()}:${connectedAccount.toLowerCase()}`
-    );
-
-  useEffect(() => {
-    if (recoveryKey == null) {
-      setRecoverableMarkee(0n);
-      return;
-    }
-    const stored = window.sessionStorage.getItem(recoveryKey);
-    try {
-      setRecoverableMarkee(stored == null ? 0n : BigInt(stored));
-    } catch {
-      window.sessionStorage.removeItem(recoveryKey);
-      setRecoverableMarkee(0n);
-    }
-  }, [recoveryKey]);
+  const [claimedMarkee, setClaimedMarkee] = useState(0n);
 
   const load = useCallback(async () => {
     if (connectedAccount == null || publicClient == null) {
@@ -140,7 +118,7 @@ export function CommunityMarkeeClaimCard({
       }
       const terminal = getAddress(terminalResult);
       const tokensAddress = await publicClient.readContract({
-        abi: revnetTerminalCashOutABI,
+        abi: revnetTerminalABI,
         address: terminal,
         functionName: "TOKENS",
       });
@@ -167,7 +145,7 @@ export function CommunityMarkeeClaimCard({
       if (buyerAmount > 0n) {
         try {
           const simulation = await publicClient.simulateContract({
-            abi: revnetTerminalPayABI,
+            abi: revnetTerminalABI,
             account: connectedAccount,
             address: terminal,
             args: [
@@ -191,25 +169,9 @@ export function CommunityMarkeeClaimCard({
           );
         }
       }
-      const totalMarkee =
-        recoverableMarkee > 0n ? recoverableMarkee : pendingMarkee;
-      const quote =
-        totalMarkee > 0n ?
-          await getMarkeeCashOutQuote({
-            chainId,
-            client: publicClient,
-            holder: connectedAccount,
-            projectId,
-            terminal,
-            tokenCount: totalMarkee,
-          })
-        : null;
       const next = {
         pendingMarkee,
         pendingSettlement,
-        projectId,
-        quote,
-        terminal,
         tokenAddress,
         tokenBalance,
       };
@@ -227,13 +189,7 @@ export function CommunityMarkeeClaimCard({
     } finally {
       setIsLoading(false);
     }
-  }, [
-    chainId,
-    connectedAccount,
-    leaderboardAddress,
-    publicClient,
-    recoverableMarkee,
-  ]);
+  }, [chainId, connectedAccount, leaderboardAddress, publicClient]);
 
   useEffect(() => {
     void load();
@@ -258,108 +214,63 @@ export function CommunityMarkeeClaimCard({
       if (walletClient == null)
         throw new Error("Connect your wallet to claim.");
 
-      let claimedTokenCount = recoverableMarkee;
-      if (claimedTokenCount <= 0n) {
-        if (snapshot.pendingSettlement <= 0n) {
-          throw new Error("There is no MARKEE available to claim.");
-        }
-        const settleHash = await walletClient.writeContract({
-          abi: streamingLeaderboardRuntimeABI,
-          account: connectedAccount,
-          address: leaderboardAddress,
-          args: [[connectedAccount]],
-          functionName: "settle",
-        });
-        const settleReceipt = await publicClient.waitForTransactionReceipt({
-          hash: settleHash,
-        });
-        if (settleReceipt.status !== "success") {
-          throw new Error("Your MARKEE earnings could not be settled.");
-        }
-
-        const tokenBalance = await publicClient.readContract({
-          abi: markeeTokenABI,
-          address: snapshot.tokenAddress,
-          args: [connectedAccount],
-          functionName: "balanceOf",
-        });
-        claimedTokenCount =
-          tokenBalance > snapshot.tokenBalance ?
-            tokenBalance - snapshot.tokenBalance
-          : 0n;
-        if (claimedTokenCount > 0n && recoveryKey != null) {
-          window.sessionStorage.setItem(
-            recoveryKey,
-            claimedTokenCount.toString(),
-          );
-          setRecoverableMarkee(claimedTokenCount);
-        }
+      if (snapshot.pendingSettlement <= 0n) {
+        throw new Error("There is no MARKEE available to claim.");
       }
+      const settleHash = await walletClient.writeContract({
+        abi: streamingLeaderboardRuntimeABI,
+        account: connectedAccount,
+        address: leaderboardAddress,
+        args: [[connectedAccount]],
+        functionName: "settle",
+      });
+      const settleReceipt = await publicClient.waitForTransactionReceipt({
+        hash: settleHash,
+      });
+      if (settleReceipt.status !== "success") {
+        throw new Error("Your MARKEE earnings could not be settled.");
+      }
+
+      const tokenBalance = await publicClient.readContract({
+        abi: markeeTokenABI,
+        address: snapshot.tokenAddress,
+        args: [connectedAccount],
+        functionName: "balanceOf",
+      });
+      const claimedTokenCount =
+        tokenBalance > snapshot.tokenBalance ?
+          tokenBalance - snapshot.tokenBalance
+        : 0n;
       if (claimedTokenCount <= 0n) {
         throw new Error("No new MARKEE was received from settlement.");
       }
-      const quote = await prepareMarkeeCashOut({
-        chainId,
-        client: publicClient,
-        holder: connectedAccount,
-        projectId: snapshot.projectId,
-        terminal: snapshot.terminal,
-        tokenCount: claimedTokenCount,
-      });
-      const cashOutHash = await walletClient.writeContract({
-        abi: revnetTerminalCashOutABI,
-        account: connectedAccount,
-        address: snapshot.terminal,
-        args: [
-          connectedAccount,
-          snapshot.projectId,
-          claimedTokenCount,
-          REVNET_NATIVE_TOKEN,
-          quote.terminalMinimum,
-          connectedAccount,
-          quote.metadata,
-        ],
-        functionName: "cashOutTokensOf",
-      });
-      const receipt = await publicClient.waitForTransactionReceipt({
-        hash: cashOutHash,
-      });
-      if (receipt.status !== "success") {
-        throw new Error("Your MARKEE claim transaction reverted.");
-      }
-      if (recoveryKey != null) window.sessionStorage.removeItem(recoveryKey);
-      setRecoverableMarkee(0n);
+      setClaimedMarkee(claimedTokenCount);
       setIsSuccess(true);
       await load();
     } catch (cause) {
       if (isUserRejectedTransactionError(cause)) return;
       const error =
         cause instanceof Error ? cause : new Error("Unable to claim MARKEE.");
-      setErrorMessage(
-        error.message.includes("quote changed") ?
-          "The best quote changed. Please try again."
-        : "Unable to claim MARKEE right now. Please try again.",
-      );
+      setErrorMessage("Unable to claim MARKEE right now. Please try again.");
       const context = {
-        type: "markee-cash-out-error",
+        type: "markee-settlement-error",
         chainId,
         connectedAccount,
         leaderboardAddress,
         tags: {
-          error_type: "markee-cash-out-error",
+          error_type: "markee-settlement-error",
           chain_id: chainId,
         },
       };
-      logOnce("error", "[CommunityMarkee] MARKEE claim failed", cause, context);
-      reportClientError(cause, context);
+      logOnce("error", "[CommunityMarkee] MARKEE claim failed", error, context);
+      reportClientError(error, context);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const totalMarkee =
-    recoverableMarkee > 0n ? recoverableMarkee : snapshot?.pendingMarkee ?? 0n;
-  if (connectedAccount == null || (!isLoading && totalMarkee <= 0n))
+  const totalMarkee = snapshot?.pendingMarkee ?? 0n;
+  if (connectedAccount == null || (!isOpen && !isLoading && totalMarkee <= 0n))
     return null;
 
   return (
@@ -383,6 +294,7 @@ export function CommunityMarkeeClaimCard({
             disabled={snapshot == null || totalMarkee <= 0n}
             onClick={() => {
               setIsSuccess(false);
+              setClaimedMarkee(0n);
               setIsOpen(true);
             }}
           >
@@ -410,11 +322,15 @@ export function CommunityMarkeeClaimCard({
                 Cancel
               </Button>
               <Button
-                disabled={snapshot?.quote == null || totalMarkee <= 0n}
+                disabled={
+                  snapshot == null ||
+                  snapshot.pendingSettlement <= 0n ||
+                  totalMarkee <= 0n
+                }
                 isLoading={isSubmitting}
                 onClick={handleClaim}
               >
-                Claim to ETH
+                Claim
               </Button>
             </div>
         }
@@ -427,7 +343,7 @@ export function CommunityMarkeeClaimCard({
                 MARKEE claimed
               </h4>
               <p className="mt-2 text-sm text-neutral-soft-content">
-                The best available route sent ETH to your wallet.
+                {formatAmount(claimedMarkee)} MARKEE was sent to your wallet.
               </p>
             </div>
           </div>
@@ -444,25 +360,17 @@ export function CommunityMarkeeClaimCard({
               <p className="mt-2 font-mono text-2xl font-semibold text-neutral-content">
                 {formatAmount(totalMarkee)} MARKEE
               </p>
-              {recoverableMarkee <= 0n &&
-                snapshot != null &&
-                snapshot.pendingMarkee > 0n && (
-                  <p className="mt-2 text-xs text-neutral-soft-content">
-                    Includes {formatAmount(snapshot.pendingMarkee)} MARKEE that
-                    will be settled first.
-                  </p>
-                )}
+              {snapshot != null && snapshot.pendingSettlement > 0n && (
+                <p className="mt-2 text-xs text-neutral-soft-content">
+                  Estimated from {formatAmount(snapshot.pendingSettlement)} ETH
+                  accumulated by your stream.
+                </p>
+              )}
             </div>
             <div className="rounded-xl border border-neutral-content/15 bg-neutral/30 p-4 text-sm">
               <div className="flex items-center justify-between gap-4">
-                <span className="text-neutral-soft-content">Best route</span>
-                <span className="font-medium text-neutral-content">
-                  {snapshot?.quote?.route === "uniswap" ?
-                    "Uniswap"
-                  : snapshot?.quote != null ?
-                    "Revnet"
-                  : "Loading…"}
-                </span>
+                <span className="text-neutral-soft-content">Settlement</span>
+                <span className="font-medium text-neutral-content">Revnet</span>
               </div>
               <div className="mt-3 flex items-center justify-between gap-4 border-t border-neutral-content/15 pt-3">
                 <span className="text-neutral-soft-content">
@@ -472,12 +380,10 @@ export function CommunityMarkeeClaimCard({
                   {formatAmount(totalMarkee)} MARKEE
                 </span>
               </div>
-              {snapshot?.quote != null && (
-                <p className="mt-3 text-xs text-neutral-soft-content">
-                  Includes 1% slippage protection. The route is refreshed before
-                  you sign.
-                </p>
-              )}
+              <p className="mt-3 text-xs text-neutral-soft-content">
+                The leaderboard settles through Revnet. Its buyback hook may use
+                Uniswap when that mints more MARKEE for the accumulated ETH.
+              </p>
             </div>
           </div>
         }
