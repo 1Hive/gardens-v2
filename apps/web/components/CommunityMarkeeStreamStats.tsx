@@ -9,7 +9,7 @@ import {
   parseAbi,
   zeroAddress,
 } from "viem";
-import { useBalance, usePublicClient } from "wagmi";
+import { usePublicClient } from "wagmi";
 import { LiveFlowingAmount } from "@/components/LiveFlowingAmount";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { logOnce } from "@/utils/log";
@@ -121,31 +121,21 @@ export function CommunityMarkeeStreamStats({
   markeeAddress,
 }: Props) {
   const publicClient = usePublicClient({ chainId });
-  const { data: liveEthxBalance } = useBalance({
-    address: connectedAccount,
-    chainId,
-    enabled: isOpen,
-    token: ethxAddress,
-    watch: true,
-  });
   const [settlement, setSettlement] = useState<SettlementSnapshot | null>(null);
   const [refundPoolAddress, setRefundPoolAddress] = useState<Address | null>(
     null,
   );
   const [refundedTotals, setRefundedTotals] =
     useState<StreamTotalsSnapshot | null>(null);
-  const {
-    currentUserFlowRateBn,
-    currentUserOtherFlowRateBn,
-    liveTotalStreamedBn,
-  } = useSuperfluidStream({
-    chainId,
-    containerId: `markee-stream-${leaderboardAddress}`,
-    includePoolMembers: false,
-    receiver: isOpen ? leaderboardAddress : "",
-    sender: connectedAccount,
-    superToken: isOpen ? ethxAddress : "",
-  });
+  const { currentUserOtherFlowRateBn, liveTotalStreamedBn } =
+    useSuperfluidStream({
+      chainId,
+      containerId: `markee-stream-${leaderboardAddress}`,
+      includePoolMembers: false,
+      receiver: isOpen ? leaderboardAddress : "",
+      sender: connectedAccount,
+      superToken: isOpen ? ethxAddress : "",
+    });
   const {
     currentFlowRateBn: currentRefundRateBn,
     liveTotalStreamedBn: liveTotalRefundedBn,
@@ -359,12 +349,9 @@ export function CommunityMarkeeStreamStats({
     publicClient,
   ]);
 
-  const effectiveRatePerSecond =
-    activeRatePerSecond > 0n ? activeRatePerSecond : (
-      currentUserFlowRateBn ?? 0n
-    );
+  const effectiveRatePerSecond = activeRatePerSecond;
   const hasActiveStream = effectiveRatePerSecond > 0n;
-  const currentEthxBalance = liveEthxBalance?.value ?? ethxBalance;
+  const currentEthxBalance = ethxBalance;
   const balanceEth = Number(formatEther(currentEthxBalance));
   const netRatePerSecond =
     isWinning && effectiveRatePerSecond > (currentRefundRateBn ?? 0n) ?

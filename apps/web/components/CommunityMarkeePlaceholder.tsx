@@ -2113,6 +2113,7 @@ function CommunityMarkeePreviewModal({
           functionName: "backerDeposit",
         }),
       );
+      setStreamPositionRefreshKey((current) => current + 1);
       onStreamUpdated();
       updateTransactionNotification(notificationToastId, {
         status: "success",

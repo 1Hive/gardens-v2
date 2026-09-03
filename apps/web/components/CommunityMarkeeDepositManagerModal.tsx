@@ -341,7 +341,7 @@ export function CommunityMarkeeDepositManagerModal({
             <Button
               btnStyle={action === "deposit" ? "filled" : "outline"}
               color="primary"
-              className="w-full"
+              className="w-full focus-visible:outline-none"
               onClick={() => prepareAction("deposit")}
             >
               Deposit
@@ -349,7 +349,7 @@ export function CommunityMarkeeDepositManagerModal({
             <Button
               btnStyle={action === "withdraw" ? "filled" : "outline"}
               color="primary"
-              className="w-full"
+              className="w-full focus-visible:outline-none"
               disabled={ethxBalance <= 0n}
               onClick={() => prepareAction("withdraw")}
             >
@@ -386,10 +386,10 @@ export function CommunityMarkeeDepositManagerModal({
                 </span>
                 <span>ETHx: {formatEther(ethxBalance).slice(0, 8)}</span>
               </div>
-              <div className="join flex w-full">
+              <div className="flex w-full items-stretch gap-2">
                 <input
                   inputMode="decimal"
-                  className="input join-item input-bordered input-info min-w-0 flex-1 bg-primary-soft-dark font-mono outline-none"
+                  className="input input-bordered input-info min-w-0 flex-1 rounded-lg bg-primary-soft-dark font-mono outline-none"
                   value={amount}
                   disabled={isBusy}
                   onChange={(event) => {
@@ -405,7 +405,7 @@ export function CommunityMarkeeDepositManagerModal({
                 <Button
                   btnStyle="filled"
                   color="primary"
-                  className="join-item rounded-l-none"
+                  className="shrink-0"
                   disabled={isBusy || amountWei <= 0n}
                   isLoading={isBusy}
                   onClick={submit}
@@ -425,7 +425,7 @@ export function CommunityMarkeeDepositManagerModal({
                     type="range"
                     min="1"
                     max="100"
-                    className="range range-primary range-xs"
+                    className="range range-xs w-full cursor-pointer bg-neutral-soft [--range-bg:var(--color-grey-200)] [--range-shdw:var(--color-green-500)] dark:bg-[#373737] dark:[--range-bg:#373737] dark:[--range-shdw:#4E9F80]"
                     disabled={ethxBalance <= 0n || isBusy}
                     value={withdrawPercentage}
                     onChange={(event) =>
@@ -457,7 +457,7 @@ export function CommunityMarkeeDepositManagerModal({
                     type="range"
                     min="1"
                     max="100"
-                    className="range range-primary range-xs"
+                    className="range range-xs w-full cursor-pointer bg-neutral-soft [--range-bg:var(--color-grey-200)] [--range-shdw:var(--color-green-500)] dark:bg-[#373737] dark:[--range-bg:#373737] dark:[--range-shdw:#4E9F80]"
                     disabled={(nativeBalance?.value ?? 0n) <= 0n}
                     value={depositPercentage}
                     onChange={(event) =>
