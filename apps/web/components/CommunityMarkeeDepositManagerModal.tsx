@@ -13,15 +13,15 @@ import {
 } from "wagmi";
 import { Button } from "@/components/Button";
 import { InfoWrapper } from "@/components/InfoWrapper";
+import { LiveFlowingAmount } from "@/components/LiveFlowingAmount";
 import { Modal } from "@/components/Modal";
-import { chainConfigMap, getExplorerUrl } from "@/configs/chains";
+import { getExplorerUrl } from "@/configs/chains";
 import { ComputedStatus } from "@/hooks/useContractWriteWithConfirmations";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { reportClientError } from "@/utils/clientErrorReporter";
 import { logOnce } from "@/utils/log";
 import {
   ethxApproveABI,
-  formatMarkeeEthxBalance,
   formatMarkeeRunway,
   getMarkeeRunwayProgress,
   getMarkeeRunwaySeconds,
@@ -29,7 +29,8 @@ import {
 } from "@/utils/markeeStreaming";
 import { isUserRejectedTransactionError } from "@/utils/transactionMessages";
 
-type Action = "deposit" | null;
+type Action = "deposit" | "withdraw" | null;
+type TransactionAction = Exclude<Action, null>;
 
 type Props = {
   activeRatePerSecond: bigint;
@@ -37,8 +38,11 @@ type Props = {
   ethxAddress: Address;
   ethxBalance: bigint;
   isOpen: boolean;
+  isStreamWinning: boolean;
   onBalancesChanged: () => void;
   onClose: () => void;
+  streamMessage?: string;
+  streamName?: string;
 };
 
 const sanitizeAmount = (value: string) => {
@@ -61,8 +65,11 @@ export function CommunityMarkeeDepositManagerModal({
   ethxAddress,
   ethxBalance,
   isOpen,
+  isStreamWinning,
   onBalancesChanged,
   onClose,
+  streamMessage,
+  streamName,
 }: Props) {
   const { address } = useAccount();
   const { chain } = useNetwork();
@@ -78,9 +85,13 @@ export function CommunityMarkeeDepositManagerModal({
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [depositPercentage, setDepositPercentage] = useState(50);
+  const [withdrawPercentage, setWithdrawPercentage] = useState(50);
   const [lastTransaction, setLastTransaction] = useState<{
+    action: TransactionAction;
     hash: `0x${string}`;
   } | null>(null);
+  const [transactionAction, setTransactionAction] =
+    useState<TransactionAction | null>(null);
   const [transactionHash, setTransactionHash] = useState<
     `0x${string}` | undefined
   >();
@@ -94,10 +105,21 @@ export function CommunityMarkeeDepositManagerModal({
   const progress =
     activeRatePerSecond > 0n ? getMarkeeRunwayProgress(runway) : 100;
   const runwayIsLow = activeRatePerSecond > 0n && runway < 7n * 86_400n;
+  const monthlyStreamRate = activeRatePerSecond * MARKEE_SECONDS_IN_MONTH;
+  const formattedMonthlyStreamRate = Number(
+    formatEther(monthlyStreamRate),
+  ).toFixed(3);
+  const winningStreamCount =
+    activeRatePerSecond > 0n && isStreamWinning ? 1 : 0;
+  const refundedStreamCount =
+    activeRatePerSecond > 0n && !isStreamWinning ? 1 : 0;
 
   useTransactionNotification({
     chainId,
-    contractName: "Deposit ETH for streaming",
+    contractName:
+      transactionAction === "withdraw" ? "Withdraw ETHx" : (
+        "Deposit ETH for streaming"
+      ),
     enabled: transactionStatus != null,
     fallbackErrorMessage: "Unable to update your streamable balance.",
     safeAddress: address,
@@ -118,12 +140,24 @@ export function CommunityMarkeeDepositManagerModal({
     setTransactionError(null);
     setTransactionHash(undefined);
     setTransactionStatus(undefined);
+    setTransactionAction(null);
     setLastTransaction(null);
   }, [isOpen]);
 
-  const prepareAction = (nextAction: Exclude<Action, null>) => {
-    setAction((current) => (current === nextAction ? null : nextAction));
-    setAmount("");
+  const prepareAction = (nextAction: TransactionAction) => {
+    if (action === nextAction) {
+      setAction(null);
+      setAmount("");
+      setError(null);
+      return;
+    }
+    setAction(nextAction);
+    if (nextAction === "withdraw") {
+      setWithdrawPercentage(50);
+      setAmount(formatEther((ethxBalance * 50n) / 100n));
+    } else {
+      setAmount("");
+    }
     setError(null);
     setLastTransaction(null);
   };
@@ -146,6 +180,12 @@ export function CommunityMarkeeDepositManagerModal({
     setError(null);
   };
 
+  const setWithdrawBalancePercentage = (percentage: number) => {
+    setWithdrawPercentage(percentage);
+    setAmount(formatEther((ethxBalance * BigInt(percentage)) / BigInt(100)));
+    setError(null);
+  };
+
   const submit = async () => {
     if (address == null || publicClient == null || action == null) return;
     setError(null);
@@ -155,26 +195,40 @@ export function CommunityMarkeeDepositManagerModal({
       setError(`Enter an amount to ${action}.`);
       return;
     }
-    if ((nativeBalance?.value ?? 0n) < amountWei) {
+    if (action === "deposit" && (nativeBalance?.value ?? 0n) < amountWei) {
       setError("Your wallet does not have enough native ETH.");
+      return;
+    }
+    if (action === "withdraw" && ethxBalance < amountWei) {
+      setError("Your ETHx balance is too low for this withdrawal.");
       return;
     }
 
     try {
+      setTransactionAction(action);
       setTransactionStatus("waiting");
       if (chain?.id !== chainId) await switchNetworkAsync?.(chainId);
       const walletClient = await getWalletClient({ chainId });
       if (walletClient == null)
         throw new Error("Connect your wallet to continue.");
 
-      const hash = await walletClient.writeContract({
-        abi: ethxApproveABI,
-        account: address,
-        address: ethxAddress,
-        functionName: "upgradeByETHTo",
-        args: [address],
-        value: amountWei,
-      });
+      const hash =
+        action === "deposit" ?
+          await walletClient.writeContract({
+            abi: ethxApproveABI,
+            account: address,
+            address: ethxAddress,
+            functionName: "upgradeByETHTo",
+            args: [address],
+            value: amountWei,
+          })
+        : await walletClient.writeContract({
+            abi: ethxApproveABI,
+            account: address,
+            address: ethxAddress,
+            functionName: "downgradeToETH",
+            args: [amountWei],
+          });
       setTransactionHash(hash);
       setTransactionStatus("loading");
       const receipt = await publicClient.waitForTransactionReceipt({ hash });
@@ -182,7 +236,7 @@ export function CommunityMarkeeDepositManagerModal({
         throw new Error("The balance transaction reverted.");
       }
       setTransactionStatus("success");
-      setLastTransaction({ hash });
+      setLastTransaction({ action, hash });
       setAction(null);
       setAmount("");
       onBalancesChanged();
@@ -243,7 +297,7 @@ export function CommunityMarkeeDepositManagerModal({
               <InfoWrapper
                 tooltip="If your ETHx runs out, your active Markee streams can be liquidated."
                 size="sm"
-                className="tooltip-top-left"
+                className="tooltip-top-right"
               >
                 <span className="text-xs font-medium uppercase tracking-wider text-neutral-soft-content">
                   Runs out in
@@ -263,20 +317,27 @@ export function CommunityMarkeeDepositManagerModal({
         )}
 
         <section className="rounded-xl border border-neutral-content/15 bg-neutral/30 p-4">
-          <InfoWrapper
-            tooltip="Markee uses Superfluid for payment streaming. Deposit ETH to get ETHx you can use for payments."
-            size="sm"
-            className="tooltip-top-left"
-          >
-            <span className="text-xs font-medium uppercase tracking-wider text-neutral-soft-content">
-              ETHx balance
-            </span>
-          </InfoWrapper>
-          <p className="mt-2 font-mono text-3xl font-semibold text-neutral-content">
-            {formatMarkeeEthxBalance(ethxBalance)}{" "}
-            <span className="text-sm text-neutral-soft-content">ETHx</span>
+          <div className="-ml-1 flex justify-start">
+            <InfoWrapper
+              tooltip="Markee uses Superfluid for payment streaming. Deposit ETH to get ETHx you can use for payments."
+              size="sm"
+              className="tooltip-top-right"
+            >
+              <span className="text-xs font-medium uppercase tracking-wider text-neutral-soft-content">
+                ETHx balance
+              </span>
+            </InfoWrapper>
+          </div>
+          <p className="mt-2 flex items-baseline gap-2">
+            <LiveFlowingAmount
+              className="text-3xl font-semibold text-neutral-content"
+              fractionDigits={5}
+              ratePerSecond={-Number(formatEther(activeRatePerSecond))}
+              value={Number(formatEther(ethxBalance))}
+            />
+            <span className="text-sm text-neutral-soft-content">ETH</span>
           </p>
-          <div className="mt-4">
+          <div className="mt-4 grid grid-cols-2 gap-2">
             <Button
               btnStyle={action === "deposit" ? "filled" : "outline"}
               color="primary"
@@ -285,11 +346,26 @@ export function CommunityMarkeeDepositManagerModal({
             >
               Deposit
             </Button>
+            <Button
+              btnStyle={action === "withdraw" ? "filled" : "outline"}
+              color="primary"
+              className="w-full"
+              disabled={ethxBalance <= 0n}
+              onClick={() => prepareAction("withdraw")}
+            >
+              Withdraw
+            </Button>
           </div>
 
           {lastTransaction != null && (
             <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs">
-              <span className="text-primary-content">✓ Deposit confirmed</span>
+              <span className="text-primary-content">
+                ✓{" "}
+                {lastTransaction.action === "deposit" ?
+                  "Deposit"
+                : "Withdrawal"}{" "}
+                confirmed
+              </span>
               <a
                 className="text-primary-content underline decoration-dotted underline-offset-4"
                 href={`${getExplorerUrl(chainId).replace(/\/$/u, "")}/tx/${lastTransaction.hash}`}
@@ -320,7 +396,11 @@ export function CommunityMarkeeDepositManagerModal({
                     setAmount(sanitizeAmount(event.target.value));
                     setError(null);
                   }}
-                  placeholder="Amount in ETH"
+                  placeholder={
+                    action === "deposit" ?
+                      "Amount to deposit (ETH)"
+                    : "Amount to withdraw (ETHx)"
+                  }
                 />
                 <Button
                   btnStyle="filled"
@@ -330,10 +410,30 @@ export function CommunityMarkeeDepositManagerModal({
                   isLoading={isBusy}
                   onClick={submit}
                 >
-                  Deposit
+                  {action === "deposit" ? "Deposit" : "Withdraw"}
                 </Button>
               </div>
-              {activeRatePerSecond > 0n ?
+              {action === "withdraw" ?
+                <label className="flex flex-col gap-1.5">
+                  <span className="flex items-center justify-between text-xs text-neutral-soft-content">
+                    <span>% of ETHx balance</span>
+                    <span className="font-mono font-semibold text-neutral-content">
+                      {withdrawPercentage}%
+                    </span>
+                  </span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="100"
+                    className="range range-primary range-xs"
+                    disabled={ethxBalance <= 0n || isBusy}
+                    value={withdrawPercentage}
+                    onChange={(event) =>
+                      setWithdrawBalancePercentage(Number(event.target.value))
+                    }
+                  />
+                </label>
+              : activeRatePerSecond > 0n ?
                 <div className="grid grid-cols-3 gap-2">
                   {[1, 2, 3].map((shortcut) => (
                     <button
@@ -375,26 +475,67 @@ export function CommunityMarkeeDepositManagerModal({
 
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="rounded-xl border border-primary-content/30 bg-primary-content/5 p-4">
-            <p className="text-xs uppercase tracking-wider text-primary-content">
-              Streaming now
+            <div className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary-content" />
+              <p className="text-xs uppercase tracking-wider text-primary-content">
+                Streaming now
+              </p>
+            </div>
+            <p className="mt-2 font-mono font-semibold text-neutral-content">
+              {isStreamWinning ? formattedMonthlyStreamRate : "0.000"}{" "}
+              <span className="text-xs font-normal text-neutral-soft-content">
+                ETH/mo
+              </span>
             </p>
-            <p className="mt-2 font-mono text-neutral-content">
-              {formatEther(activeRatePerSecond * MARKEE_SECONDS_IN_MONTH).slice(
-                0,
-                10,
-              )}{" "}
-              ETHx/mo
+            <p className="mt-1 font-mono text-xs text-neutral-soft-content">
+              {winningStreamCount}{" "}
+              {winningStreamCount === 1 ? "message" : "messages"} winning
             </p>
           </div>
           <div className="rounded-xl border border-neutral-content/15 bg-neutral/30 p-4">
             <p className="text-xs uppercase tracking-wider text-neutral-soft-content">
-              Network
+              Bids not streaming
             </p>
-            <p className="mt-2 text-neutral-content">
-              {chainConfigMap[chainId]?.name ?? `Chain ${chainId}`}
+            <p className="mt-2 font-mono font-semibold text-neutral-content">
+              {!isStreamWinning ? formattedMonthlyStreamRate : "0.000"}{" "}
+              <span className="text-xs font-normal text-neutral-soft-content">
+                ETH/mo
+              </span>
+            </p>
+            <p className="mt-1 font-mono text-xs text-neutral-soft-content">
+              {refundedStreamCount} {refundedStreamCount === 1 ? "bid" : "bids"}
             </p>
           </div>
         </div>
+
+        {activeRatePerSecond > 0n && (
+          <section>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-neutral-soft-content">
+              Your streams
+            </p>
+            <div className="flex items-center justify-between gap-4 rounded-xl border border-neutral-content/15 bg-neutral/30 px-4 py-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <span
+                  className={`h-2 w-2 shrink-0 rounded-full ${isStreamWinning ? "bg-primary-content" : "bg-neutral-soft-content"}`}
+                />
+                <div className="min-w-0">
+                  <p className="truncate font-mono text-sm font-semibold text-neutral-content">
+                    {streamMessage != null && streamMessage.trim().length > 0 ?
+                      streamMessage.trim()
+                    : "Your Markee"}
+                  </p>
+                  <p className="mt-0.5 font-mono text-xs text-neutral-soft-content">
+                    {isStreamWinning ? "Winning · #1" : "Not winning"}
+                    {streamName?.trim() ? ` · ${streamName}` : ""}
+                  </p>
+                </div>
+              </div>
+              <span className="shrink-0 font-mono text-sm font-semibold text-neutral-content">
+                {formattedMonthlyStreamRate}/mo
+              </span>
+            </div>
+          </section>
+        )}
       </div>
     </Modal>
   );

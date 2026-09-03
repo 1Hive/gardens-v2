@@ -72,7 +72,7 @@ export function CommunityMarkeePaymentReview({
         )}
         <p className="mt-1 text-xs leading-relaxed text-neutral-soft-content">
           {willWin ?
-            "Anyone can overtake your message by bidding more, pausing your payment until you're winning again. You can cancel at any time."
+            "Anyone can overtake your message by bidding more, pausing your payment until you're winning again. You can stop the stream at any time."
           : "You won't pay for time your message isn't winning, although you'll see an outgoing stream that's fully refunded to your wallet."
           }
         </p>

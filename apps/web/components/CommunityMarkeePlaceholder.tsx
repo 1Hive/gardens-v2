@@ -544,6 +544,48 @@ function CommunityMarkeePreviewModal({
     isTopMarkeeOwner ? message : connectedMarkeeMessage;
   const ownedMarkeeName =
     isTopMarkeeOwner ? topMarkeeName ?? "" : connectedMarkeeName ?? "";
+  const activeStreamIsWinning =
+    activeStreamMarkee != null &&
+    topMarkeeAddress != null &&
+    activeStreamMarkee.toLowerCase() === topMarkeeAddress.toLowerCase();
+  const activeStreamMessage =
+    activeStreamMarkee == null ? undefined
+    : (
+      topMarkeeAddress != null &&
+      activeStreamMarkee.toLowerCase() === topMarkeeAddress.toLowerCase()
+    ) ?
+      message
+    : (
+      ownedMarkeeAddress != null &&
+      activeStreamMarkee.toLowerCase() === ownedMarkeeAddress.toLowerCase()
+    ) ?
+      ownedMarkeeMessage ?? undefined
+    : (
+      selectedFundingMarkee != null &&
+      activeStreamMarkee.toLowerCase() ===
+        selectedFundingMarkee.address.toLowerCase()
+    ) ?
+      selectedFundingMarkee.message
+    : undefined;
+  const activeStreamName =
+    activeStreamMarkee == null ? undefined
+    : (
+      topMarkeeAddress != null &&
+      activeStreamMarkee.toLowerCase() === topMarkeeAddress.toLowerCase()
+    ) ?
+      topMarkeeName
+    : (
+      ownedMarkeeAddress != null &&
+      activeStreamMarkee.toLowerCase() === ownedMarkeeAddress.toLowerCase()
+    ) ?
+      ownedMarkeeName
+    : (
+      selectedFundingMarkee != null &&
+      activeStreamMarkee.toLowerCase() ===
+        selectedFundingMarkee.address.toLowerCase()
+    ) ?
+      selectedFundingMarkee.name
+    : undefined;
   const displayedMarkeeMessage =
     selectedFundingMarkee?.message ?? ownedMarkeeMessage ?? message;
   const shouldCreateMarkee =
@@ -2595,10 +2637,13 @@ function CommunityMarkeePreviewModal({
           ethxAddress={ethxAddress}
           ethxBalance={ethxAvailableBalance}
           isOpen={isDepositManagerOpen}
+          isStreamWinning={activeStreamIsWinning}
           onBalancesChanged={() =>
             setStreamPositionRefreshKey((current) => current + 1)
           }
           onClose={() => setIsDepositManagerOpen(false)}
+          streamMessage={activeStreamMessage}
+          streamName={activeStreamName}
         />
       )}
       <TransactionModal
