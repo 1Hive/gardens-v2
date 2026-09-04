@@ -16,6 +16,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { getNetwork, getWalletClient } from "@wagmi/core";
 import { useModal } from "connectkit";
+import Image from "next/image";
 import { toast } from "react-toastify";
 import {
   decodeEventLog,
@@ -201,25 +202,31 @@ function PlaceholderSign({
   return (
     <div className="group relative w-full pb-3">
       <div
-        className={`relative rounded-xl bg-neutral/50 px-6 py-8 transition-all duration-200 group-hover:border-primary-content/50 ${isEmpty ? "opacity-50 group-hover:opacity-70" : "opacity-100"} ${isPlaceholder ? "border-2 border-dashed border-neutral-content/30" : "border border-neutral-content/15"}`}
+        className={`relative z-0 rounded-xl bg-neutral/50 px-6 py-8 transition-all duration-200 sm:group-hover:-translate-y-0.5 sm:group-hover:border-primary-content/50 sm:group-hover:shadow-xl sm:group-hover:shadow-primary-content/20 ${isEmpty ? "opacity-50 group-hover:opacity-70" : "opacity-100"} ${isPlaceholder ? "border-2 border-dashed border-neutral-content/30" : "border border-neutral-content/15"}`}
       >
         <span
           aria-hidden="true"
-          className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[40%] text-lg leading-none"
+          className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center overflow-hidden rounded-xl"
         >
-          🪧
+          <Image
+            src="https://www.markee.xyz/markee-logo-purple.png"
+            alt=""
+            width={924}
+            height={924}
+            className="h-full w-auto max-w-none opacity-0 transition-opacity duration-200 sm:group-hover:opacity-[0.16]"
+          />
         </span>
         {totalViews !== null && (
-          <span className="absolute right-3 top-2 flex items-center gap-1 font-mono text-xs text-neutral-content/40 transition-colors duration-200 group-hover:text-primary-content/50">
+          <span className="absolute right-3 top-2 z-10 flex items-center gap-1 font-mono text-xs text-neutral-content/40 transition-colors duration-200 group-hover:text-primary-content/50">
             <EyeIcon className="h-3 w-3" />
             {totalViews.toLocaleString()}
           </span>
         )}
-        <p className="w-full text-center font-mono text-lg leading-snug text-neutral-content transition-colors duration-200 group-hover:text-primary-content">
+        <p className="relative z-10 w-full text-center font-mono text-lg leading-snug text-neutral-content transition-colors duration-200 group-hover:text-primary-content">
           {message}
         </p>
       </div>
-      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-primary-content/40 bg-neutral px-3 py-0.5 font-mono text-xs text-primary-content/70 opacity-100 transition-all duration-200 sm:opacity-0 sm:group-hover:opacity-100">
+      <span className="absolute bottom-0 left-1/2 z-20 -translate-x-1/2 translate-y-0 whitespace-nowrap rounded-lg border border-primary-content bg-primary-content px-4 py-0.5 font-mono text-xs font-semibold text-neutral-inverted-content opacity-100 shadow-lg shadow-primary-content/30 transition-all duration-200 sm:translate-y-1 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100">
         {hint}
       </span>
     </div>
@@ -2184,7 +2191,7 @@ function CommunityMarkeePreviewModal({
           : isFundingAnotherMarkee ?
             "Fund a Markee"
           : shouldCreateMarkee ?
-            "Create your Markee"
+            "Change the Markee Sign"
           : hasActiveStream ?
             "Manage your Markee stream"
           : "Stream to your Markee"
@@ -3474,21 +3481,18 @@ export function CommunityMarkeePlaceholder({
     hasActiveMarkee ?
       markee.leaderboard.message || "No message yet"
     : "This is a sign";
-  const isConnectedTopMarkeeOwner =
-    connectedAccount != null &&
-    markee?.leaderboard.topMarkeeOwner != null &&
-    connectedAccount.toLowerCase() ===
-      markee.leaderboard.topMarkeeOwner.toLowerCase();
-  const topMarkeeChallengeRate =
+  const topMarkeeMonthlyRate =
     markee != null ?
-      BigInt(markee.leaderboard.topRate) * MARKEE_SECONDS_IN_MONTH +
-      parseEther("0.01")
+      BigInt(markee.leaderboard.topRate) * MARKEE_SECONDS_IN_MONTH
     : 0n;
+  const topMarkeeChallengeRate =
+    topMarkeeMonthlyRate > 0n ?
+      topMarkeeMonthlyRate + parseEther("0.01")
+    : parseEther("0.001");
   const signHint =
-    !hasActiveMarkee ? "Integrate markee to this community"
-    : connectedAccount != null && !isConnectedTopMarkeeOwner ?
-      `Stream ${formatEthAmountRoundedUp(topMarkeeChallengeRate, 3)} ETH/mo to change`
-    : "Stream to this sign";
+    !hasActiveMarkee ?
+      "Integrate markee to this community"
+    : `${formatEthAmountRoundedUp(topMarkeeChallengeRate, 3)} ETH/mo to change`;
 
   useEffect(() => {
     setHasPendingClaim(readPendingMarkeeClaim(chainId, community) != null);
