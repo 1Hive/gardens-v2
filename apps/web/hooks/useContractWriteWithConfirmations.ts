@@ -25,6 +25,7 @@ import {
   getUnknownErrorSelector,
   lookupErrorSignature,
 } from "@/utils/errorSignatures";
+import { isUserRejectedRequestError } from "@/utils/isUserRejectedRequestError";
 import { stringifyJson } from "@/utils/json";
 import {
   getWalletConnectDeepLinkChoice,
@@ -421,7 +422,9 @@ export function useContractWriteWithConfirmations<
 
     if (txResult.status === "error") {
       if (directWriteResult.data == null && txResult.error) {
-        logError(txResult.error, txResult.variables, "write tx");
+        if (!isUserRejectedRequestError(txResult.error)) {
+          logError(txResult.error, txResult.variables, "write tx");
+        }
         return "error";
       }
     }
@@ -484,6 +487,7 @@ export function useContractWriteWithConfirmations<
 
   useEffect(() => {
     if (computedStatus !== "error" || !transactionError) return;
+    if (isUserRejectedRequestError(transactionError)) return;
 
     const errorKey = stringifyJson({
       chainId: resolvedChaindId,
