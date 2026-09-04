@@ -1,0 +1,29 @@
+diff --git a/build/index.es.js b/build/index.es.js
+index d7fd1a9267ec3eb83a4c79af7deb30c481a0367c..5d6fefef546e60937927091d33e552510a6f8cc6 100644
+--- a/build/index.es.js
++++ b/build/index.es.js
+@@ -4130,6 +4130,24 @@ const walletConfigs = {
+             ios: 'https://apps.apple.com/app/argent/id1358741926',
+         },
+     },
++    citizenWallet: {
++        name: 'Citizen Wallet',
++        shortName: 'Citizen',
++        icon: jsxs("svg", {
++            viewBox: '0 0 250 250',
++            'aria-hidden': true,
++            children: [
++                jsx("circle", { cx: '125', cy: '125', r: '125', fill: '#242424' }),
++                jsx("path", {
++                    fillRule: 'evenodd',
++                    clipRule: 'evenodd',
++                    d: 'M80.9608 60.4836C68.0038 60.4836 57.5 70.9874 57.5 83.9445C57.5 96.1223 66.7784 106.133 78.6516 107.293C78.6417 107.628 78.6367 107.965 78.6367 108.302V155.774C78.6367 174.41 93.7438 189.517 112.379 189.517H136.458C155.094 189.517 170.201 174.41 170.201 155.774V108.302C170.201 107.993 170.197 107.685 170.189 107.378C182.612 106.778 192.5 96.5161 192.5 83.9445C192.5 70.9874 181.996 60.4836 169.039 60.4836L80.9608 60.4836Z',
++                    fill: '#ED7BC7',
++                }),
++            ],
++        }),
++        iconShape: 'squircle',
++    },
+     coinbaseWallet: {
+         rdns: 'com.coinbase.wallet',
+         name: 'Coinbase Wallet',

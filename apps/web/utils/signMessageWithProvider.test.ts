@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  getCovenantSignatureErrorAction,
+  isUserRejectedWalletRequest,
   resolveSigningProvider,
   signMessageWithProvider,
 } from "./signMessageWithProvider";
@@ -21,10 +23,7 @@ describe("signMessageWithProvider", () => {
 
     expect(request).toHaveBeenCalledWith({
       method: "personal_sign",
-      params: [
-        "0x47617264656e73207369676e61747572652074657374",
-        account,
-      ],
+      params: ["0x47617264656e73207369676e61747572652074657374", account],
     });
   });
 
@@ -51,5 +50,44 @@ describe("signMessageWithProvider", () => {
     expect(() => resolveSigningProvider({})).toThrow(
       "does not expose a valid request() method",
     );
+  });
+
+  it.each([
+    { code: 4001 },
+    { code: "ACTION_REJECTED" },
+    { name: "UserRejectedRequestError" },
+    { message: "User denied message signature" },
+    { cause: { code: 4001 } },
+  ])("recognizes wallet rejection errors %#", (error) => {
+    expect(isUserRejectedWalletRequest(error)).toBe(true);
+  });
+
+  it.each([
+    new Error("Missing or invalid request() method: personal_sign"),
+    new Error("The connected wallet does not support message signing"),
+    { cause: new Error("WalletConnect session expired") },
+  ])(
+    "does not classify non-rejection signing failures as rejection",
+    (error) => {
+      expect(isUserRejectedWalletRequest(error)).toBe(false);
+    },
+  );
+
+  it("handles circular error causes", () => {
+    const error: { cause?: unknown } = {};
+    error.cause = error;
+
+    expect(isUserRejectedWalletRequest(error)).toBe(false);
+  });
+
+  it("blocks wallet rejection but skips other covenant signing failures", () => {
+    expect(getCovenantSignatureErrorAction({ cause: { code: 4001 } })).toBe(
+      "block",
+    );
+    expect(
+      getCovenantSignatureErrorAction(
+        new Error("Missing or invalid request() method: personal_sign"),
+      ),
+    ).toBe("skip");
   });
 });

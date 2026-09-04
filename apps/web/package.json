@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@allo-team/allo-v2-sdk": "^1.0.34",
+    "@citizenwallet/sdk": "2.0.130",
     "@divvi/referral-sdk": "^1.0.0",
     "@emeraldpay/hashicon-react": "^0.5.2",
     "@goodsdks/citizen-sdk": "1.2.0",
@@ -58,6 +59,7 @@
     "next": "15.5.22",
     "next-themes": "^0.2.1",
     "pino-pretty": "^10.2.3",
+    "qrcode.react": "4.2.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.50.1",
