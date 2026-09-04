@@ -21,6 +21,10 @@ import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useFlag } from "@/hooks/useFlag";
 import { abiWithErrors } from "@/utils/abi";
 import { reportClientError } from "@/utils/clientErrorReporter";
+import {
+  getUnknownErrorSelector,
+  lookupErrorSignature,
+} from "@/utils/errorSignatures";
 import { stringifyJson } from "@/utils/json";
 import {
   getWalletConnectDeepLinkChoice,
@@ -108,6 +112,7 @@ export function useContractWriteWithConfirmations<
   const chainIdFromPath = useChainIdFromPath();
   const { connector, address: connectedAddress } = useAccount();
   const reportedTransactionErrorRef = useRef<string | null>(null);
+  const reportedResolvedTransactionErrorRef = useRef<string | null>(null);
   const queryParams = useCollectQueryParams();
   const resolvedChaindId = +(
     props.chainId ??
@@ -382,7 +387,8 @@ export function useContractWriteWithConfirmations<
     props.onError?.(...params);
   };
 
-  const rawTransactionHash = directWriteResult.data?.hash ?? txResult.data?.hash;
+  const rawTransactionHash =
+    directWriteResult.data?.hash ?? txResult.data?.hash;
   const transactionHash =
     isRpcTransactionHash(rawTransactionHash) ? rawTransactionHash : undefined;
   const safeTransactionHash =
@@ -492,7 +498,7 @@ export function useContractWriteWithConfirmations<
     if (reportedTransactionErrorRef.current === errorKey) return;
     reportedTransactionErrorRef.current = errorKey;
 
-    reportClientError(transactionError, {
+    const errorContext = {
       type: "transaction-error",
       contractName: props.contractName,
       functionName: props.functionName,
@@ -514,7 +520,41 @@ export function useContractWriteWithConfirmations<
         contract_name: props.contractName,
         function_name: props.functionName,
       },
-    });
+    };
+
+    reportClientError(transactionError, errorContext);
+
+    const unknownSelector = getUnknownErrorSelector(transactionError);
+    if (!unknownSelector) return;
+
+    const resolvedErrorKey = `${errorKey}:${unknownSelector}`;
+    if (reportedResolvedTransactionErrorRef.current === resolvedErrorKey) {
+      return;
+    }
+    reportedResolvedTransactionErrorRef.current = resolvedErrorKey;
+
+    void lookupErrorSignature(unknownSelector)
+      .then((signatureLookup) => {
+        reportClientError(transactionError, {
+          ...errorContext,
+          type: "transaction-error-signature-resolved",
+          unknownErrorSelector: unknownSelector,
+          signatureLookup,
+          tags: {
+            ...errorContext.tags,
+            error_type: "transaction-error-signature-resolved",
+            error_signature: unknownSelector,
+            resolved_error_signature:
+              signatureLookup.candidates[0]?.name ?? "not-found",
+          },
+        });
+      })
+      .catch((lookupError) => {
+        console.warn(
+          `[transaction-error] failed to resolve unknown error signature ${unknownSelector}`,
+          lookupError,
+        );
+      });
   }, [
     computedStatus,
     transactionError,
