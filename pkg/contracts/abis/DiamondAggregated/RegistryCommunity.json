@@ -2707,6 +2707,11 @@
     },
     {
       "type": "error",
+      "name": "SUPER_GOODDOLLAR_PAUSED",
+      "inputs": []
+    },
+    {
+      "type": "error",
       "name": "TooManyMemberStrategies",
       "inputs": [
         {
