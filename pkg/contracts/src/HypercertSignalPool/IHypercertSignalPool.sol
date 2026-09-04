@@ -9,23 +9,23 @@ pragma solidity ^0.8.19;
 
 struct HypercertSignal {
     uint256 hypercertId;
-    int256  deltaSupport;   // positive = add support, negative = remove
+    int256 deltaSupport; // positive = add support, negative = remove
 }
 
 struct HypercertEntry {
     uint256 hypercertId;
-    uint256 stakedAmount;    // total staked across all voters
-    uint256 convictionLast;  // last computed conviction
-    uint256 blockLast;       // block of last conviction update
-    bool    active;
+    uint256 stakedAmount; // total staked across all voters
+    uint256 convictionLast; // last computed conviction
+    uint256 blockLast; // block of last conviction update
+    bool active;
     mapping(address => uint256) voterStakedPoints; // per-voter stakes
 }
 
 struct HypercertSignalPoolInitializeParams {
-    uint256 decay;                    // alpha decay per block (D = 10^7)
-    uint256 pointsPerVoter;           // max support points per voter (e.g. 100)
-    address registryCommunity;        // Gardens V2 registry community
-    address votingPowerRegistry;      // IVotingPowerRegistry for member checks
+    uint256 decay; // alpha decay per block (D = 10^7)
+    uint256 pointsPerVoter; // max support points per voter (e.g. 100)
+    address registryCommunity; // Gardens V2 registry community
+    address votingPowerRegistry; // IVotingPowerRegistry for member checks
 }
 
 // ── Events ─────────────────────────────────────────────────────────

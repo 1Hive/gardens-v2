@@ -78,9 +78,7 @@ contract RegistryFactoryTest is Test {
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = bytes4(keccak256("dummy()"));
         dummyCuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0x1),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(0x1), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
         vm.startPrank(owner);
         factory.setCommunityFacets(dummyCuts, address(0), "");
@@ -137,9 +135,7 @@ contract RegistryFactoryTest is Test {
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = bytes4(keccak256("dummy()"));
         dummyCuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0x1),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(0x1), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
 
         vm.prank(owner);
@@ -328,9 +324,7 @@ contract RegistryFactoryTest is Test {
         selectors[0] = bytes4(keccak256("dummy1()"));
         selectors[1] = bytes4(keccak256("dummy2()"));
         dummyCuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0x1),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(0x1), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
 
         vm.expectRevert();
@@ -351,9 +345,7 @@ contract RegistryFactoryTest is Test {
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = bytes4(keccak256("dummy()"));
         dummyCuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0x1),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(0x1), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
 
         vm.expectRevert();
@@ -565,8 +557,9 @@ contract RegistryFactoryTest is Test {
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = bytes4(keccak256("a()"));
-        cuts[0] =
-            IDiamond.FacetCut({facetAddress: address(0x1111), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors});
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: address(0x1111), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
+        });
 
         vm.startPrank(owner);
         factory.setCommunityFacets(cuts, address(0xAAAA), hex"1234");

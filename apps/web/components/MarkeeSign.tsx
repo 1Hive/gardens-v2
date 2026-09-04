@@ -96,7 +96,13 @@ export default function MarkeeSign() {
 
   // Record a view using the individual markee contract address
   useEffect(() => {
-    if (loading || loadError !== null || data.message === DEFAULT_MESSAGE || data.markeeAddress === null) return;
+    if (
+      loading ||
+      loadError !== null ||
+      data.message === DEFAULT_MESSAGE ||
+      data.markeeAddress === null
+    )
+      return;
     recordMarkeeView(data.markeeAddress, data.message)
       .then((res) => setTotalViews(res.totalViews))
       .catch(() => {});
@@ -124,7 +130,7 @@ export default function MarkeeSign() {
         {/* Sign body */}
         <div className="relative border border-neutral-content/30 rounded px-8 md:px-16 py-8 max-w-lg bg-neutral hover:border-primary-content/50 transition-colors duration-200">
           {/* View count — inside card, top right */}
-          {totalViews !== null && (
+          {typeof totalViews === "number" && (
             <span className="absolute top-2 right-3 flex items-center gap-1 text-xs font-mono text-neutral-content/40 group-hover:text-primary-content/50 transition-colors duration-200">
               <EyeIcon className="h-3 w-3" />
               {totalViews.toLocaleString()}

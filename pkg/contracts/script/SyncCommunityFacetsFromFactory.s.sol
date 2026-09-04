@@ -29,8 +29,7 @@ contract SyncCommunityFacetsFromFactory is BaseMultiChain {
         require(factoryProxy != address(0), "registry factory proxy missing");
         require(factoryProxy.code.length > 0, "registry factory proxy has no code");
 
-        (IDiamondCut.FacetCut[] memory communityCuts,,) =
-            RegistryFactory(payable(factoryProxy)).getCommunityFacets();
+        (IDiamondCut.FacetCut[] memory communityCuts,,) = RegistryFactory(payable(factoryProxy)).getCommunityFacets();
         require(communityCuts.length == EXPECTED_COMMUNITY_FACET_COUNT, "community cut count mismatch");
 
         for (uint256 i = 0; i < communityCuts.length; i++) {
@@ -41,24 +40,32 @@ contract SyncCommunityFacetsFromFactory is BaseMultiChain {
         _writeCanonicalFacetsObject(networkJson, communityCuts);
     }
 
-    function _writeCanonicalFacetsObject(string memory networkJson, IDiamondCut.FacetCut[] memory communityCuts) internal {
+    function _writeCanonicalFacetsObject(string memory networkJson, IDiamondCut.FacetCut[] memory communityCuts)
+        internal
+    {
         address diamondLoupe = communityCuts[0].facetAddress;
         address strategyDiamondLoupe = _readAddressOrZero(".FACETS.STRATEGY_DIAMOND_LOUPE");
 
         string memory facetsObject = "facets";
         string memory json = vm.serializeAddress(facetsObject, "DIAMOND_LOUPE", diamondLoupe);
         json = vm.serializeAddress(facetsObject, "CV_ADMIN", networkJson.readAddress(getKeyNetwork(".FACETS.CV_ADMIN")));
-        json =
-            vm.serializeAddress(facetsObject, "CV_ALLOCATION", networkJson.readAddress(getKeyNetwork(".FACETS.CV_ALLOCATION")));
-        json = vm.serializeAddress(facetsObject, "CV_DISPUTE", networkJson.readAddress(getKeyNetwork(".FACETS.CV_DISPUTE")));
+        json = vm.serializeAddress(
+            facetsObject, "CV_ALLOCATION", networkJson.readAddress(getKeyNetwork(".FACETS.CV_ALLOCATION"))
+        );
+        json = vm.serializeAddress(
+            facetsObject, "CV_DISPUTE", networkJson.readAddress(getKeyNetwork(".FACETS.CV_DISPUTE"))
+        );
         json = vm.serializeAddress(facetsObject, "CV_PAUSE", networkJson.readAddress(getKeyNetwork(".FACETS.CV_PAUSE")));
         json = vm.serializeAddress(facetsObject, "CV_POWER", networkJson.readAddress(getKeyNetwork(".FACETS.CV_POWER")));
-        json =
-            vm.serializeAddress(facetsObject, "CV_PROPOSAL", networkJson.readAddress(getKeyNetwork(".FACETS.CV_PROPOSAL")));
-        json =
-            vm.serializeAddress(facetsObject, "CV_SYNC_POWER", networkJson.readAddress(getKeyNetwork(".FACETS.CV_SYNC_POWER")));
-        json =
-            vm.serializeAddress(facetsObject, "CV_STREAMING", networkJson.readAddress(getKeyNetwork(".FACETS.CV_STREAMING")));
+        json = vm.serializeAddress(
+            facetsObject, "CV_PROPOSAL", networkJson.readAddress(getKeyNetwork(".FACETS.CV_PROPOSAL"))
+        );
+        json = vm.serializeAddress(
+            facetsObject, "CV_SYNC_POWER", networkJson.readAddress(getKeyNetwork(".FACETS.CV_SYNC_POWER"))
+        );
+        json = vm.serializeAddress(
+            facetsObject, "CV_STREAMING", networkJson.readAddress(getKeyNetwork(".FACETS.CV_STREAMING"))
+        );
         json = vm.serializeAddress(facetsObject, "COMMUNITY_ADMIN", communityCuts[1].facetAddress);
         json = vm.serializeAddress(facetsObject, "COMMUNITY_MEMBER", communityCuts[2].facetAddress);
         json = vm.serializeAddress(facetsObject, "COMMUNITY_PAUSE", communityCuts[3].facetAddress);

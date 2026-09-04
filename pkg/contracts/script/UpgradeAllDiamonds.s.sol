@@ -82,8 +82,6 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
     function runCurrentNetwork(string memory networkJson) public override {
         bool directBroadcast = directBroadcastOverride || networkJson.readBool(getKeyNetwork(".no-safe"));
 
-
-
         RunContext memory context = _buildRunContext(networkJson);
         _executeRun(networkJson, directBroadcast, context);
 
@@ -197,9 +195,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
     }
 
     function _logDeploymentResult(string memory label, bool reused, address deployed) internal {
-        if (reused) {
-        } else {
-        }
+        if (reused) {} else {}
     }
 
     function _runtimeCodeHash(string memory artifactId) internal returns (bytes32) {
@@ -269,7 +265,9 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
         registryFactory.setCollateralVaultTemplate(collateralVaultTemplate);
 
         registryFactory.setCommunityFacets(
-            communityCuts, address(new RegistryCommunityDiamondInit()), abi.encodeCall(RegistryCommunityDiamondInit.init, ())
+            communityCuts,
+            address(new RegistryCommunityDiamondInit()),
+            abi.encodeCall(RegistryCommunityDiamondInit.init, ())
         );
 
         registryFactory.setStrategyFacets(
@@ -289,8 +287,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
             address currentImplementation = _currentImplementation(address(cvStrategyProxies[i]));
             if (currentImplementation != strategyImplementation) {
                 cvStrategy.upgradeTo(strategyImplementation);
-            } else {
-            }
+            } else {}
             cvStrategy.diamondCut(cvCuts, address(cvInitContract), abi.encodeCall(CVStrategyDiamondInit.init, ()));
             cvStrategy.setCollateralVaultTemplate(collateralVaultTemplate);
         }
@@ -302,8 +299,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
             address currentImplementation = _currentImplementation(address(registryCommunityProxies[i]));
             if (currentImplementation != communityImplementation) {
                 community.upgradeTo(communityImplementation);
-            } else {
-            }
+            } else {}
             community.diamondCut(
                 communityCuts, address(communityInitContract), abi.encodeCall(RegistryCommunityDiamondInit.init, ())
             );
@@ -429,7 +425,6 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
         );
 
         _finalizePayloadWriter(writer);
-
     }
 
     function _buildCVStrategyTransactions(
@@ -456,8 +451,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
             address currentImplementation = _currentImplementation(address(cvStrategyProxies[i]));
             if (currentImplementation != strategyImplementation) {
                 writer = _appendTransaction(writer, _createTransactionJson(cvStrategyProxies[i], cvUpgradeCalldata));
-            } else {
-            }
+            } else {}
             writer = _appendTransaction(writer, _createTransactionJson(cvStrategyProxies[i], cvDiamondCutCalldata));
             writer =
                 _appendTransaction(writer, _createTransactionJson(cvStrategyProxies[i], cvSetCollateralVaultCalldata));
@@ -489,8 +483,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
                 writer = _appendTransaction(
                     writer, _createTransactionJson(registryCommunityProxies[i], communityUpgradeCalldata)
                 );
-            } else {
-            }
+            } else {}
             writer = _appendTransaction(
                 writer, _createTransactionJson(registryCommunityProxies[i], communityDiamondCutCalldata)
             );
@@ -500,17 +493,16 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
     }
 
     function _buildCVFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
-        IDiamond.FacetCut[] memory baseCuts =
-            _buildFacetCuts(
-                cvAdminFacet,
-                cvAllocationFacet,
-                cvDisputeFacet,
-                cvPauseFacet,
-                cvPowerFacet,
-                cvProposalFacet,
-                cvSyncPowerFacet,
-                cvStreamingFacet
-            );
+        IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(
+            cvAdminFacet,
+            cvAllocationFacet,
+            cvDisputeFacet,
+            cvPauseFacet,
+            cvPowerFacet,
+            cvProposalFacet,
+            cvSyncPowerFacet,
+            cvStreamingFacet
+        );
         cuts = new IDiamond.FacetCut[](9);
         cuts[0] = _buildLoupeFacetCut(loupeFacet);
         for (uint256 i = 0; i < 8; i++) {
@@ -615,7 +607,6 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
             )
         );
     }
-
 
     function _bytesToHexString(bytes memory _bytes) internal pure returns (string memory) {
         bytes memory alphabet = "0123456789abcdef";

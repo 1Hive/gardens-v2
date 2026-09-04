@@ -12,6 +12,7 @@ import {
   CVStrategy,
   Maybe,
   MemberCommunity,
+  RegistryCommunity,
   TokenGarden,
 } from "#/subgraph/.graphclient";
 import { Card } from "./Card";
@@ -26,6 +27,7 @@ import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 type CommunityCardProps = {
   id: string;
   communityName?: Maybe<string> | undefined;
+  archived: RegistryCommunity["archived"];
   garden: Pick<TokenGarden, "address" | "chainId" | "symbol" | "decimals">;
   members?:
     | Maybe<Pick<MemberCommunity, "id" | "memberAddress" | "stakedTokens">[]>
@@ -38,6 +40,7 @@ type CommunityCardProps = {
 export function CommunityCard({
   id,
   communityName,
+  archived,
   garden,
   members,
   membersCount,
@@ -65,7 +68,7 @@ export function CommunityCard({
       key={id}
       href={`/gardens/${chainId}/${id}`}
       testId={`community-card-${id}`}
-      className={` ${isNewCommunity ? "shadow-2xl" : ""}`}
+      className={`${archived ? "!border-warning-content" : ""} ${isNewCommunity ? "shadow-2xl" : ""}`}
     >
       <div className="flex justify-between text-neutral-content text-sm">
         {isProtopian && (

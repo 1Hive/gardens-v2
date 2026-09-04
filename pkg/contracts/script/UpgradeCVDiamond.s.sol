@@ -99,8 +99,7 @@ contract UpgradeCVDiamond is BaseMultiChain, StrategyDiamondConfiguratorBase {
             );
         }
 
-        if (!directBroadcast) {
-        }
+        if (!directBroadcast) {}
     }
 
     function _executeDirectUpgrades(
@@ -167,30 +166,27 @@ contract UpgradeCVDiamond is BaseMultiChain, StrategyDiamondConfiguratorBase {
             json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], upgradeCalldata), ","));
 
             json = string(abi.encodePacked(json, _createTransactionJson(cvStrategyProxies[i], diamondCutCalldata), ","));
-
         }
 
         json = string(abi.encodePacked(_removeLastChar(json), "]"));
 
         _writePayloadFile(json, safeOwner, networkJson);
-
     }
 
     /**
      * @notice Build all facet cuts including DiamondLoupeFacet (7 total)
      */
     function _buildAllFacetCuts() internal view returns (IDiamond.FacetCut[] memory cuts) {
-        IDiamond.FacetCut[] memory baseCuts =
-            _buildFacetCuts(
-                adminFacet,
-                allocationFacet,
-                disputeFacet,
-                pauseFacet,
-                powerFacet,
-                proposalFacet,
-                syncPowerFacet,
-                streamingFacet
-            );
+        IDiamond.FacetCut[] memory baseCuts = _buildFacetCuts(
+            adminFacet,
+            allocationFacet,
+            disputeFacet,
+            pauseFacet,
+            powerFacet,
+            proposalFacet,
+            syncPowerFacet,
+            streamingFacet
+        );
         cuts = new IDiamond.FacetCut[](9);
         for (uint256 i = 0; i < 8; i++) {
             cuts[i] = baseCuts[i];

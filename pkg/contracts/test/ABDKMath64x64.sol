@@ -15,12 +15,12 @@ pragma solidity ^0.8.0;
  */
 library ABDKMath64x64 {
     /*
-    * Minimum value signed 64.64-bit fixed point number may have. 
+    * Minimum value signed 64.64-bit fixed point number may have.
     */
     int128 private constant MIN_64x64 = -0x80000000000000000000000000000000;
 
     /*
-    * Maximum value signed 64.64-bit fixed point number may have. 
+    * Maximum value signed 64.64-bit fixed point number may have.
     */
     int128 private constant MAX_64x64 = 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 

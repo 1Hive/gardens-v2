@@ -71,6 +71,8 @@ export function useSuperfluidStream({
   containerId,
   sender,
   includePoolMembers = true,
+  includeReceiverStreams = true,
+  poolAddress,
 }: {
   receiver: string;
   superToken: string;
@@ -78,6 +80,8 @@ export function useSuperfluidStream({
   containerId: string | number;
   sender?: string;
   includePoolMembers?: boolean;
+  includeReceiverStreams?: boolean;
+  poolAddress?: string;
 }) {
   const { subscribe, unsubscribe } = usePubSubContext();
   const latestResultSignatureRef = useRef<string>("");
@@ -197,24 +201,29 @@ export function useSuperfluidStream({
 
     const normalizedSender = sender?.toLowerCase();
     const filteredReceiverStreamsSnapshotData =
-      normalizedSender == null ?
-        receiverStreamsSnapshotData
+      !includeReceiverStreams ? []
+      : normalizedSender == null ? receiverStreamsSnapshotData
       : receiverStreamsSnapshotData.filter(
           (flow) => flow.senderId.toLowerCase() === normalizedSender,
         );
 
+    const filteredPoolMembersData = result.data.poolMembers.filter(
+      (member: { pool: { id: string } }) =>
+        poolAddress == null ||
+        member.pool.id.toLowerCase() === poolAddress.toLowerCase(),
+    );
+
     let toPoolFlowRate: bigint = filteredReceiverStreamsSnapshotData.reduce(
-      (acc: bigint, flow: ReceiverStreamSnapshot) =>
-        acc + flow.currentFlowRate,
+      (acc: bigint, flow: ReceiverStreamSnapshot) => acc + flow.currentFlowRate,
       0n,
     );
 
     let poolMemberSnapshotsData: PoolMemberSnapshot[] = [];
-    if (includePoolMembers && result.data.poolMembers.length > 0) {
+    if (includePoolMembers && filteredPoolMembersData.length > 0) {
       let memberFlows: Array<{ result?: unknown; error?: unknown }> = [];
       try {
         const multicallResults = await readClient.multicall({
-          contracts: result.data.poolMembers.map((member: any) => ({
+          contracts: filteredPoolMembersData.map((member: any) => ({
             address: member.pool.id as Address,
             abi: superfluidPoolAbi,
             functionName: "getMemberFlowRate",
@@ -236,7 +245,7 @@ export function useSuperfluidStream({
           );
           hasLoggedMemberFlowReadErrorRef.current = true;
         }
-        memberFlows = result.data.poolMembers.map(() => ({ result: 0n }));
+        memberFlows = filteredPoolMembersData.map(() => ({ result: 0n }));
       }
 
       toPoolFlowRate = memberFlows.reduce((acc: bigint, flow) => {
@@ -253,7 +262,7 @@ export function useSuperfluidStream({
         return acc + BigInt(((flow?.result as any) ?? 0).toString());
       }, toPoolFlowRate);
 
-      poolMemberSnapshotsData = result.data.poolMembers.map(
+      poolMemberSnapshotsData = filteredPoolMembersData.map(
         (
           member: {
             updatedAtTimestamp: bigint;
@@ -382,7 +391,16 @@ export function useSuperfluidStream({
     if (!client) return;
     setHasFetched(false);
     fetch();
-  }, [client, superToken, receiver, connectedWalletAddress, sender, includePoolMembers]);
+  }, [
+    client,
+    superToken,
+    receiver,
+    connectedWalletAddress,
+    sender,
+    includePoolMembers,
+    includeReceiverStreams,
+    poolAddress,
+  ]);
 
   useEffect(() => {
     if (!receiverStreamsSnapshot.length && !poolMembersSnapshot.length) {

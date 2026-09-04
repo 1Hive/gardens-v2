@@ -90,11 +90,10 @@ library PowerManagementUtils {
         }
     }
 
-    function decreasePowerQuadratic(
-        IVotingPowerRegistry _votingPowerRegistry,
-        address _member,
-        uint256
-    ) internal returns (uint256) {
+    function decreasePowerQuadratic(IVotingPowerRegistry _votingPowerRegistry, address _member, uint256)
+        internal
+        returns (uint256)
+    {
         uint256 scale = _decimalScale(_votingPowerRegistry);
         uint256 newTotalStake = _votingPowerRegistry.getMemberStakedAmount(_member);
         if (newTotalStake > type(uint256).max / scale) {

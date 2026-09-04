@@ -16,7 +16,11 @@ contract GlobalPauseControllerTest is Test {
     function setUp() public {
         GlobalPauseController impl = new GlobalPauseController();
         controller = GlobalPauseController(
-            address(new ERC1967Proxy(address(impl), abi.encodeWithSelector(GlobalPauseController.initialize.selector, owner)))
+            address(
+                new ERC1967Proxy(
+                    address(impl), abi.encodeWithSelector(GlobalPauseController.initialize.selector, owner)
+                )
+            )
         );
     }
 

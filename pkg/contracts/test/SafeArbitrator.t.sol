@@ -499,14 +499,12 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
 
     function test_executeRuling_refundHappensAfterRuleCallback() public {
         SafeArbitrator localArbitrator = SafeArbitrator(
-            payable(
-                address(
+            payable(address(
                     new ERC1967Proxy(
                         address(new SafeArbitrator()),
                         abi.encodeWithSelector(SafeArbitrator.initialize.selector, ARBITRATION_FEE, address(this))
                     )
-                )
-            )
+                ))
         );
         MockArbitrableRefundOrder arbitrable = new MockArbitrableRefundOrder();
         RefundOrderSafe refundSafe = new RefundOrderSafe(localArbitrator, arbitrable);

@@ -65,9 +65,7 @@ contract RefreshFacetSnapshots is BaseMultiChain {
             FacetKind.CVSyncPower
         );
         _refreshFacet(
-            ".FACETS.CV_STREAMING",
-            "src/CVStrategy/facets/CVStreamingFacet.sol:CVStreamingFacet",
-            FacetKind.CVStreaming
+            ".FACETS.CV_STREAMING", "src/CVStrategy/facets/CVStreamingFacet.sol:CVStreamingFacet", FacetKind.CVStreaming
         );
 
         _refreshFacet(
@@ -152,5 +150,4 @@ contract RefreshFacetSnapshots is BaseMultiChain {
         if (kind == FacetKind.CommunityStrategy) return "CommunityStrategyFacet";
         revert("unknown facet kind");
     }
-
 }

@@ -828,7 +828,8 @@ contract ForkLifecycleHealthcheck is Test {
         for (uint256 i = 0; i < chains.length; i++) {
             string memory chain = chains[i];
             string memory json = _selectFork(chain);
-            RegistryFactory factory = RegistryFactory(payable(json.readAddress(_networkKey(chain, ".PROXIES.REGISTRY_FACTORY"))));
+            RegistryFactory factory =
+                RegistryFactory(payable(json.readAddress(_networkKey(chain, ".PROXIES.REGISTRY_FACTORY"))));
 
             assertTrue(factory.owner() != address(0), chain);
             assertTrue(factory.gardensFeeReceiver() != address(0), chain);
@@ -840,9 +841,8 @@ contract ForkLifecycleHealthcheck is Test {
             assertGt(communityCuts.length, 0, chain);
             assertGt(strategyCuts.length, 0, chain);
 
-            (bool success, bytes memory data) = address(factory).staticcall(
-                abi.encodeWithSelector(RegistryFactory.isAuthorizedWallet.selector, address(0))
-            );
+            (bool success, bytes memory data) = address(factory)
+                .staticcall(abi.encodeWithSelector(RegistryFactory.isAuthorizedWallet.selector, address(0)));
             assertTrue(success, string.concat(chain, ": factory missing authorized wallet selector"));
             assertFalse(abi.decode(data, (bool)), chain);
         }

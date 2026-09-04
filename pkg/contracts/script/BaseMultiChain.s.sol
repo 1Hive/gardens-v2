@@ -156,7 +156,6 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
 
         vm.startBroadcast();
 
-
         runCurrentNetwork(json);
         _flushPendingNetworkWrites();
 
@@ -187,7 +186,6 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
 
         // assertTrue(token != GV2ERC20(address(0)));
         // assertTrue(TOKEN != address(0));
-
 
         // COUNCIL_SAFE = json.readAddress(getKeyNetwork(".ENVS.COUNCIL_SAFE"));
 
@@ -592,9 +590,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
         bytes memory sanitized = new bytes(source.length);
         for (uint256 i = 0; i < source.length; i++) {
             bytes1 char = source[i];
-            if (
-                (char >= 0x30 && char <= 0x39) || (char >= 0x41 && char <= 0x5A) || (char >= 0x61 && char <= 0x7A)
-            ) {
+            if ((char >= 0x30 && char <= 0x39) || (char >= 0x41 && char <= 0x5A) || (char >= 0x61 && char <= 0x7A)) {
                 sanitized[i] = char;
             } else {
                 sanitized[i] = "_";
@@ -644,7 +640,8 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
             contractName[i] = artifactBytes[colonIndex + 1 + i];
         }
 
-        return string.concat(vm.projectRoot(), "/pkg/contracts/out/", string(fileName), "/", string(contractName), ".json");
+        return
+            string.concat(vm.projectRoot(), "/pkg/contracts/out/", string(fileName), "/", string(contractName), ".json");
     }
 
     function _immutableReferences(string memory artifactId) internal returns (string memory) {

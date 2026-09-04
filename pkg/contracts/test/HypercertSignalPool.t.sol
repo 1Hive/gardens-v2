@@ -810,7 +810,7 @@ contract HypercertSignalPoolTest is Test {
         // 8. Voter1 reallocates away from 1002
         HypercertSignal[] memory realloc = new HypercertSignal[](2);
         realloc[0] = HypercertSignal({hypercertId: 1002, deltaSupport: -30}); // remove from 1002
-        realloc[1] = HypercertSignal({hypercertId: 1001, deltaSupport: 30});  // add to 1001
+        realloc[1] = HypercertSignal({hypercertId: 1001, deltaSupport: 30}); // add to 1001
         _allocate(voter1, realloc);
 
         assertEq(pool.voterStakes(1001, voter1), 70); // 40 + 30
@@ -939,10 +939,11 @@ contract HypercertSignalPoolTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                HypercertSignalPool.ReclaimBatchTooLarge.selector, pool.MAX_RECLAIM_BATCH() + 1, pool.MAX_RECLAIM_BATCH()
+                HypercertSignalPool.ReclaimBatchTooLarge.selector,
+                pool.MAX_RECLAIM_BATCH() + 1,
+                pool.MAX_RECLAIM_BATCH()
             )
         );
         pool.reclaimStakes(ids);
     }
-
 }

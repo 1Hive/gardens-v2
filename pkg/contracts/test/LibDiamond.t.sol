@@ -3,7 +3,21 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 
-import {LibDiamond, NotContractOwner, NoSelectorsProvidedForFacetForCut, CannotAddSelectorsToZeroAddress, CannotAddFunctionToDiamondThatAlreadyExists, CannotReplaceFunctionsFromFacetWithZeroAddress, CannotReplaceFunctionWithTheSameFunctionFromTheSameFacet, CannotReplaceFunctionThatDoesNotExists, CannotReplaceImmutableFunction, CannotRemoveImmutableFunction, RemoveFacetAddressMustBeZeroAddress, CannotRemoveFunctionThatDoesNotExist, NoBytecodeAtAddress} from "../src/diamonds/libraries/LibDiamond.sol";
+import {
+    LibDiamond,
+    NotContractOwner,
+    NoSelectorsProvidedForFacetForCut,
+    CannotAddSelectorsToZeroAddress,
+    CannotAddFunctionToDiamondThatAlreadyExists,
+    CannotReplaceFunctionsFromFacetWithZeroAddress,
+    CannotReplaceFunctionWithTheSameFunctionFromTheSameFacet,
+    CannotReplaceFunctionThatDoesNotExists,
+    CannotReplaceImmutableFunction,
+    CannotRemoveImmutableFunction,
+    RemoveFacetAddressMustBeZeroAddress,
+    CannotRemoveFunctionThatDoesNotExist,
+    NoBytecodeAtAddress
+} from "../src/diamonds/libraries/LibDiamond.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
 
@@ -14,11 +28,7 @@ contract LibDiamondHarness {
         LibDiamond.setContractOwner(_owner);
     }
 
-    function diamondCut(
-        IDiamond.FacetCut[] memory _diamondCut,
-        address _init,
-        bytes memory _calldata
-    ) external {
+    function diamondCut(IDiamond.FacetCut[] memory _diamondCut, address _init, bytes memory _calldata) external {
         LibDiamond.enforceIsContractOwner();
         LibDiamond.diamondCut(_diamondCut, _init, _calldata);
     }
@@ -44,11 +54,7 @@ contract LibDiamondHarness {
     }
 
     // Allows injecting a raw action value without enum decoding guardrails to hit error paths.
-    function diamondCutRaw(
-        FacetCutInput[] memory _diamondCut,
-        address _init,
-        bytes memory _calldata
-    ) external {
+    function diamondCutRaw(FacetCutInput[] memory _diamondCut, address _init, bytes memory _calldata) external {
         LibDiamond.enforceIsContractOwner();
         IDiamond.FacetCut[] memory castCuts;
         assembly {
@@ -71,9 +77,7 @@ contract LibDiamondHarness {
 
     fallback() external payable {
         LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
-        address facet = ds
-            .facetAddressAndSelectorPosition[msg.sig]
-            .facetAddress;
+        address facet = ds.facetAddressAndSelectorPosition[msg.sig].facetAddress;
 
         if (facet == address(0)) {
             revert FunctionDoesNotExist(msg.sig);
@@ -135,10 +139,7 @@ contract InitNoop {
 }
 
 contract LibDiamondTest is Test {
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     LibDiamondHarness private diamond;
     address private owner = address(0xA11CE);
@@ -156,11 +157,8 @@ contract LibDiamondTest is Test {
 
     function _addFacet(address facet, bytes4[] memory selectors) internal {
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
-        cuts[0] = IDiamond.FacetCut({
-            facetAddress: facet,
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
-        });
+        cuts[0] =
+            IDiamond.FacetCut({facetAddress: facet, action: IDiamond.FacetCutAction.Add, functionSelectors: selectors});
         diamond.diamondCut(cuts, address(0), "");
     }
 
@@ -176,9 +174,7 @@ contract LibDiamondTest is Test {
 
     function test_enforceIsContractOwner_revertsForNonOwner() public {
         vm.prank(attacker);
-        vm.expectRevert(
-            abi.encodeWithSelector(NotContractOwner.selector, attacker, owner)
-        );
+        vm.expectRevert(abi.encodeWithSelector(NotContractOwner.selector, attacker, owner));
         diamond.enforceOwner();
     }
 
@@ -202,12 +198,7 @@ contract LibDiamondTest is Test {
         vm.prank(owner);
         _addFacet(address(facetV1), selectors);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CannotAddFunctionToDiamondThatAlreadyExists.selector,
-                selectors[0]
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CannotAddFunctionToDiamondThatAlreadyExists.selector, selectors[0]));
         vm.prank(owner);
         _addFacet(address(facetV1), selectors);
     }
@@ -215,18 +206,11 @@ contract LibDiamondTest is Test {
     function test_diamondCut_rejectsEmptySelectors() public {
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(facetV1),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: new bytes4[](0)
+            facetAddress: address(facetV1), action: IDiamond.FacetCutAction.Add, functionSelectors: new bytes4[](0)
         });
 
         vm.prank(owner);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                NoSelectorsProvidedForFacetForCut.selector,
-                address(facetV1)
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(NoSelectorsProvidedForFacetForCut.selector, address(facetV1)));
         diamond.diamondCut(cuts, address(0), "");
     }
 
@@ -238,9 +222,7 @@ contract LibDiamondTest is Test {
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(facetV2),
-            action: IDiamond.FacetCutAction.Replace,
-            functionSelectors: selectors
+            facetAddress: address(facetV2), action: IDiamond.FacetCutAction.Replace, functionSelectors: selectors
         });
 
         vm.prank(owner);
@@ -257,18 +239,12 @@ contract LibDiamondTest is Test {
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(facetV1),
-            action: IDiamond.FacetCutAction.Replace,
-            functionSelectors: selectors
+            facetAddress: address(facetV1), action: IDiamond.FacetCutAction.Replace, functionSelectors: selectors
         });
 
         vm.startPrank(owner);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                CannotReplaceFunctionWithTheSameFunctionFromTheSameFacet
-                    .selector,
-                selectors[0]
-            )
+            abi.encodeWithSelector(CannotReplaceFunctionWithTheSameFunctionFromTheSameFacet.selector, selectors[0])
         );
         diamond.diamondCut(cuts, address(0), "");
         vm.stopPrank();
@@ -282,20 +258,13 @@ contract LibDiamondTest is Test {
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0),
-            action: IDiamond.FacetCutAction.Remove,
-            functionSelectors: selectors
+            facetAddress: address(0), action: IDiamond.FacetCutAction.Remove, functionSelectors: selectors
         });
 
         vm.prank(owner);
         diamond.diamondCut(cuts, address(0), "");
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                LibDiamondHarness.FunctionDoesNotExist.selector,
-                selectors[0]
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(LibDiamondHarness.FunctionDoesNotExist.selector, selectors[0]));
         TestFacetV1(address(diamond)).bar();
     }
 
@@ -307,18 +276,11 @@ contract LibDiamondTest is Test {
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(facetV1),
-            action: IDiamond.FacetCutAction.Remove,
-            functionSelectors: selectors
+            facetAddress: address(facetV1), action: IDiamond.FacetCutAction.Remove, functionSelectors: selectors
         });
 
         vm.prank(owner);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                RemoveFacetAddressMustBeZeroAddress.selector,
-                address(facetV1)
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(RemoveFacetAddressMustBeZeroAddress.selector, address(facetV1)));
         diamond.diamondCut(cuts, address(0), "");
     }
 
@@ -328,18 +290,11 @@ contract LibDiamondTest is Test {
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0),
-            action: IDiamond.FacetCutAction.Remove,
-            functionSelectors: selectors
+            facetAddress: address(0), action: IDiamond.FacetCutAction.Remove, functionSelectors: selectors
         });
 
         vm.prank(owner);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CannotRemoveFunctionThatDoesNotExist.selector,
-                selectors[0]
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CannotRemoveFunctionThatDoesNotExist.selector, selectors[0]));
         diamond.diamondCut(cuts, address(0), "");
     }
 
@@ -349,18 +304,11 @@ contract LibDiamondTest is Test {
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(0), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
 
         vm.prank(owner);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CannotAddSelectorsToZeroAddress.selector,
-                selectors
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CannotAddSelectorsToZeroAddress.selector, selectors));
         diamond.diamondCut(cuts, address(0), "");
     }
 
@@ -370,18 +318,11 @@ contract LibDiamondTest is Test {
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: selectors
+            facetAddress: address(0), action: IDiamond.FacetCutAction.Auto, functionSelectors: selectors
         });
 
         vm.prank(owner);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CannotAddSelectorsToZeroAddress.selector,
-                selectors
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CannotAddSelectorsToZeroAddress.selector, selectors));
         diamond.diamondCut(cuts, address(0), "");
     }
 
@@ -398,9 +339,7 @@ contract LibDiamondTest is Test {
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(facetV2),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: autoSelectors
+            facetAddress: address(facetV2), action: IDiamond.FacetCutAction.Auto, functionSelectors: autoSelectors
         });
 
         vm.prank(owner);
@@ -427,9 +366,7 @@ contract LibDiamondTest is Test {
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0),
-            action: IDiamond.FacetCutAction.Remove,
-            functionSelectors: removeSelectors
+            facetAddress: address(0), action: IDiamond.FacetCutAction.Remove, functionSelectors: removeSelectors
         });
 
         vm.prank(owner);
@@ -449,27 +386,18 @@ contract LibDiamondTest is Test {
         // add selector pointing to the diamond itself to simulate immutable
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(diamond),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(diamond), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
 
         vm.prank(owner);
         diamond.diamondCut(cuts, address(0), "");
 
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0),
-            action: IDiamond.FacetCutAction.Remove,
-            functionSelectors: selectors
+            facetAddress: address(0), action: IDiamond.FacetCutAction.Remove, functionSelectors: selectors
         });
 
         vm.prank(owner);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CannotRemoveImmutableFunction.selector,
-                selectors[0]
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CannotRemoveImmutableFunction.selector, selectors[0]));
         diamond.diamondCut(cuts, address(0), "");
     }
 
@@ -479,17 +407,9 @@ contract LibDiamondTest is Test {
 
         vm.prank(owner);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                NoBytecodeAtAddress.selector,
-                init,
-                "LibDiamondCut: _init address has no code"
-            )
+            abi.encodeWithSelector(NoBytecodeAtAddress.selector, init, "LibDiamondCut: _init address has no code")
         );
-        diamond.diamondCut(
-            cuts,
-            init,
-            abi.encodeWithSignature("doesntMatter()")
-        );
+        diamond.diamondCut(cuts, init, abi.encodeWithSignature("doesntMatter()"));
     }
 
     function test_initializeDiamondCut_bubblesRevertData() public {
@@ -498,11 +418,7 @@ contract LibDiamondTest is Test {
 
         vm.prank(owner);
         vm.expectRevert(InitReverter.Boom.selector);
-        diamond.diamondCut(
-            cuts,
-            address(reverter),
-            abi.encodeWithSignature("fail()")
-        );
+        diamond.diamondCut(cuts, address(reverter), abi.encodeWithSignature("fail()"));
     }
 
     function test_initializeDiamondCut_succeeds() public {
@@ -510,11 +426,7 @@ contract LibDiamondTest is Test {
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](0);
 
         vm.prank(owner);
-        diamond.diamondCut(
-            cuts,
-            address(init),
-            abi.encodeWithSignature("run()")
-        );
+        diamond.diamondCut(cuts, address(init), abi.encodeWithSignature("run()"));
     }
 
     function test_addFunctions_revertsNoBytecode() public {
@@ -523,19 +435,12 @@ contract LibDiamondTest is Test {
         selectors[0] = TestFacetV1.foo.selector;
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
-        cuts[0] = IDiamond.FacetCut({
-            facetAddress: eoa,
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
-        });
+        cuts[0] =
+            IDiamond.FacetCut({facetAddress: eoa, action: IDiamond.FacetCutAction.Add, functionSelectors: selectors});
 
         vm.prank(owner);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                NoBytecodeAtAddress.selector,
-                eoa,
-                "LibDiamondCut: Add facet has no code"
-            )
+            abi.encodeWithSelector(NoBytecodeAtAddress.selector, eoa, "LibDiamondCut: Add facet has no code")
         );
         diamond.diamondCut(cuts, address(0), "");
     }
@@ -546,19 +451,12 @@ contract LibDiamondTest is Test {
         selectors[0] = TestFacetV1.foo.selector;
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
-        cuts[0] = IDiamond.FacetCut({
-            facetAddress: eoa,
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: selectors
-        });
+        cuts[0] =
+            IDiamond.FacetCut({facetAddress: eoa, action: IDiamond.FacetCutAction.Auto, functionSelectors: selectors});
 
         vm.prank(owner);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                NoBytecodeAtAddress.selector,
-                eoa,
-                "LibDiamondCut: Auto facet has no code"
-            )
+            abi.encodeWithSelector(NoBytecodeAtAddress.selector, eoa, "LibDiamondCut: Auto facet has no code")
         );
         diamond.diamondCut(cuts, address(0), "");
     }
@@ -572,18 +470,12 @@ contract LibDiamondTest is Test {
         address eoa = makeAddr("eoa3");
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: eoa,
-            action: IDiamond.FacetCutAction.Replace,
-            functionSelectors: selectors
+            facetAddress: eoa, action: IDiamond.FacetCutAction.Replace, functionSelectors: selectors
         });
 
         vm.prank(owner);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                NoBytecodeAtAddress.selector,
-                eoa,
-                "LibDiamondCut: Replace facet has no code"
-            )
+            abi.encodeWithSelector(NoBytecodeAtAddress.selector, eoa, "LibDiamondCut: Replace facet has no code")
         );
         diamond.diamondCut(cuts, address(0), "");
     }
@@ -594,18 +486,11 @@ contract LibDiamondTest is Test {
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(facetV1),
-            action: IDiamond.FacetCutAction.Replace,
-            functionSelectors: selectors
+            facetAddress: address(facetV1), action: IDiamond.FacetCutAction.Replace, functionSelectors: selectors
         });
 
         vm.prank(owner);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CannotReplaceFunctionThatDoesNotExists.selector,
-                selectors[0]
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CannotReplaceFunctionThatDoesNotExists.selector, selectors[0]));
         diamond.diamondCut(cuts, address(0), "");
     }
 
@@ -616,27 +501,18 @@ contract LibDiamondTest is Test {
         // add selector pointing to the diamond itself to simulate immutable
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(diamond),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(diamond), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
 
         vm.prank(owner);
         diamond.diamondCut(cuts, address(0), "");
 
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(facetV1),
-            action: IDiamond.FacetCutAction.Replace,
-            functionSelectors: selectors
+            facetAddress: address(facetV1), action: IDiamond.FacetCutAction.Replace, functionSelectors: selectors
         });
 
         vm.prank(owner);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CannotReplaceImmutableFunction.selector,
-                selectors[0]
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CannotReplaceImmutableFunction.selector, selectors[0]));
         diamond.diamondCut(cuts, address(0), "");
     }
 
@@ -648,18 +524,11 @@ contract LibDiamondTest is Test {
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0),
-            action: IDiamond.FacetCutAction.Replace,
-            functionSelectors: selectors
+            facetAddress: address(0), action: IDiamond.FacetCutAction.Replace, functionSelectors: selectors
         });
 
         vm.prank(owner);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CannotReplaceFunctionsFromFacetWithZeroAddress.selector,
-                selectors
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CannotReplaceFunctionsFromFacetWithZeroAddress.selector, selectors));
         diamond.diamondCut(cuts, address(0), "");
     }
 }

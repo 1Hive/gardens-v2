@@ -43,7 +43,8 @@ contract VerifyNetworkConfigState is Script {
             "streaming escrow factory"
         );
 
-        address expectedCommunityImpl = _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.REGISTRY_COMMUNITY");
+        address expectedCommunityImpl =
+            _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.REGISTRY_COMMUNITY");
         address expectedStrategyImpl = _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.CV_STRATEGY");
         address expectedCollateralVaultImpl =
             _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.COLLATERAL_VAULT");
@@ -52,9 +53,13 @@ contract VerifyNetworkConfigState is Script {
         address expectedStreamingEscrowImpl =
             _readOptionalAddress(networkJson, networkKey, ".IMPLEMENTATIONS.STREAMING_ESCROW");
 
-        require(factory.registryCommunityTemplate() == expectedCommunityImpl, "factory registryCommunityTemplate mismatch");
+        require(
+            factory.registryCommunityTemplate() == expectedCommunityImpl, "factory registryCommunityTemplate mismatch"
+        );
         require(factory.strategyTemplate() == expectedStrategyImpl, "factory strategyTemplate mismatch");
-        require(factory.collateralVaultTemplate() == expectedCollateralVaultImpl, "factory collateralVaultTemplate mismatch");
+        require(
+            factory.collateralVaultTemplate() == expectedCollateralVaultImpl, "factory collateralVaultTemplate mismatch"
+        );
         require(
             factory.streamingEscrowFactory() == configuredStreamingEscrowFactory,
             "factory streamingEscrowFactory mismatch"
@@ -67,7 +72,10 @@ contract VerifyNetworkConfigState is Script {
         _verifyConfiguredCode(expectedCommunityImpl, "registry community implementation");
         _verifyConfiguredCode(expectedStrategyImpl, "strategy implementation");
         _verifyConfiguredCode(expectedCollateralVaultImpl, "collateral vault implementation");
-        _verifyConfiguredCode(_readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.PAUSE_CONTROLLER"), "pause controller implementation");
+        _verifyConfiguredCode(
+            _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.PAUSE_CONTROLLER"),
+            "pause controller implementation"
+        );
         if (configuredStreamingEscrowFactory != address(0)) {
             address expectedStreamingEscrowFactoryImpl =
                 _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.STREAMING_ESCROW_FACTORY");
@@ -77,14 +85,17 @@ contract VerifyNetworkConfigState is Script {
         }
 
         _verifyFactoryCuts(factory, networkJson, networkKey);
-        address[] memory communityProxies =
-            _verifyProxyFleet(networkJson, networkKey, ".PROXIES.REGISTRY_COMMUNITIES", expectedCommunityImpl, "community");
+        address[] memory communityProxies = _verifyProxyFleet(
+            networkJson, networkKey, ".PROXIES.REGISTRY_COMMUNITIES", expectedCommunityImpl, "community"
+        );
         _verifyProxyFleetAnyImplementation(networkJson, networkKey, ".PROXIES.CV_STRATEGIES", "strategy");
         _verifyExpectedCommunityCutSelectors(factory, communityProxies);
 
         if (configuredStreamingEscrowFactory != address(0)) {
-            address liveEscrowImplementation =
-                abi.decode(_staticCall(configuredStreamingEscrowFactory, abi.encodeWithSignature("escrowImplementation()")), (address));
+            address liveEscrowImplementation = abi.decode(
+                _staticCall(configuredStreamingEscrowFactory, abi.encodeWithSignature("escrowImplementation()")),
+                (address)
+            );
             require(liveEscrowImplementation == expectedStreamingEscrowImpl, "streaming escrow implementation mismatch");
         }
     }
@@ -118,14 +129,23 @@ contract VerifyNetworkConfigState is Script {
         }
     }
 
-    function _verifyFactoryCuts(RegistryFactory factory, string memory networkJson, string memory networkKey) internal view {
+    function _verifyFactoryCuts(RegistryFactory factory, string memory networkJson, string memory networkKey)
+        internal
+        view
+    {
         (IDiamondCut.FacetCut[] memory communityCuts, address communityInit, bytes memory communityInitCalldata) =
             factory.getCommunityFacets();
         (IDiamondCut.FacetCut[] memory strategyCuts, address strategyInit, bytes memory strategyInitCalldata) =
             factory.getStrategyFacets();
 
-        require(communityInit == _readRequiredAddress(networkJson, networkKey, ".INITS.REGISTRY_COMMUNITY_DIAMOND_INIT"), "community init mismatch");
-        require(strategyInit == _readRequiredAddress(networkJson, networkKey, ".INITS.CV_STRATEGY_DIAMOND_INIT"), "strategy init mismatch");
+        require(
+            communityInit == _readRequiredAddress(networkJson, networkKey, ".INITS.REGISTRY_COMMUNITY_DIAMOND_INIT"),
+            "community init mismatch"
+        );
+        require(
+            strategyInit == _readRequiredAddress(networkJson, networkKey, ".INITS.CV_STRATEGY_DIAMOND_INIT"),
+            "strategy init mismatch"
+        );
         require(
             keccak256(communityInitCalldata) == keccak256(abi.encodeCall(RegistryCommunityDiamondInit.init, ())),
             "community init calldata mismatch"
@@ -219,7 +239,10 @@ contract VerifyNetworkConfigState is Script {
         proxies = networkJson.readAddressArray(string.concat(networkKey, proxyArrayKey));
         for (uint256 i = 0; i < proxies.length; i++) {
             require(proxies[i].code.length > 0, string.concat(label, " proxy has no code"));
-            require(_implementationOf(proxies[i]) == expectedImplementation, string.concat(label, " implementation mismatch"));
+            require(
+                _implementationOf(proxies[i]) == expectedImplementation,
+                string.concat(label, " implementation mismatch")
+            );
         }
     }
 
@@ -251,7 +274,10 @@ contract VerifyNetworkConfigState is Script {
             return;
         }
 
-        require(_implementationOf(address(factory)) == expectedImplementation, string.concat(label, " implementation mismatch"));
+        require(
+            _implementationOf(address(factory)) == expectedImplementation,
+            string.concat(label, " implementation mismatch")
+        );
         _verifyConfiguredCode(expectedImplementation, string.concat(label, " implementation"));
     }
 

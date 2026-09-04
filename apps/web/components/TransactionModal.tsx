@@ -18,6 +18,10 @@ export type TransactionProps = {
   message: string;
   status: "idle" | "waiting" | "loading" | "success" | "error";
   contractName: React.ReactNode;
+  auxiliaryLink?: {
+    href: string;
+    label: React.ReactNode;
+  };
   showClickToExplorer?: boolean;
 };
 
