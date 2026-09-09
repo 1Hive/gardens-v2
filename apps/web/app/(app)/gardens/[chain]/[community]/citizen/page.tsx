@@ -164,9 +164,7 @@ export default async function CitizenRegistrationPage({
         tokenDecimals={tokenDecimals}
         connectionParams={connectionParams}
         submittedAction={getCitizenSubmittedAction(query.citizenAction)}
-        transactionHash={
-          typeof query.tx === "string" ? query.tx : query.tx?.[0]
-        }
+        submissionId={typeof query.tx === "string" ? query.tx : query.tx?.[0]}
       />
     </section>
   );

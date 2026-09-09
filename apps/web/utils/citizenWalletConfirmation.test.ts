@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  getCitizenActionName,
+  getCitizenPendingMessage,
   getCitizenSubmittedAction,
+  getCitizenUnconfirmedMessage,
   waitForCitizenActionConfirmation,
 } from "./citizenWalletConfirmation";
 
@@ -56,7 +59,18 @@ describe("Citizen Wallet native action confirmation", () => {
         intervalMs: 0,
       }),
     ).rejects.toThrow(
-      "Citizen Wallet registration was submitted, but its on-chain state was not confirmed.",
+      "Citizen Wallet accepted the registration request, but it was not confirmed on Gnosis Chain. It may not have been broadcast. You can retry safely.",
+    );
+  });
+
+  it("distinguishes wallet acceptance from on-chain confirmation", () => {
+    expect(getCitizenActionName("approval-submitted")).toBe("approval");
+    expect(getCitizenActionName("registration-submitted")).toBe("registration");
+    expect(getCitizenPendingMessage("registration-submitted")).toBe(
+      "Citizen Wallet accepted the registration request. Waiting for it to be confirmed on Gnosis Chain…",
+    );
+    expect(getCitizenUnconfirmedMessage("approval-submitted")).toBe(
+      "Citizen Wallet accepted the approval request, but it was not confirmed on Gnosis Chain. It may not have been broadcast. You can retry safely.",
     );
   });
 

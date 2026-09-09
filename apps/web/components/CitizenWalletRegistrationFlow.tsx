@@ -14,6 +14,7 @@ import {
   getCitizenRegistrationAction,
 } from "@/utils/citizenWallet";
 import {
+  getCitizenPendingMessage,
   type CitizenSubmittedAction,
   waitForCitizenActionConfirmation,
 } from "@/utils/citizenWalletConfirmation";
@@ -40,12 +41,15 @@ type Props = {
   tokenDecimals: number;
   connectionParams: CitizenConnectionParams;
   submittedAction?: CitizenSubmittedAction;
-  transactionHash?: string;
+  submissionId?: string;
 };
 
 export function CitizenWalletRegistrationFlow(props: Props) {
   const [isWaiting, setIsWaiting] = useState(false);
   const [error, setError] = useState<string>();
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">(
+    "idle",
+  );
 
   const registrationCost = BigInt(props.registrationCost);
   const action = getCitizenRegistrationAction({
@@ -54,7 +58,9 @@ export function CitizenWalletRegistrationFlow(props: Props) {
     allowance: BigInt(props.allowance),
     registrationCost,
   });
-  const transactionHash = props.transactionHash;
+  const trimmedSubmissionId = props.submissionId?.trim();
+  const submissionId =
+    trimmedSubmissionId === "" ? undefined : trimmedSubmissionId;
 
   const buildConnectedGardensUrl = useCallback(
     () =>
@@ -68,6 +74,7 @@ export function CitizenWalletRegistrationFlow(props: Props) {
     let cancelled = false;
     setIsWaiting(true);
     setError(undefined);
+    setCopyStatus("idle");
     const client = getEnvPublicClient(100);
 
     waitForCitizenActionConfirmation({
@@ -97,7 +104,7 @@ export function CitizenWalletRegistrationFlow(props: Props) {
         reportClientError(cause, {
           type: "citizen-native-confirmation-error",
           submittedAction: props.submittedAction,
-          citizenSubmissionHash: transactionHash,
+          citizenSubmissionHash: submissionId,
           chainId: 100,
           connectedAddress: props.account,
           communityAddress: props.communityAddress,
@@ -126,8 +133,19 @@ export function CitizenWalletRegistrationFlow(props: Props) {
     props.communityAddress,
     props.submittedAction,
     registrationCost,
-    transactionHash,
+    submissionId,
   ]);
+
+  const copySubmissionId = async () => {
+    if (!submissionId) return;
+
+    try {
+      await navigator.clipboard.writeText(submissionId);
+      setCopyStatus("copied");
+    } catch {
+      setCopyStatus("failed");
+    }
+  };
 
   const buttonLabel = useMemo(() => {
     if (isWaiting) return "Waiting for confirmation…";
@@ -232,6 +250,33 @@ export function CitizenWalletRegistrationFlow(props: Props) {
         <p className="text-danger-content" role="alert">
           {error}
         </p>
+      )}
+
+      {props.submittedAction && !error && (
+        <p className="text-sm" role="status">
+          {getCitizenPendingMessage(props.submittedAction)}
+        </p>
+      )}
+
+      {submissionId && props.submittedAction && (
+        <div className="rounded-xl border border-border-neutral p-4">
+          <p className="text-sm font-semibold">Citizen submission ID</p>
+          <p className="mt-1 break-all font-mono text-xs">{submissionId}</p>
+          <Button
+            btnStyle="outline"
+            className="mt-3"
+            onClick={copySubmissionId}
+            testId="copy-citizen-submission-id"
+          >
+            {copyStatus === "copied" ? "Copied" : "Copy submission ID"}
+          </Button>
+          {copyStatus === "failed" && (
+            <p className="mt-2 text-sm text-danger-content" role="alert">
+              Could not copy automatically. Press and hold the identifier to
+              copy it.
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
