@@ -28,6 +28,10 @@ Council allowlist maintenance through `councilSafe` is part of the trusted pool-
 
 Reports where the demonstrated attacker primarily harms their own funds, collateral, voting power, or execution path are not eligible unless the report also proves concrete loss, unauthorized state change, or material harm to other users or protocol funds.
 
+### Persistent personhood verification
+
+The GoodDollar scorer is used as evidence that a wallet successfully completed a personhood check. Gardens does not treat a later loss of GoodDollar eligibility as revocation of that historical verification. Reports that only show retained authorization after a previously successful GoodDollar verification are therefore not eligible unless they demonstrate a separate bypass that lets an unverified wallet obtain authorization.
+
 ## Not Production Reachable
 
 ### Hypercert signal pool
