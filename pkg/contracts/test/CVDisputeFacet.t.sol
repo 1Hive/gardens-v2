@@ -225,6 +225,17 @@ contract CVDisputeFacetTest is Test {
         facet.rule(2, 1);
     }
 
+    function test_rule_reverts_for_stale_dispute_id() public {
+        facet.setArbitrableConfig(1, _config(1 ether, 1, 1000));
+        facet.setProposal(1, ProposalStatus.Disputed, 1, 0);
+        facet.setDisputeInfo(1, 10, block.timestamp, member);
+        facet.setDisputeId(9, 1);
+
+        vm.prank(address(arbitrator));
+        vm.expectRevert(abi.encodeWithSelector(CVDisputeFacet.DisputeIdMismatch.selector, 1, 10, 9));
+        facet.rule(9, 1);
+    }
+
     function test_rule_default_ruling_not_configured() public {
         facet.setArbitrableConfig(1, _config(1 ether, 0, 0));
         facet.setProposal(1, ProposalStatus.Disputed, 1, 0);
@@ -250,6 +261,7 @@ contract CVDisputeFacetTest is Test {
         assertFalse(escrow.disputed());
         assertEq(escrow.drainToBeneficiaryCount(), 0);
         assertEq(escrow.drainToStrategyCount(), 0);
+        assertEq(facet.disputeIdToProposalId(4), 0);
     }
 
     function test_rule_default_ruling_rejected() public {

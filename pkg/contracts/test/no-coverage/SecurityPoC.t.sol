@@ -929,7 +929,10 @@ contract PoC_H4_SelfPowerDecreaseThresholdCollapse is PoCBase {
         (,, uint256 decay,) = cvStrategy.cvParams();
         uint256 convictionAtExecutionWindow =
             ConvictionsUtils.calculateConviction(BLOCKS_ELAPSED, 0, ATTACKER_POWER, decay);
-        uint256 requestedAmount = _findRequestAmountInThresholdCollapseWindow(convictionAtExecutionWindow);
+        uint256 protectedPointsAtExecution =
+            ConvictionsUtils.weightedAverage(HONEST_POWER, HONEST_POWER + ATTACKER_POWER, BLOCKS_ELAPSED, decay);
+        uint256 requestedAmount =
+            _findRequestAmountInThresholdCollapseWindow(convictionAtExecutionWindow, protectedPointsAtExecution);
 
         uint256 proposalId = _createProposal(attacker, requestedAmount);
         _allocateSupport(attacker, proposalId, ATTACKER_POWER);
@@ -937,7 +940,7 @@ contract PoC_H4_SelfPowerDecreaseThresholdCollapse is PoCBase {
         vm.roll(block.number + BLOCKS_ELAPSED);
 
         uint256 convictionBeforeWithdraw = cvStrategy.calculateProposalConviction(proposalId);
-        uint256 thresholdBeforeWithdraw = cvStrategy.calculateThreshold(requestedAmount);
+        (,,,,,,,, uint256 thresholdBeforeWithdraw,,,) = cvStrategy.getProposal(proposalId);
         assertLe(
             convictionBeforeWithdraw,
             thresholdBeforeWithdraw,
@@ -949,7 +952,7 @@ contract PoC_H4_SelfPowerDecreaseThresholdCollapse is PoCBase {
 
         (,,,, uint256 stakeAfterWithdraw,, uint256 blockLastAfterWithdraw, uint256 convictionAfterWithdraw,,,,) =
             cvStrategy.getProposal(proposalId);
-        uint256 thresholdAfterWithdraw = cvStrategy.calculateThreshold(requestedAmount);
+        (,,,,,,,, uint256 thresholdAfterWithdraw,,,) = cvStrategy.getProposal(proposalId);
 
         console.log("[H-4] requested amount:", requestedAmount);
         console.log("[H-4] conviction before withdraw:", convictionBeforeWithdraw);
@@ -959,6 +962,11 @@ contract PoC_H4_SelfPowerDecreaseThresholdCollapse is PoCBase {
 
         assertEq(stakeAfterWithdraw, 0, "H-4 setup: attacker support should be withdrawn");
         assertEq(blockLastAfterWithdraw, block.number, "H-4 setup: withdrawal records current block");
+        assertLe(
+            convictionAfterWithdraw,
+            thresholdAfterWithdraw,
+            "H-4: deactivation must not move an under-threshold proposal above threshold"
+        );
 
         uint256 attackerBalanceBefore = attacker.balance;
         vm.expectRevert();
@@ -984,14 +992,18 @@ contract PoC_H4_SelfPowerDecreaseThresholdCollapse is PoCBase {
         allo().allocate(poolId, abi.encode(votes));
     }
 
-    function _findRequestAmountInThresholdCollapseWindow(uint256 conviction) internal view returns (uint256) {
+    function _findRequestAmountInThresholdCollapseWindow(uint256 conviction, uint256 protectedPoints)
+        internal
+        view
+        returns (uint256)
+    {
         uint256 maxRequest = _maxRequestAmount();
         uint256 low = 1;
         uint256 high = maxRequest - 1;
 
         while (low < high) {
             uint256 mid = (low + high) / 2;
-            uint256 thresholdBeforeWithdraw = _thresholdFor(mid, HONEST_POWER + ATTACKER_POWER);
+            uint256 thresholdBeforeWithdraw = _thresholdFor(mid, protectedPoints);
 
             if (thresholdBeforeWithdraw < conviction) {
                 low = mid + 1;
@@ -1001,7 +1013,7 @@ contract PoC_H4_SelfPowerDecreaseThresholdCollapse is PoCBase {
         }
 
         for (uint256 requestedAmount = low; requestedAmount < maxRequest; requestedAmount += 1 ether) {
-            uint256 thresholdBeforeWithdraw = _thresholdFor(requestedAmount, HONEST_POWER + ATTACKER_POWER);
+            uint256 thresholdBeforeWithdraw = _thresholdFor(requestedAmount, protectedPoints);
             uint256 thresholdAfterWithdraw = _thresholdFor(requestedAmount, HONEST_POWER);
 
             if (conviction <= thresholdBeforeWithdraw && conviction > thresholdAfterWithdraw) {

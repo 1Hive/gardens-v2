@@ -511,7 +511,7 @@ abstract contract CVStrategyBaseFacet {
     }
 
     function _initializeThresholdSnapshot(Proposal storage _proposal) internal {
-        _proposal.thresholdSnapshot = totalPointsActivated;
+        _proposal.thresholdSnapshot = _getPoolThresholdPoints();
         _proposal.thresholdUpdatedAtBlock = block.number;
     }
 
@@ -552,7 +552,9 @@ abstract contract CVStrategyBaseFacet {
 
     function _checkpointTotalPointsActivated(uint256 newTotalPointsActivated) internal {
         CVThresholdStorage.Layout storage thresholdLayout = CVThresholdStorage.layout();
-        uint256 thresholdPoints = _getPoolThresholdPoints();
+        uint256 thresholdPoints = thresholdLayout.thresholdUpdatedAtBlock == 0 && totalPointsActivated == 0
+            ? newTotalPointsActivated
+            : _getPoolThresholdPoints();
 
         thresholdLayout.thresholdSnapshot = thresholdPoints;
         thresholdLayout.thresholdUpdatedAtBlock = block.number;
