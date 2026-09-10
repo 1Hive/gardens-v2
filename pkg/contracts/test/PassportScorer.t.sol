@@ -13,6 +13,18 @@ contract MockStrategyMinimal {
     }
 }
 
+contract MockStrategyRegistryStatus {
+    bool public enabled;
+
+    function setEnabled(bool _enabled) external {
+        enabled = _enabled;
+    }
+
+    function enabledStrategies(address) external view returns (bool) {
+        return enabled;
+    }
+}
+
 contract PassportScorerHarness is PassportScorer {
     function seedStrategy(address strat, address council) external {
         strategies[strat] = Strategy({threshold: 0, active: false, councilSafe: council});
@@ -223,15 +235,37 @@ contract PassportScorerTest is Test {
         assertFalse(canExecute);
     }
 
-    function testCanExecuteAction_inactiveAlwaysTrue() public {
+    function testCanExecuteAction_inactiveUnregisteredStrategyRemainsPermissive() public {
+        MockStrategyRegistryStatus registry = new MockStrategyRegistryStatus();
+        MockStrategyMinimal registeredStrategy = new MockStrategyMinimal(address(registry));
+
         vm.prank(listManager);
-        passportScorer.addStrategy(strategy, 500, councilSafe); // inactive by default
+        passportScorer.addStrategy(address(registeredStrategy), 500, councilSafe);
 
         vm.prank(listManager);
         passportScorer.addUserScore(user, 1);
 
-        bool canExecute = passportScorer.canExecuteAction(user, strategy);
+        bool canExecute = passportScorer.canExecuteAction(user, address(registeredStrategy));
         assertTrue(canExecute);
+    }
+
+    function testCanExecuteAction_inactiveEnabledStrategyEnforcesThreshold() public {
+        MockStrategyRegistryStatus registry = new MockStrategyRegistryStatus();
+        MockStrategyMinimal registeredStrategy = new MockStrategyMinimal(address(registry));
+        registry.setEnabled(true);
+
+        vm.prank(listManager);
+        passportScorer.addStrategy(address(registeredStrategy), 500, councilSafe);
+
+        vm.prank(listManager);
+        passportScorer.addUserScore(user, 1);
+
+        assertFalse(passportScorer.canExecuteAction(user, address(registeredStrategy)));
+
+        vm.prank(listManager);
+        passportScorer.addUserScore(user, 500);
+
+        assertTrue(passportScorer.canExecuteAction(user, address(registeredStrategy)));
     }
 
     function testActivateStrategy_onlyAuthorizedOrCouncil() public {

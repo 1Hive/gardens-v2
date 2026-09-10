@@ -11,6 +11,17 @@ import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 
+contract RegistryFactoryHarness is RegistryFactory {
+    function seedLegacyDelegation(address holder, address delegate, address recursiveDelegate) external {
+        protopianDelegate[holder] = delegate;
+        protopiansAddresses[delegate] = true;
+        if (recursiveDelegate != address(0)) {
+            protopianDelegate[delegate] = recursiveDelegate;
+            protopiansAddresses[recursiveDelegate] = true;
+        }
+    }
+}
+
 contract MockSafe {
     address[] internal _owners;
 
@@ -42,7 +53,7 @@ contract MockRegistryCommunity {
 }
 
 contract RegistryFactoryTest is Test {
-    RegistryFactory factory;
+    RegistryFactoryHarness factory;
     address owner = address(0xA11CE);
     address authorized = address(0xBEEF1);
     address gardensFeeReceiver = address(0xFEE);
@@ -59,10 +70,10 @@ contract RegistryFactoryTest is Test {
         collateralTemplate = address(0x5678);
         councilSafe = new MockSafe(address(0xC0FFEE));
 
-        factory = RegistryFactory(
+        factory = RegistryFactoryHarness(
             address(
                 new ERC1967Proxy(
-                    address(new RegistryFactory()),
+                    address(new RegistryFactoryHarness()),
                     abi.encodeWithSelector(
                         RegistryFactory.initialize.selector,
                         owner,
@@ -78,9 +89,7 @@ contract RegistryFactoryTest is Test {
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = bytes4(keccak256("dummy()"));
         dummyCuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0x1),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(0x1), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
         vm.startPrank(owner);
         factory.setCommunityFacets(dummyCuts, address(0), "");
@@ -137,9 +146,7 @@ contract RegistryFactoryTest is Test {
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = bytes4(keccak256("dummy()"));
         dummyCuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0x1),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(0x1), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
 
         vm.prank(owner);
@@ -328,9 +335,7 @@ contract RegistryFactoryTest is Test {
         selectors[0] = bytes4(keccak256("dummy1()"));
         selectors[1] = bytes4(keccak256("dummy2()"));
         dummyCuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0x1),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(0x1), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
 
         vm.expectRevert();
@@ -351,9 +356,7 @@ contract RegistryFactoryTest is Test {
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = bytes4(keccak256("dummy()"));
         dummyCuts[0] = IDiamond.FacetCut({
-            facetAddress: address(0x1),
-            action: IDiamond.FacetCutAction.Add,
-            functionSelectors: selectors
+            facetAddress: address(0x1), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
         });
 
         vm.expectRevert();
@@ -556,6 +559,127 @@ contract RegistryFactoryTest is Test {
         assertEq(factory.protopianDelegate(from), address(0));
     }
 
+    function test_delegateProtopian_rejects_recursive_delegate_source() public {
+        address holder = address(0x111);
+        address delegate = address(0x222);
+        address recursiveDelegate = address(0x333);
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(holder), true);
+
+        vm.prank(holder);
+        factory.delegateProtopian(holder, delegate);
+
+        vm.prank(delegate);
+        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.ProtopianHolderRequired.selector, delegate));
+        factory.delegateProtopian(delegate, recursiveDelegate);
+
+        assertTrue(factory.isProtopianAddress(delegate));
+        assertFalse(factory.isProtopianAddress(recursiveDelegate));
+    }
+
+    function test_delegateProtopian_rejects_canonical_or_delegated_destination() public {
+        address firstHolder = address(0x111);
+        address secondHolder = address(0x222);
+        address delegate = address(0x333);
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(firstHolder), true);
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(secondHolder), true);
+
+        vm.prank(firstHolder);
+        factory.delegateProtopian(firstHolder, delegate);
+
+        vm.prank(secondHolder);
+        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.ProtopianDelegateUnavailable.selector, delegate));
+        factory.delegateProtopian(secondHolder, delegate);
+
+        vm.prank(secondHolder);
+        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.ProtopianDelegateUnavailable.selector, firstHolder));
+        factory.delegateProtopian(secondHolder, firstHolder);
+    }
+
+    function test_setProtopianAddress_revocationRemovesDelegatedFeeExemption() public {
+        address holder = address(0x111);
+        address delegate = address(0x222);
+
+        vm.startPrank(owner);
+        factory.setCommunityValidity(delegate, true);
+        factory.setProtocolFee(delegate, 55);
+        factory.setProtopianAddress(_toSingleton(holder), true);
+        vm.stopPrank();
+
+        vm.prank(holder);
+        factory.delegateProtopian(holder, delegate);
+        assertEq(factory.getProtocolFee(delegate), 0);
+
+        vm.prank(owner);
+        factory.setProtopianAddress(_toSingleton(holder), false);
+
+        assertFalse(factory.isProtopianAddress(delegate));
+        assertEq(factory.getProtocolFee(delegate), 55);
+    }
+
+    function test_reinitializeV2MigrateProtopians_collapsesRecursiveLegacyChain() public {
+        address holder = address(0x111);
+        address delegate = address(0x222);
+        address recursiveDelegate = address(0x333);
+        factory.seedLegacyDelegation(holder, delegate, recursiveDelegate);
+
+        vm.startPrank(owner);
+        factory.setCommunityValidity(recursiveDelegate, true);
+        factory.setProtocolFee(recursiveDelegate, 55);
+        factory.reinitializeV2MigrateProtopians(_toSingleton(holder));
+        vm.stopPrank();
+
+        assertTrue(factory.canonicalProtopians(holder));
+        assertTrue(factory.isProtopianAddress(holder));
+        assertFalse(factory.isProtopianAddress(delegate));
+        assertFalse(factory.isProtopianAddress(recursiveDelegate));
+        assertEq(factory.getProtocolFee(recursiveDelegate), 55);
+
+        vm.prank(owner);
+        vm.expectRevert();
+        factory.reinitializeV2MigrateProtopians(_toSingleton(holder));
+    }
+
+    function test_reinitializeV2MigrateProtopians_preservesValidLegacyDelegation() public {
+        address holder = address(0x111);
+        address delegate = address(0x222);
+        factory.seedLegacyDelegation(holder, delegate, address(0));
+
+        vm.prank(owner);
+        factory.reinitializeV2MigrateProtopians(_toSingleton(holder));
+
+        assertTrue(factory.canonicalProtopians(holder));
+        assertFalse(factory.isProtopianAddress(holder));
+        assertTrue(factory.isProtopianAddress(delegate));
+        assertEq(factory.protopianDelegatedFrom(delegate), holder);
+        assertEq(factory.protopianDelegate(holder), delegate);
+    }
+
+    function test_reinitializeV2MigrateProtopians_onlyOwner() public {
+        vm.expectRevert();
+        factory.reinitializeV2MigrateProtopians(_toSingleton(address(0x111)));
+    }
+
+    function test_upgradeToAndCall_migratesProtopiansAtomically() public {
+        address holder = address(0x111);
+        address delegate = address(0x222);
+        factory.seedLegacyDelegation(holder, delegate, address(0));
+        RegistryFactoryHarness nextImplementation = new RegistryFactoryHarness();
+
+        vm.prank(owner);
+        factory.upgradeToAndCall(
+            address(nextImplementation),
+            abi.encodeCall(RegistryFactory.reinitializeV2MigrateProtopians, (_toSingleton(holder)))
+        );
+
+        assertEq(factory.protopianDelegatedFrom(delegate), holder);
+        assertTrue(factory.isProtopianAddress(delegate));
+    }
+
     function test_delegateProtopian_reverts_for_zero_from() public {
         vm.expectRevert(RegistryFactory.AddressCannotBeZero.selector);
         factory.delegateProtopian(address(0), address(0x456));
@@ -565,8 +689,9 @@ contract RegistryFactoryTest is Test {
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = bytes4(keccak256("a()"));
-        cuts[0] =
-            IDiamond.FacetCut({facetAddress: address(0x1111), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors});
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: address(0x1111), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
+        });
 
         vm.startPrank(owner);
         factory.setCommunityFacets(cuts, address(0xAAAA), hex"1234");
