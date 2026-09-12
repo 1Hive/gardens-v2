@@ -376,6 +376,23 @@ tasks:
             }
           fi
 
+          if [ "${REHEARSE_SECURITY_SINGLETONS:-false}" = "true" ]; then
+            NETWORKS_JSON_PATH="${TMP_NETWORKS_JSON}" ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeSecuritySingletons.s.sol:UpgradeSecuritySingletons \
+              --rpc-url "${LOCAL_RPC_URL}" \
+              --sig "run(string)" "${CHAIN}" \
+              --account PK_DEPLOYER \
+              --password "${PK_DEPLOYER_PW}" \
+              --chain-id "${CHAIN_ID}" \
+              --ffi \
+              --broadcast \
+              ${RESUME_FLAG} \
+              ${SKIP_SIMULATION_FLAG} \
+              ${SCRIPT_VERBOSITY} || {
+              kill "${ANVIL_PID}" >/dev/null 2>&1 || true
+              exit 1
+            }
+          fi
+
           NETWORKS_JSON_PATH="${TMP_NETWORKS_JSON}" ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichainScript \
             --rpc-url "${LOCAL_RPC_URL}" \
             --sig "${SIG}" "${CHAIN}" \

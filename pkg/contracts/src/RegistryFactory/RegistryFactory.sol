@@ -451,7 +451,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
 
     /// @notice Seed canonical and reverse delegation state when upgrading an existing factory.
     /// @dev Invalid legacy delegation chains are collapsed back to their canonical holder.
-    function reinitializeV2MigrateProtopians(address[] calldata holders) external reinitializer(2) onlyOwner {
+    function reinitializeV3MigrateProtopians(address[] calldata holders) external reinitializer(3) onlyOwner {
         for (uint256 i = 0; i < holders.length; i++) {
             _revertZeroAddress(holders[i]);
             canonicalProtopians[holders[i]] = true;

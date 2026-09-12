@@ -110,6 +110,7 @@ contract UpgradeCVMultichainScript is Test {
     using stdJson for string;
 
     string internal constant NETWORK_NAME = "script-test";
+    address internal constant LEGACY_PROTOPIAN = address(0xA11CE);
 
     UpgradeCVMultichainHarness internal script;
     CommunityDiamondConfigurator internal oldCommunityConfigurator;
@@ -151,8 +152,7 @@ contract UpgradeCVMultichainScript is Test {
         oldStrategyImpl = new CVStrategy();
 
         factory = RegistryFactory(
-            payable(
-                address(
+            payable(address(
                     new ERC1967Proxy(
                         address(oldFactoryImpl),
                         abi.encodeCall(
@@ -166,8 +166,7 @@ contract UpgradeCVMultichainScript is Test {
                             )
                         )
                     )
-                )
-            )
+                ))
         );
 
         factory.setGlobalPauseController(address(pauseController));
@@ -182,6 +181,9 @@ contract UpgradeCVMultichainScript is Test {
             address(oldStrategyConfigurator.diamondInit()),
             abi.encodeCall(CVStrategyDiamondInit.init, ())
         );
+        address[] memory protopians = new address[](1);
+        protopians[0] = LEGACY_PROTOPIAN;
+        factory.setProtopianAddress(protopians, true);
 
         RegistryCommunityInitializeParams memory params;
         params._allo = address(alloMock);
@@ -198,8 +200,7 @@ contract UpgradeCVMultichainScript is Test {
         params.covenantIpfsHash = "hash";
 
         community = RegistryCommunity(
-            payable(
-                address(
+            payable(address(
                     new ERC1967Proxy(
                         address(oldCommunityImpl),
                         abi.encodeCall(
@@ -207,27 +208,25 @@ contract UpgradeCVMultichainScript is Test {
                             (params, address(oldStrategyImpl), address(collateralVaultTemplate), address(this))
                         )
                     )
-                )
-            )
+                ))
         );
 
         strategy = CVStrategy(
-            payable(
-                address(
+            payable(address(
                     new ERC1967Proxy(
                         address(oldStrategyImpl),
                         abi.encodeWithSelector(
                             CVStrategy.init.selector, address(alloMock), address(collateralVaultTemplate), address(this)
                         )
                     )
-                )
-            )
+                ))
         );
-        IDiamondCut(address(strategy)).diamondCut(
-            oldStrategyConfigurator.getFacetCuts(),
-            address(oldStrategyConfigurator.diamondInit()),
-            abi.encodeCall(CVStrategyDiamondInit.init, ())
-        );
+        IDiamondCut(address(strategy))
+            .diamondCut(
+                oldStrategyConfigurator.getFacetCuts(),
+                address(oldStrategyConfigurator.diamondInit()),
+                abi.encodeCall(CVStrategyDiamondInit.init, ())
+            );
 
         factory.transferOwnership(address(script));
         community.transferOwnership(address(script));
@@ -239,7 +238,9 @@ contract UpgradeCVMultichainScript is Test {
     function test_runCurrentNetwork_all_upgrades_and_updates_config() public {
         _useFixture("all");
         _setDefaultScriptEnv();
-        _writeFixtureJson(address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0));
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
 
         script.setPhaseForTest(0);
         script.setFactoryActionForTest(0);
@@ -258,6 +259,8 @@ contract UpgradeCVMultichainScript is Test {
         assertEq(_implementation(address(strategy)), strategyImpl);
         assertEq(factory.registryCommunityTemplate(), communityImpl);
         assertEq(factory.strategyTemplate(), strategyImpl);
+        assertTrue(factory.canonicalProtopians(LEGACY_PROTOPIAN));
+        assertTrue(factory.isProtopianAddress(LEGACY_PROTOPIAN));
         assertEq(community.strategyTemplate(), strategyImpl);
 
         (, address liveCommunityInit,) = factory.getCommunityFacets();
@@ -284,10 +287,29 @@ contract UpgradeCVMultichainScript is Test {
         _assertFactoryStrategyCutsIncludeSelector(CVStreamingFacet.isAuthorizedRebalanceCaller.selector);
     }
 
+    function test_runCurrentNetwork_migrates_factory_already_initialized_to_v2() public {
+        _useFixture("factory-from-v2");
+        _setDefaultScriptEnv();
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
+        vm.store(address(factory), bytes32(0), bytes32(uint256(2)));
+
+        script.setPhaseForTest(1);
+        script.setFactoryActionForTest(1);
+        script.executeCurrentNetworkForTest();
+
+        assertEq(uint8(uint256(vm.load(address(factory), bytes32(0)))), 3);
+        assertTrue(factory.canonicalProtopians(LEGACY_PROTOPIAN));
+        assertTrue(factory.isProtopianAddress(LEGACY_PROTOPIAN));
+    }
+
     function test_runCurrentNetwork_respects_skip_flags() public {
         _useFixture("skip-flags");
         _setDefaultScriptEnv();
-        _writeFixtureJson(address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0));
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
 
         script.setPhaseForTest(0);
         script.setFactoryActionForTest(0);
@@ -335,10 +357,18 @@ contract UpgradeCVMultichainScript is Test {
 
         string memory updated = vm.readFile(fixturePath);
         assertEq(updated.readAddress("$.networks[0].IMPLEMENTATIONS.REGISTRY_FACTORY"), address(configuredFactoryImpl));
-        assertEq(updated.readAddress("$.networks[0].IMPLEMENTATIONS.REGISTRY_COMMUNITY"), address(configuredCommunityImpl));
+        assertEq(
+            updated.readAddress("$.networks[0].IMPLEMENTATIONS.REGISTRY_COMMUNITY"), address(configuredCommunityImpl)
+        );
         assertEq(updated.readAddress("$.networks[0].IMPLEMENTATIONS.CV_STRATEGY"), address(configuredStrategyImpl));
-        assertEq(updated.readAddress("$.networks[0].INITS.REGISTRY_COMMUNITY_DIAMOND_INIT"), address(newCommunityConfigurator.diamondInit()));
-        assertEq(updated.readAddress("$.networks[0].INITS.CV_STRATEGY_DIAMOND_INIT"), address(newStrategyConfigurator.diamondInit()));
+        assertEq(
+            updated.readAddress("$.networks[0].INITS.REGISTRY_COMMUNITY_DIAMOND_INIT"),
+            address(newCommunityConfigurator.diamondInit())
+        );
+        assertEq(
+            updated.readAddress("$.networks[0].INITS.CV_STRATEGY_DIAMOND_INIT"),
+            address(newStrategyConfigurator.diamondInit())
+        );
 
         assertEq(_implementation(address(factory)), address(configuredFactoryImpl));
         assertEq(_implementation(address(community)), address(configuredCommunityImpl));
@@ -348,7 +378,9 @@ contract UpgradeCVMultichainScript is Test {
     function test_runCurrentNetwork_does_not_persist_network_writes_when_run_reverts() public {
         _useFixture("atomic-writes");
         _setDefaultScriptEnv();
-        _writeFixtureJson(address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0));
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
 
         string memory beforeJson = vm.readFile(fixturePath);
 
@@ -366,7 +398,9 @@ contract UpgradeCVMultichainScript is Test {
     function test_runCurrentNetwork_factory_only_updates_factory_facets_and_templates_from_snapshot() public {
         _useFixture("factory-only");
         _setDefaultScriptEnv();
-        _writeFixtureJson(address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0));
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
 
         script.setPhaseForTest(1);
         script.setFactoryActionForTest(0);
@@ -406,7 +440,9 @@ contract UpgradeCVMultichainScript is Test {
             abi.encodeCall(CVStrategyDiamondInit.init, ())
         );
 
-        _writeFixtureJson(address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0));
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
         string memory desiredDigestHex = vm.toString(script.computeDesiredStrategyCutsDigestForTest());
         _writeFixtureJson(
             address(oldFactoryImpl),
@@ -445,7 +481,9 @@ contract UpgradeCVMultichainScript is Test {
     function test_runCurrentNetwork_strategy_phase_only_upgrades_strategy_proxy() public {
         _useFixture("strategies-only");
         _setDefaultScriptEnv();
-        _writeFixtureJson(address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0));
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
 
         script.setPhaseForTest(3);
         script.setFactoryActionForTest(0);
@@ -470,7 +508,9 @@ contract UpgradeCVMultichainScript is Test {
     function test_runCurrentNetwork_strategy_phase_can_skip_factory_sync() public {
         _useFixture("strategies-without-factory-sync");
         _setDefaultScriptEnv();
-        _writeFixtureJson(address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0));
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
 
         script.setPhaseForTest(3);
         script.setFactoryActionForTest(0);
@@ -540,9 +580,7 @@ contract UpgradeCVMultichainScript is Test {
         script.executeCurrentNetworkForTest();
 
         string memory updated = vm.readFile(fixturePath);
-        assertEq(
-            _implementation(address(strategy)), updated.readAddress("$.networks[0].IMPLEMENTATIONS.CV_STRATEGY")
-        );
+        assertEq(_implementation(address(strategy)), updated.readAddress("$.networks[0].IMPLEMENTATIONS.CV_STRATEGY"));
         vm.prank(address(script));
         vm.expectRevert();
         strategy.reinitializeV2MigrateThresholdSnapshots();
@@ -551,7 +589,9 @@ contract UpgradeCVMultichainScript is Test {
     function test_runCurrentNetwork_communities_phase_only_upgrades_community_proxy_and_syncs_live_impl() public {
         _useFixture("communities-only");
         _setDefaultScriptEnv();
-        _writeFixtureJson(address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0));
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
 
         script.setPhaseForTest(2);
         script.setFactoryActionForTest(0);
@@ -605,9 +645,12 @@ contract UpgradeCVMultichainScript is Test {
             _initsJson(communityInit, strategyInit),
             ",",
             _factoryStateJson(communityCutsDigest, strategyCutsDigest),
+            ",",
+            _migrationsJson(),
             ',"FACETS":',
             _facetsJson(),
-            "}]}");
+            "}]}"
+        );
 
         vm.writeFile(fixturePath, json);
         vm.parseJson(json);
@@ -707,6 +750,10 @@ contract UpgradeCVMultichainScript is Test {
             strategyCutsDigest,
             '"}'
         );
+    }
+
+    function _migrationsJson() internal view returns (string memory) {
+        return string.concat('"MIGRATIONS":{"REGISTRY_FACTORY_V3_PROTOPIANS":["', vm.toString(LEGACY_PROTOPIAN), '"]}');
     }
 
     function _communityFacetsJson() internal view returns (string memory) {

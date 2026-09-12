@@ -621,7 +621,7 @@ contract RegistryFactoryTest is Test {
         assertEq(factory.getProtocolFee(delegate), 55);
     }
 
-    function test_reinitializeV2MigrateProtopians_collapsesRecursiveLegacyChain() public {
+    function test_reinitializeV3MigrateProtopians_collapsesRecursiveLegacyChain() public {
         address holder = address(0x111);
         address delegate = address(0x222);
         address recursiveDelegate = address(0x333);
@@ -630,7 +630,7 @@ contract RegistryFactoryTest is Test {
         vm.startPrank(owner);
         factory.setCommunityValidity(recursiveDelegate, true);
         factory.setProtocolFee(recursiveDelegate, 55);
-        factory.reinitializeV2MigrateProtopians(_toSingleton(holder));
+        factory.reinitializeV3MigrateProtopians(_toSingleton(holder));
         vm.stopPrank();
 
         assertTrue(factory.canonicalProtopians(holder));
@@ -641,16 +641,16 @@ contract RegistryFactoryTest is Test {
 
         vm.prank(owner);
         vm.expectRevert();
-        factory.reinitializeV2MigrateProtopians(_toSingleton(holder));
+        factory.reinitializeV3MigrateProtopians(_toSingleton(holder));
     }
 
-    function test_reinitializeV2MigrateProtopians_preservesValidLegacyDelegation() public {
+    function test_reinitializeV3MigrateProtopians_preservesValidLegacyDelegation() public {
         address holder = address(0x111);
         address delegate = address(0x222);
         factory.seedLegacyDelegation(holder, delegate, address(0));
 
         vm.prank(owner);
-        factory.reinitializeV2MigrateProtopians(_toSingleton(holder));
+        factory.reinitializeV3MigrateProtopians(_toSingleton(holder));
 
         assertTrue(factory.canonicalProtopians(holder));
         assertFalse(factory.isProtopianAddress(holder));
@@ -659,9 +659,9 @@ contract RegistryFactoryTest is Test {
         assertEq(factory.protopianDelegate(holder), delegate);
     }
 
-    function test_reinitializeV2MigrateProtopians_onlyOwner() public {
+    function test_reinitializeV3MigrateProtopians_onlyOwner() public {
         vm.expectRevert();
-        factory.reinitializeV2MigrateProtopians(_toSingleton(address(0x111)));
+        factory.reinitializeV3MigrateProtopians(_toSingleton(address(0x111)));
     }
 
     function test_upgradeToAndCall_migratesProtopiansAtomically() public {
@@ -669,13 +669,15 @@ contract RegistryFactoryTest is Test {
         address delegate = address(0x222);
         factory.seedLegacyDelegation(holder, delegate, address(0));
         RegistryFactoryHarness nextImplementation = new RegistryFactoryHarness();
+        vm.store(address(factory), bytes32(0), bytes32(uint256(2)));
 
         vm.prank(owner);
         factory.upgradeToAndCall(
             address(nextImplementation),
-            abi.encodeCall(RegistryFactory.reinitializeV2MigrateProtopians, (_toSingleton(holder)))
+            abi.encodeCall(RegistryFactory.reinitializeV3MigrateProtopians, (_toSingleton(holder)))
         );
 
+        assertEq(uint8(uint256(vm.load(address(factory), bytes32(0)))), 3);
         assertEq(factory.protopianDelegatedFrom(delegate), holder);
         assertTrue(factory.isProtopianAddress(delegate));
     }
