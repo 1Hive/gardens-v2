@@ -38,8 +38,10 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     address public globalPauseController;
     mapping(address => bool) public authorizedWallets;
     mapping(address => address) public protopianDelegate;
+    mapping(address => bool) public canonicalProtopians;
+    mapping(address => address) public protopianDelegatedFrom;
 
-    uint256[40] private __gap;
+    uint256[38] private __gap;
 
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
@@ -55,6 +57,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     event GlobalPauseControllerSet(address _newController);
     event AuthorizedWalletSet(address indexed wallet, bool authorized);
     event ProtopianDelegated(address indexed holder, address indexed to);
+    event ProtopianDelegationMigrated(address indexed holder, address indexed to);
     event ContractRegistered(address indexed target);
     event ContractUnregistered(address indexed target);
 
@@ -66,6 +69,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     error AddressCannotBeZero();
     error UnauthorizedProtopianDelegation(address caller, address holder);
     error ProtopianHolderRequired(address holder);
+    error ProtopianDelegateUnavailable(address delegate);
 
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
@@ -345,15 +349,23 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         onlyOwnerOrAuthorizedWallet
     {
         for (uint256 i = 0; i < _protopians.length; i++) {
+            address holder = _protopians[i];
+            _revertZeroAddress(holder);
+
+            canonicalProtopians[holder] = _isProtopian;
             if (!_isProtopian) {
-                address delegated = protopianDelegate[_protopians[i]];
-                if (delegated != address(0)) {
-                    protopiansAddresses[delegated] = false;
-                    protopianDelegate[_protopians[i]] = address(0);
-                    emit ProtopianDelegated(_protopians[i], address(0));
-                }
+                _clearProtopianDelegation(holder);
+                protopiansAddresses[holder] = isProtopianAddress(holder);
+                continue;
             }
-            protopiansAddresses[_protopians[i]] = _isProtopian;
+
+            _clearIncomingProtopianDelegation(holder);
+            address delegated = protopianDelegate[holder];
+            if (!_restoreProtopianDelegation(holder, delegated)) {
+                protopianDelegate[holder] = address(0);
+                protopiansAddresses[holder] = true;
+                emit ProtopianDelegated(holder, address(0));
+            }
         }
 
         if (_isProtopian) {
@@ -382,23 +394,29 @@ contract RegistryFactory is ProxyOwnableUpgrader {
             revert UnauthorizedProtopianDelegation(msg.sender, holder);
         }
 
-        address currentDelegate = protopianDelegate[holder];
-        if (!protopiansAddresses[holder] && currentDelegate == address(0)) {
+        if (!canonicalProtopians[holder]) {
             revert ProtopianHolderRequired(holder);
         }
 
-        if (currentDelegate != address(0) && currentDelegate != to) {
-            protopiansAddresses[currentDelegate] = false;
+        address currentDelegate = protopianDelegate[holder];
+        if (currentDelegate == to) {
+            return;
         }
 
+        if (to != address(0) && !_isAvailableProtopianDelegate(to)) {
+            revert ProtopianDelegateUnavailable(to);
+        }
+
+        _clearProtopianDelegation(holder);
+
         if (to == address(0)) {
-            protopianDelegate[holder] = address(0);
             protopiansAddresses[holder] = true;
             emit ProtopianDelegated(holder, address(0));
             return;
         }
 
         protopianDelegate[holder] = to;
+        protopianDelegatedFrom[to] = holder;
         protopiansAddresses[holder] = false;
         protopiansAddresses[to] = true;
 
@@ -415,11 +433,93 @@ contract RegistryFactory is ProxyOwnableUpgrader {
             return 0;
         }
 
-        bool isProtopianCommunity = protopiansAddresses[_community];
+        bool isProtopianCommunity = isProtopianAddress(_community);
         if (isProtopianCommunity) {
             return 0;
         }
 
         return communityToInfo[_community].fee;
+    }
+
+    function isProtopianAddress(address account) public view returns (bool) {
+        address delegatedFrom = protopianDelegatedFrom[account];
+        if (delegatedFrom != address(0)) {
+            return canonicalProtopians[delegatedFrom] && protopianDelegate[delegatedFrom] == account;
+        }
+        return canonicalProtopians[account] && protopianDelegate[account] == address(0);
+    }
+
+    /// @notice Seed canonical and reverse delegation state when upgrading an existing factory.
+    /// @dev Invalid legacy delegation chains are collapsed back to their canonical holder.
+    function reinitializeV3MigrateProtopians(address[] calldata holders) external reinitializer(3) onlyOwner {
+        for (uint256 i = 0; i < holders.length; i++) {
+            _revertZeroAddress(holders[i]);
+            canonicalProtopians[holders[i]] = true;
+        }
+
+        for (uint256 i = 0; i < holders.length; i++) {
+            address holder = holders[i];
+            address delegated = protopianDelegate[holder];
+            bool restored = _restoreProtopianDelegation(holder, delegated);
+            if (!restored) {
+                protopianDelegate[holder] = address(0);
+                protopiansAddresses[holder] = true;
+                if (delegated != address(0)) {
+                    protopiansAddresses[delegated] = isProtopianAddress(delegated);
+                    emit ProtopianDelegated(holder, address(0));
+                }
+            }
+            emit ProtopianDelegationMigrated(holder, restored ? delegated : address(0));
+        }
+    }
+
+    function _isAvailableProtopianDelegate(address delegate) internal view returns (bool) {
+        return !canonicalProtopians[delegate] && protopianDelegatedFrom[delegate] == address(0)
+            && protopianDelegate[delegate] == address(0) && !protopiansAddresses[delegate];
+    }
+
+    function _restoreProtopianDelegation(address holder, address delegated) internal returns (bool) {
+        if (delegated == address(0)) {
+            protopiansAddresses[holder] = true;
+            return true;
+        }
+
+        address delegatedFrom = protopianDelegatedFrom[delegated];
+        if (
+            delegated == holder || canonicalProtopians[delegated] || protopianDelegate[delegated] != address(0)
+                || (delegatedFrom != address(0) && delegatedFrom != holder)
+        ) {
+            return false;
+        }
+
+        protopianDelegatedFrom[delegated] = holder;
+        protopiansAddresses[holder] = false;
+        protopiansAddresses[delegated] = true;
+        return true;
+    }
+
+    function _clearProtopianDelegation(address holder) internal {
+        address delegated = protopianDelegate[holder];
+        if (delegated == address(0)) {
+            return;
+        }
+
+        delete protopianDelegate[holder];
+        if (protopianDelegatedFrom[delegated] == holder) {
+            delete protopianDelegatedFrom[delegated];
+        }
+        protopiansAddresses[delegated] = isProtopianAddress(delegated);
+    }
+
+    function _clearIncomingProtopianDelegation(address delegate) internal {
+        address source = protopianDelegatedFrom[delegate];
+        if (source == address(0)) {
+            return;
+        }
+
+        delete protopianDelegatedFrom[delegate];
+        delete protopianDelegate[source];
+        protopiansAddresses[source] = canonicalProtopians[source];
+        emit ProtopianDelegated(source, address(0));
     }
 }

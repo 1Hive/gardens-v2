@@ -479,7 +479,7 @@ contract DeployCoreContracts is BaseMultiChain {
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         IDiamond.FacetCut[] memory baseCuts = new IDiamond.FacetCut[](6);
 
-        bytes4[] memory adminSelectors = new bytes4[](9);
+        bytes4[] memory adminSelectors = new bytes4[](12);
         adminSelectors[0] = CommunityAdminFacet.setStrategyTemplate.selector;
         adminSelectors[1] = CommunityAdminFacet.setCollateralVaultTemplate.selector;
         adminSelectors[2] = CommunityAdminFacet.setArchived.selector;
@@ -489,6 +489,9 @@ contract DeployCoreContracts is BaseMultiChain {
         adminSelectors[6] = CommunityAdminFacet.acceptCouncilSafe.selector;
         adminSelectors[7] = CommunityAdminFacet.setCommunityParams.selector;
         adminSelectors[8] = CommunityAdminFacet.isCouncilMember.selector;
+        adminSelectors[9] = CommunityAdminFacet.getPendingCommunityParams.selector;
+        adminSelectors[10] = CommunityAdminFacet.approvePendingCommunityParams.selector;
+        adminSelectors[11] = CommunityAdminFacet.cancelPendingCommunityParams.selector;
         baseCuts[0] = IDiamond.FacetCut({
             facetAddress: address(adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
         });

@@ -7,6 +7,10 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeab
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {CVStrategy} from "./CVStrategy/CVStrategy.sol";
 
+interface IStrategyRegistryStatus {
+    function enabledStrategies(address strategy) external view returns (bool);
+}
+
 /// @custom:oz-upgrades-from PassportScorer
 contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
     address public listManager;
@@ -147,10 +151,16 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
         Strategy memory strategy = strategies[_strategy];
 
         if (!strategy.active) {
-            return true;
+            if (strategy.councilSafe == address(0)) {
+                return true;
+            }
+
+            address registryCommunity = address(CVStrategy(payable(_strategy)).registryCommunity());
+            if (!IStrategyRegistryStatus(registryCommunity).enabledStrategies(_strategy)) {
+                return true;
+            }
         }
 
         return userScore >= strategy.threshold;
     }
-
 }

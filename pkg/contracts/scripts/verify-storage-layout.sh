@@ -341,9 +341,17 @@ verify_registry_factory_storage() {
         ok=false
         [ "$VERBOSE" = true ] && echo -e "${RED}  Missing protopianDelegate storage field${NC}"
     fi
-    if ! grep -Eq "\|[[:space:]]*__gap[[:space:]]*\|[[:space:]]*uint256\[40\][[:space:]]*\|[[:space:]]*120([[:space:]]*\||$)" "$layout_tmp"; then
+    if ! grep -Eq "\|[[:space:]]*canonicalProtopians[[:space:]]*\|[[:space:]]*mapping\(address => bool\)[[:space:]]*\|[[:space:]]*120([[:space:]]*\||$)" "$layout_tmp"; then
         ok=false
-        [ "$VERBOSE" = true ] && echo -e "${RED}  Expected __gap (uint256[40]) at slot 120${NC}"
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Expected canonicalProtopians at slot 120${NC}"
+    fi
+    if ! grep -Eq "\|[[:space:]]*protopianDelegatedFrom[[:space:]]*\|[[:space:]]*mapping\(address => address\)[[:space:]]*\|[[:space:]]*121([[:space:]]*\||$)" "$layout_tmp"; then
+        ok=false
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Expected protopianDelegatedFrom at slot 121${NC}"
+    fi
+    if ! grep -Eq "\|[[:space:]]*__gap[[:space:]]*\|[[:space:]]*uint256\[38\][[:space:]]*\|[[:space:]]*122([[:space:]]*\||$)" "$layout_tmp"; then
+        ok=false
+        [ "$VERBOSE" = true ] && echo -e "${RED}  Expected __gap (uint256[38]) at slot 122${NC}"
     fi
 
     rm -f "$layout_tmp"

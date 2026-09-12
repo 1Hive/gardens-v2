@@ -13,6 +13,7 @@ import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 
 import {SafeArbitrator} from "../../src/SafeArbitrator.sol";
+import {PassportScorer} from "../../src/PassportScorer.sol";
 import {IArbitrator} from "../../src/interfaces/IArbitrator.sol";
 import {IArbitrable} from "../../src/interfaces/IArbitrable.sol";
 import {CollateralVault} from "../../src/CollateralVault.sol";
@@ -929,7 +930,10 @@ contract PoC_H4_SelfPowerDecreaseThresholdCollapse is PoCBase {
         (,, uint256 decay,) = cvStrategy.cvParams();
         uint256 convictionAtExecutionWindow =
             ConvictionsUtils.calculateConviction(BLOCKS_ELAPSED, 0, ATTACKER_POWER, decay);
-        uint256 requestedAmount = _findRequestAmountInThresholdCollapseWindow(convictionAtExecutionWindow);
+        uint256 protectedPointsAtExecution =
+            ConvictionsUtils.weightedAverage(HONEST_POWER, HONEST_POWER + ATTACKER_POWER, BLOCKS_ELAPSED, decay);
+        uint256 requestedAmount =
+            _findRequestAmountInThresholdCollapseWindow(convictionAtExecutionWindow, protectedPointsAtExecution);
 
         uint256 proposalId = _createProposal(attacker, requestedAmount);
         _allocateSupport(attacker, proposalId, ATTACKER_POWER);
@@ -937,7 +941,7 @@ contract PoC_H4_SelfPowerDecreaseThresholdCollapse is PoCBase {
         vm.roll(block.number + BLOCKS_ELAPSED);
 
         uint256 convictionBeforeWithdraw = cvStrategy.calculateProposalConviction(proposalId);
-        uint256 thresholdBeforeWithdraw = cvStrategy.calculateThreshold(requestedAmount);
+        (,,,,,,,, uint256 thresholdBeforeWithdraw,,,) = cvStrategy.getProposal(proposalId);
         assertLe(
             convictionBeforeWithdraw,
             thresholdBeforeWithdraw,
@@ -949,7 +953,7 @@ contract PoC_H4_SelfPowerDecreaseThresholdCollapse is PoCBase {
 
         (,,,, uint256 stakeAfterWithdraw,, uint256 blockLastAfterWithdraw, uint256 convictionAfterWithdraw,,,,) =
             cvStrategy.getProposal(proposalId);
-        uint256 thresholdAfterWithdraw = cvStrategy.calculateThreshold(requestedAmount);
+        (,,,,,,,, uint256 thresholdAfterWithdraw,,,) = cvStrategy.getProposal(proposalId);
 
         console.log("[H-4] requested amount:", requestedAmount);
         console.log("[H-4] conviction before withdraw:", convictionBeforeWithdraw);
@@ -959,6 +963,11 @@ contract PoC_H4_SelfPowerDecreaseThresholdCollapse is PoCBase {
 
         assertEq(stakeAfterWithdraw, 0, "H-4 setup: attacker support should be withdrawn");
         assertEq(blockLastAfterWithdraw, block.number, "H-4 setup: withdrawal records current block");
+        assertLe(
+            convictionAfterWithdraw,
+            thresholdAfterWithdraw,
+            "H-4: deactivation must not move an under-threshold proposal above threshold"
+        );
 
         uint256 attackerBalanceBefore = attacker.balance;
         vm.expectRevert();
@@ -984,14 +993,18 @@ contract PoC_H4_SelfPowerDecreaseThresholdCollapse is PoCBase {
         allo().allocate(poolId, abi.encode(votes));
     }
 
-    function _findRequestAmountInThresholdCollapseWindow(uint256 conviction) internal view returns (uint256) {
+    function _findRequestAmountInThresholdCollapseWindow(uint256 conviction, uint256 protectedPoints)
+        internal
+        view
+        returns (uint256)
+    {
         uint256 maxRequest = _maxRequestAmount();
         uint256 low = 1;
         uint256 high = maxRequest - 1;
 
         while (low < high) {
             uint256 mid = (low + high) / 2;
-            uint256 thresholdBeforeWithdraw = _thresholdFor(mid, HONEST_POWER + ATTACKER_POWER);
+            uint256 thresholdBeforeWithdraw = _thresholdFor(mid, protectedPoints);
 
             if (thresholdBeforeWithdraw < conviction) {
                 low = mid + 1;
@@ -1001,7 +1014,7 @@ contract PoC_H4_SelfPowerDecreaseThresholdCollapse is PoCBase {
         }
 
         for (uint256 requestedAmount = low; requestedAmount < maxRequest; requestedAmount += 1 ether) {
-            uint256 thresholdBeforeWithdraw = _thresholdFor(requestedAmount, HONEST_POWER + ATTACKER_POWER);
+            uint256 thresholdBeforeWithdraw = _thresholdFor(requestedAmount, protectedPoints);
             uint256 thresholdAfterWithdraw = _thresholdFor(requestedAmount, HONEST_POWER);
 
             if (conviction <= thresholdBeforeWithdraw && conviction > thresholdAfterWithdraw) {
@@ -2176,5 +2189,191 @@ contract PoC_M4b_VoterStakedProposalsDoS is PoCBase {
         console.log("[M-4b] unregisterMember gas @ voter proposal cap:", gasAtCap);
 
         assertLe(gasAtCap, 30_000_000, "M-4b: unregister path must remain under block gas limit at vote cap");
+    }
+}
+
+// =============================================================
+//  [GHSA-gj7h / GHSA-84cr F-1] Zero-flow escrow reserve drain
+// =============================================================
+
+contract SecurityZeroFlowEscrow {
+    MockSuperToken internal immutable token;
+    MockSuperfluidPool internal immutable pool;
+    address internal immutable strategy;
+    address internal immutable beneficiary;
+
+    constructor(MockSuperToken _token, MockSuperfluidPool _pool, address _strategy, address _beneficiary) {
+        token = _token;
+        pool = _pool;
+        strategy = _strategy;
+        beneficiary = _beneficiary;
+    }
+
+    function depositAmount() external pure returns (uint256) {
+        return 0;
+    }
+
+    function drainToStrategy() external {
+        require(msg.sender == strategy, "only strategy");
+        _transferBalance(strategy);
+    }
+
+    function syncOutflow() external {
+        // Models the vulnerable escrow sink: at zero units, all remaining
+        // balance would be classified as beneficiary-payable excess.
+        if (pool.memberUnits(address(this)) == 0) {
+            _transferBalance(beneficiary);
+        }
+    }
+
+    function _transferBalance(address receiver) internal {
+        uint256 balance = token.balanceOf(address(this));
+        if (balance != 0) {
+            token.transfer(receiver, balance);
+        }
+    }
+}
+
+contract PoC_GHSA_GJ7H_ZeroFlowReserveDrain is Test {
+    function test_GHSA_GJ7H_IneligibleRebalanceReturnsReserveToStrategy() public {
+        MockERC20 underlyingToken = new MockERC20();
+        MockGDAAgreement gdaAgreement = new MockGDAAgreement();
+        MockHost host = new MockHost(address(gdaAgreement));
+        MockSuperToken superToken = new MockSuperToken(address(host), address(underlyingToken));
+        MockSuperfluidPool pool = new MockSuperfluidPool();
+        MockAllo allo = new MockAllo();
+        MockRegistryCommunityStreaming registry = new MockRegistryCommunityStreaming();
+        MockRegistryFactoryStreaming registryFactory = new MockRegistryFactoryStreaming();
+        CVStreamingFacetHarness facet = new CVStreamingFacetHarness();
+        address beneficiary = makeAddr("streaming-beneficiary");
+        SecurityZeroFlowEscrow escrow = new SecurityZeroFlowEscrow(superToken, pool, address(facet), beneficiary);
+
+        facet.setupAllo(address(allo));
+        facet.setupRegistryCommunity(address(registry));
+        facet.setupPool(1);
+        facet.setupSuperfluidToken(address(superToken));
+        facet.setupSuperfluidGDA(address(pool));
+        facet.setupCVParams(9_940_581);
+        facet.setupThresholdParams(9_000_000, 1_000_000, 0);
+        facet.setupStreamingRatePerSecond(1);
+        facet.setupTotalPointsActivated(10_000_000_000);
+        facet.setDiamondOwner(address(this));
+        facet.setProxyOwner(address(this));
+        facet.setSkipWrap(true);
+        registry.setCouncilSafe(address(0xC011C1));
+        registry.setRegistryFactory(address(registryFactory));
+        allo.setPool(1, address(underlyingToken));
+        underlyingToken.mint(address(facet), 1_000 ether);
+
+        facet.setupProposal(1, ProposalStatus.Active, 0, 0, block.number);
+        facet.setStreamingEscrowExternal(1, address(escrow));
+        superToken.mint(address(escrow), 10 ether);
+
+        facet.rebalance();
+
+        assertEq(pool.memberUnits(address(escrow)), 0, "ineligible proposal must have zero units");
+        assertEq(superToken.balanceOf(beneficiary), 0, "beneficiary must not receive the pool-funded reserve");
+        assertEq(superToken.balanceOf(address(escrow)), 0, "escrow reserve must be removed before sync");
+        assertEq(superToken.balanceOf(address(facet)), 10 ether, "pool strategy must recover its reserve");
+    }
+}
+
+// =============================================================
+//  [GHSA-84cr F-2] Inactive Passport entry must not fail open
+// =============================================================
+
+contract SecurityStrategyRegistryStatus {
+    bool internal enabled = true;
+
+    function setEnabled(bool _enabled) external {
+        enabled = _enabled;
+    }
+
+    function enabledStrategies(address) external view returns (bool) {
+        return enabled;
+    }
+}
+
+contract SecurityPassportStrategy {
+    address public immutable registryCommunity;
+
+    constructor(address _registryCommunity) {
+        registryCommunity = _registryCommunity;
+    }
+}
+
+contract PoC_GHSA_84CR_PassportInactiveFailOpen is Test {
+    function test_GHSA_84CR_InactiveEnabledStrategyStillEnforcesPassportThreshold() public {
+        address listManager = makeAddr("passport-list-manager");
+        address councilSafe = makeAddr("passport-council");
+        address user = makeAddr("passport-user");
+        SecurityStrategyRegistryStatus registry = new SecurityStrategyRegistryStatus();
+        SecurityPassportStrategy strategy = new SecurityPassportStrategy(address(registry));
+        PassportScorer scorer = PassportScorer(
+            address(
+                new ERC1967Proxy(
+                    address(new PassportScorer()),
+                    abi.encodeWithSelector(PassportScorer.initialize.selector, listManager, address(this))
+                )
+            )
+        );
+
+        vm.prank(listManager);
+        scorer.addStrategy(address(strategy), 100, councilSafe);
+        vm.prank(listManager);
+        scorer.addUserScore(user, 99);
+
+        (, bool active,) = scorer.strategies(address(strategy));
+        assertFalse(active, "PoC requires the stale inactive scorer state");
+        assertFalse(scorer.canExecuteAction(user, address(strategy)), "enabled strategy must enforce its threshold");
+
+        registry.setEnabled(false);
+        assertTrue(
+            scorer.canExecuteAction(user, address(strategy)), "disabled strategy keeps the permissive control path"
+        );
+    }
+}
+
+// =============================================================
+//  [GHSA-c6c6-v53h-g3j3] Recursive Protopian delegation
+// =============================================================
+
+contract PoC_GHSA_C6C6_RecursiveProtopianDelegation is Test {
+    function test_GHSA_C6C6_DelegateCannotMintAnotherCredential() public {
+        address canonicalHolder = makeAddr("canonical-protopian");
+        address delegate = makeAddr("protopian-delegate");
+        address recursiveDelegate = makeAddr("recursive-delegate");
+        RegistryFactory factory = RegistryFactory(
+            address(
+                new ERC1967Proxy(
+                    address(new RegistryFactory()),
+                    abi.encodeWithSelector(
+                        RegistryFactory.initialize.selector,
+                        address(this),
+                        address(0xFEE),
+                        address(0x111),
+                        address(0x222),
+                        address(0x333)
+                    )
+                )
+            )
+        );
+
+        address[] memory holders = new address[](1);
+        holders[0] = canonicalHolder;
+        factory.setProtopianAddress(holders, true);
+
+        vm.prank(canonicalHolder);
+        factory.delegateProtopian(canonicalHolder, delegate);
+
+        vm.prank(delegate);
+        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.ProtopianHolderRequired.selector, delegate));
+        factory.delegateProtopian(delegate, recursiveDelegate);
+
+        assertTrue(factory.isProtopianAddress(delegate), "first-level delegate remains effective");
+        assertFalse(factory.isProtopianAddress(recursiveDelegate), "recursive credential must not be created");
+
+        factory.setProtopianAddress(holders, false);
+        assertFalse(factory.isProtopianAddress(delegate), "canonical revocation must remove delegated authority");
     }
 }

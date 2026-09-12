@@ -25,19 +25,7 @@ abstract contract CommunityDiamondConfiguratorBase {
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         cuts = new IDiamond.FacetCut[](6);
 
-        bytes4[] memory adminSelectors = new bytes4[](9);
-        adminSelectors[0] = CommunityAdminFacet.setStrategyTemplate.selector;
-        adminSelectors[1] = CommunityAdminFacet.setCollateralVaultTemplate.selector;
-        adminSelectors[2] = CommunityAdminFacet.setArchived.selector;
-        adminSelectors[3] = CommunityAdminFacet.setBasisStakedAmount.selector;
-        adminSelectors[4] = CommunityAdminFacet.setCommunityFee.selector;
-        adminSelectors[5] = CommunityAdminFacet.setCouncilSafe.selector;
-        adminSelectors[6] = CommunityAdminFacet.acceptCouncilSafe.selector;
-        adminSelectors[7] = CommunityAdminFacet.setCommunityParams.selector;
-        adminSelectors[8] = CommunityAdminFacet.isCouncilMember.selector;
-        cuts[0] = IDiamond.FacetCut({
-            facetAddress: address(_adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
-        });
+        cuts[0] = _buildCommunityAdminFacetCut(_adminFacet);
 
         bytes4[] memory memberSelectors = new bytes4[](7);
         memberSelectors[0] = CommunityMemberFacet.stakeAndRegisterMember.selector;
@@ -67,9 +55,7 @@ abstract contract CommunityDiamondConfiguratorBase {
         pauseSelectors[10] = bytes4(keccak256("pausedUntil()"));
         pauseSelectors[11] = bytes4(keccak256("pausedSelectorUntil(bytes4)"));
         cuts[2] = IDiamond.FacetCut({
-            facetAddress: address(_pauseFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: pauseSelectors
+            facetAddress: address(_pauseFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: pauseSelectors
         });
 
         bytes4[] memory poolSelectors = new bytes4[](2);
@@ -110,6 +96,29 @@ abstract contract CommunityDiamondConfiguratorBase {
             facetAddress: address(_strategyFacet),
             action: IDiamond.FacetCutAction.Auto,
             functionSelectors: strategySelectors
+        });
+    }
+
+    function _buildCommunityAdminFacetCut(CommunityAdminFacet _adminFacet)
+        internal
+        pure
+        returns (IDiamond.FacetCut memory cut)
+    {
+        bytes4[] memory adminSelectors = new bytes4[](12);
+        adminSelectors[0] = CommunityAdminFacet.setStrategyTemplate.selector;
+        adminSelectors[1] = CommunityAdminFacet.setCollateralVaultTemplate.selector;
+        adminSelectors[2] = CommunityAdminFacet.setArchived.selector;
+        adminSelectors[3] = CommunityAdminFacet.setBasisStakedAmount.selector;
+        adminSelectors[4] = CommunityAdminFacet.setCommunityFee.selector;
+        adminSelectors[5] = CommunityAdminFacet.setCouncilSafe.selector;
+        adminSelectors[6] = CommunityAdminFacet.acceptCouncilSafe.selector;
+        adminSelectors[7] = CommunityAdminFacet.setCommunityParams.selector;
+        adminSelectors[8] = CommunityAdminFacet.isCouncilMember.selector;
+        adminSelectors[9] = CommunityAdminFacet.getPendingCommunityParams.selector;
+        adminSelectors[10] = CommunityAdminFacet.approvePendingCommunityParams.selector;
+        adminSelectors[11] = CommunityAdminFacet.cancelPendingCommunityParams.selector;
+        cut = IDiamond.FacetCut({
+            facetAddress: address(_adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
         });
     }
 
@@ -204,8 +213,7 @@ contract CommunityDiamondConfigurator is CommunityDiamondConfiguratorBase {
      */
     function configureFacets(address community) external {
         IDiamond.FacetCut[] memory cuts = getFacetCuts();
-        IDiamondCut(community).diamondCut(
-            cuts, address(diamondInit), abi.encodeCall(RegistryCommunityDiamondInit.init, ())
-        );
+        IDiamondCut(community)
+            .diamondCut(cuts, address(diamondInit), abi.encodeCall(RegistryCommunityDiamondInit.init, ()));
     }
 }

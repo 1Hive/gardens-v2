@@ -48,6 +48,7 @@
     "connectkit": "1.6.0",
     "daisyui": "^4.4.20",
     "date-fns": "^3.6.0",
+    "diff": "^9.0.0",
     "dnum": "^2.11.0",
     "echarts": "^5.4.2",
     "echarts-for-react": "^3.0.2",

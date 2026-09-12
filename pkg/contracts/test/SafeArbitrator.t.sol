@@ -37,6 +37,8 @@ contract MockArbitrableRefundOrder is IArbitrable {
     function rule(uint256, uint256) external override {
         ruled = true;
     }
+
+    receive() external payable {}
 }
 
 contract RefundOrderSafe {
@@ -282,6 +284,88 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         assertEq(uint256(status), uint256(SafeArbitrator.DisputeStatus.Solved));
     }
 
+    function test_cancelDispute_onlyArbitratedCanCancelAndReceiveFee() public {
+        SafeArbitrator localArbitrator = SafeArbitrator(
+            payable(address(
+                    new ERC1967Proxy(
+                        address(new SafeArbitrator()),
+                        abi.encodeWithSelector(SafeArbitrator.initialize.selector, ARBITRATION_FEE, address(this))
+                    )
+                ))
+        );
+        MockArbitrableRefundOrder arbitrable = new MockArbitrableRefundOrder();
+
+        vm.deal(address(arbitrable), ARBITRATION_FEE);
+        vm.prank(address(arbitrable));
+        uint256 disputeId = localArbitrator.createDispute{value: ARBITRATION_FEE}(2, "");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(SafeArbitrator.OnlyArbitrated.selector, address(this), address(arbitrable))
+        );
+        localArbitrator.cancelDispute(disputeId);
+
+        uint256 balanceBefore = address(arbitrable).balance;
+        vm.prank(address(arbitrable));
+        localArbitrator.cancelDispute(disputeId);
+
+        (,,,,, SafeArbitrator.DisputeStatus status,) = localArbitrator.disputes(disputeId - 1);
+        assertEq(uint256(status), uint256(SafeArbitrator.DisputeStatus.Solved));
+        assertEq(address(arbitrable).balance, balanceBefore + ARBITRATION_FEE);
+        assertEq(address(localArbitrator).balance, 0);
+    }
+
+    function test_timeoutResolutionCancelsArbitratorDisputeAndRefundsAllChallengerFunds() public {
+        uint256 proposalId = createProposal();
+        vm.deal(challenger, 10 ether);
+        uint256 challengerBalanceBefore = challenger.balance;
+
+        vm.prank(challenger);
+        uint256 disputeId = cvStrategy.disputeProposal{value: 0.01 ether + ARBITRATION_FEE}(proposalId, "", "");
+
+        vm.warp(block.timestamp + 301);
+        cvStrategy.rule(disputeId, 0);
+
+        (,,,,, SafeArbitrator.DisputeStatus status,) = safeArbitrator.disputes(disputeId - 1);
+        assertEq(uint256(status), uint256(SafeArbitrator.DisputeStatus.Solved));
+        assertEq(address(safeArbitrator).balance, 0);
+        assertEq(challenger.balance, challengerBalanceBefore);
+        assertEq(cvStrategy.disputeIdToProposalId(disputeId), 0);
+    }
+
+    function test_staleDisputeCannotResolveLaterDisputeAfterSafeRotation() public {
+        uint256 proposalId = createProposal();
+        vm.deal(challenger, 10 ether);
+
+        vm.prank(challenger);
+        uint256 staleDisputeId =
+            cvStrategy.disputeProposal{value: 0.01 ether + ARBITRATION_FEE}(proposalId, "first", "");
+
+        vm.warp(block.timestamp + 301);
+        cvStrategy.rule(staleDisputeId, 0);
+
+        address currentSafe = makeAddr("currentSafe");
+        vm.prank(address(cvStrategy));
+        safeArbitrator.registerSafe(currentSafe);
+
+        vm.warp(block.timestamp + DISPUTE_COOLDOWN_SEC + 1);
+        vm.prank(challenger);
+        uint256 currentDisputeId =
+            cvStrategy.disputeProposal{value: 0.01 ether + ARBITRATION_FEE}(proposalId, "second", "");
+
+        vm.prank(address(_councilSafe()));
+        vm.expectRevert(SafeArbitrator.DisputeAlreadySolved.selector);
+        safeArbitrator.executeRuling(staleDisputeId, 2, address(cvStrategy));
+
+        (,,,,, ProposalStatus disputedStatus,,,,,,) = cvStrategy.getProposal(proposalId);
+        assertEq(uint256(disputedStatus), uint256(ProposalStatus.Disputed));
+
+        vm.prank(currentSafe);
+        safeArbitrator.executeRuling(currentDisputeId, 1, address(cvStrategy));
+
+        (,,,,, ProposalStatus resolvedStatus,,,,,,) = cvStrategy.getProposal(proposalId);
+        assertEq(uint256(resolvedStatus), uint256(ProposalStatus.Active));
+    }
+
     function testRevert_ExecuteRuling_InvalidProposalStatus() public {
         uint256 proposalId = createProposal();
         vm.deal(challenger, 10 ether);
@@ -297,7 +381,10 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         // Resolve the first dispute (so proposal goes back to Active and can be disputed again)
         vm.startPrank(address(_councilSafe()));
         safeArbitrator.executeRuling(disputeID1, 1, address(cvStrategy)); // Ruling that keeps proposal active
-        vm.expectRevert(abi.encodeWithSelector(CVDisputeFacet.ProposalStatusInvalid.selector, 1, 1));
+        assertEq(cvStrategy.disputeIdToProposalId(disputeID1), 0);
+        vm.expectRevert(
+            abi.encodeWithSelector(CVDisputeFacet.ProposalStatusInvalid.selector, 0, ProposalStatus.Inactive)
+        );
         cvStrategy.rule(disputeID1, 1);
         vm.stopPrank();
     }
@@ -499,14 +586,12 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
 
     function test_executeRuling_refundHappensAfterRuleCallback() public {
         SafeArbitrator localArbitrator = SafeArbitrator(
-            payable(
-                address(
+            payable(address(
                     new ERC1967Proxy(
                         address(new SafeArbitrator()),
                         abi.encodeWithSelector(SafeArbitrator.initialize.selector, ARBITRATION_FEE, address(this))
                     )
-                )
-            )
+                ))
         );
         MockArbitrableRefundOrder arbitrable = new MockArbitrableRefundOrder();
         RefundOrderSafe refundSafe = new RefundOrderSafe(localArbitrator, arbitrable);

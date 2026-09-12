@@ -11,11 +11,20 @@ import { FormCheckBox } from "@/components/Forms/FormCheckBox";
 import { FormInput } from "@/components/Forms/FormInput";
 import { FormPreview, FormRow } from "@/components/Forms/FormPreview";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
+import { PendingCommunityParamsApproval } from "@/components/PendingCommunityParamsApproval";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
 import { registryCommunityABI } from "@/src/generated";
+import {
+  PENDING_COVENANT_IPFS_HASH,
+  PENDING_KICK_ENABLED,
+  PENDING_REGISTER_STAKE_AMOUNT,
+  hasGuardedCommunityChanges,
+  hasPendingField,
+  normalizePendingCommunityParams,
+} from "@/utils/communityPendingParams";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -62,32 +71,43 @@ export function EditCommunityModal({
   const [isOpen, setIsOpen] = useState(false);
   const showEditCommunity = useFlag("showEditCommunity");
 
-  if (!showEditCommunity || (!isCouncilMember && !isCouncilSafe)) return null;
+  const canEdit = showEditCommunity && (isCouncilMember || isCouncilSafe);
 
   return (
     <>
-      <Button
-        btnStyle="outline"
-        color="primary"
-        onClick={() => setIsOpen(true)}
-        className={className}
-      >
-        Edit
-      </Button>
-      <CommunityEditModal
+      {canEdit && (
+        <Button
+          btnStyle="outline"
+          color="primary"
+          onClick={() => setIsOpen(true)}
+          className={className}
+        >
+          Edit
+        </Button>
+      )}
+      {canEdit && (
+        <CommunityEditModal
+          communityAddress={communityAddress}
+          communityName={communityName}
+          communityMembersCount={communityMembersCount}
+          currentCommunityName={currentCommunityName}
+          currentCouncilSafe={currentCouncilSafe}
+          pendingCouncilSafe={pendingCouncilSafe}
+          currentCovenant={currentCovenant}
+          tokenDecimals={tokenDecimals}
+          tokenSymbol={tokenSymbol}
+          isCouncilSafe={isCouncilSafe}
+          isCouncilMember={isCouncilMember}
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+        />
+      )}
+      <PendingCommunityParamsApproval
         communityAddress={communityAddress}
         communityName={communityName}
-        communityMembersCount={communityMembersCount}
-        currentCommunityName={currentCommunityName}
-        currentCouncilSafe={currentCouncilSafe}
-        pendingCouncilSafe={pendingCouncilSafe}
-        currentCovenant={currentCovenant}
         tokenDecimals={tokenDecimals}
         tokenSymbol={tokenSymbol}
-        isCouncilSafe={isCouncilSafe}
-        isCouncilMember={isCouncilMember}
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
+        className={className}
       />
     </>
   );
@@ -113,7 +133,11 @@ function CommunityEditModal({
 }) {
   const { publishAfterIndexed } = usePubSubContext();
   const { tooltipMessage, isButtonDisabled } = useDisableButtons();
-  const emptyCommunityOnlyDisabled = communityMembersCount > 0;
+  const editCommunityBypass = useFlag("editCommunityBypass", {
+    defaultValue: false,
+  });
+  const emptyCommunityOnlyDisabled =
+    communityMembersCount > 0 && !editCommunityBypass;
   const isReadonlyForCouncilMember = isCouncilMember && !isCouncilSafe;
 
   const { data: communityFeeData } = useContractRead({
@@ -152,6 +176,16 @@ function CommunityEditModal({
     functionName: "councilSafe",
     enabled: isOpen,
   });
+  const { data: pendingCommunityParamsData, refetch: refetchPendingParams } =
+    useContractRead({
+      address: communityAddress,
+      abi: registryCommunityABI,
+      functionName: "getPendingCommunityParams",
+      enabled: isOpen,
+    });
+  const pendingCommunityParams = normalizePendingCommunityParams(
+    pendingCommunityParamsData,
+  );
 
   const {
     register,
@@ -290,6 +324,7 @@ function CommunityEditModal({
     functionName: "setCommunityParams",
     onConfirmations: (receipt) => {
       setIsSubmitting(false);
+      void refetchPendingParams();
       publishAfterIndexed(receipt, {
         topic: "community",
         type: "update",
@@ -300,6 +335,19 @@ function CommunityEditModal({
     },
     onError: () => {
       setIsSubmitting(false);
+    },
+  });
+
+  const {
+    write: cancelPendingParams,
+    isLoading: isCancelPendingParamsLoading,
+  } = useContractWriteWithConfirmations({
+    address: communityAddress,
+    abi: registryCommunityABI,
+    contractName: "Registry Community",
+    functionName: "cancelPendingCommunityParams",
+    onConfirmations: () => {
+      void refetchPendingParams();
     },
   });
 
@@ -340,17 +388,30 @@ function CommunityEditModal({
     watchedRegisterStakeAmount !== fallbackRegisterStakeAmount ||
     watchedKickEnabled !== fallbackKickEnabled ||
     watchedCovenant.trim() !== fallbackCovenant.trim();
+  const guardedParamsChanged = hasGuardedCommunityChanges({
+    currentStake: fallbackRegisterStakeAmount,
+    nextStake: watchedRegisterStakeAmount,
+    currentKickEnabled: fallbackKickEnabled,
+    nextKickEnabled: watchedKickEnabled,
+    currentCovenant: fallbackCovenant,
+    nextCovenant: watchedCovenant,
+  });
+  const guardedSubmitBlocked =
+    communityMembersCount > 0 &&
+    guardedParamsChanged &&
+    !editCommunityBypass;
 
   const submitDisabled =
     isButtonDisabled ||
     isReadonlyForCouncilMember ||
     !hasChanges ||
+    guardedSubmitBlocked ||
     isSubmitting;
   const submitTooltip =
     isReadonlyForCouncilMember ? "Connect with Council Safe" : tooltipMessage;
 
   const handlePreview = () => {
-    if (!hasChanges) return;
+    if (!hasChanges || guardedSubmitBlocked) return;
     setPreviewData(buildCompleteValues());
     setShowPreview(true);
   };
@@ -496,7 +557,7 @@ function CommunityEditModal({
               <Button
                 btnStyle="filled"
                 color="primary"
-                disabled={!hasChanges}
+                disabled={!hasChanges || guardedSubmitBlocked}
                 onClick={handleSubmit(handlePreview)}
               >
                 Preview
@@ -634,6 +695,63 @@ function CommunityEditModal({
             </div>
           )}
 
+          {communityMembersCount > 0 && editCommunityBypass && (
+            <InfoBox infoBoxType="warning" className="rounded-2xl px-4 py-4">
+              Guarded changes are submitted for owner approval. Community name,
+              fee, fee receiver, and council safe changes still apply immediately.
+            </InfoBox>
+          )}
+
+          {editCommunityBypass && pendingCommunityParams.fields !== 0 && (
+            <div className="rounded-2xl border border-warning-content/25 bg-warning-soft px-4 py-4">
+              <p className="mb-3 font-semibold text-warning-content">
+                Pending owner approval
+              </p>
+              <div className="flex flex-col gap-2">
+                {hasPendingField(
+                  pendingCommunityParams.fields,
+                  PENDING_REGISTER_STAKE_AMOUNT,
+                ) && (
+                  <PendingCancelRow
+                    label={`Registration stake: ${formatUnits(pendingCommunityParams.registerStakeAmount, tokenDecimals)} ${tokenSymbol}`}
+                    disabled={isCancelPendingParamsLoading}
+                    onCancel={() =>
+                      cancelPendingParams({
+                        args: [PENDING_REGISTER_STAKE_AMOUNT],
+                      })
+                    }
+                  />
+                )}
+                {hasPendingField(
+                  pendingCommunityParams.fields,
+                  PENDING_KICK_ENABLED,
+                ) && (
+                  <PendingCancelRow
+                    label={`Council can expel members: ${pendingCommunityParams.isKickEnabled ? "Enabled" : "Disabled"}`}
+                    disabled={isCancelPendingParamsLoading}
+                    onCancel={() =>
+                      cancelPendingParams({ args: [PENDING_KICK_ENABLED] })
+                    }
+                  />
+                )}
+                {hasPendingField(
+                  pendingCommunityParams.fields,
+                  PENDING_COVENANT_IPFS_HASH,
+                ) && (
+                  <PendingCancelRow
+                    label={`Covenant: ${pendingCommunityParams.covenantIpfsHash || "None"}`}
+                    disabled={isCancelPendingParamsLoading}
+                    onCancel={() =>
+                      cancelPendingParams({
+                        args: [PENDING_COVENANT_IPFS_HASH],
+                      })
+                    }
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="grid gap-4">
             <FormInput
               label={`Registration stake (${tokenSymbol})`}
@@ -679,5 +797,29 @@ function CommunityEditModal({
         </div>
       }
     </Modal>
+  );
+}
+
+function PendingCancelRow({
+  label,
+  disabled,
+  onCancel,
+}: {
+  label: string;
+  disabled: boolean;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-base-100/60 px-3 py-2 text-sm">
+      <span className="min-w-0 break-all text-neutral-content">{label}</span>
+      <Button
+        btnStyle="ghost"
+        color="secondary"
+        disabled={disabled}
+        onClick={onCancel}
+      >
+        Cancel pending
+      </Button>
+    </div>
   );
 }
