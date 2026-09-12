@@ -41,8 +41,7 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
     ) external onlySquidMulticall nonReentrant {
         if (registryCommunity == address(0) || token == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroValue();
-        if (processedPayoutIds[payoutId]) revert PayoutAlreadyProcessed();
-        processedPayoutIds[payoutId] = true;
+        payoutId = _reservePayoutId(payoutId, communityKey, registryCommunity, token, amount);
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
@@ -126,8 +125,7 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
     {
         if (msg.value == 0) revert ZeroValue();
         if (registryCommunity == address(0)) revert ZeroAddress();
-        if (processedPayoutIds[payoutId]) revert PayoutAlreadyProcessed();
-        processedPayoutIds[payoutId] = true;
+        payoutId = _reservePayoutId(payoutId, communityKey, registryCommunity, address(0), msg.value);
 
         address safe = IRegistryCommunitySafe(registryCommunity).councilSafe();
         bool delivered = false;
@@ -204,5 +202,35 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
     function _tryTokenTransfer(address token, address to, uint256 amount) internal returns (bool) {
         (bool success, bytes memory returnData) = token.call(abi.encodeCall(IERC20.transfer, (to, amount)));
         return success && (returnData.length == 0 || (returnData.length >= 32 && abi.decode(returnData, (bool))));
+    }
+
+    /// @dev Squid's multicall is a shared permissionless dispatcher, so a
+    /// caller-supplied identifier cannot share the namespace used for escrow
+    /// and replay accounting. Allocate exactly one receiver-local id for every
+    /// invocation. Existing pre-upgrade ids stay readable in the mappings,
+    /// while new deliveries cannot be pre-consumed or forced through an
+    /// attacker-sized collision loop.
+    function _reservePayoutId(
+        bytes32 suppliedPayoutId,
+        bytes32 communityKey,
+        address registryCommunity,
+        address token,
+        uint256 amount
+    ) internal returns (bytes32 effectivePayoutId) {
+        effectivePayoutId = keccak256(
+            abi.encode(
+                block.chainid,
+                address(this),
+                tokenRevenueNonce++,
+                msg.sender,
+                suppliedPayoutId,
+                communityKey,
+                registryCommunity,
+                token,
+                amount
+            )
+        );
+        processedPayoutIds[effectivePayoutId] = true;
+        emit PayoutIdRekeyed(suppliedPayoutId, effectivePayoutId);
     }
 }

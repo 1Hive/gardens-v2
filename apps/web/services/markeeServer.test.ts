@@ -385,7 +385,10 @@ describe("Markee community revenue", () => {
       fromTokenAddress: "0x6a023ccd1ff6f2045c3309768ead9e68f978f6e1",
       toApprovalAddress: receiver,
       toContractAddress: receiver,
-      toFallbackAddress: recipient,
+      // A failed destination call must remain inside the Gardens receiver so
+      // it can resolve the latest council Safe instead of bypassing replay
+      // protection with a direct transfer.
+      toFallbackAddress: receiver,
     });
   });
 

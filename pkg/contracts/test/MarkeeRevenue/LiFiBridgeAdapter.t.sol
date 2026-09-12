@@ -10,12 +10,18 @@ contract MockLiFiDiamond {
     uint256 public received;
     bytes public receivedData;
     uint256 public refundAmount;
+    bool public shouldRevert;
 
     function setRefundAmount(uint256 amount) external {
         refundAmount = amount;
     }
 
+    function setShouldRevert(bool value) external {
+        shouldRevert = value;
+    }
+
     fallback() external payable {
+        if (shouldRevert) revert("lifi route failed");
         received = msg.value;
         receivedData = msg.data;
         uint256 amount = refundAmount;
@@ -26,12 +32,6 @@ contract MockLiFiDiamond {
     }
 }
 
-contract MockRevertingLiFiDiamond {
-    fallback() external payable {
-        revert("lifi route failed");
-    }
-}
-
 // No receive/fallback: any plain ETH transfer to this contract reverts.
 contract RejectingRefundRecipient {}
 
@@ -39,10 +39,16 @@ contract LiFiBridgeAdapterTest is Test {
     MockLiFiDiamond internal liFiDiamond;
     LiFiBridgeAdapter internal adapter;
     address internal gardensRouter = address(0xA11CE);
+    address internal destinationToken = address(0xD357);
+    bytes32 internal destinationExecutor = bytes32(uint256(uint160(address(0xD1A))));
+    address internal sourceFeeCollector = address(0xDE1);
+    address internal sourceFeeRecipient = address(0xB1D6E);
 
     function setUp() public {
         liFiDiamond = new MockLiFiDiamond();
         adapter = new LiFiBridgeAdapter(gardensRouter, address(liFiDiamond));
+        adapter.setSourceRoute(sourceFeeCollector, sourceFeeRecipient, 13);
+        adapter.setDestinationExecutor(100, destinationExecutor);
     }
 
     function _request(uint256 minAmountOut) internal pure returns (BridgeRequest memory) {
@@ -56,13 +62,89 @@ contract LiFiBridgeAdapterTest is Test {
         });
     }
 
-    function _quote(uint256 expectedAmountOut, uint256 executionValue) internal pure returns (bytes memory) {
+    function _route(uint256 expectedAmountOut, address destinationReceiver) internal view returns (bytes memory) {
+        return _routeWithSourceFeeRecipient(expectedAmountOut, destinationReceiver, sourceFeeRecipient);
+    }
+
+    function _routeWithSourceFeeRecipient(uint256 expectedAmountOut, address destinationReceiver, address feeRecipient)
+        internal
+        view
+        returns (bytes memory)
+    {
+        LiFiBridgeAdapter.SwapData[] memory sourceSwaps = new LiFiBridgeAdapter.SwapData[](1);
+        sourceSwaps[0] = LiFiBridgeAdapter.SwapData({
+            callTo: sourceFeeCollector,
+            approveTo: sourceFeeCollector,
+            sendingAssetId: address(0),
+            receivingAssetId: address(0),
+            fromAmount: 1 ether,
+            callData: abi.encodeWithSignature(
+                "forwardNativeFees((address,uint256)[])", _nativeFees(feeRecipient, 0.01 ether)
+            ),
+            requiresDeposit: true
+        });
+        LiFiBridgeAdapter.SwapData[] memory destinationCalls = new LiFiBridgeAdapter.SwapData[](1);
+        destinationCalls[0] = LiFiBridgeAdapter.SwapData({
+            callTo: destinationReceiver,
+            approveTo: destinationReceiver,
+            sendingAssetId: destinationToken,
+            receivingAssetId: destinationToken,
+            fromAmount: expectedAmountOut,
+            callData: abi.encodeWithSignature(
+                "receiveTokenRevenue(bytes32,address,address,uint256)",
+                keccak256("community"),
+                address(0xC0DE),
+                destinationToken,
+                expectedAmountOut
+            ),
+            requiresDeposit: true
+        });
+        LiFiBridgeAdapter.BridgeData memory bridgeData = LiFiBridgeAdapter.BridgeData({
+            transactionId: keccak256("route"),
+            bridge: "stargateV2",
+            integrator: "gardens",
+            referrer: address(0),
+            sendingAssetId: address(0),
+            receiver: address(adapter),
+            minAmount: 0.95 ether,
+            destinationChainId: 100,
+            hasSourceSwaps: true,
+            hasDestinationCall: true
+        });
+        LiFiBridgeAdapter.StargateData memory stargateData = LiFiBridgeAdapter.StargateData({
+            assetId: 13,
+            sendParams: LiFiBridgeAdapter.SendParam({
+                dstEid: 30145,
+                to: destinationExecutor,
+                amountLD: 0.95 ether,
+                minAmountLD: expectedAmountOut,
+                extraOptions: hex"00",
+                composeMsg: abi.encode(keccak256("route"), destinationCalls, address(adapter)),
+                oftCmd: hex""
+            }),
+            fee: LiFiBridgeAdapter.MessagingFee({nativeFee: 0.01 ether, lzTokenFee: 0}),
+            refundAddress: payable(address(adapter))
+        });
+        return abi.encodeWithSelector(bytes4(0xa6010a66), bridgeData, sourceSwaps, stargateData);
+    }
+
+    function _nativeFees(address recipient, uint256 amount)
+        internal
+        pure
+        returns (LiFiBridgeAdapter.NativeFee[] memory fees)
+    {
+        fees = new LiFiBridgeAdapter.NativeFee[](1);
+        fees[0] = LiFiBridgeAdapter.NativeFee({recipient: recipient, amount: amount});
+    }
+
+    function _quote(uint256 expectedAmountOut, uint256 executionValue) internal view returns (bytes memory) {
         return abi.encode(
             LiFiBridgeAdapter.LiFiQuote({
                 inputAmount: 1 ether,
                 expectedAmountOut: expectedAmountOut,
                 executionValue: executionValue,
-                routerCalldata: hex"12345678aabbccdd"
+                destinationToken: destinationToken,
+                routerCalldata: _route(expectedAmountOut, address(0xBEEF))
             })
         );
     }
@@ -75,7 +157,7 @@ contract LiFiBridgeAdapterTest is Test {
 
         assertEq(expectedAmountOut, 0.9 ether);
         assertEq(liFiDiamond.received(), 1.01 ether);
-        assertEq(liFiDiamond.receivedData(), hex"12345678aabbccdd");
+        assertEq(liFiDiamond.receivedData(), _route(0.9 ether, address(0xBEEF)));
     }
 
     function test_bridgeETH_refundsRevenueAccruedAfterQuote() public {
@@ -132,6 +214,38 @@ contract LiFiBridgeAdapterTest is Test {
         vm.prank(gardensRouter);
         vm.expectRevert(LiFiBridgeAdapter.InvalidQuote.selector);
         adapter.bridgeETH{value: 1 ether}(_request(0), _quote(0.9 ether, 1.01 ether));
+    }
+
+    function test_bridgeETH_revertsWhenProviderCalldataIsNotBoundToDestination() public {
+        vm.deal(gardensRouter, 1.01 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(LiFiBridgeAdapter.UnboundRoute.selector);
+        bytes memory maliciousQuote = abi.encode(
+            LiFiBridgeAdapter.LiFiQuote({
+                inputAmount: 1 ether,
+                expectedAmountOut: 0.9 ether,
+                executionValue: 1.01 ether,
+                destinationToken: destinationToken,
+                routerCalldata: _route(0.9 ether, address(0xBAD))
+            })
+        );
+        adapter.bridgeETH{value: 1.01 ether}(_request(0), maliciousQuote);
+    }
+
+    function test_bridgeETH_revertsWhenProviderRedirectsSourceFee() public {
+        vm.deal(gardensRouter, 1.01 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(LiFiBridgeAdapter.UnboundRoute.selector);
+        bytes memory maliciousQuote = abi.encode(
+            LiFiBridgeAdapter.LiFiQuote({
+                inputAmount: 1 ether,
+                expectedAmountOut: 0.9 ether,
+                executionValue: 1.01 ether,
+                destinationToken: destinationToken,
+                routerCalldata: _routeWithSourceFeeRecipient(0.9 ether, address(0xBEEF), address(0xBAD))
+            })
+        );
+        adapter.bridgeETH{value: 1.01 ether}(_request(0), maliciousQuote);
     }
 
     function test_constructor_revertsOnZeroLiFiDiamond() public {
@@ -212,8 +326,7 @@ contract LiFiBridgeAdapterTest is Test {
     }
 
     function test_bridgeETH_revertsOnLiFiCallFailure() public {
-        MockRevertingLiFiDiamond revertingDiamond = new MockRevertingLiFiDiamond();
-        LiFiBridgeAdapter revertingAdapter = new LiFiBridgeAdapter(gardensRouter, address(revertingDiamond));
+        liFiDiamond.setShouldRevert(true);
 
         vm.deal(gardensRouter, 1 ether);
         vm.prank(gardensRouter);
@@ -222,6 +335,6 @@ contract LiFiBridgeAdapterTest is Test {
                 LiFiBridgeAdapter.LiFiCallFailed.selector, abi.encodeWithSignature("Error(string)", "lifi route failed")
             )
         );
-        revertingAdapter.bridgeETH{value: 1 ether}(_request(0), _quote(0.9 ether, 1 ether));
+        adapter.bridgeETH{value: 1 ether}(_request(0), _quote(0.9 ether, 1 ether));
     }
 }

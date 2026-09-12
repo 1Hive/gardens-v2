@@ -47,6 +47,7 @@ interface ISquidGardensRevenueReceiver {
         address token,
         uint256 amount
     );
+    event PayoutIdRekeyed(bytes32 indexed suppliedPayoutId, bytes32 indexed effectivePayoutId);
 
     error NotSquidMulticall();
     error ZeroAddress();

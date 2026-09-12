@@ -609,7 +609,7 @@ const getSquidRoute = async ({
             }),
             callType: 2,
             chainType: "evm",
-            estimatedGas: "250000",
+            estimatedGas: "400000",
             payload: { inputPos: 0, tokenAddress: SQUID_NATIVE_TOKEN },
             target: receiver,
             value: "0",
@@ -637,7 +637,7 @@ const getSquidRoute = async ({
             }),
             callType: 1,
             chainType: "evm",
-            estimatedGas: "250000",
+            estimatedGas: "400000",
             payload: { inputPos: 4, tokenAddress: destinationToken },
             target: receiver,
             value: "0",
@@ -1171,7 +1171,9 @@ export const getMarkeeClaimExecutionQuote = async (
       chainId,
       community,
       communityKey,
-      destinationRecipient: recipient,
+      // Keep any destination fallback inside the Gardens receiver. The
+      // receiver resolves the current council Safe at delivery time.
+      destinationRecipient: receiver,
       receiver,
       refundRecipient: revenue.vaultAddress,
       squidRouter,
@@ -1226,7 +1228,7 @@ export const getMarkeeClaimExecutionQuote = async (
       chainId,
       community,
       destinationReceiver: receiver,
-      fallbackRecipient: recipient,
+      fallbackRecipient: receiver,
       signal,
     });
 
@@ -1249,6 +1251,7 @@ export const getMarkeeClaimExecutionQuote = async (
               { name: "inputAmount", type: "uint256" },
               { name: "expectedAmountOut", type: "uint256" },
               { name: "executionValue", type: "uint256" },
+              { name: "destinationToken", type: "address" },
               { name: "routerCalldata", type: "bytes" },
             ],
             type: "tuple",
@@ -1259,6 +1262,7 @@ export const getMarkeeClaimExecutionQuote = async (
             expectedAmountOut: lifiQuote.expectedAmountOut,
             executionValue: lifiQuote.executionValue,
             inputAmount: lifiQuote.inputAmount,
+            destinationToken: LIFI_GNOSIS_WETH,
             routerCalldata: lifiQuote.routerCalldata,
           },
         ],

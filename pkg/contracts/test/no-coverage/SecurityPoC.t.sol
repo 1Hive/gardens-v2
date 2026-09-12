@@ -37,6 +37,9 @@ import {StrategyDiamondConfigurator} from "../helpers/StrategyDiamondConfigurato
 import {CommunityDiamondConfigurator} from "../helpers/CommunityDiamondConfigurator.sol";
 import {PowerManagementUtils} from "../../src/CVStrategy/PowerManagementUtils.sol";
 import {IVotingPowerRegistry} from "../../src/interfaces/IVotingPowerRegistry.sol";
+import {SquidGardensRevenueReceiver} from "../../src/MarkeeRevenue/SquidGardensRevenueReceiver.sol";
+import {LiFiBridgeAdapter} from "../../src/MarkeeRevenue/LiFiBridgeAdapter.sol";
+import {BridgeRequest} from "../../src/MarkeeRevenue/interfaces/IBridgeAdapter.sol";
 import {
     CVStreamingFacetHarness,
     MockAllo,
@@ -2176,5 +2179,186 @@ contract PoC_M4b_VoterStakedProposalsDoS is PoCBase {
         console.log("[M-4b] unregisterMember gas @ voter proposal cap:", gasAtCap);
 
         assertLe(gasAtCap, 30_000_000, "M-4b: unregister path must remain under block gas limit at vote cap");
+    }
+}
+
+// =============================================================
+//  MARKEE REVENUE BRIDGE REGRESSION GATES
+// =============================================================
+
+contract MarkeePoCRegistryCommunity {
+    address public councilSafe;
+
+    constructor(address safe) {
+        councilSafe = safe;
+    }
+}
+
+contract MarkeePoCToken {
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    function mint(address to, uint256 amount) external {
+        balanceOf[to] += amount;
+    }
+
+    function approve(address spender, uint256 amount) external returns (bool) {
+        allowance[msg.sender][spender] = amount;
+        return true;
+    }
+
+    function transfer(address to, uint256 amount) external returns (bool) {
+        balanceOf[msg.sender] -= amount;
+        balanceOf[to] += amount;
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
+        uint256 approved = allowance[from][msg.sender];
+        if (approved != type(uint256).max) allowance[from][msg.sender] = approved - amount;
+        balanceOf[from] -= amount;
+        balanceOf[to] += amount;
+        return true;
+    }
+}
+
+/// @notice Regression for the public-Squid-multicall payout-ID pre-consumption DoS.
+/// An attacker may submit the provider-visible payout ID first, but the receiver
+/// must re-key every delivery into its own nonce-scoped namespace so the real
+/// delivery remains processable.
+contract PoC_MarkeePayoutIdPreConsumption is Test {
+    function test_Markee_PublicMulticallCannotPreconsumeLegitimatePayoutId() public {
+        address multicall = makeAddr("publicSquidMulticall");
+        address safe = makeAddr("councilSafe");
+        MarkeePoCRegistryCommunity community = new MarkeePoCRegistryCommunity(safe);
+        MarkeePoCToken token = new MarkeePoCToken();
+        SquidGardensRevenueReceiver implementation = new SquidGardensRevenueReceiver();
+        SquidGardensRevenueReceiver receiver = SquidGardensRevenueReceiver(
+            payable(address(
+                    new ERC1967Proxy(
+                        address(implementation),
+                        abi.encodeCall(SquidGardensRevenueReceiver.initialize, (address(this), multicall))
+                    )
+                ))
+        );
+
+        bytes32 suppliedPayoutId = keccak256("predictable-provider-payout");
+        bytes32 communityKey = keccak256("community");
+        token.mint(multicall, 101);
+        vm.startPrank(multicall);
+        token.approve(address(receiver), type(uint256).max);
+
+        // Attacker-controlled dust delivery using the same public payout ID.
+        receiver.receiveSquidTokenRevenue(suppliedPayoutId, communityKey, address(community), address(token), 1);
+        // The legitimate route must still settle instead of reverting as a duplicate.
+        receiver.receiveSquidTokenRevenue(suppliedPayoutId, communityKey, address(community), address(token), 100);
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(safe), 101, "legitimate revenue must not be denied");
+        assertEq(receiver.tokenRevenueNonce(), 2, "each delivery must reserve a fresh local payout ID");
+        assertFalse(receiver.processedPayoutIds(suppliedPayoutId), "external IDs must never occupy the local namespace");
+    }
+}
+
+contract MarkeePoCLiFiDiamond {
+    fallback() external payable {}
+}
+
+/// @notice Regression for provider-controlled LI.FI calldata. Changing only
+/// the nested destination callback must invalidate the quote before any value
+/// reaches the bridge diamond.
+contract PoC_MarkeeLiFiCalldataBinding is Test {
+    function test_Markee_ProviderCannotRedirectDestinationCallback() public {
+        address gardensRouter = makeAddr("gardensRouter");
+        address destinationReceiver = makeAddr("gardensReceiver");
+        address destinationToken = makeAddr("destinationWeth");
+        bytes32 destinationExecutor = bytes32(uint256(uint160(makeAddr("lifiDestinationExecutor"))));
+        MarkeePoCLiFiDiamond diamond = new MarkeePoCLiFiDiamond();
+        LiFiBridgeAdapter adapter = new LiFiBridgeAdapter(gardensRouter, address(diamond));
+        adapter.setSourceRoute(makeAddr("lifiFeeCollector"), makeAddr("stargateNativePool"), 13);
+        adapter.setDestinationExecutor(100, destinationExecutor);
+
+        BridgeRequest memory request = BridgeRequest({
+            destinationChainId: 100,
+            destinationReceiver: destinationReceiver,
+            communityKey: keccak256("community"),
+            registryCommunity: makeAddr("registryCommunity"),
+            refundRecipient: makeAddr("communityVault"),
+            minAmountOut: 0.9 ether
+        });
+
+        LiFiBridgeAdapter.SwapData[] memory sourceSwaps = new LiFiBridgeAdapter.SwapData[](1);
+        sourceSwaps[0] = LiFiBridgeAdapter.SwapData({
+            callTo: adapter.sourceFeeCollector(),
+            approveTo: adapter.sourceFeeCollector(),
+            sendingAssetId: address(0),
+            receivingAssetId: address(0),
+            fromAmount: 1 ether,
+            callData: abi.encodeWithSignature(
+                "forwardNativeFees((address,uint256)[])", _nativeFees(adapter.sourceFeeRecipient(), 0.01 ether)
+            ),
+            requiresDeposit: true
+        });
+        LiFiBridgeAdapter.SwapData[] memory destinationCalls = new LiFiBridgeAdapter.SwapData[](1);
+        destinationCalls[0] = LiFiBridgeAdapter.SwapData({
+            callTo: makeAddr("attacker"),
+            approveTo: makeAddr("attacker"),
+            sendingAssetId: destinationToken,
+            receivingAssetId: destinationToken,
+            fromAmount: 0.9 ether,
+            callData: hex"deadbeef",
+            requiresDeposit: true
+        });
+        LiFiBridgeAdapter.BridgeData memory bridgeData = LiFiBridgeAdapter.BridgeData({
+            transactionId: keccak256("route"),
+            bridge: "stargateV2",
+            integrator: "gardens",
+            referrer: address(0),
+            sendingAssetId: address(0),
+            receiver: address(adapter),
+            minAmount: 0.95 ether,
+            destinationChainId: 100,
+            hasSourceSwaps: true,
+            hasDestinationCall: true
+        });
+        LiFiBridgeAdapter.StargateData memory stargateData = LiFiBridgeAdapter.StargateData({
+            assetId: 13,
+            sendParams: LiFiBridgeAdapter.SendParam({
+                dstEid: 30145,
+                to: destinationExecutor,
+                amountLD: 0.95 ether,
+                minAmountLD: 0.9 ether,
+                extraOptions: hex"00",
+                composeMsg: abi.encode(keccak256("route"), destinationCalls, address(adapter)),
+                oftCmd: hex""
+            }),
+            fee: LiFiBridgeAdapter.MessagingFee({nativeFee: 0.01 ether, lzTokenFee: 0}),
+            refundAddress: payable(address(adapter))
+        });
+        bytes memory route = abi.encodeWithSelector(bytes4(0xa6010a66), bridgeData, sourceSwaps, stargateData);
+        bytes memory quote = abi.encode(
+            LiFiBridgeAdapter.LiFiQuote({
+                inputAmount: 1 ether,
+                expectedAmountOut: 0.9 ether,
+                executionValue: 1.01 ether,
+                destinationToken: destinationToken,
+                routerCalldata: route
+            })
+        );
+
+        vm.deal(gardensRouter, 1.01 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(LiFiBridgeAdapter.UnboundRoute.selector);
+        adapter.bridgeETH{value: 1.01 ether}(request, quote);
+        assertEq(address(diamond).balance, 0, "unbound route must fail before bridge execution");
+    }
+
+    function _nativeFees(address recipient, uint256 amount)
+        internal
+        pure
+        returns (LiFiBridgeAdapter.NativeFee[] memory fees)
+    {
+        fees = new LiFiBridgeAdapter.NativeFee[](1);
+        fees[0] = LiFiBridgeAdapter.NativeFee({recipient: recipient, amount: amount});
     }
 }
