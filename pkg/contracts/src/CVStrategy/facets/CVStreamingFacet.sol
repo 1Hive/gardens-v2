@@ -16,6 +16,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 interface IStreamingEscrowSync {
     function syncOutflow() external;
     function depositAmount() external view returns (uint256);
+    function drainToStrategy() external;
 }
 
 /**
@@ -187,6 +188,14 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
 
             if (!superfluidGDA.updateMemberUnits(escrow, units)) {
                 revert UpdateMemberUnitsFailed(escrow, units);
+            }
+
+            // Once an active proposal becomes ineligible, return the pool-funded
+            // escrow reserve before the subsequent sync can classify it as
+            // beneficiary-payable excess at a zero GDA flow rate.
+            // slither-disable-next-line incorrect-equality
+            if (units == 0 && proposal.proposalStatus == ProposalStatus.Active) {
+                IStreamingEscrowSync(escrow).drainToStrategy();
             }
 
             emit StreamMemberUnitUpdated(escrow, int96(int128(units)));

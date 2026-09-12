@@ -4485,6 +4485,27 @@
     },
     {
       "type": "error",
+      "name": "DisputeIdMismatch",
+      "inputs": [
+        {
+          "name": "proposalId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "expectedDisputeId",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "providedDisputeId",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
       "name": "InvalidRuling",
       "inputs": [
         {

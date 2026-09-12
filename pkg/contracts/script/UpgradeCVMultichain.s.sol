@@ -15,6 +15,7 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     using stdJson for string;
     uint256 internal constant EXPECTED_COMMUNITY_FACET_COUNT = 7;
     uint256 internal constant EXPECTED_STRATEGY_FACET_COUNT = 9;
+    uint8 internal constant REGISTRY_FACTORY_MIGRATION_VERSION = 3;
     uint8 internal constant THRESHOLD_MIGRATION_VERSION = 2;
     bytes4 internal constant COMMUNITY_CREATE_POOL_SELECTOR_V0_2 = bytes4(
         keccak256(
@@ -108,7 +109,7 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         context = _populateDesiredCuts(context, networkJson);
 
         if (_shouldDoFactory()) {
-            _executeRegistryFactoryUpgrades(context);
+            _executeRegistryFactoryUpgrades(context, networkJson);
             if (!_flagEnabled("REUSE_CONFIGURED_IMPLEMENTATIONS")) {
                 _syncRegistryFactoryImplementationFromLive(context.registryFactoryProxy);
             }
@@ -476,15 +477,30 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         }
     }
 
-    function _executeRegistryFactoryUpgrades(UpgradeContext memory context) internal {
+    function _executeRegistryFactoryUpgrades(UpgradeContext memory context, string memory networkJson) internal {
         RegistryFactory registryFactory = RegistryFactory(payable(context.registryFactoryProxy));
         bool forceFacets = _flagEnabled("FORCE_FACETS");
         bool splitFactoryFacetWrites = _flagEnabled("SPLIT_FACTORY_FACETS");
 
         if (factoryAction == FactoryAction.All || factoryAction == FactoryAction.UpgradeImpl) {
             if (context.registryFactoryImplementation == address(0)) revert("missing registry factory implementation");
-            if (_proxyImplementationAddress(context.registryFactoryProxy) != context.registryFactoryImplementation) {
-                registryFactory.upgradeTo(context.registryFactoryImplementation);
+            bool implementationIsCurrent =
+                _proxyImplementationAddress(context.registryFactoryProxy) == context.registryFactoryImplementation;
+            bool needsMigration = _initializerVersion(context.registryFactoryProxy) < REGISTRY_FACTORY_MIGRATION_VERSION;
+
+            if (!implementationIsCurrent || needsMigration) {
+                address[] memory holders =
+                    networkJson.readAddressArray(getKeyNetwork(".MIGRATIONS.REGISTRY_FACTORY_V3_PROTOPIANS"));
+                if (holders.length == 0) revert("registry factory v3 protopian holders missing");
+
+                if (!implementationIsCurrent) {
+                    registryFactory.upgradeToAndCall(
+                        context.registryFactoryImplementation,
+                        abi.encodeCall(RegistryFactory.reinitializeV3MigrateProtopians, (holders))
+                    );
+                } else {
+                    registryFactory.reinitializeV3MigrateProtopians(holders);
+                }
             }
         }
 

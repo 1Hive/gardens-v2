@@ -169,6 +169,10 @@ contract CVPowerFacetHarness is CVPowerFacet {
     function getProposalThresholdPoints(uint256 proposalId) external view returns (uint256) {
         return _getThresholdPoints(proposals[proposalId]);
     }
+
+    function getPoolThresholdPoints() external view returns (uint256) {
+        return _getPoolThresholdPoints();
+    }
 }
 
 contract CVPowerFacetTest is Test {
@@ -208,11 +212,12 @@ contract CVPowerFacetTest is Test {
         registry.setMemberPower(member, 7);
 
         vm.expectEmit();
-        emit PoolThresholdUpdated(0, 7, block.number);
+        emit PoolThresholdUpdated(7, 7, block.number);
         vm.prank(member);
         facet.activatePoints();
 
         assertEq(facet.totalPointsActivated(), 7);
+        assertEq(facet.getPoolThresholdPoints(), 7);
         assertEq(registry.lastActivated(), member);
     }
 
@@ -474,14 +479,25 @@ contract CVPowerFacetTest is Test {
         assertEq(facet.totalPointsActivated(), peakPoints);
         assertEq(facet.getProposalThresholdPoints(1), basePoints);
 
+        facet.setProposal(2, address(0), 0, 0);
+        facet.setProposalSubmitter(2, address(0xCAFE));
+        facet.initializeProposalThreshold(2);
+        assertEq(
+            facet.getProposalThresholdPoints(2),
+            basePoints,
+            "proposal creation order must not change the weighted threshold basis"
+        );
+
         vm.roll(101);
         uint256 oneBlockWeighted = ConvictionsUtils.weightedAverage(basePoints, peakPoints, 1, decay);
         assertEq(facet.getProposalThresholdPoints(1), oneBlockWeighted);
+        assertEq(facet.getProposalThresholdPoints(2), oneBlockWeighted);
         assertGt(oneBlockWeighted, basePoints);
         assertLt(oneBlockWeighted, peakPoints);
 
         vm.roll(10_000);
         assertEq(facet.getProposalThresholdPoints(1), peakPoints);
+        assertEq(facet.getProposalThresholdPoints(2), peakPoints);
     }
 
     function test_activationSpike_immediateDeactivationOnlyRetainsTimeWeightedIncrease() public {

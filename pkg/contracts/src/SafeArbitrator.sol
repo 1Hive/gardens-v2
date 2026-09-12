@@ -18,6 +18,7 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
     event ArbitrationFeeUpdated(uint256 _newArbitrationFee);
     event SafeRegistered(address indexed _arbitrable, address _safe);
     event SafeArbitratorInitialized(uint256 _arbitrationFee);
+    event DisputeCancelled(uint256 indexed _disputeID, IArbitrable indexed _arbitrable, uint256 _refundedFee);
 
     enum DisputeStatus {
         Waiting, // The dispute is waiting for the ruling or not created.
@@ -46,6 +47,7 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
     error InvalidRuling();
     error InvalidDisputeId(uint256 disputeId);
     error DisputeAlreadySolved();
+    error OnlyArbitrated(address sender, address arbitrated);
     error NotSupported();
 
     modifier onlySafe(uint256 _disputeID) {
@@ -147,6 +149,24 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
         (bool success,) = payable(msg.sender).call{value: dispute.arbitrationFee}("");
         require(success, "Transfer failed");
         emit Ruling(IArbitrable(_arbitrable), _disputeID, _ruling);
+    }
+
+    /// @notice Cancel a waiting dispute and return its fee to the arbitrable contract.
+    /// @dev Used by an arbitrable after it resolves the dispute through its timeout fallback.
+    function cancelDispute(uint256 _disputeID) external nonReentrant {
+        _requireValidDisputeId(_disputeID);
+        DisputeStruct storage dispute = disputes[_disputeID - 1];
+        if (msg.sender != address(dispute.arbitrated)) {
+            revert OnlyArbitrated(msg.sender, address(dispute.arbitrated));
+        }
+        if (dispute.status == DisputeStatus.Solved) {
+            revert DisputeAlreadySolved();
+        }
+
+        dispute.status = DisputeStatus.Solved;
+        (bool success,) = payable(msg.sender).call{value: dispute.arbitrationFee}("");
+        require(success, "Transfer failed");
+        emit DisputeCancelled(_disputeID, dispute.arbitrated, dispute.arbitrationFee);
     }
 
     /// @inheritdoc IArbitrator

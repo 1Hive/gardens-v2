@@ -8,6 +8,10 @@ import {IArbitrator} from "../../interfaces/IArbitrator.sol";
 import {Proposal, ProposalStatus, ProposalType, ArbitrableConfig} from "../ICVStrategy.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
+interface ICancellableArbitrator {
+    function cancelDispute(uint256 disputeId) external;
+}
+
 /**
  * @title CVDisputeFacet
  * @notice Facet containing dispute-related functions for CVStrategy
@@ -26,6 +30,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
     error OnlyArbitrator(address sender, address arbitrator); // 0x84844502
     error DefaultRulingNotConfigured(uint256 proposalId); // 0x1b330288
     error InvalidRuling(uint256 ruling);
+    error DisputeIdMismatch(uint256 proposalId, uint256 expectedDisputeId, uint256 providedDisputeId);
     error UpdateMemberUnitsFailed(address member, uint128 units);
 
     /*|--------------------------------------------|*/
@@ -118,6 +123,9 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
         if (proposal.proposalStatus != ProposalStatus.Disputed) {
             revert ProposalStatusInvalid(proposalId, proposal.proposalStatus);
         }
+        if (proposal.disputeInfo.disputeId != _disputeID) {
+            revert DisputeIdMismatch(proposalId, proposal.disputeInfo.disputeId, _disputeID);
+        }
 
         bool isTimeOut = block.timestamp > proposal.disputeInfo.disputeTimestamp + arbitrableConfig.defaultRulingTimeout;
 
@@ -127,16 +135,19 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
         if (!isTimeOut && _ruling > 2) {
             revert InvalidRuling(_ruling);
         }
+        if ((isTimeOut || _ruling == 0) && arbitrableConfig.defaultRuling == 0) {
+            revert DefaultRulingNotConfigured(proposalId);
+        }
+
+        disputeCount--;
+        proposal.lastDisputeCompletion = block.timestamp;
+        delete disputeIdToProposalId[_disputeID];
 
         if (isTimeOut || _ruling == 0) {
-            if (arbitrableConfig.defaultRuling == 0) {
-                revert DefaultRulingNotConfigured(proposalId);
-            }
             if (arbitrableConfig.defaultRuling == 1) {
                 proposal.proposalStatus = ProposalStatus.Active;
                 _handleStreamingResolution(proposalId, true);
-            }
-            if (arbitrableConfig.defaultRuling == 2) {
+            } else if (arbitrableConfig.defaultRuling == 2) {
                 proposal.proposalStatus = ProposalStatus.Rejected;
                 _decrementActiveProposalCount();
                 _removeOpenStreamingProposal(proposalId);
@@ -145,11 +156,16 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
                     proposalId, proposal.submitter, proposal.submitter, arbitrableConfig.submitterCollateralAmount
                 );
             }
+            uint256 refundedArbitrationFee = isTimeOut
+                ? _cancelTimedOutDispute(
+                    arbitrableConfig.arbitrator, _disputeID, proposalId, proposal.disputeInfo.challenger
+                )
+                : 0;
             _tryWithdrawCollateral(
                 proposalId,
                 proposal.disputeInfo.challenger,
                 proposal.disputeInfo.challenger,
-                arbitrableConfig.challengerCollateralAmount
+                arbitrableConfig.challengerCollateralAmount + refundedArbitrationFee
             );
         } else if (_ruling == 1) {
             proposal.proposalStatus = ProposalStatus.Active;
@@ -180,9 +196,21 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
             );
         }
 
-        disputeCount--;
-        proposal.lastDisputeCompletion = block.timestamp;
         emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
+    }
+
+    function _cancelTimedOutDispute(IArbitrator arbitrator, uint256 disputeId, uint256 proposalId, address challenger)
+        internal
+        returns (uint256 refundedArbitrationFee)
+    {
+        uint256 balanceBefore = address(this).balance;
+        try ICancellableArbitrator(address(arbitrator)).cancelDispute(disputeId) {
+            uint256 balanceAfter = address(this).balance;
+            if (balanceAfter > balanceBefore) {
+                refundedArbitrationFee = balanceAfter - balanceBefore;
+                collateralVault.depositCollateral{value: refundedArbitrationFee}(proposalId, challenger);
+            }
+        } catch {}
     }
 
     function _handleStreamingResolution(uint256 proposalId, bool active) internal {

@@ -920,9 +920,8 @@ contract CVStreamingFacetTest is Test {
         facet.checkpointTotalPointsActivated(remainingPoints);
         vm.roll(block.number + 1);
 
-        uint256 rawThreshold = ConvictionsUtils.calculateThreshold(
-            0, 1_000 ether, remainingPoints, decay, 1_000_000, 9_000_000, 0
-        );
+        uint256 rawThreshold =
+            ConvictionsUtils.calculateThreshold(0, 1_000 ether, remainingPoints, decay, 1_000_000, 9_000_000, 0);
         uint256 weightedThreshold = ConvictionsUtils.calculateThreshold(
             0, 1_000 ether, facet.exposedGetThresholdPoints(1), decay, 1_000_000, 9_000_000, 0
         );
@@ -1334,6 +1333,21 @@ contract CVStreamingFacetTest is Test {
 
         assertEq(gdaPool.memberUnits(escrow1), 0);
         assertEq(gdaPool.updateCount(), 1);
+        assertEq(MockStreamingEscrowSync(escrow1).drainToStrategyCount(), 1);
+        assertEq(MockStreamingEscrowSync(escrow1).syncCount(), 1);
+    }
+
+    function test_rebalance_ineligibleActiveProposalDrainsEscrowEveryTimeUnitsAreZero() public {
+        MockStreamingEscrowSync escrow = new MockStreamingEscrowSync();
+        facet.setupProposal(1, ProposalStatus.Active, 0, 0, block.number);
+        facet.setStreamingEscrowExternal(1, address(escrow));
+
+        facet.rebalance();
+        facet.rebalance();
+
+        assertEq(gdaPool.memberUnits(address(escrow)), 0);
+        assertEq(escrow.drainToStrategyCount(), 2);
+        assertEq(escrow.syncCount(), 2);
     }
 
     // Note: Wrapping functionality is complex to mock, so we skip this test

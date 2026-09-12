@@ -110,6 +110,7 @@ contract UpgradeCVMultichainScript is Test {
     using stdJson for string;
 
     string internal constant NETWORK_NAME = "script-test";
+    address internal constant LEGACY_PROTOPIAN = address(0xA11CE);
 
     UpgradeCVMultichainHarness internal script;
     CommunityDiamondConfigurator internal oldCommunityConfigurator;
@@ -180,6 +181,9 @@ contract UpgradeCVMultichainScript is Test {
             address(oldStrategyConfigurator.diamondInit()),
             abi.encodeCall(CVStrategyDiamondInit.init, ())
         );
+        address[] memory protopians = new address[](1);
+        protopians[0] = LEGACY_PROTOPIAN;
+        factory.setProtopianAddress(protopians, true);
 
         RegistryCommunityInitializeParams memory params;
         params._allo = address(alloMock);
@@ -255,6 +259,8 @@ contract UpgradeCVMultichainScript is Test {
         assertEq(_implementation(address(strategy)), strategyImpl);
         assertEq(factory.registryCommunityTemplate(), communityImpl);
         assertEq(factory.strategyTemplate(), strategyImpl);
+        assertTrue(factory.canonicalProtopians(LEGACY_PROTOPIAN));
+        assertTrue(factory.isProtopianAddress(LEGACY_PROTOPIAN));
         assertEq(community.strategyTemplate(), strategyImpl);
 
         (, address liveCommunityInit,) = factory.getCommunityFacets();
@@ -279,6 +285,23 @@ contract UpgradeCVMultichainScript is Test {
             updated.readAddress("$.networks[0].FACETS.CV_STREAMING")
         );
         _assertFactoryStrategyCutsIncludeSelector(CVStreamingFacet.isAuthorizedRebalanceCaller.selector);
+    }
+
+    function test_runCurrentNetwork_migrates_factory_already_initialized_to_v2() public {
+        _useFixture("factory-from-v2");
+        _setDefaultScriptEnv();
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
+        vm.store(address(factory), bytes32(0), bytes32(uint256(2)));
+
+        script.setPhaseForTest(1);
+        script.setFactoryActionForTest(1);
+        script.executeCurrentNetworkForTest();
+
+        assertEq(uint8(uint256(vm.load(address(factory), bytes32(0)))), 3);
+        assertTrue(factory.canonicalProtopians(LEGACY_PROTOPIAN));
+        assertTrue(factory.isProtopianAddress(LEGACY_PROTOPIAN));
     }
 
     function test_runCurrentNetwork_respects_skip_flags() public {
@@ -485,7 +508,9 @@ contract UpgradeCVMultichainScript is Test {
     function test_runCurrentNetwork_strategy_phase_can_skip_factory_sync() public {
         _useFixture("strategies-without-factory-sync");
         _setDefaultScriptEnv();
-        _writeFixtureJson(address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0));
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
 
         script.setPhaseForTest(3);
         script.setFactoryActionForTest(0);
@@ -555,9 +580,7 @@ contract UpgradeCVMultichainScript is Test {
         script.executeCurrentNetworkForTest();
 
         string memory updated = vm.readFile(fixturePath);
-        assertEq(
-            _implementation(address(strategy)), updated.readAddress("$.networks[0].IMPLEMENTATIONS.CV_STRATEGY")
-        );
+        assertEq(_implementation(address(strategy)), updated.readAddress("$.networks[0].IMPLEMENTATIONS.CV_STRATEGY"));
         vm.prank(address(script));
         vm.expectRevert();
         strategy.reinitializeV2MigrateThresholdSnapshots();
@@ -622,6 +645,8 @@ contract UpgradeCVMultichainScript is Test {
             _initsJson(communityInit, strategyInit),
             ",",
             _factoryStateJson(communityCutsDigest, strategyCutsDigest),
+            ",",
+            _migrationsJson(),
             ',"FACETS":',
             _facetsJson(),
             "}]}"
@@ -725,6 +750,10 @@ contract UpgradeCVMultichainScript is Test {
             strategyCutsDigest,
             '"}'
         );
+    }
+
+    function _migrationsJson() internal view returns (string memory) {
+        return string.concat('"MIGRATIONS":{"REGISTRY_FACTORY_V3_PROTOPIANS":["', vm.toString(LEGACY_PROTOPIAN), '"]}');
     }
 
     function _communityFacetsJson() internal view returns (string memory) {

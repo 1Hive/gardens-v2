@@ -1175,6 +1175,8 @@ contract ForkLifecycleHealthcheck is Test {
     }
 
     function _assertStrategyDeploymentMatchesConfig(string memory communityName, address strategy) internal {
+        if (_skipStrategyConfigChecks()) return;
+
         string memory chain = _chainFromCommunityName(communityName);
         string memory json = vm.readFile(_networksJsonPath());
         if (!_skipImplementationChecks()) {
@@ -1225,6 +1227,10 @@ contract ForkLifecycleHealthcheck is Test {
 
     function _skipImplementationChecks() internal view returns (bool) {
         return vm.envOr("FORK_HEALTHCHECK_SKIP_IMPLEMENTATION_CHECKS", false);
+    }
+
+    function _skipStrategyConfigChecks() internal view returns (bool) {
+        return vm.envOr("FORK_HEALTHCHECK_SKIP_STRATEGY_CONFIG_CHECKS", false);
     }
 
     function _chainFromCommunityName(string memory communityName) internal pure returns (string memory) {

@@ -100,6 +100,8 @@ anvil \
   --fork-url "$RPC_URL" \
   --chain-id "$CHAIN_ID" \
   --port "$PORT" \
+  --timeout "${ANVIL_FORK_TIMEOUT_MS:-300000}" \
+  --retries "${ANVIL_FORK_RETRIES:-10}" \
   > "/tmp/gardens-rehearse-${CHAIN}-chunked-anvil.log" 2>&1 &
 ANVIL_PID=$!
 
@@ -128,6 +130,7 @@ run_forge_script() {
     --ffi \
     --broadcast \
     --skip-simulation \
+    --offline \
     --disable-labels \
     -q \
     "$@"
@@ -144,9 +147,28 @@ NETWORKS_JSON_PATH="$TMP_NETWORKS_JSON" ETH_PASSWORD= DEPLOYER_ADDRESS="$DEPLOYE
     --ffi \
     --broadcast \
     --skip-simulation \
+    --offline \
     --disable-labels \
     -q
 echo "refresh facets ok"
+
+if [[ "${REHEARSE_SECURITY_SINGLETONS:-false}" == "true" ]]; then
+  echo "security singletons"
+  NETWORKS_JSON_PATH="$TMP_NETWORKS_JSON" ETH_PASSWORD= DEPLOYER_ADDRESS="$DEPLOYER_ADDRESS" \
+    RUST_LOG=error timeout "$SCRIPT_TIMEOUT" forge script script/UpgradeSecuritySingletons.s.sol:UpgradeSecuritySingletons \
+      --rpc-url "$LOCAL_RPC_URL" \
+      --sig "run(string)" "$CHAIN" \
+      --account PK_DEPLOYER \
+      --password "$PK_DEPLOYER_PW" \
+      --chain-id "$CHAIN_ID" \
+      --ffi \
+      --broadcast \
+      --skip-simulation \
+      --offline \
+      --disable-labels \
+      -q
+  echo "security singletons ok"
+fi
 
 echo "factory"
 NETWORKS_JSON_PATH="$TMP_NETWORKS_JSON" ETH_PASSWORD= DEPLOYER_ADDRESS="$DEPLOYER_ADDRESS" \

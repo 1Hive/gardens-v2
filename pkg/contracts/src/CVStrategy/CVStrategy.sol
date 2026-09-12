@@ -688,7 +688,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     }
 
     function _initializeThresholdSnapshot(Proposal storage _proposal) internal {
-        _proposal.thresholdSnapshot = totalPointsActivated;
+        _proposal.thresholdSnapshot = _getPoolThresholdPoints();
         _proposal.thresholdUpdatedAtBlock = block.number;
     }
 
