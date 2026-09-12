@@ -337,13 +337,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <button
               type="button"
-              className="md:hidden inline-flex items-center justify-center rounded-md p-3 hover:bg-neutral-soft dark:hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="relative md:hidden inline-flex items-center justify-center rounded-md p-3 hover:bg-neutral-soft dark:hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"
               aria-label="Toggle navigation menu"
               onClick={() => setMobileMenuOpen((open) => !open)}
             >
               {mobileMenuOpen ?
                 <XMarkIcon className="h-6 w-6" />
               : <Bars3Icon className="h-6 w-6" />}
+              {showCampaignBadge && (
+                <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary-content text-[10px] font-bold leading-none text-neutral">
+                  1
+                </span>
+              )}
             </button>
           </div>
         </div>

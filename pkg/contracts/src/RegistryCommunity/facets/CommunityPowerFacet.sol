@@ -27,6 +27,8 @@ contract CommunityPowerFacet is CommunityBaseFacet {
     error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower); // 0x8a11f318
     error PointsDeactivated(); // 0xd4d3290e
     error TooManyMemberStrategies(address member, uint256 current, uint256 maxAllowed);
+    // Declared for ABI decoding when the GoodDollar token reverts during safeTransferFrom.
+    error SUPER_GOODDOLLAR_PAUSED(); // 0x7f66be17
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/

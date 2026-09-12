@@ -1,14 +1,15 @@
 import { SuperBanner, SuperLogo, GoodDollarLogo } from "@/assets";
 import { getLatestCampaignIdFromKeys } from "@/utils/campaignIds";
 
-export type CampaignId = "1" | "2" | "3" | "4";
+export type CampaignId = "1" | "2" | "3" | "4" | "5";
 
 export interface CampaignConfig {
-  id: CampaignId;
+  id: number;
   name: string;
   description: string;
   tokenAllocated: number;
   tokenSymbol: string;
+  startDate?: string;
   endDate: string;
   banner: any;
   logo: any;
@@ -64,7 +65,20 @@ export const CAMPAIGNS = {
     logo: SuperLogo,
     leaderboardEndpoint: "/api/superfluid-points/leaderboard?campaignId=607",
   },
-} as const;
+  "5": {
+    id: 706,
+    name: "Superfluid Ecosystem Rewards Season 7",
+    tokenAllocated: 545_945,
+    description:
+      "Earn SUP rewards by staking governance tokens, adding funds to pools, following Gardens on Farcaster, and earning triple points in Streaming pools.",
+    tokenSymbol: "SUP",
+    startDate: "1 Sep 2026",
+    endDate: "30 Nov 2026",
+    banner: SuperBanner,
+    logo: SuperLogo,
+    leaderboardEndpoint: "/api/superfluid-points/leaderboard?campaignId=706",
+  },
+} as const satisfies Record<CampaignId, CampaignConfig>;
 
 export function getLatestCampaignId(): CampaignId {
   return getLatestCampaignIdFromKeys(Object.keys(CAMPAIGNS) as CampaignId[]);
