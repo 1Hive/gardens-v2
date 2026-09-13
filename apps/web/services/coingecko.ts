@@ -12,6 +12,11 @@ type SupportedPlatform =
 
 type SupportedCoinId = "ethereum" | "matic-network" | "celo" | "xdai";
 type PriceCacheEntry = { value: number; expiresAt: number; symbol?: string };
+type PriceCachePayload = {
+  updatedAt?: string;
+  ttlMs?: number;
+  entries?: Record<string, PriceCacheEntry | null>;
+};
 const coingeckoBaseUrl =
   process.env.COINGECKO_API_BASE ?? "https://api.coingecko.com/api/v3";
 const getBaseUrl = () => {
@@ -126,6 +131,11 @@ let hydratePriceCachePromise: Promise<void> | null = null;
 let persistPriceCachePromise: Promise<string | null> | null = null;
 const priceCache = new Map<string, PriceCacheEntry>();
 
+export const getTokenPriceCacheState = () => ({
+  cid: latestPriceCacheCid,
+  entries: priceCache.size,
+});
+
 const coercePrice = (entry: OverrideEntry | undefined | null) => {
   if (entry == null) return null;
   if (typeof entry === "number") return entry;
@@ -222,68 +232,88 @@ const unpinPriceCacheCid = async (cid: string | null) => {
   }
 };
 
+const listPinnedPriceCacheCids = async (): Promise<string[]> => {
+  if (!CAN_WRITE_PINATA) return [];
+  try {
+    const data = await pinataClient?.pinList({
+      status: "pinned",
+      metadata: { name: COINGECKO_PRICE_CACHE_NAME, keyvalues: {} },
+      pageLimit: 1000,
+      pageOffset: 0,
+    } as any);
+    return Array.from(
+      new Set(
+        (data?.rows ?? [])
+          .map((row: any) => row?.ipfs_pin_hash)
+          .filter((cid: unknown): cid is string => typeof cid === "string"),
+      ),
+    );
+  } catch (error) {
+    console.warn("[coingecko] pinata pinList error (price cache)", error);
+    return [];
+  }
+};
+
+const mergePriceCachePayload = (
+  remote: PriceCachePayload | null,
+  now = Date.now(),
+) => {
+  if (!remote?.entries || typeof remote.entries !== "object") return 0;
+  let merged = 0;
+  for (const [key, entry] of Object.entries(remote.entries)) {
+    if (
+      !entry ||
+      typeof entry !== "object" ||
+      typeof entry.value !== "number" ||
+      typeof entry.expiresAt !== "number" ||
+      entry.expiresAt <= now
+    ) {
+      continue;
+    }
+    const existing = priceCache.get(key);
+    if (!existing || entry.expiresAt > existing.expiresAt) {
+      priceCache.set(key, entry);
+      merged++;
+    }
+  }
+  return merged;
+};
+
+const mergePinnedPriceCaches = async () => {
+  const pinnedCids = await listPinnedPriceCacheCids();
+  const candidateCids = Array.from(
+    new Set([latestPriceCacheCid, ...pinnedCids].filter(Boolean) as string[]),
+  );
+  let merged = 0;
+  let readableCid: string | null = null;
+
+  const remotes = await Promise.all(
+    candidateCids.map(async (cid) => ({
+      cid,
+      remote: await fetchIpfsJson<PriceCachePayload>(cid),
+    })),
+  );
+  const now = Date.now();
+  for (const { cid, remote } of remotes) {
+    if (remote) readableCid = cid;
+    merged += mergePriceCachePayload(remote, now);
+  }
+  if (readableCid) latestPriceCacheCid = readableCid;
+
+  return { pinnedCids, candidateCids, merged };
+};
+
 const hydratePriceCacheFromPinata = async () => {
   if (priceCacheHydrated) return;
   if (hydratePriceCachePromise) return hydratePriceCachePromise;
 
   hydratePriceCachePromise = (async () => {
+    const { candidateCids, merged } = await mergePinnedPriceCaches();
     priceCacheHydrated = true;
-
-    const cid =
-      latestPriceCacheCid ??
-      (await (async () => {
-        if (!CAN_WRITE_PINATA) return null;
-        try {
-          const data = await pinataClient?.pinList({
-            status: "pinned",
-            metadata: { name: COINGECKO_PRICE_CACHE_NAME, keyvalues: {} },
-            pageLimit: 1,
-            pageOffset: 0,
-          } as any);
-          const found = data?.rows?.[0]?.ipfs_pin_hash ?? null;
-          if (found) {
-            latestPriceCacheCid = found;
-          }
-          return found;
-        } catch (error) {
-          console.warn("[coingecko] pinata pinList error (price cache)", error);
-          return null;
-        }
-      })());
-
-    if (!cid) return;
-
-    const remote = await fetchIpfsJson<{
-      entries?: Record<string, PriceCacheEntry | null>;
-    }>(cid);
-    const entries =
-      remote && typeof remote === "object" && "entries" in remote ?
-        remote.entries
-      : null;
-    if (!entries || typeof entries !== "object") return;
-
-    const now = Date.now();
-    let hydrated = 0;
-
-    for (const [key, entry] of Object.entries(entries)) {
-      if (
-        !entry ||
-        typeof entry !== "object" ||
-        typeof entry.value !== "number" ||
-        typeof entry.expiresAt !== "number"
-      ) {
-        continue;
-      }
-
-      if (entry.expiresAt <= now) continue;
-      priceCache.set(key, entry);
-      hydrated++;
-    }
-
-    if (hydrated > 0) {
+    if (merged > 0) {
       console.log("[coingecko] hydrated price cache from IPFS", {
-        cid,
-        entries: hydrated,
+        cids: candidateCids,
+        entries: priceCache.size,
       });
     }
   })();
@@ -295,46 +325,67 @@ const hydratePriceCacheFromPinata = async () => {
   }
 };
 
+export const hydrateTokenPriceCache = hydratePriceCacheFromPinata;
+
 const persistPriceCache = async (): Promise<string | null> => {
   if (!CAN_WRITE_PINATA || !priceCacheDirty) return null;
   if (priceCache.size === 0) {
     priceCacheDirty = false;
     return null;
   }
-  if (persistPriceCachePromise) return persistPriceCachePromise;
+  if (persistPriceCachePromise) {
+    await persistPriceCachePromise;
+    return priceCacheDirty ? persistPriceCache() : latestPriceCacheCid;
+  }
 
   persistPriceCachePromise = (async () => {
-    const payload = {
-      updatedAt: new Date().toISOString(),
-      ttlMs: COINGECKO_PRICE_CACHE_TTL_MS,
-      entries: Object.fromEntries(priceCache.entries()),
-    };
-
     try {
-      const previousCid = latestPriceCacheCid;
-      await unpinPriceCacheCid(previousCid);
-      const data = await pinataClient?.pinJSONToIPFS(
-        normalizeForPinata(payload),
-        {
-          pinataMetadata: {
-            name: COINGECKO_PRICE_CACHE_NAME,
-            keyvalues: { updatedAt: payload.updatedAt },
-          } as any,
-          pinataOptions:
-            PINATA_GROUP_ID ? ({ groupId: PINATA_GROUP_ID } as any) : undefined,
-        },
-      );
-      if (data?.IpfsHash) {
-        latestPriceCacheCid = data.IpfsHash;
+      while (priceCacheDirty) {
         priceCacheDirty = false;
-        console.log("[coingecko] pinned price cache to IPFS", {
+        const { pinnedCids } = await mergePinnedPriceCaches();
+        const now = Date.now();
+        for (const [key, entry] of priceCache.entries()) {
+          if (entry.expiresAt <= now) priceCache.delete(key);
+        }
+        if (priceCache.size === 0) continue;
+
+        const payload = {
+          updatedAt: new Date().toISOString(),
+          ttlMs: COINGECKO_PRICE_CACHE_TTL_MS,
+          entries: Object.fromEntries(priceCache.entries()),
+        };
+        const data = await pinataClient?.pinJSONToIPFS(
+          normalizeForPinata(payload),
+          {
+            pinataMetadata: {
+              name: COINGECKO_PRICE_CACHE_NAME,
+              keyvalues: { updatedAt: payload.updatedAt },
+            } as any,
+            pinataOptions:
+              PINATA_GROUP_ID ?
+                ({ groupId: PINATA_GROUP_ID } as any)
+              : undefined,
+          },
+        );
+        if (!data?.IpfsHash) {
+          priceCacheDirty = true;
+          break;
+        }
+
+        latestPriceCacheCid = data.IpfsHash;
+        console.log("[coingecko] pinned merged price cache to IPFS", {
           cid: data.IpfsHash,
-          entries: priceCache.size,
+          entries: Object.keys(payload.entries).length,
         });
-        return data.IpfsHash;
+        await Promise.all(
+          pinnedCids
+            .filter((cid) => cid !== data.IpfsHash)
+            .map((cid) => unpinPriceCacheCid(cid)),
+        );
       }
     } catch (error) {
       console.warn("[coingecko] pinata pinJSONToIPFS error (prices)", error);
+      priceCacheDirty = true;
     }
 
     return latestPriceCacheCid;
