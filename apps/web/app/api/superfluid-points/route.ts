@@ -12,7 +12,11 @@ import {
   shouldCountDirectFunding,
 } from "./points";
 import { chainConfigMap } from "@/configs/chains";
-import { getTokenUsdPrice } from "@/services/coingecko";
+import {
+  getTokenPriceCacheState,
+  getTokenUsdPrice,
+  hydrateTokenPriceCache,
+} from "@/services/coingecko";
 import { getSuperfluidPointsClient } from "@/services/superfluid-points";
 import { erc20ABI } from "@/src/generated";
 import { ChainId } from "@/types";
@@ -929,8 +933,6 @@ const EXCLUDED_WALLETS: Set<string> = new Set(
 );
 const PINATA_POINTS_SNAPSHOT_CID =
   process.env.SUPERFLUID_POINTS_SNAPSHOT_CID ?? null;
-const PINATA_PRICE_CACHE_NAME =
-  process.env.COINGECKO_PRICE_CACHE_NAME ?? "token-prices";
 const PINATA_ENS_CACHE_NAME =
   process.env.SUPERFLUID_ENS_CACHE_NAME ?? "superfluid-ens-cache";
 const PINATA_GROUP_ID =
@@ -1016,7 +1018,6 @@ let nativeTokenCache = new Map<string, string>();
 let latestPointsSnapshotCid: string | null = PINATA_POINTS_SNAPSHOT_CID;
 let creationCacheCampaignVersion: string | null = null;
 let transferCacheCampaignVersion: string | null = null;
-const TOKEN_PRICE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ENS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ENS_AVATAR_RETRY_MS = ENS_CACHE_TTL_MS;
 const ENS_METADATA_AVATAR_BASE_URL =
@@ -1039,13 +1040,6 @@ const fetchEnsAvatarFromMetadata = async (
   }
   return null;
 };
-const tokenPriceCache = new Map<
-  string,
-  { value: number; expiresAt: number; symbol?: string }
->();
-let priceCacheDirty = false;
-let latestPriceCacheCid: string | null = null;
-let priceCacheHydrated = false;
 let lastEnsCachePrune = 0;
 const ENS_CACHE_PRUNE_INTERVAL_MS = 60 * 60 * 1000;
 const isEnsNegativeCacheEntry = (entry: EnsCacheEntry) =>
@@ -1670,74 +1664,13 @@ const persistCreationBlockCache = async (): Promise<string | null> => {
   return cid ?? latestCreationBlockCacheCid;
 };
 
-const hydratePriceCacheFromIpfs = async () => {
-  if (priceCacheHydrated) return;
-  priceCacheHydrated = true;
-  const cid =
-    latestPriceCacheCid ??
-    (await (async () => {
-      if (latestPriceCacheCid != null || !CAN_WRITE_PINATA) return null;
-      try {
-        const data = await pinataClient?.pinList({
-          status: "pinned",
-          metadata: { name: PINATA_PRICE_CACHE_NAME },
-          pageLimit: 1,
-          pageOffset: 0,
-        } as any);
-        const found = data?.rows?.[0]?.ipfs_pin_hash ?? null;
-        if (found) {
-          latestPriceCacheCid = found;
-          return found;
-        }
-        return null;
-      } catch {
-        return null;
-      }
-    })());
-  if (!cid) return;
-  const remote = await fetchIpfsJson(cid);
-  const entries =
-    remote && typeof remote === "object" && "entries" in remote ?
-      (remote as any).entries
-    : null;
-  if (!entries || typeof entries !== "object") return;
-  const now = Date.now();
-  let hydrated = 0;
-  for (const [key, val] of Object.entries(entries)) {
-    if (
-      !val ||
-      typeof val !== "object" ||
-      typeof (val as any).value !== "number" ||
-      typeof (val as any).expiresAt !== "number"
-    ) {
-      continue;
-    }
-    const expiresAt = (val as any).expiresAt;
-    if (expiresAt <= now) continue;
-    const symbol =
-      typeof (val as any).symbol === "string" ? (val as any).symbol : "";
-    tokenPriceCache.set(key, {
-      value: (val as any).value,
-      expiresAt,
-      symbol,
-    });
-    hydrated++;
-  }
-  if (hydrated > 0) {
-    console.log("[superfluid-points] hydrated token price cache from IPFS", {
-      cid,
-      entries: hydrated,
-    });
-  }
-};
-
 const hydrateCachesFromIpfs = async () => {
   const startedAt = Date.now();
   try {
     await Promise.all([
       hydrateCreationBlockCacheFromIpfs(),
       hydrateTransferLogCacheFromIpfs(),
-      hydratePriceCacheFromIpfs(),
+      hydrateTokenPriceCache(),
       hydrateEnsIdentityCacheFromIpfs(),
     ]);
     console.log("[superfluid-points] cache hydration complete", {
@@ -1745,7 +1678,7 @@ const hydrateCachesFromIpfs = async () => {
       campaignVersion: currentCampaignVersion,
       creationBlockEntries: creationBlockCache.size,
       transferLogEntries: transferLogCache.size,
-      priceEntries: tokenPriceCache.size,
+      priceEntries: getTokenPriceCacheState().entries,
       ensEntries: ensIdentityCache.size,
     });
   } catch (error) {
@@ -2004,67 +1937,6 @@ const persistTransferLogCache = async (): Promise<string | null> => {
   const cid = await pinTransferLogCacheToIpfs();
   transferLogCacheDirty = false;
   return cid ?? latestTransferLogCacheCid;
-};
-
-const unpinPriceCacheCid = async (cid: string | null) => {
-  if (!CAN_WRITE_PINATA || !cid) return;
-  try {
-    await pinataClient?.unpin(cid);
-    console.log("[superfluid-points] unpinned previous token price cache", {
-      cid,
-    });
-  } catch (error) {
-    console.warn("[superfluid-points] pinata unpin error (prices)", {
-      cid,
-      error,
-    });
-  }
-};
-
-const pinPriceCacheToIpfs = async (): Promise<string | null> => {
-  if (!CAN_WRITE_PINATA || !priceCacheDirty || tokenPriceCache.size === 0)
-    return null;
-  const entries = Object.fromEntries(tokenPriceCache.entries());
-  const payload = {
-    updatedAt: new Date().toISOString(),
-    ttlMs: TOKEN_PRICE_CACHE_TTL_MS,
-    entries,
-  };
-  try {
-    const previousCid = latestPriceCacheCid;
-    await unpinPriceCacheCid(previousCid);
-    const data = await pinataClient?.pinJSONToIPFS(
-      normalizeForPinata(payload),
-      {
-        pinataMetadata: {
-          name: PINATA_PRICE_CACHE_NAME,
-          keyvalues: { updatedAt: payload.updatedAt },
-        } as any,
-        pinataOptions:
-          PINATA_GROUP_ID ? ({ groupId: PINATA_GROUP_ID } as any) : undefined,
-      },
-    );
-    if (data?.IpfsHash) {
-      latestPriceCacheCid = data.IpfsHash;
-      console.log("[superfluid-points] pinned token price cache to IPFS", {
-        cid: data.IpfsHash,
-      });
-      return data.IpfsHash;
-    }
-    return null;
-  } catch (error) {
-    console.warn("[superfluid-points] pinata pinJSONToIPFS error (prices)", {
-      error,
-    });
-    return null;
-  }
-};
-
-const persistPriceCache = async (): Promise<string | null> => {
-  if (!priceCacheDirty) return null;
-  const cid = await pinPriceCacheToIpfs();
-  priceCacheDirty = false;
-  return cid ?? latestPriceCacheCid;
 };
 
 const pinEnsIdentityCacheToIpfs = async (): Promise<string | null> => {
@@ -3052,26 +2924,12 @@ const processChain = async ({
   }: {
     token: Address;
     symbol: string;
-  }): Promise<number> => {
-    const key = `${chainId}-${toLower(token)}`;
-    const cached = tokenPriceCache.get(key);
-    const now = Date.now();
-    if (cached && cached.expiresAt > now) {
-      return cached.value;
-    }
-    const price = await getTokenUsdPrice({
+  }): Promise<number> =>
+    getTokenUsdPrice({
       chainId: Number(chainId),
       address: token,
       symbol,
     });
-    tokenPriceCache.set(key, {
-      value: price,
-      expiresAt: now + TOKEN_PRICE_CACHE_TTL_MS,
-      symbol,
-    });
-    priceCacheDirty = true;
-    return price;
-  };
 
   for (const pool of pools) {
     poolsProcessed++;
@@ -3641,16 +3499,15 @@ export async function GET(req: Request) {
         ensCacheCid: null,
       };
     }
-    const [creationPin, transferPin, pricePin, ensPin] = await Promise.all([
+    const [creationPin, transferPin, ensPin] = await Promise.all([
       persistCreationBlockCache(),
       persistTransferLogCache(),
-      persistPriceCache(),
       persistEnsIdentityCache(),
     ]);
     return {
       creationBlockCacheCid: creationPin ?? latestCreationBlockCacheCid ?? null,
       transferLogCacheCid: transferPin ?? latestTransferLogCacheCid ?? null,
-      priceCacheCid: pricePin ?? latestPriceCacheCid ?? null,
+      priceCacheCid: getTokenPriceCacheState().cid,
       ensCacheCid: ensPin ?? latestEnsCacheCid ?? null,
     };
   };
@@ -3675,7 +3532,7 @@ export async function GET(req: Request) {
         null,
       priceCacheCid:
         extras?.priceCacheCid ??
-        latestPriceCacheCid ??
+        getTokenPriceCacheState().cid ??
         pinnedPriceCacheCid ??
         null,
       pointsSnapshotCid:
@@ -4531,7 +4388,8 @@ export async function GET(req: Request) {
           responseCreationCid ?? latestCreationBlockCacheCid ?? null,
         transferLogCacheCid:
           responseTransferCid ?? latestTransferLogCacheCid ?? null,
-        priceCacheCid: pinned.priceCacheCid ?? latestPriceCacheCid ?? null,
+        priceCacheCid:
+          pinned.priceCacheCid ?? getTokenPriceCacheState().cid ?? null,
         ensCacheCid: responseEnsCid ?? latestEnsCacheCid ?? null,
         pointsSnapshotCid: responsePointsCid,
         campaignId: effectiveCampaignId,
