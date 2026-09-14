@@ -23,6 +23,7 @@ const CID_A = "QmP5Gpuke1GBHWrq4oZ5CkFgEPNbXUcCYjEtvZJcjwzvxd";
 const CID_B = "Qme48KamKRdyGj5V2EdgdP5dEbY9T8UHfBLaH9P4q8rBYP";
 const STALE_CID = "Qmbco3eSVvwgkD7jRmsMJ6LgWUYxJ8N4nXq19gzQx4D8gY";
 const NEW_CID = "QmdgJ2QixG5cZKY1UbcstYAWrWxwunu3aKfwG2ESUuTGaA";
+const MARKEE_ADDRESS = "0xF6627cF19317C33B457f77452876e6e297c4942F";
 
 describe("CoinGecko Pinata price cache", () => {
   beforeEach(() => {
@@ -217,5 +218,80 @@ describe("CoinGecko Pinata price cache", () => {
       "gas-token:10": expect.objectContaining({ value: 2500 }),
       "gas-token:42220": expect.objectContaining({ value: 0.08 }),
     });
+  });
+
+  it("falls back to GeckoTerminal when CoinGecko omits a token price", async () => {
+    vi.stubEnv("COINGECKO_PRICE_CACHE_CID", "");
+    vi.stubEnv("COINGECKO_API_KEY", "demo-key");
+    pinataMocks.pinList.mockResolvedValue({ rows: [] });
+    pinataMocks.pinJSONToIPFS.mockResolvedValue({ IpfsHash: NEW_CID });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const url = String(input);
+        if (url.startsWith("https://api.coingecko.com/api/v3/")) {
+          return Response.json({});
+        }
+        if (
+          url ===
+          `https://api.geckoterminal.com/api/v2/simple/networks/base/token_price/${MARKEE_ADDRESS.toLowerCase()}`
+        ) {
+          return Response.json({
+            data: {
+              attributes: {
+                token_prices: {
+                  [MARKEE_ADDRESS.toLowerCase()]: "0.00581734526341272",
+                },
+              },
+            },
+          });
+        }
+        throw new Error(`Unexpected fetch: ${url}`);
+      }),
+    );
+
+    const { getTokenUsdPrice } = await import("./coingecko");
+    await expect(
+      getTokenUsdPrice({
+        chainId: 8453,
+        address: MARKEE_ADDRESS,
+        symbol: "MARKEE",
+      }),
+    ).resolves.toBe(0.00581734526341272);
+
+    const payload = pinataMocks.pinJSONToIPFS.mock.calls.at(-1)?.[0];
+    expect(payload.entries).toMatchObject({
+      [`8453:${MARKEE_ADDRESS.toLowerCase()}`]: expect.objectContaining({
+        value: 0.00581734526341272,
+        symbol: "MARKEE",
+      }),
+    });
+  });
+
+  it("does not call GeckoTerminal when CoinGecko returns a price", async () => {
+    vi.stubEnv("COINGECKO_PRICE_CACHE_CID", "");
+    vi.stubEnv("COINGECKO_API_KEY", "demo-key");
+    pinataMocks.pinList.mockResolvedValue({ rows: [] });
+    pinataMocks.pinJSONToIPFS.mockResolvedValue({ IpfsHash: NEW_CID });
+    const fetchMock = vi.fn(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.startsWith("https://api.coingecko.com/api/v3/")) {
+        return Response.json({
+          [MARKEE_ADDRESS.toLowerCase()]: { usd: 0.006 },
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { getTokenUsdPrice } = await import("./coingecko");
+    await expect(
+      getTokenUsdPrice({
+        chainId: 8453,
+        address: MARKEE_ADDRESS,
+        symbol: "MARKEE",
+      }),
+    ).resolves.toBe(0.006);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

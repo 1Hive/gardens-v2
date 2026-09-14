@@ -10,6 +10,15 @@ type SupportedPlatform =
   | "arbitrum-one"
   | "optimistic-ethereum";
 
+type SupportedGeckoTerminalNetwork =
+  | "eth"
+  | "polygon_pos"
+  | "celo"
+  | "base"
+  | "xdai"
+  | "arbitrum"
+  | "optimism";
+
 type SupportedCoinId = "ethereum" | "matic-network" | "celo" | "xdai";
 type PriceCacheEntry = { value: number; expiresAt: number; symbol?: string };
 type PriceCachePayload = {
@@ -42,6 +51,19 @@ const PLATFORM_BY_CHAIN: Record<number, SupportedPlatform> = {
   10: "optimistic-ethereum",
 };
 
+const GECKO_TERMINAL_NETWORK_BY_CHAIN: Record<
+  number,
+  SupportedGeckoTerminalNetwork
+> = {
+  1: "eth",
+  10: "optimism",
+  100: "xdai",
+  137: "polygon_pos",
+  8453: "base",
+  42161: "arbitrum",
+  42220: "celo",
+};
+
 const GAS_TOKEN_COIN_ID_BY_CHAIN: Record<number, SupportedCoinId> = {
   1: "ethereum",
   10: "ethereum",
@@ -61,6 +83,12 @@ const COINGECKO_TOKEN_PRICE_URL = (
 ) => `${baseUrl}/simple/token_price/${platform}`;
 
 const COINGECKO_COIN_PRICE_URL = (baseUrl: string) => `${baseUrl}/simple/price`;
+const GECKO_TERMINAL_BASE_URL = "https://api.geckoterminal.com/api/v2";
+const GECKO_TERMINAL_TOKEN_PRICE_URL = (
+  network: SupportedGeckoTerminalNetwork,
+  address: string,
+) =>
+  `${GECKO_TERMINAL_BASE_URL}/simple/networks/${network}/token_price/${address}`;
 const COINGECKO_PRICE_CACHE_NAME =
   process.env.COINGECKO_PRICE_CACHE_NAME ?? "token-prices";
 const COINGECKO_PRICE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -460,6 +488,55 @@ const setCachedPrice = ({
   priceCacheDirty = true;
 };
 
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
+
+const fetchGeckoTerminalTokenUsdPrice = async ({
+  chainId,
+  address,
+}: {
+  chainId: number;
+  address: string;
+}): Promise<number> => {
+  const network = GECKO_TERMINAL_NETWORK_BY_CHAIN[chainId];
+  if (!network) {
+    throw new Error(`Unsupported chainId for GeckoTerminal price: ${chainId}`);
+  }
+
+  const normalizedAddress = address.toLowerCase();
+  const response = await fetch(
+    GECKO_TERMINAL_TOKEN_PRICE_URL(network, normalizedAddress),
+    {
+      headers: { accept: "application/json" },
+      next: { revalidate: 0 },
+    },
+  );
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(
+      `Failed to fetch GeckoTerminal price (${response.status}): ${body}`,
+    );
+  }
+
+  const data = (await response.json()) as {
+    data?: {
+      attributes?: {
+        token_prices?: Record<string, string | number | null>;
+      };
+    };
+  };
+  const price = Number(
+    data.data?.attributes?.token_prices?.[normalizedAddress],
+  );
+  if (!Number.isFinite(price) || price <= 0) {
+    throw new Error(
+      `GeckoTerminal price missing in response for ${address} on ${chainId}`,
+    );
+  }
+
+  return price;
+};
+
 async function fetchTokenUsdPrice({
   chainId,
   address,
@@ -485,41 +562,49 @@ async function fetchTokenUsdPrice({
   primaryUrl.searchParams.set("contract_addresses", address.toLowerCase());
   primaryUrl.searchParams.set("vs_currencies", "usd");
 
-  const request = async (targetUrl: URL) => {
-    const res = await fetch(targetUrl, {
+  try {
+    const response = await fetch(primaryUrl, {
       headers: getRequestHeaders(),
       next: { revalidate: 0 },
     });
-    return res;
-  };
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(
+        `Failed to fetch Coingecko price (${response.status}): ${body}`,
+      );
+    }
 
-  let response = await request(primaryUrl);
-
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(
-      `Failed to fetch Coingecko price (${response.status}): ${body}`,
+    const data = (await response.json()) as Record<
+      string,
+      { usd?: number | null }
+    >;
+    const entry = data[address.toLowerCase()];
+    if (entry?.usd == null) {
+      throw new Error(
+        `Coingecko price missing in response for ${address} on ${chainId}`,
+      );
+    }
+    return entry.usd;
+  } catch (coingeckoError) {
+    console.warn(
+      "[coingecko] primary token price failed, trying GeckoTerminal",
+      {
+        chainId,
+        address,
+        symbol,
+        error: getErrorMessage(coingeckoError),
+      },
     );
+    try {
+      return await fetchGeckoTerminalTokenUsdPrice({ chainId, address });
+    } catch (geckoTerminalError) {
+      throw new Error(
+        `Failed to fetch token price for ${address} on ${chainId}; ` +
+          `CoinGecko: ${getErrorMessage(coingeckoError)}; ` +
+          `GeckoTerminal: ${getErrorMessage(geckoTerminalError)}`,
+      );
+    }
   }
-
-  const data = (await response.json()) as Record<
-    string,
-    { usd?: number | null }
-  >;
-
-  const entry = data[address.toLowerCase()];
-  if (entry?.usd == null) {
-    const overridePrice = getOverridePrice(
-      getTokenOverrideKey(chainId, address),
-      symbol,
-    );
-    if (overridePrice != null) return overridePrice;
-    throw new Error(
-      `Coingecko price missing in response for ${address} on ${chainId}`,
-    );
-  }
-
-  return entry.usd;
 }
 
 async function fetchGasTokenUsdPrice({
