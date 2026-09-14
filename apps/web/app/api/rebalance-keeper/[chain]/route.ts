@@ -147,6 +147,8 @@ const GARDENS_APP_BASE_URL = "https://app.gardens.fund";
 const CFA_V1_FORWARDER =
   "0xcfA132E353cB4E398080B9700609bb008eceB125" as Address;
 const PROPOSAL_MULTICALL_CHUNK_SIZE = 75;
+const CELO_CHAIN_ID = 42220;
+const DEFAULT_CELO_SIGNIFICANT_RATE_CHANGE_BPS = 500n;
 
 let ablyClient: Ably.Rest | null = null;
 let hasWarnedMissingAblyKey = false;
@@ -328,12 +330,24 @@ async function multicallInChunks({
 async function shouldRunRebalance({
   publicClient,
   strategy,
+  chainId,
 }: {
   publicClient: PublicClient;
   strategy: Address;
+  chainId: ChainId;
 }): Promise<{ shouldRun: boolean; reason?: string; error?: string }> {
-  const thresholdBps = readBigintEnv(
-    "STREAMING_REBALANCE_SIGNIFICANT_RATE_CHANGE_BPS",
+  const thresholdBps =
+    Number(chainId) === CELO_CHAIN_ID ?
+      readBigintEnv(
+        "STREAMING_REBALANCE_CELO_SIGNIFICANT_RATE_CHANGE_BPS",
+        DEFAULT_CELO_SIGNIFICANT_RATE_CHANGE_BPS,
+      )
+    : readBigintEnv(
+        "STREAMING_REBALANCE_SIGNIFICANT_RATE_CHANGE_BPS",
+        DEFAULT_SIGNIFICANT_RATE_CHANGE_BPS,
+      );
+  const outflowThresholdBps = readBigintEnv(
+    "STREAMING_REBALANCE_OUTFLOW_DRIFT_BPS",
     DEFAULT_SIGNIFICANT_RATE_CHANGE_BPS,
   );
 
@@ -611,6 +625,7 @@ async function shouldRunRebalance({
         currentTotalFlowRate,
         hasStreamingConfig: true,
         thresholdBps,
+        outflowThresholdBps,
         proposals: proposalSnapshots.map((proposal, index) => {
           const beneficiaryResult = escrowStateResults[index * 2];
           const disputedResult = escrowStateResults[index * 2 + 1];
@@ -969,6 +984,7 @@ async function runKeeperForChain({
         const rebalanceNeed = await shouldRunRebalance({
           publicClient,
           strategy,
+          chainId,
         });
         if (!rebalanceNeed.shouldRun) {
           skipped.push({

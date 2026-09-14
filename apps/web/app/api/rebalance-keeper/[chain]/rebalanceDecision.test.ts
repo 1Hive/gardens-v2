@@ -228,6 +228,33 @@ describe("rebalance decision", () => {
     });
   });
 
+  it("preserves the outflow drift threshold when the rate threshold is raised", () => {
+    expect(
+      evaluateRebalanceDecision(
+        baseInput({
+          thresholdBps: 500n,
+          outflowThresholdBps: 50n,
+          currentTotalFlowRate: 1_000n,
+          proposals: [
+            {
+              status: ACTIVE_STATUS,
+              conviction: 15_000n,
+              threshold: 100n,
+              currentUnits: 1_000n,
+              currentFlowRate: 1_000n,
+              currentOutflowRate: 990n,
+              escrowDisputed: false,
+              hasEscrow: true,
+            },
+          ],
+        }),
+      ),
+    ).toEqual({
+      shouldRun: true,
+      reason: "escrow_outflow_drift_50bps",
+    });
+  });
+
   it("runs to stop flow when there are no proposals but flow is still active", () => {
     expect(
       evaluateRebalanceDecision(
