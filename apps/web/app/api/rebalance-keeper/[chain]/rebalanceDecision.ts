@@ -15,6 +15,7 @@ export type RebalanceDecisionInput = {
   currentTotalFlowRate: bigint;
   hasStreamingConfig: boolean;
   thresholdBps?: bigint;
+  outflowThresholdBps?: bigint;
   proposals: Array<{
     status: number;
     conviction: bigint;
@@ -64,6 +65,7 @@ export function evaluateRebalanceDecision({
   currentTotalFlowRate,
   hasStreamingConfig,
   thresholdBps = DEFAULT_SIGNIFICANT_RATE_CHANGE_BPS,
+  outflowThresholdBps = DEFAULT_SIGNIFICANT_RATE_CHANGE_BPS,
   proposals,
 }: RebalanceDecisionInput): RebalanceDecision {
   if (!hasStreamingConfig) {
@@ -179,14 +181,14 @@ export function evaluateRebalanceDecision({
     return isSignificantRateChange({
       current: proposal.currentOutflowRate,
       target: targetOutflowRate,
-      thresholdBps,
+      thresholdBps: outflowThresholdBps,
     });
   });
 
   if (hasSignificantEscrowOutflowDrift) {
     return {
       shouldRun: true,
-      reason: `escrow_outflow_drift_${thresholdBps}bps`,
+      reason: `escrow_outflow_drift_${outflowThresholdBps}bps`,
     };
   }
 
