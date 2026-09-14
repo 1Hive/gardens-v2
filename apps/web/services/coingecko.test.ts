@@ -89,6 +89,93 @@ describe("CoinGecko Pinata price cache", () => {
     expect(pinataMocks.unpin).toHaveBeenCalledWith(CID_B);
   });
 
+  it("bounds concurrent IPFS reads while hydrating many cache snapshots", async () => {
+    const cids = Array.from({ length: 40 }, (_, index) => `cache-cid-${index}`);
+    let activeReads = 0;
+    let maxActiveReads = 0;
+    let releaseReads!: () => void;
+    let markSaturated!: () => void;
+    const readsBlocked = new Promise<void>((resolve) => {
+      releaseReads = resolve;
+    });
+    const saturated = new Promise<void>((resolve) => {
+      markSaturated = resolve;
+    });
+
+    vi.stubEnv("COINGECKO_PRICE_CACHE_CID", "");
+    pinataMocks.pinList.mockResolvedValue({
+      rows: cids.map((cid) => ({ ipfs_pin_hash: cid })),
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        activeReads += 1;
+        maxActiveReads = Math.max(maxActiveReads, activeReads);
+        if (activeReads === 16) markSaturated();
+        await readsBlocked;
+        activeReads -= 1;
+        return Response.json({ entries: {} });
+      }),
+    );
+
+    const { hydrateTokenPriceCache } = await import("./coingecko");
+    const hydration = hydrateTokenPriceCache();
+    await saturated;
+
+    expect(fetch).toHaveBeenCalledTimes(16);
+    expect(maxActiveReads).toBe(16);
+
+    releaseReads();
+    await hydration;
+    expect(fetch).toHaveBeenCalledTimes(cids.length);
+  });
+
+  it("bounds concurrent Pinata cleanup after publishing a merged cache", async () => {
+    const cids = Array.from({ length: 40 }, (_, index) => `cache-cid-${index}`);
+    let activeUnpins = 0;
+    let maxActiveUnpins = 0;
+    let releaseUnpins!: () => void;
+    let markSaturated!: () => void;
+    const unpinsBlocked = new Promise<void>((resolve) => {
+      releaseUnpins = resolve;
+    });
+    const saturated = new Promise<void>((resolve) => {
+      markSaturated = resolve;
+    });
+
+    vi.stubEnv("COINGECKO_PRICE_CACHE_CID", "");
+    vi.stubEnv(
+      "COINGECKO_PRICE_OVERRIDES",
+      JSON.stringify({ "gas-token:10": 2500 }),
+    );
+    pinataMocks.pinList.mockResolvedValue({
+      rows: cids.map((cid) => ({ ipfs_pin_hash: cid })),
+    });
+    pinataMocks.pinJSONToIPFS.mockResolvedValue({ IpfsHash: NEW_CID });
+    pinataMocks.unpin.mockImplementation(async () => {
+      activeUnpins += 1;
+      maxActiveUnpins = Math.max(maxActiveUnpins, activeUnpins);
+      if (activeUnpins === 16) markSaturated();
+      await unpinsBlocked;
+      activeUnpins -= 1;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ entries: {} })),
+    );
+
+    const { getGasTokenUsdPrice } = await import("./coingecko");
+    const price = getGasTokenUsdPrice({ chainId: 10, symbol: "ETH" });
+    await saturated;
+
+    expect(pinataMocks.unpin).toHaveBeenCalledTimes(16);
+    expect(maxActiveUnpins).toBe(16);
+
+    releaseUnpins();
+    await expect(price).resolves.toBe(2500);
+    expect(pinataMocks.unpin).toHaveBeenCalledTimes(cids.length);
+  });
+
   it("flushes entries added while another cache upload is in flight", async () => {
     let releaseFirstPin!: () => void;
     let markFirstPinStarted!: () => void;

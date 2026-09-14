@@ -64,6 +64,7 @@ const COINGECKO_COIN_PRICE_URL = (baseUrl: string) => `${baseUrl}/simple/price`;
 const COINGECKO_PRICE_CACHE_NAME =
   process.env.COINGECKO_PRICE_CACHE_NAME ?? "token-prices";
 const COINGECKO_PRICE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const PRICE_CACHE_PINATA_CONCURRENCY = 16;
 const PINATA_GROUP_ID =
   process.env.PINATA_GROUP_ID ?? "37bf2b9a-5a2e-4049-b138-8b1e180d44a4";
 
@@ -203,6 +204,30 @@ const normalizeForPinata = <T>(payload: T): T => {
   }
 };
 
+const mapWithConcurrency = async <T, R>(
+  items: T[],
+  concurrency: number,
+  task: (item: T, index: number) => Promise<R>,
+): Promise<R[]> => {
+  if (items.length === 0) return [];
+
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    async () => {
+      while (nextIndex < items.length) {
+        const currentIndex = nextIndex;
+        nextIndex += 1;
+        results[currentIndex] = await task(items[currentIndex]!, currentIndex);
+      }
+    },
+  );
+
+  await Promise.all(workers);
+  return results;
+};
+
 const fetchIpfsJson = async <T>(cid: string): Promise<T | null> => {
   if (!cid || !isValidCid(cid)) return null;
   try {
@@ -223,12 +248,13 @@ const fetchIpfsJson = async <T>(cid: string): Promise<T | null> => {
 };
 
 const unpinPriceCacheCid = async (cid: string | null) => {
-  if (!CAN_WRITE_PINATA || !cid) return;
+  if (!CAN_WRITE_PINATA || !cid) return false;
   try {
     await pinataClient?.unpin(cid);
-    console.log("[coingecko] unpinned previous price cache", { cid });
+    return true;
   } catch (error) {
     console.warn("[coingecko] pinata unpin error (prices)", { cid, error });
+    return false;
   }
 };
 
@@ -287,11 +313,13 @@ const mergePinnedPriceCaches = async () => {
   let merged = 0;
   let readableCid: string | null = null;
 
-  const remotes = await Promise.all(
-    candidateCids.map(async (cid) => ({
+  const remotes = await mapWithConcurrency(
+    candidateCids,
+    PRICE_CACHE_PINATA_CONCURRENCY,
+    async (cid) => ({
       cid,
       remote: await fetchIpfsJson<PriceCachePayload>(cid),
-    })),
+    }),
   );
   const now = Date.now();
   for (const { cid, remote } of remotes) {
@@ -312,7 +340,7 @@ const hydratePriceCacheFromPinata = async () => {
     priceCacheHydrated = true;
     if (merged > 0) {
       console.log("[coingecko] hydrated price cache from IPFS", {
-        cids: candidateCids,
+        cidCount: candidateCids.length,
         entries: priceCache.size,
       });
     }
@@ -377,11 +405,18 @@ const persistPriceCache = async (): Promise<string | null> => {
           cid: data.IpfsHash,
           entries: Object.keys(payload.entries).length,
         });
-        await Promise.all(
-          pinnedCids
-            .filter((cid) => cid !== data.IpfsHash)
-            .map((cid) => unpinPriceCacheCid(cid)),
+        const cidsToUnpin = pinnedCids.filter((cid) => cid !== data.IpfsHash);
+        const unpinResults = await mapWithConcurrency(
+          cidsToUnpin,
+          PRICE_CACHE_PINATA_CONCURRENCY,
+          unpinPriceCacheCid,
         );
+        if (cidsToUnpin.length > 0) {
+          console.log("[coingecko] cleaned up previous price caches", {
+            attempted: cidsToUnpin.length,
+            unpinned: unpinResults.filter(Boolean).length,
+          });
+        }
       }
     } catch (error) {
       console.warn("[coingecko] pinata pinJSONToIPFS error (prices)", error);
