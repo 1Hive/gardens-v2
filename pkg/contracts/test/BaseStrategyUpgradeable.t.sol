@@ -107,7 +107,9 @@ contract BaseStrategyUpgradeableTest is Test {
         BaseStrategyUpgradeableHarness impl = new BaseStrategyUpgradeableHarness();
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(impl),
-            abi.encodeWithSelector(BaseStrategyUpgradeableHarness.initializeHarness.selector, address(allo), "TEST_STRATEGY", owner)
+            abi.encodeWithSelector(
+                BaseStrategyUpgradeableHarness.initializeHarness.selector, address(allo), "TEST_STRATEGY", owner
+            )
         );
         strategy = BaseStrategyUpgradeableHarness(payable(address(proxy)));
     }

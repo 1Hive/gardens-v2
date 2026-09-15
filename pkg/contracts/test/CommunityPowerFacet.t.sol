@@ -212,9 +212,7 @@ contract CommunityPowerFacetTest is Test {
         token.mint(address(facet), 5);
 
         vm.prank(member);
-        vm.expectRevert(
-            abi.encodeWithSelector(CommunityPowerFacet.CantDecreaseMoreThanPower.selector, 5, 3)
-        );
+        vm.expectRevert(abi.encodeWithSelector(CommunityPowerFacet.CantDecreaseMoreThanPower.selector, 5, 3));
         facet.decreasePower(5);
     }
 

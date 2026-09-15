@@ -97,8 +97,9 @@ contract DiamondLoupeFacetTest is Test {
         selectors[2] = DiamondLoupeFacet.facetAddresses.selector;
         selectors[3] = DiamondLoupeFacet.facetAddress.selector;
         selectors[4] = DiamondLoupeFacet.supportsInterface.selector;
-        cuts[0] =
-            IDiamond.FacetCut({facetAddress: address(loupeFacet), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors});
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: address(loupeFacet), action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
+        });
         diamond.diamondCut(cuts, address(0), "");
     }
 
@@ -116,8 +117,9 @@ contract DiamondLoupeFacetTest is Test {
 
     function _addFacet(address facetAddress, bytes4[] memory selectors) internal {
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
-        cuts[0] =
-            IDiamond.FacetCut({facetAddress: facetAddress, action: IDiamond.FacetCutAction.Add, functionSelectors: selectors});
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: facetAddress, action: IDiamond.FacetCutAction.Add, functionSelectors: selectors
+        });
         diamond.diamondCut(cuts, address(0), "");
     }
 

@@ -948,7 +948,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         //     metadata
         // );
 
-
         /**
          * ASSERTS
          *
@@ -1640,7 +1639,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             uint256 maxRatio = 0.1 ether;
             uint256 spendingLimit = ((maxRatio * 1e18) / 0.77645 ether); // 0.77645 -> MAX_RATIO_CONSTANT
 
-
             uint256 pot = 3_000 ether;
             uint256 amountRequested = ((pot * spendingLimit) / 1e18) - 115 ether;
             (IAllo.Pool memory pool, uint256 _poolId, uint256 _proposalId) =
@@ -1694,7 +1692,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             assertEq(cv.getProposalStakedAmount(proposalId), STAKED_AMOUNT + STAKED_AMOUNT2);
         }
 
-
         // assertEq(ConvictionsUtils.getMaxConviction(cv.getProposalStakedAmount(proposalId),getDecay(cv)), 57806809642175848314931, "maxCVStaked");
 
         uint256 rollTo100 =
@@ -1719,7 +1716,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         // assertEq(threshold, 115613619, "threshold");
         // assertEq(threshold, MIN_THRESHOLD_PTS, "threshold");
-
 
         cv.updateProposalConviction(proposalId);
 
@@ -1810,7 +1806,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             assertEq(cv.getProposalStakedAmount(proposalId), STAKED_AMOUNT + STAKED_AMOUNT2);
         }
 
-
         // assertEq(ConvictionsUtils.getMaxConviction(cv.getProposalStakedAmount(proposalId),getDecay(cv)), 57806809642175848314931, "maxCVStaked");
 
         uint256 rollTo100 =
@@ -1836,7 +1831,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // assertEq(threshold, 115613619, "threshold");
         // 88495575221238938053097333333333 -> threshold override computed based on minThresholdPoints
         assertEq(threshold, 88495575221238938053097333333333, "threshold"); // Expect to be the threshold override
-
 
         cv.updateProposalConviction(proposalId);
 
@@ -2185,7 +2179,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
             assertEq(cv.getProposalVoterStake(proposalId, address(pool_admin())), STAKED_AMOUNT2);
             assertEq(cv.getProposalStakedAmount(proposalId), STAKED_AMOUNT + STAKED_AMOUNT2);
-
         }
 
         /**
@@ -2312,14 +2305,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.getProposalVoterStake(proposalId, address(pool_admin())), STAKED_AMOUNT2);
         assertEq(cv.getProposalStakedAmount(proposalId), STAKED_AMOUNT + STAKED_AMOUNT2);
 
-
         assertTrue(cvLast < cv.updateProposalConviction(proposalId), "growing2");
 
         cvLast = cv.updateProposalConviction(proposalId);
         vm.roll(200);
 
         assertTrue(cvLast < cv.updateProposalConviction(proposalId), "growing3");
-
 
         (
             ,,,,,,,
@@ -2334,7 +2325,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             uint256 threshold,
             uint256 voterStakedPoints,,
         ) = cv.getProposal(proposalId);
-
 
         assertEq(voterStakedPoints, uint256(SUPPORT_POINTS), "voterStakedPoints");
     }
@@ -2429,7 +2419,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         //     uint256 threshold,
         //     uint256 voterPointsPct
         // ) = cv.getProposal(proposalId);
-
     }
 
     function test_distribute_native_token_increasePower() public {
@@ -2537,7 +2526,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             uint256 threshold, // uint256 voterPointsPct
             ,,
         ) = cv.getProposal(proposalId);
-
 
         // recipients[0] = address(1);
         bytes memory dataProposal = abi.encode(proposalId);
@@ -3135,7 +3123,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     //             // uint256 voterPointsPct
     //     ) = cv.getProposal(proposalId);
 
-
     //     address[] memory recipients = new address[](0);
     //     // recipients[0] = address(1);
     //     bytes memory dataProposal = abi.encode(proposalId);
@@ -3213,7 +3200,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             uint256 threshold, // uint256 voterPointsPct
             ,,
         ) = cv.getProposal(proposalId);
-
 
         // Return the proposal details
     }

@@ -6,7 +6,6 @@ pragma solidity ^0.8.0;
 interface IDiamondLoupe {
     /// These functions are expected to be called frequently
     /// by tools.
-
     struct Facet {
         address facetAddress;
         bytes4[] functionSelectors;

@@ -78,11 +78,7 @@ contract NFTPowerRegistryTest is Test {
     function test_constructor_revertsWithZeroTokenAddress() public {
         NFTPowerRegistry.NFTPowerSource[] memory sources = new NFTPowerRegistry.NFTPowerSource[](1);
         sources[0] = NFTPowerRegistry.NFTPowerSource({
-            token: address(0),
-            nftType: NFTPowerRegistry.NFTType.ERC721,
-            weight: 10000,
-            tokenId: 0,
-            hatId: 0
+            token: address(0), nftType: NFTPowerRegistry.NFTType.ERC721, weight: 10000, tokenId: 0, hatId: 0
         });
         vm.expectRevert(NFTPowerRegistry.ZeroAddress.selector);
         new NFTPowerRegistry(address(mockHats), sources);
@@ -105,11 +101,7 @@ contract NFTPowerRegistryTest is Test {
     function test_constructor_storesSourcesCorrectly() public {
         NFTPowerRegistry.NFTPowerSource[] memory sources = new NFTPowerRegistry.NFTPowerSource[](2);
         sources[0] = NFTPowerRegistry.NFTPowerSource({
-            token: address(nft721),
-            nftType: NFTPowerRegistry.NFTType.ERC721,
-            weight: 10000,
-            tokenId: 0,
-            hatId: 0
+            token: address(nft721), nftType: NFTPowerRegistry.NFTType.ERC721, weight: 10000, tokenId: 0, hatId: 0
         });
         sources[1] = NFTPowerRegistry.NFTPowerSource({
             token: address(mockHats),
@@ -193,11 +185,7 @@ contract NFTPowerRegistryTest is Test {
 
         NFTPowerRegistry.NFTPowerSource[] memory sources = new NFTPowerRegistry.NFTPowerSource[](3);
         sources[0] = NFTPowerRegistry.NFTPowerSource({
-            token: address(nft721),
-            nftType: NFTPowerRegistry.NFTType.ERC721,
-            weight: 10000,
-            tokenId: 0,
-            hatId: 0
+            token: address(nft721), nftType: NFTPowerRegistry.NFTType.ERC721, weight: 10000, tokenId: 0, hatId: 0
         });
         sources[1] = NFTPowerRegistry.NFTPowerSource({
             token: address(mockHats),
@@ -226,11 +214,7 @@ contract NFTPowerRegistryTest is Test {
 
         NFTPowerRegistry.NFTPowerSource[] memory sources = new NFTPowerRegistry.NFTPowerSource[](2);
         sources[0] = NFTPowerRegistry.NFTPowerSource({
-            token: address(nft721),
-            nftType: NFTPowerRegistry.NFTType.ERC721,
-            weight: 10000,
-            tokenId: 0,
-            hatId: 0
+            token: address(nft721), nftType: NFTPowerRegistry.NFTType.ERC721, weight: 10000, tokenId: 0, hatId: 0
         });
         sources[1] = NFTPowerRegistry.NFTPowerSource({
             token: address(mockHats),
@@ -278,11 +262,7 @@ contract NFTPowerRegistryTest is Test {
     function _createERC721Registry(uint256 weight) internal returns (NFTPowerRegistry) {
         NFTPowerRegistry.NFTPowerSource[] memory sources = new NFTPowerRegistry.NFTPowerSource[](1);
         sources[0] = NFTPowerRegistry.NFTPowerSource({
-            token: address(nft721),
-            nftType: NFTPowerRegistry.NFTType.ERC721,
-            weight: weight,
-            tokenId: 0,
-            hatId: 0
+            token: address(nft721), nftType: NFTPowerRegistry.NFTType.ERC721, weight: weight, tokenId: 0, hatId: 0
         });
         return new NFTPowerRegistry(address(mockHats), sources);
     }
@@ -302,11 +282,7 @@ contract NFTPowerRegistryTest is Test {
     function _createHatRegistry(uint256 hatId, uint256 weight) internal returns (NFTPowerRegistry) {
         NFTPowerRegistry.NFTPowerSource[] memory sources = new NFTPowerRegistry.NFTPowerSource[](1);
         sources[0] = NFTPowerRegistry.NFTPowerSource({
-            token: address(mockHats),
-            nftType: NFTPowerRegistry.NFTType.HAT,
-            weight: weight,
-            tokenId: 0,
-            hatId: hatId
+            token: address(mockHats), nftType: NFTPowerRegistry.NFTType.HAT, weight: weight, tokenId: 0, hatId: hatId
         });
         return new NFTPowerRegistry(address(mockHats), sources);
     }

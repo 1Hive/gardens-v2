@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >= 0.8.11;
+pragma solidity >=0.8.11;
 
 import {IERC20, IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IERC777} from "@openzeppelin/contracts/token/ERC777/IERC777.sol";
@@ -32,8 +32,7 @@ interface ISuperToken is IERC20Metadata, IERC777 {
     /**
      * @dev Initialize the contract
      */
-    function initialize(IERC20 underlyingToken, uint8 underlyingDecimals, string calldata n, string calldata s)
-        external;
+    function initialize(IERC20 underlyingToken, uint8 underlyingDecimals, string calldata n, string calldata s) external;
 
     /**
      * @dev Initialize the contract with an admin
@@ -412,10 +411,7 @@ interface ISuperToken is IERC20Metadata, IERC777 {
      * @return underlyingAmount The underlying token amount after scaling
      * @return adjustedAmount The super token amount after scaling
      */
-    function toUnderlyingAmount(uint256 amount)
-        external
-        view
-        returns (uint256 underlyingAmount, uint256 adjustedAmount);
+    function toUnderlyingAmount(uint256 amount) external view returns (uint256 underlyingAmount, uint256 adjustedAmount);
 
     /**
      * @dev Upgrade ERC20 to SuperToken.
