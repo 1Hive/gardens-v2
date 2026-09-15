@@ -12,6 +12,59 @@ type WalletConnector = {
   getProvider: () => Promise<unknown>;
 };
 
+type ErrorLike = {
+  cause?: unknown;
+  code?: unknown;
+  message?: unknown;
+  name?: unknown;
+};
+
+const USER_REJECTION_MESSAGES = [
+  "user rejected",
+  "user denied",
+  "rejected by user",
+  "request rejected",
+];
+
+const isErrorLike = (error: unknown): error is ErrorLike =>
+  typeof error === "object" && error !== null;
+
+export const isUserRejectedWalletRequest = (error: unknown): boolean => {
+  const seen = new Set<unknown>();
+  let current: unknown = error;
+
+  while (isErrorLike(current) && !seen.has(current)) {
+    seen.add(current);
+
+    if (
+      current.code === 4001 ||
+      current.code === "4001" ||
+      current.code === "ACTION_REJECTED" ||
+      current.name === "UserRejectedRequestError"
+    ) {
+      return true;
+    }
+
+    const normalizedMessage =
+      typeof current.message === "string" ? current.message.toLowerCase() : "";
+    if (
+      USER_REJECTION_MESSAGES.some((message) =>
+        normalizedMessage.includes(message),
+      )
+    ) {
+      return true;
+    }
+
+    current = current.cause;
+  }
+
+  return false;
+};
+
+export const getCovenantSignatureErrorAction = (
+  error: unknown,
+): "block" | "skip" => (isUserRejectedWalletRequest(error) ? "block" : "skip");
+
 const hasRequestMethod = (provider: unknown): provider is Eip1193Provider =>
   typeof (provider as Eip1193Provider | undefined)?.request === "function";
 
