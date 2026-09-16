@@ -84,5 +84,4 @@ contract UpgradeProxyOwner is BaseMultiChain {
     function _codehash(address target) internal view returns (bytes32) {
         return target.codehash;
     }
-
 }

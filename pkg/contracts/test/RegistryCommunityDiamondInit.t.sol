@@ -12,7 +12,7 @@ import {IERC165} from "../src/diamonds/interfaces/IERC165.sol";
 
 contract DiamondInitHarness {
     function callInit(address init) external {
-        (bool ok, ) = init.delegatecall(abi.encodeWithSelector(RegistryCommunityDiamondInit.init.selector));
+        (bool ok,) = init.delegatecall(abi.encodeWithSelector(RegistryCommunityDiamondInit.init.selector));
         require(ok, "init failed");
     }
 

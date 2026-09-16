@@ -78,9 +78,7 @@ contract PauseFacetBaseTest is Test {
 
     function test_setPauseController_requires_owner() public {
         vm.prank(address(0xBEEF));
-        vm.expectRevert(
-            abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(0xBEEF), address(this))
-        );
+        vm.expectRevert(abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(0xBEEF), address(this)));
         facet.setPauseController(address(controller));
 
         facet.setPauseController(address(controller));
@@ -89,9 +87,7 @@ contract PauseFacetBaseTest is Test {
 
     function test_setPauseFacet_owner_updates() public {
         vm.prank(address(0xBEEF));
-        vm.expectRevert(
-            abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(0xBEEF), address(this))
-        );
+        vm.expectRevert(abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(0xBEEF), address(this)));
         facet.setPauseFacet(address(0x1234));
 
         facet.setPauseFacet(address(0x1234));
@@ -165,17 +161,17 @@ contract PauseFacetBaseTest is Test {
     function test_communityPauseFacet_uses_owner() public {
         CommunityPauseFacetHarness impl = new CommunityPauseFacetHarness();
         CommunityPauseFacetHarness community = CommunityPauseFacetHarness(
-            payable(
-                address(new ERC1967Proxy(address(impl), abi.encodeWithSelector(impl.initializeHarness.selector, address(this))))
-            )
+            payable(address(
+                    new ERC1967Proxy(
+                        address(impl), abi.encodeWithSelector(impl.initializeHarness.selector, address(this))
+                    )
+                ))
         );
         community.setPauseController(address(controller));
         assertEq(community.pauseController(), address(controller));
 
         vm.prank(address(0xBEEF));
-        vm.expectRevert(
-            abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(0xBEEF), address(this))
-        );
+        vm.expectRevert(abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(0xBEEF), address(this)));
         community.setPauseController(address(controller));
     }
 
@@ -186,9 +182,7 @@ contract PauseFacetBaseTest is Test {
         assertEq(cv.pauseController(), address(controller));
 
         cv.setOwner(address(0xCAFE));
-        vm.expectRevert(
-            abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(this), address(0xCAFE))
-        );
+        vm.expectRevert(abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(this), address(0xCAFE)));
         cv.setPauseController(address(controller));
     }
 
@@ -201,9 +195,7 @@ contract PauseFacetBaseTest is Test {
         cv.setPauseController(address(controller));
         assertEq(cv.pauseController(), address(controller));
 
-        vm.expectRevert(
-            abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(this), address(rawOwner))
-        );
+        vm.expectRevert(abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(this), address(rawOwner)));
         cv.setPauseController(address(controller));
     }
 

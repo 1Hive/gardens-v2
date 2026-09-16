@@ -74,27 +74,16 @@ contract GenerateFacetUpgradePayloads is UpgradeCVMultichainBase {
         );
 
         writer = _appendCommunityTransactions(
-            writer,
-            networkJson,
-            facetCuts.communityCuts,
-            communityInit,
-            communityInitCalldata
+            writer, networkJson, facetCuts.communityCuts, communityInit, communityInitCalldata
         );
 
-        writer = _appendStrategyTransactions(
-            writer,
-            networkJson,
-            facetCuts.cvCuts,
-            strategyInit,
-            strategyInitCalldata
-        );
+        writer = _appendStrategyTransactions(writer, networkJson, facetCuts.cvCuts, strategyInit, strategyInitCalldata);
 
         _finalizePayloadWriter(writer);
     }
 
     function _buildFacetCutsFromConfiguredAddresses() internal returns (FacetCuts memory cuts) {
-        DiamondLoupeFacet loupeFacet =
-            DiamondLoupeFacet(_requireConfiguredFacet(".FACETS.DIAMOND_LOUPE"));
+        DiamondLoupeFacet loupeFacet = DiamondLoupeFacet(_requireConfiguredFacet(".FACETS.DIAMOND_LOUPE"));
 
         cuts.cvCuts = _buildCVFacetCuts(
             CVAdminFacet(_requireConfiguredFacet(".FACETS.CV_ADMIN")),
@@ -143,10 +132,7 @@ contract GenerateFacetUpgradePayloads is UpgradeCVMultichainBase {
                 _createTransactionJson(
                     registryFactoryProxy,
                     abi.encodeWithSelector(
-                        RegistryFactory.setCommunityFacets.selector,
-                        communityCuts,
-                        communityInit,
-                        communityInitCalldata
+                        RegistryFactory.setCommunityFacets.selector, communityCuts, communityInit, communityInitCalldata
                     )
                 )
             );
@@ -158,10 +144,7 @@ contract GenerateFacetUpgradePayloads is UpgradeCVMultichainBase {
                 _createTransactionJson(
                     registryFactoryProxy,
                     abi.encodeWithSelector(
-                        RegistryFactory.setStrategyFacets.selector,
-                        cvCuts,
-                        strategyInit,
-                        strategyInitCalldata
+                        RegistryFactory.setStrategyFacets.selector, cvCuts, strategyInit, strategyInitCalldata
                     )
                 )
             );
@@ -211,10 +194,7 @@ contract GenerateFacetUpgradePayloads is UpgradeCVMultichainBase {
                 _createTransactionJson(
                     proxies[i],
                     abi.encodeWithSelector(
-                        RegistryCommunity.diamondCut.selector,
-                        allCuts,
-                        communityInit,
-                        communityInitCalldata
+                        RegistryCommunity.diamondCut.selector, allCuts, communityInit, communityInitCalldata
                     )
                 )
             );
@@ -232,8 +212,7 @@ contract GenerateFacetUpgradePayloads is UpgradeCVMultichainBase {
         address[] memory proxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         for (uint256 i = 0; i < proxies.length; i++) {
             IDiamond.FacetCut[] memory allCuts = _mergeFacetCuts(
-                _buildStaleSelectorRemovalCuts(proxies[i], cvCuts),
-                _buildChangedFacetCuts(proxies[i], cvCuts)
+                _buildStaleSelectorRemovalCuts(proxies[i], cvCuts), _buildChangedFacetCuts(proxies[i], cvCuts)
             );
             if (allCuts.length == 0) continue;
 

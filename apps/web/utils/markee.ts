@@ -161,7 +161,28 @@ export async function recordMarkeeView(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ address: markeeAddress, message }),
   });
-  return res.json();
+  const payload: unknown = await res.json();
+  if (
+    !res.ok ||
+    typeof payload !== "object" ||
+    payload === null ||
+    !("totalViews" in payload) ||
+    !("messageViews" in payload) ||
+    !("counted" in payload) ||
+    typeof payload.totalViews !== "number" ||
+    !Number.isFinite(payload.totalViews) ||
+    typeof payload.messageViews !== "number" ||
+    !Number.isFinite(payload.messageViews) ||
+    typeof payload.counted !== "boolean"
+  ) {
+    throw new Error("Markee returned an invalid view response");
+  }
+
+  return {
+    counted: payload.counted,
+    messageViews: payload.messageViews,
+    totalViews: payload.totalViews,
+  };
 }
 
 /**

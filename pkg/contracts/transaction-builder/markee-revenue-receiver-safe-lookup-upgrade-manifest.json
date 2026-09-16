@@ -1,0 +1,51 @@
+{
+  "contract": "SquidGardensRevenueReceiver",
+  "reason": "Resolve the current council Safe at delivery time and preserve retryability when the registry lookup fails.",
+  "compiler": "0.8.23",
+  "deployer": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+  "governanceSafe": "0x9a17De1f0caD0c592F656410997E4B685d339029",
+  "chains": {
+    "ethereum": {
+      "chainId": 1,
+      "proxy": "0xF6437EcB8d70ff8FeA74a6D8bC50946c3a7DB5D2",
+      "implementation": "0x08922f13e89200661F5C236ddfF51b9469BC0d79",
+      "deploymentTransaction": "0xec231b5dae6c1bdb716856732ee3b5499f9e370f151f0dee87820868b9721aa8",
+      "upgradeTransaction": "0x5caa4c0262effc305ebc84aa46c3db9518ab2f82f47cbc60a023fc30cf26d93f"
+    },
+    "optimism": {
+      "chainId": 10,
+      "proxy": "0x03b1073D285C240bB074b37841adb83c7CCdD329",
+      "implementation": "0x88cFd997F3b76B2cecAd199dBCc24C59CdFF846F",
+      "deploymentTransaction": "0xa5acf1efc5f0f2e5f9fbf845be3f48abd733701251e908a62c352a001aa67b49",
+      "upgradeTransaction": "0xd581ccbd007e09b89a42c5c77a813a9dda4148e9ee2b9ac787d7df1b5abe38fb"
+    },
+    "arbitrum": {
+      "chainId": 42161,
+      "proxy": "0xc224E441368864c91EB721A0b82911ABb861880f",
+      "implementation": "0x9Bb7520E01de00E6E9AbBBFFa7C08CF0e0CA5105",
+      "deploymentTransaction": "0x2844e84fe2677325f2c078e51a3b437e1e80410bdce4537e0e3cbf5f1738f991",
+      "upgradeTransaction": "0xeb54caafbc8b5ae96b9b62b5e46621c73d0ddbc91bd7f7cbdd6056d2861ff6fb"
+    },
+    "polygon": {
+      "chainId": 137,
+      "proxy": "0x047328Eb5c7e09c66CB3238F0D6603b2D547cBC0",
+      "implementation": "0x66f562965E679a258acD8feaE0f3b692E99ae7B7",
+      "deploymentTransaction": "0xb977bf3d59ce92437bece0329b297bcf64caf11252a0f2598df5e086e9008524",
+      "upgradeTransaction": "0x24cd4ad2bc4971627e4a3cd5a1aed75a8fd1cde328ad1428dfee6fca9b6925e8"
+    },
+    "gnosis": {
+      "chainId": 100,
+      "proxy": "0xd6DD4D4364D2bbB8C95086E52C877fb41ec3b7aE",
+      "implementation": "0x66F536A248e044091c8C7FDE7c133Bf9ED7AB4e1",
+      "deploymentTransaction": "0x5a9a7f2c2632c09ea60e73c6d84fa7a0d873d41668f461021340faaa9dde860e",
+      "upgradeTransaction": "0x7de475354709638f0006342e97b2c07884dd2b9bfe36976fc10463ac8d118331"
+    },
+    "celo": {
+      "chainId": 42220,
+      "proxy": "0xCBE14EB5ddD78929E6C48226889cA317017D9339",
+      "implementation": "0x4f9BD808b6D496Ef1FFB259b9940D6B623080529",
+      "deploymentTransaction": "0xa4c2c9206f653773b2d16a35e95e10b80311596abe5c0f27c4f2ce8f8464a68b",
+      "upgradeTransaction": "0xa19f078a7cd52d2445a51cea9c4fe8d7ed24a422067eb3fe281f3da7bd0c6549"
+    }
+  }
+}

@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import { AddrethConfig } from "addreth";
 import { ConnectKitProvider, getDefaultConnectors, useModal } from "connectkit";
+import { createPortal } from "react-dom";
 import { Bounce, ToastContainer } from "react-toastify";
 import { Address, createWalletClient, custom, isAddress } from "viem";
 import { base } from "viem/chains";
@@ -577,6 +578,69 @@ const ProvidersWithQueryParams = ({ children }: Props) => {
   );
 };
 
+const TopLayerToastContainer = ({ theme }: { theme: "dark" | "light" }) => {
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const dialogStack = Array.from(
+      document.querySelectorAll<HTMLDialogElement>("dialog[open]"),
+    );
+    const syncPortalTarget = () => {
+      const openDialogs = dialogStack.filter(
+        (dialog) => dialog.open && document.contains(dialog),
+      );
+      dialogStack.splice(0, dialogStack.length, ...openDialogs);
+      setPortalTarget(openDialogs.at(-1) ?? document.body);
+    };
+
+    syncPortalTarget();
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.type !== "attributes" ||
+          mutation.attributeName !== "open" ||
+          !(mutation.target instanceof HTMLDialogElement)
+        ) {
+          return;
+        }
+
+        const dialog = mutation.target;
+        const existingIndex = dialogStack.indexOf(dialog);
+        if (existingIndex >= 0) dialogStack.splice(existingIndex, 1);
+        if (dialog.open) dialogStack.push(dialog);
+      });
+      syncPortalTarget();
+    });
+    observer.observe(document.body, {
+      attributeFilter: ["open"],
+      attributes: true,
+      subtree: true,
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  if (portalTarget == null) return null;
+
+  return createPortal(
+    <ToastContainer
+      style={{ zIndex: 1000 }}
+      position="top-right"
+      autoClose={5000}
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+      theme={theme}
+      transition={Bounce}
+    />,
+    portalTarget,
+  );
+};
+
 const ThemeAware = ({ children }: { children: React.ReactNode }) => {
   const { resolvedTheme } = useTheme();
   const chainFromPath = useChainFromPath() as Chain | undefined;
@@ -615,19 +679,8 @@ const ThemeAware = ({ children }: { children: React.ReactNode }) => {
           {children}
         </TransactionNotificationProvider>
       </ConnectKitProvider>
-      <ToastContainer
-        style={{ zIndex: 1000 }}
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
+      <TopLayerToastContainer
         theme={resolvedTheme === "darkTheme" ? "dark" : "light"}
-        transition={Bounce}
       />
     </>
   );

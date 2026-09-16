@@ -124,17 +124,15 @@ contract DeployCoreContracts is BaseMultiChain {
         RegistryFactory registryFactory = RegistryFactory(payable(registryFactoryProxy));
 
         if (_runPhase2()) {
-            (IDiamond.FacetCut[] memory communityCuts, CommunityFacetDeployments memory communityFacets) = _deployCommunityFacets();
-            (IDiamond.FacetCut[] memory strategyCuts, StrategyFacetDeployments memory strategyFacets) = _deployStrategyFacets();
+            (IDiamond.FacetCut[] memory communityCuts, CommunityFacetDeployments memory communityFacets) =
+                _deployCommunityFacets();
+            (IDiamond.FacetCut[] memory strategyCuts, StrategyFacetDeployments memory strategyFacets) =
+                _deployStrategyFacets();
             registryFactory.setCommunityFacets(
-                communityCuts,
-                communityFacets.init,
-                abi.encodeCall(RegistryCommunityDiamondInit.init, ())
+                communityCuts, communityFacets.init, abi.encodeCall(RegistryCommunityDiamondInit.init, ())
             );
             registryFactory.setStrategyFacets(
-                strategyCuts,
-                strategyFacets.init,
-                abi.encodeCall(CVStrategyDiamondInit.init, ())
+                strategyCuts, strategyFacets.init, abi.encodeCall(CVStrategyDiamondInit.init, ())
             );
 
             _snapshotCommunityFacetDeployments(communityFacets);
@@ -249,8 +247,7 @@ contract DeployCoreContracts is BaseMultiChain {
         implementation = address(new GlobalPauseController());
         pauseController = address(
             new ERC1967Proxy(
-                implementation,
-                abi.encodeWithSelector(GlobalPauseController.initialize.selector, address(SENDER))
+                implementation, abi.encodeWithSelector(GlobalPauseController.initialize.selector, address(SENDER))
             )
         );
         _writeNetworkAddress(".ENVS.PAUSE_CONTROLLER", pauseController);
@@ -307,8 +304,7 @@ contract DeployCoreContracts is BaseMultiChain {
         implementation = address(new SafeArbitrator());
         safeArbitrator = address(
             new ERC1967Proxy(
-                implementation,
-                abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.001 ether, address(SENDER))
+                implementation, abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.001 ether, address(SENDER))
             )
         );
         _writeNetworkAddress(".ENVS.ARBITRATOR", safeArbitrator);
@@ -505,9 +501,7 @@ contract DeployCoreContracts is BaseMultiChain {
         memberSelectors[5] = CommunityMemberFacet.getStakeAmountWithFees.selector;
         memberSelectors[6] = CommunityMemberFacet.registerMember.selector;
         baseCuts[1] = IDiamond.FacetCut({
-            facetAddress: address(memberFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: memberSelectors
+            facetAddress: address(memberFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: memberSelectors
         });
 
         bytes4[] memory pauseSelectors = new bytes4[](12);
@@ -524,9 +518,7 @@ contract DeployCoreContracts is BaseMultiChain {
         pauseSelectors[10] = bytes4(keccak256("pausedUntil()"));
         pauseSelectors[11] = bytes4(keccak256("pausedSelectorUntil(bytes4)"));
         baseCuts[2] = IDiamond.FacetCut({
-            facetAddress: address(pauseFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: pauseSelectors
+            facetAddress: address(pauseFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: pauseSelectors
         });
 
         bytes4[] memory poolSelectors = new bytes4[](2);
@@ -616,7 +608,9 @@ contract DeployCoreContracts is BaseMultiChain {
         disputeSelectors[0] = CVDisputeFacet.disputeProposal.selector;
         disputeSelectors[1] = CVDisputeFacet.rule.selector;
         baseCuts[2] = IDiamond.FacetCut({
-            facetAddress: address(disputeFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: disputeSelectors
+            facetAddress: address(disputeFacet),
+            action: IDiamond.FacetCutAction.Auto,
+            functionSelectors: disputeSelectors
         });
 
         bytes4[] memory pauseSelectors = new bytes4[](12);
@@ -633,9 +627,7 @@ contract DeployCoreContracts is BaseMultiChain {
         pauseSelectors[10] = bytes4(keccak256("pausedUntil()"));
         pauseSelectors[11] = bytes4(keccak256("pausedSelectorUntil(bytes4)"));
         baseCuts[3] = IDiamond.FacetCut({
-            facetAddress: address(pauseFacet),
-            action: IDiamond.FacetCutAction.Auto,
-            functionSelectors: pauseSelectors
+            facetAddress: address(pauseFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: pauseSelectors
         });
 
         bytes4[] memory powerSelectors = new bytes4[](5);
@@ -664,7 +656,9 @@ contract DeployCoreContracts is BaseMultiChain {
         syncSelectors[2] = CVSyncPowerFacet.syncPower.selector;
         syncSelectors[3] = CVSyncPowerFacet.batchSyncPower.selector;
         baseCuts[6] = IDiamond.FacetCut({
-            facetAddress: address(syncPowerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: syncSelectors
+            facetAddress: address(syncPowerFacet),
+            action: IDiamond.FacetCutAction.Auto,
+            functionSelectors: syncSelectors
         });
 
         bytes4[] memory streamingSelectors = new bytes4[](6);
@@ -687,11 +681,7 @@ contract DeployCoreContracts is BaseMultiChain {
         }
     }
 
-    function _buildLoupeFacetCut(DiamondLoupeFacet loupeFacet)
-        internal
-        pure
-        returns (IDiamond.FacetCut memory)
-    {
+    function _buildLoupeFacetCut(DiamondLoupeFacet loupeFacet) internal pure returns (IDiamond.FacetCut memory) {
         bytes4[] memory loupeSelectors = new bytes4[](5);
         loupeSelectors[0] = IDiamondLoupe.facets.selector;
         loupeSelectors[1] = IDiamondLoupe.facetFunctionSelectors.selector;

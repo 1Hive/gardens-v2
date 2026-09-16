@@ -116,8 +116,7 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
         _checkOnlyAllo();
         __BaseStrategy_init(_poolId);
 
-        HypercertSignalPoolInitializeParams memory params =
-            abi.decode(_data, (HypercertSignalPoolInitializeParams));
+        HypercertSignalPoolInitializeParams memory params = abi.decode(_data, (HypercertSignalPoolInitializeParams));
 
         if (params.decay == 0 || params.decay >= D) revert InvalidDecay(params.decay);
         if (params.pointsPerVoter == 0) revert InvalidPointsPerVoter(params.pointsPerVoter);
@@ -227,7 +226,9 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
 
             emit SupportAllocated(_sender, hcId, delta, newStake);
 
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
 
         // Check point budget after all allocations
@@ -315,7 +316,9 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
                 emit StakesReclaimed(msg.sender, hcId, stake);
             }
 
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -331,10 +334,7 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
 
         uint256 timePassed = block.number - blockLast[_hypercertId];
         conviction = ConvictionsUtils.calculateConviction(
-            timePassed,
-            convictionLast[_hypercertId],
-            stakedAmounts[_hypercertId],
-            decay
+            timePassed, convictionLast[_hypercertId], stakedAmounts[_hypercertId], decay
         );
     }
 
@@ -343,18 +343,18 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
     ///      Returns real-time conviction (applies decay since last on-chain update).
     /// @return hypercertIds Array of active hypercert IDs
     /// @return weights Array of corresponding conviction weights
-    function getConvictionWeights()
-        external
-        view
-        returns (uint256[] memory hypercertIds, uint256[] memory weights)
-    {
+    function getConvictionWeights() external view returns (uint256[] memory hypercertIds, uint256[] memory weights) {
         // Count active hypercerts
         uint256 activeCount = 0;
         for (uint256 i = 0; i < _hypercertIds.length;) {
             if (hypercertActive[_hypercertIds[i]]) {
-                unchecked { ++activeCount; }
+                unchecked {
+                    ++activeCount;
+                }
             }
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
 
         hypercertIds = new uint256[](activeCount);
@@ -367,15 +367,15 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
                 hypercertIds[idx] = hcId;
                 uint256 timePassed = block.number - blockLast[hcId];
                 uint256 eligibleStake = _eligibleStakedAmount(hcId);
-                weights[idx] = ConvictionsUtils.calculateConviction(
-                    timePassed,
-                    convictionLast[hcId],
-                    eligibleStake,
-                    decay
-                );
-                unchecked { ++idx; }
+                weights[idx] =
+                    ConvictionsUtils.calculateConviction(timePassed, convictionLast[hcId], eligibleStake, decay);
+                unchecked {
+                    ++idx;
+                }
             }
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -392,9 +392,13 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
         uint256 count = 0;
         for (uint256 i = 0; i < _hypercertIds.length;) {
             if (voterStakes[_hypercertIds[i]][_voter] > 0) {
-                unchecked { ++count; }
+                unchecked {
+                    ++count;
+                }
             }
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
 
         hypercertIds = new uint256[](count);
@@ -407,9 +411,13 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
             if (stake > 0) {
                 hypercertIds[idx] = hcId;
                 amounts[idx] = stake;
-                unchecked { ++idx; }
+                unchecked {
+                    ++idx;
+                }
             }
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -429,9 +437,13 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
     function activeHypercertCount() external view returns (uint256 count) {
         for (uint256 i = 0; i < _hypercertIds.length;) {
             if (hypercertActive[_hypercertIds[i]]) {
-                unchecked { ++count; }
+                unchecked {
+                    ++count;
+                }
             }
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -447,10 +459,7 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
         if (timePassed == 0) return;
 
         uint256 newConviction = ConvictionsUtils.calculateConviction(
-            timePassed,
-            convictionLast[_hypercertId],
-            stakedAmounts[_hypercertId],
-            decay
+            timePassed, convictionLast[_hypercertId], stakedAmounts[_hypercertId], decay
         );
 
         convictionLast[_hypercertId] = newConviction;
@@ -466,7 +475,9 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
             if (votingPowerRegistry.isMember(voter)) {
                 eligibleStake += voterStakes[_hypercertId][voter];
             }
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
     }
 }

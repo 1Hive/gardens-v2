@@ -54,10 +54,7 @@ contract DeployStreamingEscrowFactory is BaseMultiChain {
             new ERC1967Proxy(
                 factoryImplementation,
                 abi.encodeWithSelector(
-                    StreamingEscrowFactory.initialize.selector,
-                    proxyOwner,
-                    ISuperfluid(host),
-                    escrowImplementation
+                    StreamingEscrowFactory.initialize.selector, proxyOwner, ISuperfluid(host), escrowImplementation
                 )
             )
         );

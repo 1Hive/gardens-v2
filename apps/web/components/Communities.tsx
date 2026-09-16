@@ -14,7 +14,10 @@ import { CommunityFilters } from "./CommunityFilters";
 import { ONE_HIVE_COMMUNITY_ADDRESS } from "@/globals";
 import { useFlag } from "@/hooks/useFlag";
 
-export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
+export type LightCommunity = Pick<
+  RegistryCommunity,
+  "id" | "communityName" | "archived"
+> & {
   garden: Pick<
     TokenGarden,
     "address" | "chainId" | "symbol" | "name" | "decimals"

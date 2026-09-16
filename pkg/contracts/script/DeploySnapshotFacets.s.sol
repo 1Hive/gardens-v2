@@ -80,7 +80,6 @@ contract DeploySnapshotFacets is BaseMultiChain {
         _writeNetworkAddress(".FACETS.CV_PROPOSAL", address(cvProposal));
         _writeNetworkAddress(".FACETS.CV_SYNC_POWER", address(cvSyncPower));
         _writeNetworkAddress(".FACETS.CV_STREAMING", address(cvStreaming));
-
     }
 
     function _deployAndSnapshotCommunityFacets() internal {
@@ -97,7 +96,6 @@ contract DeploySnapshotFacets is BaseMultiChain {
         _writeNetworkAddress(".FACETS.COMMUNITY_POOL", address(communityPool));
         _writeNetworkAddress(".FACETS.COMMUNITY_POWER", address(communityPower));
         _writeNetworkAddress(".FACETS.COMMUNITY_STRATEGY", address(communityStrategy));
-
     }
 
     function _parseTarget(string memory targetName) internal pure returns (FacetTarget) {
@@ -107,5 +105,4 @@ contract DeploySnapshotFacets is BaseMultiChain {
         if (targetHash == keccak256(bytes("community"))) return FacetTarget.Community;
         revert("invalid target, use all|strategy|community");
     }
-
 }

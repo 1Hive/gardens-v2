@@ -15,6 +15,5 @@ contract DeployHoneyERC20 is Script {
         vm.startBroadcast();
         GV2ERC20 token = new GV2ERC20("Honey", "HNY", 18);
         vm.stopBroadcast();
-
     }
 }

@@ -72,7 +72,6 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         token = new TERC20("sepolia Honey", "sepHNY", 18);
 
-
         registry = allo.getRegistry();
 
         ERC1967Proxy scorerProxy = new ERC1967Proxy(
@@ -102,7 +101,6 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         );
 
         safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
-
 
         RegistryCommunityInitializeParams memory params;
 
@@ -256,13 +254,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         allo.registerRecipient{value: 3 ether}(poolIdFixed, data2);
         vm.stopBroadcast();
 
-
         create_community();
-
-
-
-
-
     }
 
     function _getPointConfig() internal pure returns (PointSystemConfig memory) {
@@ -277,7 +269,6 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         token = new TERC20("sepolia Matias", "sepMAT", 18);
 
         // RegistryFactory registryFactory = new RegistryFactory();
-
 
         RegistryCommunityInitializeParams memory params;
 
@@ -304,7 +295,6 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             abi.encodeCall(CVStrategyDiamondInit.init, ())
         );
         RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
-
 
         token.mint(address(pool_admin()), 10_000 ether);
         ERC1967Proxy strategy1Proxy = new ERC1967Proxy(
@@ -449,11 +439,6 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         allo.registerRecipient{value: 3 ether}(poolIdFixed, data2);
 
         vm.stopBroadcast();
-
-
-
-
-
     }
 
     function deployAllo() public returns (address) {
