@@ -45,12 +45,13 @@ vi.mock("@/utils/publicClient", () => ({
   resolveClientChain: vi.fn((chainId: number) => ({ id: chainId })),
 }));
 
-import { clearMarkeeAuthorizationChallengesForTests, POST } from "./route";
+import { clearMarkeeAuthorizationChallengesForTests, GET, POST } from "./route";
 
 const community = "0x0000000000000000000000000000000000000001";
 const councilSafe = "0x0000000000000000000000000000000000000002";
 const otherAccount = "0x0000000000000000000000000000000000000003";
 const rotatedSafe = "0x0000000000000000000000000000000000000004";
+const keeperAddress = "0x0000000000000000000000000000000000000006";
 const signature = `0x${"11".repeat(65)}`;
 const leaderboardFactory = "0x37f420fdE5c98e611EB7cb9b74ef579D84697039";
 const rotatedLeaderboardFactory = "0x0000000000000000000000000000000000000005";
@@ -84,6 +85,13 @@ const issueChallenge = async (account = councilSafe, chainId = 100) => {
     response,
   };
 };
+
+const checkKeeperEligibility = (account: string) =>
+  GET(
+    new Request(
+      `http://localhost/api/markee/authorize?account=${encodeURIComponent(account)}`,
+    ),
+  );
 
 describe("Markee council Safe authorization", () => {
   beforeEach(() => {
@@ -129,6 +137,7 @@ describe("Markee council Safe authorization", () => {
     expect(response.status).toBe(201);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     expect(body).toMatchObject({
+      authorizationRole: "councilSafe",
       chainId: 100,
       community,
       councilSafe,
@@ -183,6 +192,7 @@ describe("Markee council Safe authorization", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       authorized: true,
+      authorizationRole: "councilSafe",
       chainId: 100,
       community,
       councilSafe,
@@ -217,6 +227,44 @@ describe("Markee council Safe authorization", () => {
     expect(mocks.waitForTransactionReceipt).toHaveBeenCalledWith({
       hash: transactionHash,
     });
+  });
+
+  it("allows the configured keeper to authorize and execute creation", async () => {
+    const { body: challenge, response: challengeResponse } =
+      await issueChallenge(keeperAddress);
+
+    expect(challengeResponse.status).toBe(201);
+    expect(challenge.authorizationRole).toBe("keeper");
+
+    const response = await callRoute({
+      action: "verify",
+      nonce: challenge.nonce,
+      signature,
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      authorized: true,
+      authorizationRole: "keeper",
+      transactionHash,
+    });
+    expect(mocks.verifyTypedData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        address: keeperAddress,
+        signature,
+      }),
+    );
+    expect(mocks.writeContract).toHaveBeenCalled();
+  });
+
+  it("reports keeper eligibility without exposing keeper credentials", async () => {
+    const keeperResponse = await checkKeeperEligibility(keeperAddress);
+    const otherResponse = await checkKeeperEligibility(otherAccount);
+
+    expect(keeperResponse.status).toBe(200);
+    await expect(keeperResponse.json()).resolves.toEqual({ isKeeper: true });
+    expect(otherResponse.status).toBe(200);
+    await expect(otherResponse.json()).resolves.toEqual({ isKeeper: false });
   });
 
   it("executes the router call on Base for a production community", async () => {
@@ -303,7 +351,7 @@ describe("Markee council Safe authorization", () => {
 
     expect(firstResponse.status).toBe(401);
     await expect(firstResponse.json()).resolves.toEqual({
-      error: "Invalid council Safe authorization signature.",
+      error: "Invalid Markee authorization signature.",
     });
     expect(replayResponse.status).toBe(401);
   });
