@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { BanknotesIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
 import {
@@ -26,6 +26,7 @@ import { isUserRejectedTransactionError } from "@/utils/transactionMessages";
 
 type Props = {
   chainId: number;
+  communityRevenue?: ReactNode;
   leaderboardAddress: Address;
 };
 
@@ -61,6 +62,7 @@ function formatAmount(value: bigint, maximumFractionDigits = 6) {
 
 export function CommunityMarkeeClaimCard({
   chainId,
+  communityRevenue,
   leaderboardAddress,
 }: Props) {
   const { address: connectedAccount } = useAccount();
@@ -341,36 +343,61 @@ export function CommunityMarkeeClaimCard({
   };
 
   const totalMarkee = snapshot?.pendingMarkee ?? 0n;
-  if (connectedAccount == null || (!isOpen && !isLoading && totalMarkee <= 0n))
+  if (
+    connectedAccount == null ||
+    (!isOpen && !isLoading && totalMarkee <= 0n && communityRevenue == null)
+  )
     return null;
+
+  const showStreamerRewards =
+    (isLoading && snapshot == null) || totalMarkee > 0n;
 
   return (
     <>
       <div className="mt-3 rounded-xl border border-neutral-content/15 bg-neutral/30 p-4">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-wider text-neutral-soft-content">
-              Claim MARKEE
-            </p>
-            {isLoading && snapshot == null ?
-              <div className="skeleton mt-2 h-6 w-28 rounded-md" />
-            : <p className="mt-1 font-mono text-lg font-semibold text-neutral-content">
-                {formatAmount(totalMarkee)} MARKEE
+        <p className="text-xs uppercase tracking-wider text-neutral-soft-content">
+          🪧 MARKEE
+        </p>
+
+        {showStreamerRewards && (
+          <div className="mt-3 flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-neutral-content">
+                Accumulated
               </p>
-            }
+              {isLoading && snapshot == null ?
+                <div className="skeleton mt-2 h-6 w-28 rounded-md" />
+              : <p className="mt-1 font-mono text-lg font-semibold text-neutral-content">
+                  {formatAmount(totalMarkee)} MARKEE
+                </p>
+              }
+            </div>
+            <Button
+              btnStyle="outline"
+              className="shrink-0 whitespace-nowrap"
+              color="primary"
+              disabled={snapshot == null || totalMarkee <= 0n}
+              onClick={() => {
+                setErrorMessage(null);
+                setIsOpen(true);
+              }}
+            >
+              Claim
+            </Button>
           </div>
-          <Button
-            btnStyle="outline"
-            color="primary"
-            disabled={snapshot == null || totalMarkee <= 0n}
-            onClick={() => {
-              setErrorMessage(null);
-              setIsOpen(true);
-            }}
+        )}
+
+        {communityRevenue != null && (
+          <div
+            className={
+              showStreamerRewards ?
+                "mt-4 border-t border-neutral-content/15 pt-4"
+              : "mt-3"
+            }
           >
-            Claim
-          </Button>
-        </div>
+            {communityRevenue}
+          </div>
+        )}
       </div>
 
       <Modal

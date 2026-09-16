@@ -3791,6 +3791,44 @@ export function CommunityMarkeePlaceholder({
       : "Creating the community vault and Markee leaderboard.",
     status: optInTransactionStatus,
   };
+  const hasCommunityRevenue =
+    hasPendingClaim || BigInt(markee.revenue.claimableAmount) > 0n;
+  const communityRevenueRow =
+    canOptIn && hasActiveMarkee && hasCommunityRevenue ?
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-neutral-content">
+            Community revenue
+          </p>
+          {hasPendingClaim ?
+            <div
+              className="mt-2 flex items-center gap-2 text-sm text-primary-content"
+              role="status"
+            >
+              <span className="loading loading-spinner loading-sm" />
+              <span>Bridge in progress</span>
+            </div>
+          : <p
+              className="tooltip tooltip-top mt-1 cursor-help font-mono text-lg font-semibold text-neutral-content"
+              data-tip={`${formatEther(BigInt(markee.revenue.claimableAmount))} ${markee.revenue.symbol}`}
+              tabIndex={0}
+            >
+              {formatEthAmountRounded(markee.revenue.claimableAmount, 3)}{" "}
+              {markee.revenue.symbol}
+            </p>
+          }
+        </div>
+        <Button
+          btnStyle="outline"
+          color="primary"
+          className="shrink-0 whitespace-nowrap"
+          onClick={() => setIsClaimOpen(true)}
+          testId="markee-community-claim-open"
+        >
+          {hasPendingClaim ? "Open" : "Claim"}
+        </Button>
+      </div>
+    : null;
 
   return (
     <>
@@ -3824,49 +3862,12 @@ export function CommunityMarkeePlaceholder({
           markee.integration.leaderboardAddress != null && (
             <CommunityMarkeeClaimCard
               chainId={markee.markeeChainId}
+              communityRevenue={communityRevenueRow}
               leaderboardAddress={getAddress(
                 markee.integration.leaderboardAddress,
               )}
             />
           )}
-
-        {canOptIn && hasActiveMarkee && (
-          <div className="mt-3 flex flex-col gap-3 rounded-xl border border-neutral-content/15 bg-neutral/30 p-4">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-neutral-soft-content">
-                  🪧 Markee community revenue
-                </p>
-                {hasPendingClaim ?
-                  <div
-                    className="mt-2 flex items-center gap-2 text-sm text-primary-content"
-                    role="status"
-                  >
-                    <span className="loading loading-spinner loading-sm" />
-                    <span>Bridge in progress</span>
-                  </div>
-                : <p
-                    className="tooltip tooltip-top mt-1 cursor-help font-mono text-lg font-semibold text-neutral-content"
-                    data-tip={`${formatEther(BigInt(markee.revenue.claimableAmount))} ${markee.revenue.symbol}`}
-                    tabIndex={0}
-                  >
-                    {formatEthAmountRounded(markee.revenue.claimableAmount, 3)}{" "}
-                    {markee.revenue.symbol}
-                  </p>
-                }
-              </div>
-              <Button
-                btnStyle="outline"
-                color="primary"
-                className="w-full sm:w-auto"
-                onClick={() => setIsClaimOpen(true)}
-                testId="markee-community-claim-open"
-              >
-                {hasPendingClaim ? "Open" : "Claim"}
-              </Button>
-            </div>
-          </div>
-        )}
       </section>
 
       <CommunityMarkeePreviewModal
