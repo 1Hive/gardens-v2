@@ -10,8 +10,22 @@ type SupportedPlatform =
   | "arbitrum-one"
   | "optimistic-ethereum";
 
+type SupportedGeckoTerminalNetwork =
+  | "eth"
+  | "polygon_pos"
+  | "celo"
+  | "base"
+  | "xdai"
+  | "arbitrum"
+  | "optimism";
+
 type SupportedCoinId = "ethereum" | "matic-network" | "celo" | "xdai";
 type PriceCacheEntry = { value: number; expiresAt: number; symbol?: string };
+type PriceCachePayload = {
+  updatedAt?: string;
+  ttlMs?: number;
+  entries?: Record<string, PriceCacheEntry | null>;
+};
 const coingeckoBaseUrl =
   process.env.COINGECKO_API_BASE ?? "https://api.coingecko.com/api/v3";
 const getBaseUrl = () => {
@@ -37,6 +51,19 @@ const PLATFORM_BY_CHAIN: Record<number, SupportedPlatform> = {
   10: "optimistic-ethereum",
 };
 
+const GECKO_TERMINAL_NETWORK_BY_CHAIN: Record<
+  number,
+  SupportedGeckoTerminalNetwork
+> = {
+  1: "eth",
+  10: "optimism",
+  100: "xdai",
+  137: "polygon_pos",
+  8453: "base",
+  42161: "arbitrum",
+  42220: "celo",
+};
+
 const GAS_TOKEN_COIN_ID_BY_CHAIN: Record<number, SupportedCoinId> = {
   1: "ethereum",
   10: "ethereum",
@@ -56,9 +83,16 @@ const COINGECKO_TOKEN_PRICE_URL = (
 ) => `${baseUrl}/simple/token_price/${platform}`;
 
 const COINGECKO_COIN_PRICE_URL = (baseUrl: string) => `${baseUrl}/simple/price`;
+const GECKO_TERMINAL_BASE_URL = "https://api.geckoterminal.com/api/v2";
+const GECKO_TERMINAL_TOKEN_PRICE_URL = (
+  network: SupportedGeckoTerminalNetwork,
+  address: string,
+) =>
+  `${GECKO_TERMINAL_BASE_URL}/simple/networks/${network}/token_price/${address}`;
 const COINGECKO_PRICE_CACHE_NAME =
   process.env.COINGECKO_PRICE_CACHE_NAME ?? "token-prices";
 const COINGECKO_PRICE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const PRICE_CACHE_PINATA_CONCURRENCY = 16;
 const PINATA_GROUP_ID =
   process.env.PINATA_GROUP_ID ?? "37bf2b9a-5a2e-4049-b138-8b1e180d44a4";
 
@@ -125,6 +159,11 @@ let priceCacheDirty = false;
 let hydratePriceCachePromise: Promise<void> | null = null;
 let persistPriceCachePromise: Promise<string | null> | null = null;
 const priceCache = new Map<string, PriceCacheEntry>();
+
+export const getTokenPriceCacheState = () => ({
+  cid: latestPriceCacheCid,
+  entries: priceCache.size,
+});
 
 const coercePrice = (entry: OverrideEntry | undefined | null) => {
   if (entry == null) return null;
@@ -193,6 +232,30 @@ const normalizeForPinata = <T>(payload: T): T => {
   }
 };
 
+const mapWithConcurrency = async <T, R>(
+  items: T[],
+  concurrency: number,
+  task: (item: T, index: number) => Promise<R>,
+): Promise<R[]> => {
+  if (items.length === 0) return [];
+
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    async () => {
+      while (nextIndex < items.length) {
+        const currentIndex = nextIndex;
+        nextIndex += 1;
+        results[currentIndex] = await task(items[currentIndex]!, currentIndex);
+      }
+    },
+  );
+
+  await Promise.all(workers);
+  return results;
+};
+
 const fetchIpfsJson = async <T>(cid: string): Promise<T | null> => {
   if (!cid || !isValidCid(cid)) return null;
   try {
@@ -213,13 +276,87 @@ const fetchIpfsJson = async <T>(cid: string): Promise<T | null> => {
 };
 
 const unpinPriceCacheCid = async (cid: string | null) => {
-  if (!CAN_WRITE_PINATA || !cid) return;
+  if (!CAN_WRITE_PINATA || !cid) return false;
   try {
     await pinataClient?.unpin(cid);
-    console.log("[coingecko] unpinned previous price cache", { cid });
+    return true;
   } catch (error) {
     console.warn("[coingecko] pinata unpin error (prices)", { cid, error });
+    return false;
   }
+};
+
+const listPinnedPriceCacheCids = async (): Promise<string[]> => {
+  if (!CAN_WRITE_PINATA) return [];
+  try {
+    const data = await pinataClient?.pinList({
+      status: "pinned",
+      metadata: { name: COINGECKO_PRICE_CACHE_NAME, keyvalues: {} },
+      pageLimit: 1000,
+      pageOffset: 0,
+    } as any);
+    return Array.from(
+      new Set(
+        (data?.rows ?? [])
+          .map((row: any) => row?.ipfs_pin_hash)
+          .filter((cid: unknown): cid is string => typeof cid === "string"),
+      ),
+    );
+  } catch (error) {
+    console.warn("[coingecko] pinata pinList error (price cache)", error);
+    return [];
+  }
+};
+
+const mergePriceCachePayload = (
+  remote: PriceCachePayload | null,
+  now = Date.now(),
+) => {
+  if (!remote?.entries || typeof remote.entries !== "object") return 0;
+  let merged = 0;
+  for (const [key, entry] of Object.entries(remote.entries)) {
+    if (
+      !entry ||
+      typeof entry !== "object" ||
+      typeof entry.value !== "number" ||
+      typeof entry.expiresAt !== "number" ||
+      entry.expiresAt <= now
+    ) {
+      continue;
+    }
+    const existing = priceCache.get(key);
+    if (!existing || entry.expiresAt > existing.expiresAt) {
+      priceCache.set(key, entry);
+      merged++;
+    }
+  }
+  return merged;
+};
+
+const mergePinnedPriceCaches = async () => {
+  const pinnedCids = await listPinnedPriceCacheCids();
+  const candidateCids = Array.from(
+    new Set([latestPriceCacheCid, ...pinnedCids].filter(Boolean) as string[]),
+  );
+  let merged = 0;
+  let readableCid: string | null = null;
+
+  const remotes = await mapWithConcurrency(
+    candidateCids,
+    PRICE_CACHE_PINATA_CONCURRENCY,
+    async (cid) => ({
+      cid,
+      remote: await fetchIpfsJson<PriceCachePayload>(cid),
+    }),
+  );
+  const now = Date.now();
+  for (const { cid, remote } of remotes) {
+    if (remote) readableCid = cid;
+    merged += mergePriceCachePayload(remote, now);
+  }
+  if (readableCid) latestPriceCacheCid = readableCid;
+
+  return { pinnedCids, candidateCids, merged };
 };
 
 const hydratePriceCacheFromPinata = async () => {
@@ -227,63 +364,12 @@ const hydratePriceCacheFromPinata = async () => {
   if (hydratePriceCachePromise) return hydratePriceCachePromise;
 
   hydratePriceCachePromise = (async () => {
+    const { candidateCids, merged } = await mergePinnedPriceCaches();
     priceCacheHydrated = true;
-
-    const cid =
-      latestPriceCacheCid ??
-      (await (async () => {
-        if (!CAN_WRITE_PINATA) return null;
-        try {
-          const data = await pinataClient?.pinList({
-            status: "pinned",
-            metadata: { name: COINGECKO_PRICE_CACHE_NAME, keyvalues: {} },
-            pageLimit: 1,
-            pageOffset: 0,
-          } as any);
-          const found = data?.rows?.[0]?.ipfs_pin_hash ?? null;
-          if (found) {
-            latestPriceCacheCid = found;
-          }
-          return found;
-        } catch (error) {
-          console.warn("[coingecko] pinata pinList error (price cache)", error);
-          return null;
-        }
-      })());
-
-    if (!cid) return;
-
-    const remote = await fetchIpfsJson<{
-      entries?: Record<string, PriceCacheEntry | null>;
-    }>(cid);
-    const entries =
-      remote && typeof remote === "object" && "entries" in remote ?
-        remote.entries
-      : null;
-    if (!entries || typeof entries !== "object") return;
-
-    const now = Date.now();
-    let hydrated = 0;
-
-    for (const [key, entry] of Object.entries(entries)) {
-      if (
-        !entry ||
-        typeof entry !== "object" ||
-        typeof entry.value !== "number" ||
-        typeof entry.expiresAt !== "number"
-      ) {
-        continue;
-      }
-
-      if (entry.expiresAt <= now) continue;
-      priceCache.set(key, entry);
-      hydrated++;
-    }
-
-    if (hydrated > 0) {
+    if (merged > 0) {
       console.log("[coingecko] hydrated price cache from IPFS", {
-        cid,
-        entries: hydrated,
+        cidCount: candidateCids.length,
+        entries: priceCache.size,
       });
     }
   })();
@@ -295,46 +381,74 @@ const hydratePriceCacheFromPinata = async () => {
   }
 };
 
+export const hydrateTokenPriceCache = hydratePriceCacheFromPinata;
+
 const persistPriceCache = async (): Promise<string | null> => {
   if (!CAN_WRITE_PINATA || !priceCacheDirty) return null;
   if (priceCache.size === 0) {
     priceCacheDirty = false;
     return null;
   }
-  if (persistPriceCachePromise) return persistPriceCachePromise;
+  if (persistPriceCachePromise) {
+    await persistPriceCachePromise;
+    return priceCacheDirty ? persistPriceCache() : latestPriceCacheCid;
+  }
 
   persistPriceCachePromise = (async () => {
-    const payload = {
-      updatedAt: new Date().toISOString(),
-      ttlMs: COINGECKO_PRICE_CACHE_TTL_MS,
-      entries: Object.fromEntries(priceCache.entries()),
-    };
-
     try {
-      const previousCid = latestPriceCacheCid;
-      await unpinPriceCacheCid(previousCid);
-      const data = await pinataClient?.pinJSONToIPFS(
-        normalizeForPinata(payload),
-        {
-          pinataMetadata: {
-            name: COINGECKO_PRICE_CACHE_NAME,
-            keyvalues: { updatedAt: payload.updatedAt },
-          } as any,
-          pinataOptions:
-            PINATA_GROUP_ID ? ({ groupId: PINATA_GROUP_ID } as any) : undefined,
-        },
-      );
-      if (data?.IpfsHash) {
-        latestPriceCacheCid = data.IpfsHash;
+      while (priceCacheDirty) {
         priceCacheDirty = false;
-        console.log("[coingecko] pinned price cache to IPFS", {
+        const { pinnedCids } = await mergePinnedPriceCaches();
+        const now = Date.now();
+        for (const [key, entry] of priceCache.entries()) {
+          if (entry.expiresAt <= now) priceCache.delete(key);
+        }
+        if (priceCache.size === 0) continue;
+
+        const payload = {
+          updatedAt: new Date().toISOString(),
+          ttlMs: COINGECKO_PRICE_CACHE_TTL_MS,
+          entries: Object.fromEntries(priceCache.entries()),
+        };
+        const data = await pinataClient?.pinJSONToIPFS(
+          normalizeForPinata(payload),
+          {
+            pinataMetadata: {
+              name: COINGECKO_PRICE_CACHE_NAME,
+              keyvalues: { updatedAt: payload.updatedAt },
+            } as any,
+            pinataOptions:
+              PINATA_GROUP_ID ?
+                ({ groupId: PINATA_GROUP_ID } as any)
+              : undefined,
+          },
+        );
+        if (!data?.IpfsHash) {
+          priceCacheDirty = true;
+          break;
+        }
+
+        latestPriceCacheCid = data.IpfsHash;
+        console.log("[coingecko] pinned merged price cache to IPFS", {
           cid: data.IpfsHash,
-          entries: priceCache.size,
+          entries: Object.keys(payload.entries).length,
         });
-        return data.IpfsHash;
+        const cidsToUnpin = pinnedCids.filter((cid) => cid !== data.IpfsHash);
+        const unpinResults = await mapWithConcurrency(
+          cidsToUnpin,
+          PRICE_CACHE_PINATA_CONCURRENCY,
+          unpinPriceCacheCid,
+        );
+        if (cidsToUnpin.length > 0) {
+          console.log("[coingecko] cleaned up previous price caches", {
+            attempted: cidsToUnpin.length,
+            unpinned: unpinResults.filter(Boolean).length,
+          });
+        }
       }
     } catch (error) {
       console.warn("[coingecko] pinata pinJSONToIPFS error (prices)", error);
+      priceCacheDirty = true;
     }
 
     return latestPriceCacheCid;
@@ -374,6 +488,55 @@ const setCachedPrice = ({
   priceCacheDirty = true;
 };
 
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
+
+const fetchGeckoTerminalTokenUsdPrice = async ({
+  chainId,
+  address,
+}: {
+  chainId: number;
+  address: string;
+}): Promise<number> => {
+  const network = GECKO_TERMINAL_NETWORK_BY_CHAIN[chainId];
+  if (!network) {
+    throw new Error(`Unsupported chainId for GeckoTerminal price: ${chainId}`);
+  }
+
+  const normalizedAddress = address.toLowerCase();
+  const response = await fetch(
+    GECKO_TERMINAL_TOKEN_PRICE_URL(network, normalizedAddress),
+    {
+      headers: { accept: "application/json" },
+      next: { revalidate: 0 },
+    },
+  );
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(
+      `Failed to fetch GeckoTerminal price (${response.status}): ${body}`,
+    );
+  }
+
+  const data = (await response.json()) as {
+    data?: {
+      attributes?: {
+        token_prices?: Record<string, string | number | null>;
+      };
+    };
+  };
+  const price = Number(
+    data.data?.attributes?.token_prices?.[normalizedAddress],
+  );
+  if (!Number.isFinite(price) || price <= 0) {
+    throw new Error(
+      `GeckoTerminal price missing in response for ${address} on ${chainId}`,
+    );
+  }
+
+  return price;
+};
+
 async function fetchTokenUsdPrice({
   chainId,
   address,
@@ -399,41 +562,49 @@ async function fetchTokenUsdPrice({
   primaryUrl.searchParams.set("contract_addresses", address.toLowerCase());
   primaryUrl.searchParams.set("vs_currencies", "usd");
 
-  const request = async (targetUrl: URL) => {
-    const res = await fetch(targetUrl, {
+  try {
+    const response = await fetch(primaryUrl, {
       headers: getRequestHeaders(),
       next: { revalidate: 0 },
     });
-    return res;
-  };
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(
+        `Failed to fetch Coingecko price (${response.status}): ${body}`,
+      );
+    }
 
-  let response = await request(primaryUrl);
-
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(
-      `Failed to fetch Coingecko price (${response.status}): ${body}`,
+    const data = (await response.json()) as Record<
+      string,
+      { usd?: number | null }
+    >;
+    const entry = data[address.toLowerCase()];
+    if (entry?.usd == null) {
+      throw new Error(
+        `Coingecko price missing in response for ${address} on ${chainId}`,
+      );
+    }
+    return entry.usd;
+  } catch (coingeckoError) {
+    console.warn(
+      "[coingecko] primary token price failed, trying GeckoTerminal",
+      {
+        chainId,
+        address,
+        symbol,
+        error: getErrorMessage(coingeckoError),
+      },
     );
+    try {
+      return await fetchGeckoTerminalTokenUsdPrice({ chainId, address });
+    } catch (geckoTerminalError) {
+      throw new Error(
+        `Failed to fetch token price for ${address} on ${chainId}; ` +
+          `CoinGecko: ${getErrorMessage(coingeckoError)}; ` +
+          `GeckoTerminal: ${getErrorMessage(geckoTerminalError)}`,
+      );
+    }
   }
-
-  const data = (await response.json()) as Record<
-    string,
-    { usd?: number | null }
-  >;
-
-  const entry = data[address.toLowerCase()];
-  if (entry?.usd == null) {
-    const overridePrice = getOverridePrice(
-      getTokenOverrideKey(chainId, address),
-      symbol,
-    );
-    if (overridePrice != null) return overridePrice;
-    throw new Error(
-      `Coingecko price missing in response for ${address} on ${chainId}`,
-    );
-  }
-
-  return entry.usd;
 }
 
 async function fetchGasTokenUsdPrice({

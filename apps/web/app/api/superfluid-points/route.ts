@@ -12,12 +12,22 @@ import {
   shouldCountDirectFunding,
 } from "./points";
 import { chainConfigMap } from "@/configs/chains";
-import { getTokenUsdPrice } from "@/services/coingecko";
+import {
+  getTokenPriceCacheState,
+  getTokenUsdPrice,
+  hydrateTokenPriceCache,
+} from "@/services/coingecko";
+import { createNotionRequestRunner } from "@/services/notion-rate-limit";
 import { getSuperfluidPointsClient } from "@/services/superfluid-points";
 import { erc20ABI } from "@/src/generated";
 import { ChainId } from "@/types";
 import { isValidCid } from "@/utils/ipfs";
+import { logger } from "@/utils/serverLogger";
 import { getViemChain } from "@/utils/web3";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 800;
 
 type Strategy = {
   id: Address;
@@ -365,7 +375,17 @@ const NOTION_DATA_SOURCE_ID_BY_CAMPAIGN: Record<string, string> = {
   "706": "36bd6929-d014-808c-8fc2-000b77b14155",
 };
 let notionDataSourceId: string | null = NOTION_DATA_SOURCE_ID;
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const runNotionRequest = createNotionRequestRunner({
+  onRetry: ({ operation, attempt, delayMs, error }) => {
+    console.warn("[superfluid-points] Notion request rate limited, retrying", {
+      operation,
+      attempt,
+      delayMs,
+      code: (error as any)?.code ?? null,
+      status: (error as any)?.status ?? null,
+    });
+  },
+});
 const buildWalletCsv = (
   entries: {
     address: string;
@@ -402,9 +422,11 @@ const ensureNotionDataSourceId = async (): Promise<string | null> => {
   if (!notionClient || !NOTION_DB_ID_NORMALIZED) return null;
   if (notionDataSourceId) return notionDataSourceId;
   try {
-    const db = await notionClient.databases.retrieve({
-      database_id: NOTION_DB_ID_NORMALIZED,
-    });
+    const db = await runNotionRequest("retrieve database", () =>
+      notionClient.databases.retrieve({
+        database_id: NOTION_DB_ID_NORMALIZED,
+      }),
+    );
     const dsId = (db as any)?.data_sources?.[0]?.id;
     if (typeof dsId === "string") {
       notionDataSourceId = dsId;
@@ -451,9 +473,11 @@ const ensureNotionRichTextProperty = async (
     return true;
   }
   try {
-    const db = await notionClient.databases.retrieve({
-      database_id: NOTION_DB_ID_NORMALIZED,
-    });
+    const db = await runNotionRequest(`retrieve ${propertyName} schema`, () =>
+      notionClient.databases.retrieve({
+        database_id: NOTION_DB_ID_NORMALIZED,
+      }),
+    );
     const props = (db as any)?.properties ?? {};
     if (props?.[propertyName]?.type === "rich_text") {
       if (propertyName === "Checksum") {
@@ -463,12 +487,14 @@ const ensureNotionRichTextProperty = async (
       }
       return true;
     }
-    await (notionClient as any).databases.update({
-      database_id: NOTION_DB_ID_NORMALIZED,
-      properties: {
-        [propertyName]: { rich_text: {} },
-      },
-    });
+    await runNotionRequest(`create ${propertyName} property`, () =>
+      (notionClient as any).databases.update({
+        database_id: NOTION_DB_ID_NORMALIZED,
+        properties: {
+          [propertyName]: { rich_text: {} },
+        },
+      }),
+    );
     if (propertyName === "Checksum") {
       notionChecksumEnsured = true;
     } else {
@@ -505,10 +531,12 @@ const notionQueryDb = async (
       dataSource: dataSourceId,
       body,
     });
-    return await notionClient.dataSources.query({
-      data_source_id: dataSourceId,
-      ...body,
-    });
+    return await runNotionRequest("query data source", () =>
+      notionClient.dataSources.query({
+        data_source_id: dataSourceId,
+        ...body,
+      }),
+    );
   } catch (error) {
     const code = (error as any)?.code ?? (error as any)?.status;
     const message = (error as any)?.message ?? "";
@@ -555,7 +583,9 @@ const archiveNotionPages = async ({
   let archived = 0;
   for (const pageId of uniquePageIds) {
     try {
-      await notionClient.pages.update({ page_id: pageId, archived: true });
+      await runNotionRequest("archive page", () =>
+        notionClient.pages.update({ page_id: pageId, archived: true }),
+      );
       archived += 1;
     } catch (error) {
       console.error("[superfluid-points] failed to archive Notion page", {
@@ -585,6 +615,7 @@ const upsertNotionWallet = async ({
   existingPageId,
   existingChecksum,
   duplicatePageIds = [],
+  lookupWhenMissing = true,
 }: {
   address: string;
   fundPoints: number;
@@ -596,6 +627,7 @@ const upsertNotionWallet = async ({
   existingPageId?: string | null;
   existingChecksum?: string | null;
   duplicatePageIds?: string[];
+  lookupWhenMissing?: boolean;
 }): Promise<boolean> => {
   if (!notionClient || !NOTION_DB_ID_NORMALIZED || notionDisabled) return false;
   const checksumReady = await ensureNotionChecksumProperty();
@@ -640,7 +672,7 @@ const upsertNotionWallet = async ({
     });
     let pageId: string | null = existingPageId ?? null;
     let existingResult: any | null = null;
-    if (!pageId) {
+    if (!pageId && lookupWhenMissing) {
       try {
         existingResult = await notionQueryDb({
           filter: {
@@ -671,48 +703,53 @@ const upsertNotionWallet = async ({
     }
 
     if (pageId) {
+      const targetPageId = pageId;
       const isArchived =
         (existingResult?.results?.[0] as any)?.archived === true;
       if (isArchived) {
         try {
-          await notionClient.pages.update({
-            page_id: pageId,
-            archived: false,
-          });
+          await runNotionRequest("unarchive page", () =>
+            notionClient.pages.update({
+              page_id: targetPageId,
+              archived: false,
+            }),
+          );
           console.log("[superfluid-points] notion unarchived page", {
-            pageId,
+            pageId: targetPageId,
             address: normalized,
           });
         } catch (err) {
           console.error(
             "[superfluid-points] Failed to unarchive Notion page before update",
-            { pageId, err },
+            { pageId: targetPageId, err },
           );
         }
       }
       const currentChecksum =
-        existingChecksum !== undefined ?
-          existingChecksum
-        : (existingResult?.results?.[0]?.properties as any)?.Checksum
-            ?.rich_text?.[0]?.plain_text;
+        existingChecksum !== undefined ? existingChecksum : (
+          (existingResult?.results?.[0]?.properties as any)?.Checksum
+            ?.rich_text?.[0]?.plain_text
+        );
       if (currentChecksum === checksum) {
         await archiveNotionPages({
-          pageIds: duplicateIds.filter((id) => id !== pageId),
+          pageIds: duplicateIds.filter((id) => id !== targetPageId),
           reason: `duplicate wallet ${normalized}`,
         });
         return true; // no changes needed
       }
       console.log("[superfluid-points] notion updating page", {
-        pageId,
+        pageId: targetPageId,
         address: normalized,
         props,
       });
-      await notionClient.pages.update({
-        page_id: pageId,
-        properties: props,
-      });
+      await runNotionRequest("update wallet page", () =>
+        notionClient.pages.update({
+          page_id: targetPageId,
+          properties: props,
+        }),
+      );
       await archiveNotionPages({
-        pageIds: duplicateIds.filter((id) => id !== pageId),
+        pageIds: duplicateIds.filter((id) => id !== targetPageId),
         reason: `duplicate wallet ${normalized}`,
       });
     } else {
@@ -724,13 +761,15 @@ const upsertNotionWallet = async ({
         address: normalized,
         props,
       });
-      await notionClient.pages.create({
-        parent: {
-          type: "data_source_id",
-          data_source_id: dataSourceId,
-        },
-        properties: props,
-      });
+      await runNotionRequest("create wallet page", () =>
+        notionClient.pages.create({
+          parent: {
+            type: "data_source_id",
+            data_source_id: dataSourceId,
+          },
+          properties: props,
+        }),
+      );
     }
     return true;
   } catch (error) {
@@ -755,10 +794,12 @@ const upsertNotionWallet = async ({
         });
         const retryPageId = retryLookup?.results?.[0]?.id ?? null;
         if (retryPageId) {
-          await notionClient.pages.update({
-            page_id: retryPageId,
-            archived: false,
-          });
+          await runNotionRequest("unarchive page before retry", () =>
+            notionClient.pages.update({
+              page_id: retryPageId,
+              archived: false,
+            }),
+          );
           console.log(
             "[superfluid-points] Retrying Notion upsert after unarchive",
             {
@@ -929,8 +970,6 @@ const EXCLUDED_WALLETS: Set<string> = new Set(
 );
 const PINATA_POINTS_SNAPSHOT_CID =
   process.env.SUPERFLUID_POINTS_SNAPSHOT_CID ?? null;
-const PINATA_PRICE_CACHE_NAME =
-  process.env.COINGECKO_PRICE_CACHE_NAME ?? "token-prices";
 const PINATA_ENS_CACHE_NAME =
   process.env.SUPERFLUID_ENS_CACHE_NAME ?? "superfluid-ens-cache";
 const PINATA_GROUP_ID =
@@ -1016,7 +1055,6 @@ let nativeTokenCache = new Map<string, string>();
 let latestPointsSnapshotCid: string | null = PINATA_POINTS_SNAPSHOT_CID;
 let creationCacheCampaignVersion: string | null = null;
 let transferCacheCampaignVersion: string | null = null;
-const TOKEN_PRICE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ENS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ENS_AVATAR_RETRY_MS = ENS_CACHE_TTL_MS;
 const ENS_METADATA_AVATAR_BASE_URL =
@@ -1039,13 +1077,6 @@ const fetchEnsAvatarFromMetadata = async (
   }
   return null;
 };
-const tokenPriceCache = new Map<
-  string,
-  { value: number; expiresAt: number; symbol?: string }
->();
-let priceCacheDirty = false;
-let latestPriceCacheCid: string | null = null;
-let priceCacheHydrated = false;
 let lastEnsCachePrune = 0;
 const ENS_CACHE_PRUNE_INTERVAL_MS = 60 * 60 * 1000;
 const isEnsNegativeCacheEntry = (entry: EnsCacheEntry) =>
@@ -1670,74 +1701,13 @@ const persistCreationBlockCache = async (): Promise<string | null> => {
   return cid ?? latestCreationBlockCacheCid;
 };
 
-const hydratePriceCacheFromIpfs = async () => {
-  if (priceCacheHydrated) return;
-  priceCacheHydrated = true;
-  const cid =
-    latestPriceCacheCid ??
-    (await (async () => {
-      if (latestPriceCacheCid != null || !CAN_WRITE_PINATA) return null;
-      try {
-        const data = await pinataClient?.pinList({
-          status: "pinned",
-          metadata: { name: PINATA_PRICE_CACHE_NAME },
-          pageLimit: 1,
-          pageOffset: 0,
-        } as any);
-        const found = data?.rows?.[0]?.ipfs_pin_hash ?? null;
-        if (found) {
-          latestPriceCacheCid = found;
-          return found;
-        }
-        return null;
-      } catch {
-        return null;
-      }
-    })());
-  if (!cid) return;
-  const remote = await fetchIpfsJson(cid);
-  const entries =
-    remote && typeof remote === "object" && "entries" in remote ?
-      (remote as any).entries
-    : null;
-  if (!entries || typeof entries !== "object") return;
-  const now = Date.now();
-  let hydrated = 0;
-  for (const [key, val] of Object.entries(entries)) {
-    if (
-      !val ||
-      typeof val !== "object" ||
-      typeof (val as any).value !== "number" ||
-      typeof (val as any).expiresAt !== "number"
-    ) {
-      continue;
-    }
-    const expiresAt = (val as any).expiresAt;
-    if (expiresAt <= now) continue;
-    const symbol =
-      typeof (val as any).symbol === "string" ? (val as any).symbol : "";
-    tokenPriceCache.set(key, {
-      value: (val as any).value,
-      expiresAt,
-      symbol,
-    });
-    hydrated++;
-  }
-  if (hydrated > 0) {
-    console.log("[superfluid-points] hydrated token price cache from IPFS", {
-      cid,
-      entries: hydrated,
-    });
-  }
-};
-
 const hydrateCachesFromIpfs = async () => {
   const startedAt = Date.now();
   try {
     await Promise.all([
       hydrateCreationBlockCacheFromIpfs(),
       hydrateTransferLogCacheFromIpfs(),
-      hydratePriceCacheFromIpfs(),
+      hydrateTokenPriceCache(),
       hydrateEnsIdentityCacheFromIpfs(),
     ]);
     console.log("[superfluid-points] cache hydration complete", {
@@ -1745,7 +1715,7 @@ const hydrateCachesFromIpfs = async () => {
       campaignVersion: currentCampaignVersion,
       creationBlockEntries: creationBlockCache.size,
       transferLogEntries: transferLogCache.size,
-      priceEntries: tokenPriceCache.size,
+      priceEntries: getTokenPriceCacheState().entries,
       ensEntries: ensIdentityCache.size,
     });
   } catch (error) {
@@ -2004,67 +1974,6 @@ const persistTransferLogCache = async (): Promise<string | null> => {
   const cid = await pinTransferLogCacheToIpfs();
   transferLogCacheDirty = false;
   return cid ?? latestTransferLogCacheCid;
-};
-
-const unpinPriceCacheCid = async (cid: string | null) => {
-  if (!CAN_WRITE_PINATA || !cid) return;
-  try {
-    await pinataClient?.unpin(cid);
-    console.log("[superfluid-points] unpinned previous token price cache", {
-      cid,
-    });
-  } catch (error) {
-    console.warn("[superfluid-points] pinata unpin error (prices)", {
-      cid,
-      error,
-    });
-  }
-};
-
-const pinPriceCacheToIpfs = async (): Promise<string | null> => {
-  if (!CAN_WRITE_PINATA || !priceCacheDirty || tokenPriceCache.size === 0)
-    return null;
-  const entries = Object.fromEntries(tokenPriceCache.entries());
-  const payload = {
-    updatedAt: new Date().toISOString(),
-    ttlMs: TOKEN_PRICE_CACHE_TTL_MS,
-    entries,
-  };
-  try {
-    const previousCid = latestPriceCacheCid;
-    await unpinPriceCacheCid(previousCid);
-    const data = await pinataClient?.pinJSONToIPFS(
-      normalizeForPinata(payload),
-      {
-        pinataMetadata: {
-          name: PINATA_PRICE_CACHE_NAME,
-          keyvalues: { updatedAt: payload.updatedAt },
-        } as any,
-        pinataOptions:
-          PINATA_GROUP_ID ? ({ groupId: PINATA_GROUP_ID } as any) : undefined,
-      },
-    );
-    if (data?.IpfsHash) {
-      latestPriceCacheCid = data.IpfsHash;
-      console.log("[superfluid-points] pinned token price cache to IPFS", {
-        cid: data.IpfsHash,
-      });
-      return data.IpfsHash;
-    }
-    return null;
-  } catch (error) {
-    console.warn("[superfluid-points] pinata pinJSONToIPFS error (prices)", {
-      error,
-    });
-    return null;
-  }
-};
-
-const persistPriceCache = async (): Promise<string | null> => {
-  if (!priceCacheDirty) return null;
-  const cid = await pinPriceCacheToIpfs();
-  priceCacheDirty = false;
-  return cid ?? latestPriceCacheCid;
 };
 
 const pinEnsIdentityCacheToIpfs = async (): Promise<string | null> => {
@@ -3052,26 +2961,12 @@ const processChain = async ({
   }: {
     token: Address;
     symbol: string;
-  }): Promise<number> => {
-    const key = `${chainId}-${toLower(token)}`;
-    const cached = tokenPriceCache.get(key);
-    const now = Date.now();
-    if (cached && cached.expiresAt > now) {
-      return cached.value;
-    }
-    const price = await getTokenUsdPrice({
+  }): Promise<number> =>
+    getTokenUsdPrice({
       chainId: Number(chainId),
       address: token,
       symbol,
     });
-    tokenPriceCache.set(key, {
-      value: price,
-      expiresAt: now + TOKEN_PRICE_CACHE_TTL_MS,
-      symbol,
-    });
-    priceCacheDirty = true;
-    return price;
-  };
 
   for (const pool of pools) {
     poolsProcessed++;
@@ -3641,16 +3536,15 @@ export async function GET(req: Request) {
         ensCacheCid: null,
       };
     }
-    const [creationPin, transferPin, pricePin, ensPin] = await Promise.all([
+    const [creationPin, transferPin, ensPin] = await Promise.all([
       persistCreationBlockCache(),
       persistTransferLogCache(),
-      persistPriceCache(),
       persistEnsIdentityCache(),
     ]);
     return {
       creationBlockCacheCid: creationPin ?? latestCreationBlockCacheCid ?? null,
       transferLogCacheCid: transferPin ?? latestTransferLogCacheCid ?? null,
-      priceCacheCid: pricePin ?? latestPriceCacheCid ?? null,
+      priceCacheCid: getTokenPriceCacheState().cid,
       ensCacheCid: ensPin ?? latestEnsCacheCid ?? null,
     };
   };
@@ -3675,7 +3569,7 @@ export async function GET(req: Request) {
         null,
       priceCacheCid:
         extras?.priceCacheCid ??
-        latestPriceCacheCid ??
+        getTokenPriceCacheState().cid ??
         pinnedPriceCacheCid ??
         null,
       pointsSnapshotCid:
@@ -4228,6 +4122,7 @@ export async function GET(req: Request) {
       success: false,
       processed: 0,
       failed: 0,
+      skipped: 0,
     };
 
     if (
@@ -4238,6 +4133,12 @@ export async function GET(req: Request) {
     ) {
       notionSync.attempted = true;
       try {
+        const checksumReady = await ensureNotionChecksumProperty();
+        const breakdownReady = await ensureNotionBreakdownProperty();
+        if (!checksumReady || !breakdownReady) {
+          throw new Error("Notion schema is missing required properties");
+        }
+
         // Fetch existing pages to update in place
         let cursor: string | undefined;
         let fetched = 0;
@@ -4245,7 +4146,9 @@ export async function GET(req: Request) {
           const body: Record<string, any> = { page_size: 50 };
           if (cursor) body.start_cursor = cursor;
           const res = await notionQueryDb(body);
-          if (!res) break;
+          if (!res) {
+            throw new Error("Notion existing-page scan was incomplete");
+          }
           cursor = res.next_cursor ?? undefined;
           const pages = res.results ?? [];
           for (const page of pages) {
@@ -4266,10 +4169,7 @@ export async function GET(req: Request) {
                 totalPts: typeof total === "number" ? total : 0,
                 checksum: typeof checksum === "string" ? checksum : null,
               });
-              notionExistingPages.set(
-                normalizedWallet,
-                existingPagesForWallet,
-              );
+              notionExistingPages.set(normalizedWallet, existingPagesForWallet);
               fetched += 1;
             }
           }
@@ -4277,88 +4177,62 @@ export async function GET(req: Request) {
         console.log("[superfluid-points] Notion existing pages fetched", {
           count: fetched,
         });
-      } catch (error) {
-        console.error("[superfluid-points] Failed to read Notion database", {
-          error,
-        });
-      }
 
-      console.log("[superfluid-points] Syncing wallet points to Notion", {
-        count: walletBreakdown.length,
-      });
-      const batchSize = 50;
-      let delayMs = 350;
-      const maxDelayMs = 10_000;
-      const minDelayMs = 200;
-      const seen = new Set<string>();
-      try {
-        let i = 0;
-        while (i < walletBreakdown.length) {
-          const batch = walletBreakdown.slice(i, i + batchSize);
-          console.log("[superfluid-points] Notion batch start", {
-            batchStart: i,
-            batchEnd: i + batch.length - 1,
-            batchSize: batch.length,
-            delayMs,
-          });
-          try {
-            const results = await Promise.all(
-              batch.map((wallet) => {
-                const walletKey = wallet.address.toLowerCase();
-                seen.add(walletKey);
-                const existingPages = notionExistingPages.get(walletKey) ?? [];
-                const [existing] = existingPages;
-                const duplicatePageIds = existingPages
-                  .slice(1)
-                  .map((entry) => entry.pageId);
-                // Skip update if checksum matches existing
-                if (existing?.checksum === wallet.checksum) {
-                  return archiveNotionPages({
-                    pageIds: duplicatePageIds,
-                    reason: `duplicate wallet ${walletKey}`,
-                  }).then(() => true);
-                }
-                return upsertNotionWallet({
-                  address: wallet.address,
-                  fundPoints: wallet.fundPoints,
-                  streamPoints: wallet.streamPoints,
-                  governanceStakePoints: wallet.governanceStakePoints,
-                  farcasterPoints: wallet.farcasterPoints,
-                  totalPoints: wallet.totalPoints,
-                  breakdown: wallet.breakdown,
-                  existingPageId: existing?.pageId ?? null,
-                  existingChecksum: existing?.checksum ?? null,
-                  duplicatePageIds,
-                });
-              }),
-            );
-            results.forEach((ok) => {
-              notionSync.processed += 1;
-              if (!ok) notionSync.failed += 1;
+        console.log("[superfluid-points] Syncing wallet points to Notion", {
+          count: walletBreakdown.length,
+        });
+        const progressInterval = 25;
+        const seen = new Set<string>();
+        for (const wallet of walletBreakdown) {
+          const walletKey = wallet.address.toLowerCase();
+          seen.add(walletKey);
+          const existingPages = notionExistingPages.get(walletKey) ?? [];
+          const [existing] = existingPages;
+          const duplicatePageIds = existingPages
+            .slice(1)
+            .map((entry) => entry.pageId);
+          let ok = true;
+          if (existing?.checksum === wallet.checksum) {
+            notionSync.skipped += 1;
+            await archiveNotionPages({
+              pageIds: duplicatePageIds,
+              reason: `duplicate wallet ${walletKey}`,
             });
-            console.log("[superfluid-points] Notion batch complete", {
+          } else {
+            ok = await upsertNotionWallet({
+              address: wallet.address,
+              fundPoints: wallet.fundPoints,
+              streamPoints: wallet.streamPoints,
+              governanceStakePoints: wallet.governanceStakePoints,
+              farcasterPoints: wallet.farcasterPoints,
+              totalPoints: wallet.totalPoints,
+              breakdown: wallet.breakdown,
+              existingPageId: existing?.pageId ?? null,
+              existingChecksum: existing?.checksum ?? null,
+              duplicatePageIds,
+              lookupWhenMissing: false,
+            });
+          }
+          notionSync.processed += 1;
+          if (!ok) {
+            notionSync.failed += 1;
+            throw new Error(
+              "Notion wallet upsert failed; stopping for a resumable retry",
+            );
+          }
+          if (
+            notionSync.processed % progressInterval === 0 ||
+            notionSync.processed === walletBreakdown.length
+          ) {
+            console.log("[superfluid-points] Notion sync progress", {
               processed: notionSync.processed,
               failed: notionSync.failed,
+              skipped: notionSync.skipped,
               remaining: walletBreakdown.length - notionSync.processed,
             });
-            delayMs = Math.max(minDelayMs, Math.floor(delayMs * 0.85));
-            i += batchSize;
-          } catch (error: any) {
-            const status = error?.status ?? error?.code;
-            const isRateLimit = status === 429;
-            delayMs = Math.min(maxDelayMs, Math.floor(delayMs * 2));
-            console.warn("[superfluid-points] Notion batch retrying", {
-              batchStart: i,
-              batchEnd: i + batch.length - 1,
-              delayMs,
-              isRateLimit,
-              error,
-            });
-          }
-          if (i < walletBreakdown.length) {
-            await sleep(delayMs);
           }
         }
+
         // Archive rows no longer present
         const toArchive: string[] = [];
         for (const [wallet, entries] of notionExistingPages.entries()) {
@@ -4390,6 +4264,20 @@ export async function GET(req: Request) {
           notionDisabled,
         });
       }
+    }
+
+    if (notionSync.attempted && !notionSync.success) {
+      await logger.error(
+        new Error("Superfluid points Notion sync incomplete"),
+        {
+          source: "superfluid-points-cron",
+          campaignId: effectiveCampaignId,
+          processed: notionSync.processed,
+          failed: notionSync.failed,
+          skipped: notionSync.skipped,
+          total: walletBreakdown.length,
+        },
+      );
     }
 
     if (pointsSnapshotPromise) {
@@ -4531,7 +4419,8 @@ export async function GET(req: Request) {
           responseCreationCid ?? latestCreationBlockCacheCid ?? null,
         transferLogCacheCid:
           responseTransferCid ?? latestTransferLogCacheCid ?? null,
-        priceCacheCid: pinned.priceCacheCid ?? latestPriceCacheCid ?? null,
+        priceCacheCid:
+          pinned.priceCacheCid ?? getTokenPriceCacheState().cid ?? null,
         ensCacheCid: responseEnsCid ?? latestEnsCacheCid ?? null,
         pointsSnapshotCid: responsePointsCid,
         campaignId: effectiveCampaignId,
