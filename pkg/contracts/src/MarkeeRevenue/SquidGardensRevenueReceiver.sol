@@ -45,7 +45,7 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
-        address safe = IRegistryCommunitySafe(registryCommunity).councilSafe();
+        address safe = _resolveCouncilSafe(registryCommunity);
         bool delivered = safe != address(0) && _tryTokenTransfer(token, safe, amount);
 
         if (delivered) {
@@ -87,7 +87,7 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
         processedPayoutIds[payoutId] = true;
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
-        address safe = IRegistryCommunitySafe(registryCommunity).councilSafe();
+        address safe = _resolveCouncilSafe(registryCommunity);
         bool delivered = safe != address(0) && _tryTokenTransfer(token, safe, amount);
         if (delivered) {
             emit TokenPayoutDelivered(payoutId, communityKey, safe, token, amount);
@@ -127,7 +127,7 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
         if (registryCommunity == address(0)) revert ZeroAddress();
         payoutId = _reservePayoutId(payoutId, communityKey, registryCommunity, address(0), msg.value);
 
-        address safe = IRegistryCommunitySafe(registryCommunity).councilSafe();
+        address safe = _resolveCouncilSafe(registryCommunity);
         bool delivered = false;
         if (safe != address(0)) {
             (delivered,) = payable(safe).call{value: msg.value}("");
@@ -149,7 +149,7 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
         if (payout.registryCommunity == address(0)) revert PayoutNotFound();
         if (payout.resolved) revert PayoutAlreadyResolved();
 
-        address safe = IRegistryCommunitySafe(payout.registryCommunity).councilSafe();
+        address safe = _resolveCouncilSafe(payout.registryCommunity);
         if (safe == address(0)) revert TransferFailed();
         payout.resolved = true;
         (bool success,) = payable(safe).call{value: payout.amount}("");
@@ -178,7 +178,7 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
         if (payout.registryCommunity == address(0)) revert PayoutNotFound();
         if (payout.resolved) revert PayoutAlreadyResolved();
 
-        address safe = IRegistryCommunitySafe(payout.registryCommunity).councilSafe();
+        address safe = _resolveCouncilSafe(payout.registryCommunity);
         if (safe == address(0)) revert TransferFailed();
         payout.resolved = true;
         if (!_tryTokenTransfer(payout.token, safe, payout.amount)) revert TransferFailed();
@@ -202,6 +202,18 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
     function _tryTokenTransfer(address token, address to, uint256 amount) internal returns (bool) {
         (bool success, bytes memory returnData) = token.call(abi.encodeCall(IERC20.transfer, (to, amount)));
         return success && (returnData.length == 0 || (returnData.length >= 32 && abi.decode(returnData, (bool))));
+    }
+
+    /// @dev Destination delivery must never depend on the registry lookup
+    /// succeeding. A broken or temporarily reverting community proxy should
+    /// escrow the payout for retry or owner recovery instead of reverting the
+    /// bridge callback and handing fund recovery back to the bridge provider.
+    function _resolveCouncilSafe(address registryCommunity) internal view returns (address safe) {
+        try IRegistryCommunitySafe(registryCommunity).councilSafe() returns (address currentSafe) {
+            safe = currentSafe;
+        } catch {
+            safe = address(0);
+        }
     }
 
     /// @dev Squid's multicall is a shared permissionless dispatcher, so a

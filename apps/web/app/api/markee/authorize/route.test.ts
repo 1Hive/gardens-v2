@@ -264,7 +264,7 @@ describe("Markee council Safe authorization", () => {
 
     expect(replay.status).toBe(401);
     await expect(replay.json()).resolves.toEqual({
-      error: "Authorization challenge is invalid or already used.",
+      error: "Authorization challenge is invalid, expired, or already used.",
     });
     expect(mocks.verifyTypedData).toHaveBeenCalledTimes(1);
   });
@@ -324,7 +324,7 @@ describe("Markee council Safe authorization", () => {
 
       expect(response.status).toBe(401);
       await expect(response.json()).resolves.toEqual({
-        error: "Authorization challenge has expired.",
+        error: "Authorization challenge is invalid, expired, or already used.",
       });
       expect(mocks.verifyTypedData).not.toHaveBeenCalled();
     } finally {

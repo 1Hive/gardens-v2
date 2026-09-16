@@ -12,6 +12,14 @@ import {
   zeroAddress,
 } from "viem";
 import {
+  clearMarkeeChallengesForTests,
+  consumeMarkeeChallenge,
+  MarkeeChallengeRateLimitError,
+  MarkeeChallengeStoreUnavailableError,
+  reserveMarkeeChallengeIssue,
+  saveMarkeeChallenge,
+} from "../../../../../utils/markeeChallengeStore";
+import {
   readLimitedJsonBody,
   RequestBodyTooLargeError,
 } from "../../../../../utils/readLimitedJsonBody";
@@ -30,7 +38,7 @@ export const runtime = "nodejs";
 
 const CHALLENGE_TTL_SECONDS = 5 * 60;
 const MAX_REQUEST_BYTES = 16 * 1024;
-const MAX_ACTIVE_CHALLENGES = 5_000;
+const CHALLENGE_NAMESPACE = "claim";
 
 const safeOwnerABI = parseAbi([
   "function isOwner(address account) view returns (bool)",
@@ -93,19 +101,6 @@ type VerifyRequest = {
 
 type RequestBody = ChallengeRequest | VerifyRequest;
 
-const globalForMarkeeClaimAuthorization = globalThis as typeof globalThis & {
-  __markeeClaimAuthorizationChallenges?: Map<string, ClaimChallenge>;
-};
-
-const challenges =
-  globalForMarkeeClaimAuthorization.__markeeClaimAuthorizationChallenges ??
-  new Map<string, ClaimChallenge>();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForMarkeeClaimAuthorization.__markeeClaimAuthorizationChallenges =
-    challenges;
-}
-
 const jsonError = (error: string, status: number) =>
   NextResponse.json(
     { error },
@@ -162,12 +157,6 @@ const parseRequest = (value: unknown): RequestBody | null => {
   }
 
   return null;
-};
-
-const pruneExpiredChallenges = (now: number) => {
-  for (const [nonce, challenge] of challenges) {
-    if (challenge.deadline <= now) challenges.delete(nonce);
-  }
 };
 
 const getAuthorizationDomain = (chainId: number, community: Address) => ({
@@ -248,27 +237,17 @@ const createClaimMessage = async ({
 };
 
 const issueChallenge = async (body: ChallengeRequest) => {
-  // TODO(#953): Replace this with a shared, atomic single-use nonce store.
-  // Fail closed until production has that durable store.
-  // An in-memory Map cannot prevent replay across serverless instances.
-  if (process.env.NODE_ENV === "production") {
-    return jsonError(
-      "Markee revenue claims are temporarily unavailable in this deployment.",
-      503,
-    );
-  }
-
   if (!Object.prototype.hasOwnProperty.call(chainConfigMap, body.chainId)) {
     return jsonError("Unsupported community chain.", 400);
   }
 
   const now = Math.floor(Date.now() / 1000);
-  pruneExpiredChallenges(now);
-  if (challenges.size >= MAX_ACTIVE_CHALLENGES) {
-    return jsonError("Too many active claim authorization requests.", 429);
-  }
 
   try {
+    await reserveMarkeeChallengeIssue({
+      namespace: CHALLENGE_NAMESPACE,
+      subject: `${body.chainId}:${body.community.toLowerCase()}`,
+    });
     const councilSafe = await readCouncilSafe(body.chainId, body.community);
     if (councilSafe === zeroAddress) {
       return jsonError("This community does not have a council Safe.", 409);
@@ -300,7 +279,12 @@ const issueChallenge = async (body: ChallengeRequest) => {
       }),
       nonce,
     };
-    challenges.set(nonce, challenge);
+    await saveMarkeeChallenge({
+      namespace: CHALLENGE_NAMESPACE,
+      nonce,
+      ttlSeconds: CHALLENGE_TTL_SECONDS,
+      value: challenge,
+    });
 
     return jsonSuccess(
       {
@@ -329,20 +313,45 @@ const issueChallenge = async (body: ChallengeRequest) => {
     );
   } catch (error) {
     console.error("[Markee claim authorization] Challenge failed", error);
+    if (error instanceof MarkeeChallengeRateLimitError) {
+      return jsonError(
+        "Too many Markee claim requests. Please wait a minute and try again.",
+        429,
+      );
+    }
+    if (error instanceof MarkeeChallengeStoreUnavailableError) {
+      return jsonError(
+        "Markee claim authorization is temporarily unavailable. Please try again shortly.",
+        503,
+      );
+    }
     return jsonError("Unable to validate the council Safe member.", 502);
   }
 };
 
 const verifyChallenge = async (body: VerifyRequest) => {
-  const challenge = challenges.get(body.nonce);
+  let challenge: ClaimChallenge | null;
+  try {
+    challenge = await consumeMarkeeChallenge<ClaimChallenge>({
+      namespace: CHALLENGE_NAMESPACE,
+      nonce: body.nonce,
+    });
+  } catch (error) {
+    console.error(
+      "[Markee claim authorization] Failed to consume challenge",
+      error,
+    );
+    return jsonError(
+      "Markee claim authorization is temporarily unavailable. Please try again shortly.",
+      503,
+    );
+  }
   if (!challenge) {
     return jsonError(
-      "Claim authorization challenge is invalid or already used.",
+      "Claim authorization challenge is invalid, expired, or already used.",
       401,
     );
   }
-
-  challenges.delete(body.nonce);
 
   if (challenge.deadline <= Math.floor(Date.now() / 1000)) {
     return jsonError("Claim authorization challenge has expired.", 401);
@@ -443,5 +452,5 @@ export async function POST(request: Request) {
 }
 
 export const clearMarkeeClaimAuthorizationChallengesForTests = () => {
-  if (process.env.NODE_ENV === "test") challenges.clear();
+  clearMarkeeChallengesForTests(CHALLENGE_NAMESPACE);
 };

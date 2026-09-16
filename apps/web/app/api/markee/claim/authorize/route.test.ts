@@ -237,7 +237,8 @@ describe("Markee manual claim authorization", () => {
 
     expect(replay.status).toBe(401);
     await expect(replay.json()).resolves.toEqual({
-      error: "Claim authorization challenge is invalid or already used.",
+      error:
+        "Claim authorization challenge is invalid, expired, or already used.",
     });
   });
 

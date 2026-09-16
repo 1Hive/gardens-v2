@@ -24,7 +24,7 @@ V1 integrates only the streaming leaderboard strategy. The Gardens community rec
 - A keeper automatically sweeps when effective bridge cost is at most 1% of available revenue.
 - A manual claim may be initiated by the council Safe or any current Safe owner.
 - Manual claims may exceed 1% only when the signer accepts explicit maximum fee limits.
-- Bridge fees are deducted from community revenue; the keeper pays its own Base transaction gas.
+- Bridge fees and the measured source-chain transaction gas are deducted from community revenue. The router reimburses the authorized keeper for the signed `gasCost`; the API rejects claims whose gas cost would consume the revenue.
 - Base communities are paid locally without bridging.
 - Remote payouts resolve `RegistryCommunity.councilSafe()` on the destination chain at delivery time.
 - V1 bridge execution is keeper-only. Permissionless sponsored bridging is deferred.
@@ -192,13 +192,15 @@ The vault:
 
 ### Automatic slow path
 
-The API periodically fetches a fresh Squid quote for each opted-in remote community and automatically sweeps when:
+The intended automatic sweeper periodically fetches a fresh quote from the bridge configured for each opted-in remote community and submits a claim when:
 
 ```text
 effectiveBridgeCost / availableRevenue <= 1%
 ```
 
-Effective bridge cost includes destination execution, cross-chain execution, and route or swap loss. It excludes the keeper's Base transaction gas.
+Effective bridge cost includes destination execution, cross-chain execution, route or swap loss, and the keeper's reimbursed Base transaction gas.
+
+The quote and manual-claim paths are implemented. A production scheduler and community-discovery job for automatic sweeps are still required; until then, claims are manual.
 
 If the ratio exceeds 1%, revenue remains in the vault and continues accumulating. Base communities have no bridge fee and are paid locally by the keeper.
 
@@ -237,13 +239,13 @@ interface IBridgeAdapter {
 }
 ```
 
-The Squid adapter forwards native ETH and API-produced route calldata only to the configured canonical Squid Router. The quote binds the originating vault as the source-chain refund address and includes a destination post-hook that calls the chain's singleton receiver with a payout identifier and community identity. The API validates the Squid transaction target, source value, expected destination output, destination receiver, and minimum output before keeper execution.
+The router stores a bridge protocol and adapter per destination. Squid is configured for Ethereum, Optimism, Arbitrum, Polygon, and Celo. Gnosis uses the LI.FI adapter and delivers WETH to the same singleton receiver interface. The API validates provider quotes before keeper execution; LI.FI route calldata is decoded and bound on-chain. Squid calldata remains an explicit trusted-keeper/API boundary because the provider's canonical router accepts generic calls; a complete fail-closed Squid decoder requires captured route fixtures for every enabled destination and asset.
 
 ### Destination delivery
 
-There is one shared receiver on every supported remote Gardens chain. It authenticates that chain's Squid Multicall, accepts the full native output supplied by the post-hook, resolves the latest council Safe, and forwards the native asset.
+There is one shared receiver on every supported remote Gardens chain. It accepts the configured provider's native or token output, resolves the latest council Safe, and forwards the delivered asset.
 
-If the Safe transfer fails, the receiver catches the failure instead of reverting the Squid post-hook. It records the amount against `payoutId` and `communityKey`, then permits a permissionless local retry that resolves the latest Safe again.
+If the Safe lookup reverts, returns zero, or the transfer fails, the receiver escrows the delivery instead of reverting the provider callback. It records the amount against `payoutId` and `communityKey`, then permits a permissionless local retry that resolves the latest Safe again.
 
 ### Failure handling
 
@@ -271,42 +273,44 @@ flowchart TD
 
 ## Contracts and Ownership
 
-| Component | Deployment | Upgrade policy | Owner/access |
-|---|---|---|---|
-| `CommunityRevenueVault` | One deterministic clone per community on Base | Non-upgradeable clone | Router-only release |
-| `GardensMarkeeRouter` | Singleton on Base; deploys vault clones and creates/registers leaderboards | UUPS via `ProxyOwnableUpgrader` | Authorized keeper for creation; Gardens Base `ProxyOwner` for factory/configuration and leaderboard administration |
-| `SquidBridgeAdapter` | Replaceable adapter on Base | Replace by router configuration | Router-only execution; calldata target pinned to the canonical Squid Router |
-| `SquidGardensRevenueReceiver` | Singleton per remote chain | UUPS via `ProxyOwnableUpgrader` | Squid-Multicall-only delivery; chain-local Gardens `ProxyOwner` |
+| Component                     | Deployment                                                                 | Upgrade policy                  | Owner/access                                                                                                       |
+| ----------------------------- | -------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `CommunityRevenueVault`       | One deterministic clone per community on Base                              | Non-upgradeable clone           | Router-only release                                                                                                |
+| `GardensMarkeeRouter`         | Singleton on Base; deploys vault clones and creates/registers leaderboards | UUPS via `ProxyOwnableUpgrader` | Authorized keeper for creation; Gardens Base `ProxyOwner` for factory/configuration and leaderboard administration |
+| `SquidBridgeAdapter`          | Replaceable adapter on Base                                                | Replace by router configuration | Router-only execution; calldata target pinned to the canonical Squid Router                                        |
+| `LiFiBridgeAdapter`           | Replaceable adapter on Base                                                | Replace by router configuration | Router-only execution; decoded route bindings and configured LI.FI diamond                                         |
+| `SquidGardensRevenueReceiver` | Singleton per remote chain                                                 | UUPS via `ProxyOwnableUpgrader` | Provider delivery and retry escrow; chain-local Gardens `ProxyOwner`                                               |
 
 The effective Gardens owner manages keeper authorization, the settable streaming leaderboard factory, leaderboard administration, and adapter/receiver configuration. The factory setter rejects the zero address and addresses without contract code. Successful router and adapter calls must not retain community revenue.
 
 ## Supported Destinations
 
-| Community chain | Chain ID | Delivery asset |
-|---|---:|---|
-| Base | 8453 | Native ETH, local payout |
-| Ethereum | 1 | Native ETH |
-| Optimism | 10 | Native ETH |
-| Arbitrum | 42161 | Native ETH |
-| Polygon | 137 | Native POL |
-| Gnosis | 100 | Native xDAI |
-| Celo | 42220 | Native CELO |
+| Community chain | Chain ID | Delivery asset           |
+| --------------- | -------: | ------------------------ |
+| Base            |     8453 | Native ETH, local payout |
+| Ethereum        |        1 | Native ETH               |
+| Optimism        |       10 | Native ETH               |
+| Arbitrum        |    42161 | Native ETH               |
+| Polygon         |      137 | WETH                     |
+| Gnosis          |      100 | WETH                     |
+| Celo            |    42220 | WETH                     |
 
-Squid supports the production Gardens chains listed above. A singleton receiver is deployed on each destination and configured against that chain's live Squid Multicall; Gnosis uses its chain-specific Multicall address. Route availability, refund behavior, native destination asset, and quote limits must still be validated with low-value canaries before enabling claims generally. The existing Across path remains testnet-only while production uses Squid from Base.
+Production uses destination-specific bridge configuration: Squid for Ethereum, Optimism, Arbitrum, Polygon, and Celo; LI.FI for Gnosis. A singleton receiver is deployed on every destination. Route availability, refund behavior, destination asset, and quote limits must still be validated with low-value canaries before enabling claims generally. Across remains testnet-only.
 
 ### Production deployments
 
-| Component or chain | Address |
-|---|---|
-| Base `GardensMarkeeRouter` proxy | `0xa9d9b3a9CE7edA7000A4baD8Af0863F716eA9d30` |
+| Component or chain                 | Address                                      |
+| ---------------------------------- | -------------------------------------------- |
+| Base `GardensMarkeeRouter` proxy   | `0xa9d9b3a9CE7edA7000A4baD8Af0863F716eA9d30` |
 | Base `StreamingLeaderboardFactory` | `0x37f420fdE5c98e611EB7cb9b74ef579D84697039` |
-| Base `SquidBridgeAdapter` | `0xD41C42eF1EB7aC8Cc69D294602c51b14e3B308C6` |
-| Ethereum receiver | `0xF6437EcB8d70ff8FeA74a6D8bC50946c3a7DB5D2` |
-| Optimism receiver | `0x03b1073D285C240bB074b37841adb83c7CCdD329` |
-| Arbitrum receiver | `0xc224E441368864c91EB721A0b82911ABb861880f` |
-| Polygon receiver | `0x047328Eb5c7e09c66CB3238F0D6603b2D547cBC0` |
-| Gnosis receiver | `0xd6DD4D4364D2bbB8C95086E52C877fb41ec3b7aE` |
-| Celo receiver | `0xCBE14EB5ddD78929E6C48226889cA317017D9339` |
+| Base `SquidBridgeAdapter`          | `0xD41C42eF1EB7aC8Cc69D294602c51b14e3B308C6` |
+| Base `LiFiBridgeAdapter`           | `0x6D1fAd96b037547EFAcC8aa3394Bd10776a135A3` |
+| Ethereum receiver                  | `0xF6437EcB8d70ff8FeA74a6D8bC50946c3a7DB5D2` |
+| Optimism receiver                  | `0x03b1073D285C240bB074b37841adb83c7CCdD329` |
+| Arbitrum receiver                  | `0xc224E441368864c91EB721A0b82911ABb861880f` |
+| Polygon receiver                   | `0x047328Eb5c7e09c66CB3238F0D6603b2D547cBC0` |
+| Gnosis receiver                    | `0xd6DD4D4364D2bbB8C95086E52C877fb41ec3b7aE` |
+| Celo receiver                      | `0xCBE14EB5ddD78929E6C48226889cA317017D9339` |
 
 ## Two-Developer Split
 
@@ -395,7 +399,8 @@ interface IGardensMarkeeRouter {
 - Squid exposes a live quote within the configured limits for every enabled Base route.
 - The Squid route binds the originating vault as `fromAddress` for source-chain refunds.
 - A Gardens Squid integrator ID is configured in the API environment.
-- The API safely persists consumed nonces, an indexing mirror of router community registrations, claims, quotes, and transfer status.
+- The API stores authorization challenges in a shared Redis-compatible REST store and atomically consumes them. Production must configure `MARKEE_AUTH_REDIS_REST_URL` and `MARKEE_AUTH_REDIS_REST_TOKEN` (or the supported Vercel KV/Upstash aliases).
+- Router registrations remain the canonical integration index; pending bridge status is mirrored for UI reconciliation.
 - Threshold policy stays off-chain; contracts enforce quote validity, destination integrity, minimum output, and funds conservation.
 
 ## Definition of Done
@@ -406,6 +411,7 @@ interface IGardensMarkeeRouter {
 - A threshold-valid current council Safe can opt in.
 - One Safe owner alone cannot opt in.
 - Replayed, expired, and stale-Safe authorizations are rejected; duplicate router execution returns the existing registration.
+- Authorization replay protection works across serverless instances through an atomic shared-store consume.
 - The deterministic vault is created or reused.
 - The streaming leaderboard is created with that vault as beneficiary.
 - The router atomically registers the chain ID, RegistryCommunity, vault, factory, leaderboard, and seed Markee.

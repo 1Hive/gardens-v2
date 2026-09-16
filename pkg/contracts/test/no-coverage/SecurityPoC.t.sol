@@ -2207,6 +2207,12 @@ contract MarkeePoCRegistryCommunity {
     }
 }
 
+contract MarkeePoCRevertingRegistryCommunity {
+    function councilSafe() external pure returns (address) {
+        revert("registry unavailable");
+    }
+}
+
 contract MarkeePoCToken {
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
@@ -2270,6 +2276,38 @@ contract PoC_MarkeePayoutIdPreConsumption is Test {
         assertEq(token.balanceOf(safe), 101, "legitimate revenue must not be denied");
         assertEq(receiver.tokenRevenueNonce(), 2, "each delivery must reserve a fresh local payout ID");
         assertFalse(receiver.processedPayoutIds(suppliedPayoutId), "external IDs must never occupy the local namespace");
+    }
+}
+
+/// @notice Regression for destination payout availability. A broken community
+/// proxy must not revert the bridge callback and strand recovery with the
+/// bridge provider; the receiver keeps the funds in its retryable escrow.
+contract PoC_MarkeeSafeLookupFailureEscrow is Test {
+    function test_Markee_RevertingSafeLookupEscrowsDestinationFunds() public {
+        address multicall = makeAddr("publicSquidMulticall");
+        MarkeePoCRevertingRegistryCommunity community = new MarkeePoCRevertingRegistryCommunity();
+        MarkeePoCToken token = new MarkeePoCToken();
+        SquidGardensRevenueReceiver implementation = new SquidGardensRevenueReceiver();
+        SquidGardensRevenueReceiver receiver = SquidGardensRevenueReceiver(
+            payable(address(
+                    new ERC1967Proxy(
+                        address(implementation),
+                        abi.encodeCall(SquidGardensRevenueReceiver.initialize, (address(this), multicall))
+                    )
+                ))
+        );
+
+        uint256 amount = 1 ether;
+        token.mint(multicall, amount);
+        vm.startPrank(multicall);
+        token.approve(address(receiver), amount);
+        receiver.receiveSquidTokenRevenue(
+            keccak256("provider-payout"), keccak256("community"), address(community), address(token), amount
+        );
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(address(receiver)), amount, "destination funds must remain recoverable");
+        assertEq(receiver.tokenRevenueNonce(), 1, "the escrowed delivery must remain accounted for");
     }
 }
 

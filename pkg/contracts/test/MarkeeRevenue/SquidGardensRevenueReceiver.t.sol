@@ -11,6 +11,34 @@ import {MockRegistryCommunity} from "./mocks/MockRegistryCommunity.sol";
 
 contract SquidRejectingSafe {}
 
+contract RevertingRegistryCommunity {
+    function councilSafe() external pure returns (address) {
+        revert("registry unavailable");
+    }
+}
+
+contract SwitchableRegistryCommunity {
+    address internal safe;
+    bool internal unavailable;
+
+    constructor(address initialSafe) {
+        safe = initialSafe;
+    }
+
+    function setCouncilSafe(address newSafe) external {
+        safe = newSafe;
+    }
+
+    function setUnavailable(bool isUnavailable) external {
+        unavailable = isUnavailable;
+    }
+
+    function councilSafe() external view returns (address) {
+        if (unavailable) revert("registry unavailable");
+        return safe;
+    }
+}
+
 contract MockSquidToken is ERC20 {
     address public rejectedRecipient;
 
@@ -110,6 +138,28 @@ contract SquidGardensRevenueReceiverTest is Test {
         receiver.receiveSquidRevenue{value: 1}(bytes32(uint256(1)), bytes32(0), address(community));
     }
 
+    function test_receiveSquidRevenue_escrowsWhenCouncilSafeLookupReverts() public {
+        RevertingRegistryCommunity community = new RevertingRegistryCommunity();
+        bytes32 suppliedPayoutId = bytes32(uint256(11));
+        bytes32 communityKey = keccak256("community");
+        uint256 amount = 1 ether;
+        bytes32 effectivePayoutId = _effectivePayoutId(
+            receiver.tokenRevenueNonce(), suppliedPayoutId, communityKey, address(community), address(0), amount
+        );
+
+        vm.deal(squidMulticall, amount);
+        vm.prank(squidMulticall);
+        receiver.receiveSquidRevenue{value: amount}(suppliedPayoutId, communityKey, address(community));
+
+        (bytes32 storedCommunityKey, address storedCommunity, uint256 storedAmount, bool resolved) =
+            receiver.failedPayouts(effectivePayoutId);
+        assertEq(storedCommunityKey, communityKey);
+        assertEq(storedCommunity, address(community));
+        assertEq(storedAmount, amount);
+        assertFalse(resolved);
+        assertEq(address(receiver).balance, amount);
+    }
+
     function test_receiveSquidRevenue_collisionCannotBlockLegitimatePayout() public {
         MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
         bytes32 payoutId = _deliver(bytes32(uint256(1)), community, 1 ether);
@@ -131,6 +181,37 @@ contract SquidGardensRevenueReceiverTest is Test {
         assertEq(newSafe.balance, 1 ether);
     }
 
+    function test_retryPayout_preservesEscrowUntilCouncilSafeLookupRecovers() public {
+        SquidRejectingSafe rejectingSafe = new SquidRejectingSafe();
+        SwitchableRegistryCommunity community = new SwitchableRegistryCommunity(address(rejectingSafe));
+        bytes32 suppliedPayoutId = bytes32(uint256(13));
+        bytes32 communityKey = keccak256("community");
+        uint256 amount = 1 ether;
+        bytes32 payoutId = _effectivePayoutId(
+            receiver.tokenRevenueNonce(), suppliedPayoutId, communityKey, address(community), address(0), amount
+        );
+
+        vm.deal(squidMulticall, amount);
+        vm.prank(squidMulticall);
+        receiver.receiveSquidRevenue{value: amount}(suppliedPayoutId, communityKey, address(community));
+
+        community.setUnavailable(true);
+        vm.expectRevert(ISquidGardensRevenueReceiver.TransferFailed.selector);
+        receiver.retryPayout(payoutId);
+        (,,, bool resolvedWhileUnavailable) = receiver.failedPayouts(payoutId);
+        assertFalse(resolvedWhileUnavailable);
+        assertEq(address(receiver).balance, amount);
+
+        address newSafe = address(0x5AFE);
+        community.setUnavailable(false);
+        community.setCouncilSafe(newSafe);
+        receiver.retryPayout(payoutId);
+
+        (,,, bool resolved) = receiver.failedPayouts(payoutId);
+        assertTrue(resolved);
+        assertEq(newSafe.balance, amount);
+    }
+
     function test_receiveSquidTokenRevenue_deliversTokenToLatestSafe() public {
         address safe = address(0x5AFE);
         MockRegistryCommunity community = new MockRegistryCommunity(safe);
@@ -139,6 +220,52 @@ contract SquidGardensRevenueReceiverTest is Test {
 
         assertEq(token.balanceOf(safe), 1 ether);
         assertEq(token.balanceOf(address(receiver)), 0);
+    }
+
+    function test_receiveSquidTokenRevenue_escrowsWhenCouncilSafeLookupReverts() public {
+        RevertingRegistryCommunity community = new RevertingRegistryCommunity();
+        bytes32 suppliedPayoutId = bytes32(uint256(12));
+        bytes32 communityKey = keccak256("community");
+        uint256 amount = 1 ether;
+        bytes32 effectivePayoutId = _effectivePayoutId(
+            receiver.tokenRevenueNonce(), suppliedPayoutId, communityKey, address(community), address(token), amount
+        );
+
+        token.mint(squidMulticall, amount);
+        vm.startPrank(squidMulticall);
+        token.approve(address(receiver), amount);
+        receiver.receiveSquidTokenRevenue(suppliedPayoutId, communityKey, address(community), address(token), amount);
+        vm.stopPrank();
+
+        (
+            bytes32 storedCommunityKey,
+            address storedCommunity,
+            address storedToken,
+            uint256 storedAmount,
+            bool resolved
+        ) = receiver.failedTokenPayouts(effectivePayoutId);
+        assertEq(storedCommunityKey, communityKey);
+        assertEq(storedCommunity, address(community));
+        assertEq(storedToken, address(token));
+        assertEq(storedAmount, amount);
+        assertFalse(resolved);
+        assertEq(token.balanceOf(address(receiver)), amount);
+    }
+
+    function test_receiveTokenRevenue_escrowsWhenCouncilSafeLookupReverts() public {
+        RevertingRegistryCommunity community = new RevertingRegistryCommunity();
+        bytes32 communityKey = keccak256("community");
+        address lifiExecutor = address(0x11F1);
+        uint256 amount = 1 ether;
+        token.mint(lifiExecutor, amount);
+
+        vm.startPrank(lifiExecutor);
+        token.approve(address(receiver), amount);
+        receiver.receiveTokenRevenue(communityKey, address(community), address(token), amount);
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(address(receiver)), amount);
+        assertEq(receiver.tokenRevenueNonce(), 1);
     }
 
     function test_receiveTokenRevenue_deliversCallerApprovedTokenToLatestSafe() public {
@@ -211,6 +338,40 @@ contract SquidGardensRevenueReceiverTest is Test {
         assertEq(token.balanceOf(newSafe), 1 ether);
         (,,,, bool resolved) = receiver.failedTokenPayouts(payoutId);
         assertTrue(resolved);
+    }
+
+    function test_retryTokenPayout_preservesEscrowUntilCouncilSafeLookupRecovers() public {
+        address rejectingSafe = address(0xBAD5AFE3);
+        token.setRejectedRecipient(rejectingSafe);
+        SwitchableRegistryCommunity community = new SwitchableRegistryCommunity(rejectingSafe);
+        bytes32 suppliedPayoutId = bytes32(uint256(14));
+        bytes32 communityKey = keccak256("community");
+        uint256 amount = 1 ether;
+        bytes32 payoutId = _effectivePayoutId(
+            receiver.tokenRevenueNonce(), suppliedPayoutId, communityKey, address(community), address(token), amount
+        );
+
+        token.mint(squidMulticall, amount);
+        vm.startPrank(squidMulticall);
+        token.approve(address(receiver), amount);
+        receiver.receiveSquidTokenRevenue(suppliedPayoutId, communityKey, address(community), address(token), amount);
+        vm.stopPrank();
+
+        community.setUnavailable(true);
+        vm.expectRevert(ISquidGardensRevenueReceiver.TransferFailed.selector);
+        receiver.retryTokenPayout(payoutId);
+        (,,,, bool resolvedWhileUnavailable) = receiver.failedTokenPayouts(payoutId);
+        assertFalse(resolvedWhileUnavailable);
+        assertEq(token.balanceOf(address(receiver)), amount);
+
+        address newSafe = address(0x5AFE);
+        community.setUnavailable(false);
+        community.setCouncilSafe(newSafe);
+        receiver.retryTokenPayout(payoutId);
+
+        (,,,, bool resolved) = receiver.failedTokenPayouts(payoutId);
+        assertTrue(resolved);
+        assertEq(token.balanceOf(newSafe), amount);
     }
 
     function test_recoverTokenPayout_onlyOwner() public {
