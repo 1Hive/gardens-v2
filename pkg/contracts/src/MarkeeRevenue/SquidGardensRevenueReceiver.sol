@@ -152,6 +152,9 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
         address safe = _resolveCouncilSafe(payout.registryCommunity);
         if (safe == address(0)) revert TransferFailed();
         payout.resolved = true;
+        // The recipient is not caller-controlled: it is resolved from the
+        // payout's registered RegistryCommunity at retry time.
+        // slither-disable-next-line arbitrary-send-eth
         (bool success,) = payable(safe).call{value: payout.amount}("");
         if (!success) revert TransferFailed();
 

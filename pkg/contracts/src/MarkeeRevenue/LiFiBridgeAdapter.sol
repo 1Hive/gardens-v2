@@ -143,6 +143,9 @@ contract LiFiBridgeAdapter is Ownable, IBridgeAdapter {
     function recoverNative(address payable recipient) external onlyOwner {
         if (recipient == address(0)) revert ZeroAddress();
         uint256 amount = address(this).balance;
+        // This is an input guard, not a security decision based on mutable
+        // external state or an exact asset-accounting invariant.
+        // slither-disable-next-line incorrect-equality
         if (amount == 0) revert NoNativeBalance();
 
         (bool recovered,) = recipient.call{value: amount}("");
