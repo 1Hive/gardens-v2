@@ -53,7 +53,7 @@ contract CommunityPowerFacet is CommunityBaseFacet {
     }
 
     function onlyRegistryMemberAddress(address _sender) internal view {
-        if (!isRegisteredMember(_sender)) { revert UserNotInRegistry(); }
+        if (!isRegisteredMember(_sender)) revert UserNotInRegistry();
     }
 
     function onlyStrategyEnabled(address _strategy) internal view {
@@ -171,7 +171,8 @@ contract CommunityPowerFacet is CommunityBaseFacet {
             }
         }
 
-        gardenToken.safeTransferFrom(member, address(this), _amountStaked); addressToMemberInfo[member].stakedAmount += _amountStaked;
+        gardenToken.safeTransferFrom(member, address(this), _amountStaked);
+        addressToMemberInfo[member].stakedAmount += _amountStaked;
         emit MemberPowerIncreased(member, _amountStaked);
     }
 

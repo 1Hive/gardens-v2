@@ -207,8 +207,9 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     uint256[] public openStreamingProposalIds;
     mapping(uint256 => uint256) public openStreamingProposalIndex;
     bool public openStreamingProposalsInitialized;
+    bool internal _reentrancyLocked;
     // slither-disable-next-line shadowing-state
-    uint256[41] private __gap;
+    uint256[40] private __gap;
 
     // Constants (also defined in CVStrategyBaseFacet for facet access)
     uint256 public constant RULING_OPTIONS = 3;

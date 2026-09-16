@@ -124,6 +124,7 @@ export default function ClientPage({
   const { data: communitiesSections, fetching: isFetching } =
     useSubgraphQueryMultiChain<getCommunitiesQuery>({
       query: getCommunitiesDocument,
+      refreshKey: showArchived,
       modifier: (data) => {
         return data
           .flatMap((section) =>

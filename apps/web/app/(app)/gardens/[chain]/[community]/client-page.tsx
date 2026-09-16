@@ -15,6 +15,7 @@ import { Dnum, multiply } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "react-toastify";
+import { useMediaQuery } from "usehooks-ts";
 import { Address } from "viem";
 import { mainnet } from "viem/chains";
 import { useAccount, useToken } from "wagmi";
@@ -46,6 +47,7 @@ import {
   RegisterMember,
   Statistic,
 } from "@/components";
+import { CommunityMarkeePlaceholder } from "@/components/CommunityMarkeePlaceholder";
 import { Divider } from "@/components/Divider";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { LoupeButton } from "@/components/LoupeButton";
@@ -122,6 +124,7 @@ export default function ClientPage({
   const pendingNewCommunityRefetch = useRef<string | null>(null);
   const { publishAfterIndexed } = usePubSubContext();
   const chain = useChainFromPath();
+  const isMobileViewport = useMediaQuery("(max-width: 767px)");
   const [selectedTab, setSelectedTab] = useState(0);
   const memberOptimistic = useMemo(
     () => ({
@@ -799,21 +802,21 @@ export default function ClientPage({
 
                   <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:flex-shrink-0 md:justify-end">
                     {effectiveCouncilSafe && (
-                        <EditCommunityModal
-                          communityAddress={registryCommunity.id as Address}
-                          communityName={communityName ?? "Community"}
-                          communityMembersCount={Number(membersCount ?? 0)}
-                          currentCommunityName={communityName ?? ""}
-                          currentCouncilSafe={effectiveCouncilSafe}
-                          pendingCouncilSafe={
-                            effectivePendingCouncilSafe ?? undefined
-                          }
-                          currentCovenant={covenant ?? ""}
-                          tokenDecimals={resolvedTokenGarden.decimals}
-                          tokenSymbol={resolvedTokenGarden.symbol}
-                          isCouncilSafe={isCouncilSafe}
-                          isCouncilMember={isCouncilMember}
-                        />
+                      <EditCommunityModal
+                        communityAddress={registryCommunity.id as Address}
+                        communityName={communityName ?? "Community"}
+                        communityMembersCount={Number(membersCount ?? 0)}
+                        currentCommunityName={communityName ?? ""}
+                        currentCouncilSafe={effectiveCouncilSafe}
+                        pendingCouncilSafe={
+                          effectivePendingCouncilSafe ?? undefined
+                        }
+                        currentCovenant={covenant ?? ""}
+                        tokenDecimals={resolvedTokenGarden.decimals}
+                        tokenSymbol={resolvedTokenGarden.symbol}
+                        isCouncilSafe={isCouncilSafe}
+                        isCouncilMember={isCouncilMember}
+                      />
                     )}
                     {(isCouncilMember || isCouncilSafe) && (
                       <Button
@@ -1038,13 +1041,21 @@ export default function ClientPage({
 
       {/* Desktop Right Sidebar - Stake component */}
       <div className="hidden md:block col-span-12 xl:col-span-3">
-        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-2 sticky top-32">
+        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-4 sticky top-32">
           <IncreasePower
             memberData={accountAddress ? isMemberResult : undefined}
             registryCommunity={registryCommunity}
             tokenGarden={resolvedTokenGarden}
             registrationAmount={registrationAmount}
           />
+          {!isMobileViewport && (
+            <CommunityMarkeePlaceholder
+              canOptIn={Boolean(isCouncilMember || isCouncilSafe)}
+              chainId={chain?.id}
+              community={communityAddr as Address}
+              councilSafe={effectiveCouncilSafe}
+            />
+          )}
         </div>
       </div>
 
@@ -1072,8 +1083,14 @@ export default function ClientPage({
 
         <div className="mt-4">
           {/* Overview Tab */}
-          {selectedTab === 0 && (
+          {isMobileViewport && selectedTab === 0 && (
             <div className="backdrop-blur-sm flex flex-col gap-6">
+              <CommunityMarkeePlaceholder
+                canOptIn={Boolean(isCouncilMember || isCouncilSafe)}
+                chainId={chain?.id}
+                community={communityAddr as Address}
+                councilSafe={effectiveCouncilSafe}
+              />
               <header
                 className={`border shadow-sm section-layout ${headerCardBorderClass}`}
               >
@@ -1165,22 +1182,22 @@ export default function ClientPage({
                     {/* Action Buttons */}
                     <div className="flex flex-col gap-2 mt-4">
                       {effectiveCouncilSafe && (
-                          <EditCommunityModal
-                            communityAddress={registryCommunity.id as Address}
-                            communityName={communityName ?? "Community"}
-                            communityMembersCount={Number(membersCount ?? 0)}
-                            currentCommunityName={communityName ?? ""}
-                            currentCouncilSafe={effectiveCouncilSafe}
-                            pendingCouncilSafe={
-                              effectivePendingCouncilSafe ?? undefined
-                            }
-                            currentCovenant={covenant ?? ""}
-                            tokenDecimals={resolvedTokenGarden.decimals}
-                            tokenSymbol={resolvedTokenGarden.symbol}
-                            isCouncilSafe={isCouncilSafe}
-                            isCouncilMember={isCouncilMember}
-                            className="w-full"
-                          />
+                        <EditCommunityModal
+                          communityAddress={registryCommunity.id as Address}
+                          communityName={communityName ?? "Community"}
+                          communityMembersCount={Number(membersCount ?? 0)}
+                          currentCommunityName={communityName ?? ""}
+                          currentCouncilSafe={effectiveCouncilSafe}
+                          pendingCouncilSafe={
+                            effectivePendingCouncilSafe ?? undefined
+                          }
+                          currentCovenant={covenant ?? ""}
+                          tokenDecimals={resolvedTokenGarden.decimals}
+                          tokenSymbol={resolvedTokenGarden.symbol}
+                          isCouncilSafe={isCouncilSafe}
+                          isCouncilMember={isCouncilMember}
+                          className="w-full"
+                        />
                       )}
                       {(isCouncilMember || isCouncilSafe) && (
                         <Button

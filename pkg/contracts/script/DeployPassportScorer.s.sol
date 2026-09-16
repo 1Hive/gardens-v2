@@ -21,7 +21,6 @@ contract DeployPassportScorer is BaseMultiChain {
             )
         );
 
-
         // CV STRATEGIES
         // address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         // for (uint256 i = 0; i < cvStrategyProxies.length; i++) {

@@ -72,10 +72,7 @@ contract DiamondUpgradeInitializersTest is Test {
         calls[0] = abi.encodeWithSelector(InitSupportFacet.mark.selector, keyA);
         calls[1] = abi.encodeWithSelector(InitSupportFacet.mark.selector, keyB);
 
-        diamond.runInit(
-            address(multiInit),
-            abi.encodeWithSelector(DiamondMultiInit.multiInit.selector, targets, calls)
-        );
+        diamond.runInit(address(multiInit), abi.encodeWithSelector(DiamondMultiInit.multiInit.selector, targets, calls));
 
         assertTrue(diamond.isSupported(keyA));
         assertTrue(diamond.isSupported(keyB));
@@ -90,15 +87,8 @@ contract DiamondUpgradeInitializersTest is Test {
         calls[0] = abi.encodeWithSelector(InitSupportFacet.mark.selector, bytes4(0));
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                AddressAndCalldataLengthDoNotMatch.selector,
-                targets.length,
-                calls.length
-            )
+            abi.encodeWithSelector(AddressAndCalldataLengthDoNotMatch.selector, targets.length, calls.length)
         );
-        diamond.runInit(
-            address(multiInit),
-            abi.encodeWithSelector(DiamondMultiInit.multiInit.selector, targets, calls)
-        );
+        diamond.runInit(address(multiInit), abi.encodeWithSelector(DiamondMultiInit.multiInit.selector, targets, calls));
     }
 }

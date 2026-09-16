@@ -71,6 +71,7 @@ abstract contract CVStrategyBaseFacet {
     error StrategySelectorPaused(bytes4 selector, address controller);
     error OnlyOwner(address sender, address ownerAddress);
     error BlockNumberRegression(uint256 recordedBlock, uint256 currentBlock);
+    error ReentrantCall();
 
     /*|--------------------------------------------|*/
     /*|              CONSTANTS                     |*/
@@ -243,9 +244,13 @@ abstract contract CVStrategyBaseFacet {
     /// @dev Slot 137+
     bool public openStreamingProposalsInitialized;
 
+    /// @notice Diamond-wide reentrancy lock shared by all CVStrategy facets
+    /// @dev Slot 138+
+    bool internal _reentrancyLocked;
+
     /// @dev Reserved storage space to allow for layout changes in the future
     /// @dev This gap is at the end of storage to allow adding new variables without shifting slots
-    uint256[41] private __gap;
+    uint256[40] private __gap;
 
     /*|--------------------------------------------|*/
     /*|         SHARED HELPER FUNCTIONS            |*/
@@ -406,6 +411,20 @@ abstract contract CVStrategyBaseFacet {
             revert OnlyRegistryCommunity(msg.sender, address(registryCommunity));
         }
         _;
+    }
+
+    /**
+     * @notice Diamond-wide reentrancy guard. Shares one lock (in this base facet's storage)
+     * across every facet, so a callback landing on any other facet mid-call is blocked too -
+     * not just re-entry into the same function.
+     */
+    modifier nonReentrant() {
+        if (_reentrancyLocked) {
+            revert ReentrantCall();
+        }
+        _reentrancyLocked = true;
+        _;
+        _reentrancyLocked = false;
     }
 
     /**

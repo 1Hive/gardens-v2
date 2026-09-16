@@ -85,8 +85,7 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
             );
         }
 
-        if (!directBroadcast) {
-        }
+        if (!directBroadcast) {}
     }
 
     function _executeDirectUpgrades(
@@ -126,7 +125,10 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
         RegistryCommunityDiamondInit initContract = new RegistryCommunityDiamondInit();
 
         bytes memory diamondCutCalldata = abi.encodeWithSelector(
-            RegistryCommunity.diamondCut.selector, cuts, address(initContract), abi.encodeCall(RegistryCommunityDiamondInit.init, ())
+            RegistryCommunity.diamondCut.selector,
+            cuts,
+            address(initContract),
+            abi.encodeCall(RegistryCommunityDiamondInit.init, ())
         );
 
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
@@ -140,13 +142,11 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
             json = string(
                 abi.encodePacked(json, _createTransactionJson(registryCommunityProxies[i], diamondCutCalldata), ",")
             );
-
         }
 
         json = string(abi.encodePacked(_removeLastChar(json), "]"));
 
         _writePayloadFile(json, safeOwner, networkJson);
-
     }
 
     /**

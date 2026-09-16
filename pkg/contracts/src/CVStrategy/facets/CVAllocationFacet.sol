@@ -71,7 +71,13 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
 
     // Sig: 0xef2920fc
-    function allocate(bytes memory _data, address _sender) external payable onlyAllo onlyInitialized {
+    function allocate(bytes memory _data, address _sender)
+        external
+        payable
+        onlyAllo
+        onlyInitialized
+        nonReentrant
+    {
         registryCommunity.onlyStrategyEnabled(address(this));
         ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
         if (pv.length > MAX_ALLOCATIONS_PER_TX) {
@@ -193,6 +199,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         external
         onlyAllo
         onlyInitialized
+        nonReentrant
     {
         if (_data.length <= 0) {
             revert ProposalDataIsEmpty(_data.length);
@@ -215,6 +222,9 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
                 IERC20(proposals[proposalId].requestedToken).balanceOf(address(this))
                     < proposals[proposalId].requestedAmount
             ) {
+                // nonReentrant on this function blocks any reentrant call back into
+                // distribute()/allocate(), so the poolAmount/threshold read above can't go stale.
+                // slither-disable-next-line reentrancy-balance
                 superfluidToken.downgrade(superfluidToken.balanceOf(address(this))); // Unwrap all available
             }
         }
