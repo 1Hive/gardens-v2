@@ -78,7 +78,11 @@ type AuthorizationMessage = {
   deadline: bigint;
 };
 
+type AuthorizationRole = "councilSafe" | "keeper";
+
 type Challenge = {
+  authorizer: Address;
+  authorizationRole: AuthorizationRole;
   chainId: number;
   community: Address;
   councilSafe: Address;
@@ -203,18 +207,24 @@ const getStreamingLeaderboardFactoryAddress = (communityChainId?: number) => {
   return value && isAddress(value) ? getAddress(value) : null;
 };
 
+const getKeeperAccount = () => {
+  const privateKey = process.env.KEEPER_WALLET_PK?.trim();
+  if (!privateKey || !/^0x[0-9a-fA-F]{64}$/u.test(privateKey)) return null;
+
+  return privateKeyToAccount(privateKey as Hex);
+};
+
 const executeRouterCreation = async (challenge: Challenge) => {
   const execution = getMarkeeExecutionConfig(challenge.chainId);
   if (!execution.router) {
     throw new Error("Markee router is not configured for this environment");
   }
 
-  const privateKey = process.env.KEEPER_WALLET_PK?.trim();
-  if (!privateKey || !/^0x[0-9a-fA-F]{64}$/u.test(privateKey)) {
+  const account = getKeeperAccount();
+  if (account == null) {
     throw new Error("Markee keeper wallet is not configured");
   }
 
-  const account = privateKeyToAccount(privateKey as Hex);
   const client = getEnvPublicClient(execution.chainId);
   const keeperIsAuthorized = await client.readContract({
     abi: gardensMarkeeRouterABI,
@@ -336,18 +346,25 @@ const issueChallenge = async (body: ChallengeRequest) => {
     if (councilSafe === zeroAddress) {
       return jsonError("This community does not have a council Safe.", 409);
     }
-    if (body.account !== councilSafe) {
+    const keeperAccount = getKeeperAccount();
+    const isKeeper = keeperAccount?.address === body.account;
+    if (body.account !== councilSafe && !isKeeper) {
       return jsonError(
         "Connect with the community council Safe to authorize Markee.",
         403,
       );
     }
 
+    const authorizationRole: AuthorizationRole =
+      isKeeper ? "keeper" : "councilSafe";
+
     const randomNonce = BigInt(`0x${randomBytes(32).toString("hex")}`);
     const nonceValue = randomNonce === BigInt(0) ? BigInt(1) : randomNonce;
     const nonce = nonceValue.toString();
     const deadline = now + CHALLENGE_TTL_SECONDS;
     const challenge: Challenge = {
+      authorizer: body.account,
+      authorizationRole,
       chainId: body.chainId,
       community: body.community,
       councilSafe,
@@ -374,6 +391,7 @@ const issueChallenge = async (body: ChallengeRequest) => {
         chainId: challenge.chainId,
         community: challenge.community,
         councilSafe: challenge.councilSafe,
+        authorizationRole: challenge.authorizationRole,
         deadline: challenge.deadline,
         leaderboardFactory: challenge.leaderboardFactory,
         nonce: challenge.nonce,
@@ -464,10 +482,19 @@ const verifyChallenge = async (body: VerifyRequest) => {
         409,
       );
     }
+    if (
+      challenge.authorizationRole === "keeper" &&
+      getKeeperAccount()?.address !== challenge.authorizer
+    ) {
+      return jsonError(
+        "The configured Markee keeper changed. Request a new challenge.",
+        409,
+      );
+    }
 
     const client = getEnvPublicClient(challenge.chainId);
     const signatureIsValid = await client.verifyTypedData({
-      address: currentCouncilSafe,
+      address: challenge.authorizer,
       domain: getAuthorizationDomain(challenge.chainId, challenge.community),
       message: challenge.message,
       primaryType: "OptInAuthorization",
@@ -475,7 +502,7 @@ const verifyChallenge = async (body: VerifyRequest) => {
       types: authorizationTypes,
     });
     if (!signatureIsValid) {
-      return jsonError("Invalid council Safe authorization signature.", 401);
+      return jsonError("Invalid Markee authorization signature.", 401);
     }
 
     const routerExecution = await executeRouterCreation(challenge);
@@ -485,6 +512,7 @@ const verifyChallenge = async (body: VerifyRequest) => {
       chainId: challenge.chainId,
       community: challenge.community,
       councilSafe: currentCouncilSafe,
+      authorizationRole: challenge.authorizationRole,
       leaderboardFactory: challenge.leaderboardFactory,
       markeeChainId: routerExecution.chainId,
       router: routerExecution.router,
@@ -515,6 +543,18 @@ export async function POST(request: Request) {
   return body.action === "challenge" ?
       issueChallenge(body)
     : verifyChallenge(body);
+}
+
+export async function GET(request: Request) {
+  const accountValue = new URL(request.url).searchParams.get("account");
+  if (accountValue == null || !isAddress(accountValue)) {
+    return jsonError("Invalid keeper eligibility account.", 400);
+  }
+
+  const keeperAccount = getKeeperAccount();
+  return jsonSuccess({
+    isKeeper: keeperAccount?.address === getAddress(accountValue),
+  });
 }
 
 export const clearMarkeeAuthorizationChallengesForTests = () => {

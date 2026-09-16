@@ -3458,6 +3458,7 @@ export function CommunityMarkeePlaceholder({
   const [isOptInTransactionModalOpen, setIsOptInTransactionModalOpen] =
     useState(false);
   const [isCouncilSafeCopied, setIsCouncilSafeCopied] = useState(false);
+  const [isConnectedKeeper, setIsConnectedKeeper] = useState(false);
   const [markee, setMarkee] = useState<CommunityMarkeeResponse | null>(null);
   const [totalViews, setTotalViews] = useState<number | null>(null);
   const [authorizationStatus, setAuthorizationStatus] =
@@ -3472,6 +3473,7 @@ export function CommunityMarkeePlaceholder({
     councilSafe != null &&
     connectedAccount != null &&
     councilSafe.toLowerCase() === connectedAccount.toLowerCase();
+  const canAuthorizeMarkee = isConnectedCouncilSafe || isConnectedKeeper;
   const isAuthorizing =
     authorizationStatus === "requesting" ||
     authorizationStatus === "signing" ||
@@ -3497,6 +3499,38 @@ export function CommunityMarkeePlaceholder({
   useEffect(() => {
     setHasPendingClaim(readPendingMarkeeClaim(chainId, community) != null);
   }, [chainId, community]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setIsConnectedKeeper(false);
+    if (connectedAccount == null) return () => controller.abort();
+
+    const params = new URLSearchParams({ account: connectedAccount });
+    void fetch(`/api/markee/authorize?${params.toString()}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) return { isKeeper: false };
+        return (await response.json()) as { isKeeper?: unknown };
+      })
+      .then((result) => {
+        if (!controller.signal.aborted) {
+          setIsConnectedKeeper(result.isKeeper === true);
+        }
+      })
+      .catch((error: unknown) => {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          logOnce(
+            "warn",
+            "[CommunityMarkee] Unable to check keeper eligibility",
+            error,
+          );
+        }
+      });
+
+    return () => controller.abort();
+  }, [connectedAccount]);
 
   useTransactionNotification({
     chainId: markee?.markeeChainId ?? chainId,
@@ -3610,11 +3644,12 @@ export function CommunityMarkeePlaceholder({
     markee?.leaderboard.topMarkeeAddress,
   ]);
 
-  if (markee == null || (!hasActiveMarkee && !canOptIn)) return null;
+  if (markee == null || (!hasActiveMarkee && !canOptIn && !isConnectedKeeper))
+    return null;
 
   const handleAuthorize = async () => {
     if (
-      !isConnectedCouncilSafe ||
+      !canAuthorizeMarkee ||
       connectedAccount == null ||
       connector == null ||
       chainId == null
@@ -3697,7 +3732,7 @@ export function CommunityMarkeePlaceholder({
         signature,
       });
       if (!verification.authorized) {
-        throw new Error("The council Safe authorization was not accepted.");
+        throw new Error("The Markee authorization was not accepted.");
       }
       if (verification.transactionHash == null) {
         throw new Error(
@@ -3871,7 +3906,7 @@ export function CommunityMarkeePlaceholder({
       </section>
 
       <CommunityMarkeePreviewModal
-        canIntegrate={canOptIn && !hasActiveMarkee}
+        canIntegrate={(canOptIn || isConnectedKeeper) && !hasActiveMarkee}
         isOpen={isPreviewOpen}
         leaderboardAddress={markee?.integration.leaderboardAddress ?? undefined}
         markeeChainId={markee?.markeeChainId}
@@ -3943,7 +3978,7 @@ export function CommunityMarkeePlaceholder({
               color="primary"
               className="w-full sm:w-auto"
               disabled={
-                !isConnectedCouncilSafe ||
+                !canAuthorizeMarkee ||
                 chainId == null ||
                 authorizationStatus === "authorized"
               }
@@ -3951,7 +3986,7 @@ export function CommunityMarkeePlaceholder({
               onClick={handleAuthorize}
               testId="markee-opt-in-create"
               tooltip={
-                !isConnectedCouncilSafe ?
+                !canAuthorizeMarkee ?
                   "Switch to the council Safe to continue."
                 : undefined
               }
@@ -3964,7 +3999,7 @@ export function CommunityMarkeePlaceholder({
         }
       >
         <div className="flex flex-col gap-6">
-          {!isConnectedCouncilSafe && councilSafe && (
+          {!canAuthorizeMarkee && councilSafe && (
             <div className="flex items-start gap-3 rounded-xl border border-warning-content/30 bg-warning-soft/50 p-4">
               <ArrowsRightLeftIcon className="mt-0.5 h-5 w-5 shrink-0 text-warning-content" />
               <div>
