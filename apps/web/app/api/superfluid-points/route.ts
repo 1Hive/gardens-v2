@@ -5,6 +5,7 @@ import pinataSDK from "@pinata/sdk";
 import { NextResponse } from "next/server";
 import { AnyVariables, Client, createClient, fetchExchange, gql } from "urql";
 import { Address, createPublicClient, formatUnits, http, parseAbi } from "viem";
+import { getFarcasterNextCursor, hasPrimaryWalletLabel } from "./farcaster";
 import {
   applyPoolActivityMultiplier,
   calculateCampaignWalletPoints,
@@ -1177,7 +1178,7 @@ const fetchFarcasterFollowerFids = async (
       for (const u of users) {
         if (typeof u?.fid === "number") fidsSet.add(u.fid);
       }
-      cursor = json?.result?.next?.cursor;
+      cursor = getFarcasterNextCursor(json);
       if (!cursor) return true;
     }
   };
@@ -1361,8 +1362,7 @@ const fetchFarcasterWalletsForFids = async (
                 a &&
                 typeof a.address === "string" &&
                 a.address.toLowerCase().startsWith("0x") &&
-                typeof a.label === "string" &&
-                a.label.toLowerCase().includes("primary"),
+                hasPrimaryWalletLabel(a),
             )
             .map((l: any) => l?.address)
         : [],
