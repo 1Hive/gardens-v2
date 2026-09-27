@@ -163,6 +163,10 @@ contract CVPowerFacet is CVStrategyBaseFacet {
         if (points != 0) {
             _decreaseTotalPointsActivated(points);
         }
+
+        CVSyncPowerStorage.Layout storage syncLayout = CVSyncPowerStorage.layout();
+        syncLayout.syncedPower[_member] = 0;
+        syncLayout.hasSyncedPower[_member] = false;
     }
 
     function _decreaseTotalPointsActivated(uint256 points) internal {

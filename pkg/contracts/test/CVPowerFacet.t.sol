@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 
 import {CVPowerFacet} from "../src/CVStrategy/facets/CVPowerFacet.sol";
 import {CVStrategyBaseFacet} from "../src/CVStrategy/CVStrategyBaseFacet.sol";
+import {CVSyncPowerStorage} from "../src/CVStrategy/CVSyncPowerStorage.sol";
 import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
 import {CVParams, Proposal, ProposalStatus, PointSystem, PointSystemConfig} from "../src/CVStrategy/ICVStrategy.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
@@ -172,6 +173,17 @@ contract CVPowerFacetHarness is CVPowerFacet {
 
     function getPoolThresholdPoints() external view returns (uint256) {
         return _getPoolThresholdPoints();
+    }
+
+    function setSyncedPower(address member, uint256 power, bool hasSynced) external {
+        CVSyncPowerStorage.Layout storage syncLayout = CVSyncPowerStorage.layout();
+        syncLayout.syncedPower[member] = power;
+        syncLayout.hasSyncedPower[member] = hasSynced;
+    }
+
+    function getSyncedPower(address member) external view returns (uint256 power, bool hasSynced) {
+        CVSyncPowerStorage.Layout storage syncLayout = CVSyncPowerStorage.layout();
+        return (syncLayout.syncedPower[member], syncLayout.hasSyncedPower[member]);
     }
 }
 
@@ -345,6 +357,20 @@ contract CVPowerFacetTest is Test {
 
         assertEq(facet.totalPointsActivated(), 0);
         assertEq(registry.lastDeactivated(), address(0));
+    }
+
+    function test_deactivatePointsFromRegistry_clears_synced_power() public {
+        registry.setMemberPower(member, 7);
+        registry.setActivated(member, true);
+        facet.setTotalPointsActivated(7);
+        facet.setSyncedPower(member, 7, true);
+
+        vm.prank(address(registry));
+        facet.deactivatePoints(member);
+
+        (uint256 syncedPower, bool hasSyncedPower) = facet.getSyncedPower(member);
+        assertEq(syncedPower, 0);
+        assertFalse(hasSyncedPower);
     }
 
     function test_deactivatePoints_saturates_when_member_power_exceeds_total() public {

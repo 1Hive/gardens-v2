@@ -48,7 +48,9 @@ import {ConvictionsUtils} from "../src/CVStrategy/ConvictionsUtils.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
 import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
+import {CommunityInvalidStakeMigration} from "../src/RegistryCommunity/migrations/CommunityInvalidStakeMigration.sol";
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
+import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
 
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
@@ -1211,6 +1213,89 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         registryCommunity.unregisterMember();
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), 0);
         assertEq(cv.getProposalStakedAmount(proposalId), 0);
+    }
+
+    function test_reinitializeV2RemoveInvalidStakes_clears_all_stake_accounting() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+        uint256 invalidStake = registryCommunity.getMemberStakedAmount(address(this));
+        uint256 honestStake = registryCommunity.getMemberStakedAmount(pool_admin());
+
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
+        votes[0] = ProposalSupport(proposalId, 100);
+        allo().allocate(poolId, abi.encode(votes));
+
+        assertEq(cv.getProposalVoterStake(proposalId, address(this)), 100);
+        assertEq(cv.getProposalStakedAmount(proposalId), 100);
+        assertEq(cv.totalVoterStakePct(address(this)), 100);
+        assertEq(cv.totalStaked(), 100);
+        assertEq(cv.totalPointsActivated(), invalidStake);
+        assertEq(registryCommunity.memberPowerInStrategy(address(this), address(cv)), invalidStake);
+        assertTrue(registryCommunity.memberActivatedInStrategies(address(this), address(cv)));
+        assertEq(token.balanceOf(address(registryCommunity)), invalidStake + honestStake);
+
+        address[] memory affectedMembers = new address[](1);
+        affectedMembers[0] = address(this);
+        IDiamondCut.FacetCut[] memory noFacetCuts = new IDiamondCut.FacetCut[](0);
+        CommunityInvalidStakeMigration migration = new CommunityInvalidStakeMigration();
+
+        vm.prank(factoryOwner);
+        registryCommunity.diamondCut(
+            noFacetCuts,
+            address(migration),
+            abi.encodeCall(
+                CommunityInvalidStakeMigration.reinitializeV2RemoveInvalidStakes, (affectedMembers, invalidStake)
+            )
+        );
+
+        assertFalse(registryCommunity.isMember(address(this)));
+        assertEq(registryCommunity.getMemberStakedAmount(address(this)), 0);
+        assertEq(registryCommunity.memberPowerInStrategy(address(this), address(cv)), 0);
+        assertFalse(registryCommunity.memberActivatedInStrategies(address(this), address(cv)));
+        assertEq(cv.getProposalVoterStake(proposalId, address(this)), 0);
+        assertEq(cv.getProposalStakedAmount(proposalId), 0);
+        assertEq(cv.totalVoterStakePct(address(this)), 0);
+        assertEq(cv.totalStaked(), 0);
+        assertEq(cv.totalPointsActivated(), 0);
+        assertEq(registryCommunity.totalMembers(), 1);
+
+        token.burn(address(registryCommunity), invalidStake);
+        assertEq(token.balanceOf(address(registryCommunity)), honestStake);
+
+        vm.prank(factoryOwner);
+        vm.expectRevert();
+        registryCommunity.diamondCut(
+            noFacetCuts,
+            address(migration),
+            abi.encodeCall(
+                CommunityInvalidStakeMigration.reinitializeV2RemoveInvalidStakes, (affectedMembers, invalidStake)
+            )
+        );
+    }
+
+    function test_reinitializeV2RemoveInvalidStakes_reverts_on_wrong_expected_total() public {
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        registryCommunity.stakeAndRegisterMember("");
+        uint256 recordedStake = registryCommunity.getMemberStakedAmount(address(this));
+
+        address[] memory affectedMembers = new address[](1);
+        affectedMembers[0] = address(this);
+        IDiamondCut.FacetCut[] memory noFacetCuts = new IDiamondCut.FacetCut[](0);
+        CommunityInvalidStakeMigration migration = new CommunityInvalidStakeMigration();
+
+        vm.prank(factoryOwner);
+        vm.expectRevert();
+        registryCommunity.diamondCut(
+            noFacetCuts,
+            address(migration),
+            abi.encodeCall(
+                CommunityInvalidStakeMigration.reinitializeV2RemoveInvalidStakes, (affectedMembers, recordedStake + 1)
+            )
+        );
+
+        assertTrue(registryCommunity.isMember(address(this)));
+        assertEq(registryCommunity.getMemberStakedAmount(address(this)), recordedStake);
+        assertEq(registryCommunity.totalMembers(), 1);
     }
 
     function test_disputeAbstain() public {
