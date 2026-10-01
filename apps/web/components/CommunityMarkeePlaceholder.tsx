@@ -95,6 +95,12 @@ import {
   writePendingMarkeeClaim,
 } from "@/utils/pendingMarkeeClaim";
 import {
+  clearPendingMarkeeOptIn,
+  PendingMarkeeOptIn,
+  readPendingMarkeeOptIn,
+  writePendingMarkeeOptIn,
+} from "@/utils/pendingMarkeeOptIn";
+import {
   Eip712TypedData,
   signTypedDataWithProvider,
 } from "@/utils/signTypedDataWithProvider";
@@ -124,6 +130,10 @@ type ChallengeResponse = {
 
 type VerifyResponse = {
   authorized: boolean;
+  confirmations?: number;
+  deadline?: number;
+  pending?: boolean;
+  threshold?: number;
   bridgeName?: string | null;
   bridged?: boolean;
   estimatedRouteDurationSeconds?: number;
@@ -131,6 +141,13 @@ type VerifyResponse = {
   router?: Address;
   transactionHash?: `0x${string}`;
   transactionUrl?: string;
+};
+
+const SAFE_APPROVAL_POLL_INTERVAL_MS = 15_000;
+
+type SafeApprovalProgress = {
+  confirmations: number;
+  threshold: number;
 };
 
 const formatBridgeDuration = (seconds: number) => {
@@ -166,6 +183,16 @@ async function postAuthorization<T>(body: Record<string, unknown>) {
 
   return result;
 }
+
+const getSafeApprovalProgress = (
+  verification: VerifyResponse,
+): SafeApprovalProgress | null =>
+  verification.confirmations != null && verification.threshold != null ?
+    {
+      confirmations: verification.confirmations,
+      threshold: verification.threshold,
+    }
+  : null;
 
 async function postClaimAuthorization<T>(body: Record<string, unknown>) {
   const response = await fetch("/api/markee/claim/authorize", {
@@ -3465,6 +3492,11 @@ export function CommunityMarkeePlaceholder({
     useState<AuthorizationStatus>("idle");
   const [optInTransactionNotification, setOptInTransactionNotification] =
     useState<MarkeeTransactionNotification | null>(null);
+  const [pendingOptIn, setPendingOptIn] = useState<PendingMarkeeOptIn | null>(
+    null,
+  );
+  const [safeApproval, setSafeApproval] =
+    useState<SafeApprovalProgress | null>(null);
   const optInTransactionAttempt = useRef(0);
   const { address: connectedAccount, connector } = useAccount();
   const { chain: connectedChain } = useNetwork();
@@ -3498,6 +3530,11 @@ export function CommunityMarkeePlaceholder({
 
   useEffect(() => {
     setHasPendingClaim(readPendingMarkeeClaim(chainId, community) != null);
+  }, [chainId, community]);
+
+  useEffect(() => {
+    setPendingOptIn(readPendingMarkeeOptIn(chainId, community));
+    setSafeApproval(null);
   }, [chainId, community]);
 
   useEffect(() => {
@@ -3644,8 +3681,109 @@ export function CommunityMarkeePlaceholder({
     markee?.leaderboard.topMarkeeAddress,
   ]);
 
+  useEffect(() => {
+    if (pendingOptIn == null || chainId == null || hasActiveMarkee) return;
+
+    let cancelled = false;
+    let checkTimeout: ReturnType<typeof setTimeout> | undefined;
+    const stopWaiting = () => {
+      clearPendingMarkeeOptIn(chainId, community);
+      setPendingOptIn(null);
+      setSafeApproval(null);
+    };
+
+    const check = async () => {
+      try {
+        const response = await fetch("/api/markee/authorize", {
+          body: JSON.stringify({
+            action: "verify",
+            nonce: pendingOptIn.nonce,
+            signature: pendingOptIn.signature,
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        });
+        const result = (await response.json()) as VerifyResponse & {
+          error?: unknown;
+        };
+        if (cancelled) return;
+
+        if (response.status === 401 || response.status === 409) {
+          // Expired, rejected, or already used (possibly by another owner's
+          // tab), so this challenge can never succeed.
+          stopWaiting();
+          const refreshed = await refreshMarkee().catch(() => undefined);
+          if (refreshed?.integration.status !== "active") {
+            toast.error(
+              typeof result.error === "string" ?
+                result.error
+              : "The council Safe authorization is no longer valid.",
+            );
+          }
+          return;
+        }
+
+        if (response.ok && result.pending === true) {
+          setSafeApproval(getSafeApprovalProgress(result));
+        } else if (response.ok && result.authorized) {
+          stopWaiting();
+          if (result.transactionHash != null) {
+            setOptInTransactionNotification({
+              contractName: "Create Markee leaderboard",
+              status: "success",
+              targetAddress: result.router,
+              toastId: `markee-opt-in-safe-${pendingOptIn.nonce}`,
+              transactionHash: result.transactionHash,
+            });
+            setIsOpen(false);
+            setIsOptInTransactionModalOpen(true);
+          }
+          void refreshMarkeeUntilActive().catch((error: unknown) => {
+            console.error(
+              "Unable to refresh the new Markee community integration",
+              error,
+            );
+          });
+          return;
+        }
+      } catch (error) {
+        if (cancelled) return;
+        logOnce(
+          "warn",
+          "[CommunityMarkee] Unable to check council Safe approval",
+          error,
+        );
+      }
+
+      checkTimeout = setTimeout(check, SAFE_APPROVAL_POLL_INTERVAL_MS);
+    };
+
+    void check();
+
+    return () => {
+      cancelled = true;
+      if (checkTimeout != null) clearTimeout(checkTimeout);
+    };
+  }, [
+    chainId,
+    community,
+    hasActiveMarkee,
+    pendingOptIn,
+    refreshMarkee,
+    refreshMarkeeUntilActive,
+  ]);
+
   if (markee == null || (!hasActiveMarkee && !canOptIn && !isConnectedKeeper))
     return null;
+
+  const safePrefix =
+    chainId != null ? chainConfigMap[chainId]?.safePrefix : undefined;
+
+  const discardPendingOptIn = () => {
+    if (chainId != null) clearPendingMarkeeOptIn(chainId, community);
+    setPendingOptIn(null);
+    setSafeApproval(null);
+  };
 
   const handleAuthorize = async () => {
     if (
@@ -3731,6 +3869,24 @@ export function CommunityMarkeePlaceholder({
         nonce: challenge.nonce,
         signature,
       });
+      if (verification.pending === true) {
+        // The council Safe needs more owner signatures. Keep the challenge
+        // locally and check back while the other owners sign in Safe{Wallet}.
+        const pending: PendingMarkeeOptIn = {
+          deadline: verification.deadline ?? 0,
+          nonce: challenge.nonce,
+          signature,
+          version: 1,
+        };
+        writePendingMarkeeOptIn(chainId, community, pending);
+        setPendingOptIn(pending);
+        setSafeApproval(getSafeApprovalProgress(verification));
+        setOptInTransactionNotification(null);
+        setIsOptInTransactionModalOpen(false);
+        setIsOpen(true);
+        setAuthorizationStatus("idle");
+        return;
+      }
       if (!verification.authorized) {
         throw new Error("The Markee authorization was not accepted.");
       }
@@ -3980,25 +4136,80 @@ export function CommunityMarkeePlaceholder({
               disabled={
                 !canAuthorizeMarkee ||
                 chainId == null ||
-                authorizationStatus === "authorized"
+                authorizationStatus === "authorized" ||
+                pendingOptIn != null
               }
               isLoading={isAuthorizing}
               onClick={handleAuthorize}
               testId="markee-opt-in-create"
               tooltip={
-                !canAuthorizeMarkee ?
+                pendingOptIn != null ?
+                  "Waiting for the council Safe owners to sign."
+                : !canAuthorizeMarkee ?
                   "Switch to the council Safe to continue."
                 : undefined
               }
               tooltipClassName="flex justify-end"
               tooltipSide="tooltip-top-left"
             >
-              {authorizationStatus === "authorized" ? "Authorized" : "Create"}
+              {authorizationStatus === "authorized" ?
+                "Authorized"
+              : pendingOptIn != null ?
+                "Waiting for Safe"
+              : "Create"}
             </Button>
           </div>
         }
       >
         <div className="flex flex-col gap-6">
+          {pendingOptIn != null && (
+            <div
+              className="flex items-start gap-3 rounded-xl border border-primary-content/30 bg-primary-soft/50 p-4"
+              role="status"
+              data-testid="markee-opt-in-awaiting-safe"
+            >
+              <span className="loading loading-spinner loading-sm mt-0.5 shrink-0 text-primary-content" />
+              <div>
+                <p className="font-medium text-neutral-content">
+                  Waiting for council Safe signatures
+                  {safeApproval != null &&
+                    ` (${safeApproval.confirmations} of ${safeApproval.threshold})`}
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-neutral-soft-content">
+                  Ask the other Safe owners to sign the &quot;Gardens
+                  Markee&quot; message
+                  {councilSafe != null && safePrefix != null ?
+                    <>
+                      {" "}
+                      under{" "}
+                      <a
+                        className="underline"
+                        href={`https://app.safe.global/transactions/messages?safe=${safePrefix}:${councilSafe}`}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        Messages in Safe&#123;Wallet&#125;
+                      </a>
+                    </>
+                  : " in Safe{Wallet}"}
+                  . The leaderboard is created automatically once enough
+                  owners sign
+                  {pendingOptIn.deadline > 0 &&
+                    `, before ${new Date(pendingOptIn.deadline * 1000).toLocaleString()}`}
+                  .
+                </p>
+                <button
+                  type="button"
+                  className="mt-2 text-sm text-neutral-soft-content underline"
+                  onClick={discardPendingOptIn}
+                  data-testid="markee-opt-in-discard-pending"
+                >
+                  Start over
+                </button>
+              </div>
+            </div>
+          )}
+
           {!canAuthorizeMarkee && councilSafe && (
             <div className="flex items-start gap-3 rounded-xl border border-warning-content/30 bg-warning-soft/50 p-4">
               <ArrowsRightLeftIcon className="mt-0.5 h-5 w-5 shrink-0 text-warning-content" />
