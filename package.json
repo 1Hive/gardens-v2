@@ -22,7 +22,7 @@
     "turbo": "^1.7.4"
   },
   "engines": {
-    "node": ">=24"
+    "node": "24.x"
   },
   "resolutions": {
     "@typescript-eslint/parser": "6.18.2-alpha.2"
