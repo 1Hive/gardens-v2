@@ -205,6 +205,33 @@ export const reserveMarkeeChallengeIssue = async ({
   if (allowed !== 1) throw new MarkeeChallengeRateLimitError();
 };
 
+/**
+ * Reads a challenge without consuming it. Multisig authorizations stay pending
+ * while owners sign, so callers peek first and only consume once the
+ * signature is valid.
+ */
+export const peekMarkeeChallenge = async <T>({
+  namespace,
+  nonce,
+}: {
+  namespace: string;
+  nonce: string;
+}): Promise<T | null> => {
+  requireDurableStoreInProduction();
+  const key = getKey(namespace, nonce);
+  const config = getRedisConfig();
+  if (config != null) {
+    const serialized = await redisCommand<string | null>(["GET", key]);
+    return serialized == null ? null : deserialize<T>(serialized);
+  }
+
+  const stored = memoryChallenges.get(key);
+  if (stored == null || stored.expiresAt <= Math.floor(Date.now() / 1000)) {
+    return null;
+  }
+  return stored.value as T;
+};
+
 export const consumeMarkeeChallenge = async <T>({
   namespace,
   nonce,

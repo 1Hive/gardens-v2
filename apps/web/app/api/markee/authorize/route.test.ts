@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   estimateContractGas: vi.fn(),
+  fetch: vi.fn(),
   getBalance: vi.fn(),
   getEnvPublicClient: vi.fn(),
   getGasPrice: vi.fn(),
@@ -30,7 +31,7 @@ vi.mock("viem/accounts", () => ({
 
 vi.mock("@/configs/chains", () => ({
   chainConfigMap: {
-    100: { isTestnet: false },
+    100: { isTestnet: false, safePrefix: "gno" },
     11155111: { isTestnet: true },
   },
 }));
@@ -62,6 +63,16 @@ const vault = "0x0000000000000000000000000000000000000009";
 const leaderboard = "0x0000000000000000000000000000000000000010";
 const seedMarkee = "0x0000000000000000000000000000000000000011";
 const transactionHash = `0x${"22".repeat(32)}`;
+const preparedSignature = `0x${"33".repeat(65 * 4)}`;
+
+const safeMessageResponse = (confirmations: number) =>
+  new Response(
+    JSON.stringify({
+      confirmations: Array.from({ length: confirmations }, () => ({})),
+      preparedSignature,
+    }),
+    { status: 200 },
+  );
 
 const callRoute = (body: Record<string, unknown>) =>
   POST(
@@ -99,8 +110,12 @@ describe("Markee council Safe authorization", () => {
     clearMarkeeAuthorizationChallengesForTests();
     mocks.readContract.mockImplementation(
       ({ functionName }: { functionName: string }) =>
-        functionName === "keepers" ? true : councilSafe,
+        functionName === "keepers" ? true
+        : functionName === "getThreshold" ? 4n
+        : councilSafe,
     );
+    mocks.fetch.mockResolvedValue(new Response("{}", { status: 404 }));
+    vi.stubGlobal("fetch", mocks.fetch);
     mocks.simulateContract.mockResolvedValue({
       request: { test: true },
       result: [vault, leaderboard, seedMarkee],
@@ -299,7 +314,7 @@ describe("Markee council Safe authorization", () => {
     );
   });
 
-  it("consumes a challenge before verification to reject replays", async () => {
+  it("consumes a verified challenge to reject replays", async () => {
     const { body: challenge } = await issueChallenge();
     const request = {
       action: "verify",
@@ -334,9 +349,111 @@ describe("Markee council Safe authorization", () => {
     expect(mocks.verifyTypedData).not.toHaveBeenCalled();
   });
 
-  it("rejects an invalid Safe signature and consumes its challenge", async () => {
+  it("keeps a council Safe challenge pending until owners sign it", async () => {
     mocks.verifyTypedData.mockResolvedValue(false);
     const { body: challenge } = await issueChallenge();
+    const request = {
+      action: "verify",
+      nonce: challenge.nonce,
+      signature,
+    };
+
+    const firstResponse = await callRoute(request);
+    expect(firstResponse.status).toBe(202);
+    await expect(firstResponse.json()).resolves.toMatchObject({
+      authorized: false,
+      confirmations: 0,
+      deadline: challenge.deadline,
+      pending: true,
+      threshold: 4,
+    });
+
+    mocks.fetch.mockResolvedValue(safeMessageResponse(3));
+    const secondResponse = await callRoute(request);
+    expect(secondResponse.status).toBe(202);
+    await expect(secondResponse.json()).resolves.toMatchObject({
+      confirmations: 3,
+      pending: true,
+      threshold: 4,
+    });
+    expect(mocks.fetch).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /^https:\/\/api\.safe\.global\/tx-service\/gno\/api\/v1\/messages\/0x[0-9a-f]{64}\/$/u,
+      ),
+      expect.anything(),
+    );
+    expect(mocks.writeContract).not.toHaveBeenCalled();
+  });
+
+  it("accepts the Safe's collected signatures once the threshold is met", async () => {
+    mocks.verifyTypedData.mockImplementation(
+      async ({ signature: value }: { signature: string }) =>
+        value === preparedSignature,
+    );
+    mocks.fetch.mockResolvedValue(safeMessageResponse(4));
+    const { body: challenge } = await issueChallenge();
+    const request = {
+      action: "verify",
+      nonce: challenge.nonce,
+      signature,
+    };
+
+    const response = await callRoute(request);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      authorized: true,
+      authorizationRole: "councilSafe",
+      transactionHash,
+    });
+    expect(mocks.verifyTypedData).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        address: councilSafe,
+        signature: preparedSignature,
+      }),
+    );
+    expect(mocks.writeContract).toHaveBeenCalledTimes(1);
+    expect((await callRoute(request)).status).toBe(401);
+  });
+
+  it("keeps the challenge when the Safe's collected signature fails to verify", async () => {
+    mocks.verifyTypedData.mockResolvedValue(false);
+    mocks.fetch.mockResolvedValue(safeMessageResponse(4));
+    const { body: challenge } = await issueChallenge();
+    const request = {
+      action: "verify",
+      nonce: challenge.nonce,
+      signature,
+    };
+
+    const failedResponse = await callRoute(request);
+    expect(failedResponse.status).toBe(502);
+    expect(mocks.writeContract).not.toHaveBeenCalled();
+
+    mocks.verifyTypedData.mockImplementation(
+      async ({ signature: value }: { signature: string }) =>
+        value === preparedSignature,
+    );
+    mocks.fetch.mockResolvedValue(safeMessageResponse(4));
+    const retryResponse = await callRoute(request);
+    expect(retryResponse.status).toBe(200);
+    expect(mocks.writeContract).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives council Safe owners a week to sign", async () => {
+    const before = Math.floor(Date.now() / 1000);
+    const { body: safeChallenge } = await issueChallenge();
+    const { body: keeperChallenge } = await issueChallenge(keeperAddress);
+
+    expect(safeChallenge.deadline - before).toBeGreaterThanOrEqual(
+      7 * 24 * 60 * 60,
+    );
+    expect(keeperChallenge.deadline - before).toBeLessThanOrEqual(5 * 60);
+  });
+
+  it("rejects an invalid keeper signature and consumes its challenge", async () => {
+    mocks.verifyTypedData.mockResolvedValue(false);
+    const { body: challenge } = await issueChallenge(keeperAddress);
 
     const firstResponse = await callRoute({
       action: "verify",
@@ -354,6 +471,10 @@ describe("Markee council Safe authorization", () => {
       error: "Invalid Markee authorization signature.",
     });
     expect(replayResponse.status).toBe(401);
+    await expect(replayResponse.json()).resolves.toEqual({
+      error: "Authorization challenge is invalid, expired, or already used.",
+    });
+    expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
   it("rejects an expired challenge", async () => {
@@ -362,7 +483,7 @@ describe("Markee council Safe authorization", () => {
 
     try {
       const { body: challenge } = await issueChallenge();
-      vi.advanceTimersByTime(5 * 60 * 1000 + 1000);
+      vi.advanceTimersByTime(7 * 24 * 60 * 60 * 1000 + 1000);
 
       const response = await callRoute({
         action: "verify",

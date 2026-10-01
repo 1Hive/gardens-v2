@@ -5,6 +5,7 @@ import {
   createWalletClient,
   encodePacked,
   getAddress,
+  hashTypedData,
   Hex,
   http,
   isAddress,
@@ -20,6 +21,7 @@ import {
   consumeMarkeeChallenge,
   MarkeeChallengeRateLimitError,
   MarkeeChallengeStoreUnavailableError,
+  peekMarkeeChallenge,
   reserveMarkeeChallengeIssue,
   saveMarkeeChallenge,
 } from "../../../../utils/markeeChallengeStore";
@@ -27,6 +29,10 @@ import {
   readLimitedJsonBody,
   RequestBodyTooLargeError,
 } from "../../../../utils/readLimitedJsonBody";
+import {
+  fetchSafeMessageStatus,
+  getSafeMessageHash,
+} from "../../../../utils/safeMessages";
 import { chainConfigMap } from "@/configs/chains";
 import { registryCommunityABI } from "@/src/generated";
 import {
@@ -39,6 +45,9 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const CHALLENGE_TTL_SECONDS = 5 * 60;
+// Council Safes are multisigs: owners sign the off-chain message one at a
+// time in Safe{Wallet}, so the challenge has to outlive that collection.
+const SAFE_CHALLENGE_TTL_SECONDS = 7 * 24 * 60 * 60;
 const MAX_REQUEST_BYTES = 16 * 1024;
 const CHALLENGE_NAMESPACE = "opt-in";
 const LEADERBOARD_METADATA_HASH = keccak256(
@@ -55,6 +64,8 @@ const gardensMarkeeRouterABI = parseAbi([
   "function createCommunityLeaderboard(uint256 communityChainId, address registryCommunity, string leaderboardName, string platformId) returns (address vault, address leaderboard, address seedMarkee)",
   "function keepers(address keeper) view returns (bool)",
 ]);
+
+const safeABI = parseAbi(["function getThreshold() view returns (uint256)"]);
 
 const authorizationTypes = {
   OptInAuthorization: [
@@ -361,7 +372,11 @@ const issueChallenge = async (body: ChallengeRequest) => {
     const randomNonce = BigInt(`0x${randomBytes(32).toString("hex")}`);
     const nonceValue = randomNonce === BigInt(0) ? BigInt(1) : randomNonce;
     const nonce = nonceValue.toString();
-    const deadline = now + CHALLENGE_TTL_SECONDS;
+    const ttlSeconds =
+      authorizationRole === "councilSafe" ?
+        SAFE_CHALLENGE_TTL_SECONDS
+      : CHALLENGE_TTL_SECONDS;
+    const deadline = now + ttlSeconds;
     const challenge: Challenge = {
       authorizer: body.account,
       authorizationRole,
@@ -382,7 +397,7 @@ const issueChallenge = async (body: ChallengeRequest) => {
     await saveMarkeeChallenge({
       namespace: CHALLENGE_NAMESPACE,
       nonce,
-      ttlSeconds: CHALLENGE_TTL_SECONDS,
+      ttlSeconds,
       value: challenge,
     });
 
@@ -430,10 +445,59 @@ const issueChallenge = async (body: ChallengeRequest) => {
   }
 };
 
+type SafeSignatureResolution =
+  | { signature: Hex }
+  | {
+      pending: {
+        confirmations: number;
+        safeMessageHash: Hex;
+        threshold: number;
+      };
+    };
+
+/**
+ * A council Safe signature only becomes valid once enough owners confirm the
+ * off-chain message, which wallets like Rabby propose to the Safe Transaction
+ * Service with a single owner signature. Read the collected signatures from
+ * there instead of trusting what the wallet returned.
+ */
+const resolveSafeSignature = async (
+  client: ReturnType<typeof getEnvPublicClient>,
+  challenge: Challenge,
+  messageHash: Hex,
+): Promise<SafeSignatureResolution> => {
+  const safeMessageHash = getSafeMessageHash({
+    chainId: challenge.chainId,
+    messageHash,
+    safe: challenge.authorizer,
+  });
+  const [threshold, status] = await Promise.all([
+    client.readContract({
+      abi: safeABI,
+      address: challenge.authorizer,
+      functionName: "getThreshold",
+    }),
+    fetchSafeMessageStatus(challenge.chainId, safeMessageHash),
+  ]);
+  const confirmations = status?.confirmations ?? 0;
+
+  if (status?.preparedSignature == null || BigInt(confirmations) < threshold) {
+    return {
+      pending: {
+        confirmations,
+        safeMessageHash,
+        threshold: Number(threshold),
+      },
+    };
+  }
+
+  return { signature: status.preparedSignature };
+};
+
 const verifyChallenge = async (body: VerifyRequest) => {
   let challenge: Challenge | null;
   try {
-    challenge = await consumeMarkeeChallenge<Challenge>({
+    challenge = await peekMarkeeChallenge<Challenge>({
       namespace: CHALLENGE_NAMESPACE,
       nonce: body.nonce,
     });
@@ -493,16 +557,72 @@ const verifyChallenge = async (body: VerifyRequest) => {
     }
 
     const client = getEnvPublicClient(challenge.chainId);
-    const signatureIsValid = await client.verifyTypedData({
-      address: challenge.authorizer,
+    const typedData = {
       domain: getAuthorizationDomain(challenge.chainId, challenge.community),
       message: challenge.message,
       primaryType: "OptInAuthorization",
-      signature: body.signature,
       types: authorizationTypes,
-    });
+    } as const;
+    let signatureIsValid =
+      body.signature !== "0x" &&
+      (await client.verifyTypedData({
+        ...typedData,
+        address: challenge.authorizer,
+        signature: body.signature,
+      }));
+
+    if (!signatureIsValid && challenge.authorizationRole === "councilSafe") {
+      const resolution = await resolveSafeSignature(
+        client,
+        challenge,
+        hashTypedData(typedData),
+      );
+      if ("pending" in resolution) {
+        return jsonSuccess(
+          {
+            authorized: false,
+            deadline: challenge.deadline,
+            pending: true,
+            ...resolution.pending,
+          },
+          202,
+        );
+      }
+      signatureIsValid = await client.verifyTypedData({
+        ...typedData,
+        address: challenge.authorizer,
+        signature: resolution.signature,
+      });
+    }
+
     if (!signatureIsValid) {
+      if (challenge.authorizationRole === "councilSafe") {
+        // Owners may have spent days signing, so keep the challenge and let the
+        // client retry rather than forcing them to start over.
+        return jsonError(
+          "The council Safe signatures could not be verified yet. Retrying shortly.",
+          502,
+        );
+      }
+      await consumeMarkeeChallenge<Challenge>({
+        namespace: CHALLENGE_NAMESPACE,
+        nonce: body.nonce,
+      });
       return jsonError("Invalid Markee authorization signature.", 401);
+    }
+
+    // Consume only after the signature checks out so a pending Safe message
+    // survives while owners sign, then rely on the atomic delete to reject
+    // replays and concurrent verifications.
+    const consumed = await consumeMarkeeChallenge<Challenge>({
+      namespace: CHALLENGE_NAMESPACE,
+      nonce: body.nonce,
+    });
+    if (consumed == null) {
+      return jsonError(
+        "Authorization challenge is invalid, expired, or already used.",
+        401,
+      );
     }
 
     const routerExecution = await executeRouterCreation(challenge);
