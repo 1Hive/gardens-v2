@@ -3693,6 +3693,14 @@ export function CommunityMarkeePlaceholder({
     };
 
     const check = async () => {
+      if (pendingOptIn.deadline <= Math.floor(Date.now() / 1000)) {
+        stopWaiting();
+        toast.error(
+          "The council Safe authorization expired. Start the opt-in again.",
+        );
+        return;
+      }
+
       try {
         const response = await fetch("/api/markee/authorize", {
           body: JSON.stringify({

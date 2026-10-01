@@ -595,6 +595,22 @@ const verifyChallenge = async (body: VerifyRequest) => {
       });
     }
 
+    if (!signatureIsValid) {
+      if (challenge.authorizationRole === "councilSafe") {
+        // Owners may have spent days signing, so keep the challenge and let the
+        // client retry rather than forcing them to start over.
+        return jsonError(
+          "The council Safe signatures could not be verified yet. Retrying shortly.",
+          502,
+        );
+      }
+      await consumeMarkeeChallenge<Challenge>({
+        namespace: CHALLENGE_NAMESPACE,
+        nonce: body.nonce,
+      });
+      return jsonError("Invalid Markee authorization signature.", 401);
+    }
+
     // Consume only after the signature checks out so a pending Safe message
     // survives while owners sign, then rely on the atomic delete to reject
     // replays and concurrent verifications.
@@ -602,9 +618,6 @@ const verifyChallenge = async (body: VerifyRequest) => {
       namespace: CHALLENGE_NAMESPACE,
       nonce: body.nonce,
     });
-    if (!signatureIsValid) {
-      return jsonError("Invalid Markee authorization signature.", 401);
-    }
     if (consumed == null) {
       return jsonError(
         "Authorization challenge is invalid, expired, or already used.",

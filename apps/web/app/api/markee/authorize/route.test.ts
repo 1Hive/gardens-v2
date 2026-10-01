@@ -416,6 +416,30 @@ describe("Markee council Safe authorization", () => {
     expect((await callRoute(request)).status).toBe(401);
   });
 
+  it("keeps the challenge when the Safe's collected signature fails to verify", async () => {
+    mocks.verifyTypedData.mockResolvedValue(false);
+    mocks.fetch.mockResolvedValue(safeMessageResponse(4));
+    const { body: challenge } = await issueChallenge();
+    const request = {
+      action: "verify",
+      nonce: challenge.nonce,
+      signature,
+    };
+
+    const failedResponse = await callRoute(request);
+    expect(failedResponse.status).toBe(502);
+    expect(mocks.writeContract).not.toHaveBeenCalled();
+
+    mocks.verifyTypedData.mockImplementation(
+      async ({ signature: value }: { signature: string }) =>
+        value === preparedSignature,
+    );
+    mocks.fetch.mockResolvedValue(safeMessageResponse(4));
+    const retryResponse = await callRoute(request);
+    expect(retryResponse.status).toBe(200);
+    expect(mocks.writeContract).toHaveBeenCalledTimes(1);
+  });
+
   it("gives council Safe owners a week to sign", async () => {
     const before = Math.floor(Date.now() / 1000);
     const { body: safeChallenge } = await issueChallenge();
