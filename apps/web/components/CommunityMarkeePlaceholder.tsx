@@ -765,7 +765,7 @@ function CommunityMarkeePreviewModal({
           Your message
         </span>
         <textarea
-          className="textarea textarea-bordered min-h-24 w-full resize-none border-primary-content bg-primary-soft-dark font-mono shadow-[0_0_24px_rgb(var(--color-primary-content)/0.08)] outline-none focus:border-primary-content"
+          className="textarea textarea-bordered min-h-24 w-full resize-none border-primary-content bg-neutral text-neutral-content dark:bg-primary-soft-dark font-mono shadow-[0_0_24px_rgb(var(--color-primary-content)/0.08)] outline-none focus:border-primary-content"
           value={newMarkeeMessage}
           onChange={(event) => setNewMarkeeMessage(event.target.value)}
           placeholder="Write the message you want to lead with"
@@ -785,7 +785,7 @@ function CommunityMarkeePreviewModal({
           </span>
         </span>
         <input
-          className="input input-bordered w-full border-primary-content bg-primary-soft-dark outline-none focus:border-primary-content"
+          className="input input-bordered w-full border-primary-content bg-neutral text-neutral-content dark:bg-primary-soft-dark outline-none focus:border-primary-content"
           value={newMarkeeName}
           onChange={(event) => setNewMarkeeName(event.target.value)}
           placeholder="Your name"
@@ -2410,7 +2410,7 @@ function CommunityMarkeePreviewModal({
                           Markee message
                         </span>
                         <textarea
-                          className="textarea textarea-bordered min-h-24 w-full resize-none border-primary-content bg-primary-soft-dark font-mono shadow-[0_0_24px_rgb(var(--color-primary-content)/0.08)] outline-none focus:border-primary-content"
+                          className="textarea textarea-bordered min-h-24 w-full resize-none border-primary-content bg-neutral text-neutral-content dark:bg-primary-soft-dark font-mono shadow-[0_0_24px_rgb(var(--color-primary-content)/0.08)] outline-none focus:border-primary-content"
                           value={editedMessage}
                           onChange={(event) =>
                             setEditedMessage(event.target.value)
@@ -2431,7 +2431,7 @@ function CommunityMarkeePreviewModal({
                           </span>
                         </span>
                         <input
-                          className="input input-bordered w-full border-primary-content bg-primary-soft-dark outline-none focus:border-primary-content"
+                          className="input input-bordered w-full border-primary-content bg-neutral text-neutral-content dark:bg-primary-soft-dark outline-none focus:border-primary-content"
                           value={editedName}
                           onChange={(event) =>
                             setEditedName(event.target.value)
