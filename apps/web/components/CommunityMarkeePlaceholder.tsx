@@ -4000,10 +4000,6 @@ export function CommunityMarkeePlaceholder({
         }
       >
         <div className="flex flex-col gap-6">
-          <p className="text-sm text-neutral-soft-content">
-            The council Safe or any of its current owners can authorize Markee
-            activation. An owner can sign directly from their wallet.
-          </p>
           {!canAuthorizeMarkee && councilSafe && (
             <div className="flex items-start gap-3 rounded-xl border border-warning-content/30 bg-warning-soft/50 p-4">
               <ArrowsRightLeftIcon className="mt-0.5 h-5 w-5 shrink-0 text-warning-content" />
