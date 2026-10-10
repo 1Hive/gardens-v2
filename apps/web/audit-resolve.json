@@ -1,6 +1,18 @@
 {
   "version": 1,
   "decisions": {
+    "1240992|@allo-team/allo-v2-sdk>@typechain/hardhat>hardhat>@ethersproject/abi>@ethersproject/hash>@ethersproject/abstract-signer>@ethersproject/abstract-provider>@ethersproject/transactions>@ethersproject/signing-key>elliptic>@sentry/node>cookie>uuid>mocha>chokidar>braces": {
+      "decision": "ignore",
+      "madeAt": 1791670590000,
+      "reason": "The affected braces path is build tooling and does not process user-supplied glob patterns in the deployed web application; no fixed braces release is currently published.",
+      "expiresAt": 1794373199000
+    },
+    "1241230|@graphprotocol/client-urql>@graphql-mesh/urql-exchange>@graphql-mesh/runtime>@envelop/extended-validation>@graphql-tools/utils": {
+      "decision": "ignore",
+      "madeAt": 1791670590000,
+      "reason": "The GraphQL Mesh client uses static generated configuration and does not pass user-controlled objects to mergeDeep; the available fix requires an incompatible dependency-line change.",
+      "expiresAt": 1794373199000
+    },
     "1123686|@allo-team/allo-v2-sdk>@typechain/hardhat>hardhat>@ethersproject/abi>@ethersproject/hash>@ethersproject/abstract-signer>@ethersproject/abstract-provider>@ethersproject/transactions>@ethersproject/signing-key>elliptic>@sentry/node>cookie>adm-zip": {
       "decision": "ignore",
       "madeAt": 1784736000000,
