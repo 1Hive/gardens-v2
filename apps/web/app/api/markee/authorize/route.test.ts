@@ -99,7 +99,9 @@ describe("Markee council Safe authorization", () => {
     clearMarkeeAuthorizationChallengesForTests();
     mocks.readContract.mockImplementation(
       ({ functionName }: { functionName: string }) =>
-        functionName === "keepers" ? true : councilSafe,
+        functionName === "keepers" ? true
+        : functionName === "isOwner" ? false
+        : councilSafe,
     );
     mocks.simulateContract.mockResolvedValue({
       request: { test: true },
@@ -171,14 +173,75 @@ describe("Markee council Safe authorization", () => {
     );
   });
 
-  it("asks a connected owner account to switch to the council Safe", async () => {
+  it("rejects an account that is not a current council Safe owner", async () => {
     const { body, response } = await issueChallenge(otherAccount);
 
     expect(response.status).toBe(403);
     expect(body).toEqual({
-      error: "Connect with the community council Safe to authorize Markee.",
+      error:
+        "Connect with the community council Safe or one of its current owners to authorize Markee.",
     });
     expect(mocks.verifyTypedData).not.toHaveBeenCalled();
+  });
+
+  it("allows a current owner to sign and deploy without the Safe threshold", async () => {
+    mocks.readContract.mockImplementation(({ functionName }) =>
+      functionName === "councilSafe" ? councilSafe : true,
+    );
+    const { body: challenge, response: issued } =
+      await issueChallenge(otherAccount);
+    expect(issued.status).toBe(201);
+    expect(challenge.authorizationRole).toBe("councilOwner");
+    const response = await callRoute({
+      action: "verify",
+      nonce: challenge.nonce,
+      signature,
+    });
+    expect(response.status).toBe(200);
+    expect(mocks.readContract).toHaveBeenCalledWith(
+      expect.objectContaining({
+        address: councilSafe,
+        functionName: "isOwner",
+        args: [otherAccount],
+      }),
+    );
+    expect(mocks.verifyTypedData).toHaveBeenCalledWith(
+      expect.objectContaining({ address: otherAccount }),
+    );
+    expect(mocks.writeContract).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects an owner removed after issuing the challenge", async () => {
+    mocks.readContract.mockImplementation(({ functionName }) =>
+      functionName === "councilSafe" ? councilSafe : true,
+    );
+    const { body: challenge } = await issueChallenge(otherAccount);
+    mocks.readContract.mockImplementation(({ functionName }) =>
+      functionName === "councilSafe" ? councilSafe : false,
+    );
+    const response = await callRoute({
+      action: "verify",
+      nonce: challenge.nonce,
+      signature,
+    });
+    expect(response.status).toBe(403);
+    expect(mocks.verifyTypedData).not.toHaveBeenCalled();
+    expect(mocks.writeContract).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid owner signature without deploying", async () => {
+    mocks.readContract.mockImplementation(({ functionName }) =>
+      functionName === "councilSafe" ? councilSafe : true,
+    );
+    const { body: challenge } = await issueChallenge(otherAccount);
+    mocks.verifyTypedData.mockResolvedValue(false);
+    const response = await callRoute({
+      action: "verify",
+      nonce: challenge.nonce,
+      signature,
+    });
+    expect(response.status).toBe(401);
+    expect(mocks.writeContract).not.toHaveBeenCalled();
   });
 
   it("accepts a threshold-valid Safe signature through ERC-1271", async () => {
