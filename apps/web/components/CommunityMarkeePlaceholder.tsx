@@ -3473,7 +3473,8 @@ export function CommunityMarkeePlaceholder({
     councilSafe != null &&
     connectedAccount != null &&
     councilSafe.toLowerCase() === connectedAccount.toLowerCase();
-  const canAuthorizeMarkee = isConnectedCouncilSafe || isConnectedKeeper;
+  const canAuthorizeMarkee =
+    canOptIn || isConnectedCouncilSafe || isConnectedKeeper;
   const isAuthorizing =
     authorizationStatus === "requesting" ||
     authorizationStatus === "signing" ||
@@ -3987,7 +3988,7 @@ export function CommunityMarkeePlaceholder({
               testId="markee-opt-in-create"
               tooltip={
                 !canAuthorizeMarkee ?
-                  "Switch to the council Safe to continue."
+                  "Connect with the council Safe or one of its owners to continue."
                 : undefined
               }
               tooltipClassName="flex justify-end"
@@ -3999,12 +4000,16 @@ export function CommunityMarkeePlaceholder({
         }
       >
         <div className="flex flex-col gap-6">
+          <p className="text-sm text-neutral-soft-content">
+            The council Safe or any of its current owners can authorize Markee
+            activation. An owner can sign directly from their wallet.
+          </p>
           {!canAuthorizeMarkee && councilSafe && (
             <div className="flex items-start gap-3 rounded-xl border border-warning-content/30 bg-warning-soft/50 p-4">
               <ArrowsRightLeftIcon className="mt-0.5 h-5 w-5 shrink-0 text-warning-content" />
               <div>
                 <p className="font-medium text-neutral-content">
-                  Switch to the council Safe
+                  Connect with the council Safe or an owner
                 </p>
                 <p className="mt-1 text-sm leading-relaxed text-neutral-soft-content">
                   Connect with{" "}
@@ -4042,8 +4047,8 @@ export function CommunityMarkeePlaceholder({
                       : <ClipboardDocumentIcon className="h-4 w-4" />}
                     </button>
                   </span>{" "}
-                  to collect the Safe&apos;s approval and create this
-                  leaderboard.
+                  or one of its current owners to sign the authorization and
+                  create this leaderboard.
                 </p>
               </div>
             </div>

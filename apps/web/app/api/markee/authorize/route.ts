@@ -56,6 +56,22 @@ const gardensMarkeeRouterABI = parseAbi([
   "function keepers(address keeper) view returns (bool)",
 ]);
 
+const safeOwnerABI = parseAbi([
+  "function isOwner(address owner) view returns (bool)",
+]);
+
+const isCouncilOwner = (
+  chainId: number,
+  councilSafe: Address,
+  account: Address,
+) =>
+  getEnvPublicClient(chainId).readContract({
+    abi: safeOwnerABI,
+    address: councilSafe,
+    args: [account],
+    functionName: "isOwner",
+  });
+
 const authorizationTypes = {
   OptInAuthorization: [
     { name: "communityKey", type: "bytes32" },
@@ -78,7 +94,7 @@ type AuthorizationMessage = {
   deadline: bigint;
 };
 
-type AuthorizationRole = "councilSafe" | "keeper";
+type AuthorizationRole = "councilSafe" | "councilOwner" | "keeper";
 
 type Challenge = {
   authorizer: Address;
@@ -348,15 +364,22 @@ const issueChallenge = async (body: ChallengeRequest) => {
     }
     const keeperAccount = getKeeperAccount();
     const isKeeper = keeperAccount?.address === body.account;
-    if (body.account !== councilSafe && !isKeeper) {
+    const isSafe = body.account === councilSafe;
+    const isOwner =
+      !isSafe &&
+      !isKeeper &&
+      (await isCouncilOwner(body.chainId, councilSafe, body.account));
+    if (!isSafe && !isKeeper && !isOwner) {
       return jsonError(
-        "Connect with the community council Safe to authorize Markee.",
+        "Connect with the community council Safe or one of its current owners to authorize Markee.",
         403,
       );
     }
 
     const authorizationRole: AuthorizationRole =
-      isKeeper ? "keeper" : "councilSafe";
+      isKeeper ? "keeper"
+      : isSafe ? "councilSafe"
+      : "councilOwner";
 
     const randomNonce = BigInt(`0x${randomBytes(32).toString("hex")}`);
     const nonceValue = randomNonce === BigInt(0) ? BigInt(1) : randomNonce;
@@ -489,6 +512,20 @@ const verifyChallenge = async (body: VerifyRequest) => {
       return jsonError(
         "The configured Markee keeper changed. Request a new challenge.",
         409,
+      );
+    }
+
+    if (
+      challenge.authorizationRole === "councilOwner" &&
+      !(await isCouncilOwner(
+        challenge.chainId,
+        currentCouncilSafe,
+        challenge.authorizer,
+      ))
+    ) {
+      return jsonError(
+        "The authorizer is no longer a council Safe owner.",
+        403,
       );
     }
 
