@@ -310,8 +310,16 @@ export function CommunityMarkeeClaimCard({
         }
       });
       setActualRoute(usedUniswap ? "uniswap-buyback" : "revnet-mint");
+      setSnapshot((current) =>
+        current == null ?
+          current
+        : {
+            ...current,
+            pendingMarkee: 0n,
+            pendingSettlement: 0n,
+          },
+      );
       setTransactionStatus("success");
-      await load();
     } catch (cause) {
       if (isUserRejectedTransactionError(cause)) {
         setTransactionStatus(undefined);
