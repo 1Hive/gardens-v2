@@ -360,8 +360,8 @@ export function CommunityMarkeeClaimCard({
         </p>
 
         {showStreamerRewards && (
-          <div className="mt-3 flex items-center justify-between gap-4">
-            <div className="min-w-0">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0 flex-1 basis-40">
               <p className="text-sm font-medium text-neutral-content">
                 Accumulated
               </p>
@@ -374,7 +374,7 @@ export function CommunityMarkeeClaimCard({
             </div>
             <Button
               btnStyle="outline"
-              className="shrink-0 whitespace-nowrap"
+              className="ml-auto !w-auto shrink-0 whitespace-nowrap"
               color="primary"
               disabled={snapshot == null || totalMarkee <= 0n}
               onClick={() => {

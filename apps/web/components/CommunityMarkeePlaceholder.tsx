@@ -35,6 +35,8 @@ import {
   useSwitchNetwork,
   useWalletClient,
 } from "wagmi";
+import markeeLogoBlack from "@/assets/markee-logo-black.png";
+import markeeLogoWhite from "@/assets/markee-logo-white.png";
 import { Button } from "@/components/Button";
 import { CommunityMarkeeClaimCard } from "@/components/CommunityMarkeeClaimCard";
 import { CommunityMarkeeDepositManagerModal } from "@/components/CommunityMarkeeDepositManagerModal";
@@ -116,6 +118,7 @@ type AuthorizationStatus =
 
 const CLAIM_QUOTE_CHANGED_MESSAGE =
   "The claim quote changed. Refreshing the latest quote…";
+const MARKEE_WIN_INCREMENT = parseEther("0.001");
 
 type ChallengeResponse = {
   nonce: string;
@@ -209,11 +212,14 @@ function PlaceholderSign({
           className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center overflow-hidden rounded-xl"
         >
           <Image
-            src="https://www.markee.xyz/markee-logo-purple.png"
+            src={markeeLogoBlack}
             alt=""
-            width={924}
-            height={924}
-            className="h-full w-auto max-w-none opacity-0 transition-opacity duration-200 sm:group-hover:opacity-[0.16]"
+            className="h-full w-auto max-w-none opacity-0 transition-opacity duration-200 sm:group-hover:opacity-[0.16] dark:hidden"
+          />
+          <Image
+            src={markeeLogoWhite}
+            alt=""
+            className="hidden h-full w-auto max-w-none opacity-0 transition-opacity duration-200 sm:group-hover:opacity-[0.16] dark:block"
           />
         </span>
         {totalViews !== null && (
@@ -421,7 +427,7 @@ function CommunityMarkeePreviewModal({
   const challengeMonthlyRateAmount =
     hasTopStream ?
       [
-        topMonthlyRateAmount + parseEther("0.01"),
+        topMonthlyRateAmount + MARKEE_WIN_INCREMENT,
         effectiveMinimumMonthlyRateAmount,
       ].reduce((highest, amount) => (amount > highest ? amount : highest))
     : effectiveMinimumMonthlyRateAmount;
@@ -3490,8 +3496,8 @@ export function CommunityMarkeePlaceholder({
     : 0n;
   const topMarkeeChallengeRate =
     topMarkeeMonthlyRate > 0n ?
-      topMarkeeMonthlyRate + parseEther("0.01")
-    : parseEther("0.001");
+      topMarkeeMonthlyRate + MARKEE_WIN_INCREMENT
+    : MARKEE_WIN_INCREMENT;
   const signHint =
     !hasActiveMarkee ?
       "Integrate markee to this community"
@@ -3831,8 +3837,8 @@ export function CommunityMarkeePlaceholder({
     hasPendingClaim || BigInt(markee.revenue.claimableAmount) > 0n;
   const communityRevenueRow =
     canOptIn && hasActiveMarkee && hasCommunityRevenue ?
-      <div className="flex items-center justify-between gap-4">
-        <div className="min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0 flex-1 basis-40">
           <p className="text-sm font-medium text-neutral-content">
             Community revenue
           </p>
@@ -3857,7 +3863,7 @@ export function CommunityMarkeePlaceholder({
         <Button
           btnStyle="outline"
           color="primary"
-          className="shrink-0 whitespace-nowrap"
+          className="ml-auto !w-auto shrink-0 whitespace-nowrap"
           onClick={() => setIsClaimOpen(true)}
           testId="markee-community-claim-open"
         >
