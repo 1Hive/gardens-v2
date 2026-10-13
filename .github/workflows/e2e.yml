@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       preview_url:
-        description: "Optional Vercel preview URL to test"
+        description: "Optional Vercel preview URL; no inputs uses the default E2E deployment"
         required: false
         type: string
       pr_head_sha:
@@ -46,6 +46,7 @@ jobs:
       VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
       VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID || secrets.VERCEL_TEAM_ID }}
       PR_HEAD_SHA: ${{ inputs.pr_head_sha || github.event.pull_request.head.sha || github.sha }}
+      USE_DEFAULT_DEPLOYMENT: ${{ github.event_name == 'workflow_dispatch' && !inputs.preview_url && !inputs.pr_head_sha }}
       E2E_FALLBACK_URL: ${{ vars.E2E_FALLBACK_URL || 'https://gardens-v2-dev.vercel.app' }}
 
     steps:
@@ -72,7 +73,7 @@ jobs:
             fi
           done
 
-          if [ -z "${PREVIEW_URL_OVERRIDE:-}" ]; then
+          if [ -z "${PREVIEW_URL_OVERRIDE:-}" ] && [ "${USE_DEFAULT_DEPLOYMENT:-false}" != "true" ]; then
             for key in VERCEL_TOKEN VERCEL_PROJECT_ID; do
               if [ -z "${!key:-}" ]; then
                 echo "::warning::Missing required CI configuration: ${key}"
@@ -191,6 +192,16 @@ jobs:
             exit 0
           fi
 
+          if [ "${USE_DEFAULT_DEPLOYMENT:-false}" = "true" ]; then
+            preview_url="${E2E_FALLBACK_URL}"
+            if [[ ! "${preview_url}" =~ ^https?:// ]]; then
+              preview_url="https://${preview_url}"
+            fi
+            echo "::notice::No preview URL or commit SHA provided; using default E2E deployment ${preview_url}"
+            echo "preview_url=${preview_url}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           base_api="https://api.vercel.com/v6/deployments"
           query="?projectId=${VERCEL_PROJECT_ID}&limit=20&meta-githubCommitSha=${PR_HEAD_SHA}"
           if [ -n "${VERCEL_TEAM_ID:-}" ]; then
@@ -268,10 +279,14 @@ jobs:
                 exit 0
               fi
 
-              echo "No READY deployment URL found for branch alias ${branch_alias}. Falling back to branch alias: https://${branch_alias}"
-              echo "::notice::Using Vercel branch alias https://${branch_alias}"
-              echo "preview_url=https://${branch_alias}" >> "$GITHUB_OUTPUT"
-              exit 0
+              echo "No READY deployment URL found for branch alias ${branch_alias}."
+              if [ -n "${E2E_FALLBACK_URL:-}" ]; then
+                echo "::warning::Skipped build has no usable branch deployment. Falling back to ${E2E_FALLBACK_URL}"
+                echo "preview_url=${E2E_FALLBACK_URL}" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+              echo "No default E2E deployment configured."
+              exit 1
             fi
 
             if [ "${state}" = "ERROR" ] || [ "${state}" = "FAILED" ] || [ "${state}" = "CANCELED" ]; then
