@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { testWithSynpress } from "@synthetixio/synpress";
 import { MetaMask } from "@synthetixio/synpress/playwright";
 import { mnemonicToAccount } from "viem/accounts";
@@ -350,6 +351,48 @@ async function ensureWalletConnected(page: any, metamask: MetaMask) {
   }
 }
 
+async function waitForDisputeControlReady({
+  page,
+  metamask,
+  testId,
+}: {
+  page: Page;
+  metamask: MetaMask;
+  testId: "btn-dispute-proposal" | "btn-open-dispute";
+}) {
+  const control = getByTestId(page, testId);
+
+  // The browser's subgraph can lag behind the endpoint used by test setup.
+  // A page that initially fetched no proposal or an old status needs a refetch.
+  for (const timeout of [60000, 120000]) {
+    try {
+      await expect
+        .poll(
+          async () =>
+            (await control.isVisible()) &&
+            (await control.isEnabled().catch(() => false)),
+          {
+            timeout,
+            intervals: [1000, 2000, 3000, 5000],
+            message: `${testId} is visible and enabled on the proposal page`,
+          },
+        )
+        .toBe(true);
+      return control;
+    } catch (error) {
+      if (timeout === 120000) {
+        throw error;
+      }
+
+      await page.reload({ waitUntil: "domcontentloaded", timeout: 60000 });
+      await page.bringToFront();
+      await ensureWalletConnected(page, metamask);
+    }
+  }
+
+  throw new Error(`${testId} did not become ready`);
+}
+
 async function mockIpfsJsonUpload(page: any) {
   await page.route("**/api/ipfs", async (route: any) => {
     if (route.request().method() !== "POST") {
@@ -469,9 +512,11 @@ test("should dispute and rule a proposal", async ({
   await page.bringToFront();
   await ensureWalletConnected(page, metamask);
 
-  const disputeButton = getByTestId(page, "btn-dispute-proposal");
-  await expect(disputeButton).toBeVisible({ timeout: 180000 });
-  await expect(disputeButton).toBeEnabled({ timeout: 180000 });
+  const disputeButton = await waitForDisputeControlReady({
+    page,
+    metamask,
+    testId: "btn-dispute-proposal",
+  });
   await disputeButton.click();
 
   const disputeReasonInput = getByTestId(page, "input-dispute-reason");
@@ -500,9 +545,11 @@ test("should dispute and rule a proposal", async ({
   await page.bringToFront();
   await ensureWalletConnected(page, metamask);
 
-  const openDisputeButton = getByTestId(page, "btn-open-dispute");
-  await expect(openDisputeButton).toBeVisible({ timeout: 180000 });
-  await expect(openDisputeButton).toBeEnabled({ timeout: 180000 });
+  const openDisputeButton = await waitForDisputeControlReady({
+    page,
+    metamask,
+    testId: "btn-open-dispute",
+  });
   await openDisputeButton.click();
 
   const rejectRulingButton = getByTestId(page, "btn-rule-reject");
