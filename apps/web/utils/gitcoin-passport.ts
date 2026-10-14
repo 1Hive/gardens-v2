@@ -19,7 +19,7 @@ export async function fetchPassportScore(account: string): Promise<number> {
   }
   const apiKey = process.env.GITCOIN_PASSPORT_API_KEY;
   const scorerId = process.env.SCORER_ID;
-  const endpoint = `https://api.scorer.gitcoin.co/registry/score/${scorerId}/${account}`;
+  const endpoint = `https://api.passport.xyz/registry/score/${scorerId}/${account}`;
 
   if (!apiKey) {
     throw Error("API key is missing");
@@ -50,7 +50,7 @@ export async function fetchPassportScore(account: string): Promise<number> {
 export async function fetchAllPassportScores() {
   const apiKey = process.env.GITCOIN_PASSPORT_API_KEY;
   const scorerId = process.env.SCORER_ID;
-  const endpoint = `https://api.scorer.gitcoin.co/registry/score/${scorerId}`;
+  const endpoint = `https://api.passport.xyz/registry/score/${scorerId}`;
 
   if (!apiKey) {
     throw Error("API key is missing");
