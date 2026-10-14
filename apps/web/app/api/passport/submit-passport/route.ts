@@ -11,7 +11,7 @@ interface PassportData {
 export async function POST(request: Request) {
   const apiKey = process.env.GITCOIN_PASSPORT_API_KEY;
   const scorerId = process.env.SCORER_ID;
-  const endpoint = "https://api.scorer.gitcoin.co/registry/submit-passport";
+  const endpoint = "https://api.passport.xyz/registry/submit-passport";
 
   if (!apiKey) {
     return NextResponse.json({ error: "API key is missing" }, { status: 500 });
