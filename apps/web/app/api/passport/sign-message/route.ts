@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const apiKey = process.env.GITCOIN_PASSPORT_API_KEY;
-  const endpoint = "https://api.scorer.gitcoin.co/registry/signing-message";
+  const endpoint = "https://api.passport.xyz/registry/signing-message";
 
   if (!apiKey) {
     return NextResponse.json({ error: "API key is missing" }, { status: 500 });
