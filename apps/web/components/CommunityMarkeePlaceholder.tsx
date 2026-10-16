@@ -209,7 +209,7 @@ function PlaceholderSign({
       >
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center overflow-hidden rounded-xl"
+          className="pointer-events-none absolute inset-2 -z-10 flex items-center justify-center overflow-hidden rounded-xl"
         >
           <Image
             src={markeeLogoBlack}
