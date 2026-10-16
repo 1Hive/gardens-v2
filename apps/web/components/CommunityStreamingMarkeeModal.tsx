@@ -352,7 +352,7 @@ export function CommunityStreamingMarkeeModal({
                                 </p>
                                 {isPromoted && (
                                   <span className="rounded-full border border-primary-content/40 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary-content">
-                                    Promoted
+                                    Winner
                                   </span>
                                 )}
                                 {isOwned && (
