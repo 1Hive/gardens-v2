@@ -362,27 +362,27 @@ export function CommunityMarkeeClaimCard({
 
   return (
     <>
-      <div className="contents xl:mt-3 xl:block xl:rounded-xl xl:border xl:border-neutral-content/15 xl:bg-neutral/30 xl:p-4">
-        <p className="hidden text-xs uppercase tracking-wider text-neutral-soft-content xl:block">
+      <div className="mt-3 rounded-xl border border-neutral-content/15 bg-neutral/30 p-4">
+        <p className="text-xs uppercase tracking-wider text-neutral-soft-content">
           🪧 MARKEE
         </p>
 
         {showStreamerRewards && (
-          <div className="flex min-w-0 flex-col items-start justify-between gap-3 rounded-xl border border-neutral-content/15 bg-neutral/30 p-2 sm:p-4 xl:mt-3 xl:flex-row xl:flex-wrap xl:items-center xl:gap-4 xl:rounded-none xl:border-0 xl:bg-transparent xl:p-0">
-            <div className="min-w-0 max-w-full xl:flex-1 xl:basis-40">
-              <p className="break-words text-[11px] font-medium text-neutral-content sm:text-sm">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0 flex-1 basis-40">
+              <p className="text-sm font-medium text-neutral-content">
                 Accumulated
               </p>
               {isLoading && snapshot == null ?
-                <div className="skeleton mt-2 h-6 w-28 max-w-full rounded-md" />
-              : <p className="mt-1 break-words font-mono text-sm font-semibold text-neutral-content sm:text-lg">
+                <div className="skeleton mt-2 h-6 w-28 rounded-md" />
+              : <p className="mt-1 font-mono text-lg font-semibold text-neutral-content">
                   {formatAmount(totalMarkee)} MARKEE
                 </p>
               }
             </div>
             <Button
               btnStyle="outline"
-              className="!w-auto shrink-0 whitespace-nowrap !px-2 sm:!px-4 xl:ml-auto"
+              className="ml-auto !w-auto shrink-0 whitespace-nowrap"
               color="primary"
               disabled={snapshot == null || totalMarkee <= 0n}
               onClick={() => {
@@ -397,9 +397,11 @@ export function CommunityMarkeeClaimCard({
 
         {communityRevenue != null && (
           <div
-            className={`min-w-0 rounded-xl border border-neutral-content/15 bg-neutral/30 p-2 sm:p-4 xl:rounded-none xl:border-0 xl:bg-transparent xl:p-0 ${
-              showStreamerRewards ? "xl:mt-4 xl:border-t xl:pt-4" : "xl:mt-3"
-            }`}
+            className={
+              showStreamerRewards ?
+                "mt-4 border-t border-neutral-content/15 pt-4"
+              : "mt-3"
+            }
           >
             {communityRevenue}
           </div>

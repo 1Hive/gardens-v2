@@ -203,9 +203,9 @@ function PlaceholderSign({
   totalViews: number | null;
 }) {
   return (
-    <div className="group relative h-full w-full pb-3">
+    <div className="group relative w-full pb-3">
       <div
-        className={`relative z-0 flex h-full min-h-[90px] items-center rounded-xl bg-neutral/50 px-2 py-8 transition-all duration-200 sm:px-6 sm:group-hover:-translate-y-0.5 sm:group-hover:border-primary-content/50 sm:group-hover:shadow-xl sm:group-hover:shadow-primary-content/20 ${isEmpty ? "opacity-50 group-hover:opacity-70" : "opacity-100"} ${isPlaceholder ? "border-2 border-dashed border-neutral-content/30" : "border border-neutral-content/15"}`}
+        className={`relative z-0 rounded-xl bg-neutral/50 px-6 py-8 transition-all duration-200 sm:group-hover:-translate-y-0.5 sm:group-hover:border-primary-content/50 sm:group-hover:shadow-xl sm:group-hover:shadow-primary-content/20 ${isEmpty ? "opacity-50 group-hover:opacity-70" : "opacity-100"} ${isPlaceholder ? "border-2 border-dashed border-neutral-content/30" : "border border-neutral-content/15"}`}
       >
         <span
           aria-hidden="true"
@@ -228,11 +228,11 @@ function PlaceholderSign({
             {totalViews.toLocaleString()}
           </span>
         )}
-        <p className="relative z-10 w-full break-words text-center font-mono text-sm leading-snug text-neutral-content transition-colors duration-200 group-hover:text-primary-content sm:text-lg">
+        <p className="relative z-10 w-full text-center font-mono text-lg leading-snug text-neutral-content transition-colors duration-200 group-hover:text-primary-content">
           {message}
         </p>
       </div>
-      <span className="absolute bottom-0 left-1/2 z-20 w-max max-w-full -translate-x-1/2 translate-y-0 rounded-lg border border-primary-content bg-primary-content px-1 py-0.5 text-center font-mono text-[10px] font-semibold leading-tight text-neutral-inverted-content opacity-100 shadow-lg shadow-primary-content/30 transition-all duration-200 sm:translate-y-1 sm:px-4 sm:text-xs sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100">
+      <span className="absolute bottom-0 left-1/2 z-20 -translate-x-1/2 translate-y-0 whitespace-nowrap rounded-lg border border-primary-content bg-primary-content px-4 py-0.5 font-mono text-xs font-semibold text-neutral-inverted-content opacity-100 shadow-lg shadow-primary-content/30 transition-all duration-200 sm:translate-y-1 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100">
         {hint}
       </span>
     </div>
@@ -3837,21 +3837,21 @@ export function CommunityMarkeePlaceholder({
     hasPendingClaim || BigInt(markee.revenue.claimableAmount) > 0n;
   const communityRevenueRow =
     canOptIn && hasActiveMarkee && hasCommunityRevenue ?
-      <div className="flex h-full min-w-0 flex-col items-start justify-between gap-3 xl:flex-row xl:flex-wrap xl:items-center xl:gap-4">
-        <div className="min-w-0 max-w-full xl:flex-1 xl:basis-40">
-          <p className="break-words text-[11px] font-medium text-neutral-content sm:text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0 flex-1 basis-40">
+          <p className="text-sm font-medium text-neutral-content">
             Community revenue
           </p>
           {hasPendingClaim ?
             <div
-              className="mt-2 flex items-center gap-2 text-xs text-primary-content sm:text-sm"
+              className="mt-2 flex items-center gap-2 text-sm text-primary-content"
               role="status"
             >
-              <span className="loading loading-spinner loading-sm shrink-0" />
+              <span className="loading loading-spinner loading-sm" />
               <span>Bridge in progress</span>
             </div>
           : <p
-              className="tooltip tooltip-top mt-1 max-w-full cursor-help break-words font-mono text-sm font-semibold text-neutral-content max-xl:before:left-auto max-xl:before:right-0 max-xl:before:translate-x-0 sm:text-lg"
+              className="tooltip tooltip-top mt-1 cursor-help font-mono text-lg font-semibold text-neutral-content"
               data-tip={`${formatEther(BigInt(markee.revenue.claimableAmount))} ${markee.revenue.symbol}`}
               tabIndex={0}
             >
@@ -3863,7 +3863,7 @@ export function CommunityMarkeePlaceholder({
         <Button
           btnStyle="outline"
           color="primary"
-          className="!w-auto shrink-0 whitespace-nowrap !px-2 sm:!px-4 xl:ml-auto"
+          className="ml-auto !w-auto shrink-0 whitespace-nowrap"
           onClick={() => setIsClaimOpen(true)}
           testId="markee-community-claim-open"
         >
@@ -3874,13 +3874,10 @@ export function CommunityMarkeePlaceholder({
 
   return (
     <>
-      <section
-        aria-label="Markee leaderboard"
-        className="grid auto-cols-fr grid-flow-col items-stretch gap-2 sm:gap-4 xl:block"
-      >
+      <section aria-label="Markee leaderboard">
         <button
           type="button"
-          className="min-w-0 w-full cursor-pointer rounded-xl text-left focus:outline-none"
+          className="w-full cursor-pointer rounded-xl text-left focus:outline-none"
           aria-label={
             hasActiveMarkee ? "Open this Markee" : (
               "Integrate Markee for this community"
