@@ -1039,23 +1039,25 @@ export default function ClientPage({
         </div>
       </div>
 
-      {/* Desktop Right Sidebar - Stake component */}
-      <div className="hidden md:block col-span-12 xl:col-span-3">
-        <div className="backdrop-blur-sm rounded-lg flex flex-col gap-4 sticky top-32">
-          <IncreasePower
-            memberData={accountAddress ? isMemberResult : undefined}
-            registryCommunity={registryCommunity}
-            tokenGarden={resolvedTokenGarden}
-            registrationAmount={registrationAmount}
-          />
-          {!isMobileViewport && (
+      {/* Single-column Markee first; desktop sidebar below staking. */}
+      <div className="contents xl:col-span-3 xl:block">
+        <div className="contents xl:sticky xl:top-32 xl:flex xl:flex-col xl:gap-4 xl:rounded-lg xl:backdrop-blur-sm">
+          <div className="order-2 col-span-12 hidden md:block xl:order-none">
+            <IncreasePower
+              memberData={accountAddress ? isMemberResult : undefined}
+              registryCommunity={registryCommunity}
+              tokenGarden={resolvedTokenGarden}
+              registrationAmount={registrationAmount}
+            />
+          </div>
+          <div className="order-first col-span-12 empty:hidden xl:order-none">
             <CommunityMarkeePlaceholder
               canOptIn={Boolean(isCouncilMember || isCouncilSafe)}
               chainId={chain?.id}
               community={communityAddr as Address}
               councilSafe={effectiveCouncilSafe}
             />
-          )}
+          </div>
         </div>
       </div>
 
@@ -1085,12 +1087,6 @@ export default function ClientPage({
           {/* Overview Tab */}
           {isMobileViewport && selectedTab === 0 && (
             <div className="backdrop-blur-sm flex flex-col gap-6">
-              <CommunityMarkeePlaceholder
-                canOptIn={Boolean(isCouncilMember || isCouncilSafe)}
-                chainId={chain?.id}
-                community={communityAddr as Address}
-                councilSafe={effectiveCouncilSafe}
-              />
               <header
                 className={`border shadow-sm section-layout ${headerCardBorderClass}`}
               >
