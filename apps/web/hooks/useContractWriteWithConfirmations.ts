@@ -27,6 +27,7 @@ import {
 } from "@/utils/errorSignatures";
 import { isUserRejectedRequestError } from "@/utils/isUserRejectedRequestError";
 import { stringifyJson } from "@/utils/json";
+import { shouldRetryWithWalletClient } from "@/utils/shouldRetryWithWalletClient";
 import {
   getWalletConnectDeepLinkChoice,
   isMobileBrowser,
@@ -43,20 +44,6 @@ export type ComputedStatus =
 
 const isRpcTransactionHash = (hash?: string): hash is `0x${string}` =>
   /^0x[a-fA-F0-9]{64}$/.test(hash ?? "");
-
-const shouldRetryWithWalletClient = (error: unknown) => {
-  const transportError = [
-    error instanceof Error ? error.message : undefined,
-    (error as { cause?: { message?: string } })?.cause?.message,
-    (error as { details?: string })?.details,
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  return /HTTP request failed|Failed to fetch|fetch failed|NetworkError|Load failed/i.test(
-    transportError,
-  );
-};
 
 const DIRECT_WALLET_FALLBACK_GAS_LIMIT = 1_500_000n;
 
