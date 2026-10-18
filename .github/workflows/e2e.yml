@@ -172,6 +172,10 @@ jobs:
         if: steps.preflight.outputs.run_e2e == 'true'
         run: pnpm --filter e2e exec playwright install --with-deps chromium
 
+      - name: Test E2E wallet helpers
+        if: steps.preflight.outputs.run_e2e == 'true'
+        run: pnpm --filter e2e test:helpers
+
       - name: Wait for Vercel preview deployment
         if: steps.preflight.outputs.run_e2e == 'true'
         id: vercel
