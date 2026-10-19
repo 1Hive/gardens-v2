@@ -25,6 +25,7 @@ import { LoadingSpinner } from "../LoadingSpinner";
 import { Button } from "@/components";
 import { chainConfigMap, ChainIcon } from "@/configs/chains";
 import { isProd } from "@/configs/isProd";
+import { getUnsupportedGovernanceTokenError } from "@/configs/unsupportedGovernanceTokens";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useAppSwitchNetwork } from "@/hooks/useAppSwitchNetwork";
@@ -130,7 +131,13 @@ export const CommunityForm = () => {
     if ((tokenAddress && switchNetworkData?.id != null) || selectedChainId) {
       trigger("tokenAddress");
     }
-  }, [switchNetworkData?.id, connectedChainId, selectedChainId]);
+  }, [
+    tokenAddress,
+    switchNetworkData?.id,
+    connectedChainId,
+    selectedChainId,
+    trigger,
+  ]);
 
   useEffect(() => {
     if (!councilSafe || feeReceiver?.trim().length) return;
@@ -300,6 +307,20 @@ export const CommunityForm = () => {
     try {
       setLoading(true);
 
+      const unsupportedTokenError = getUnsupportedGovernanceTokenError(
+        Number(getValues("chainId")),
+        getValues("tokenAddress"),
+      );
+      if (unsupportedTokenError) {
+        setError("tokenAddress", {
+          type: "validate",
+          message: unsupportedTokenError,
+        });
+        setShowPreview(false);
+        setLoading(false);
+        return;
+      }
+
       // Switch network if necessary
       if (selectedChainId && selectedChainId !== connectedChainId) {
         try {
@@ -436,8 +457,14 @@ export const CommunityForm = () => {
   }, [previewData, formRowTypes]);
 
   const validateTokenAddress = async (address: string) => {
+    setTokenData(null);
     if (!isAddress(address)) return "Invalid Token Address";
     if (normalizedChainId == null) return "Please select a chain first";
+    const unsupportedTokenError = getUnsupportedGovernanceTokenError(
+      normalizedChainId,
+      address,
+    );
+    if (unsupportedTokenError) return unsupportedTokenError;
     if (normalizedChainId !== Number(connectedChainId))
       return `Connect to ${chainConfigMap[normalizedChainId]?.name} network`;
     if (!selectedChainPublicClient)
@@ -536,6 +563,10 @@ export const CommunityForm = () => {
               }
               tooltip="ERC20 token address that will be used for the governance of the community"
             />
+            <p className="text-sm text-neutral-soft-content">
+              Use a standard ERC-20 token with no rebasing, demurrage, or
+              transfer fees.
+            </p>
           </div>
           <div className="flex flex-col">
             <FormInput
