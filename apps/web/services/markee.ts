@@ -31,6 +31,8 @@ export type CommunityMarkeeResponse = {
 };
 
 export type MarkeeClaimQuoteResponse = {
+  quoteId?: string;
+  maxFeeAmount?: string;
   bridgeProtocol: "across" | "lifi" | "none" | "squid";
   bridged: boolean;
   claimAmount: string;

@@ -557,7 +557,7 @@ function CommunityMarkeePreviewModal({
   const ownedMarkeeMessage =
     isTopMarkeeOwner ? message : connectedMarkeeMessage;
   const ownedMarkeeName =
-    isTopMarkeeOwner ? (topMarkeeName ?? "") : (connectedMarkeeName ?? "");
+    isTopMarkeeOwner ? topMarkeeName ?? "" : connectedMarkeeName ?? "";
   const activeStreamIsWinning =
     activeStreamMarkee != null &&
     topMarkeeAddress != null &&
@@ -573,7 +573,7 @@ function CommunityMarkeePreviewModal({
       ownedMarkeeAddress != null &&
       activeStreamMarkee.toLowerCase() === ownedMarkeeAddress.toLowerCase()
     ) ?
-      (ownedMarkeeMessage ?? undefined)
+      ownedMarkeeMessage ?? undefined
     : (
       selectedFundingMarkee != null &&
       activeStreamMarkee.toLowerCase() ===
@@ -2312,10 +2312,10 @@ function CommunityMarkeePreviewModal({
                     "Change the stream, message, name, or funded Markee to continue."
                   : isStreamGasEstimatePending ?
                     "Estimating the network fee…"
-                  : (streamFormError ??
+                  : streamFormError ??
                     autoFundingError ??
                     insufficientBalanceMessage ??
-                    undefined)
+                    undefined
 
                 }
                 tooltipClassName="flex justify-end text-left"
@@ -2744,7 +2744,8 @@ function CommunityRevenueClaimModal({
     : availableRevenueWei != null && /^\d+$/u.test(availableRevenueWei) ?
       BigInt(availableRevenueWei)
     : null;
-  const bridgeFeeAmountWei = quote ? BigInt(quote.estimatedFeeAmount) : 0n;
+  const bridgeFeeAmountWei =
+    quote ? BigInt(quote.maxFeeAmount ?? quote.estimatedFeeAmount) : 0n;
   const networkFeeAmountWei =
     quote ? BigInt(quote.estimatedNetworkFeeAmount) : 0n;
   const effectiveMarkeeChainId =
@@ -2757,12 +2758,22 @@ function CommunityRevenueClaimModal({
   const claimRecipient = quote?.recipient ?? councilSafe;
   const communityChainName =
     chainId != null ?
-      (chainConfigMap[chainId]?.name ?? `chain ${chainId}`)
+      chainConfigMap[chainId]?.name ?? `chain ${chainId}`
     : "the community chain";
   const estimatedFeeAmountWei = isBridgedClaim ? bridgeFeeAmountWei : 0n;
   const totalFeeAmountWei = estimatedFeeAmountWei + networkFeeAmountWei;
+  // LI.FI delivers WETH 1:1 with the source ETH denomination. Other routes may
+  // convert currencies (for example ETH to xDAI), so keep their quoted output.
+  const hasMinimumOutput =
+    quote?.maxFeeAmount != null &&
+    (quote.bridgeProtocol === "lifi" || !quote.bridged);
   const amountReceivedWei =
-    quote != null ? BigInt(quote.expectedAmountOut) : 0n;
+    hasMinimumOutput ?
+      claimAmountWei > totalFeeAmountWei ?
+        claimAmountWei - totalFeeAmountWei
+      : 0n
+    : quote != null ? BigInt(quote.expectedAmountOut)
+    : 0n;
   const transactionFeePercentage =
     claimAmountWei > 0n ?
       (Number(totalFeeAmountWei) / Number(claimAmountWei)) * 100
@@ -3004,6 +3015,7 @@ function CommunityRevenueClaimModal({
 
     const originalChainId = connectedChain?.id;
     setClaimStatus("requesting");
+    let claimWasSigned = false;
     setClaimBridgeName(null);
     setClaimTransactionHash(null);
     setClaimTransactionUrl(null);
@@ -3028,6 +3040,7 @@ function CommunityRevenueClaimModal({
         action: "challenge",
         chainId,
         community,
+        quoteId: quote.quoteId,
       });
       if (challenge.nonce.length === 0) {
         throw new Error(
@@ -3056,7 +3069,8 @@ function CommunityRevenueClaimModal({
       if (
         claimAmountIsInvalid ||
         challengeGasCost !== quote.estimatedNetworkFeeAmount ||
-        challenge.typedData.message.maxFeeAmount !== quote.estimatedFeeAmount ||
+        challenge.typedData.message.maxFeeAmount !==
+          (quote.maxFeeAmount ?? quote.estimatedFeeAmount) ||
         challenge.typedData.message.markeeChainId !==
           quote.markeeChainId.toString() ||
         challengeRecipient.toLowerCase() !== quote.recipient.toLowerCase()
@@ -3083,26 +3097,7 @@ function CommunityRevenueClaimModal({
         connector,
         typedData: challenge.typedData,
       });
-      if (
-        originalChainId != null &&
-        originalChainId !== chainId &&
-        switchNetworkAsync != null
-      ) {
-        try {
-          await switchNetworkAsync(originalChainId);
-        } catch (error) {
-          logOnce(
-            "warn",
-            "[CommunityMarkee] Unable to restore the original wallet chain after claim authorization",
-            error,
-          );
-          toast.warn(
-            "Authorization signed, but your wallet could not switch back to the original network.",
-            { toastId: "markee-network-restore-warning" },
-          );
-        }
-      }
-
+      claimWasSigned = true;
       setClaimStatus("verifying");
       const verification = await postClaimAuthorization<VerifyResponse>({
         action: "verify",
@@ -3166,6 +3161,25 @@ function CommunityRevenueClaimModal({
             "The community revenue claim could not be completed.",
           ),
         );
+      }
+    } finally {
+      // Submit the signed authorization before asking the wallet to switch back.
+      // A slow or unanswered network prompt must not delay keeper execution.
+      if (
+        claimWasSigned &&
+        originalChainId != null &&
+        originalChainId !== chainId &&
+        switchNetworkAsync != null
+      ) {
+        try {
+          await switchNetworkAsync(originalChainId);
+        } catch (error) {
+          logOnce(
+            "warn",
+            "[CommunityMarkee] Unable to restore wallet chain after claim",
+            error,
+          );
+        }
       }
     }
   };
@@ -3434,7 +3448,7 @@ function CommunityRevenueClaimModal({
                   <InfoWrapper
                     tooltip={
                       quote != null && isBridgedClaim ?
-                        `Transaction gas: ${formatEthAmount(networkFeeAmountWei)} ${quote.symbol} · Bridge fee: ${formatEthAmount(estimatedFeeAmountWei)} ${quote.symbol}`
+                        `Transaction gas: ${formatEthAmount(networkFeeAmountWei)} ${quote.symbol} · Maximum bridge fee: ${formatEthAmount(estimatedFeeAmountWei)} ${quote.symbol}. Includes a 5% buffer on the bridge fee; execution cannot exceed your signed limit.`
                       : quote != null ?
                         `Transaction gas: ${formatEthAmount(networkFeeAmountWei)} ${quote.symbol}`
                       : isBridgedClaim ?
@@ -3453,7 +3467,7 @@ function CommunityRevenueClaimModal({
                 </div>
                 <span className={quote != null ? feeTextClass : undefined}>
                   {quote != null ?
-                    `${formatEthAmount(totalFeeAmountWei)} ${quote.symbol} (${transactionFeePercentageLabel})`
+                    `${quote.maxFeeAmount != null ? "Up to " : ""}${formatEthAmount(totalFeeAmountWei)} ${quote.symbol} (${transactionFeePercentageLabel})`
                   : isQuotePending ?
                     <span
                       aria-hidden="true"
@@ -3464,7 +3478,10 @@ function CommunityRevenueClaimModal({
               </div>
               <div className="border-t border-neutral-content/15" />
               <div className="flex items-center justify-between gap-4 text-neutral-soft-content">
-                <span>Council Safe receives</span>
+                <span>
+                  Council Safe receives
+                  {hasMinimumOutput ? " at least" : ""}
+                </span>
                 <span className="text-sm font-semibold text-primary-content">
                   {quote ?
                     `${formatEthAmount(amountReceivedWei)} ${quote.destinationSymbol}`
@@ -3867,8 +3884,8 @@ export function CommunityMarkeePlaceholder({
       optInTransactionStatus === "success" ?
         "The community vault and Markee leaderboard were created."
       : optInTransactionStatus === "error" ?
-        (optInTransactionNotification?.error?.message ??
-        "Unable to create the community Markee leaderboard.")
+        optInTransactionNotification?.error?.message ??
+        "Unable to create the community Markee leaderboard."
       : "Creating the community vault and Markee leaderboard.",
     status: optInTransactionStatus,
   };

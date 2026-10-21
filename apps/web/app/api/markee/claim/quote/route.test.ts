@@ -24,13 +24,46 @@ vi.mock("@/services/markeeServer", () => ({
   },
 }));
 import { GET } from "./route";
+import { clearMarkeeChallengesForTests } from "../../../../../utils/markeeChallengeStore";
+import { consumeClaimQuoteSnapshot } from "../../../../../utils/markeeClaimQuoteSnapshot";
 import { MarkeeClaimExecutionError } from "@/services/markeeServer";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  clearMarkeeChallengesForTests();
   mocks.readContract.mockResolvedValue(
     "0x0000000000000000000000000000000000000001",
   );
+});
+
+it("returns durable reviewed terms instead of exposing a short executable-route expiry", async () => {
+  const community = "0xe2396fe2169ca026962971d3b2e373ba925b6257";
+  const recipient = "0x0000000000000000000000000000000000000001";
+  mocks.getClaimQuote.mockResolvedValue({
+    bridged: true,
+    claimAmount: 100000n,
+    estimatedFeeAmount: 1000n,
+    estimatedNetworkFeeAmount: 200n,
+    expectedAmountOut: 98800n,
+    markeeChainId: 8453,
+    recipient,
+    expiresAt: Math.floor(Date.now() / 1000) + 60,
+  });
+  const response = await GET(
+    new NextRequest(
+      `https://app.gardens.fund/api/markee/claim/quote?chainId=100&community=${community}`,
+    ),
+  );
+  const body = await response.json();
+  expect(response.status).toBe(200);
+  expect(body.quoteId).toMatch(/^[a-f0-9]{64}$/u);
+  expect(body.maxFeeAmount).toBe("1050");
+  expect(body.expiresAt).toBeGreaterThanOrEqual(
+    Math.floor(Date.now() / 1000) + 299,
+  );
+  await expect(
+    consumeClaimQuoteSnapshot(body.quoteId, 100, community, recipient, 8453),
+  ).resolves.toMatchObject({ claimAmount: 100000n, maxFeeAmount: 1050n });
 });
 
 it("returns a non-retryable unavailable-route response without caching", async () => {
