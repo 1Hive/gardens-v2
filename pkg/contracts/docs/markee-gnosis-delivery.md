@@ -2,8 +2,11 @@
 
 ## Status and scope
 
-Implementation and deployment preparation only. No addresses below imply a new deployment.
-Do not enable the new route until the entire preflight and acceptance sequence passes.
+The 1Hive Gnosis pilot was activated on 2026-10-21. See the
+[deployment and acceptance record](markee-gnosis-activation-2026-10-21.md) for actual
+addresses, transactions, production checks and the remaining live-settlement test.
+The deployment instructions below remain applicable to additional communities;
+do not enable another route until its preflight and acceptance sequence passes.
 Existing router, leaderboard, messages, streams, revenue balances and receiver remain unchanged.
 The Base router's existing `setBridgeConfiguration(uint256,address,uint8)` selects a replacement adapter; no proxy upgrade is required.
 
@@ -144,6 +147,5 @@ pkg/contracts/test/LiFiRelayBridgeFork.t.sol`). It replaces adapter code only
   Stop/fix the worker separately if its signer is compromised; anyone can safely
   call `deliver()` to the current council Safe.
 
-Pushing this change alone does not activate the new bridge route. Until deployment
-and configuration are complete, the old route reports a clear no-route error and
-pauses automatic quote retries.
+Pushing code alone does not activate a bridge route. Each additional community
+requires a verified destination vault, adapter mapping and delivery configuration.
