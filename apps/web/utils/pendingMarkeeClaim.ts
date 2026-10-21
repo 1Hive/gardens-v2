@@ -42,7 +42,7 @@ export const readPendingMarkeeClaim = (
     ) as Partial<PendingMarkeeClaim> | null;
     if (
       value?.version !== 1 ||
-      value.bridgeName !== "Squid" ||
+      (value.bridgeName !== "Squid" && value.bridgeName !== "LI.FI") ||
       typeof value.createdAt !== "number" ||
       typeof value.fromChainId !== "number" ||
       typeof value.toChainId !== "number" ||

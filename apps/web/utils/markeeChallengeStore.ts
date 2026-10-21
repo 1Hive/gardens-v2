@@ -102,6 +102,45 @@ const redisCommand = async <T>(command: Array<string | number>): Promise<T> => {
   return body.result as T;
 };
 
+// Delivery uses a dedicated signer and a shared lease, never per-instance memory.
+export async function acquireMarkeeDeliveryLease(
+  owner: string,
+): Promise<boolean> {
+  return (
+    (await redisCommand<string | null>([
+      "SET",
+      "gardens:markee:gnosis-delivery:lease",
+      owner,
+      "NX",
+      "EX",
+      300,
+    ])) === "OK"
+  );
+}
+export async function releaseMarkeeDeliveryLease(owner: string) {
+  await redisCommand([
+    "EVAL",
+    "if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) else return 0 end",
+    1,
+    "gardens:markee:gnosis-delivery:lease",
+    owner,
+  ]);
+}
+
+export async function renewMarkeeDeliveryLease(
+  owner: string,
+): Promise<boolean> {
+  return (
+    (await redisCommand<number>([
+      "EVAL",
+      "if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('EXPIRE', KEYS[1], 300) else return 0 end",
+      1,
+      "gardens:markee:gnosis-delivery:lease",
+      owner,
+    ])) === 1
+  );
+}
+
 const requireDurableStoreInProduction = () => {
   if (process.env.NODE_ENV === "production" && getRedisConfig() == null) {
     throw new MarkeeChallengeStoreUnavailableError();

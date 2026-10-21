@@ -51,6 +51,7 @@ export type MarkeeClaimBridgeStatusResponse = {
   elapsedTimeSeconds: number | null;
   sourceTransactionUrl: string | null;
   status:
+    | "awaiting_delivery"
     | "needs_gas"
     | "not_found"
     | "ongoing"
@@ -60,15 +61,36 @@ export type MarkeeClaimBridgeStatusResponse = {
     | "unknown";
 };
 
+export class MarkeeApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly retryable: boolean,
+    readonly code?: string,
+  ) {
+    super(message);
+    this.name = "MarkeeApiError";
+  }
+}
+
 export async function fetchMarkeeJson<T>(url: string, signal?: AbortSignal) {
   const response = await fetch(url, { cache: "no-store", signal });
-  const body = (await response.json()) as T & { error?: unknown };
+  const body = (await response.json()) as T & {
+    error?: unknown;
+    retryable?: unknown;
+    code?: unknown;
+  };
 
   if (!response.ok) {
-    throw new Error(
+    throw new MarkeeApiError(
       typeof body.error === "string" ?
         body.error
       : "Unable to load Markee data.",
+      response.status,
+      typeof body.retryable === "boolean" ?
+        body.retryable
+      : response.status >= 500 || response.status === 429,
+      typeof body.code === "string" ? body.code : undefined,
     );
   }
 

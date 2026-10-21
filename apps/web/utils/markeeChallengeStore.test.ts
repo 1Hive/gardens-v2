@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  acquireMarkeeDeliveryLease,
+  renewMarkeeDeliveryLease,
+  releaseMarkeeDeliveryLease,
   clearMarkeeChallengesForTests,
   consumeMarkeeChallenge,
   MarkeeChallengeRateLimitError,
@@ -42,6 +45,38 @@ describe("Markee challenge store", () => {
     await expect(
       consumeMarkeeChallenge({ namespace, nonce: "1" }),
     ).resolves.toBeNull();
+  });
+
+  it("requires shared Redis for delivery even outside production", async () => {
+    await expect(acquireMarkeeDeliveryLease("owner")).rejects.toBeInstanceOf(
+      MarkeeChallengeStoreUnavailableError,
+    );
+  });
+
+  it("acquires, renews and releases delivery leases with ownership checks", async () => {
+    vi.stubEnv("MARKEE_AUTH_REDIS_REST_URL", "https://redis.example.test");
+    vi.stubEnv("MARKEE_AUTH_REDIS_REST_TOKEN", "test-token");
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json({ result: "OK" }))
+      .mockResolvedValueOnce(Response.json({ result: 1 }))
+      .mockResolvedValueOnce(Response.json({ result: 0 }));
+    expect(await acquireMarkeeDeliveryLease("owner")).toBe(true);
+    expect(await renewMarkeeDeliveryLease("owner")).toBe(true);
+    await releaseMarkeeDeliveryLease("owner");
+    const commands = fetchMock.mock.calls.map(([, init]) =>
+      JSON.parse(String(init?.body)),
+    );
+    expect(commands[0]).toEqual([
+      "SET",
+      "gardens:markee:gnosis-delivery:lease",
+      "owner",
+      "NX",
+      "EX",
+      300,
+    ]);
+    expect(commands[1][1]).toContain("== ARGV[1]");
+    expect(commands[2][1]).toContain("== ARGV[1]");
   });
 
   it("rejects an expired in-memory challenge", async () => {

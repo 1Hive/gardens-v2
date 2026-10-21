@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isHex } from "viem";
+import { getAddress, isAddress, isHex } from "viem";
 import { chainConfigMap } from "@/configs/chains";
+import { getMarkeeDeliveryStatus } from "@/services/markeeDeliveryStatus";
 import {
   getSquidClaimBridgeStatus,
   MarkeeClaimExecutionError,
@@ -33,6 +34,20 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    if (request.nextUrl.searchParams.get("bridgeName") === "LI.FI") {
+      const community = request.nextUrl.searchParams.get("community");
+      if (
+        fromChainId !== 8453 ||
+        toChainId !== 100 ||
+        !community ||
+        !isAddress(community)
+      )
+        return jsonError("Invalid community delivery request.", 400);
+      return NextResponse.json(
+        await getMarkeeDeliveryStatus(getAddress(community), transactionHash),
+        { headers: { "Cache-Control": "no-store" } },
+      );
+    }
     const status = await getSquidClaimBridgeStatus({
       fromChainId,
       toChainId,

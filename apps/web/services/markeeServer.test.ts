@@ -392,6 +392,47 @@ describe("Markee community revenue", () => {
     });
   });
 
+  it.each([false, true])(
+    "does not mislabel LI.FI 1002 as temporary or insufficient funds (delivery=%s)",
+    async (delivery) => {
+      process.env.NEXT_PUBLIC_ENV_GARDENS = "prod";
+      process.env.MARKEE_ROUTER_ADDRESS_BASE = router;
+      process.env.LIFI_INTEGRATOR_ID = "gardens";
+      mocks.readContract
+        .mockResolvedValueOnce(vault)
+        .mockResolvedValueOnce([0n, 0n, 0n, 1_000_000_000_000_000n])
+        .mockResolvedValueOnce([adapter, 3])
+        .mockResolvedValueOnce(receiver);
+      const fetchMock = vi.fn();
+      if (delivery)
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ estimate: { toAmountMin: "900000000000000" } }),
+        });
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 404,
+        json: async () => ({
+          code: 1002,
+          message: "No available quotes for the requested transfer.",
+        }),
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      await expect(
+        getMarkeeClaimExecutionQuote(100, community, recipient),
+      ).rejects.toMatchObject({
+        status: 409,
+        code: "BRIDGE_ROUTE_UNAVAILABLE",
+        retryable: false,
+        message:
+          delivery ?
+            "No bridge route currently supports delivery to the Gnosis community receiver. Your revenue remains on Base. Automatic retries are paused."
+          : "No bridge route is available for this claim. Your revenue has not moved. Automatic retries are paused.",
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(delivery ? 2 : 1);
+    },
+  );
+
   it("explains when Gnosis revenue is too small for the LI.FI route", async () => {
     process.env.NEXT_PUBLIC_ENV_GARDENS = "prod";
     process.env.MARKEE_ROUTER_ADDRESS_BASE = router;
@@ -471,7 +512,7 @@ describe("Markee community revenue", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("explains when LI.FI cannot generate a Gnosis transaction for a tiny claim", async () => {
+  it("does not assume an unbuildable Gnosis transaction means insufficient revenue", async () => {
     process.env.NEXT_PUBLIC_ENV_GARDENS = "prod";
     process.env.MARKEE_ROUTER_ADDRESS_BASE = router;
     process.env.LIFI_INTEGRATOR_ID = "gardens";
@@ -497,8 +538,10 @@ describe("Markee community revenue", () => {
       getMarkeeClaimExecutionQuote(100, community, recipient),
     ).rejects.toMatchObject({
       message:
-        "Revenue is currently too small to cover the Gnosis bridge costs. Let more Markee revenue accumulate before claiming.",
+        "The bridge provider could not build this Gnosis claim transaction. Your revenue has not moved. Automatic retries are paused.",
       status: 409,
+      code: "BRIDGE_TRANSACTION_UNAVAILABLE",
+      retryable: false,
     });
   });
 
