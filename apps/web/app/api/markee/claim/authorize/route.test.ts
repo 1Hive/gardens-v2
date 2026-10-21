@@ -42,6 +42,7 @@ vi.mock("@/utils/publicClient", () => ({
 }));
 
 import { clearMarkeeClaimAuthorizationChallengesForTests, POST } from "./route";
+import { saveClaimQuoteSnapshot } from "../../../../../utils/markeeClaimQuoteSnapshot";
 
 const community = "0x0000000000000000000000000000000000000001";
 const councilSafe = "0x0000000000000000000000000000000000000002";
@@ -147,6 +148,63 @@ describe("Markee manual claim authorization", () => {
         functionName: "isOwner",
       }),
     );
+  });
+
+  it("signs exactly the displayed snapshot without fetching a changing second quote", async () => {
+    const terms = {
+      claimAmount: 420000n,
+      estimatedFeeAmount: 2000n,
+      estimatedNetworkFeeAmount: 1000n,
+      markeeChainId: 11155111,
+      recipient: councilSafe,
+    } as const;
+    const snapshot = await saveClaimQuoteSnapshot(100, community, terms);
+    // The live balance and gas/bridge prices could all change while the modal is open.
+    mocks.getClaimQuote.mockResolvedValue({
+      ...terms,
+      claimAmount: 430000n,
+      estimatedNetworkFeeAmount: 1300n,
+    });
+    const response = await callRoute({
+      account: councilOwner,
+      action: "challenge",
+      chainId: 100,
+      community,
+      quoteId: snapshot.quoteId,
+    });
+    const challenge = await response.json();
+    expect(response.status).toBe(201);
+    expect(mocks.getClaimQuote).not.toHaveBeenCalled();
+    expect(challenge.typedData.message).toMatchObject({
+      claimAmount: "420000",
+      gasCost: "1000",
+      maxFeeAmount: "2100",
+    });
+    const verified = await callRoute({
+      action: "verify",
+      nonce: challenge.nonce,
+      signature,
+    });
+    expect(verified.status).toBe(200);
+    expect(mocks.executeMarkeeClaim).toHaveBeenCalledWith(
+      expect.objectContaining({
+        expectedClaimAmount: 420000n,
+        gasCost: 1000n,
+        maxFeeAmount: 2100n,
+      }),
+    );
+  });
+
+  it("rejects missing snapshots instead of silently fetching different terms", async () => {
+    const response = await callRoute({
+      account: councilOwner,
+      action: "challenge",
+      chainId: 100,
+      community,
+      quoteId: "a".repeat(64),
+    });
+    expect(response.status).toBe(409);
+    expect(mocks.getClaimQuote).not.toHaveBeenCalled();
   });
 
   it("allows the council Safe itself without an owner lookup", async () => {

@@ -20,6 +20,10 @@ import {
   saveMarkeeChallenge,
 } from "../../../../../utils/markeeChallengeStore";
 import {
+  ClaimQuoteUnavailableError,
+  consumeClaimQuoteSnapshot,
+} from "../../../../../utils/markeeClaimQuoteSnapshot";
+import {
   readLimitedJsonBody,
   RequestBodyTooLargeError,
 } from "../../../../../utils/readLimitedJsonBody";
@@ -91,6 +95,7 @@ type ChallengeRequest = {
   chainId: number;
   community: Address;
   account: Address;
+  quoteId?: string;
 };
 
 type VerifyRequest = {
@@ -126,7 +131,10 @@ const parseRequest = (value: unknown): RequestBody | null => {
       typeof value.community !== "string" ||
       !isAddress(value.community) ||
       typeof value.account !== "string" ||
-      !isAddress(value.account)
+      !isAddress(value.account) ||
+      (value.quoteId != null &&
+        (typeof value.quoteId !== "string" ||
+          !/^[a-f0-9]{64}$/u.test(value.quoteId)))
     ) {
       return null;
     }
@@ -136,6 +144,7 @@ const parseRequest = (value: unknown): RequestBody | null => {
       action: "challenge",
       chainId: value.chainId,
       community: getAddress(value.community),
+      quoteId: value.quoteId as string | undefined,
     };
   }
 
@@ -204,6 +213,7 @@ const createClaimMessage = async ({
   claimant,
   deadline,
   nonce,
+  quoteId,
 }: {
   chainId: number;
   community: Address;
@@ -211,12 +221,18 @@ const createClaimMessage = async ({
   claimant: Address;
   deadline: number;
   nonce: bigint;
+  quoteId?: string;
 }): Promise<ClaimAuthorizationMessage> => {
-  const quote = await markeeAdapter.getClaimQuote(
-    chainId,
-    community,
-    councilSafe,
-  );
+  const quote =
+    quoteId ?
+      await consumeClaimQuoteSnapshot(
+        quoteId,
+        chainId,
+        community,
+        councilSafe,
+        getMarkeeChainId(chainId),
+      )
+    : await markeeAdapter.getClaimQuote(chainId, community, councilSafe);
 
   return {
     claimAmount: quote.claimAmount,
@@ -229,7 +245,8 @@ const createClaimMessage = async ({
     councilSafe,
     deadline: BigInt(deadline),
     markeeChainId: BigInt(getMarkeeChainId(chainId)),
-    maxFeeAmount: quote.estimatedFeeAmount,
+    maxFeeAmount:
+      "maxFeeAmount" in quote ? quote.maxFeeAmount : quote.estimatedFeeAmount,
     nonce,
     recipient: councilSafe,
     registryCommunity: community,
@@ -276,6 +293,7 @@ const issueChallenge = async (body: ChallengeRequest) => {
         councilSafe,
         deadline,
         nonce: nonceValue,
+        quoteId: body.quoteId,
       }),
       nonce,
     };
@@ -313,6 +331,8 @@ const issueChallenge = async (body: ChallengeRequest) => {
     );
   } catch (error) {
     console.error("[Markee claim authorization] Challenge failed", error);
+    if (error instanceof ClaimQuoteUnavailableError)
+      return jsonError(error.message, 409);
     if (error instanceof MarkeeChallengeRateLimitError) {
       return jsonError(
         "Too many Markee claim requests. Please wait a minute and try again.",

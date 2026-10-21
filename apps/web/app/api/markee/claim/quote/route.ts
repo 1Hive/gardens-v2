@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAddress, isAddress, zeroAddress } from "viem";
+import {
+  MarkeeChallengeRateLimitError,
+  MarkeeChallengeStoreUnavailableError,
+  reserveMarkeeChallengeIssue,
+} from "../../../../../utils/markeeChallengeStore";
+import { saveClaimQuoteSnapshot } from "../../../../../utils/markeeClaimQuoteSnapshot";
 import { chainConfigMap } from "@/configs/chains";
 import {
   MarkeeClaimExecutionError,
@@ -36,6 +42,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await reserveMarkeeChallengeIssue({
+      namespace: "claim-quote",
+      subject: `${chainId}:${community.toLowerCase()}`,
+    });
     const registryCommunity = getAddress(community);
     const client = getEnvPublicClient(chainId);
     const councilSafe = await client.readContract({
@@ -57,10 +67,17 @@ export async function GET(request: NextRequest) {
       registryCommunity,
       getAddress(councilSafe),
     );
+    const snapshot = await saveClaimQuoteSnapshot(
+      chainId,
+      registryCommunity,
+      quote,
+    );
 
     return NextResponse.json(
       {
         ...quote,
+        ...snapshot,
+        maxFeeAmount: snapshot.maxFeeAmount.toString(),
         claimAmount: quote.claimAmount.toString(),
         estimatedFeeAmount: quote.estimatedFeeAmount.toString(),
         estimatedNetworkFeeAmount: quote.estimatedNetworkFeeAmount.toString(),
@@ -70,6 +87,13 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error("[Markee claim quote] Quote failed", error);
+    if (error instanceof MarkeeChallengeRateLimitError)
+      return jsonError("Too many quote requests. Please wait a minute.", 429);
+    if (error instanceof MarkeeChallengeStoreUnavailableError)
+      return jsonError(
+        "Claim quote storage is temporarily unavailable. Please try again shortly.",
+        503,
+      );
     if (error instanceof MarkeeClaimExecutionError) {
       return jsonError(
         error.message,
