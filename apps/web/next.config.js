@@ -5,6 +5,12 @@ const isProdEnv =
 
 module.exports = {
   reactStrictMode: true,
+  experimental: {
+    // Custom webpack configuration disables this worker by default. Isolate
+    // compilation so its heap is released before the production type check.
+    webpackBuildWorker: true,
+    webpackMemoryOptimizations: true,
+  },
   async rewrites() {
     const addressPattern = "(0x[a-fA-F0-9]{40})";
     return [
@@ -19,7 +25,8 @@ module.exports = {
       {
         source:
           "/gardens/:chainId/:community/:pool/:proposal/opengraph-image-:hash",
-        destination: "/gardens/:chainId/:community/:pool/:proposal/opengraph-image",
+        destination:
+          "/gardens/:chainId/:community/:pool/:proposal/opengraph-image",
       },
       {
         source:
