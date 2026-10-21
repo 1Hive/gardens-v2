@@ -11,9 +11,14 @@ import { getEnvPublicClient } from "@/utils/publicClient";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const jsonError = (error: string, status: number) =>
+const jsonError = (
+  error: string,
+  status: number,
+  code?: string,
+  retryable = status >= 500 || status === 429,
+) =>
   NextResponse.json(
-    { error },
+    { error, code, retryable },
     { headers: { "Cache-Control": "no-store" }, status },
   );
 
@@ -66,7 +71,12 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("[Markee claim quote] Quote failed", error);
     if (error instanceof MarkeeClaimExecutionError) {
-      return jsonError(error.message, error.status);
+      return jsonError(
+        error.message,
+        error.status,
+        error.code,
+        error.retryable,
+      );
     }
     return jsonError("Unable to prepare the community revenue quote.", 502);
   }

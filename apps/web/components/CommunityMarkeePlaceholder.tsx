@@ -96,6 +96,7 @@ import {
   readPendingMarkeeClaim,
   writePendingMarkeeClaim,
 } from "@/utils/pendingMarkeeClaim";
+import { pollMarkeeClaimQuote } from "@/utils/pollMarkeeClaimQuote";
 import {
   Eip712TypedData,
   signTypedDataWithProvider,
@@ -556,7 +557,7 @@ function CommunityMarkeePreviewModal({
   const ownedMarkeeMessage =
     isTopMarkeeOwner ? message : connectedMarkeeMessage;
   const ownedMarkeeName =
-    isTopMarkeeOwner ? topMarkeeName ?? "" : connectedMarkeeName ?? "";
+    isTopMarkeeOwner ? (topMarkeeName ?? "") : (connectedMarkeeName ?? "");
   const activeStreamIsWinning =
     activeStreamMarkee != null &&
     topMarkeeAddress != null &&
@@ -572,7 +573,7 @@ function CommunityMarkeePreviewModal({
       ownedMarkeeAddress != null &&
       activeStreamMarkee.toLowerCase() === ownedMarkeeAddress.toLowerCase()
     ) ?
-      ownedMarkeeMessage ?? undefined
+      (ownedMarkeeMessage ?? undefined)
     : (
       selectedFundingMarkee != null &&
       activeStreamMarkee.toLowerCase() ===
@@ -2311,10 +2312,10 @@ function CommunityMarkeePreviewModal({
                     "Change the stream, message, name, or funded Markee to continue."
                   : isStreamGasEstimatePending ?
                     "Estimating the network fee…"
-                  : streamFormError ??
+                  : (streamFormError ??
                     autoFundingError ??
                     insufficientBalanceMessage ??
-                    undefined
+                    undefined)
 
                 }
                 tooltipClassName="flex justify-end text-left"
@@ -2731,6 +2732,8 @@ function CommunityRevenueClaimModal({
   const [claimError, setClaimError] = useState<string | null>(null);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [isQuoteTimedOut, setIsQuoteTimedOut] = useState(false);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [quoteRefreshKey, setQuoteRefreshKey] = useState(0);
   const [isRecipientCopied, setIsRecipientCopied] = useState(false);
   const { address: connectedAccount, connector } = useAccount();
   const { chain: connectedChain } = useNetwork();
@@ -2754,7 +2757,7 @@ function CommunityRevenueClaimModal({
   const claimRecipient = quote?.recipient ?? councilSafe;
   const communityChainName =
     chainId != null ?
-      chainConfigMap[chainId]?.name ?? `chain ${chainId}`
+      (chainConfigMap[chainId]?.name ?? `chain ${chainId}`)
     : "the community chain";
   const estimatedFeeAmountWei = isBridgedClaim ? bridgeFeeAmountWei : 0n;
   const totalFeeAmountWei = estimatedFeeAmountWei + networkFeeAmountWei;
@@ -2786,7 +2789,8 @@ function CommunityRevenueClaimModal({
     claimStatus === "requesting" ||
     claimStatus === "signing" ||
     claimStatus === "verifying";
-  const isQuotePending = quote == null && !isQuoteTimedOut;
+  const isQuotePending =
+    quote == null && quoteError == null && !isQuoteTimedOut;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -2810,7 +2814,7 @@ function CommunityRevenueClaimModal({
 
   const refreshClaimQuote = useCallback(
     async (signal: AbortSignal, showLoading: boolean) => {
-      if (chainId == null) return;
+      if (chainId == null) throw new Error("Community chain is unavailable.");
 
       const params = new URLSearchParams({
         chainId: chainId.toString(),
@@ -2823,21 +2827,14 @@ function CommunityRevenueClaimModal({
           `/api/markee/claim/quote?${params.toString()}`,
           signal,
         );
+        if (signal.aborted) throw new DOMException("Aborted", "AbortError");
         setQuote(refreshedQuote);
+        setQuoteError(null);
         setIsQuoteTimedOut(false);
         setClaimError((currentError) =>
           currentError === CLAIM_QUOTE_CHANGED_MESSAGE ? null : currentError,
         );
         return refreshedQuote;
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          return;
-        }
-        logOnce(
-          "warn",
-          "[CommunityMarkee] Unable to load the claim quote",
-          error,
-        );
       } finally {
         if (showLoading && !signal.aborted) setIsQuoteLoading(false);
       }
@@ -2863,35 +2860,38 @@ function CommunityRevenueClaimModal({
     }
 
     const controller = new AbortController();
-    let refreshTimeout: ReturnType<typeof setTimeout> | undefined;
-
-    const refresh = async (showLoading: boolean) => {
-      const refreshedQuote = await refreshClaimQuote(
-        controller.signal,
-        showLoading,
-      );
-      if (!controller.signal.aborted) {
-        const refreshDelay =
-          refreshedQuote != null ?
-            Math.max(refreshedQuote.expiresAt * 1_000 - Date.now(), 1_000)
-          : 5_000;
-        refreshTimeout = setTimeout(() => void refresh(false), refreshDelay);
-      }
-    };
-
-    void refresh(true);
+    const stop = pollMarkeeClaimQuote({
+      signal: controller.signal,
+      load: () => refreshClaimQuote(controller.signal, true),
+      onError: (error) => {
+        setQuote(null);
+        setIsQuoteTimedOut(true);
+        setQuoteError(
+          error instanceof Error ?
+            error.message
+          : "Unable to load the claim quote.",
+        );
+      },
+    });
 
     return () => {
       controller.abort();
-      if (refreshTimeout != null) clearTimeout(refreshTimeout);
+      stop();
     };
-  }, [chainId, isAuthorizingClaim, isClaimComplete, isOpen, refreshClaimQuote]);
+  }, [
+    chainId,
+    isAuthorizingClaim,
+    isClaimComplete,
+    isOpen,
+    refreshClaimQuote,
+    quoteRefreshKey,
+  ]);
 
   useEffect(() => {
     if (
       !isOpen ||
       !isClaimComplete ||
-      claimBridgeName !== "Squid" ||
+      (claimBridgeName !== "Squid" && claimBridgeName !== "LI.FI") ||
       claimTransactionHash == null ||
       effectiveMarkeeChainId == null ||
       chainId == null
@@ -2901,8 +2901,9 @@ function CommunityRevenueClaimModal({
 
     const controller = new AbortController();
     let refreshTimeout: ReturnType<typeof setTimeout> | undefined;
+    let statusFailures = 0;
     const terminalStatuses = new Set<MarkeeClaimBridgeStatusResponse["status"]>(
-      ["success", "needs_gas", "partial_success", "refund"],
+      ["success", "needs_gas", "partial_success", "refund", "unknown"],
     );
 
     const refreshStatus = async () => {
@@ -2912,13 +2913,17 @@ function CommunityRevenueClaimModal({
           fromChainId: effectiveMarkeeChainId.toString(),
           toChainId: chainId.toString(),
           transactionHash: claimTransactionHash,
+          bridgeName: claimBridgeName,
+          community,
         });
         const nextStatus =
           await fetchMarkeeJson<MarkeeClaimBridgeStatusResponse>(
             `/api/markee/claim/status?${params.toString()}`,
             controller.signal,
           );
+        if (controller.signal.aborted) return;
         setBridgeStatus(nextStatus);
+        statusFailures = 0;
         setBridgeStatusError(false);
         if (nextStatus.axelarTransactionUrl != null) {
           setClaimTransactionUrl(nextStatus.axelarTransactionUrl);
@@ -2934,14 +2939,18 @@ function CommunityRevenueClaimModal({
         }
         logOnce(
           "warn",
-          "[CommunityMarkee] Unable to refresh the Squid bridge status",
+          "[CommunityMarkee] Unable to refresh the bridge status",
           error,
         );
         setBridgeStatusError(true);
+        shouldRefresh = ++statusFailures < 3;
       }
 
       if (!controller.signal.aborted && shouldRefresh) {
-        refreshTimeout = setTimeout(() => void refreshStatus(), 5_000);
+        refreshTimeout = setTimeout(
+          () => void refreshStatus(),
+          15_000 * Math.max(1, statusFailures),
+        );
       }
     };
 
@@ -2972,6 +2981,7 @@ function CommunityRevenueClaimModal({
     setEstimatedRouteDurationSeconds(null);
     setClaimSourceChainId(null);
     setQuote(null);
+    setQuoteError(null);
     setClaimError(null);
     setIsQuoteTimedOut(false);
     setIsRecipientCopied(false);
@@ -3113,7 +3123,8 @@ function CommunityRevenueClaimModal({
           null,
       );
       if (
-        verification.bridgeName === "Squid" &&
+        (verification.bridgeName === "Squid" ||
+          verification.bridgeName === "LI.FI") &&
         verification.transactionHash != null &&
         quote.bridged
       ) {
@@ -3121,7 +3132,7 @@ function CommunityRevenueClaimModal({
           chainId,
           community,
           {
-            bridgeName: "Squid",
+            bridgeName: verification.bridgeName,
             createdAt: Date.now(),
             estimatedRouteDurationSeconds:
               verification.estimatedRouteDurationSeconds ??
@@ -3161,32 +3172,40 @@ function CommunityRevenueClaimModal({
 
   const isTrackedSquidClaim =
     isClaimComplete &&
-    claimBridgeName === "Squid" &&
+    (claimBridgeName === "Squid" || claimBridgeName === "LI.FI") &&
     claimTransactionHash != null;
   const squidDeliveryStatus = bridgeStatus?.status ?? "ongoing";
   const squidDeliveryIsComplete = squidDeliveryStatus === "success";
   const squidDeliveryNeedsAttention =
+    squidDeliveryStatus === "unknown" ||
     squidDeliveryStatus === "needs_gas" ||
     squidDeliveryStatus === "partial_success" ||
     squidDeliveryStatus === "refund";
   const squidStatusTitle =
     squidDeliveryStatus === "success" ? "Revenue delivered"
+    : squidDeliveryStatus === "unknown" ? "Delivery status unavailable"
+    : squidDeliveryStatus === "awaiting_delivery" ?
+      "Bridge arrived; delivery pending"
     : squidDeliveryStatus === "needs_gas" ? "Bridge needs gas"
     : squidDeliveryStatus === "partial_success" ? "Bridge partially completed"
     : squidDeliveryStatus === "refund" ? "Bridge refunded"
     : "Bridge in progress";
   const squidStatusDescription =
     squidDeliveryStatus === "success" ?
-      "Squid delivered the community revenue to the council Safe."
+      "The community revenue was delivered to the council Safe."
+    : squidDeliveryStatus === "unknown" ?
+      "This transfer could not be verified automatically. Contact support with the transaction link before submitting another claim."
+    : squidDeliveryStatus === "awaiting_delivery" ?
+      "Funds are in the community vault. Delivery resolves the current council Safe and normally runs within five minutes."
     : squidDeliveryStatus === "needs_gas" ?
       "Destination execution needs more gas. Open the Squid transaction for the available recovery action."
     : squidDeliveryStatus === "partial_success" ?
-      "The bridge reached the destination chain, but its final action did not complete. Open the Squid transaction for details."
+      "The bridge reached the destination chain, but its final action did not complete. Contact support with the transaction link."
     : squidDeliveryStatus === "refund" ?
-      "Squid refunded the bridge transaction on the source chain."
+      "The bridge reports a source-chain refund. Contact support before submitting another claim."
     : squidDeliveryStatus === "not_found" ?
-      "The source transaction is confirmed. Waiting for Squid to index the bridge."
-    : "The source transaction is confirmed. Squid is delivering the revenue to the council Safe.";
+      "The source transaction is confirmed. Waiting for the bridge to index it."
+    : "The source transaction is confirmed. Waiting for bridge arrival and community delivery.";
 
   return (
     <Modal
@@ -3279,7 +3298,9 @@ function CommunityRevenueClaimModal({
               )}
             {isTrackedSquidClaim && bridgeStatusError && (
               <p className="mt-2 max-w-sm text-xs text-warning-content">
-                Live status is temporarily unavailable. Retrying automatically…
+                Live status is unavailable. Retries are limited; close and
+                reopen this modal to check again. Do not submit another claim
+                for this transfer.
               </p>
             )}
             {claimTransactionUrl && (
@@ -3363,6 +3384,24 @@ function CommunityRevenueClaimModal({
                 title="Claim unsuccessful"
                 content={claimError}
               />
+            </div>
+          )}
+
+          {quoteError && (
+            <div role="alert" className="flex flex-col gap-2">
+              <InfoBox
+                infoBoxType="warning"
+                title="Claim quote unavailable"
+                content={quoteError}
+              />
+              <button
+                type="button"
+                disabled={isQuoteLoading}
+                className="self-start text-sm text-primary-content underline disabled:opacity-50"
+                onClick={() => setQuoteRefreshKey((key) => key + 1)}
+              >
+                {isQuoteLoading ? "Checking route…" : "Check route again"}
+              </button>
             </div>
           )}
 
@@ -3828,8 +3867,8 @@ export function CommunityMarkeePlaceholder({
       optInTransactionStatus === "success" ?
         "The community vault and Markee leaderboard were created."
       : optInTransactionStatus === "error" ?
-        optInTransactionNotification?.error?.message ??
-        "Unable to create the community Markee leaderboard."
+        (optInTransactionNotification?.error?.message ??
+        "Unable to create the community Markee leaderboard.")
       : "Creating the community vault and Markee leaderboard.",
     status: optInTransactionStatus,
   };

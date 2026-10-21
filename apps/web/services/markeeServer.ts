@@ -13,6 +13,11 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import {
+  getCommunityDeliveryVault,
+  getDeliveryAdapter,
+  requestRelayQuote,
+} from "./markeeDelivery";
+import {
   getEnvPublicClient,
   getRpcUrlForChain,
   resolveClientChain,
@@ -376,6 +381,8 @@ export class MarkeeClaimExecutionError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    readonly code?: string,
+    readonly retryable = status >= 500 || status === 429,
   ) {
     super(message);
     this.name = "MarkeeClaimExecutionError";
@@ -805,6 +812,7 @@ const throwLifiQuoteError = (
   body: LifiQuoteResponse,
   chainId: number,
   community: Address,
+  stage: "transfer" | "delivery" = "transfer",
 ): never => {
   const providerMessage = body.message ?? "No provider error message";
   console.error(
@@ -815,8 +823,19 @@ const throwLifiQuoteError = (
       community,
       message: providerMessage,
       status: response.status,
+      stage,
     },
   );
+  if (String(body.code) === "1002") {
+    throw new MarkeeClaimExecutionError(
+      chainId === GNOSIS_CHAIN_ID && stage === "delivery" ?
+        "No bridge route currently supports delivery to the Gnosis community receiver. Your revenue remains on Base. Automatic retries are paused."
+      : "No bridge route is available for this claim. Your revenue has not moved. Automatic retries are paused.",
+      409,
+      "BRIDGE_ROUTE_UNAVAILABLE",
+      false,
+    );
+  }
   if (
     chainId === GNOSIS_CHAIN_ID &&
     (String(body.code) === "1001" ||
@@ -826,8 +845,10 @@ const throwLifiQuoteError = (
       ))
   ) {
     throw new MarkeeClaimExecutionError(
-      LIFI_GNOSIS_REVENUE_TOO_SMALL_MESSAGE,
+      "The bridge provider could not build this Gnosis claim transaction. Your revenue has not moved. Automatic retries are paused.",
       409,
+      "BRIDGE_TRANSACTION_UNAVAILABLE",
+      false,
     );
   }
   throw new MarkeeClaimExecutionError(
@@ -864,6 +885,27 @@ const getLifiRoute = async ({
   }
 
   const apiKey = process.env.LIFI_GARDENS_API_KEY?.trim();
+  if (chainId === GNOSIS_CHAIN_ID && adapter === getDeliveryAdapter()) {
+    const vault = await getCommunityDeliveryVault(
+      adapter,
+      getCommunityKey(chainId, community),
+      community,
+    );
+    const relay = await requestRelayQuote({
+      adapter,
+      vault,
+      amount,
+      signal: getProviderRequestSignal(signal),
+    });
+    if (!relay.response.ok)
+      throwLifiQuoteError(relay.response, relay.body, chainId, community);
+    if (!relay.quote)
+      throw new MarkeeClaimExecutionError(
+        "Invalid community delivery quote.",
+        502,
+      );
+    return relay.quote;
+  }
   const headers = {
     Accept: "application/json",
     "User-Agent": "Gardens/1.0",
@@ -964,7 +1006,9 @@ const getLifiRoute = async ({
   });
   const body = (await response.json()) as LifiQuoteResponse;
 
-  if (!response.ok) throwLifiQuoteError(response, body, chainId, community);
+  if (!response.ok) {
+    throwLifiQuoteError(response, body, chainId, community, "delivery");
+  }
 
   const transactionRequest = body.transactionRequest;
   const target = requireAddress(

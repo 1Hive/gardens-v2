@@ -2,6 +2,10 @@
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- .",
   "crons": [
     {
+      "path": "/api/markee/claim/deliver",
+      "schedule": "*/5 * * * *"
+    },
+    {
       "path": "/api/passport-oracles/daily-job/10",
       "schedule": "*/15 * * * *"
     },
