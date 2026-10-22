@@ -13,7 +13,7 @@ import {
 describe("superfluid campaign points", () => {
   const wallet = "0xabcdef0000000000000000000000000000000000";
   const fundingForPool = (
-    transfers: { from: string; value: bigint }[],
+    transfers: { from: string; value: bigint | string }[],
     multiplier = 1,
   ) =>
     Array.from(sumFundingByWallet(transfers), ([from, cents]) => ({
@@ -93,6 +93,33 @@ describe("superfluid campaign points", () => {
         { from: wallet, value: 6n * unit + 1n },
       ]).get(wallet),
     ).toBe(10n * unit);
+  });
+
+  it("adds IPFS-cached decimal strings instead of concatenating them", () => {
+    expect(
+      fundingForPool([
+        { from: wallet, value: "400" },
+        { from: wallet, value: "600" },
+      ]),
+    ).toEqual([{ from: wallet, eligible: true, points: 10 }]);
+    expect(
+      fundingForPool([
+        { from: wallet, value: "400" },
+        { from: wallet, value: "599" },
+      ]),
+    ).toEqual([{ from: wallet, eligible: false, points: 0 }]);
+  });
+
+  it("combines cached and fresh transfers exactly beyond safe integer precision", () => {
+    const unit = 10n ** 18n;
+    const transfers = [
+      { from: wallet, value: (4n * unit - 1n).toString() },
+      { from: wallet, value: 6n * unit + 1n },
+    ];
+    expect(sumFundingByWallet(transfers).get(wallet)).toBe(10n * unit);
+    expect(sumFundingByWallet([...transfers].reverse()).get(wallet)).toBe(
+      10n * unit,
+    );
   });
 
   it("computes wallet points across all activity categories", () => {
