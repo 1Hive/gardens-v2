@@ -19,6 +19,7 @@ import {
   hydrateTokenPriceCache,
 } from "@/services/coingecko";
 import { createNotionRequestRunner } from "@/services/notion-rate-limit";
+import { ensureNotionRichTextSchema } from "@/services/notion-schema";
 import { getSuperfluidPointsClient } from "@/services/superfluid-points";
 import { erc20ABI } from "@/src/generated";
 import { ChainId } from "@/types";
@@ -474,36 +475,22 @@ const ensureNotionRichTextProperty = async (
     return true;
   }
   try {
-    const db = await runNotionRequest(`retrieve ${propertyName} schema`, () =>
-      notionClient.databases.retrieve({
-        database_id: NOTION_DB_ID_NORMALIZED,
-      }),
-    );
-    const props = (db as any)?.properties ?? {};
-    if (props?.[propertyName]?.type === "rich_text") {
-      if (propertyName === "Checksum") {
-        notionChecksumEnsured = true;
-      } else {
-        notionBreakdownEnsured = true;
-      }
-      return true;
-    }
-    await runNotionRequest(`create ${propertyName} property`, () =>
-      (notionClient as any).databases.update({
-        database_id: NOTION_DB_ID_NORMALIZED,
-        properties: {
-          [propertyName]: { rich_text: {} },
-        },
-      }),
-    );
+    const dataSourceId = await ensureNotionDataSourceId();
+    if (!dataSourceId) throw new Error("No Notion data_source_id available");
+    await ensureNotionRichTextSchema({
+      client: notionClient,
+      dataSourceId,
+      propertyName,
+      runRequest: runNotionRequest,
+    });
     if (propertyName === "Checksum") {
       notionChecksumEnsured = true;
     } else {
       notionBreakdownEnsured = true;
     }
     console.log(
-      `[superfluid-points] added ${propertyName} property to Notion database`,
-      { databaseId: NOTION_DB_ID_NORMALIZED, propertyName },
+      `[superfluid-points] ensured ${propertyName} property on Notion data source`,
+      { dataSourceId, propertyName },
     );
     return true;
   } catch (error) {
@@ -511,7 +498,7 @@ const ensureNotionRichTextProperty = async (
       `[superfluid-points] failed to ensure ${propertyName} property`,
       { error, propertyName },
     );
-    return false;
+    throw error;
   }
 };
 
@@ -562,7 +549,7 @@ const notionQueryDb = async (
       );
       notionDisabled = true;
     }
-    return null;
+    throw error;
   }
 };
 
@@ -835,7 +822,7 @@ const upsertNotionWallet = async ({
       address,
       error,
     );
-    return false;
+    throw error;
   }
 };
 
@@ -4123,6 +4110,11 @@ export async function GET(req: Request) {
       processed: 0,
       failed: 0,
       skipped: 0,
+      error: null as {
+        message: string;
+        code: string | null;
+        status: number | null;
+      } | null,
     };
 
     if (
@@ -4213,13 +4205,12 @@ export async function GET(req: Request) {
               lookupWhenMissing: false,
             });
           }
-          notionSync.processed += 1;
           if (!ok) {
-            notionSync.failed += 1;
             throw new Error(
               "Notion wallet upsert failed; stopping for a resumable retry",
             );
           }
+          notionSync.processed += 1;
           if (
             notionSync.processed % progressInterval === 0 ||
             notionSync.processed === walletBreakdown.length
@@ -4251,6 +4242,17 @@ export async function GET(req: Request) {
         }
       } catch (error) {
         console.error("[superfluid-points] Notion sync failure", error);
+        notionSync.error = {
+          message: error instanceof Error ? error.message : String(error),
+          code:
+            typeof (error as any)?.code === "string" ?
+              (error as any).code
+            : null,
+          status:
+            typeof (error as any)?.status === "number" ?
+              (error as any).status
+            : null,
+        };
         notionSync.failed += walletBreakdown.length - notionSync.processed;
       }
       notionSync.success = notionSync.failed === 0;
@@ -4276,6 +4278,7 @@ export async function GET(req: Request) {
           failed: notionSync.failed,
           skipped: notionSync.skipped,
           total: walletBreakdown.length,
+          error: notionSync.error,
         },
       );
     }
@@ -4390,12 +4393,21 @@ export async function GET(req: Request) {
     console.warn = originalConsole.warn;
     console.error = originalConsole.error;
 
+    originalConsole.log("[superfluid-points] run completed", {
+      campaignId: effectiveCampaignId,
+      walletCount: walletBreakdown.length,
+      notionSync,
+      pointsSnapshotCid: responsePointsCid,
+      runLogsCid: responseRunLogsCid,
+    });
+
     return NextResponse.json(
       {
         csv: walletBreakdownCsv,
         message:
-          traceOnly ?
-            "Superfluid wallet trace completed"
+          traceOnly ? "Superfluid wallet trace completed"
+          : notionSync.attempted && !notionSync.success ?
+            "Superfluid points synced; Notion sync incomplete"
           : "Superfluid points sync completed",
         updated: updates,
         totals: responseTotals,
@@ -4437,7 +4449,7 @@ export async function GET(req: Request) {
         traceOnly,
         debug: chainDebug,
       },
-      { status: 200 },
+      { status: notionSync.attempted && !notionSync.success ? 503 : 200 },
     );
   } catch (error) {
     const pinned = await flushCaches();
