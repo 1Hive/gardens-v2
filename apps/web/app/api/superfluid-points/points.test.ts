@@ -2,16 +2,58 @@ import { describe, expect, it } from "vitest";
 
 import {
   STREAMING_POOL_ACTIVITY_MULTIPLIER,
+  accumulatePointEvent,
   applyPoolActivityMultiplier,
   calculateCampaignWalletPoints,
   calculatePoolFundingPoints,
   getPoolActivityMultiplier,
   shouldCountDirectFunding,
   sumFundingByWallet,
+  toSafePointTotal,
 } from "./points";
 
 describe("superfluid campaign points", () => {
   const wallet = "0xabcdef0000000000000000000000000000000000";
+
+  it("preserves credits across an oversized event and its reversal in any order", () => {
+    const oversized = 2.8951200000000004e47;
+    const events = [50, 50, -oversized, oversized];
+    for (const ordered of [events, [...events].reverse()]) {
+      const existing = toSafePointTotal(
+        ordered.reduce(accumulatePointEvent, 0n),
+        "fundPoints",
+      );
+      expect(existing).toBe(100);
+      expect(50 - existing).toBe(-50);
+      const corrected = accumulatePointEvent(
+        ordered.reduce(accumulatePointEvent, 0n),
+        50 - existing,
+      );
+      expect(50 - toSafePointTotal(corrected, "fundPoints")).toBe(0);
+    }
+  });
+
+  it("retains exact totals between event pages", () => {
+    const oversized = 7.587316e21;
+    const pageOne = [10, 10, -oversized].reduce(accumulatePointEvent, 0n);
+    const total = [oversized, -10, 10].reduce(accumulatePointEvent, pageOne);
+    expect(toSafePointTotal(total, "fundPoints")).toBe(20);
+    expect(10 - toSafePointTotal(total, "fundPoints")).toBe(-10);
+  });
+
+  it("rejects invalid events and unsafe uncancelled balances before reconciliation", () => {
+    for (const points of [NaN, Infinity, -Infinity, 0.5]) {
+      expect(() => accumulatePointEvent(0n, points)).toThrow();
+    }
+    expect(() => toSafePointTotal(2n ** 53n, "wallet fundPoints")).toThrow(
+      "wallet fundPoints",
+    );
+    expect(() => toSafePointTotal(-(2n ** 53n), "fundPoints")).toThrow();
+    expect(toSafePointTotal(BigInt(Number.MAX_SAFE_INTEGER), "fundPoints")).toBe(
+      Number.MAX_SAFE_INTEGER,
+    );
+    expect(toSafePointTotal(-12n, "fundPoints")).toBe(-12);
+  });
   const fundingForPool = (
     transfers: { from: string; value: bigint | string }[],
     multiplier = 1,

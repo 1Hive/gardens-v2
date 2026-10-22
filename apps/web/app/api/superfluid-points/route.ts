@@ -7,12 +7,14 @@ import { AnyVariables, Client, createClient, fetchExchange, gql } from "urql";
 import { Address, createPublicClient, formatUnits, http, parseAbi } from "viem";
 import { getFarcasterNextCursor, hasPrimaryWalletLabel } from "./farcaster";
 import {
+  accumulatePointEvent,
   applyPoolActivityMultiplier,
   calculateCampaignWalletPoints,
   calculatePoolFundingPoints,
   getPoolActivityMultiplier,
   shouldCountDirectFunding,
   sumFundingByWallet,
+  toSafePointTotal,
 } from "./points";
 import { chainConfigMap } from "@/configs/chains";
 import {
@@ -3924,7 +3926,7 @@ export async function GET(req: Request) {
       }
       const limit = 250;
       let offset = 0;
-      const existingMap = new Map<string, Record<string, number>>();
+      const existingMap = new Map<string, Record<string, bigint>>();
       while (true) {
         console.log("[superfluid-points] points service getEvents sweep request", {
           offset,
@@ -3956,18 +3958,33 @@ export async function GET(req: Request) {
             existingMap.get(key) ??
             Array.from(eventNames).reduce(
               (acc, n) => {
-                acc[n] = 0;
+                acc[n] = 0n;
                 return acc;
               },
-              {} as Record<string, number>,
+              {} as Record<string, bigint>,
             );
-          existingTotals[name] = (existingTotals[name] ?? 0) + pts;
+          existingTotals[name] = accumulatePointEvent(
+            existingTotals[name] ?? 0n,
+            pts,
+          );
           existingMap.set(key, existingTotals);
         }
         offset += res.length;
         if (res.length < limit) break;
       }
-      return existingMap;
+      const safeTotals = new Map<string, Record<string, number>>();
+      for (const [address, totalsByCategory] of existingMap) {
+        safeTotals.set(
+          address,
+          Object.fromEntries(
+            Object.entries(totalsByCategory).map(([name, total]) => [
+              name,
+              toSafePointTotal(total, `${address} ${name}`),
+            ]),
+          ),
+        );
+      }
+      return safeTotals;
     };
 
     const allEventPayloads: Array<{

@@ -1,6 +1,25 @@
 export const STREAMING_POOL_PROPOSAL_TYPE = "2";
 export const STREAMING_POOL_ACTIVITY_MULTIPLIER = 3;
 
+// Keep the accumulator exact across pages: large historical credits and their
+// reversals must not erase the smaller valid credits between them.
+export const accumulatePointEvent = (total: bigint, points: number): bigint => {
+  if (!Number.isFinite(points) || !Number.isInteger(points)) {
+    throw new Error(`Invalid integer points event: ${points}`);
+  }
+  return total + BigInt(points);
+};
+
+// Convert only after the complete event history has been summed. Refuse an
+// unsafe remaining balance before the route can send any adjustments.
+export const toSafePointTotal = (total: bigint, context: string): number => {
+  const limit = BigInt(Number.MAX_SAFE_INTEGER);
+  if (total > limit || total < -limit) {
+    throw new Error(`Unsafe points balance for ${context}: ${total}`);
+  }
+  return Number(total);
+};
+
 type ProposalType = string | number | null | undefined;
 
 export type CampaignWalletPointInput = {
