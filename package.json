@@ -32,6 +32,7 @@
     "overrides": {
       "sharp": "0.35.5",
       "axios": "1.20.0",
+      "follow-redirects": "1.16.1",
       "@pinata/sdk>axios": "1.20.0",
       "@stackso/js-core>axios": "1.20.0",
       "@tenderly/sdk>axios": "1.20.0",
