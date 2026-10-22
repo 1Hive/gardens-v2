@@ -38,6 +38,23 @@ export const applyPoolActivityMultiplier = (
   proposalType: ProposalType,
 ) => amount * getPoolActivityMultiplier(proposalType);
 
+// Call once per pool and campaign window so contributions never cross pools.
+export const sumFundingByWallet = (
+  transfers: { from: string; value: bigint }[],
+) => {
+  const totals = new Map<string, bigint>();
+  for (const { from, value } of transfers) {
+    const address = from.toLowerCase();
+    totals.set(address, (totals.get(address) ?? 0n) + value);
+  }
+  return totals;
+};
+
+export const calculatePoolFundingPoints = (usd: number, multiplier = 1) => {
+  const eligible = usd >= 10;
+  return { eligible, points: eligible ? usd * multiplier : 0 };
+};
+
 export const calculateCampaignWalletPoints = ({
   address,
   fundUsd,
