@@ -9,8 +9,10 @@ import { getFarcasterNextCursor, hasPrimaryWalletLabel } from "./farcaster";
 import {
   applyPoolActivityMultiplier,
   calculateCampaignWalletPoints,
+  calculatePoolFundingPoints,
   getPoolActivityMultiplier,
   shouldCountDirectFunding,
+  sumFundingByWallet,
 } from "./points";
 import { chainConfigMap } from "@/configs/chains";
 import {
@@ -2653,15 +2655,23 @@ const accumulateFundingPoints = async ({
     );
   }
 
+  const transfers: { from: string; value: bigint }[] = [];
   for (const log of logs) {
     const value = "args" in log ? (log as any).args?.value : null;
     const from = "args" in log ? (log as any).args?.from : null;
     if (!value || !from || !isValidAddr(from)) continue;
-    const amount = Number(formatUnits(value as bigint, tokenDecimals));
+    transfers.push({ from, value: value as bigint });
+  }
+
+  // Sum raw token amounts before USD conversion and threshold/bonus checks.
+  // These logs are already scoped to this pool's campaign block range.
+  for (const [key, value] of sumFundingByWallet(transfers)) {
+    const amount = Number(formatUnits(value, tokenDecimals));
     const usd = amount * priceUsd;
-    const key = toLower(from);
-    const isEligible = usd >= 10;
-    const delta = isEligible ? usd * multiplier : 0;
+    const { eligible: isEligible, points: delta } = calculatePoolFundingPoints(
+      usd,
+      multiplier,
+    );
     if (isEligible) {
       const prev = userTotals.get(key) ?? { fundUsd: 0, streamUsd: 0 };
       userTotals.set(key, {
@@ -2681,7 +2691,8 @@ const accumulateFundingPoints = async ({
         chainId,
         bonusApplied: multiplier > 1,
         eligible: isEligible,
-        excludedReason: isEligible ? undefined : "Below $10 threshold",
+        excludedReason:
+          isEligible ? undefined : "Campaign funding to this pool is below $10",
       });
     }
   }
