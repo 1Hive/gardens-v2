@@ -2655,12 +2655,12 @@ const accumulateFundingPoints = async ({
     );
   }
 
-  const transfers: { from: string; value: bigint }[] = [];
+  const transfers: { from: string; value: bigint | string }[] = [];
   for (const log of logs) {
     const value = "args" in log ? (log as any).args?.value : null;
     const from = "args" in log ? (log as any).args?.from : null;
     if (!value || !from || !isValidAddr(from)) continue;
-    transfers.push({ from, value: value as bigint });
+    transfers.push({ from, value });
   }
 
   // Sum raw token amounts before USD conversion and threshold/bonus checks.

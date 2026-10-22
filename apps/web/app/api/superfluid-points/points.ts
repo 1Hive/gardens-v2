@@ -40,12 +40,13 @@ export const applyPoolActivityMultiplier = (
 
 // Call once per pool and campaign window so contributions never cross pools.
 export const sumFundingByWallet = (
-  transfers: { from: string; value: bigint }[],
+  transfers: { from: string; value: bigint | string }[],
 ) => {
   const totals = new Map<string, bigint>();
   for (const { from, value } of transfers) {
     const address = from.toLowerCase();
-    totals.set(address, (totals.get(address) ?? 0n) + value);
+    // IPFS cache serialization turns bigint amounts into decimal strings.
+    totals.set(address, (totals.get(address) ?? 0n) + BigInt(value));
   }
   return totals;
 };
