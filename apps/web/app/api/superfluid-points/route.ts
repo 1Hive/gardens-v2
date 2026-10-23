@@ -15,6 +15,7 @@ import {
   shouldCountDirectFunding,
   sumFundingByWallet,
   toSafePointTotal,
+  validatePointAdjustments,
 } from "./points";
 import { chainConfigMap } from "@/configs/chains";
 import {
@@ -4093,6 +4094,8 @@ export async function GET(req: Request) {
         target: 0,
       });
     }
+
+    validatePointAdjustments(allEventPayloads);
 
     if (traceOnly) {
       console.log("[superfluid-points] TRACE ONLY - skipping points service sync", {
