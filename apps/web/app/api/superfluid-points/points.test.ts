@@ -10,10 +10,85 @@ import {
   shouldCountDirectFunding,
   sumFundingByWallet,
   toSafePointTotal,
+  validatePointAdjustments,
 } from "./points";
 
 describe("superfluid campaign points", () => {
   const wallet = "0xabcdef0000000000000000000000000000000000";
+
+  it("keeps the reversed Season 7 dominant-locker credit at zero", () => {
+    const credit = 2_759_024_000_000_000;
+    const existing = toSafePointTotal(
+      [credit, -credit].reduce(accumulatePointEvent, 0n),
+      "0x5533dde975640699e9419eccf6b840efc45a0a91 fundPoints",
+    );
+    expect(existing).toBe(0);
+    // A stale GDA allocation must not be used as a new points-ledger balance.
+    expect(0 - existing).toBe(0);
+  });
+
+  it("rejects oversized campaign targets before they can become reward units", () => {
+    for (const fundUsd of [2.8951200000000004e47, 7.587316e21, 1.061544e18]) {
+      expect(() =>
+        calculateCampaignWalletPoints({
+          address: wallet,
+          fundUsd,
+          streamUsd: 0,
+          governanceStakePoints: 0,
+          farcasterPoints: 0,
+        }),
+      ).toThrow("Unsafe points target");
+    }
+  });
+
+  it("rejects invalid inputs and a combined total outside the safe integer range", () => {
+    const input = {
+      address: wallet,
+      fundUsd: 0,
+      streamUsd: 0,
+      governanceStakePoints: 0,
+      farcasterPoints: 0,
+    };
+    for (const field of [
+      "fundUsd",
+      "streamUsd",
+      "governanceStakePoints",
+      "farcasterPoints",
+    ]) {
+      for (const value of [NaN, Infinity, -Infinity, -1]) {
+        expect(() =>
+          calculateCampaignWalletPoints({ ...input, [field]: value }),
+        ).toThrow("Invalid points input");
+      }
+    }
+    expect(() =>
+      calculateCampaignWalletPoints({
+        ...input,
+        fundUsd: Number.MAX_SAFE_INTEGER,
+        farcasterPoints: 1,
+      }),
+    ).toThrow("Unsafe points balance");
+  });
+
+  it("validates later batches too and permits legitimate negative adjustments", () => {
+    const events = Array.from({ length: 251 }, () => ({
+      event: "fundPoints",
+      payload: { account: wallet, points: -50 },
+    }));
+    expect(() => validatePointAdjustments(events)).not.toThrow();
+    // Each input balance is safe, but their difference is not.
+    events[250].payload.points = Number.MAX_SAFE_INTEGER - -2;
+    expect(() => validatePointAdjustments(events)).toThrow(
+      "Unsafe points adjustment",
+    );
+    for (const points of [NaN, Infinity, 0.5]) {
+      expect(() =>
+        validatePointAdjustments([
+          { event: "fundPoints", payload: { account: wallet, points } },
+        ]),
+      ).toThrow();
+    }
+  });
 
   it("preserves credits across an oversized event and its reversal in any order", () => {
     const oversized = 2.8951200000000004e47;

@@ -20,6 +20,23 @@ export const toSafePointTotal = (total: bigint, context: string): number => {
   return Number(total);
 };
 
+// Validate the complete run before its first batch is submitted. Two safe
+// balances can still produce an unsafe adjustment when their signs differ.
+export const validatePointAdjustments = (
+  events: ReadonlyArray<{
+    event: string;
+    payload: { account: string; points: number };
+  }>,
+) => {
+  for (const { event, payload } of events) {
+    if (!Number.isSafeInteger(payload.points)) {
+      throw new Error(
+        `Unsafe points adjustment for ${payload.account} ${event}: ${payload.points}`,
+      );
+    }
+  }
+};
+
 type ProposalType = string | number | null | undefined;
 
 export type CampaignWalletPointInput = {
@@ -82,10 +99,42 @@ export const calculateCampaignWalletPoints = ({
   governanceStakePoints,
   farcasterPoints,
 }: CampaignWalletPointInput): CampaignWalletPointTarget => {
+  for (const [category, value] of Object.entries({
+    fundUsd,
+    streamUsd,
+    governanceStakePoints,
+    farcasterPoints,
+  })) {
+    if (!Number.isFinite(value) || value < 0) {
+      throw new Error(
+        `Invalid points input for ${address} ${category}: ${value}`,
+      );
+    }
+  }
   const fundPoints = fundUsd >= 10 ? Math.floor(fundUsd) : 0;
   const streamPoints = streamUsd >= 10 ? Math.floor(streamUsd) : 0;
   const governanceStakePts = Math.floor(governanceStakePoints);
   const farcasterPts = Math.floor(farcasterPoints);
+  const categories = {
+    fundPoints,
+    streamPoints,
+    governanceStakePts,
+    farcasterPts,
+  };
+  for (const [category, points] of Object.entries(categories)) {
+    if (!Number.isSafeInteger(points)) {
+      throw new Error(
+        `Unsafe points target for ${address} ${category}: ${points}`,
+      );
+    }
+  }
+  const totalPoints = toSafePointTotal(
+    Object.values(categories).reduce(
+      (total, points) => total + BigInt(points),
+      0n,
+    ),
+    `${address} totalPoints`,
+  );
 
   return {
     address,
@@ -95,7 +144,6 @@ export const calculateCampaignWalletPoints = ({
     streamPoints,
     governanceStakePoints: governanceStakePts,
     farcasterPoints: farcasterPts,
-    totalPoints:
-      fundPoints + streamPoints + governanceStakePts + farcasterPts,
+    totalPoints,
   };
 };
