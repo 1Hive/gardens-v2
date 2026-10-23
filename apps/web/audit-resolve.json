@@ -54,6 +54,12 @@
       "madeAt": 1775832300000,
       "reason": "Pending Next.js upgrade to a tested fixed release line at or above 15.5.15.",
       "expiresAt": 1778424300000
+    },
+    "1242879|@graphprotocol/client-urql>@graphql-mesh/urql-exchange>@graphql-mesh/runtime>@envelop/extended-validation>@graphql-tools/utils": {
+      "decision": "ignore",
+      "madeAt": 1792702800000,
+      "reason": "The installed 10.11.0 and 11.0.0 packages carry the upstream mergeIncrementalResult and mergeDeep security backports in pnpm.patchedDependencies (CJS and ESM). audit:check first runs check-graphql-security.mjs against every installed affected copy and fails if the backport is absent or unsafe. The sanitized npm audit cannot model pnpm patches. A blanket utils 12 override breaks the GraphQL 16 variable API used by the current Mesh executor/delegate; retire this decision after a coordinated compatible upgrade. See patches/README.md.",
+      "expiresAt": 1795294800000
     }
   }
 }
