@@ -34,6 +34,7 @@ import {
   markNotionSyncComplete,
   markNotionSyncFailed,
   markNotionWalletProcessed,
+  NotionSyncCleanupError,
 } from "@/services/notion-sync-progress";
 import { getSuperfluidPointsClient } from "@/services/superfluid-points";
 import { erc20ABI } from "@/src/generated";
@@ -611,7 +612,7 @@ const archiveNotionPages = async ({
         reason,
         error,
       });
-      throw error;
+      throw new NotionSyncCleanupError(error);
     }
   }
   if (archived > 0) {

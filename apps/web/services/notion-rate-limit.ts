@@ -153,6 +153,7 @@ export const createNotionRequestRunner = ({
             (retryTransient &&
               isNotionTransientError(error) &&
               attempt < maxTransientRetries);
+          // maxRetries is also a shared ceiling for mixed 429/5xx sequences.
           if (!retryable || attempt >= maxRetries) {
             throw error;
           }
@@ -163,7 +164,8 @@ export const createNotionRequestRunner = ({
             Math.max(minIntervalMs, retryAfterMs) +
             Math.floor(random() * RETRY_JITTER_MS);
           // Never shorten Retry-After to fit the budget; defer to a later run.
-          if (now() - startedAt + delayMs >= maxRetryStartElapsedMs) throw error;
+          if (now() - startedAt + delayMs >= maxRetryStartElapsedMs)
+            throw error;
           ensureTimeBudget(delayMs);
           onRetry?.({
             operation,

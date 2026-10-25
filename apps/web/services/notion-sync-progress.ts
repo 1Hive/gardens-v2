@@ -1,5 +1,14 @@
 export type NotionSyncFailurePhase = "prepare" | "wallet" | "cleanup";
 
+// Duplicate cleanup can run inside the wallet loop (even on checksum skips).
+// Keep its failure separate from an attempted wallet upsert.
+export class NotionSyncCleanupError extends Error {
+  constructor(cause: unknown) {
+    super("Notion page cleanup failed", { cause });
+    this.name = "NotionSyncCleanupError";
+  }
+}
+
 type NotionSyncError = {
   message: string;
   code: string | null;
@@ -46,21 +55,26 @@ export const markNotionSyncFailed = (
   phase: NotionSyncFailurePhase,
   { requestNotAttempted = false }: { requestNotAttempted?: boolean } = {},
 ) => {
+  const isCleanup = error instanceof NotionSyncCleanupError;
+  const failurePhase = isCleanup ? "cleanup" : phase;
+  const originalError = isCleanup ? error.cause : error;
   const details =
-    error && typeof error === "object" ?
-      (error as Record<string, unknown>)
+    originalError && typeof originalError === "object" ?
+      (originalError as Record<string, unknown>)
     : null;
   state.error = {
     message:
-      typeof details?.message === "string" ? details.message : String(error),
+      typeof details?.message === "string" ?
+        details.message
+      : String(originalError),
     code: typeof details?.code === "string" ? details.code : null,
     status: typeof details?.status === "number" ? details.status : null,
   };
-  state.failurePhase = phase;
+  state.failurePhase = failurePhase;
   state.success = false;
   // A stopped pass has not attempted every remaining wallet. Preparation and
   // cleanup errors also do not represent failed wallet writes.
-  if (phase === "wallet" && !requestNotAttempted) state.failed += 1;
+  if (failurePhase === "wallet" && !requestNotAttempted) state.failed += 1;
 };
 
 export const markNotionSyncComplete = (state: NotionSyncProgress) => {

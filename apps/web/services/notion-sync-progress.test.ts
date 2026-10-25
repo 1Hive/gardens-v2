@@ -5,6 +5,7 @@ import {
   markNotionSyncComplete,
   markNotionSyncFailed,
   markNotionWalletProcessed,
+  NotionSyncCleanupError,
 } from "./notion-sync-progress";
 
 describe("Notion sync progress", () => {
@@ -68,6 +69,24 @@ describe("Notion sync progress", () => {
       remaining: 0,
       success: false,
       failurePhase: "cleanup",
+    });
+  });
+
+  it("attributes duplicate archival inside the wallet loop to cleanup", () => {
+    const progress = createNotionSyncProgress(2);
+    progress.attempted = true;
+    markNotionWalletProcessed(progress, { skipped: true });
+    const cause = { message: "Bad Gateway", status: 502 };
+    markNotionSyncFailed(progress, new NotionSyncCleanupError(cause), "wallet");
+
+    expect(progress).toMatchObject({
+      processed: 1,
+      skipped: 1,
+      failed: 0,
+      remaining: 1,
+      success: false,
+      failurePhase: "cleanup",
+      error: { message: "Bad Gateway", status: 502, code: null },
     });
   });
 
