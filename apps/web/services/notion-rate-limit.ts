@@ -1,6 +1,9 @@
 type NotionRequestRunnerOptions = {
   minIntervalMs?: number;
   maxRetries?: number;
+  maxTransientRetries?: number;
+  // Bounds when retries may start; does not cancel an in-flight SDK request.
+  maxRetryStartElapsedMs?: number;
   sleep?: (ms: number) => Promise<void>;
   now?: () => number;
   random?: () => number;
@@ -14,8 +17,30 @@ type NotionRequestRunnerOptions = {
 
 const DEFAULT_MIN_INTERVAL_MS = 400;
 const DEFAULT_MAX_RETRIES = 5;
+const DEFAULT_MAX_TRANSIENT_RETRIES = 3;
+const DEFAULT_MAX_RETRY_START_ELAPSED_MS = 60_000;
 const DEFAULT_RETRY_DELAY_MS = 1_000;
+const MAX_RETRY_DELAY_MS = 8_000;
 const RETRY_JITTER_MS = 250;
+
+type NotionRequestOptions = {
+  // Only opt in for reads and idempotent writes, never ambiguous page creates.
+  retryTransient?: boolean;
+  deadlineMs?: number;
+  requestTimeoutMs?: number;
+};
+
+export class NotionRequestBudgetExceededError extends Error {
+  readonly code = "notion_sync_budget_exceeded";
+
+  constructor(
+    operation: string,
+    readonly requestAttempted: boolean,
+  ) {
+    super(`Notion sync time budget exhausted before ${operation}`);
+    this.name = "NotionRequestBudgetExceededError";
+  }
+}
 
 const defaultSleep = (ms: number) =>
   new Promise<void>((resolve) => {
@@ -49,6 +74,19 @@ export const isNotionRateLimitError = (error: unknown) => {
   return candidate.status === 429 || candidate.code === "rate_limited";
 };
 
+export const isNotionTransientError = (error: unknown) => {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as Record<string, any>;
+  return (
+    [500, 502, 503, 504].includes(candidate.status) ||
+    [
+      "internal_server_error",
+      "service_unavailable",
+      "gateway_timeout",
+    ].includes(candidate.code)
+  );
+};
+
 export const getNotionRetryAfterMs = (error: unknown): number | null => {
   if (!error || typeof error !== "object") return null;
   const candidate = error as Record<string, any>;
@@ -68,6 +106,8 @@ export const getNotionRetryAfterMs = (error: unknown): number | null => {
 export const createNotionRequestRunner = ({
   minIntervalMs = DEFAULT_MIN_INTERVAL_MS,
   maxRetries = DEFAULT_MAX_RETRIES,
+  maxTransientRetries = DEFAULT_MAX_TRANSIENT_RETRIES,
+  maxRetryStartElapsedMs = DEFAULT_MAX_RETRY_START_ELAPSED_MS,
   sleep = defaultSleep,
   now = Date.now,
   random = Math.random,
@@ -79,25 +119,52 @@ export const createNotionRequestRunner = ({
   return async <T>(
     operation: string,
     request: () => Promise<T>,
+    {
+      retryTransient = false,
+      deadlineMs = Infinity,
+      requestTimeoutMs = 0,
+    }: NotionRequestOptions = {},
   ): Promise<T> => {
     const execute = async () => {
+      const startedAt = now();
+      let requestAttempted = false;
+      const ensureTimeBudget = (delayMs: number) => {
+        // Leave room for the SDK's request timeout, not just the backoff.
+        if (now() + delayMs + requestTimeoutMs >= deadlineMs) {
+          throw new NotionRequestBudgetExceededError(
+            operation,
+            requestAttempted,
+          );
+        }
+      };
       for (let attempt = 0; ; attempt += 1) {
         const intervalDelay = Math.max(0, nextRequestAt - now());
+        ensureTimeBudget(intervalDelay);
         if (intervalDelay > 0) await sleep(intervalDelay);
+        ensureTimeBudget(0);
         nextRequestAt = now() + minIntervalMs;
 
         try {
+          requestAttempted = true;
           return await request();
         } catch (error) {
-          if (!isNotionRateLimitError(error) || attempt >= maxRetries) {
+          const retryable =
+            isNotionRateLimitError(error) ||
+            (retryTransient &&
+              isNotionTransientError(error) &&
+              attempt < maxTransientRetries);
+          if (!retryable || attempt >= maxRetries) {
             throw error;
           }
           const retryAfterMs =
             getNotionRetryAfterMs(error) ??
-            DEFAULT_RETRY_DELAY_MS * 2 ** attempt;
+            Math.min(MAX_RETRY_DELAY_MS, DEFAULT_RETRY_DELAY_MS * 2 ** attempt);
           const delayMs =
             Math.max(minIntervalMs, retryAfterMs) +
             Math.floor(random() * RETRY_JITTER_MS);
+          // Never shorten Retry-After to fit the budget; defer to a later run.
+          if (now() - startedAt + delayMs >= maxRetryStartElapsedMs) throw error;
+          ensureTimeBudget(delayMs);
           onRetry?.({
             operation,
             attempt: attempt + 1,
@@ -105,6 +172,7 @@ export const createNotionRequestRunner = ({
             error,
           });
           await sleep(delayMs);
+          if (now() - startedAt >= maxRetryStartElapsedMs) throw error;
         }
       }
     };
