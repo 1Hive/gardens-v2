@@ -58,20 +58,12 @@ interface ISquidGardensRevenueReceiver {
     error PayoutAlreadyResolved();
     error TransferFailed();
 
-    function receiveSquidRevenue(bytes32 payoutId, bytes32 communityKey, address registryCommunity) external payable;
     function receiveSquidRevenueV2(
         bytes32 payoutId,
         bytes32 communityKey,
         address registryCommunity,
         uint256 minAmountOut
     ) external payable;
-    function receiveSquidTokenRevenue(
-        bytes32 payoutId,
-        bytes32 communityKey,
-        address registryCommunity,
-        address token,
-        uint256 amount
-    ) external;
     function receiveSquidTokenRevenueV2(
         bytes32 payoutId,
         bytes32 communityKey,
