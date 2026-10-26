@@ -12,6 +12,7 @@ type QuoteTerms = {
   claimAmount: bigint;
   estimatedFeeAmount: bigint;
   estimatedNetworkFeeAmount: bigint;
+  expectedAmountOut: bigint;
   markeeChainId: number;
   recipient: Address;
 };

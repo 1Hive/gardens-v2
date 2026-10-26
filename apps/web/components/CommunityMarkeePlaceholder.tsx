@@ -3049,10 +3049,12 @@ function CommunityRevenueClaimModal({
       }
       const challengeClaimAmountValue = challenge.typedData.message.claimAmount;
       const challengeGasCost = challenge.typedData.message.gasCost;
+      const challengeMinAmountOut = challenge.typedData.message.minAmountOut;
       const challengeRecipient = challenge.typedData.message.recipient;
       if (
         typeof challengeClaimAmountValue !== "string" ||
         typeof challengeGasCost !== "string" ||
+        typeof challengeMinAmountOut !== "string" ||
         typeof challengeRecipient !== "string"
       ) {
         throw new Error(
@@ -3071,6 +3073,7 @@ function CommunityRevenueClaimModal({
         challengeGasCost !== quote.estimatedNetworkFeeAmount ||
         challenge.typedData.message.maxFeeAmount !==
           (quote.maxFeeAmount ?? quote.estimatedFeeAmount) ||
+        challengeMinAmountOut !== quote.expectedAmountOut ||
         challenge.typedData.message.markeeChainId !==
           quote.markeeChainId.toString() ||
         challengeRecipient.toLowerCase() !== quote.recipient.toLowerCase()

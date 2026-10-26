@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { decodeAbiParameters, parseAbiParameters } from "viem";
 
 const mocks = vi.hoisted(() => ({
   estimateContractGas: vi.fn(),
@@ -199,6 +200,7 @@ describe("Markee community revenue", () => {
       .mockResolvedValueOnce([adapter, 2])
       .mockResolvedValueOnce(receiver)
       .mockResolvedValueOnce(squidRouter);
+    const providerExpiry = Math.floor(Date.now() / 1000) + 120;
     const fetchMock = vi.fn().mockResolvedValue({
       json: async () => ({
         route: {
@@ -211,6 +213,7 @@ describe("Markee community revenue", () => {
           },
           transactionRequest: {
             data: "0x12345678",
+            expiry: providerExpiry.toString(),
             target: squidRouter,
             value: "1000000000000000000",
           },
@@ -230,6 +233,7 @@ describe("Markee community revenue", () => {
       estimatedFeeAmount: 10_000_000_000_000_000n,
       estimatedRouteDurationSeconds: 180,
       expectedAmountOut: 980_000_000_000_000_000n,
+      expiresAt: providerExpiry,
       markeeChainId: 8453,
       minAmountOut: 980_000_000_000_000_000n,
       recipient,
@@ -258,6 +262,17 @@ describe("Markee community revenue", () => {
       },
       toChain: "10",
       toToken: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    });
+    expect(request.postHook.calls[0].callData.slice(0, 10)).toBe("0x23357e7b");
+    const [encodedQuote] = decodeAbiParameters(
+      parseAbiParameters(
+        "(uint256 inputAmount,uint256 expectedAmountOut,uint256 executionValue,uint256 deadline,bytes routerCalldata)",
+      ),
+      quote.quoteData,
+    );
+    expect(encodedQuote).toMatchObject({
+      deadline: BigInt(providerExpiry),
+      routerCalldata: "0x12345678",
     });
   });
 
@@ -867,6 +882,29 @@ describe("Markee community revenue", () => {
     });
   });
 
+  it("rejects a refreshed route below the council-authorized output", async () => {
+    mocks.readContract
+      .mockResolvedValueOnce(vault)
+      .mockResolvedValueOnce([0n, 0n, 0n, 5_000_000_000_000_000n]);
+
+    await expect(
+      executeMarkeeClaim({
+        chainId: 11155111,
+        community,
+        expectedClaimAmount: 5_000_000_000_000_000n,
+        gasCost: 0n,
+        maxFeeAmount: 0n,
+        minAmountOut: 5_000_000_000_000_001n,
+        recipient,
+      }),
+    ).rejects.toMatchObject({
+      message:
+        "The bridge output decreased below the amount authorized by the council member.",
+      status: 409,
+    });
+    expect(mocks.simulateContract).not.toHaveBeenCalled();
+  });
+
   it("refuses to broadcast when the configured keeper is not authorized", async () => {
     mocks.readContract
       .mockResolvedValueOnce(vault)
@@ -880,6 +918,7 @@ describe("Markee community revenue", () => {
         expectedClaimAmount: 5_000_000_000_000_000n,
         gasCost: 0n,
         maxFeeAmount: 0n,
+        minAmountOut: 5_000_000_000_000_000n,
         recipient,
       }),
     ).rejects.toMatchObject({
@@ -902,6 +941,7 @@ describe("Markee community revenue", () => {
         expectedClaimAmount: 4_000_000_000_000_000n,
         gasCost: 0n,
         maxFeeAmount: 0n,
+        minAmountOut: 4_000_000_000_000_000n,
         recipient,
       }),
     ).rejects.toMatchObject({
@@ -922,6 +962,7 @@ describe("Markee community revenue", () => {
         expectedClaimAmount: 5_000_000_000_000_000n,
         gasCost: 0n,
         maxFeeAmount: 0n,
+        minAmountOut: 5_000_000_000_000_000n,
         recipient,
       }),
     ).rejects.toMatchObject({
@@ -948,6 +989,7 @@ describe("Markee community revenue", () => {
         expectedClaimAmount: 5_000_000_000_000_000n,
         gasCost: 0n,
         maxFeeAmount: 0n,
+        minAmountOut: 5_000_000_000_000_000n,
         recipient,
       }),
     ).rejects.toMatchObject({

@@ -60,6 +60,7 @@ const claimAuthorizationTypes = {
     { name: "claimAmount", type: "uint256" },
     { name: "gasCost", type: "uint256" },
     { name: "maxFeeAmount", type: "uint256" },
+    { name: "minAmountOut", type: "uint256" },
     { name: "nonce", type: "uint256" },
     { name: "deadline", type: "uint256" },
   ],
@@ -76,6 +77,7 @@ type ClaimAuthorizationMessage = {
   claimAmount: bigint;
   gasCost: bigint;
   maxFeeAmount: bigint;
+  minAmountOut: bigint;
   nonce: bigint;
   deadline: bigint;
 };
@@ -247,6 +249,7 @@ const createClaimMessage = async ({
     markeeChainId: BigInt(getMarkeeChainId(chainId)),
     maxFeeAmount:
       "maxFeeAmount" in quote ? quote.maxFeeAmount : quote.estimatedFeeAmount,
+    minAmountOut: quote.expectedAmountOut,
     nonce,
     recipient: councilSafe,
     registryCommunity: community,
@@ -420,6 +423,7 @@ const verifyChallenge = async (body: VerifyRequest) => {
       expectedClaimAmount: challenge.message.claimAmount,
       gasCost: challenge.message.gasCost,
       maxFeeAmount: challenge.message.maxFeeAmount,
+      minAmountOut: challenge.message.minAmountOut,
       recipient: currentCouncilSafe,
     });
 
