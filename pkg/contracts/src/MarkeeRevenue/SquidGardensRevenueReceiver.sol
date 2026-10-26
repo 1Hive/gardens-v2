@@ -32,17 +32,6 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
     }
 
     /// @inheritdoc ISquidGardensRevenueReceiver
-    function receiveSquidTokenRevenue(
-        bytes32 payoutId,
-        bytes32 communityKey,
-        address registryCommunity,
-        address token,
-        uint256 amount
-    ) external onlySquidMulticall nonReentrant {
-        _receiveSquidTokenRevenue(payoutId, communityKey, registryCommunity, token, amount);
-    }
-
-    /// @inheritdoc ISquidGardensRevenueReceiver
     function receiveSquidTokenRevenueV2(
         bytes32 payoutId,
         bytes32 communityKey,
@@ -137,16 +126,6 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
         if (newSquidMulticall == address(0)) revert ZeroAddress();
         squidMulticall = newSquidMulticall;
         emit SquidMulticallUpdated(newSquidMulticall);
-    }
-
-    /// @inheritdoc ISquidGardensRevenueReceiver
-    function receiveSquidRevenue(bytes32 payoutId, bytes32 communityKey, address registryCommunity)
-        external
-        payable
-        onlySquidMulticall
-        nonReentrant
-    {
-        _receiveSquidRevenue(payoutId, communityKey, registryCommunity);
     }
 
     /// @inheritdoc ISquidGardensRevenueReceiver

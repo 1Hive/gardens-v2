@@ -59,6 +59,11 @@ contract MockSquidToken is ERC20 {
 }
 
 contract SquidGardensRevenueReceiverTest is Test {
+    bytes4 internal constant LEGACY_RECEIVE_SQUID_REVENUE_SELECTOR =
+        bytes4(keccak256("receiveSquidRevenue(bytes32,bytes32,address)"));
+    bytes4 internal constant LEGACY_RECEIVE_SQUID_TOKEN_REVENUE_SELECTOR =
+        bytes4(keccak256("receiveSquidTokenRevenue(bytes32,bytes32,address,address,uint256)"));
+
     SquidGardensRevenueReceiver internal receiver;
     address internal proxyOwner = address(0xA11CE);
     address internal squidMulticall = address(0x5A01D);
@@ -110,7 +115,9 @@ contract SquidGardensRevenueReceiverTest is Test {
         token.mint(squidMulticall, amount);
         vm.startPrank(squidMulticall);
         token.approve(address(receiver), amount);
-        receiver.receiveSquidTokenRevenue(payoutId, keccak256("community"), address(community), address(token), amount);
+        receiver.receiveSquidTokenRevenueV2(
+            payoutId, keccak256("community"), address(community), address(token), amount, amount
+        );
         vm.stopPrank();
     }
 
@@ -123,10 +130,10 @@ contract SquidGardensRevenueReceiverTest is Test {
         );
         vm.deal(squidMulticall, amount);
         vm.prank(squidMulticall);
-        receiver.receiveSquidRevenue{value: amount}(payoutId, keccak256("community"), address(community));
+        receiver.receiveSquidRevenueV2{value: amount}(payoutId, keccak256("community"), address(community), amount);
     }
 
-    function test_receiveSquidRevenue_deliversNativeCurrencyToLatestSafe() public {
+    function test_receiveSquidRevenueV2_deliversNativeCurrencyToLatestSafe() public {
         MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
         _deliver(bytes32(uint256(1)), community, 1 ether);
         assertEq(address(0x5AFE).balance, 1 ether);
@@ -155,13 +162,13 @@ contract SquidGardensRevenueReceiverTest is Test {
         assertEq(address(0x5AFE).balance, 1 ether);
     }
 
-    function test_receiveSquidRevenue_revertsForWrongCaller() public {
+    function test_receiveSquidRevenueV2_revertsForWrongCaller() public {
         MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
         vm.expectRevert(ISquidGardensRevenueReceiver.NotSquidMulticall.selector);
-        receiver.receiveSquidRevenue{value: 1}(bytes32(uint256(1)), bytes32(0), address(community));
+        receiver.receiveSquidRevenueV2{value: 1}(bytes32(uint256(1)), bytes32(0), address(community), 1);
     }
 
-    function test_receiveSquidRevenue_escrowsWhenCouncilSafeLookupReverts() public {
+    function test_receiveSquidRevenueV2_escrowsWhenCouncilSafeLookupReverts() public {
         RevertingRegistryCommunity community = new RevertingRegistryCommunity();
         bytes32 suppliedPayoutId = bytes32(uint256(11));
         bytes32 communityKey = keccak256("community");
@@ -172,7 +179,7 @@ contract SquidGardensRevenueReceiverTest is Test {
 
         vm.deal(squidMulticall, amount);
         vm.prank(squidMulticall);
-        receiver.receiveSquidRevenue{value: amount}(suppliedPayoutId, communityKey, address(community));
+        receiver.receiveSquidRevenueV2{value: amount}(suppliedPayoutId, communityKey, address(community), amount);
 
         (bytes32 storedCommunityKey, address storedCommunity, uint256 storedAmount, bool resolved) =
             receiver.failedPayouts(effectivePayoutId);
@@ -183,7 +190,7 @@ contract SquidGardensRevenueReceiverTest is Test {
         assertEq(address(receiver).balance, amount);
     }
 
-    function test_receiveSquidRevenue_collisionCannotBlockLegitimatePayout() public {
+    function test_receiveSquidRevenueV2_collisionCannotBlockLegitimatePayout() public {
         MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
         bytes32 payoutId = _deliver(bytes32(uint256(1)), community, 1 ether);
 
@@ -216,7 +223,7 @@ contract SquidGardensRevenueReceiverTest is Test {
 
         vm.deal(squidMulticall, amount);
         vm.prank(squidMulticall);
-        receiver.receiveSquidRevenue{value: amount}(suppliedPayoutId, communityKey, address(community));
+        receiver.receiveSquidRevenueV2{value: amount}(suppliedPayoutId, communityKey, address(community), amount);
 
         community.setUnavailable(true);
         vm.expectRevert(ISquidGardensRevenueReceiver.TransferFailed.selector);
@@ -235,7 +242,7 @@ contract SquidGardensRevenueReceiverTest is Test {
         assertEq(newSafe.balance, amount);
     }
 
-    function test_receiveSquidTokenRevenue_deliversTokenToLatestSafe() public {
+    function test_receiveSquidTokenRevenueV2_deliversTokenToLatestSafe() public {
         address safe = address(0x5AFE);
         MockRegistryCommunity community = new MockRegistryCommunity(safe);
 
@@ -273,7 +280,7 @@ contract SquidGardensRevenueReceiverTest is Test {
         assertEq(token.balanceOf(safe), 1 ether);
     }
 
-    function test_receiveSquidTokenRevenue_escrowsWhenCouncilSafeLookupReverts() public {
+    function test_receiveSquidTokenRevenueV2_escrowsWhenCouncilSafeLookupReverts() public {
         RevertingRegistryCommunity community = new RevertingRegistryCommunity();
         bytes32 suppliedPayoutId = bytes32(uint256(12));
         bytes32 communityKey = keccak256("community");
@@ -285,7 +292,9 @@ contract SquidGardensRevenueReceiverTest is Test {
         token.mint(squidMulticall, amount);
         vm.startPrank(squidMulticall);
         token.approve(address(receiver), amount);
-        receiver.receiveSquidTokenRevenue(suppliedPayoutId, communityKey, address(community), address(token), amount);
+        receiver.receiveSquidTokenRevenueV2(
+            suppliedPayoutId, communityKey, address(community), address(token), amount, amount
+        );
         vm.stopPrank();
 
         (
@@ -346,7 +355,7 @@ contract SquidGardensRevenueReceiverTest is Test {
         assertEq(token.balanceOf(address(0x5AFE)), 0);
     }
 
-    function test_receiveSquidTokenRevenue_nativeIdCollisionCannotBlockTokenPayout() public {
+    function test_receiveSquidTokenRevenueV2_nativeIdCollisionCannotBlockTokenPayout() public {
         MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
         bytes32 payoutId = bytes32(uint256(3));
         _deliver(payoutId, community, 1 ether);
@@ -354,14 +363,14 @@ contract SquidGardensRevenueReceiverTest is Test {
         token.mint(squidMulticall, 1 ether);
         vm.startPrank(squidMulticall);
         token.approve(address(receiver), 1 ether);
-        receiver.receiveSquidTokenRevenue(payoutId, bytes32(0), address(community), address(token), 1 ether);
+        receiver.receiveSquidTokenRevenueV2(payoutId, bytes32(0), address(community), address(token), 1 ether, 1 ether);
         vm.stopPrank();
 
         assertEq(token.balanceOf(address(0x5AFE)), 1 ether);
         assertEq(receiver.tokenRevenueNonce(), 2);
     }
 
-    function test_receiveSquidRevenue_collisionCannotOverwriteFailedPayout() public {
+    function test_receiveSquidRevenueV2_collisionCannotOverwriteFailedPayout() public {
         SquidRejectingSafe rejectingSafe = new SquidRejectingSafe();
         MockRegistryCommunity community = new MockRegistryCommunity(address(rejectingSafe));
         bytes32 suppliedPayoutId = bytes32(uint256(44));
@@ -405,7 +414,9 @@ contract SquidGardensRevenueReceiverTest is Test {
         token.mint(squidMulticall, amount);
         vm.startPrank(squidMulticall);
         token.approve(address(receiver), amount);
-        receiver.receiveSquidTokenRevenue(suppliedPayoutId, communityKey, address(community), address(token), amount);
+        receiver.receiveSquidTokenRevenueV2(
+            suppliedPayoutId, communityKey, address(community), address(token), amount, amount
+        );
         vm.stopPrank();
 
         community.setUnavailable(true);
@@ -466,24 +477,28 @@ contract SquidGardensRevenueReceiverTest is Test {
         receiver.setSquidMulticall(address(0));
     }
 
-    function test_receiveSquidTokenRevenue_revertsOnZeroRegistryCommunity() public {
+    function test_receiveSquidTokenRevenueV2_revertsOnZeroRegistryCommunity() public {
         vm.prank(squidMulticall);
         vm.expectRevert(ISquidGardensRevenueReceiver.ZeroAddress.selector);
-        receiver.receiveSquidTokenRevenue(bytes32(uint256(1)), bytes32(0), address(0), address(token), 1 ether);
+        receiver.receiveSquidTokenRevenueV2(
+            bytes32(uint256(1)), bytes32(0), address(0), address(token), 1 ether, 1 ether
+        );
     }
 
-    function test_receiveSquidTokenRevenue_revertsOnZeroToken() public {
+    function test_receiveSquidTokenRevenueV2_revertsOnZeroToken() public {
         MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
         vm.prank(squidMulticall);
         vm.expectRevert(ISquidGardensRevenueReceiver.ZeroAddress.selector);
-        receiver.receiveSquidTokenRevenue(bytes32(uint256(1)), bytes32(0), address(community), address(0), 1 ether);
+        receiver.receiveSquidTokenRevenueV2(
+            bytes32(uint256(1)), bytes32(0), address(community), address(0), 1 ether, 1 ether
+        );
     }
 
-    function test_receiveSquidTokenRevenue_revertsOnZeroAmount() public {
+    function test_receiveSquidTokenRevenueV2_revertsOnZeroAmount() public {
         MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
         vm.prank(squidMulticall);
         vm.expectRevert(ISquidGardensRevenueReceiver.ZeroValue.selector);
-        receiver.receiveSquidTokenRevenue(bytes32(uint256(1)), bytes32(0), address(community), address(token), 0);
+        receiver.receiveSquidTokenRevenueV2(bytes32(uint256(1)), bytes32(0), address(community), address(token), 0, 0);
     }
 
     function test_receiveTokenRevenue_revertsOnZeroRegistryCommunity() public {
@@ -518,18 +533,59 @@ contract SquidGardensRevenueReceiverTest is Test {
         assertEq(token.balanceOf(address(receiver)), 1 ether);
     }
 
-    function test_receiveSquidRevenue_revertsOnZeroValue() public {
+    function test_receiveSquidRevenueV2_revertsOnZeroValue() public {
         MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
         vm.prank(squidMulticall);
         vm.expectRevert(ISquidGardensRevenueReceiver.ZeroValue.selector);
-        receiver.receiveSquidRevenue(bytes32(uint256(1)), bytes32(0), address(community));
+        receiver.receiveSquidRevenueV2(bytes32(uint256(1)), bytes32(0), address(community), 0);
     }
 
-    function test_receiveSquidRevenue_revertsOnZeroRegistryCommunity() public {
+    function test_receiveSquidRevenueV2_revertsOnZeroRegistryCommunity() public {
         vm.deal(squidMulticall, 1 ether);
         vm.prank(squidMulticall);
         vm.expectRevert(ISquidGardensRevenueReceiver.ZeroAddress.selector);
-        receiver.receiveSquidRevenue{value: 1 ether}(bytes32(uint256(1)), bytes32(0), address(0));
+        receiver.receiveSquidRevenueV2{value: 1 ether}(bytes32(uint256(1)), bytes32(0), address(0), 1 ether);
+    }
+
+    function test_legacyReceiveSquidRevenueSelector_revertsWithoutMovingFunds() public {
+        MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
+        vm.deal(squidMulticall, 1 ether);
+
+        vm.prank(squidMulticall);
+        (bool success,) = address(receiver).call{value: 1 ether}(
+            abi.encodeWithSelector(
+                LEGACY_RECEIVE_SQUID_REVENUE_SELECTOR, bytes32(uint256(1)), keccak256("community"), address(community)
+            )
+        );
+
+        assertFalse(success);
+        assertEq(squidMulticall.balance, 1 ether);
+        assertEq(address(receiver).balance, 0);
+        assertEq(receiver.tokenRevenueNonce(), 0);
+    }
+
+    function test_legacyReceiveSquidTokenRevenueSelector_revertsWithoutMovingFunds() public {
+        MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
+        token.mint(squidMulticall, 1 ether);
+        vm.startPrank(squidMulticall);
+        token.approve(address(receiver), 1 ether);
+        (bool success,) = address(receiver)
+            .call(
+                abi.encodeWithSelector(
+                    LEGACY_RECEIVE_SQUID_TOKEN_REVENUE_SELECTOR,
+                    bytes32(uint256(1)),
+                    keccak256("community"),
+                    address(community),
+                    address(token),
+                    1 ether
+                )
+            );
+        vm.stopPrank();
+
+        assertFalse(success);
+        assertEq(token.balanceOf(squidMulticall), 1 ether);
+        assertEq(token.balanceOf(address(receiver)), 0);
+        assertEq(receiver.tokenRevenueNonce(), 0);
     }
 
     function test_retryPayout_revertsForUnknownPayout() public {
