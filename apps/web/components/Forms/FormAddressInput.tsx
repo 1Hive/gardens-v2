@@ -117,14 +117,24 @@ export const FormAddressInput = ({
   });
 
   useEffect(() => {
-    if (ensAddress) {
+    // Only apply a result while the input still contains the name that was
+    // resolved. This also prevents callback changes from reapplying it on
+    // every render after the address has been written to the form.
+    if (ensAddress && isENS(debouncedValue) && inputValue === debouncedValue) {
       setInputValue(ensAddress);
       (onChange ?? registerOptions?.onChange)?.({
         target: { name: registerKey, value: ensAddress },
         currentTarget: { name: registerKey, value: ensAddress },
       } as React.ChangeEvent<HTMLInputElement>);
     }
-  }, [ensAddress, onChange, registerKey, registerOptions]);
+  }, [
+    debouncedValue,
+    ensAddress,
+    inputValue,
+    onChange,
+    registerKey,
+    registerOptions,
+  ]);
 
   const validateSafeAddress = async (address: string) => {
     if (bypassSafeCheck) {
