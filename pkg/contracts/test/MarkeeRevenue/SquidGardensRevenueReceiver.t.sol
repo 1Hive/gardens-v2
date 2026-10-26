@@ -132,6 +132,29 @@ contract SquidGardensRevenueReceiverTest is Test {
         assertEq(address(0x5AFE).balance, 1 ether);
     }
 
+    function test_receiveSquidRevenueV2_enforcesMinimumOutput() public {
+        MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
+        vm.deal(squidMulticall, 0.9 ether);
+        vm.prank(squidMulticall);
+        vm.expectRevert(
+            abi.encodeWithSelector(ISquidGardensRevenueReceiver.InsufficientOutput.selector, 0.9 ether, 1 ether)
+        );
+        receiver.receiveSquidRevenueV2{value: 0.9 ether}(
+            bytes32(uint256(1)), keccak256("community"), address(community), 1 ether
+        );
+    }
+
+    function test_receiveSquidRevenueV2_deliversAtMinimumOutput() public {
+        MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
+        vm.deal(squidMulticall, 1 ether);
+        vm.prank(squidMulticall);
+        receiver.receiveSquidRevenueV2{value: 1 ether}(
+            bytes32(uint256(1)), keccak256("community"), address(community), 1 ether
+        );
+
+        assertEq(address(0x5AFE).balance, 1 ether);
+    }
+
     function test_receiveSquidRevenue_revertsForWrongCaller() public {
         MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
         vm.expectRevert(ISquidGardensRevenueReceiver.NotSquidMulticall.selector);
@@ -220,6 +243,34 @@ contract SquidGardensRevenueReceiverTest is Test {
 
         assertEq(token.balanceOf(safe), 1 ether);
         assertEq(token.balanceOf(address(receiver)), 0);
+    }
+
+    function test_receiveSquidTokenRevenueV2_enforcesMinimumOutput() public {
+        MockRegistryCommunity community = new MockRegistryCommunity(address(0x5AFE));
+        token.mint(squidMulticall, 0.9 ether);
+        vm.startPrank(squidMulticall);
+        token.approve(address(receiver), 0.9 ether);
+        vm.expectRevert(
+            abi.encodeWithSelector(ISquidGardensRevenueReceiver.InsufficientOutput.selector, 0.9 ether, 1 ether)
+        );
+        receiver.receiveSquidTokenRevenueV2(
+            bytes32(uint256(2)), keccak256("community"), address(community), address(token), 0.9 ether, 1 ether
+        );
+        vm.stopPrank();
+    }
+
+    function test_receiveSquidTokenRevenueV2_deliversAtMinimumOutput() public {
+        address safe = address(0x5AFE);
+        MockRegistryCommunity community = new MockRegistryCommunity(safe);
+        token.mint(squidMulticall, 1 ether);
+        vm.startPrank(squidMulticall);
+        token.approve(address(receiver), 1 ether);
+        receiver.receiveSquidTokenRevenueV2(
+            bytes32(uint256(2)), keccak256("community"), address(community), address(token), 1 ether, 1 ether
+        );
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(safe), 1 ether);
     }
 
     function test_receiveSquidTokenRevenue_escrowsWhenCouncilSafeLookupReverts() public {

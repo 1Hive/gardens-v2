@@ -7,7 +7,7 @@ import "forge-std/console2.sol";
 import {SquidGardensRevenueReceiver} from "../src/MarkeeRevenue/SquidGardensRevenueReceiver.sol";
 
 /// @notice Upgrades a shared Gardens revenue receiver to accept token payouts
-/// from destination-call bridges such as LI.FI Composer.
+/// and enforce Squid V2 destination-side minimum output.
 contract UpgradeSquidGardensRevenueReceiver is Script {
     function run() external {
         address receiverProxy = vm.envAddress("GARDENS_SQUID_REVENUE_RECEIVER");

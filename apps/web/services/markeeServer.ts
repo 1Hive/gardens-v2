@@ -88,7 +88,9 @@ const squidBridgeAdapterABI = parseAbi([
 
 const squidGardensRevenueReceiverABI = parseAbi([
   "function receiveSquidRevenue(bytes32 payoutId, bytes32 communityKey, address registryCommunity) payable",
+  "function receiveSquidRevenueV2(bytes32 payoutId, bytes32 communityKey, address registryCommunity, uint256 minAmountOut) payable",
   "function receiveSquidTokenRevenue(bytes32 payoutId, bytes32 communityKey, address registryCommunity, address token, uint256 amount)",
+  "function receiveSquidTokenRevenueV2(bytes32 payoutId, bytes32 communityKey, address registryCommunity, address token, uint256 amount, uint256 minAmountOut)",
   "function receiveTokenRevenue(bytes32 communityKey, address registryCommunity, address token, uint256 amount)",
 ]);
 
@@ -189,6 +191,7 @@ type SquidRouteResponse = {
     };
     transactionRequest?: {
       data?: string;
+      expiry?: string | number;
       target?: string;
       targetAddress?: string;
       value?: string;
@@ -611,8 +614,8 @@ const getSquidRoute = async ({
           {
             callData: encodeFunctionData({
               abi: squidGardensRevenueReceiverABI,
-              args: [payoutId, communityKey, community],
-              functionName: "receiveSquidRevenue",
+              args: [payoutId, communityKey, community, 0n],
+              functionName: "receiveSquidRevenueV2",
             }),
             callType: 2,
             chainType: "evm",
@@ -639,8 +642,15 @@ const getSquidRoute = async ({
           {
             callData: encodeFunctionData({
               abi: squidGardensRevenueReceiverABI,
-              args: [payoutId, communityKey, community, destinationToken, 0n],
-              functionName: "receiveSquidTokenRevenue",
+              args: [
+                payoutId,
+                communityKey,
+                community,
+                destinationToken,
+                0n,
+                0n,
+              ],
+              functionName: "receiveSquidTokenRevenueV2",
             }),
             callType: 1,
             chainType: "evm",
@@ -774,6 +784,13 @@ const getSquidRoute = async ({
     );
   }
 
+  const now = Math.floor(Date.now() / 1000);
+  const providerExpiry = Number(transactionRequest.expiry);
+  const deadline =
+    Number.isSafeInteger(providerExpiry) && providerExpiry > now ?
+      Math.min(providerExpiry, now + 3 * 60)
+    : now + 3 * 60;
+
   const fromAmountUsd = parseDecimalToFixed(estimate?.fromAmountUSD ?? "");
   const toAmountUsd = parseDecimalToFixed(estimate?.toAmountUSD ?? "");
   const estimatedRouteDuration = Number(estimate?.estimatedRouteDuration);
@@ -801,6 +818,7 @@ const getSquidRoute = async ({
       : "ETH",
     estimatedFeeAmount: estimatedRouteLoss + executionValue - amount,
     estimatedRouteDurationSeconds,
+    deadline,
     executionValue,
     expectedAmountOut,
     routerCalldata: transactionRequest.data as Hex,
@@ -1234,7 +1252,7 @@ export const getMarkeeClaimExecutionQuote = async (
       executionValue: squidQuote.executionValue,
       gasCost,
       expectedAmountOut: squidQuote.expectedAmountOut,
-      expiresAt: now + 3 * 60,
+      expiresAt: squidQuote.deadline,
       markeeChainId,
       minAmountOut: squidQuote.expectedAmountOut,
       quoteData: encodeAbiParameters(
@@ -1244,6 +1262,7 @@ export const getMarkeeClaimExecutionQuote = async (
               { name: "inputAmount", type: "uint256" },
               { name: "expectedAmountOut", type: "uint256" },
               { name: "executionValue", type: "uint256" },
+              { name: "deadline", type: "uint256" },
               { name: "routerCalldata", type: "bytes" },
             ],
             type: "tuple",
@@ -1254,6 +1273,7 @@ export const getMarkeeClaimExecutionQuote = async (
             expectedAmountOut: squidQuote.expectedAmountOut,
             executionValue: squidQuote.executionValue,
             inputAmount: transferAmount,
+            deadline: BigInt(squidQuote.deadline),
             routerCalldata: squidQuote.routerCalldata,
           },
         ],
@@ -1451,6 +1471,7 @@ export const executeMarkeeClaim = async ({
   expectedClaimAmount,
   gasCost,
   maxFeeAmount,
+  minAmountOut,
   recipient,
 }: {
   chainId: number;
@@ -1458,6 +1479,7 @@ export const executeMarkeeClaim = async ({
   expectedClaimAmount: bigint;
   gasCost: bigint;
   maxFeeAmount: bigint;
+  minAmountOut: bigint;
   recipient: Address;
 }) => {
   const quote = await getMarkeeClaimExecutionQuote(
@@ -1480,6 +1502,12 @@ export const executeMarkeeClaim = async ({
   if (quote.estimatedFeeAmount > maxFeeAmount) {
     throw new MarkeeClaimExecutionError(
       "Bridge fees increased above the amount authorized by the council member.",
+      409,
+    );
+  }
+  if (quote.expectedAmountOut < minAmountOut) {
+    throw new MarkeeClaimExecutionError(
+      "The bridge output decreased below the amount authorized by the council member.",
       409,
     );
   }
