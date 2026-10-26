@@ -58,10 +58,11 @@ type MarkdownEditorProps = {
   className?: string;
   errors?: Record<string, string>;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  onBlur?: React.FocusEventHandler<HTMLInputElement>;
   disabled?: boolean;
   readOnly?: boolean;
   testId?: string;
-} & Omit<React.ComponentProps<typeof MDXEditor>, "onChange" | "markdown">;
+} & Omit<React.ComponentProps<typeof MDXEditor>, "onChange" | "onBlur" | "markdown">;
 
 const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
   function MarkdownEditor(
@@ -69,6 +70,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
       id,
       value,
       onChange,
+      onBlur,
       className,
       errors,
       disabled = false,
@@ -223,7 +225,9 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
       const isToolbarClick = target.closest(".mdxeditor-toolbar");
       const isPopupClick = target.closest(".mdxeditor-popup-container");
       if (isToolbarClick != null || isPopupClick != null) return;
-      const isWithinContent = target.closest(".mdxeditor-root-contenteditable");
+      const isWithinContent = target.closest(
+        ".mdxeditor-root-contenteditable, .mdxeditor-source-editor, .cm-editor",
+      );
       if (!isWithinContent) {
         event.preventDefault();
         focusEditor();
@@ -361,6 +365,19 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
                 } as HTMLInputElement,
               } as React.ChangeEvent<HTMLInputElement>;
               onChange?.(syntheticEvent);
+            }}
+            onBlur={() => {
+              // Source mode emits a detached FocusEvent with a null target.
+              // Adapt it to the field event expected by React Hook Form.
+              const target = {
+                name: id,
+                value: editorRef.current?.getMarkdown() ?? value ?? "",
+              } as HTMLInputElement;
+              onBlur?.({
+                type: "blur",
+                target,
+                currentTarget: target,
+              } as React.FocusEvent<HTMLInputElement>);
             }}
             {...rest}
           />
