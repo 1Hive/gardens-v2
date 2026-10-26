@@ -371,14 +371,7 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
                 || !allowedSwapTargets[chainId][swapCall.target]
         ) revert UnboundRoute();
         bytes4 selector = _selector(swapCall.callData);
-        SwapDetails memory swap = SwapDetails({
-            tokenIn: address(0),
-            tokenOut: address(0),
-            recipient: address(0),
-            amountIn: 0,
-            amountOutMinimum: 0,
-            inputPosition: 0
-        });
+        SwapDetails memory swap;
         if (selector == EXACT_INPUT_SINGLE_SELECTOR) {
             swap = _decodeExactInputSingle(swapCall.callData);
         } else if (selector == EXACT_INPUT_SINGLE_WITH_DEADLINE_SELECTOR) {
@@ -403,12 +396,10 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
     }
 
     function _decodeExactInputSingle(bytes memory callData) internal pure returns (SwapDetails memory swap) {
-        uint24 fee;
-        uint160 sqrtPriceLimit;
-        (swap.tokenIn, swap.tokenOut, fee, swap.recipient, swap.amountIn, swap.amountOutMinimum, sqrtPriceLimit) =
-            abi.decode(_withoutSelector(callData), (address, address, uint24, address, uint256, uint256, uint160));
-        fee;
-        sqrtPriceLimit;
+        bytes memory arguments = _withoutSelector(callData);
+        (swap.tokenIn, swap.tokenOut,, swap.recipient) = abi.decode(arguments, (address, address, uint24, address));
+        (swap.amountIn, swap.amountOutMinimum,) =
+            abi.decode(_slice(arguments, 4 * 32, 3 * 32), (uint256, uint256, uint160));
         swap.inputPosition = 4;
     }
 
@@ -417,24 +408,11 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
         view
         returns (SwapDetails memory swap)
     {
-        uint24 fee;
+        bytes memory arguments = _withoutSelector(callData);
         uint256 deadline;
-        uint160 sqrtPriceLimit;
-        (
-            swap.tokenIn,
-            swap.tokenOut,
-            fee,
-            swap.recipient,
-            deadline,
-            swap.amountIn,
-            swap.amountOutMinimum,
-            sqrtPriceLimit
-        ) =
-            abi.decode(
-                _withoutSelector(callData), (address, address, uint24, address, uint256, uint256, uint256, uint160)
-            );
-        fee;
-        sqrtPriceLimit;
+        (swap.tokenIn, swap.tokenOut,, swap.recipient) = abi.decode(arguments, (address, address, uint24, address));
+        (deadline, swap.amountIn, swap.amountOutMinimum,) =
+            abi.decode(_slice(arguments, 4 * 32, 4 * 32), (uint256, uint256, uint256, uint160));
         if (deadline < block.timestamp) revert UnboundRoute();
         swap.inputPosition = 5;
     }
@@ -582,9 +560,18 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
 
     function _withoutSelector(bytes memory data) internal pure returns (bytes memory result) {
         if (data.length < 4) revert UnboundRoute();
-        result = new bytes(data.length - 4);
-        for (uint256 i; i < result.length; ++i) {
-            result[i] = data[i + 4];
+        return _slice(data, 4, data.length - 4);
+    }
+
+    function _slice(bytes memory data, uint256 start, uint256 length) internal pure returns (bytes memory result) {
+        if (data.length < start + length) revert UnboundRoute();
+        result = new bytes(length);
+        assembly {
+            let source := add(add(data, 0x20), start)
+            let destination := add(result, 0x20)
+            for { let offset := 0 } lt(offset, length) { offset := add(offset, 0x20) } {
+                mstore(add(destination, offset), mload(add(source, offset)))
+            }
         }
     }
 }
