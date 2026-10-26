@@ -1,0 +1,51 @@
+{
+  "contract": "SquidGardensRevenueReceiver",
+  "reason": "Remove the unused Squid V1 native and token callback selectors while preserving V2 minimum-output enforcement.",
+  "sourceCommit": "2424088a77749db49ddd167e31905b61265c09a0",
+  "compiler": "0.8.23",
+  "deployer": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+  "chains": {
+    "ethereum": {
+      "chainId": 1,
+      "proxy": "0xF6437EcB8d70ff8FeA74a6D8bC50946c3a7DB5D2",
+      "implementation": "0x4aE69fFBEf15b511c88cce0cEe7b41F302158AFF",
+      "deploymentTransaction": "0xa961ded1a3fc5b47c6ccd5dd89e15d511cae9bb649c68522d5e2943fdfa3e350",
+      "upgradeTransaction": "0x4de084d03125460eb2da34b54ba5bac19d68a86b21dc0514b8b02a1cac81d6c8"
+    },
+    "optimism": {
+      "chainId": 10,
+      "proxy": "0x03b1073D285C240bB074b37841adb83c7CCdD329",
+      "implementation": "0xfc930A224c69238BA83BE9EA18763231A0a1Dff4",
+      "deploymentTransaction": "0x836b152c9b12a54fca1427086ca70175120f6761b4f16daea9e4f496d43c80dc",
+      "upgradeTransaction": "0x46fb8957186359e8b8aaf3c1784b0099976517d2f08dd32f0e8452eff5062d68"
+    },
+    "arbitrum": {
+      "chainId": 42161,
+      "proxy": "0xc224E441368864c91EB721A0b82911ABb861880f",
+      "implementation": "0x1343DF449cF53cf9d69Fab19dC9947b238D312D7",
+      "deploymentTransaction": "0x58b3627c63c3559771bf03667d4a7599b5f6ddb6612581fd1a605374dbce8012",
+      "upgradeTransaction": "0x679e021eaebc2c9a5517dca28edfbc8dc8c7e405aaaaca6aa910d6f13db299f8"
+    },
+    "polygon": {
+      "chainId": 137,
+      "proxy": "0x047328Eb5c7e09c66CB3238F0D6603b2D547cBC0",
+      "implementation": "0x9ADeE7d7299cE6760F1911387B01E7Ae75fB6163",
+      "deploymentTransaction": "0x3d6d96532e33039eaa5e8c2c373f3fea80b6a3a2832b75a426159065fd3cd6bd",
+      "upgradeTransaction": "0x86c9260c40af80fb18c655ce11aa3af4269422f620041628e43d0215e8e19248"
+    },
+    "gnosis": {
+      "chainId": 100,
+      "proxy": "0xd6DD4D4364D2bbB8C95086E52C877fb41ec3b7aE",
+      "implementation": "0x59110bE1e7159dcEAEA8E6fA0bD2e6a5Bb456F22",
+      "deploymentTransaction": "0x4f572fb85a9d04ce0f1ba0774f18d73b2b463cb41f343a3f101eb00aa3566e24",
+      "upgradeTransaction": "0xf81bca4c183c7aaa781377d963aa08538d6970a7bd3ad53611937532f5649b5a"
+    },
+    "celo": {
+      "chainId": 42220,
+      "proxy": "0xCBE14EB5ddD78929E6C48226889cA317017D9339",
+      "implementation": "0x9E15695E3546987C252F6EB74EBa198b0b73EF03",
+      "deploymentTransaction": "0x0775c5c823931e509b328ecce3a66daa434ee3164a6a95bc85df412d74cc22bf",
+      "upgradeTransaction": "0xb124a84d9ff88bbb3c4602137bd512165cb4fd741b983fce90634be1570d33dc"
+    }
+  }
+}
