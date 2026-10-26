@@ -2268,9 +2268,11 @@ contract PoC_MarkeePayoutIdPreConsumption is Test {
         token.approve(address(receiver), type(uint256).max);
 
         // Attacker-controlled dust delivery using the same public payout ID.
-        receiver.receiveSquidTokenRevenue(suppliedPayoutId, communityKey, address(community), address(token), 1);
+        receiver.receiveSquidTokenRevenueV2(suppliedPayoutId, communityKey, address(community), address(token), 1, 1);
         // The legitimate route must still settle instead of reverting as a duplicate.
-        receiver.receiveSquidTokenRevenue(suppliedPayoutId, communityKey, address(community), address(token), 100);
+        receiver.receiveSquidTokenRevenueV2(
+            suppliedPayoutId, communityKey, address(community), address(token), 100, 100
+        );
         vm.stopPrank();
 
         assertEq(token.balanceOf(safe), 101, "legitimate revenue must not be denied");
@@ -2301,8 +2303,8 @@ contract PoC_MarkeeSafeLookupFailureEscrow is Test {
         token.mint(multicall, amount);
         vm.startPrank(multicall);
         token.approve(address(receiver), amount);
-        receiver.receiveSquidTokenRevenue(
-            keccak256("provider-payout"), keccak256("community"), address(community), address(token), amount
+        receiver.receiveSquidTokenRevenueV2(
+            keccak256("provider-payout"), keccak256("community"), address(community), address(token), amount, amount
         );
         vm.stopPrank();
 

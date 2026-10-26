@@ -87,9 +87,7 @@ const squidBridgeAdapterABI = parseAbi([
 ]);
 
 const squidGardensRevenueReceiverABI = parseAbi([
-  "function receiveSquidRevenue(bytes32 payoutId, bytes32 communityKey, address registryCommunity) payable",
   "function receiveSquidRevenueV2(bytes32 payoutId, bytes32 communityKey, address registryCommunity, uint256 minAmountOut) payable",
-  "function receiveSquidTokenRevenue(bytes32 payoutId, bytes32 communityKey, address registryCommunity, address token, uint256 amount)",
   "function receiveSquidTokenRevenueV2(bytes32 payoutId, bytes32 communityKey, address registryCommunity, address token, uint256 amount, uint256 minAmountOut)",
   "function receiveTokenRevenue(bytes32 communityKey, address registryCommunity, address token, uint256 amount)",
 ]);
