@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+import { AsyncLocalStorage } from "node:async_hooks";
 import { Client as NotionClient } from "@notionhq/client";
 import pinataSDK from "@pinata/sdk";
 import { NextResponse } from "next/server";
@@ -23,8 +24,18 @@ import {
   getTokenUsdPrice,
   hydrateTokenPriceCache,
 } from "@/services/coingecko";
-import { createNotionRequestRunner } from "@/services/notion-rate-limit";
+import {
+  createNotionRequestRunner,
+  NotionRequestBudgetExceededError,
+} from "@/services/notion-rate-limit";
 import { ensureNotionRichTextSchema } from "@/services/notion-schema";
+import {
+  createNotionSyncProgress,
+  markNotionSyncComplete,
+  markNotionSyncFailed,
+  markNotionWalletProcessed,
+  NotionSyncCleanupError,
+} from "@/services/notion-sync-progress";
 import { getSuperfluidPointsClient } from "@/services/superfluid-points";
 import { erc20ABI } from "@/src/generated";
 import { ChainId } from "@/types";
@@ -367,9 +378,13 @@ const normalizeForPinata = <T>(payload: T): T => {
 };
 const NOTION_DB_ID = process.env.NOTION_DB_ID;
 const NOTION_TOKEN = process.env.NOTION_TOKEN;
+const NOTION_REQUEST_TIMEOUT_MS = 60_000;
 const notionClient =
   NOTION_DB_ID && NOTION_TOKEN ?
-    new NotionClient({ auth: NOTION_TOKEN })
+    new NotionClient({
+      auth: NOTION_TOKEN,
+      timeoutMs: NOTION_REQUEST_TIMEOUT_MS,
+    })
   : null;
 const NOTION_DB_ID_TRIMMED = NOTION_DB_ID?.trim();
 const NOTION_DB_ID_NORMALIZED =
@@ -382,9 +397,10 @@ const NOTION_DATA_SOURCE_ID_BY_CAMPAIGN: Record<string, string> = {
   "706": "36bd6929-d014-808c-8fc2-000b77b14155",
 };
 let notionDataSourceId: string | null = NOTION_DATA_SOURCE_ID;
-const runNotionRequest = createNotionRequestRunner({
+const notionRequestDeadline = new AsyncLocalStorage<number>();
+const runQueuedNotionRequest = createNotionRequestRunner({
   onRetry: ({ operation, attempt, delayMs, error }) => {
-    console.warn("[superfluid-points] Notion request rate limited, retrying", {
+    console.warn("[superfluid-points] Notion request failed, retrying", {
       operation,
       attempt,
       delayMs,
@@ -393,6 +409,16 @@ const runNotionRequest = createNotionRequestRunner({
     });
   },
 });
+const runNotionRequest = <T>(
+  operation: string,
+  request: () => Promise<T>,
+  { retryTransient = true }: { retryTransient?: boolean } = {},
+): Promise<T> =>
+  runQueuedNotionRequest(operation, request, {
+    retryTransient,
+    deadlineMs: notionRequestDeadline.getStore(),
+    requestTimeoutMs: NOTION_REQUEST_TIMEOUT_MS,
+  });
 const buildWalletCsv = (
   entries: {
     address: string;
@@ -586,6 +612,7 @@ const archiveNotionPages = async ({
         reason,
         error,
       });
+      throw new NotionSyncCleanupError(error);
     }
   }
   if (archived > 0) {
@@ -688,10 +715,14 @@ const upsertNotionWallet = async ({
           );
         }
       } catch (err) {
-        console.warn("[superfluid-points] notion lookup failed, will create", {
-          address: normalized,
-          err,
-        });
+        console.warn(
+          "[superfluid-points] notion lookup failed, stopping upsert",
+          {
+            address: normalized,
+            err,
+          },
+        );
+        throw err;
       }
     }
 
@@ -754,14 +785,19 @@ const upsertNotionWallet = async ({
         address: normalized,
         props,
       });
-      await runNotionRequest("create wallet page", () =>
-        notionClient.pages.create({
-          parent: {
-            type: "data_source_id",
-            data_source_id: dataSourceId,
-          },
-          properties: props,
-        }),
+      await runNotionRequest(
+        "create wallet page",
+        () =>
+          notionClient.pages.create({
+            parent: {
+              type: "data_source_id",
+              data_source_id: dataSourceId,
+            },
+            properties: props,
+          }),
+        // A 5xx may arrive after creation committed. The next full scan will
+        // find that row; retrying here could create a second wallet page.
+        { retryTransient: false },
       );
     }
     return true;
@@ -3375,6 +3411,7 @@ const processChain = async ({
 };
 
 export async function GET(req: Request) {
+  const runStartedAt = Date.now();
   const runLogBuffer: string[] = [];
   const isLocalEnv =
     process.env.VERCEL !== "1" && process.env.NODE_ENV !== "production";
@@ -4135,18 +4172,7 @@ export async function GET(req: Request) {
         pinPointsSnapshotToIpfs(walletBreakdown, snapshotName)
       : null;
 
-    let notionSync = {
-      attempted: false,
-      success: false,
-      processed: 0,
-      failed: 0,
-      skipped: 0,
-      error: null as {
-        message: string;
-        code: string | null;
-        status: number | null;
-      } | null,
-    };
+    const notionSync = createNotionSyncProgress(walletBreakdown.length);
 
     if (
       canSyncNotion &&
@@ -4155,138 +4181,147 @@ export async function GET(req: Request) {
       !notionDisabled
     ) {
       notionSync.attempted = true;
+      let notionPhase: "prepare" | "wallet" | "cleanup" = "prepare";
       try {
-        const checksumReady = await ensureNotionChecksumProperty();
-        const breakdownReady = await ensureNotionBreakdownProperty();
-        if (!checksumReady || !breakdownReady) {
-          throw new Error("Notion schema is missing required properties");
-        }
-
-        // Fetch existing pages to update in place
-        let cursor: string | undefined;
-        let fetched = 0;
-        do {
-          const body: Record<string, any> = { page_size: 50 };
-          if (cursor) body.start_cursor = cursor;
-          const res = await notionQueryDb(body);
-          if (!res) {
-            throw new Error("Notion existing-page scan was incomplete");
-          }
-          cursor = res.next_cursor ?? undefined;
-          const pages = res.results ?? [];
-          for (const page of pages) {
-            const pid = (page as any)?.id;
-            const wallet = page?.properties?.Wallet?.title?.[0]?.plain_text;
-            const total =
-              page?.properties?.["Total Pts"]?.number ??
-              page?.properties?.Total?.number ??
-              0;
-            const checksum =
-              page?.properties?.Checksum?.rich_text?.[0]?.plain_text ?? null;
-            if (pid && typeof wallet === "string") {
-              const normalizedWallet = wallet.toLowerCase();
-              const existingPagesForWallet =
-                notionExistingPages.get(normalizedWallet) ?? [];
-              existingPagesForWallet.push({
-                pageId: pid,
-                totalPts: typeof total === "number" ? total : 0,
-                checksum: typeof checksum === "string" ? checksum : null,
-              });
-              notionExistingPages.set(normalizedWallet, existingPagesForWallet);
-              fetched += 1;
+        // Leave 30 seconds for snapshot/run-log completion and the response.
+        // Async-local scope prevents overlapping runs from sharing a deadline.
+        // This gates new requests/retries; it does not cancel in-flight SDK work.
+        await notionRequestDeadline.run(
+          runStartedAt + maxDuration * 1_000 - 30_000,
+          async () => {
+            const checksumReady = await ensureNotionChecksumProperty();
+            const breakdownReady = await ensureNotionBreakdownProperty();
+            if (!checksumReady || !breakdownReady) {
+              throw new Error("Notion schema is missing required properties");
             }
-          }
-        } while (cursor);
-        console.log("[superfluid-points] Notion existing pages fetched", {
-          count: fetched,
-        });
 
-        console.log("[superfluid-points] Syncing wallet points to Notion", {
-          count: walletBreakdown.length,
-        });
-        const progressInterval = 25;
-        const seen = new Set<string>();
-        for (const wallet of walletBreakdown) {
-          const walletKey = wallet.address.toLowerCase();
-          seen.add(walletKey);
-          const existingPages = notionExistingPages.get(walletKey) ?? [];
-          const [existing] = existingPages;
-          const duplicatePageIds = existingPages
-            .slice(1)
-            .map((entry) => entry.pageId);
-          let ok = true;
-          if (existing?.checksum === wallet.checksum) {
-            notionSync.skipped += 1;
-            await archiveNotionPages({
-              pageIds: duplicatePageIds,
-              reason: `duplicate wallet ${walletKey}`,
+            // Fetch existing pages to update in place
+            let cursor: string | undefined;
+            let fetched = 0;
+            do {
+              const body: Record<string, any> = { page_size: 50 };
+              if (cursor) body.start_cursor = cursor;
+              const res = await notionQueryDb(body);
+              if (!res) {
+                throw new Error("Notion existing-page scan was incomplete");
+              }
+              cursor = res.next_cursor ?? undefined;
+              const pages = res.results ?? [];
+              for (const page of pages) {
+                const pid = (page as any)?.id;
+                const wallet = page?.properties?.Wallet?.title?.[0]?.plain_text;
+                const total =
+                  page?.properties?.["Total Pts"]?.number ??
+                  page?.properties?.Total?.number ??
+                  0;
+                const checksum =
+                  page?.properties?.Checksum?.rich_text?.[0]?.plain_text ??
+                  null;
+                if (pid && typeof wallet === "string") {
+                  const normalizedWallet = wallet.toLowerCase();
+                  const existingPagesForWallet =
+                    notionExistingPages.get(normalizedWallet) ?? [];
+                  existingPagesForWallet.push({
+                    pageId: pid,
+                    totalPts: typeof total === "number" ? total : 0,
+                    checksum: typeof checksum === "string" ? checksum : null,
+                  });
+                  notionExistingPages.set(
+                    normalizedWallet,
+                    existingPagesForWallet,
+                  );
+                  fetched += 1;
+                }
+              }
+            } while (cursor);
+            console.log("[superfluid-points] Notion existing pages fetched", {
+              count: fetched,
             });
-          } else {
-            ok = await upsertNotionWallet({
-              address: wallet.address,
-              fundPoints: wallet.fundPoints,
-              streamPoints: wallet.streamPoints,
-              governanceStakePoints: wallet.governanceStakePoints,
-              farcasterPoints: wallet.farcasterPoints,
-              totalPoints: wallet.totalPoints,
-              breakdown: wallet.breakdown,
-              existingPageId: existing?.pageId ?? null,
-              existingChecksum: existing?.checksum ?? null,
-              duplicatePageIds,
-              lookupWhenMissing: false,
-            });
-          }
-          if (!ok) {
-            throw new Error(
-              "Notion wallet upsert failed; stopping for a resumable retry",
-            );
-          }
-          notionSync.processed += 1;
-          if (
-            notionSync.processed % progressInterval === 0 ||
-            notionSync.processed === walletBreakdown.length
-          ) {
-            console.log("[superfluid-points] Notion sync progress", {
-              processed: notionSync.processed,
-              failed: notionSync.failed,
-              skipped: notionSync.skipped,
-              remaining: walletBreakdown.length - notionSync.processed,
-            });
-          }
-        }
 
-        // Archive rows no longer present
-        const toArchive: string[] = [];
-        for (const [wallet, entries] of notionExistingPages.entries()) {
-          if (!seen.has(wallet)) {
-            toArchive.push(...entries.map((entry) => entry.pageId));
-          }
-        }
-        const archived = await archiveNotionPages({
-          pageIds: toArchive,
-          reason: "wallet no longer present",
-        });
-        if (toArchive.length) {
-          console.log("[superfluid-points] Notion archived removed rows", {
-            archived,
-          });
-        }
+            console.log("[superfluid-points] Syncing wallet points to Notion", {
+              count: walletBreakdown.length,
+            });
+            const progressInterval = 25;
+            const seen = new Set<string>();
+            for (const wallet of walletBreakdown) {
+              notionPhase = "wallet";
+              const walletKey = wallet.address.toLowerCase();
+              seen.add(walletKey);
+              const existingPages = notionExistingPages.get(walletKey) ?? [];
+              const [existing] = existingPages;
+              const duplicatePageIds = existingPages
+                .slice(1)
+                .map((entry) => entry.pageId);
+              let ok = true;
+              if (existing?.checksum === wallet.checksum) {
+                await archiveNotionPages({
+                  pageIds: duplicatePageIds,
+                  reason: `duplicate wallet ${walletKey}`,
+                });
+              } else {
+                ok = await upsertNotionWallet({
+                  address: wallet.address,
+                  fundPoints: wallet.fundPoints,
+                  streamPoints: wallet.streamPoints,
+                  governanceStakePoints: wallet.governanceStakePoints,
+                  farcasterPoints: wallet.farcasterPoints,
+                  totalPoints: wallet.totalPoints,
+                  breakdown: wallet.breakdown,
+                  existingPageId: existing?.pageId ?? null,
+                  existingChecksum: existing?.checksum ?? null,
+                  duplicatePageIds,
+                  lookupWhenMissing: false,
+                });
+              }
+              if (!ok) {
+                throw new Error(
+                  "Notion wallet upsert failed; stopping for a resumable retry",
+                );
+              }
+              markNotionWalletProcessed(notionSync, {
+                skipped: existing?.checksum === wallet.checksum,
+              });
+              if (
+                notionSync.processed % progressInterval === 0 ||
+                notionSync.processed === walletBreakdown.length
+              ) {
+                console.log("[superfluid-points] Notion sync progress", {
+                  processed: notionSync.processed,
+                  failed: notionSync.failed,
+                  skipped: notionSync.skipped,
+                  remaining: notionSync.remaining,
+                });
+              }
+            }
+
+            // Archive rows no longer present
+            notionPhase = "cleanup";
+            const toArchive: string[] = [];
+            for (const [wallet, entries] of notionExistingPages.entries()) {
+              if (!seen.has(wallet)) {
+                toArchive.push(...entries.map((entry) => entry.pageId));
+              }
+            }
+            const archived = await archiveNotionPages({
+              pageIds: toArchive,
+              reason: "wallet no longer present",
+            });
+            if (toArchive.length) {
+              console.log("[superfluid-points] Notion archived removed rows", {
+                archived,
+              });
+            }
+          },
+        );
+        markNotionSyncComplete(notionSync);
       } catch (error) {
         console.error("[superfluid-points] Notion sync failure", error);
-        notionSync.error = {
-          message: error instanceof Error ? error.message : String(error),
-          code:
-            typeof (error as any)?.code === "string" ?
-              (error as any).code
-            : null,
-          status:
-            typeof (error as any)?.status === "number" ?
-              (error as any).status
-            : null,
-        };
-        notionSync.failed += walletBreakdown.length - notionSync.processed;
+        markNotionSyncFailed(notionSync, error, notionPhase, {
+          requestNotAttempted:
+            error instanceof NotionRequestBudgetExceededError &&
+            !error.requestAttempted,
+        });
       }
-      notionSync.success = notionSync.failed === 0;
     } else {
       if (!notionSync.attempted) {
         console.log("[superfluid-points] Skipping Notion sync", {
@@ -4308,6 +4343,8 @@ export async function GET(req: Request) {
           processed: notionSync.processed,
           failed: notionSync.failed,
           skipped: notionSync.skipped,
+          remaining: notionSync.remaining,
+          failurePhase: notionSync.failurePhase,
           total: walletBreakdown.length,
           error: notionSync.error,
         },
