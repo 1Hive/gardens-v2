@@ -11,6 +11,7 @@ const quote = {
   claimAmount: 100000n,
   estimatedFeeAmount: 1001n,
   estimatedNetworkFeeAmount: 200n,
+  expectedAmountOut: 98_999n,
   markeeChainId: 8453,
   recipient,
 } as const;

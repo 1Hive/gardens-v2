@@ -6,7 +6,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 
 import {CommunityRevenueVault} from "../src/MarkeeRevenue/CommunityRevenueVault.sol";
 import {GardensMarkeeRouter} from "../src/MarkeeRevenue/GardensMarkeeRouter.sol";
-import {SquidBridgeAdapter} from "../src/MarkeeRevenue/SquidBridgeAdapter.sol";
+import {SquidBridgeAdapterV2} from "../src/MarkeeRevenue/SquidBridgeAdapterV2.sol";
 import {IGardensMarkeeRouter} from "../src/MarkeeRevenue/interfaces/IGardensMarkeeRouter.sol";
 
 // Canonical Base ETHx and WETH, per the locked V1 decisions.
@@ -18,7 +18,7 @@ address constant MARKEE_KEEPER = 0xb5f2B971878dD2Bc8A0c53635f33280F34C41F2A;
 
 /// @notice Deploys the Base singleton `GardensMarkeeRouter` (behind an
 /// `ERC1967Proxy`, owned by the network's `PROXY_OWNER`), its
-/// `CommunityRevenueVault` clone implementation, and a `SquidBridgeAdapter`.
+/// `CommunityRevenueVault` clone implementation, and a `SquidBridgeAdapterV2`.
 ///
 /// The adapter is first constructed with `router = address(0)` because its
 /// `onlyRouter` gate needs the proxy address. Once the proxy exists, the
@@ -46,7 +46,7 @@ contract DeployGardensMarkeeRouter is BaseMultiChain {
         address celoReceiver = vm.envAddress("MARKEE_RECEIVER_CELO");
 
         address vaultImplementation = address(new CommunityRevenueVault());
-        SquidBridgeAdapter adapter = new SquidBridgeAdapter(address(0), SQUID_ROUTER);
+        SquidBridgeAdapterV2 adapter = new SquidBridgeAdapterV2(address(0), SQUID_ROUTER);
         address routerImplementation = address(new GardensMarkeeRouter());
 
         address routerProxy = address(
@@ -83,7 +83,7 @@ contract DeployGardensMarkeeRouter is BaseMultiChain {
 
         console2.log("Proxy owner", proxyOwner);
         console2.log("CommunityRevenueVault impl", vaultImplementation);
-        console2.log("SquidBridgeAdapter", address(adapter));
+        console2.log("SquidBridgeAdapterV2", address(adapter));
         console2.log("StreamingLeaderboardFactory", STREAMING_LEADERBOARD_FACTORY);
         console2.log("Keeper", MARKEE_KEEPER);
         console2.log("GardensMarkeeRouter impl", routerImplementation);

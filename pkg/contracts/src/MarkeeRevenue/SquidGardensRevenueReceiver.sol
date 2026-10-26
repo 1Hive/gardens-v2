@@ -39,6 +39,29 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
         address token,
         uint256 amount
     ) external onlySquidMulticall nonReentrant {
+        _receiveSquidTokenRevenue(payoutId, communityKey, registryCommunity, token, amount);
+    }
+
+    /// @inheritdoc ISquidGardensRevenueReceiver
+    function receiveSquidTokenRevenueV2(
+        bytes32 payoutId,
+        bytes32 communityKey,
+        address registryCommunity,
+        address token,
+        uint256 amount,
+        uint256 minAmountOut
+    ) external onlySquidMulticall nonReentrant {
+        if (amount < minAmountOut) revert InsufficientOutput(amount, minAmountOut);
+        _receiveSquidTokenRevenue(payoutId, communityKey, registryCommunity, token, amount);
+    }
+
+    function _receiveSquidTokenRevenue(
+        bytes32 payoutId,
+        bytes32 communityKey,
+        address registryCommunity,
+        address token,
+        uint256 amount
+    ) internal {
         if (registryCommunity == address(0) || token == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroValue();
         payoutId = _reservePayoutId(payoutId, communityKey, registryCommunity, token, amount);
@@ -123,6 +146,21 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
         onlySquidMulticall
         nonReentrant
     {
+        _receiveSquidRevenue(payoutId, communityKey, registryCommunity);
+    }
+
+    /// @inheritdoc ISquidGardensRevenueReceiver
+    function receiveSquidRevenueV2(
+        bytes32 payoutId,
+        bytes32 communityKey,
+        address registryCommunity,
+        uint256 minAmountOut
+    ) external payable onlySquidMulticall nonReentrant {
+        if (msg.value < minAmountOut) revert InsufficientOutput(msg.value, minAmountOut);
+        _receiveSquidRevenue(payoutId, communityKey, registryCommunity);
+    }
+
+    function _receiveSquidRevenue(bytes32 payoutId, bytes32 communityKey, address registryCommunity) internal {
         if (msg.value == 0) revert ZeroValue();
         if (registryCommunity == address(0)) revert ZeroAddress();
         payoutId = _reservePayoutId(payoutId, communityKey, registryCommunity, address(0), msg.value);

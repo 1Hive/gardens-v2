@@ -89,6 +89,7 @@ describe("Markee manual claim authorization", () => {
       claimAmount: BigInt("420000000000000000"),
       estimatedFeeAmount: BigInt("2000000000000000"),
       estimatedNetworkFeeAmount: BigInt("1000000000000000"),
+      expectedAmountOut: BigInt("418000000000000000"),
       markeeChainId: 11155111,
       recipient: councilSafe,
     });
@@ -133,6 +134,7 @@ describe("Markee manual claim authorization", () => {
           communityChainId: "100",
           markeeChainId: "11155111",
           maxFeeAmount: "2000000000000000",
+          minAmountOut: "418000000000000000",
           recipient: councilSafe,
           registryCommunity: community,
         },
@@ -155,6 +157,7 @@ describe("Markee manual claim authorization", () => {
       claimAmount: 420000n,
       estimatedFeeAmount: 2000n,
       estimatedNetworkFeeAmount: 1000n,
+      expectedAmountOut: 418000n,
       markeeChainId: 11155111,
       recipient: councilSafe,
     } as const;
@@ -179,6 +182,7 @@ describe("Markee manual claim authorization", () => {
       claimAmount: "420000",
       gasCost: "1000",
       maxFeeAmount: "2100",
+      minAmountOut: "418000",
     });
     const verified = await callRoute({
       action: "verify",
@@ -191,6 +195,7 @@ describe("Markee manual claim authorization", () => {
         expectedClaimAmount: 420000n,
         gasCost: 1000n,
         maxFeeAmount: 2100n,
+        minAmountOut: 418000n,
       }),
     );
   });
@@ -266,6 +271,7 @@ describe("Markee manual claim authorization", () => {
           claimant: councilOwner,
           gasCost: BigInt("1000000000000000"),
           maxFeeAmount: BigInt("2000000000000000"),
+          minAmountOut: BigInt("418000000000000000"),
           recipient: councilSafe,
         }),
         primaryType: "ClaimAuthorization",
@@ -278,6 +284,7 @@ describe("Markee manual claim authorization", () => {
       expectedClaimAmount: BigInt("420000000000000000"),
       gasCost: BigInt("1000000000000000"),
       maxFeeAmount: BigInt("2000000000000000"),
+      minAmountOut: BigInt("418000000000000000"),
       recipient: councilSafe,
     });
   });
