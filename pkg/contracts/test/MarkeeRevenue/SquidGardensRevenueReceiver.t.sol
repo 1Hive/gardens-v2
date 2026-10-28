@@ -770,6 +770,30 @@ contract SquidGardensRevenueReceiverTest is Test {
         receiver.recoverTokenPayout(payoutId, badRecoveryTarget);
     }
 
+    function test_initializeTokenLiabilityAccounting_upgradesReceiverAlreadyAtVersionTwo() public {
+        address[] memory liabilityTokens = new address[](1);
+        liabilityTokens[0] = address(token);
+        uint256[] memory liabilityAmounts = new uint256[](1);
+        liabilityAmounts[0] = 1 ether;
+
+        // Simulate the live Gnosis receiver, whose prior upgrade already used initializer version 2.
+        vm.store(address(receiver), bytes32(uint256(0)), bytes32(uint256(2)));
+        vm.store(address(receiver), bytes32(uint256(157)), bytes32(0));
+
+        address implementation = address(new SquidGardensRevenueReceiver());
+        vm.prank(proxyOwner);
+        receiver.upgradeToAndCall(
+            implementation,
+            abi.encodeCall(
+                SquidGardensRevenueReceiver.initializeTokenLiabilityAccounting, (liabilityTokens, liabilityAmounts)
+            )
+        );
+
+        assertTrue(receiver.tokenLiabilityAccountingInitialized());
+        assertEq(receiver.unresolvedTokenLiability(address(token)), 1 ether);
+        assertEq(uint256(vm.load(address(receiver), bytes32(uint256(0)))), 3);
+    }
+
     function test_recoverUntrackedToken_deliversFallbackBalance() public {
         address recoveryTarget = address(0xFEE);
         token.mint(address(receiver), 1 ether);

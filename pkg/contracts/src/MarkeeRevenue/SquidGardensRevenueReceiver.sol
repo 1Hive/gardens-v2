@@ -128,10 +128,11 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
     }
 
     /// @notice Seeds aggregate liabilities when upgrading an existing receiver.
-    /// @dev The owner must derive these values from unresolved TokenPayoutEscrowed records.
+    /// @dev Version 3 is required because an earlier Gnosis receiver upgrade already consumed version 2.
+    ///      The owner must derive these values from unresolved TokenPayoutEscrowed records.
     function initializeTokenLiabilityAccounting(address[] calldata tokens, uint256[] calldata liabilities)
         external
-        reinitializer(2)
+        reinitializer(3)
         onlyOwner
     {
         if (tokenLiabilityAccountingInitialized) revert LiabilityAccountingAlreadyInitialized();
