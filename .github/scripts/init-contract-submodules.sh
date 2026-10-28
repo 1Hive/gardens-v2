@@ -17,5 +17,13 @@ git submodule update --init --force --depth=1 --recursive \
 git submodule update --init --force --depth=1 lib/allo-v2
 git -C lib/allo-v2 submodule sync
 git -C lib/allo-v2 submodule update --init --force --depth=1 --recursive \
+  lib/eas-contracts \
+  lib/forge-std \
   lib/hats-protocol \
-  lib/solady
+  lib/hedgey-vesting \
+  lib/openzeppelin-contracts \
+  lib/openzeppelin-contracts-upgradeable \
+  lib/permit2 \
+  lib/solady \
+  lib/superfluid-protocol-monorepo \
+  lib/v2-core
