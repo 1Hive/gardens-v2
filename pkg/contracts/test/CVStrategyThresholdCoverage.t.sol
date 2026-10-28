@@ -132,17 +132,15 @@ contract CVStrategyThresholdCoverage is Test {
         );
 
         assertFalse(localStrategy.submitterActiveProposalCountsInitialized());
-        assertEq(localStrategy.submitterActiveProposalCountsMigrationCursor(), 1);
-        assertEq(localStrategy.submitterActiveProposalCountsMigrationEnd(), 3);
 
         localStrategy.migrateSubmitterActiveProposalCounts(1);
         assertFalse(localStrategy.submitterActiveProposalCountsInitialized());
-        assertEq(localStrategy.activeProposalCountBySubmitter(member), 1);
-        assertEq(localStrategy.activeProposalCountBySubmitter(secondMember), 0);
+        assertEq(localStrategy.getActiveProposalCountBySubmitter(member), 1);
+        assertEq(localStrategy.getActiveProposalCountBySubmitter(secondMember), 0);
 
         localStrategy.migrateSubmitterActiveProposalCounts(2);
         assertTrue(localStrategy.submitterActiveProposalCountsInitialized());
-        assertEq(localStrategy.activeProposalCountBySubmitter(secondMember), 1);
+        assertEq(localStrategy.getActiveProposalCountBySubmitter(secondMember), 1);
 
         vm.expectRevert();
         localStrategy.reinitializeV3MigrateSubmitterActiveProposalCounts();

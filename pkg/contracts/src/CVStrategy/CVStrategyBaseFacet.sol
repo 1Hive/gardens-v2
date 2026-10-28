@@ -261,11 +261,11 @@ abstract contract CVStrategyBaseFacet {
 
     /// @notice Next historical proposal id to process during the bounded migration
     // slither-disable-next-line uninitialized-state
-    uint256 public submitterActiveProposalCountsMigrationCursor;
+    uint256 internal submitterActiveProposalCountsMigrationCursor;
 
     /// @notice Last proposal id included in the bounded migration snapshot
     // slither-disable-next-line uninitialized-state
-    uint256 public submitterActiveProposalCountsMigrationEnd;
+    uint256 internal submitterActiveProposalCountsMigrationEnd;
 
     /// @dev Reserved storage space to allow for layout changes in the future
     /// @dev This gap is at the end of storage to allow adding new variables without shifting slots

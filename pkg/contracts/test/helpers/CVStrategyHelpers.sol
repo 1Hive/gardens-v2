@@ -523,6 +523,10 @@ contract CVStrategyHarness is CVStrategy {
         submitterActiveProposalCountsInitialized = initialized;
     }
 
+    function getActiveProposalCountBySubmitter(address submitter) external view returns (uint256) {
+        return activeProposalCountBySubmitter[submitter];
+    }
+
     function setCvParams(CVParams memory params) external {
         cvParams = params;
     }
