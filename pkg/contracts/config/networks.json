@@ -1448,6 +1448,7 @@
           "0x4d28599ddcba0b041dca0cfee3337048120405cf",
           "0x4db6295640c3d87e3fae7bd150b4ac58e33870fa",
           "0x523b362913b56e10e9dde785952e5e0efdab4aad",
+          "0x562d2a137278ce0722844a091791d0c4aeddab79",
           "0x56ef770d72e0bc6363db2991941bfda8a1f25dca",
           "0x57db3264a363379b2c66a6914c0bf1d70f4763f6",
           "0x5999073f8ec583a60513940b477de4c07805ab58",
@@ -1517,7 +1518,7 @@
           "0xfd4aa4530de29181c3ddac433b2fa60e7ba38ede"
         ]
       },
-      "hash": "2a5989358fee306f58bc0e0d8b23a516dcf3d950",
+      "hash": "d2b9d0fe3dc6623146d01f5e97b5916c7620c69c",
       "IMPLEMENTATIONS": {
         "CV_STRATEGY": "0xd9463d1e7d7f6b87052a8a5d487ee26ddd8eae81",
         "CV_UTIL_LIB": "0xb8c00172bf950b67878ae403bef9b6c0ff3434d0",
