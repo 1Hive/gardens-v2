@@ -170,10 +170,18 @@ if [[ "${REHEARSE_SECURITY_SINGLETONS:-false}" == "true" ]]; then
   echo "security singletons ok"
 fi
 
-echo "factory"
-NETWORKS_JSON_PATH="$TMP_NETWORKS_JSON" ETH_PASSWORD= DEPLOYER_ADDRESS="$DEPLOYER_ADDRESS" \
-  run_forge_script "runFactory(string)"
-echo "factory ok"
+if [[ "$PHASE" == "all" || "$PHASE" == "communities" ]]; then
+  echo "factory"
+  NETWORKS_JSON_PATH="$TMP_NETWORKS_JSON" ETH_PASSWORD= DEPLOYER_ADDRESS="$DEPLOYER_ADDRESS" \
+    run_forge_script "runFactory(string)"
+  echo "factory ok"
+else
+  echo "prepare strategy implementation and facets"
+  NETWORKS_JSON_PATH="$TMP_NETWORKS_JSON" ETH_PASSWORD= DEPLOYER_ADDRESS="$DEPLOYER_ADDRESS" \
+    STRATEGY_START_INDEX=0 STRATEGY_END_INDEX=0 \
+    run_forge_script "runStrategies(string)"
+  echo "strategy implementation and facets ready"
+fi
 
 if [[ "$PHASE" == "all" || "$PHASE" == "communities" ]]; then
   start=0
@@ -202,6 +210,8 @@ if [[ "$PHASE" == "all" || "$PHASE" == "strategies" ]]; then
     echo "strategies ${start}-${end}"
     NETWORKS_JSON_PATH="$TMP_NETWORKS_JSON" ETH_PASSWORD= DEPLOYER_ADDRESS="$DEPLOYER_ADDRESS" \
       REUSE_CONFIGURED_IMPLEMENTATIONS=true SKIP_FACET_DEPLOYMENT=true \
+      MIGRATE_THRESHOLD_SNAPSHOTS="${MIGRATE_THRESHOLD_SNAPSHOTS:-false}" \
+      MIGRATE_SUBMITTER_PROPOSAL_COUNTS="${MIGRATE_SUBMITTER_PROPOSAL_COUNTS:-true}" \
       STRATEGY_START_INDEX="$start" STRATEGY_END_INDEX="$end" \
       run_forge_script "runStrategies(string)"
     echo "strategies ${start}-${end} ok"
