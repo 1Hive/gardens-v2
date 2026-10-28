@@ -623,6 +623,14 @@ contract CVAllocationFacetTest is Test {
         facet.distribute(new address[](0), "", address(0));
     }
 
+    function test_distribute_reverts_when_strategy_disabled() public {
+        registry.setStrategyEnabled(false);
+
+        vm.prank(address(allo));
+        vm.expectRevert(MockRegistryCommunityAlloc.StrategyDisabled.selector);
+        facet.distribute(new address[](0), abi.encode(uint256(1)), member);
+    }
+
     function test_distribute_reverts_pool_empty() public {
         allo.setPoolToken(1, facet.nativeToken());
         facet.setProposalType(ProposalType.Funding);

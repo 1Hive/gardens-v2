@@ -240,6 +240,14 @@ contract CVProposalFacetHarness is CVProposalFacet {
         activeProposalCountInitialized = initialized;
     }
 
+    function setSubmitterActiveProposalCountsInitialized(bool initialized) external {
+        submitterActiveProposalCountsInitialized = initialized;
+    }
+
+    function setActiveProposalCountBySubmitter(address submitter, uint256 count) external {
+        activeProposalCountBySubmitter[submitter] = count;
+    }
+
     function setStreamingEscrowExternal(uint256 proposalId, address escrow) external {
         CVStreamingStorage.layout().proposalEscrow[proposalId] = escrow;
     }
@@ -286,6 +294,10 @@ contract CVProposalFacetHarness is CVProposalFacet {
 
     function getProposalRequestedAmount(uint256 proposalId) external view returns (uint256) {
         return proposals[proposalId].requestedAmount;
+    }
+
+    function getProposalSubmitter(uint256 proposalId) external view returns (address) {
+        return proposals[proposalId].submitter;
     }
 
     function getProposalConvictionState(uint256 proposalId)
@@ -505,6 +517,10 @@ contract CVStrategyHarness is CVStrategy {
 
     function setProposalType(ProposalType proposalType_) external {
         proposalType = proposalType_;
+    }
+
+    function setSubmitterActiveProposalCountsInitialized(bool initialized) external {
+        submitterActiveProposalCountsInitialized = initialized;
     }
 
     function setCvParams(CVParams memory params) external {

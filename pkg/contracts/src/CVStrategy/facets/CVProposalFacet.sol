@@ -42,6 +42,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
     error StreamingEscrowFactoryNotSet(); // 0x1dd8d4b9
     error UpdateMemberUnitsFailed(address member, uint128 units);
     error ProposalLimitReached(uint256 current, uint256 max);
+    error SubmitterProposalLimitReached(address submitter, uint256 current, uint256 max);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -94,11 +95,23 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
 
         // TEMPORARY POST-UPGRADE MIGRATION: remove after activeProposalCount is initialized on deployed pools.
         _runActiveProposalCountPostUpgradeMigration();
+        if (!submitterActiveProposalCountsInitialized) {
+            revert SubmitterProposalCountMigrationPending(
+                submitterActiveProposalCountsMigrationCursor, submitterActiveProposalCountsMigrationEnd
+            );
+        }
         if (activeProposalCount >= MAX_PROPOSAL_COUNT) {
             revert ProposalLimitReached(activeProposalCount, MAX_PROPOSAL_COUNT);
         }
+        uint256 submitterActiveProposalCount = activeProposalCountBySubmitter[_sender];
+        if (submitterActiveProposalCount >= MAX_ACTIVE_PROPOSALS_PER_SUBMITTER) {
+            revert SubmitterProposalLimitReached(
+                _sender, submitterActiveProposalCount, MAX_ACTIVE_PROPOSALS_PER_SUBMITTER
+            );
+        }
         uint256 proposalId = ++proposalCounter;
         activeProposalCount++;
+        activeProposalCountBySubmitter[_sender]++;
         Proposal storage p = proposals[proposalId];
 
         p.proposalId = proposalId;
@@ -151,7 +164,7 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
         }
 
         proposals[proposalId].proposalStatus = ProposalStatus.Cancelled;
-        _decrementActiveProposalCount();
+        _decrementActiveProposalCount(proposalId);
         _removeOpenStreamingProposal(proposalId);
 
         collateralVault.withdrawCollateral(

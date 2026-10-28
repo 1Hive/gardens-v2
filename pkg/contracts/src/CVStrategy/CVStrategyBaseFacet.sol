@@ -72,6 +72,7 @@ abstract contract CVStrategyBaseFacet {
     error OnlyOwner(address sender, address ownerAddress);
     error BlockNumberRegression(uint256 recordedBlock, uint256 currentBlock);
     error ReentrantCall();
+    error SubmitterProposalCountMigrationPending(uint256 cursor, uint256 end);
 
     /*|--------------------------------------------|*/
     /*|              CONSTANTS                     |*/
@@ -79,6 +80,7 @@ abstract contract CVStrategyBaseFacet {
     uint256 public constant RULING_OPTIONS = 3;
     uint256 public constant DISPUTE_COOLDOWN_SEC = 2 hours;
     uint256 public constant MAX_PROPOSAL_COUNT = 128;
+    uint256 public constant MAX_ACTIVE_PROPOSALS_PER_SUBMITTER = 8;
     uint256 public constant MAX_ALLOCATIONS_PER_TX = 64;
     uint256 public constant MAX_VOTER_STAKED_PROPOSALS = 128;
     uint256 public constant MAX_SYNC_BATCH_MEMBERS = 128;
@@ -248,9 +250,26 @@ abstract contract CVStrategyBaseFacet {
     /// @dev Slot 138+
     bool internal _reentrancyLocked;
 
+    /// @notice Number of non-terminal proposals owned by each submitter
+    /// @dev Slot 139+
+    mapping(address => uint256) public activeProposalCountBySubmitter;
+
+    /// @notice Whether activeProposalCountBySubmitter has been initialized for this strategy
+    /// @dev Slot 140+
+    // slither-disable-next-line uninitialized-state
+    bool public submitterActiveProposalCountsInitialized;
+
+    /// @notice Next historical proposal id to process during the bounded migration
+    // slither-disable-next-line uninitialized-state
+    uint256 public submitterActiveProposalCountsMigrationCursor;
+
+    /// @notice Last proposal id included in the bounded migration snapshot
+    // slither-disable-next-line uninitialized-state
+    uint256 public submitterActiveProposalCountsMigrationEnd;
+
     /// @dev Reserved storage space to allow for layout changes in the future
     /// @dev This gap is at the end of storage to allow adding new variables without shifting slots
-    uint256[40] private __gap;
+    uint256[36] private __gap;
 
     /*|--------------------------------------------|*/
     /*|         SHARED HELPER FUNCTIONS            |*/
@@ -441,12 +460,17 @@ abstract contract CVStrategyBaseFacet {
             status == ProposalStatus.Cancelled || status == ProposalStatus.Rejected || status == ProposalStatus.Executed;
     }
 
-    function _decrementActiveProposalCount() internal {
-        if (!activeProposalCountInitialized) {
-            return;
-        }
-        if (activeProposalCount > 0) {
+    function _decrementActiveProposalCount(uint256 proposalId) internal {
+        if (activeProposalCountInitialized && activeProposalCount > 0) {
             activeProposalCount--;
+        }
+
+        if (submitterActiveProposalCountsInitialized) {
+            address submitter = proposals[proposalId].submitter;
+            uint256 submitterCount = activeProposalCountBySubmitter[submitter];
+            if (submitterCount > 0) {
+                activeProposalCountBySubmitter[submitter] = submitterCount - 1;
+            }
         }
     }
 
@@ -469,6 +493,7 @@ abstract contract CVStrategyBaseFacet {
         activeProposalCount = count;
         activeProposalCountInitialized = true;
     }
+
     // END TEMPORARY POST-UPGRADE MIGRATION: activeProposalCount
 
     function _addOpenStreamingProposal(uint256 proposalId) internal {

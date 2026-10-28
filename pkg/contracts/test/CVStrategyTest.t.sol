@@ -3367,7 +3367,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.stopPrank();
     }
 
-    function test_activatePoints_success_not_activated_strategy() public {
+    function test_activatePoints_fails_not_activated_strategy_while_enabled() public {
         (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
@@ -3387,11 +3387,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         registryCommunity.stakeAndRegisterMember("");
 
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector, address(6)));
         cv.activatePoints();
 
         vm.stopPrank();
-
-        assertEq(cv.totalPointsActivated(), MINIMUM_STAKE * 2, "Points should be activated");
     }
 
     function test_activatePoints_success_not_sybyl_scorer_set() public {

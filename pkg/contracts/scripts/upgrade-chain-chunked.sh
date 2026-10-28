@@ -152,6 +152,7 @@ while [[ "$start" -lt "$STRATEGY_COUNT" ]]; do
   fi
   echo "strategies ${start}-${end}"
   REUSE_CONFIGURED_IMPLEMENTATIONS=true SKIP_FACET_DEPLOYMENT=true MIGRATE_THRESHOLD_SNAPSHOTS=true \
+    MIGRATE_SUBMITTER_PROPOSAL_COUNTS=true \
     STRATEGY_START_INDEX="$start" STRATEGY_END_INDEX="$end" \
     run_cv_upgrade "runStrategies(string)"
   echo "strategies ${start}-${end} ok"

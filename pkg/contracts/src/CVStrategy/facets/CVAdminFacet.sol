@@ -9,6 +9,10 @@ import {IRegistryFactory} from "../../IRegistryFactory.sol";
 import {Proposal, ArbitrableConfig, CVParams, ProposalType} from "../ICVStrategy.sol";
 import {LibDiamond} from "../../diamonds/libraries/LibDiamond.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
+import "@superfluid-finance/ethereum-contracts/contracts/utils/GDAv1Forwarder.sol";
+import {
+    PoolConfig
+} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/IGeneralDistributionAgreementV1.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
@@ -30,8 +34,11 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
     error RebalanceCallFailed();
     error ProposalActive(uint256 proposalId);
     error SuperfluidUnderlyingTokenMismatch(address expectedUnderlying, address actualUnderlying);
+    error SuperfluidPoolAlreadyMatchesToken(address pool, address token);
+    error SuperfluidTokenCannotBeZero();
     error ApproveFailed(address token, address spender, uint256 amount);
     error StreamingRateOverflow(uint256 streamingRatePerSecond);
+    error SuperfluidPoolCreationFailed();
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -54,6 +61,7 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
     event SuperfluidGDADisconnected(address indexed gda, address indexed by);
     event PointsDeactivated(address member);
     event VotingPowerRegistryUpdated(address indexed oldRegistry, address indexed newRegistry);
+    event SuperfluidPoolCreated(address indexed gda, address indexed superfluidToken, uint256 maxStreamingRate);
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
@@ -88,7 +96,7 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
         address[] memory _membersToRemove,
         address _superfluidToken,
         uint256 _streamingRatePerSecond
-    ) external {
+    ) external nonReentrant {
         _setPoolParamsCore(
             _arbitrableConfig,
             _cvParams,
@@ -115,7 +123,11 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
 
         if (proposalType == ProposalType.Streaming && address(previousSuperfluidToken) != _superfluidToken) {
             _ensureNoUnclosedStreamingProposals();
-            _migrateStreamingTokenBalance(previousSuperfluidToken, ISuperToken(_superfluidToken));
+            ISuperToken nextSuperfluidToken = ISuperToken(_superfluidToken);
+            _stopStreamingDistribution(previousSuperfluidToken);
+            _migrateStreamingTokenBalance(previousSuperfluidToken, nextSuperfluidToken);
+            superfluidGDA = _createSuperfluidPool(nextSuperfluidToken);
+            emit SuperfluidPoolCreated(address(superfluidGDA), _superfluidToken, _streamingRatePerSecond);
         }
 
         superfluidToken = ISuperToken(_superfluidToken);
@@ -157,6 +169,29 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
             revert SuperfluidGDADisconnectFailed(gda, address(supertoken), msg.sender);
         }
         emit SuperfluidGDADisconnected(gda, msg.sender);
+    }
+
+    /// @notice Repairs a streaming strategy whose stored pool belongs to a different SuperToken.
+    /// @dev This is a one-time operational path for strategies affected by the previous token migration logic.
+    function repairSuperfluidGDA() external nonReentrant {
+        onlyCouncilSafe();
+        _ensureNoUnclosedStreamingProposals();
+
+        ISuperToken configuredToken = superfluidToken;
+        _validateSuperfluidUnderlying(configuredToken);
+
+        ISuperfluidPool previousPool = superfluidGDA;
+        ISuperToken previousPoolToken = address(previousPool) == address(0)
+            ? ISuperToken(address(0))
+            : ISuperToken(address(previousPool.superToken()));
+        if (address(previousPoolToken) == address(configuredToken)) {
+            revert SuperfluidPoolAlreadyMatchesToken(address(previousPool), address(configuredToken));
+        }
+
+        _stopStreamingDistribution(previousPoolToken);
+        _migrateStreamingTokenBalance(previousPoolToken, configuredToken);
+        superfluidGDA = _createSuperfluidPool(configuredToken);
+        emit SuperfluidPoolCreated(address(superfluidGDA), address(configuredToken), streamingRatePerSecond);
     }
 
     /*|--------------------------------------------|*/
@@ -278,12 +313,8 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
     }
 
     function _migrateStreamingTokenBalance(ISuperToken previousToken, ISuperToken nextToken) internal {
-        if (
-            address(previousToken) == address(0) || address(nextToken) == address(0)
-                || address(previousToken) == address(nextToken)
-        ) {
-            return;
-        }
+        _validateSuperfluidUnderlying(nextToken);
+        if (address(previousToken) == address(0) || address(previousToken) == address(nextToken)) return;
 
         uint256 previousBalance = previousToken.balanceOf(address(this));
         if (previousBalance == 0) {
@@ -293,10 +324,6 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
         previousToken.downgrade(previousBalance);
 
         address poolToken = allo.getPool(poolId).token;
-        address nextUnderlyingToken = nextToken.getUnderlyingToken();
-        if (nextUnderlyingToken != poolToken) {
-            revert SuperfluidUnderlyingTokenMismatch(poolToken, nextUnderlyingToken);
-        }
 
         uint256 unwrappedBalance = IERC20(poolToken).balanceOf(address(this));
         if (unwrappedBalance == 0) {
@@ -314,6 +341,35 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
         }
 
         nextToken.upgrade(upgradeAmount);
+    }
+
+    function _validateSuperfluidUnderlying(ISuperToken token) internal view {
+        if (address(token) == address(0)) revert SuperfluidTokenCannotBeZero();
+        address poolToken = allo.getPool(poolId).token;
+        address underlyingToken = token.getUnderlyingToken();
+        if (underlyingToken != poolToken) {
+            revert SuperfluidUnderlyingTokenMismatch(poolToken, underlyingToken);
+        }
+    }
+
+    function _stopStreamingDistribution(ISuperToken token) internal {
+        if (address(token) != address(0) && address(superfluidGDA) != address(0)) {
+            int96 actualFlowRate = token.distributeFlow(superfluidGDA, 0);
+            if (actualFlowRate != 0) revert RebalanceCallFailed();
+        }
+    }
+
+    function _createSuperfluidPool(ISuperToken token) internal returns (ISuperfluidPool pool) {
+        (bool success, ISuperfluidPool createdPool) = GDAv1Forwarder(0x6DA13Bde224A05a288748d857b9e7DDEffd1dE08)
+            .createPool(
+                ISuperfluidToken(token),
+                address(this),
+                PoolConfig({transferabilityForUnitsOwner: false, distributionFromAnyAddress: false})
+            );
+        if (!success || address(createdPool) == address(0)) {
+            revert SuperfluidPoolCreationFailed();
+        }
+        return createdPool;
     }
 
     function _addToAllowList(address[] memory members) internal {
