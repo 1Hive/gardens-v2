@@ -28,7 +28,12 @@ describe("Gitcoin Passport scorer client", () => {
   });
 
   it("fetches and parses a score from the Passport API", async () => {
-    fetchMock.mockResolvedValue(Response.json({ score: "21.75" }));
+    fetchMock.mockResolvedValue(
+      Response.json({
+        expiration_date: "2099-01-01T00:00:00Z",
+        score: "21.75",
+      }),
+    );
 
     await expect(fetchPassportScore(account)).resolves.toBe(21.75);
 
@@ -42,6 +47,17 @@ describe("Gitcoin Passport scorer client", () => {
         method: "GET",
       },
     );
+  });
+
+  it("returns zero when the Passport credential has expired", async () => {
+    fetchMock.mockResolvedValue(
+      Response.json({
+        expiration_date: "2020-01-01T00:00:00Z",
+        score: "21.75",
+      }),
+    );
+
+    await expect(fetchPassportScore(account)).resolves.toBe(0);
   });
 
   it("rejects an invalid account before making a request", async () => {

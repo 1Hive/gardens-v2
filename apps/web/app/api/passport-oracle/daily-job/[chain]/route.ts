@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { gql } from "urql";
+import { gql, type Client } from "urql";
 import {
   createPublicClient,
   http,
@@ -11,13 +11,18 @@ import { privateKeyToAccount } from "viem/accounts";
 import { getConfigByChain } from "@/configs/chains";
 import { initUrqlClient } from "@/providers/urql";
 import { passportScorerABI } from "@/src/generated";
-import { ApiScore, fetchAllPassportScores } from "@/utils/gitcoin-passport";
+import {
+  ApiScore,
+  fetchAllPassportScores,
+  getEffectivePassportScore,
+} from "@/utils/gitcoin-passport";
 import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
 import { getViemChain } from "@/utils/web3";
 
 const PASSPORT_KEEPER_PRIVATE_KEY =
   process.env.LIST_MANAGER_PRIVATE_KEY ?? process.env.KEEPER_WALLET_PK ?? "";
 const LOCAL_RPC = "http://127.0.0.1:8545";
+const SCORE_REFRESH_INTERVAL_SECONDS = 7 * 24 * 60 * 60;
 
 interface PassportUser {
   id: string;
@@ -26,9 +31,16 @@ interface PassportUser {
   lastUpdated: string;
 }
 
+const PASSPORT_USER_PAGE_SIZE = 1000;
+
 const query = gql`
-  query {
-    passportUsers {
+  query PassportUsers($first: Int!, $skip: Int!) {
+    passportUsers(
+      first: $first
+      skip: $skip
+      orderBy: id
+      orderDirection: asc
+    ) {
       id
       userAddress
       score
@@ -37,9 +49,10 @@ const query = gql`
   }
 `;
 
-const compareScores = (
+export const compareScores = (
   subgraphUsers: PassportUser[],
   apiScores: ApiScore[],
+  nowSeconds = Math.floor(Date.now() / 1000),
 ) => {
   const updates: {
     userAddress: Address;
@@ -53,13 +66,19 @@ const compareScores = (
         user.address.toLowerCase() === subgraphUser.userAddress.toLowerCase(),
     );
 
-    if (
-      apiUser &&
-      parseFloat(apiUser.score) !== parseFloat(subgraphUser.score)
-    ) {
+    if (!apiUser) return;
+
+    const apiScore = getEffectivePassportScore(apiUser, nowSeconds * 1000);
+    const scaledApiScore = Math.round(apiScore * CV_PASSPORT_THRESHOLD_SCALE);
+    const storedScore = Number(subgraphUser.score);
+    const scoreIsStale =
+      Number(subgraphUser.lastUpdated) <=
+      nowSeconds - SCORE_REFRESH_INTERVAL_SECONDS;
+
+    if (scaledApiScore !== storedScore || scoreIsStale) {
       updates.push({
         userAddress: subgraphUser.userAddress as Address,
-        score: parseFloat(apiUser.score),
+        score: apiScore,
         lastUpdated: new Date(apiUser.last_score_timestamp).getTime() / 1000,
       });
     }
@@ -72,11 +91,28 @@ const updateScoresOnChain = async (
   chain: string,
   updates: { userAddress: Address; score: number; lastUpdated: number }[],
 ) => {
+  if (!PASSPORT_KEEPER_PRIVATE_KEY) {
+    throw new Error("Passport keeper is not configured");
+  }
   const RPC_URL = getConfigByChain(chain)?.rpcUrl ?? LOCAL_RPC;
   const CONTRACT_ADDRESS = getConfigByChain(chain)?.passportScorer as Address;
 
+  const failures: { userAddress: Address; error: string }[] = [];
   for (const update of updates) {
-    const integerScore = Number(update.score) * CV_PASSPORT_THRESHOLD_SCALE;
+    const integerScore = Math.round(
+      Number(update.score) * CV_PASSPORT_THRESHOLD_SCALE,
+    );
+    if (
+      !Number.isFinite(update.score) ||
+      update.score < 0 ||
+      !Number.isSafeInteger(integerScore)
+    ) {
+      failures.push({
+        userAddress: update.userAddress,
+        error: "Passport score is invalid",
+      });
+      continue;
+    }
 
     const client = createPublicClient({
       chain: getViemChain(chain),
@@ -89,45 +125,71 @@ const updateScoresOnChain = async (
       transport: custom(client.transport),
     });
 
-    const hash = await walletClient.writeContract({
-      abi: passportScorerABI,
-      address: CONTRACT_ADDRESS,
-      functionName: "addUserScore" as const,
-      args: [update.userAddress, BigInt(integerScore)] as const,
-    });
-    await client.waitForTransactionReceipt({ hash });
+    try {
+      const hash = await walletClient.writeContract({
+        abi: passportScorerABI,
+        address: CONTRACT_ADDRESS,
+        functionName: "addUserScore" as const,
+        args: [update.userAddress, BigInt(integerScore)] as const,
+      });
+      await client.waitForTransactionReceipt({ hash });
+    } catch (error) {
+      console.error("Failed to refresh Passport score", {
+        chain,
+        userAddress: update.userAddress,
+        error,
+      });
+      failures.push({
+        userAddress: update.userAddress,
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
   }
+  return failures;
 };
 
 const updateScores = async (chain: string) => {
   const subgraphUrl = getConfigByChain(chain)?.subgraphUrl as string;
   const { urqlClient } = initUrqlClient({ chainId: chain });
-  const subgraphResponse = await urqlClient
-    .query<{ passportUsers: PassportUser[] }>(
-      query,
-      {},
-      {
-        url: subgraphUrl,
-        requestPolicy: "network-only",
-      },
-    )
-    .toPromise();
 
-  if (!subgraphResponse.data) {
-    throw new Error("Failed to fetch data from subgraph");
-  }
-
-  const subgraphUsers = subgraphResponse.data.passportUsers ?? [];
+  const subgraphUsers = await fetchPassportUsers(urqlClient, subgraphUrl);
 
   const apiScores = await fetchAllPassportScores();
 
   const updates = compareScores(subgraphUsers, apiScores);
 
-  if (updates.length > 0) {
-    await updateScoresOnChain(chain, updates);
-  }
+  const failures =
+    updates.length > 0 ? await updateScoresOnChain(chain, updates) : [];
 
-  return updates;
+  return { updates, failures };
+};
+
+export const fetchPassportUsers = async (
+  urqlClient: Client,
+  subgraphUrl: string,
+) => {
+  const subgraphUsers: PassportUser[] = [];
+  for (let skip = 0; ; skip += PASSPORT_USER_PAGE_SIZE) {
+    const subgraphResponse = await urqlClient
+      .query<{ passportUsers: PassportUser[] }>(
+        query,
+        { first: PASSPORT_USER_PAGE_SIZE, skip },
+        {
+          url: subgraphUrl,
+          requestPolicy: "network-only",
+        },
+      )
+      .toPromise();
+
+    if (!subgraphResponse.data) {
+      throw new Error("Failed to fetch data from subgraph");
+    }
+
+    const page = subgraphResponse.data.passportUsers ?? [];
+    subgraphUsers.push(...page);
+    if (page.length < PASSPORT_USER_PAGE_SIZE) break;
+  }
+  return subgraphUsers;
 };
 
 type RouteContext = {
@@ -149,7 +211,7 @@ export async function GET(req: Request, { params }: RouteContext) {
   }
 
   try {
-    const updates = await updateScores(chain);
+    const { updates, failures } = await updateScores(chain);
     return NextResponse.json(
       {
         message:
@@ -157,6 +219,7 @@ export async function GET(req: Request, { params }: RouteContext) {
             "Scores updated successfully"
           : "No updates required",
         updates,
+        failures,
       },
       { status: 200 },
     );

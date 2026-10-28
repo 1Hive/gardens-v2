@@ -31,6 +31,11 @@ contract PassportScorerHarness is PassportScorer {
     }
 
     function callOnlyCouncil(address strat) external onlyCouncil(strat) {}
+
+    function seedLegacyScore(address account, uint256 score) external {
+        userScores[account] = score;
+        delete userScoreUpdatedAt[account];
+    }
 }
 
 contract PassportScorerTest is Test {
@@ -55,11 +60,13 @@ contract PassportScorerTest is Test {
     }
 
     function testAddUserScore() public {
+        vm.warp(100);
         vm.prank(listManager);
         passportScorer.addUserScore(user, passportScore);
 
         uint256 storedScore = passportScorer.userScores(user);
         assertEq(storedScore, passportScore);
+        assertEq(passportScorer.userScoreUpdatedAt(user), 100);
     }
 
     function testAddUserScore_zeroAddressReverts() public {
@@ -69,14 +76,16 @@ contract PassportScorerTest is Test {
     }
 
     function testRemoveUser() public {
+        vm.warp(100);
         vm.prank(listManager);
-        passportScorer.addUserScore(user, 0);
+        passportScorer.addUserScore(user, passportScore);
 
         vm.prank(listManager);
         passportScorer.removeUser(user);
 
         uint256 storedScore = passportScorer.userScores(user);
         assertEq(storedScore, 0);
+        assertEq(passportScorer.userScoreUpdatedAt(user), 0);
     }
 
     function testRemoveUser_zeroAddressReverts() public {
@@ -233,6 +242,81 @@ contract PassportScorerTest is Test {
 
         canExecute = passportScorer.canExecuteAction(user, strategy);
         assertFalse(canExecute);
+    }
+
+    function testCanExecuteAction_rejectsExpiredScore() public {
+        vm.prank(listManager);
+        passportScorer.addStrategy(strategy, 50, councilSafe);
+        vm.prank(councilSafe);
+        passportScorer.activateStrategy(strategy);
+
+        vm.warp(100);
+        vm.prank(listManager);
+        passportScorer.addUserScore(user, passportScore);
+
+        vm.warp(100 + passportScorer.SCORE_VALIDITY_PERIOD());
+        assertTrue(passportScorer.canExecuteAction(user, strategy));
+
+        vm.warp(101 + passportScorer.SCORE_VALIDITY_PERIOD());
+        assertFalse(passportScorer.canExecuteAction(user, strategy));
+    }
+
+    function testAddUserScore_refreshesUnchangedScoreExpiry() public {
+        vm.prank(listManager);
+        passportScorer.addStrategy(strategy, 50, councilSafe);
+        vm.prank(councilSafe);
+        passportScorer.activateStrategy(strategy);
+
+        vm.warp(100);
+        vm.prank(listManager);
+        passportScorer.addUserScore(user, passportScore);
+
+        vm.warp(100 + passportScorer.SCORE_VALIDITY_PERIOD());
+        vm.prank(listManager);
+        passportScorer.addUserScore(user, passportScore);
+
+        assertEq(passportScorer.userScoreUpdatedAt(user), block.timestamp);
+        assertTrue(passportScorer.canExecuteAction(user, strategy));
+    }
+
+    function testCanExecuteAction_zeroThresholdRemainsPermissiveWithoutScore() public {
+        vm.prank(listManager);
+        passportScorer.addStrategy(strategy, 0, councilSafe);
+        vm.prank(councilSafe);
+        passportScorer.activateStrategy(strategy);
+
+        assertTrue(passportScorer.canExecuteAction(user, strategy));
+    }
+
+    function testInitializeScoreExpiration_grantsLegacyScoresTemporaryGrace() public {
+        vm.prank(listManager);
+        passportScorer.addStrategy(strategy, 50, councilSafe);
+        vm.prank(councilSafe);
+        passportScorer.activateStrategy(strategy);
+
+        passportScorer.seedLegacyScore(user, passportScore);
+        assertEq(passportScorer.userScoreUpdatedAt(user), 0);
+
+        vm.warp(100);
+        vm.prank(owner);
+        passportScorer.initializeScoreExpiration();
+
+        assertTrue(passportScorer.canExecuteAction(user, strategy));
+        vm.warp(101 + passportScorer.SCORE_VALIDITY_PERIOD());
+        assertFalse(passportScorer.canExecuteAction(user, strategy));
+    }
+
+    function testInitializeScoreExpiration_onlyOwnerAndOnlyOnce() public {
+        vm.prank(unauthorizedUser);
+        vm.expectRevert("Ownable: caller is not the owner");
+        passportScorer.initializeScoreExpiration();
+
+        vm.prank(owner);
+        passportScorer.initializeScoreExpiration();
+
+        vm.prank(owner);
+        vm.expectRevert("Initializable: contract is already initialized");
+        passportScorer.initializeScoreExpiration();
     }
 
     function testCanExecuteAction_inactiveUnregisteredStrategyRemainsPermissive() public {
