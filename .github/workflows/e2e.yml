@@ -92,7 +92,7 @@ jobs:
         if: steps.preflight.outputs.run_e2e == 'true'
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: false
 
       - name: Setup pnpm
         if: steps.preflight.outputs.run_e2e == 'true'
