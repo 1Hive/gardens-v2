@@ -173,6 +173,7 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
 
     /// @notice Repairs a streaming strategy whose stored pool belongs to a different SuperToken.
     /// @dev This is a one-time operational path for strategies affected by the previous token migration logic.
+    // slither-disable-next-line reentrancy-no-eth
     function repairSuperfluidGDA() external nonReentrant {
         onlyCouncilSafe();
         _ensureNoUnclosedStreamingProposals();

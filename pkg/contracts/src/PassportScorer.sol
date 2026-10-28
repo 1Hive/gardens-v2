@@ -19,7 +19,8 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
     mapping(address => Strategy) public strategies;
     mapping(address => uint256) public userScoreUpdatedAt;
     uint256 public legacyScoreGracePeriodEnd;
-    uint256[48] private __gap;
+    /// @custom:oz-renamed-from __gap
+    uint256[48] private __passportScorerGap;
 
     uint256 public constant SCORE_VALIDITY_PERIOD = 30 days;
 

@@ -341,7 +341,7 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
         ) revert UnboundRoute();
 
         address currentToken = BASE_WETH;
-        uint256 bridgeAmountMinimum;
+        uint256 bridgeAmountMinimum = 0;
         for (uint256 i = 1; i < calls.length; i += 2) {
             SquidCall memory swapCall = calls[i + 1];
             _validateApproval(calls[i], currentToken, swapCall.target, type(uint256).max, DEFAULT_CALL);
