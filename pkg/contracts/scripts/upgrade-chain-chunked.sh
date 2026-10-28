@@ -165,7 +165,7 @@ if [[ "$PHASE" == "all" || "$PHASE" == "strategies" ]]; then
     fi
     echo "strategies ${start}-${end}"
     REUSE_CONFIGURED_IMPLEMENTATIONS=true SKIP_FACET_DEPLOYMENT=true \
-      MIGRATE_THRESHOLD_SNAPSHOTS="${MIGRATE_THRESHOLD_SNAPSHOTS:-false}" \
+      MIGRATE_THRESHOLD_SNAPSHOTS="${MIGRATE_THRESHOLD_SNAPSHOTS:-true}" \
       MIGRATE_SUBMITTER_PROPOSAL_COUNTS="${MIGRATE_SUBMITTER_PROPOSAL_COUNTS:-true}" \
       STRATEGY_START_INDEX="$start" STRATEGY_END_INDEX="$end" \
       run_cv_upgrade "runStrategies(string)"
