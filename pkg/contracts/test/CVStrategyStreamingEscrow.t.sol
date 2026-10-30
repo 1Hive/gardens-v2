@@ -203,6 +203,10 @@ contract CVProposalFacetHarness is CVProposalFacet {
         superfluidToken = token;
         superfluidGDA = gda;
     }
+
+    function setSubmitterActiveProposalCountsInitialized() external {
+        submitterActiveProposalCountsInitialized = true;
+    }
 }
 
 contract CVStrategyStreamingEscrowTest is Test {
@@ -269,6 +273,7 @@ contract CVStrategyStreamingEscrowTest is Test {
         );
         harness.setCollateralVault(address(collateralVault));
         harness.setSuperfluid(ISuperToken(address(token)), ISuperfluidPool(address(pool)));
+        harness.setSubmitterActiveProposalCountsInitialized();
     }
 
     function test_registerRecipient_usesFactoryAndEscrowMember() public {

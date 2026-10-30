@@ -80,6 +80,7 @@ contract CVProposalFacetTest is Test {
         facet.setVotingPowerRegistry(address(registryCommunity));
         facet.setCollateralVault(address(collateralVault));
         facet.setProposalType(ProposalType.Funding);
+        facet.setSubmitterActiveProposalCountsInitialized(true);
 
         allo.setPoolToken(1, poolToken);
         registryCommunity.setMember(member, true);
@@ -183,6 +184,87 @@ contract CVProposalFacetTest is Test {
             abi.encodeWithSelector(CVProposalFacet.ProposalLimitReached.selector, maxProposalCount, maxProposalCount)
         );
         facet.registerRecipient{value: 1 ether}(abi.encode(proposal), member);
+    }
+
+    function test_registerRecipient_reverts_when_submitter_active_proposal_limit_reached() public {
+        uint256 maxSubmitterProposals = facet.MAX_ACTIVE_PROPOSALS_PER_SUBMITTER();
+        CreateProposal memory proposal =
+            CreateProposal(1, beneficiary, 10, poolToken, Metadata({protocol: 1, pointer: "p"}));
+        vm.deal(address(allo), (maxSubmitterProposals + 1) * 1 ether);
+
+        for (uint256 i; i < maxSubmitterProposals; ++i) {
+            vm.prank(address(allo));
+            facet.registerRecipient{value: 1 ether}(abi.encode(proposal), member);
+        }
+
+        vm.prank(address(allo));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVProposalFacet.SubmitterProposalLimitReached.selector,
+                member,
+                maxSubmitterProposals,
+                maxSubmitterProposals
+            )
+        );
+        facet.registerRecipient{value: 1 ether}(abi.encode(proposal), member);
+    }
+
+    function test_registerRecipient_reverts_until_submitter_count_migration_completes() public {
+        facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Active, block.timestamp, 0);
+        facet.seedProposal(2, member, beneficiary, poolToken, 10, ProposalStatus.Executed, block.timestamp, 0);
+        facet.setSubmitterActiveProposalCountsInitialized(false);
+
+        CreateProposal memory proposal =
+            CreateProposal(1, beneficiary, 10, poolToken, Metadata({protocol: 1, pointer: "p"}));
+        vm.deal(address(allo), 1 ether);
+        vm.prank(address(allo));
+        vm.expectRevert(
+            abi.encodeWithSelector(CVStrategyBaseFacet.SubmitterProposalCountMigrationPending.selector, 0, 0)
+        );
+        facet.registerRecipient{value: 1 ether}(abi.encode(proposal), member);
+    }
+
+    function test_registerRecipient_submitter_limit_does_not_block_other_member() public {
+        address secondMember = makeAddr("secondMember");
+        registryCommunity.setMember(secondMember, true);
+        uint256 maxSubmitterProposals = facet.MAX_ACTIVE_PROPOSALS_PER_SUBMITTER();
+        CreateProposal memory proposal =
+            CreateProposal(1, beneficiary, 10, poolToken, Metadata({protocol: 1, pointer: "p"}));
+        vm.deal(address(allo), (maxSubmitterProposals + 1) * 1 ether);
+
+        for (uint256 i; i < maxSubmitterProposals; ++i) {
+            vm.prank(address(allo));
+            facet.registerRecipient{value: 1 ether}(abi.encode(proposal), member);
+        }
+
+        vm.prank(address(allo));
+        facet.registerRecipient{value: 1 ether}(abi.encode(proposal), secondMember);
+
+        assertEq(facet.getProposalSubmitter(maxSubmitterProposals + 1), secondMember);
+    }
+
+    function test_registerRecipient_terminal_proposal_frees_submitter_slot() public {
+        uint256 maxSubmitterProposals = facet.MAX_ACTIVE_PROPOSALS_PER_SUBMITTER();
+        CreateProposal memory proposal =
+            CreateProposal(1, beneficiary, 10, poolToken, Metadata({protocol: 1, pointer: "p"}));
+        vm.deal(address(allo), (maxSubmitterProposals + 1) * 1 ether);
+
+        for (uint256 i; i < maxSubmitterProposals; ++i) {
+            vm.prank(address(allo));
+            facet.registerRecipient{value: 1 ether}(abi.encode(proposal), member);
+        }
+
+        assertEq(facet.activeProposalCountBySubmitter(member), maxSubmitterProposals);
+
+        vm.prank(member);
+        facet.cancelProposal(1);
+        assertEq(facet.activeProposalCountBySubmitter(member), maxSubmitterProposals - 1);
+
+        vm.prank(address(allo));
+        facet.registerRecipient{value: 1 ether}(abi.encode(proposal), member);
+
+        assertEq(facet.getProposalSubmitter(maxSubmitterProposals + 1), member);
+        assertEq(facet.activeProposalCountBySubmitter(member), maxSubmitterProposals);
     }
 
     function test_registerRecipient_streaming_reverts_when_initial_units_update_fails() public {

@@ -117,6 +117,39 @@ contract CVStrategyThresholdCoverage is Test {
         localStrategy.reinitializeV2MigrateThresholdSnapshots();
     }
 
+    function test_reinitializeV3MigrateSubmitterActiveProposalCounts_processesBoundedBatches() public {
+        address secondMember = makeAddr("secondMember");
+        CVStrategyHarness localStrategy = _newInitializedStrategy(address(this));
+        localStrategy.setSubmitterActiveProposalCountsInitialized(false);
+        localStrategy.setProposal(1, member, 0, ProposalStatus.Active, block.number, 0);
+        localStrategy.setProposal(2, member, 0, ProposalStatus.Cancelled, block.number, 0);
+        localStrategy.setProposal(3, secondMember, 0, ProposalStatus.Disputed, block.number, 0);
+
+        CVStrategyHarness nextImplementation = new CVStrategyHarness();
+        localStrategy.upgradeToAndCall(
+            address(nextImplementation),
+            abi.encodeWithSelector(CVStrategy.reinitializeV3MigrateSubmitterActiveProposalCounts.selector)
+        );
+
+        assertFalse(localStrategy.submitterActiveProposalCountsInitialized());
+
+        vm.expectRevert(bytes("Batch size must be nonzero"));
+        localStrategy.migrateSubmitterActiveProposalCounts(0);
+        assertFalse(localStrategy.submitterActiveProposalCountsInitialized());
+
+        localStrategy.migrateSubmitterActiveProposalCounts(1);
+        assertFalse(localStrategy.submitterActiveProposalCountsInitialized());
+        assertEq(localStrategy.getActiveProposalCountBySubmitter(member), 1);
+        assertEq(localStrategy.getActiveProposalCountBySubmitter(secondMember), 0);
+
+        localStrategy.migrateSubmitterActiveProposalCounts(2);
+        assertTrue(localStrategy.submitterActiveProposalCountsInitialized());
+        assertEq(localStrategy.getActiveProposalCountBySubmitter(secondMember), 1);
+
+        vm.expectRevert();
+        localStrategy.reinitializeV3MigrateSubmitterActiveProposalCounts();
+    }
+
     function _newInitializedStrategy(address migrationOwner) internal returns (CVStrategyHarness) {
         CVStrategyHarness implementation = new CVStrategyHarness();
         ERC1967Proxy proxy = new ERC1967Proxy(

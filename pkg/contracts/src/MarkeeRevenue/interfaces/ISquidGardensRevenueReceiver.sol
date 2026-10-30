@@ -48,6 +48,8 @@ interface ISquidGardensRevenueReceiver {
         uint256 amount
     );
     event PayoutIdRekeyed(bytes32 indexed suppliedPayoutId, bytes32 indexed effectivePayoutId);
+    event UntrackedTokenRecovered(address indexed token, address indexed recipient, uint256 amount);
+    event TokenLiabilityAccountingInitialized(address[] tokens, uint256[] liabilities);
 
     error NotSquidMulticall();
     error ZeroAddress();
@@ -57,6 +59,10 @@ interface ISquidGardensRevenueReceiver {
     error PayoutNotFound();
     error PayoutAlreadyResolved();
     error TransferFailed();
+    error LiabilityAccountingNotInitialized();
+    error LiabilityAccountingAlreadyInitialized();
+    error InsufficientUntrackedBalance(uint256 available, uint256 requested);
+    error ArrayLengthMismatch();
 
     function receiveSquidRevenueV2(
         bytes32 payoutId,
@@ -78,4 +84,6 @@ interface ISquidGardensRevenueReceiver {
     function retryTokenPayout(bytes32 payoutId) external;
     function recoverPayout(bytes32 payoutId, address payable to) external;
     function recoverTokenPayout(bytes32 payoutId, address to) external;
+    function recoverUntrackedToken(address token, address to, uint256 amount) external;
+    function initializeTokenLiabilityAccounting(address[] calldata tokens, uint256[] calldata liabilities) external;
 }

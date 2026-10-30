@@ -17,8 +17,14 @@ import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
 import {
+    ISuperfluidToken
+} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluidToken.sol";
+import {
     ISuperfluidPool
 } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
+import {
+    PoolConfig
+} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/IGeneralDistributionAgreementV1.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
 import {LibDiamond} from "../src/diamonds/libraries/LibDiamond.sol";
@@ -110,6 +116,7 @@ contract MockSybilScorerAdmin is ISybilScorer {
 
 contract MockSuperfluidHost {
     address public agreement;
+    bool public ignoreFlowUpdates;
 
     constructor(address agreement_) {
         agreement = agreement_;
@@ -117,6 +124,10 @@ contract MockSuperfluidHost {
 
     function setAgreement(address agreement_) external {
         agreement = agreement_;
+    }
+
+    function setIgnoreFlowUpdates(bool ignore) external {
+        ignoreFlowUpdates = ignore;
     }
 
     function getAgreementClass(bytes32) external view returns (address) {
@@ -127,7 +138,7 @@ contract MockSuperfluidHost {
         external
         returns (bytes memory)
     {
-        if (agreementClass == agreement) {
+        if (agreementClass == agreement && !ignoreFlowUpdates) {
             bytes4 selector;
             assembly {
                 selector := calldataload(data.offset)
@@ -154,6 +165,26 @@ contract MockGDAAgreement {
     function setFlowRate(address pool, int96 newFlowRate) external {
         lastPool = pool;
         flowRate = newFlowRate;
+    }
+}
+
+contract MockCreatedSuperfluidPool {
+    address public immutable superToken;
+    address public immutable admin;
+
+    constructor(address superToken_, address admin_) {
+        superToken = superToken_;
+        admin = admin_;
+    }
+}
+
+contract MockGDAForwarder {
+    function createPool(ISuperfluidToken token, address admin, PoolConfig calldata)
+        external
+        returns (bool success, ISuperfluidPool pool)
+    {
+        pool = ISuperfluidPool(address(new MockCreatedSuperfluidPool(address(token), admin)));
+        return (true, pool);
     }
 }
 
@@ -386,6 +417,7 @@ contract CVAdminFacetHarness is CVAdminFacet {
 }
 
 contract CVAdminFacetTest is Test {
+    address internal constant GDA_FORWARDER = 0x6DA13Bde224A05a288748d857b9e7DDEffd1dE08;
     CVAdminFacetHarness internal facet;
     MockRegistryCommunityAdmin internal registry;
     MockSybilScorerAdmin internal sybil;
@@ -400,6 +432,9 @@ contract CVAdminFacetTest is Test {
     address internal keeper = makeAddr("keeper");
 
     function setUp() public {
+        MockGDAForwarder forwarder = new MockGDAForwarder();
+        vm.etch(GDA_FORWARDER, address(forwarder).code);
+
         facet = new CVAdminFacetHarness();
         registry = new MockRegistryCommunityAdmin();
         sybil = new MockSybilScorerAdmin();
@@ -611,6 +646,9 @@ contract CVAdminFacetTest is Test {
         allo.setPoolToken(1, address(underlyingToken));
         facet.setProposalType(ProposalType.Streaming);
         facet.setSuperfluidToken(address(oldToken));
+        address oldPool = address(0xB0B);
+        facet.setSuperfluidGDA(oldPool);
+        gdaAgreement.setFlowRate(oldPool, 123);
         facet.setProposalStatus(1, ProposalStatus.Rejected);
         oldToken.setBalance(address(facet), 25 ether);
 
@@ -633,6 +671,85 @@ contract CVAdminFacetTest is Test {
         assertEq(newToken.lastUpgradeAmount(), 25 ether);
         assertEq(underlyingToken.balanceOf(address(facet)), 0);
         assertEq(address(facet.superfluidToken()), address(newToken));
+        assertEq(gdaAgreement.lastPool(), oldPool);
+        assertEq(int256(gdaAgreement.flowRate()), 0);
+        MockCreatedSuperfluidPool newPool = MockCreatedSuperfluidPool(address(facet.superfluidGDA()));
+        assertEq(newPool.superToken(), address(newToken));
+        assertEq(newPool.admin(), address(facet));
+    }
+
+    function test_repairSuperfluidGDA_replaces_mismatched_pool_and_migrates_balance() public {
+        MockGDAAgreement gdaAgreement = new MockGDAAgreement();
+        MockSuperfluidHost host = new MockSuperfluidHost(address(gdaAgreement));
+        MockSuperToken oldToken = new MockSuperToken(address(host), address(underlyingToken));
+        MockSuperToken configuredToken = new MockSuperToken(address(host), address(underlyingToken));
+        MockCreatedSuperfluidPool oldPool = new MockCreatedSuperfluidPool(address(oldToken), address(facet));
+
+        allo.setPoolToken(1, address(underlyingToken));
+        facet.setProposalType(ProposalType.Streaming);
+        facet.setSuperfluidToken(address(configuredToken));
+        facet.setSuperfluidGDA(address(oldPool));
+        oldToken.setBalance(address(facet), 25 ether);
+        gdaAgreement.setFlowRate(address(oldPool), 123);
+
+        vm.prank(councilSafe);
+        facet.repairSuperfluidGDA();
+
+        assertEq(oldToken.lastDowngradeAmount(), 25 ether);
+        assertEq(configuredToken.balanceOf(address(facet)), 25 ether);
+        assertEq(int256(gdaAgreement.flowRate()), 0);
+        MockCreatedSuperfluidPool repairedPool = MockCreatedSuperfluidPool(address(facet.superfluidGDA()));
+        assertEq(repairedPool.superToken(), address(configuredToken));
+        assertEq(repairedPool.admin(), address(facet));
+    }
+
+    function test_repairSuperfluidGDA_reverts_when_old_distribution_does_not_stop() public {
+        MockGDAAgreement gdaAgreement = new MockGDAAgreement();
+        MockSuperfluidHost host = new MockSuperfluidHost(address(gdaAgreement));
+        MockSuperToken oldToken = new MockSuperToken(address(host), address(underlyingToken));
+        MockSuperToken configuredToken = new MockSuperToken(address(host), address(underlyingToken));
+        MockCreatedSuperfluidPool oldPool = new MockCreatedSuperfluidPool(address(oldToken), address(facet));
+
+        allo.setPoolToken(1, address(underlyingToken));
+        facet.setProposalType(ProposalType.Streaming);
+        facet.setSuperfluidToken(address(configuredToken));
+        facet.setSuperfluidGDA(address(oldPool));
+        gdaAgreement.setFlowRate(address(oldPool), 123);
+        host.setIgnoreFlowUpdates(true);
+
+        vm.prank(councilSafe);
+        vm.expectRevert(CVAdminFacet.RebalanceCallFailed.selector);
+        facet.repairSuperfluidGDA();
+    }
+
+    function test_setPoolParams_streaming_validates_underlying_even_with_zero_balance() public {
+        factoryAllowlist.setAllowed(address(arbitrator), true);
+        MockGDAAgreement gdaAgreement = new MockGDAAgreement();
+        MockSuperfluidHost host = new MockSuperfluidHost(address(gdaAgreement));
+        MockSuperToken oldToken = new MockSuperToken(address(host), address(underlyingToken));
+        MockSuperToken incompatibleToken = new MockSuperToken(address(host), address(0xBAD));
+
+        allo.setPoolToken(1, address(underlyingToken));
+        facet.setProposalType(ProposalType.Streaming);
+        facet.setSuperfluidToken(address(oldToken));
+
+        ArbitrableConfig memory arb = ArbitrableConfig({
+            arbitrator: IArbitrator(address(arbitrator)),
+            tribunalSafe: address(0xBEEF),
+            submitterCollateralAmount: 1,
+            challengerCollateralAmount: 1,
+            defaultRuling: 1,
+            defaultRulingTimeout: 10
+        });
+        CVParams memory params = CVParams({maxRatio: 0, weight: 0, decay: 0, minThresholdPoints: 0});
+
+        vm.prank(councilSafe);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVAdminFacet.SuperfluidUnderlyingTokenMismatch.selector, address(underlyingToken), address(0xBAD)
+            )
+        );
+        facet.setPoolParams(arb, params, 0, new address[](0), new address[](0), address(incompatibleToken), 0);
     }
 
     function test_setPoolParams_streaming_migrates_six_decimal_underlying_to_eighteen_decimal_super_token() public {

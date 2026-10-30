@@ -17,7 +17,12 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
 
     mapping(address => uint256) public userScores;
     mapping(address => Strategy) public strategies;
-    uint256[50] private __gap;
+    mapping(address => uint256) public userScoreUpdatedAt;
+    uint256 public legacyScoreGracePeriodEnd;
+    /// @custom:oz-renamed-from __gap
+    uint256[48] private __passportScorerGap;
+
+    uint256 public constant SCORE_VALIDITY_PERIOD = 30 days;
 
     event UserScoreAdded(address indexed user, uint256 score);
     event UserRemoved(address indexed user);
@@ -26,6 +31,7 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
     event StrategyRemoved(address indexed strategy);
     event StrategyActivated(address indexed strategy);
     event ThresholdModified(address indexed strategy, uint256 newThreshold);
+    event ScoreExpirationInitialized(uint256 legacyScoreGracePeriodEnd);
 
     error OnlyAuthorized();
     error OnlyAuthorizedOrUser();
@@ -75,12 +81,19 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
         listManager = _listManager;
     }
 
+    /// @notice Starts a one-time grace period for scores written before timestamps were introduced.
+    function initializeScoreExpiration() external reinitializer(2) onlyOwner {
+        legacyScoreGracePeriodEnd = block.timestamp + SCORE_VALIDITY_PERIOD;
+        emit ScoreExpirationInitialized(legacyScoreGracePeriodEnd);
+    }
+
     /// @notice Add a userScore to the list
     /// @param _user address of the user to add
     /// @param _score score to assign to the user
     function addUserScore(address _user, uint256 _score) external onlyAuthorized {
         _revertZeroAddress(_user);
         userScores[_user] = _score;
+        userScoreUpdatedAt[_user] = block.timestamp;
         emit UserScoreAdded(_user, _score);
     }
 
@@ -89,6 +102,7 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
     function removeUser(address _user) external onlyAuthorized {
         _revertZeroAddress(_user);
         delete userScores[_user];
+        delete userScoreUpdatedAt[_user];
         emit UserRemoved(_user);
     }
 
@@ -161,6 +175,16 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
             }
         }
 
-        return userScore >= strategy.threshold;
+        if (strategy.threshold == 0) {
+            return true;
+        }
+
+        uint256 updatedAt = userScoreUpdatedAt[_user];
+        // Zero distinguishes pre-upgrade scores that use the bounded migration grace period.
+        // slither-disable-next-line incorrect-equality
+        bool scoreIsFresh = updatedAt == 0
+            ? legacyScoreGracePeriodEnd != 0 && block.timestamp <= legacyScoreGracePeriodEnd
+            : block.timestamp <= updatedAt + SCORE_VALIDITY_PERIOD;
+        return scoreIsFresh && userScore >= strategy.threshold;
     }
 }

@@ -154,7 +154,6 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     event SuperfluidPoolCreated(address indexed gda, address indexed superfluidToken, uint256 maxStreamingRate);
     event SuperfluidGDAConnected(address indexed gda, address indexed by);
     event SuperfluidGDADisconnected(address indexed gda, address indexed by);
-    event ThresholdSnapshotsMigrated(uint256 proposalCount, uint256 totalPointsActivated, uint256 blockNumber);
     event PoolThresholdUpdated(
         uint256 thresholdSnapshot, uint256 totalPointsActivated, uint256 thresholdUpdatedAtBlock
     );
@@ -208,8 +207,12 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     mapping(uint256 => uint256) public openStreamingProposalIndex;
     bool public openStreamingProposalsInitialized;
     bool internal _reentrancyLocked;
+    mapping(address => uint256) internal activeProposalCountBySubmitter;
+    bool public submitterActiveProposalCountsInitialized;
+    uint256 internal submitterActiveProposalCountsMigrationCursor;
+    uint256 internal submitterActiveProposalCountsMigrationEnd;
     // slither-disable-next-line shadowing-state
-    uint256[40] private __gap;
+    uint256[36] private __gap;
 
     // Constants (also defined in CVStrategyBaseFacet for facet access)
     uint256 public constant RULING_OPTIONS = 3;
@@ -261,8 +264,40 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         if (migrateOpenStreamingProposals) {
             openStreamingProposalsInitialized = true;
         }
+    }
 
-        emit ThresholdSnapshotsMigrated(currentProposalCounter, currentTotalPointsActivated, block.number);
+    /// @notice Starts the bounded per-submitter active proposal counter migration.
+    /// @dev Proposal creation remains paused until migrateSubmitterActiveProposalCounts completes.
+    function reinitializeV3MigrateSubmitterActiveProposalCounts() external reinitializer(3) onlyOwner {
+        submitterActiveProposalCountsMigrationCursor = 1;
+        submitterActiveProposalCountsMigrationEnd = proposalCounter;
+        submitterActiveProposalCountsInitialized = proposalCounter == 0;
+    }
+
+    /// @notice Processes a bounded slice of historical proposals for the V3 migration.
+    function migrateSubmitterActiveProposalCounts(uint256 maxProposals) external onlyOwner {
+        require(maxProposals > 0, "Batch size must be nonzero");
+        uint256 cursor = submitterActiveProposalCountsMigrationCursor;
+        uint256 migrationEnd = submitterActiveProposalCountsMigrationEnd;
+
+        uint256 batchEnd = cursor + maxProposals - 1;
+        if (batchEnd > migrationEnd) batchEnd = migrationEnd;
+
+        for (uint256 proposalId = cursor; proposalId <= batchEnd; ++proposalId) {
+            Proposal storage proposal = proposals[proposalId];
+            if (
+                proposal.proposalStatus != ProposalStatus.Cancelled
+                    && proposal.proposalStatus != ProposalStatus.Rejected
+                    && proposal.proposalStatus != ProposalStatus.Executed
+            ) {
+                activeProposalCountBySubmitter[proposal.submitter]++;
+            }
+        }
+
+        submitterActiveProposalCountsMigrationCursor = batchEnd + 1;
+        if (batchEnd == migrationEnd) {
+            submitterActiveProposalCountsInitialized = true;
+        }
     }
 
     // Sig: 0xedd146cc
@@ -283,6 +318,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         votingPowerRegistry = ip.votingPowerRegistry == address(0)
             ? IVotingPowerRegistry(ip.registryCommunity)
             : IVotingPowerRegistry(ip.votingPowerRegistry);
+        submitterActiveProposalCountsInitialized = true;
 
         _requireRegisteredArbitrator(address(ip.arbitrableConfig.arbitrator));
         _requireRegisteredSybilScorer(ip.sybilScorer);

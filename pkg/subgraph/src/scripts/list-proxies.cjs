@@ -40,6 +40,18 @@ const ethereumSubgraph =
   "https://api.studio.thegraph.com/query/102093/gardens-v-2-ethereum/" +
   subgraphConfig.VERSION_PROD;
 
+const gatewayKey =
+  process.env.SERVER_SUBGRAPH_KEY || process.env.NEXT_PUBLIC_SUBGRAPH_KEY;
+const publishedSubgraphIds = {
+  [viemChains.arbitrum.id]: "9ejruFicuLT6hfuXNTnS8UCwxTWrHz4uinesdZu1dKmk",
+  [viemChains.optimism.id]: "FmcVWeR9xdJyjM53DPuCvEdH24fSXARdq4K5K8EZRZVp",
+  [viemChains.polygon.id]: "4vsznmRkUGm9DZFBwvC6PDvGPVfVLQcUUr5ExdTNZiUc",
+  [viemChains.gnosis.id]: "ELGHrYhvJJQrYkVsYWS5iDuFpQ1p834Q2k2kBmUAVZAi",
+  [viemChains.base.id]: "HAjsxiYJEkV8oDZgVTaJE9NQ2XzgqekFbY99tMGu53eJ",
+  [viemChains.celo.id]: "BsXEnGaXdj3CkGRn95bswGcv2mQX7m8kNq7M7WBxxPx8",
+  [viemChains.mainnet.id]: "39E6r8bqUTeyrSb4JWMkqcVBKqeKAwJVp6mPhoDCtgbB",
+};
+
 const chainArg = process.argv
   .slice(2)
   .filter((arg) => arg !== "--")
@@ -63,6 +75,13 @@ const jsons = {
   // @ts-ignore
   [viemChains.mainnet.id]: ethereumSubgraph,
 };
+
+if (gatewayKey) {
+  for (const [chainId, publishedId] of Object.entries(publishedSubgraphIds)) {
+    jsons[chainId] =
+      `https://gateway.thegraph.com/api/${gatewayKey}/subgraphs/id/${publishedId}`;
+  }
+}
 
 async function extractProxies(chainId) {
   let registryFactoryProxy;
@@ -104,7 +123,12 @@ async function extractProxies(chainId) {
   }
 }`;
 
-  console.debug("Querying subgraph", subgraphEndpoint);
+  console.debug(
+    "Querying subgraph",
+    gatewayKey && publishedSubgraphIds[chain.id]
+      ? `published deployment for chain ${chain.id}`
+      : subgraphEndpoint,
+  );
   const response = await fetch(subgraphEndpoint, {
     method: "POST",
     headers: {
@@ -196,7 +220,7 @@ async function main() {
       console.error("Error parsing json");
       return;
     }
-    fs.writeFileSync(networksPath, netStringToSave);
+    fs.writeFileSync(networksPath, `${netStringToSave}\n`);
   } else {
     console.error(`networks.json in path ${networksPath} don't exists`);
   }

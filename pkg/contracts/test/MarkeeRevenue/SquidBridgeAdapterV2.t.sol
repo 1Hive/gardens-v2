@@ -41,12 +41,20 @@ contract SquidBridgeAdapterV2Test is Test {
     address internal constant CELO_EXCHANGE = 0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6;
     address internal constant CELO_V2_ROUTER = 0x1421bDe4B10e8dd459b3BCb598810B1337D56842;
     address internal constant CELO_V3_ROUTER = 0x5615CDAb10dc425a742d643d949a7F474C01abc4;
+    address internal constant BASE_ETH_USD_FEED = 0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70;
 
     MockCanonicalSquidRouterV2 internal squidRouter;
     SquidBridgeAdapterV2 internal adapter;
     address internal gardensRouter = address(0xA11CE);
 
     function setUp() public {
+        vm.warp(2 hours);
+        vm.mockCall(BASE_ETH_USD_FEED, abi.encodeWithSignature("decimals()"), abi.encode(uint8(8)));
+        vm.mockCall(
+            BASE_ETH_USD_FEED,
+            abi.encodeWithSignature("latestRoundData()"),
+            abi.encode(uint80(1), int256(2_000e8), block.timestamp, block.timestamp, uint80(1))
+        );
         squidRouter = new MockCanonicalSquidRouterV2();
         adapter = new SquidBridgeAdapterV2(gardensRouter, address(squidRouter));
     }
@@ -313,6 +321,16 @@ contract SquidBridgeAdapterV2Test is Test {
         pure
         returns (SquidBridgeAdapterV2.SquidCall memory)
     {
+        return _swapWithMinimum(tokenIn, tokenOut, recipient, target, 0.9 ether);
+    }
+
+    function _swapWithMinimum(
+        address tokenIn,
+        address tokenOut,
+        address recipient,
+        address target,
+        uint256 amountOutMinimum
+    ) internal pure returns (SquidBridgeAdapterV2.SquidCall memory) {
         return SquidBridgeAdapterV2.SquidCall({
             callType: 1,
             target: target,
@@ -324,7 +342,7 @@ contract SquidBridgeAdapterV2Test is Test {
                 uint24(100),
                 recipient,
                 uint256(1 ether),
-                uint256(0.8 ether),
+                amountOutMinimum,
                 uint160(0)
             ),
             payload: abi.encode(tokenIn, uint256(4))
@@ -547,6 +565,77 @@ contract SquidBridgeAdapterV2Test is Test {
         adapter.bridgeETH{value: 1.01 ether}(request, _quote(route, 0.9 ether, block.timestamp + 5 minutes));
     }
 
+    function test_bridgeETH_revertsWhenSourceSwapMinimumIsEconomicallyUnbound() public {
+        BridgeRequest memory request = _request(0.8 ether);
+        SquidBridgeAdapterV2.SquidCall[] memory sourceCalls = _sourceCalls(1 ether);
+        sourceCalls[2] = _swapWithMinimum(BASE_WETH, BASE_AXL_USDC, address(squidRouter), BASE_SWAP_ROUTER, 1);
+        bytes memory route = _encodeRoute(
+            sourceCalls,
+            _nativeDestinationCalls(request, 1 ether),
+            1 ether,
+            "optimism",
+            _toHexString(address(squidRouter)),
+            request.destinationReceiver,
+            request.refundRecipient,
+            true
+        );
+
+        vm.deal(gardensRouter, 1.01 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(abi.encodeWithSelector(SquidBridgeAdapterV2.InsufficientSourceOutput.selector, 1, 1_800e6));
+        adapter.bridgeETH{value: 1.01 ether}(request, _quote(route, 0.9 ether, block.timestamp + 5 minutes));
+    }
+
+    function test_bridgeETH_revertsWhenSourcePriceIsStale() public {
+        vm.mockCall(
+            BASE_ETH_USD_FEED,
+            abi.encodeWithSignature("latestRoundData()"),
+            abi.encode(
+                uint80(1), int256(2_000e8), block.timestamp - 1 hours - 1, block.timestamp - 1 hours - 1, uint80(1)
+            )
+        );
+        BridgeRequest memory request = _request(0.8 ether);
+
+        vm.deal(gardensRouter, 1.01 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(SquidBridgeAdapterV2.InvalidPriceFeed.selector);
+        adapter.bridgeETH{value: 1.01 ether}(
+            request, _quote(_validNativeRoute(request), 0.9 ether, block.timestamp + 5 minutes)
+        );
+    }
+
+    function test_bridgeETH_revertsWhenSourcePriceRoundIsIncomplete() public {
+        vm.mockCall(
+            BASE_ETH_USD_FEED,
+            abi.encodeWithSignature("latestRoundData()"),
+            abi.encode(uint80(2), int256(2_000e8), block.timestamp, block.timestamp, uint80(1))
+        );
+        BridgeRequest memory request = _request(0.8 ether);
+
+        vm.deal(gardensRouter, 1.01 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(SquidBridgeAdapterV2.InvalidPriceFeed.selector);
+        adapter.bridgeETH{value: 1.01 ether}(
+            request, _quote(_validNativeRoute(request), 0.9 ether, block.timestamp + 5 minutes)
+        );
+    }
+
+    function test_bridgeETH_revertsWhenSourcePriceRoundNeverStarted() public {
+        vm.mockCall(
+            BASE_ETH_USD_FEED,
+            abi.encodeWithSignature("latestRoundData()"),
+            abi.encode(uint80(1), int256(2_000e8), uint256(0), block.timestamp, uint80(1))
+        );
+        BridgeRequest memory request = _request(0.8 ether);
+
+        vm.deal(gardensRouter, 1.01 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(SquidBridgeAdapterV2.InvalidPriceFeed.selector);
+        adapter.bridgeETH{value: 1.01 ether}(
+            request, _quote(_validNativeRoute(request), 0.9 ether, block.timestamp + 5 minutes)
+        );
+    }
+
     function test_bridgeETH_revertsWhenSourceUsesUnapprovedTarget() public {
         BridgeRequest memory request = _request(0.8 ether);
         address attackerTarget = address(0xBAD);
@@ -589,6 +678,37 @@ contract SquidBridgeAdapterV2Test is Test {
         vm.prank(gardensRouter);
         vm.expectRevert(SquidBridgeAdapterV2.UnboundRoute.selector);
         adapter.bridgeETH{value: 1.01 ether}(request, _quote(route, 0.9 ether, block.timestamp + 5 minutes));
+    }
+
+    function test_bridgeETH_revertsWhenDestinationSwapMinimumIsBelowExpectedOutput() public {
+        BridgeRequest memory request = _request(0.8 ether);
+        SquidBridgeAdapterV2.SquidCall[] memory destinationCalls = _nativeDestinationCalls(request, 1 ether);
+        destinationCalls[2] = _swapWithMinimum(BASE_AXL_USDC, OPTIMISM_WETH, SQUID_MULTICALL, OPTIMISM_SWAP_ROUTER, 1);
+        bytes memory route = _encodeRoute(
+            _sourceCalls(1 ether),
+            destinationCalls,
+            1 ether,
+            "optimism",
+            _toHexString(address(squidRouter)),
+            request.destinationReceiver,
+            request.refundRecipient,
+            true
+        );
+
+        vm.deal(gardensRouter, 1.01 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(abi.encodeWithSelector(SquidBridgeAdapterV2.InsufficientOutput.selector, 1, 0.9 ether));
+        adapter.bridgeETH{value: 1.01 ether}(request, _quote(route, 0.9 ether, block.timestamp + 5 minutes));
+    }
+
+    function test_bridgeETH_revertsWhenProviderQuoteIsBelowIndependentDestinationFloor() public {
+        BridgeRequest memory request = _request(0);
+        bytes memory route = _validNativeRoute(request);
+
+        vm.deal(gardensRouter, 1.01 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(abi.encodeWithSelector(SquidBridgeAdapterV2.InsufficientOutput.selector, 1, 0.9 ether));
+        adapter.bridgeETH{value: 1.01 ether}(request, _quote(route, 1, block.timestamp + 5 minutes));
     }
 
     function test_bridgeETH_revertsWhenProviderSetsItsOwnMinimum() public {

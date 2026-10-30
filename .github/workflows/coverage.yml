@@ -30,7 +30,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: false
+
+      - name: Initialize required submodules
+        run: .github/scripts/init-contract-submodules.sh
 
       - name: Setup swap space
         run: |

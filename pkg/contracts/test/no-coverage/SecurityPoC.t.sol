@@ -1182,6 +1182,7 @@ contract PoC_GHSAQPR5_TimeWeightedThresholdSnapshot is PoCBase {
 contract PoC_GDN05_CancelledProposalsDoNotExhaustCreation is PoCBase {
     GV2ERC20 token;
     address attacker = makeAddr("attacker");
+    address victim = makeAddr("victim");
 
     uint256 constant MAX_PROPOSAL_COUNT = 128;
     uint256 constant SUBMITTER_COL = 0.02 ether;
@@ -1195,6 +1196,7 @@ contract PoC_GDN05_CancelledProposalsDoNotExhaustCreation is PoCBase {
         token.mint(local(), TOTAL_SUPPLY / 3);
         token.mint(pool_admin(), TOTAL_SUPPLY / 3);
         token.mint(attacker, TOTAL_SUPPLY / 3);
+        token.mint(victim, STAKE_WITH_FEES);
 
         _deployArbitrator(ARB_FEE);
         _deployFactory(address(token));
@@ -1217,6 +1219,7 @@ contract PoC_GDN05_CancelledProposalsDoNotExhaustCreation is PoCBase {
         );
 
         _approveAndRegister(attacker);
+        _approveAndRegister(victim);
     }
 
     function test_GDN05_CancelledProposalsDoNotExhaustCreation() public {
@@ -1229,6 +1232,27 @@ contract PoC_GDN05_CancelledProposalsDoNotExhaustCreation is PoCBase {
 
         uint256 newProposalId = _createProposal(attacker, 1 ether);
         assertGt(newProposalId, 0, "GDN-05: cancelled proposals must not exhaust future proposal creation");
+    }
+
+    function test_GHSA7G4H_OneMemberCannotOccupyEveryActiveProposalSlot() public {
+        uint256 memberLimit = 8;
+        for (uint256 i; i < memberLimit; ++i) {
+            _createProposal(attacker, 1 ether);
+        }
+
+        (,, uint256 collateral,,,) = cvStrategy.getArbitrableConfig();
+        vm.deal(attacker, collateral);
+        CreateProposal memory proposal = CreateProposal(poolId, attacker, 1 ether, address(NATIVE), meta);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVProposalFacet.SubmitterProposalLimitReached.selector, attacker, memberLimit, memberLimit
+            )
+        );
+        vm.prank(attacker);
+        allo().registerRecipient{value: collateral}(poolId, abi.encode(proposal));
+
+        uint256 victimProposalId = _createProposal(victim, 1 ether);
+        assertGt(victimProposalId, 0, "GHSA-7g4h: another member must retain proposal access");
     }
 }
 
@@ -2121,10 +2145,11 @@ contract PoC_M7_PushPaymentChallengerDoS is PoCBase {
 contract PoC_M4b_VoterStakedProposalsDoS is PoCBase {
     GV2ERC20 token;
     address victim = makeAddr("victim");
-    address submitter = makeAddr("proposalSubmitter");
 
     uint256 constant ARB_FEE = 0.5 ether;
     uint256 constant MAX_VOTER_STAKED_PROPOSALS = 128;
+    uint256 constant MAX_ACTIVE_PROPOSALS_PER_SUBMITTER = 8;
+    uint256 constant SUBMITTER_COUNT = MAX_VOTER_STAKED_PROPOSALS / MAX_ACTIVE_PROPOSALS_PER_SUBMITTER;
 
     function setUp() public {
         _alloSetup();
@@ -2132,7 +2157,6 @@ contract PoC_M4b_VoterStakedProposalsDoS is PoCBase {
         token = new GV2ERC20("Token", "TKN", 18);
         token.mint(local(), TOTAL_SUPPLY / 3);
         token.mint(victim, TOTAL_SUPPLY / 3);
-        token.mint(submitter, TOTAL_SUPPLY / 3);
 
         _deployArbitrator(ARB_FEE);
         _deployFactory(address(token));
@@ -2158,16 +2182,23 @@ contract PoC_M4b_VoterStakedProposalsDoS is PoCBase {
         vm.prank(victim);
         cvStrategy.activatePoints();
 
-        _approveAndRegister(submitter);
-        vm.prank(submitter);
-        cvStrategy.activatePoints();
+        for (uint256 i; i < SUBMITTER_COUNT; ++i) {
+            address submitter = _proposalSubmitter(i);
+            token.mint(submitter, STAKE_WITH_FEES);
+            _approveAndRegister(submitter);
+        }
 
         vm.deal(address(this), POOL_AMOUNT);
         (bool ok,) = address(cvStrategy).call{value: POOL_AMOUNT}("");
         require(ok, "pool fund failed");
     }
 
-    function _createAndVoteOnProposal() internal {
+    function _proposalSubmitter(uint256 index) internal pure returns (address) {
+        return address(uint160(uint256(keccak256(abi.encodePacked("proposalSubmitter", index)))));
+    }
+
+    function _createAndVoteOnProposal(uint256 index) internal {
+        address submitter = _proposalSubmitter(index / MAX_ACTIVE_PROPOSALS_PER_SUBMITTER);
         uint256 proposalId = _createProposal(submitter, 0.01 ether);
 
         ProposalSupport[] memory allocs = new ProposalSupport[](1);
@@ -2185,7 +2216,7 @@ contract PoC_M4b_VoterStakedProposalsDoS is PoCBase {
 
     function test_M4b_UnregisterMustStayGasBoundedAsVotesGrow() public {
         for (uint256 i = 0; i < MAX_VOTER_STAKED_PROPOSALS; i++) {
-            _createAndVoteOnProposal();
+            _createAndVoteOnProposal(i);
         }
 
         uint256 gasAtCap = _measureUnregisterGas();
@@ -2555,6 +2586,34 @@ contract PoC_GHSA_84CR_PassportInactiveFailOpen is Test {
         assertTrue(
             scorer.canExecuteAction(user, address(strategy)), "disabled strategy keeps the permissive control path"
         );
+    }
+
+    function test_GHSA_QWX5_ExpiredPassportScoreCannotAuthorizeActions() public {
+        address listManager = makeAddr("passport-list-manager");
+        address councilSafe = makeAddr("passport-council");
+        address user = makeAddr("passport-user");
+        SecurityStrategyRegistryStatus registry = new SecurityStrategyRegistryStatus();
+        SecurityPassportStrategy strategy = new SecurityPassportStrategy(address(registry));
+        PassportScorer scorer = PassportScorer(
+            address(
+                new ERC1967Proxy(
+                    address(new PassportScorer()),
+                    abi.encodeWithSelector(PassportScorer.initialize.selector, listManager, address(this))
+                )
+            )
+        );
+
+        vm.prank(listManager);
+        scorer.addStrategy(address(strategy), 100, councilSafe);
+        vm.prank(listManager);
+        scorer.activateStrategy(address(strategy));
+        vm.warp(100);
+        vm.prank(listManager);
+        scorer.addUserScore(user, 100);
+
+        assertTrue(scorer.canExecuteAction(user, address(strategy)), "fresh Passport score should authorize");
+        vm.warp(101 + scorer.SCORE_VALIDITY_PERIOD());
+        assertFalse(scorer.canExecuteAction(user, address(strategy)), "expired Passport score must be rejected");
     }
 }
 

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import {IBridgeAdapter, BridgeRequest} from "./interfaces/IBridgeAdapter.sol";
 import {ISquidGardensRevenueReceiver} from "./interfaces/ISquidGardensRevenueReceiver.sol";
@@ -65,6 +66,7 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
     address internal constant SQUID_MULTICALL = 0xaD6Cea45f98444a922a2b4fE96b8C90F0862D2F4;
     address internal constant BASE_WETH = 0x4200000000000000000000000000000000000006;
     address internal constant BASE_AXL_USDC = 0xEB466342C4d449BC9f53A865D5Cb90586f405215;
+    address internal constant BASE_ETH_USD_FEED = 0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70;
     bytes4 internal constant CALL_BRIDGE_CALL_SELECTOR = 0x846a1bc6;
     bytes4 internal constant APPROVE_SELECTOR = 0x095ea7b3;
     bytes4 internal constant DEPOSIT_SELECTOR = 0xd0e30db0;
@@ -78,6 +80,10 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
     uint8 internal constant FULL_TOKEN_BALANCE = 1;
     uint8 internal constant FULL_NATIVE_BALANCE = 2;
     uint8 internal constant COLLECT_TOKEN_BALANCE = 3;
+    uint256 internal constant BPS_DENOMINATOR = 10_000;
+    uint256 internal constant MAX_SOURCE_SLIPPAGE_BPS = 1_000;
+    uint256 internal constant MAX_DESTINATION_SLIPPAGE_BPS = 1_000;
+    uint256 internal constant MAX_ETH_USD_PRICE_AGE = 1 hours;
 
     address public router;
     address public immutable squidRouter;
@@ -104,6 +110,8 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
     error RefundFailed();
     error SquidCallFailed(bytes reason);
     error UnboundRoute();
+    error InvalidPriceFeed();
+    error InsufficientSourceOutput(uint256 minimum, uint256 requiredMinimum);
 
     modifier onlyRouter() {
         if (msg.sender != router) revert NotRouter();
@@ -147,6 +155,11 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
                 || quote.executionValue > msg.value || quote.deadline == 0 || quote.routerCalldata.length < 4
         ) revert InvalidQuote();
         if (block.timestamp > quote.deadline) revert QuoteExpired(quote.deadline);
+
+        uint256 independentMinimum = _minimumDestinationOutput(quote.inputAmount);
+        if (quote.expectedAmountOut < independentMinimum) {
+            revert InsufficientOutput(quote.expectedAmountOut, independentMinimum);
+        }
 
         bytes memory boundRouterCalldata = _validateRoute(request, quote);
         expectedAmountOut = quote.expectedAmountOut;
@@ -235,6 +248,8 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
         SquidCall memory payoutCall = calls[calls.length - 1];
         if (payoutCall.target != request.destinationReceiver || payoutCall.value != 0) revert UnboundRoute();
 
+        uint256 independentMinimum = _minimumDestinationOutput(quote.inputAmount);
+
         address currentToken = _destinationBridgeToken(request.destinationChainId);
         SquidCall memory collectCall = calls[0];
         if (
@@ -245,28 +260,31 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
 
         bytes4 payoutSelector = _selector(payoutCall.callData);
         if (payoutSelector == ISquidGardensRevenueReceiver.receiveSquidRevenueV2.selector) {
-            return _bindNativePayout(request, quote, calls, currentToken, payoutCall);
+            return _bindNativePayout(request, quote.inputAmount, calls, currentToken, payoutCall, independentMinimum);
         } else if (payoutSelector == ISquidGardensRevenueReceiver.receiveSquidTokenRevenueV2.selector) {
-            return _bindTokenPayout(request, quote, calls, currentToken, payoutCall);
+            return _bindTokenPayout(request, quote.inputAmount, calls, currentToken, payoutCall, independentMinimum);
         }
         revert UnboundRoute();
     }
 
     function _bindNativePayout(
         BridgeRequest calldata request,
-        SquidQuote memory quote,
+        uint256 inputAmount,
         SquidCall[] memory calls,
         address currentToken,
-        SquidCall memory payoutCall
+        SquidCall memory payoutCall,
+        uint256 independentMinimum
     ) internal view returns (SquidCall memory) {
         if (!_supportsNativeOutput(request.destinationChainId) || calls.length < 3) {
             revert UnboundRoute();
         }
-        currentToken = _validateDestinationSwaps(calls, currentToken, calls.length - 2, request.destinationChainId);
+        currentToken = _validateDestinationSwaps(
+            calls, currentToken, calls.length - 2, request.destinationChainId, independentMinimum
+        );
         _validateWithdraw(calls[calls.length - 2], currentToken, request.destinationChainId);
         (bytes32 routePayoutId, bytes32 communityKey, address registryCommunity, uint256 minimum) =
             abi.decode(_withoutSelector(payoutCall.callData), (bytes32, bytes32, address, uint256));
-        bytes32 payoutId = keccak256(abi.encode(request.communityKey, request.registryCommunity, quote.inputAmount));
+        bytes32 payoutId = keccak256(abi.encode(request.communityKey, request.registryCommunity, inputAmount));
         if (
             payoutCall.callType != FULL_NATIVE_BALANCE || routePayoutId != payoutId
                 || communityKey != request.communityKey || registryCommunity != request.registryCommunity
@@ -275,22 +293,25 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
         ) revert UnboundRoute();
         payoutCall.callData = abi.encodeCall(
             ISquidGardensRevenueReceiver.receiveSquidRevenueV2,
-            (payoutId, request.communityKey, request.registryCommunity, quote.expectedAmountOut)
+            (payoutId, request.communityKey, request.registryCommunity, independentMinimum)
         );
         return payoutCall;
     }
 
     function _bindTokenPayout(
         BridgeRequest calldata request,
-        SquidQuote memory quote,
+        uint256 inputAmount,
         SquidCall[] memory calls,
         address currentToken,
-        SquidCall memory payoutCall
+        SquidCall memory payoutCall,
+        uint256 independentMinimum
     ) internal view returns (SquidCall memory) {
         if (calls.length < 3) revert UnboundRoute();
-        currentToken = _validateDestinationSwaps(calls, currentToken, calls.length - 2, request.destinationChainId);
+        currentToken = _validateDestinationSwaps(
+            calls, currentToken, calls.length - 2, request.destinationChainId, independentMinimum
+        );
         TokenPayout memory routePayout = abi.decode(_withoutSelector(payoutCall.callData), (TokenPayout));
-        bytes32 payoutId = keccak256(abi.encode(request.communityKey, request.registryCommunity, quote.inputAmount));
+        bytes32 payoutId = keccak256(abi.encode(request.communityKey, request.registryCommunity, inputAmount));
         if (
             payoutCall.callType != FULL_TOKEN_BALANCE || routePayout.payoutId != payoutId
                 || routePayout.communityKey != request.communityKey
@@ -304,7 +325,7 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
         );
         payoutCall.callData = abi.encodeCall(
             ISquidGardensRevenueReceiver.receiveSquidTokenRevenueV2,
-            (payoutId, request.communityKey, request.registryCommunity, routePayout.token, 0, quote.expectedAmountOut)
+            (payoutId, request.communityKey, request.registryCommunity, routePayout.token, 0, independentMinimum)
         );
         return payoutCall;
     }
@@ -320,26 +341,34 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
         ) revert UnboundRoute();
 
         address currentToken = BASE_WETH;
+        uint256 bridgeAmountMinimum = 0;
         for (uint256 i = 1; i < calls.length; i += 2) {
             SquidCall memory swapCall = calls[i + 1];
             _validateApproval(calls[i], currentToken, swapCall.target, type(uint256).max, DEFAULT_CALL);
             address recipient = i + 2 == calls.length ? squidRouter : SQUID_MULTICALL;
-            currentToken = _validateSwap(swapCall, currentToken, recipient, 8453);
+            (currentToken, bridgeAmountMinimum) = _validateSwap(swapCall, currentToken, recipient, 8453);
         }
         if (currentToken != BASE_AXL_USDC) revert UnboundRoute();
+        _validateSourceOutputFloor(quote.inputAmount, bridgeAmountMinimum);
     }
 
     function _validateDestinationSwaps(
         SquidCall[] memory calls,
         address currentToken,
         uint256 terminalIndex,
-        uint256 destinationChainId
+        uint256 destinationChainId,
+        uint256 requiredOutputMinimum
     ) internal view returns (address) {
         if (terminalIndex < 1 || (terminalIndex - 1) % 2 != 0) revert UnboundRoute();
+        uint256 finalSwapMinimum;
         for (uint256 i = 1; i < terminalIndex; i += 2) {
             SquidCall memory swapCall = calls[i + 1];
             _validateApproval(calls[i], currentToken, swapCall.target, type(uint256).max, DEFAULT_CALL);
-            currentToken = _validateSwap(swapCall, currentToken, SQUID_MULTICALL, destinationChainId);
+            (currentToken, finalSwapMinimum) =
+                _validateSwap(swapCall, currentToken, SQUID_MULTICALL, destinationChainId);
+        }
+        if (finalSwapMinimum < requiredOutputMinimum) {
+            revert InsufficientOutput(finalSwapMinimum, requiredOutputMinimum);
         }
         return currentToken;
     }
@@ -364,13 +393,15 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
     function _validateSwap(SquidCall memory swapCall, address tokenIn, address recipient, uint256 chainId)
         internal
         view
-        returns (address tokenOut)
+        returns (address tokenOut, uint256 amountOutMinimum)
     {
         if (
             swapCall.callType != FULL_TOKEN_BALANCE || swapCall.value != 0
                 || !allowedSwapTargets[chainId][swapCall.target]
         ) revert UnboundRoute();
         bytes4 selector = _selector(swapCall.callData);
+        // Every supported selector below assigns the complete swap description.
+        // slither-disable-next-line uninitialized-local
         SwapDetails memory swap;
         if (selector == EXACT_INPUT_SINGLE_SELECTOR) {
             swap = _decodeExactInputSingle(swapCall.callData);
@@ -392,7 +423,28 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
         if (keccak256(swapCall.payload) != keccak256(abi.encode(swap.tokenIn, swap.inputPosition))) {
             revert UnboundRoute();
         }
-        return swap.tokenOut;
+        return (swap.tokenOut, swap.amountOutMinimum);
+    }
+
+    function _validateSourceOutputFloor(uint256 inputAmount, uint256 bridgeAmountMinimum) internal view {
+        (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) =
+            IAggregatorV3(BASE_ETH_USD_FEED).latestRoundData();
+        uint8 decimals = IAggregatorV3(BASE_ETH_USD_FEED).decimals();
+        if (
+            answer <= 0 || decimals > 18 || startedAt == 0 || updatedAt < startedAt || answeredInRound < roundId
+                || updatedAt > block.timestamp || block.timestamp - updatedAt > MAX_ETH_USD_PRICE_AGE
+        ) revert InvalidPriceFeed();
+
+        uint256 usdValueInBridgeDecimals = Math.mulDiv(inputAmount, uint256(answer), 10 ** (uint256(decimals) + 12));
+        uint256 requiredMinimum =
+            Math.mulDiv(usdValueInBridgeDecimals, BPS_DENOMINATOR - MAX_SOURCE_SLIPPAGE_BPS, BPS_DENOMINATOR);
+        if (bridgeAmountMinimum < requiredMinimum) {
+            revert InsufficientSourceOutput(bridgeAmountMinimum, requiredMinimum);
+        }
+    }
+
+    function _minimumDestinationOutput(uint256 inputAmount) internal pure returns (uint256) {
+        return Math.mulDiv(inputAmount, BPS_DENOMINATOR - MAX_DESTINATION_SLIPPAGE_BPS, BPS_DENOMINATOR);
     }
 
     function _decodeExactInputSingle(bytes memory callData) internal pure returns (SwapDetails memory swap) {
@@ -574,4 +626,12 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
             }
         }
     }
+}
+
+interface IAggregatorV3 {
+    function decimals() external view returns (uint8);
+    function latestRoundData()
+        external
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
 }
