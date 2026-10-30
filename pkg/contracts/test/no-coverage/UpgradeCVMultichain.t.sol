@@ -304,6 +304,25 @@ contract UpgradeCVMultichainScript is Test {
         assertTrue(factory.isProtopianAddress(LEGACY_PROTOPIAN));
     }
 
+    function test_runCurrentNetwork_upgrades_factory_without_repeating_completed_migration() public {
+        _useFixture("factory-already-v3");
+        _setDefaultScriptEnv();
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
+        vm.store(address(factory), bytes32(0), bytes32(uint256(3)));
+
+        script.setPhaseForTest(1);
+        script.setFactoryActionForTest(1);
+        script.executeCurrentNetworkForTest();
+
+        string memory updated = vm.readFile(fixturePath);
+        assertEq(
+            _implementation(address(factory)), updated.readAddress("$.networks[0].IMPLEMENTATIONS.REGISTRY_FACTORY")
+        );
+        assertEq(uint8(uint256(vm.load(address(factory), bytes32(0)))), 3);
+    }
+
     function test_runCurrentNetwork_respects_skip_flags() public {
         _useFixture("skip-flags");
         _setDefaultScriptEnv();
@@ -548,6 +567,27 @@ contract UpgradeCVMultichainScript is Test {
         vm.prank(address(script));
         vm.expectRevert();
         strategy.reinitializeV3MigrateSubmitterActiveProposalCounts();
+    }
+
+    function test_runCurrentNetwork_resumes_incomplete_submitter_count_migration() public {
+        _useFixture("strategies-resume-submitter-counts");
+        _setDefaultScriptEnv();
+        _writeFixtureJson(
+            address(oldFactoryImpl), address(oldCommunityImpl), address(oldStrategyImpl), address(0), address(0)
+        );
+
+        vm.store(address(strategy), bytes32(uint256(110)), bytes32(uint256(1)));
+        assertEq(strategy.proposalCounter(), 1);
+        vm.prank(address(script));
+        strategy.reinitializeV3MigrateSubmitterActiveProposalCounts();
+        assertFalse(strategy.submitterActiveProposalCountsInitialized());
+
+        script.setPhaseForTest(3);
+        script.setFactoryActionForTest(0);
+        script.setFlagForTest("MIGRATE_SUBMITTER_PROPOSAL_COUNTS", true);
+        script.executeCurrentNetworkForTest();
+
+        assertTrue(strategy.submitterActiveProposalCountsInitialized());
     }
 
     function test_runCurrentNetwork_strategy_phase_can_migrate_when_implementation_is_current() public {
