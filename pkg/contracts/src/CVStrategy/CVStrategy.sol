@@ -107,6 +107,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     error StrategyPaused(address controller);
     error StrategySelectorPaused(bytes4 selector, address controller);
     error SuperfluidPoolCreationFailed();
+    error MigrationBatchSizeCannotBeZero();
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -276,7 +277,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
 
     /// @notice Processes a bounded slice of historical proposals for the V3 migration.
     function migrateSubmitterActiveProposalCounts(uint256 maxProposals) external onlyOwner {
-        require(maxProposals > 0, "Batch size must be nonzero");
+        if (maxProposals == 0) revert MigrationBatchSizeCannotBeZero();
         uint256 cursor = submitterActiveProposalCountsMigrationCursor;
         uint256 migrationEnd = submitterActiveProposalCountsMigrationEnd;
 
