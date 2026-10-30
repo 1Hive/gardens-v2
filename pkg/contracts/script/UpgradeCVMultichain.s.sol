@@ -507,7 +507,7 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
                 _proxyImplementationAddress(context.registryFactoryProxy) == context.registryFactoryImplementation;
             bool needsMigration = _initializerVersion(context.registryFactoryProxy) < REGISTRY_FACTORY_MIGRATION_VERSION;
 
-            if (!implementationIsCurrent || needsMigration) {
+            if (needsMigration) {
                 address[] memory holders =
                     networkJson.readAddressArray(getKeyNetwork(".MIGRATIONS.REGISTRY_FACTORY_V3_PROTOPIANS"));
                 if (holders.length == 0) revert("registry factory v3 protopian holders missing");
@@ -520,6 +520,8 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
                 } else {
                     registryFactory.reinitializeV3MigrateProtopians(holders);
                 }
+            } else if (!implementationIsCurrent) {
+                registryFactory.upgradeTo(context.registryFactoryImplementation);
             }
         }
 
@@ -754,6 +756,9 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
             options.migrateThresholdSnapshots && _initializerVersion(proxy) < THRESHOLD_MIGRATION_VERSION;
         bool needsSubmitterProposalCountMigration = options.migrateSubmitterProposalCounts
             && _initializerVersion(proxy) < SUBMITTER_PROPOSAL_COUNT_MIGRATION_VERSION;
+        bool needsSubmitterProposalCountCompletion = options.migrateSubmitterProposalCounts
+            && _initializerVersion(proxy) >= SUBMITTER_PROPOSAL_COUNT_MIGRATION_VERSION
+            && !cvStrategy.submitterActiveProposalCountsInitialized();
         IDiamond.FacetCut[] memory allCuts = _mergeFacetCuts(
             _buildStaleSelectorRemovalCuts(proxy, context.cvCuts), _buildChangedFacetCuts(proxy, context.cvCuts)
         );
@@ -773,6 +778,7 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
             } else if (implementationIsCurrent) {
                 _runStrategyMigrations(cvStrategy, needsThresholdMigration, needsSubmitterProposalCountMigration);
             }
+            if (needsSubmitterProposalCountCompletion) _completeSubmitterProposalCountMigration(cvStrategy);
             return;
         }
 
@@ -786,6 +792,7 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         } else if (implementationIsCurrent) {
             _runStrategyMigrations(cvStrategy, needsThresholdMigration, needsSubmitterProposalCountMigration);
         }
+        if (needsSubmitterProposalCountCompletion) _completeSubmitterProposalCountMigration(cvStrategy);
         if (needsDiamondCut) {
             IDiamondCut(proxy).diamondCut(allCuts, options.strategyInit, options.strategyInitCalldata);
         }
