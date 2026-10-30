@@ -69,6 +69,25 @@
     },
     {
       "type": "function",
+      "name": "activeProposalCountBySubmitter",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
       "name": "activeProposalCountInitialized",
       "inputs": [],
       "outputs": [
@@ -919,6 +938,19 @@
     },
     {
       "type": "function",
+      "name": "migrateSubmitterActiveProposalCounts",
+      "inputs": [
+        {
+          "name": "maxProposals",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
       "name": "openStreamingProposalIds",
       "inputs": [
         {
@@ -1208,6 +1240,13 @@
     {
       "type": "function",
       "name": "reinitializeV2MigrateThresholdSnapshots",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "reinitializeV3MigrateSubmitterActiveProposalCounts",
       "inputs": [],
       "outputs": [],
       "stateMutability": "nonpayable"
@@ -1518,6 +1557,45 @@
     {
       "type": "function",
       "name": "streamingRatePerSecond",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "submitterActiveProposalCountsInitialized",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "submitterActiveProposalCountsMigrationCursor",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "submitterActiveProposalCountsMigrationEnd",
       "inputs": [],
       "outputs": [
         {
@@ -2969,6 +3047,51 @@
     },
     {
       "type": "event",
+      "name": "SubmitterActiveProposalCountsMigrated",
+      "inputs": [
+        {
+          "name": "proposalCount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "SubmitterActiveProposalCountsMigrationBatchProcessed",
+      "inputs": [
+        {
+          "name": "firstProposalId",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "lastProposalId",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "SubmitterActiveProposalCountsMigrationStarted",
+      "inputs": [
+        {
+          "name": "proposalCount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
       "name": "SuperfluidGDAConnected",
       "inputs": [
         {
@@ -3423,6 +3546,11 @@
     },
     {
       "type": "error",
+      "name": "InvalidMigrationBatchSize",
+      "inputs": []
+    },
+    {
+      "type": "error",
       "name": "MISMATCH",
       "inputs": []
     },
@@ -3816,6 +3944,11 @@
     },
     {
       "type": "error",
+      "name": "SubmitterProposalCountMigrationNotStarted",
+      "inputs": []
+    },
+    {
+      "type": "error",
       "name": "SuperfluidPoolCreationFailed",
       "inputs": []
     },
@@ -3934,6 +4067,19 @@
     },
     {
       "type": "function",
+      "name": "MAX_ACTIVE_PROPOSALS_PER_SUBMITTER",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
       "name": "MAX_ALLOCATIONS_PER_TX",
       "inputs": [],
       "outputs": [
@@ -4015,6 +4161,13 @@
         }
       ],
       "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "repairSuperfluidGDA",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
     },
     {
       "type": "function",
@@ -4234,10 +4387,31 @@
     },
     {
       "type": "error",
+      "name": "ReentrantCall",
+      "inputs": []
+    },
+    {
+      "type": "error",
       "name": "StreamingRateOverflow",
       "inputs": [
         {
           "name": "streamingRatePerSecond",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "SubmitterProposalCountMigrationPending",
+      "inputs": [
+        {
+          "name": "cursor",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "end",
           "type": "uint256",
           "internalType": "uint256"
         }
@@ -4284,6 +4458,27 @@
           "internalType": "address"
         }
       ]
+    },
+    {
+      "type": "error",
+      "name": "SuperfluidPoolAlreadyMatchesToken",
+      "inputs": [
+        {
+          "name": "pool",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "SuperfluidTokenCannotBeZero",
+      "inputs": []
     },
     {
       "type": "error",
@@ -4753,6 +4948,27 @@
       "type": "error",
       "name": "StreamingEscrowFactoryNotSet",
       "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "SubmitterProposalLimitReached",
+      "inputs": [
+        {
+          "name": "submitter",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "current",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "max",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
     },
     {
       "type": "error",

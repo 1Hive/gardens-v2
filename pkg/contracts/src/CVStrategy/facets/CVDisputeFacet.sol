@@ -149,7 +149,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
                 _handleStreamingResolution(proposalId, true);
             } else if (arbitrableConfig.defaultRuling == 2) {
                 proposal.proposalStatus = ProposalStatus.Rejected;
-                _decrementActiveProposalCount();
+                _decrementActiveProposalCount(proposalId);
                 _removeOpenStreamingProposal(proposalId);
                 _handleStreamingResolution(proposalId, false);
                 _tryWithdrawCollateral(
@@ -178,7 +178,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
             );
         } else if (_ruling == 2) {
             proposal.proposalStatus = ProposalStatus.Rejected;
-            _decrementActiveProposalCount();
+            _decrementActiveProposalCount(proposalId);
             _removeOpenStreamingProposal(proposalId);
             _handleStreamingResolution(proposalId, false);
             _tryWithdrawCollateral(

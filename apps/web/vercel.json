@@ -6,23 +6,35 @@
       "schedule": "*/5 * * * *"
     },
     {
-      "path": "/api/passport-oracles/daily-job/10",
+      "path": "/api/passport-oracle/daily-job/1",
       "schedule": "*/15 * * * *"
     },
     {
-      "path": "/api/passport-oracles/daily-job/137",
+      "path": "/api/passport-oracle/daily-job/10",
       "schedule": "*/15 * * * *"
     },
     {
-      "path": "/api/passport-oracles/daily-job/100",
+      "path": "/api/passport-oracle/daily-job/137",
       "schedule": "*/15 * * * *"
     },
     {
-      "path": "/api/passport-oracles/daily-job/42161",
+      "path": "/api/passport-oracle/daily-job/100",
       "schedule": "*/15 * * * *"
     },
     {
-      "path": "/api/passport-oracles/daily-job/421614",
+      "path": "/api/passport-oracle/daily-job/42161",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/passport-oracle/daily-job/8453",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/passport-oracle/daily-job/42220",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/passport-oracle/daily-job/421614",
       "schedule": "*/15 * * * *"
     },
     {

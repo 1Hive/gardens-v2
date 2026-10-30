@@ -94,7 +94,9 @@ describe("Passport write-score keeper relay", () => {
   });
 
   it("returns success without using the keeper when the score is unchanged", async () => {
-    mocks.readContract.mockResolvedValue(2_000n);
+    mocks.readContract
+      .mockResolvedValueOnce(2_000n)
+      .mockResolvedValueOnce(BigInt(Math.floor(Date.now() / 1000)));
 
     const response = await callRoute();
 
@@ -112,6 +114,50 @@ describe("Passport write-score keeper relay", () => {
     expect(mocks.createWalletClient).not.toHaveBeenCalled();
     expect(mocks.writeContract).not.toHaveBeenCalled();
     expect(mocks.waitForTransactionReceipt).not.toHaveBeenCalled();
+  });
+
+  it("refreshes an unchanged score when its on-chain timestamp is stale", async () => {
+    const hash = `0x${"3".repeat(64)}`;
+    mocks.readContract.mockResolvedValueOnce(2_000n).mockResolvedValueOnce(1n);
+    mocks.writeContract.mockResolvedValue(hash);
+
+    const response = await callRoute();
+
+    expect(response.status).toBe(200);
+    expect(mocks.writeContract).toHaveBeenCalledWith(
+      expect.objectContaining({
+        args: [user, 2_000n],
+        functionName: "addUserScore",
+      }),
+    );
+  });
+
+  it("keeps the unchanged-score no-op before the scorer exposes timestamps", async () => {
+    mocks.readContract
+      .mockResolvedValueOnce(2_000n)
+      .mockRejectedValueOnce(new Error("unknown selector"));
+
+    const response = await callRoute();
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ unchanged: true });
+    expect(mocks.writeContract).not.toHaveBeenCalled();
+  });
+
+  it("writes a zero score so an invalid credential is revoked immediately", async () => {
+    const hash = `0x${"4".repeat(64)}`;
+    mocks.fetchPassportScore.mockResolvedValue(0);
+    mocks.readContract
+      .mockResolvedValueOnce(2_000n)
+      .mockResolvedValueOnce(BigInt(Math.floor(Date.now() / 1000)));
+    mocks.writeContract.mockResolvedValue(hash);
+
+    const response = await callRoute();
+
+    expect(response.status).toBe(200);
+    expect(mocks.writeContract).toHaveBeenCalledWith(
+      expect.objectContaining({ args: [user, 0n] }),
+    );
   });
 
   it("writes a changed score and waits until the no-op read can observe it", async () => {

@@ -12,11 +12,13 @@ import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCom
 import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol";
 
 contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
+    uint256 internal constant SUBMITTER_PROPOSAL_COUNT_MIGRATION_BATCH_SIZE = 128;
     using stdJson for string;
     uint256 internal constant EXPECTED_COMMUNITY_FACET_COUNT = 7;
     uint256 internal constant EXPECTED_STRATEGY_FACET_COUNT = 9;
     uint8 internal constant REGISTRY_FACTORY_MIGRATION_VERSION = 3;
     uint8 internal constant THRESHOLD_MIGRATION_VERSION = 2;
+    uint8 internal constant SUBMITTER_PROPOSAL_COUNT_MIGRATION_VERSION = 3;
     bytes4 internal constant COMMUNITY_CREATE_POOL_SELECTOR_V0_2 = bytes4(
         keccak256(
             "createPool(address,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[],address,uint256),(uint256,string))"
@@ -63,6 +65,7 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         bool skipDiamondCut;
         bool diamondCutBeforeUpgrade;
         bool migrateThresholdSnapshots;
+        bool migrateSubmitterProposalCounts;
         address strategyInit;
         bytes strategyInitCalldata;
     }
@@ -87,6 +90,11 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         address poolFacet;
         address powerFacet;
         address strategyFacet;
+    }
+
+    struct LinkReference {
+        uint256 length;
+        uint256 start;
     }
 
     function runCurrentNetwork(string memory networkJson) public override {
@@ -456,18 +464,29 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     function _syncCVUtilLibFromStrategyImplementation(address implementation) internal {
         require(implementation != address(0), "strategy implementation missing");
         bytes memory runtimeCode = implementation.code;
-        require(runtimeCode.length > 17112, "strategy implementation code too short");
+        LinkReference[] memory references = _cvUtilLinkReferences();
+        require(references.length != 0, "CV_UTIL_LIB link references missing");
 
-        address linkedLibrary = _readLinkedAddress(runtimeCode, 7066);
+        address linkedLibrary = _readLinkedAddress(runtimeCode, references[0].start);
         require(linkedLibrary != address(0), "CV_UTIL_LIB link missing");
-        require(_readLinkedAddress(runtimeCode, 7223) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 9005) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 13664) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 14376) == linkedLibrary, "CV_UTIL_LIB link mismatch");
-        require(_readLinkedAddress(runtimeCode, 17093) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        for (uint256 i; i < references.length; ++i) {
+            require(references[i].length == 20, "CV_UTIL_LIB link length invalid");
+            require(_readLinkedAddress(runtimeCode, references[i].start) == linkedLibrary, "CV_UTIL_LIB link mismatch");
+        }
         require(linkedLibrary.code.length != 0, "CV_UTIL_LIB has no code");
 
         _writeNetworkAddress(".IMPLEMENTATIONS.CV_UTIL_LIB", linkedLibrary);
+    }
+
+    function _cvUtilLinkReferences() internal view returns (LinkReference[] memory) {
+        string memory artifactPath =
+            string.concat(vm.projectRoot(), "/pkg/contracts/out/CVStrategy.sol/CVStrategy.json");
+        string memory artifactJson = vm.readFile(artifactPath);
+        bytes memory encoded = vm.parseJson(
+            artifactJson,
+            ".deployedBytecode.linkReferences[\"pkg/contracts/src/CVStrategy/ConvictionsUtils.sol\"].ConvictionsUtils"
+        );
+        return abi.decode(encoded, (LinkReference[]));
     }
 
     function _readLinkedAddress(bytes memory runtimeCode, uint256 offset) internal pure returns (address linked) {
@@ -625,6 +644,7 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
             skipDiamondCut: _flagEnabled("SKIP_STRATEGY_DIAMOND_CUT"),
             diamondCutBeforeUpgrade: _flagEnabled("STRATEGY_DCUT_BEFORE_UPGRADE"),
             migrateThresholdSnapshots: _flagEnabled("MIGRATE_THRESHOLD_SNAPSHOTS"),
+            migrateSubmitterProposalCounts: _flagEnabled("MIGRATE_SUBMITTER_PROPOSAL_COUNTS"),
             strategyInit: address(0),
             strategyInitCalldata: bytes("")
         });
@@ -732,6 +752,8 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         bool needsUpgradeTo = !options.skipUpgradeTo && !implementationIsCurrent;
         bool needsThresholdMigration =
             options.migrateThresholdSnapshots && _initializerVersion(proxy) < THRESHOLD_MIGRATION_VERSION;
+        bool needsSubmitterProposalCountMigration = options.migrateSubmitterProposalCounts
+            && _initializerVersion(proxy) < SUBMITTER_PROPOSAL_COUNT_MIGRATION_VERSION;
         IDiamond.FacetCut[] memory allCuts = _mergeFacetCuts(
             _buildStaleSelectorRemovalCuts(proxy, context.cvCuts), _buildChangedFacetCuts(proxy, context.cvCuts)
         );
@@ -742,17 +764,27 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
                 IDiamondCut(proxy).diamondCut(allCuts, options.strategyInit, options.strategyInitCalldata);
             }
             if (needsUpgradeTo) {
-                _upgradeStrategyImplementation(cvStrategy, context.strategyImplementation, needsThresholdMigration);
-            } else if (needsThresholdMigration && implementationIsCurrent) {
-                cvStrategy.reinitializeV2MigrateThresholdSnapshots();
+                _upgradeStrategyImplementation(
+                    cvStrategy,
+                    context.strategyImplementation,
+                    needsThresholdMigration,
+                    needsSubmitterProposalCountMigration
+                );
+            } else if (implementationIsCurrent) {
+                _runStrategyMigrations(cvStrategy, needsThresholdMigration, needsSubmitterProposalCountMigration);
             }
             return;
         }
 
         if (needsUpgradeTo) {
-            _upgradeStrategyImplementation(cvStrategy, context.strategyImplementation, needsThresholdMigration);
-        } else if (needsThresholdMigration && implementationIsCurrent) {
-            cvStrategy.reinitializeV2MigrateThresholdSnapshots();
+            _upgradeStrategyImplementation(
+                cvStrategy,
+                context.strategyImplementation,
+                needsThresholdMigration,
+                needsSubmitterProposalCountMigration
+            );
+        } else if (implementationIsCurrent) {
+            _runStrategyMigrations(cvStrategy, needsThresholdMigration, needsSubmitterProposalCountMigration);
         }
         if (needsDiamondCut) {
             IDiamondCut(proxy).diamondCut(allCuts, options.strategyInit, options.strategyInitCalldata);
@@ -762,14 +794,45 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
     function _upgradeStrategyImplementation(
         CVStrategy cvStrategy,
         address strategyImplementation,
-        bool migrateThresholdSnapshots
+        bool migrateThresholdSnapshots,
+        bool migrateSubmitterProposalCounts
     ) internal {
         if (migrateThresholdSnapshots) {
             cvStrategy.upgradeToAndCall(
                 strategyImplementation, abi.encodeCall(CVStrategy.reinitializeV2MigrateThresholdSnapshots, ())
             );
+            if (migrateSubmitterProposalCounts) {
+                cvStrategy.reinitializeV3MigrateSubmitterActiveProposalCounts();
+                _completeSubmitterProposalCountMigration(cvStrategy);
+            }
+        } else if (migrateSubmitterProposalCounts) {
+            cvStrategy.upgradeToAndCall(
+                strategyImplementation,
+                abi.encodeCall(CVStrategy.reinitializeV3MigrateSubmitterActiveProposalCounts, ())
+            );
+            _completeSubmitterProposalCountMigration(cvStrategy);
         } else {
             cvStrategy.upgradeTo(strategyImplementation);
+        }
+    }
+
+    function _runStrategyMigrations(
+        CVStrategy cvStrategy,
+        bool migrateThresholdSnapshots,
+        bool migrateSubmitterProposalCounts
+    ) internal {
+        if (migrateThresholdSnapshots) {
+            cvStrategy.reinitializeV2MigrateThresholdSnapshots();
+        }
+        if (migrateSubmitterProposalCounts) {
+            cvStrategy.reinitializeV3MigrateSubmitterActiveProposalCounts();
+            _completeSubmitterProposalCountMigration(cvStrategy);
+        }
+    }
+
+    function _completeSubmitterProposalCountMigration(CVStrategy cvStrategy) internal {
+        while (!cvStrategy.submitterActiveProposalCountsInitialized()) {
+            cvStrategy.migrateSubmitterActiveProposalCounts(SUBMITTER_PROPOSAL_COUNT_MIGRATION_BATCH_SIZE);
         }
     }
 

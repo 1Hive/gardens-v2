@@ -21,7 +21,10 @@ contract UpgradeSecuritySingletons is BaseMultiChain {
         address passportScorerImplementation = address(new PassportScorer());
         address safeArbitratorImplementation = address(new SafeArbitrator());
 
-        PassportScorer(passportScorerProxy).upgradeTo(passportScorerImplementation);
+        PassportScorer(passportScorerProxy)
+            .upgradeToAndCall(
+                passportScorerImplementation, abi.encodeCall(PassportScorer.initializeScoreExpiration, ())
+            );
         SafeArbitrator(payable(safeArbitratorProxy)).upgradeTo(safeArbitratorImplementation);
 
         _writeNetworkAddress(".IMPLEMENTATIONS.PASSPORT_SCORER", passportScorerImplementation);

@@ -528,7 +528,7 @@ contract UpgradeCVMultichainScript is Test {
         );
     }
 
-    function test_runCurrentNetwork_strategy_phase_can_atomically_migrate_threshold_snapshots() public {
+    function test_runCurrentNetwork_strategy_phase_can_atomically_run_strategy_migrations() public {
         _useFixture("strategies-migrate-thresholds");
         _setDefaultScriptEnv();
         _writeFixtureJson(
@@ -538,11 +538,16 @@ contract UpgradeCVMultichainScript is Test {
         script.setPhaseForTest(3);
         script.setFactoryActionForTest(0);
         script.setFlagForTest("MIGRATE_THRESHOLD_SNAPSHOTS", true);
+        script.setFlagForTest("MIGRATE_SUBMITTER_PROPOSAL_COUNTS", true);
         script.executeCurrentNetworkForTest();
 
         vm.prank(address(script));
         vm.expectRevert();
         strategy.reinitializeV2MigrateThresholdSnapshots();
+
+        vm.prank(address(script));
+        vm.expectRevert();
+        strategy.reinitializeV3MigrateSubmitterActiveProposalCounts();
     }
 
     function test_runCurrentNetwork_strategy_phase_can_migrate_when_implementation_is_current() public {
@@ -680,6 +685,7 @@ contract UpgradeCVMultichainScript is Test {
         script.setFlagForTest("STRATEGY_DCUT_BEFORE_UPGRADE", false);
         script.setFlagForTest("SKIP_STRATEGY_DIAMOND_INIT", false);
         script.setFlagForTest("MIGRATE_THRESHOLD_SNAPSHOTS", false);
+        script.setFlagForTest("MIGRATE_SUBMITTER_PROPOSAL_COUNTS", false);
     }
 
     function _networkMetaJson() internal pure returns (string memory) {

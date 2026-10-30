@@ -23,8 +23,10 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
     mapping(bytes32 payoutId => FailedPayout) public failedPayouts;
     mapping(bytes32 payoutId => FailedTokenPayout) public failedTokenPayouts;
     uint256 public tokenRevenueNonce;
+    mapping(address token => uint256 amount) public unresolvedTokenLiability;
+    bool public tokenLiabilityAccountingInitialized;
 
-    uint256[45] private __gap;
+    uint256[43] private __gap;
 
     modifier onlySquidMulticall() {
         if (msg.sender != squidMulticall) revert NotSquidMulticall();
@@ -70,6 +72,7 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
                 amount: amount,
                 resolved: false
             });
+            unresolvedTokenLiability[token] += amount;
             emit TokenPayoutEscrowed(payoutId, communityKey, token, amount);
         }
     }
@@ -111,6 +114,7 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
                 amount: amount,
                 resolved: false
             });
+            unresolvedTokenLiability[token] += amount;
             emit TokenPayoutEscrowed(payoutId, communityKey, token, amount);
         }
     }
@@ -120,6 +124,25 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
         ProxyOwnableUpgrader.initialize(initialOwner);
         __ReentrancyGuard_init();
         squidMulticall = initialSquidMulticall;
+        tokenLiabilityAccountingInitialized = true;
+    }
+
+    /// @notice Seeds aggregate liabilities when upgrading an existing receiver.
+    /// @dev Version 3 is required because an earlier Gnosis receiver upgrade already consumed version 2.
+    ///      The owner must derive these values from unresolved TokenPayoutEscrowed records.
+    function initializeTokenLiabilityAccounting(address[] calldata tokens, uint256[] calldata liabilities)
+        external
+        reinitializer(3)
+        onlyOwner
+    {
+        if (tokenLiabilityAccountingInitialized) revert LiabilityAccountingAlreadyInitialized();
+        if (tokens.length != liabilities.length) revert ArrayLengthMismatch();
+        for (uint256 i; i < tokens.length; ++i) {
+            if (tokens[i] == address(0)) revert ZeroAddress();
+            unresolvedTokenLiability[tokens[i]] = liabilities[i];
+        }
+        tokenLiabilityAccountingInitialized = true;
+        emit TokenLiabilityAccountingInitialized(tokens, liabilities);
     }
 
     function setSquidMulticall(address newSquidMulticall) external onlyOwner {
@@ -201,6 +224,7 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
         address safe = _resolveCouncilSafe(payout.registryCommunity);
         if (safe == address(0)) revert TransferFailed();
         payout.resolved = true;
+        unresolvedTokenLiability[payout.token] -= payout.amount;
         if (!_tryTokenTransfer(payout.token, safe, payout.amount)) revert TransferFailed();
 
         emit TokenPayoutRetried(payoutId, safe, payout.token, payout.amount);
@@ -214,9 +238,24 @@ contract SquidGardensRevenueReceiver is ProxyOwnableUpgrader, ReentrancyGuardUpg
         if (payout.resolved) revert PayoutAlreadyResolved();
 
         payout.resolved = true;
+        unresolvedTokenLiability[payout.token] -= payout.amount;
         if (!_tryTokenTransfer(payout.token, to, payout.amount)) revert TransferFailed();
 
         emit TokenPayoutRecovered(payoutId, to, payout.token, payout.amount);
+    }
+
+    /// @notice Recovers a token delivered through Squid's fallback path before
+    /// the receiver callback could create a failed-payout record.
+    function recoverUntrackedToken(address token, address to, uint256 amount) external onlyOwner nonReentrant {
+        if (token == address(0) || to == address(0)) revert ZeroAddress();
+        if (amount == 0) revert ZeroValue();
+        if (!tokenLiabilityAccountingInitialized) revert LiabilityAccountingNotInitialized();
+        uint256 balance = IERC20(token).balanceOf(address(this));
+        uint256 liability = unresolvedTokenLiability[token];
+        uint256 available = balance > liability ? balance - liability : 0;
+        if (amount > available) revert InsufficientUntrackedBalance(available, amount);
+        IERC20(token).safeTransfer(to, amount);
+        emit UntrackedTokenRecovered(token, to, amount);
     }
 
     function _tryTokenTransfer(address token, address to, uint256 amount) internal returns (bool) {

@@ -210,16 +210,16 @@ contract StreamingEscrow is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, Su
         _setOutflow(disputed ? int96(0) : _currentGDAFlowRate(), beneficiary);
     }
 
-    function drainToBeneficiary() external onlyStrategy {
+    function drainToBeneficiary() external onlyStrategy nonReentrant {
         _drainTo(beneficiary);
     }
 
-    function drainToStrategy() external onlyStrategy {
+    function drainToStrategy() external onlyStrategy nonReentrant {
         _setOutflow(0, beneficiary);
         _drainTo(strategy);
     }
 
-    function claim() external {
+    function claim() external nonReentrant {
         if (disputed) {
             revert Disputed();
         }

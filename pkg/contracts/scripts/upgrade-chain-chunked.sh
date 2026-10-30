@@ -68,9 +68,15 @@ NODE
 
 CHUNK_SIZE="${CHUNK_SIZE:-20}"
 SCRIPT_TIMEOUT="${SCRIPT_TIMEOUT:-1800s}"
+PHASE="${PHASE:-all}"
 COMMUNITY_START_AT="${COMMUNITY_START_AT:-0}"
 STRATEGY_START_AT="${STRATEGY_START_AT:-0}"
 DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "$PK_DEPLOYER_PW")"
+
+case "$PHASE" in
+  all|communities|strategies) ;;
+  *) echo "unsupported PHASE: $PHASE" >&2; exit 1 ;;
+esac
 
 declare -a COMMON_ARGS=(
   --rpc-url "$RPC_URL"
@@ -124,39 +130,49 @@ if [[ "${UPGRADE_SECURITY_SINGLETONS:-true}" == "true" ]]; then
   echo "security singletons ok"
 fi
 
-if [[ "${SKIP_FACTORY:-false}" != "true" ]]; then
+if [[ "${SKIP_FACTORY:-false}" != "true" && ( "$PHASE" == "all" || "$PHASE" == "communities" ) ]]; then
   echo "factory"
   run_cv_upgrade "runFactory(string)"
   echo "factory ok"
+elif [[ "$PHASE" == "strategies" ]]; then
+  echo "prepare strategy implementation and facets"
+  STRATEGY_START_INDEX=0 STRATEGY_END_INDEX=0 run_cv_upgrade "runStrategies(string)"
+  echo "strategy implementation and facets ready"
 fi
 
-start="$COMMUNITY_START_AT"
-while [[ "$start" -lt "$COMMUNITY_COUNT" ]]; do
-  end=$((start + CHUNK_SIZE))
-  if [[ "$end" -gt "$COMMUNITY_COUNT" ]]; then
-    end="$COMMUNITY_COUNT"
-  fi
-  echo "communities ${start}-${end}"
-  REUSE_CONFIGURED_IMPLEMENTATIONS=true SKIP_FACET_DEPLOYMENT=true \
-    COMMUNITY_START_INDEX="$start" COMMUNITY_END_INDEX="$end" \
-    run_cv_upgrade "runCommunities(string)"
-  echo "communities ${start}-${end} ok"
-  start="$end"
-done
+if [[ "$PHASE" == "all" || "$PHASE" == "communities" ]]; then
+  start="$COMMUNITY_START_AT"
+  while [[ "$start" -lt "$COMMUNITY_COUNT" ]]; do
+    end=$((start + CHUNK_SIZE))
+    if [[ "$end" -gt "$COMMUNITY_COUNT" ]]; then
+      end="$COMMUNITY_COUNT"
+    fi
+    echo "communities ${start}-${end}"
+    REUSE_CONFIGURED_IMPLEMENTATIONS=true SKIP_FACET_DEPLOYMENT=true \
+      COMMUNITY_START_INDEX="$start" COMMUNITY_END_INDEX="$end" \
+      run_cv_upgrade "runCommunities(string)"
+    echo "communities ${start}-${end} ok"
+    start="$end"
+  done
+fi
 
-start="$STRATEGY_START_AT"
-while [[ "$start" -lt "$STRATEGY_COUNT" ]]; do
-  end=$((start + CHUNK_SIZE))
-  if [[ "$end" -gt "$STRATEGY_COUNT" ]]; then
-    end="$STRATEGY_COUNT"
-  fi
-  echo "strategies ${start}-${end}"
-  REUSE_CONFIGURED_IMPLEMENTATIONS=true SKIP_FACET_DEPLOYMENT=true MIGRATE_THRESHOLD_SNAPSHOTS=true \
-    STRATEGY_START_INDEX="$start" STRATEGY_END_INDEX="$end" \
-    run_cv_upgrade "runStrategies(string)"
-  echo "strategies ${start}-${end} ok"
-  start="$end"
-done
+if [[ "$PHASE" == "all" || "$PHASE" == "strategies" ]]; then
+  start="$STRATEGY_START_AT"
+  while [[ "$start" -lt "$STRATEGY_COUNT" ]]; do
+    end=$((start + CHUNK_SIZE))
+    if [[ "$end" -gt "$STRATEGY_COUNT" ]]; then
+      end="$STRATEGY_COUNT"
+    fi
+    echo "strategies ${start}-${end}"
+    REUSE_CONFIGURED_IMPLEMENTATIONS=true SKIP_FACET_DEPLOYMENT=true \
+      MIGRATE_THRESHOLD_SNAPSHOTS="${MIGRATE_THRESHOLD_SNAPSHOTS:-true}" \
+      MIGRATE_SUBMITTER_PROPOSAL_COUNTS="${MIGRATE_SUBMITTER_PROPOSAL_COUNTS:-true}" \
+      STRATEGY_START_INDEX="$start" STRATEGY_END_INDEX="$end" \
+      run_cv_upgrade "runStrategies(string)"
+    echo "strategies ${start}-${end} ok"
+    start="$end"
+  done
+fi
 
 echo "verify"
 VERIFY_COMMAND_TIMEOUT="${VERIFY_COMMAND_TIMEOUT:-1200}" \

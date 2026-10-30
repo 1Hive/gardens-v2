@@ -71,13 +71,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     /*|--------------------------------------------|*/
 
     // Sig: 0xef2920fc
-    function allocate(bytes memory _data, address _sender)
-        external
-        payable
-        onlyAllo
-        onlyInitialized
-        nonReentrant
-    {
+    function allocate(bytes memory _data, address _sender) external payable onlyAllo onlyInitialized nonReentrant {
         registryCommunity.onlyStrategyEnabled(address(this));
         ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
         if (pv.length > MAX_ALLOCATIONS_PER_TX) {
@@ -201,6 +195,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         onlyInitialized
         nonReentrant
     {
+        registryCommunity.onlyStrategyEnabled(address(this));
         if (_data.length <= 0) {
             revert ProposalDataIsEmpty(_data.length);
         }
@@ -271,7 +266,7 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         }
 
         proposals[proposalId].proposalStatus = ProposalStatus.Executed;
-        _decrementActiveProposalCount();
+        _decrementActiveProposalCount(proposalId);
         _removeOpenStreamingProposal(proposalId);
         _transferAmount(
             allo.getPool(poolId).token, proposals[proposalId].beneficiary, proposals[proposalId].requestedAmount

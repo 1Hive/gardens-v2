@@ -26,7 +26,10 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
         with:
-          submodules: recursive
+          submodules: false
+
+      - name: Initialize required submodules
+        run: .github/scripts/init-contract-submodules.sh
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1

@@ -23,6 +23,7 @@ const PASSPORT_KEEPER_PRIVATE_KEY = (
   process.env.LIST_MANAGER_PRIVATE_KEY ?? process.env.KEEPER_WALLET_PK
 )?.trim() as Hex | undefined;
 const LOCAL_RPC = "http://127.0.0.1:8545";
+const SCORE_REFRESH_INTERVAL_SECONDS = 7 * 24 * 60 * 60;
 
 type RouteContext = {
   params: Promise<{
@@ -150,9 +151,13 @@ export async function POST(req: Request, { params }: RouteContext) {
     const score = await fetchPassportScore(user);
     const integerScore = Math.round(score * CV_PASSPORT_THRESHOLD_SCALE);
 
-    if (!integerScore || isNaN(integerScore)) {
+    if (
+      !Number.isFinite(score) ||
+      score < 0 ||
+      !Number.isSafeInteger(integerScore)
+    ) {
       return NextResponse.json(
-        { error: "Passport has no score" },
+        { error: "Passport score is invalid" },
         { status: 400 },
       );
     }
@@ -173,7 +178,27 @@ export async function POST(req: Request, { params }: RouteContext) {
       args: [user as Address],
     });
 
-    if (currentScore === nextScore) {
+    let scoreUpdatedAt: bigint | null = null;
+    try {
+      scoreUpdatedAt = await client.readContract({
+        abi: passportScorerABI,
+        address: chainConfig.passportScorer,
+        functionName: "userScoreUpdatedAt",
+        args: [user as Address],
+      });
+    } catch {
+      // Older scorer implementations do not expose freshness yet. Preserve
+      // the existing unchanged-score no-op until their upgrade is complete.
+    }
+
+    const refreshCutoff = BigInt(
+      Math.floor(Date.now() / 1000) - SCORE_REFRESH_INTERVAL_SECONDS,
+    );
+
+    if (
+      currentScore === nextScore &&
+      (scoreUpdatedAt == null || scoreUpdatedAt > refreshCutoff)
+    ) {
       return NextResponse.json({
         message: "User score is already up to date",
         score: integerScore,
