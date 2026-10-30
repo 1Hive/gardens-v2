@@ -133,6 +133,10 @@ contract CVStrategyThresholdCoverage is Test {
 
         assertFalse(localStrategy.submitterActiveProposalCountsInitialized());
 
+        vm.expectRevert(bytes("Batch size must be nonzero"));
+        localStrategy.migrateSubmitterActiveProposalCounts(0);
+        assertFalse(localStrategy.submitterActiveProposalCountsInitialized());
+
         localStrategy.migrateSubmitterActiveProposalCounts(1);
         assertFalse(localStrategy.submitterActiveProposalCountsInitialized());
         assertEq(localStrategy.getActiveProposalCountBySubmitter(member), 1);

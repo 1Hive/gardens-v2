@@ -276,6 +276,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
 
     /// @notice Processes a bounded slice of historical proposals for the V3 migration.
     function migrateSubmitterActiveProposalCounts(uint256 maxProposals) external onlyOwner {
+        require(maxProposals > 0, "Batch size must be nonzero");
         uint256 cursor = submitterActiveProposalCountsMigrationCursor;
         uint256 migrationEnd = submitterActiveProposalCountsMigrationEnd;
 
