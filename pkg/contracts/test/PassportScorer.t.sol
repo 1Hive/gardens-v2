@@ -15,9 +15,14 @@ contract MockStrategyMinimal {
 
 contract MockStrategyRegistryStatus {
     bool public enabled;
+    address public councilSafe = address(4);
 
     function setEnabled(bool _enabled) external {
         enabled = _enabled;
+    }
+
+    function setCouncilSafe(address _councilSafe) external {
+        councilSafe = _councilSafe;
     }
 
     function enabledStrategies(address) external view returns (bool) {
@@ -40,6 +45,7 @@ contract PassportScorerHarness is PassportScorer {
 
 contract PassportScorerTest is Test {
     PassportScorerHarness public passportScorer;
+    MockStrategyRegistryStatus public registry;
     address public listManager = address(1);
     address public user = address(2);
     address public strategy = address(3);
@@ -49,6 +55,8 @@ contract PassportScorerTest is Test {
     uint256 public passportScore = 0;
 
     function setUp() public {
+        registry = new MockStrategyRegistryStatus();
+        strategy = address(new MockStrategyMinimal(address(registry)));
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(new PassportScorerHarness()),
             abi.encodeWithSelector(PassportScorer.initialize.selector, address(listManager), owner)
@@ -213,6 +221,25 @@ contract PassportScorerTest is Test {
         assertEq(storedCouncilSafe, councilSafe);
     }
 
+    function testFormerCouncilLosesAccessAfterRotation() public {
+        vm.prank(listManager);
+        passportScorer.addStrategy(strategy, 50, councilSafe);
+        address newCouncil = address(0xB0B);
+        registry.setCouncilSafe(newCouncil);
+
+        vm.prank(councilSafe);
+        vm.expectRevert(PassportScorer.OnlyCouncilOrAuthorized.selector);
+        passportScorer.removeStrategy(strategy);
+        vm.prank(councilSafe);
+        vm.expectRevert(PassportScorer.OnlyCouncilOrAuthorized.selector);
+        passportScorer.modifyThreshold(strategy, 0);
+
+        vm.prank(newCouncil);
+        passportScorer.modifyThreshold(strategy, 75);
+        (uint256 threshold,,) = passportScorer.strategies(strategy);
+        assertEq(threshold, 75);
+    }
+
     function testModifyThreshold_unauthorizedReverts() public {
         vm.prank(listManager);
         passportScorer.addStrategy(strategy, 10, councilSafe);
@@ -353,7 +380,7 @@ contract PassportScorerTest is Test {
     }
 
     function testActivateStrategy_onlyAuthorizedOrCouncil() public {
-        MockStrategyMinimal mockStrategy = new MockStrategyMinimal(address(0));
+        MockStrategyMinimal mockStrategy = new MockStrategyMinimal(address(registry));
 
         vm.prank(listManager);
         passportScorer.addStrategy(address(mockStrategy), 10, councilSafe);
@@ -374,7 +401,36 @@ contract PassportScorerTest is Test {
         vm.expectRevert(PassportScorer.OnlyCouncil.selector);
         passportScorer.callOnlyCouncil(strategy);
 
+        vm.prank(address(registry));
+        vm.expectRevert(PassportScorer.OnlyCouncil.selector);
+        passportScorer.callOnlyCouncil(strategy);
+
         vm.prank(councilSafe);
         passportScorer.callOnlyCouncil(strategy);
+    }
+
+    function testMalformedStrategyCannotAuthorizeCouncil() public {
+        address malformedStrategy = address(registry);
+
+        vm.prank(unauthorizedUser);
+        vm.expectRevert(PassportScorer.OnlyCouncilOrAuthorized.selector);
+        passportScorer.modifyThreshold(malformedStrategy, 10);
+
+        vm.prank(unauthorizedUser);
+        vm.expectRevert(PassportScorer.OnlyCouncil.selector);
+        passportScorer.callOnlyCouncil(malformedStrategy);
+    }
+
+    function testMalformedCommunityCannotAuthorizeCouncil() public {
+        address malformedCommunity = address(new MockStrategyMinimal(address(0)));
+        address malformedStrategy = address(new MockStrategyMinimal(malformedCommunity));
+
+        vm.prank(unauthorizedUser);
+        vm.expectRevert(PassportScorer.OnlyCouncilOrAuthorized.selector);
+        passportScorer.modifyThreshold(malformedStrategy, 10);
+
+        vm.prank(unauthorizedUser);
+        vm.expectRevert(PassportScorer.OnlyCouncil.selector);
+        passportScorer.callOnlyCouncil(malformedStrategy);
     }
 }

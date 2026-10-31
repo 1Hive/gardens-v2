@@ -468,6 +468,24 @@ contract StreamingEscrowTest is Test {
         assertEq(token.balanceOf(beneficiary), 0);
     }
 
+    function test_zero_flow_claim_and_sync_preserve_reserve_for_strategy() public {
+        pool.setMemberFlowRate(address(escrow), 10);
+        token.mint(address(escrow), 100);
+        pool.setMemberFlowRate(address(escrow), 0);
+
+        vm.prank(other);
+        escrow.claim();
+        vm.prank(other);
+        escrow.syncOutflow();
+
+        assertEq(token.balanceOf(address(escrow)), 100);
+        assertEq(token.balanceOf(beneficiary), 0);
+
+        escrow.drainToStrategy();
+        assertEq(token.balanceOf(address(escrow)), 0);
+        assertEq(token.balanceOf(strategy), 100);
+    }
+
     function test_setBeneficiary_updates_flow_when_not_disputed() public {
         pool.setMemberFlowRate(address(escrow), 123);
         uint256 start = host.callAgreementCount();

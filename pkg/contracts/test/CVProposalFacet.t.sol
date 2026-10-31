@@ -297,6 +297,39 @@ contract CVProposalFacetTest is Test {
         assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Cancelled));
     }
 
+    function test_cancelProposal_rejectedCollateralCanBeRecoveredToAnotherAddress() public {
+        facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Active, block.timestamp, 0);
+        collateralVault.setRejectWithdrawal(true);
+
+        vm.prank(member);
+        facet.cancelProposal(1);
+        assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Cancelled));
+
+        address recipient = address(0xB0B);
+        vm.prank(member);
+        facet.recoverFailedSubmitterCollateral(1, recipient);
+        assertEq(collateralVault.lastAccount(), recipient);
+        assertEq(collateralVault.lastAmount(), 1 ether);
+    }
+
+    function test_recoverFailedSubmitterCollateral_rejectsOtherCaller() public {
+        facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Cancelled, block.timestamp, 0);
+        vm.prank(address(0xB0B));
+        vm.expectRevert(
+            abi.encodeWithSelector(CVStrategyBaseFacet.OnlySubmitter.selector, 1, member, address(0xB0B))
+        );
+        facet.recoverFailedSubmitterCollateral(1, beneficiary);
+    }
+
+    function test_recoverFailedSubmitterCollateral_rejectsActiveProposal() public {
+        facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Active, block.timestamp, 0);
+        vm.prank(member);
+        vm.expectRevert(
+            abi.encodeWithSelector(CVProposalFacet.CollateralNotReleasable.selector, 1, uint8(ProposalStatus.Active))
+        );
+        facet.recoverFailedSubmitterCollateral(1, beneficiary);
+    }
+
     function test_cancelProposal_revertWhenNotActive() public {
         facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Executed, block.timestamp, 0);
         vm.prank(member);

@@ -49,6 +49,11 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
     error TooManyVoterStakedProposals(address voter, uint256 current, uint256 maxAllowed);
     error UpdateMemberUnitsFailed(address member, uint128 units);
     error ProposalTypeNotSupported(ProposalType proposalType);
+    error NoProposalSupport(uint256 proposalId);
+
+    event CollateralPayoutFailed(
+        uint256 indexed proposalId, address indexed fromUser, address indexed toUser, uint256 amount, bytes reason
+    );
 
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
@@ -265,17 +270,34 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
             revert ConvictionUnderMinimumThreshold(convictionLast, threshold, proposals[proposalId].requestedAmount);
         }
 
+        if (proposals[proposalId].requestedAmount > 0 && proposals[proposalId].stakedAmount == 0) {
+            revert NoProposalSupport(proposalId);
+        }
+
+        if (proposals[proposalId].requestedAmount > 0) {
+            uint256 currentSupportLimit =
+                ConvictionsUtils.getMaxConviction(proposals[proposalId].stakedAmount, cvParams.decay);
+            if (currentSupportLimit <= threshold) {
+                revert ConvictionUnderMinimumThreshold(
+                    currentSupportLimit, threshold, proposals[proposalId].requestedAmount
+                );
+            }
+        }
+
         proposals[proposalId].proposalStatus = ProposalStatus.Executed;
         _decrementActiveProposalCount(proposalId);
         _removeOpenStreamingProposal(proposalId);
         _transferAmount(
             allo.getPool(poolId).token, proposals[proposalId].beneficiary, proposals[proposalId].requestedAmount
         );
-        collateralVault.withdrawCollateral(
-            proposalId,
-            proposals[proposalId].submitter,
-            arbitrableConfigs[proposals[proposalId].arbitrableConfigVersion].submitterCollateralAmount
-        );
+        address submitter = proposals[proposalId].submitter;
+        uint256 collateral = arbitrableConfigs[proposals[proposalId].arbitrableConfigVersion].submitterCollateralAmount;
+        if (collateral != 0) {
+            try collateralVault.withdrawCollateral(proposalId, submitter, collateral) {}
+            catch (bytes memory reason) {
+                emit CollateralPayoutFailed(proposalId, submitter, submitter, collateral, reason);
+            }
+        }
 
         emit Distributed(proposalId, proposals[proposalId].beneficiary, proposals[proposalId].requestedAmount);
     }

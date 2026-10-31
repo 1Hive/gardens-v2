@@ -29,7 +29,7 @@ abstract contract StrategyDiamondConfiguratorBase {
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         cuts = new IDiamond.FacetCut[](8);
 
-        bytes4[] memory adminSelectors = new bytes4[](5);
+        bytes4[] memory adminSelectors = new bytes4[](6);
         adminSelectors[0] = bytes4(
             keccak256(
                 "setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)"
@@ -43,6 +43,7 @@ abstract contract StrategyDiamondConfiguratorBase {
         adminSelectors[2] = CVAdminFacet.connectSuperfluidGDA.selector;
         adminSelectors[3] = CVAdminFacet.disconnectSuperfluidGDA.selector;
         adminSelectors[4] = CVAdminFacet.setVotingPowerRegistry.selector;
+        adminSelectors[5] = CVAdminFacet.repairSuperfluidGDA.selector;
         cuts[0] = IDiamond.FacetCut({
             facetAddress: address(_adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
         });
@@ -93,10 +94,11 @@ abstract contract StrategyDiamondConfiguratorBase {
             facetAddress: address(_powerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: powerSelectors
         });
 
-        bytes4[] memory proposalSelectors = new bytes4[](3);
+        bytes4[] memory proposalSelectors = new bytes4[](4);
         proposalSelectors[0] = CVProposalFacet.registerRecipient.selector;
         proposalSelectors[1] = CVProposalFacet.cancelProposal.selector;
         proposalSelectors[2] = CVProposalFacet.editProposal.selector;
+        proposalSelectors[3] = CVProposalFacet.recoverFailedSubmitterCollateral.selector;
         cuts[5] = IDiamond.FacetCut({
             facetAddress: address(_proposalFacet),
             action: IDiamond.FacetCutAction.Auto,

@@ -43,6 +43,8 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
     error UpdateMemberUnitsFailed(address member, uint128 units);
     error ProposalLimitReached(uint256 current, uint256 max);
     error SubmitterProposalLimitReached(address submitter, uint256 current, uint256 max);
+    error CollateralNotReleasable(uint256 proposalId, uint8 status);
+    error InvalidCollateralRecipient();
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -50,6 +52,9 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
     event ProposalCreated(uint256 poolId, uint256 proposalId);
     event ProposalCreated(uint256 poolId, uint256 proposalId, address escrow);
     event ProposalCancelled(uint256 proposalId);
+    event CollateralPayoutFailed(
+        uint256 indexed proposalId, address indexed fromUser, address indexed toUser, uint256 amount, bytes reason
+    );
     event ProposalEdited(uint256 proposalId, Metadata metadata, address beneficiary, uint256 requestedAmount);
     event SupportAdded(
         address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
@@ -167,11 +172,13 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
         _decrementActiveProposalCount(proposalId);
         _removeOpenStreamingProposal(proposalId);
 
-        collateralVault.withdrawCollateral(
-            proposalId,
-            proposals[proposalId].submitter,
-            arbitrableConfigs[proposals[proposalId].arbitrableConfigVersion].submitterCollateralAmount
-        );
+        uint256 collateral = arbitrableConfigs[proposals[proposalId].arbitrableConfigVersion].submitterCollateralAmount;
+        if (collateral != 0) {
+            try collateralVault.withdrawCollateral(proposalId, msg.sender, collateral) {}
+            catch (bytes memory reason) {
+                emit CollateralPayoutFailed(proposalId, msg.sender, msg.sender, collateral, reason);
+            }
+        }
 
         // Streaming proposal handling
         if (proposalType == ProposalType.Streaming) {
@@ -187,6 +194,23 @@ contract CVProposalFacet is CVStrategyBaseFacet, CVStreamingBase {
         }
 
         emit ProposalCancelled(proposalId);
+    }
+
+    function recoverFailedSubmitterCollateral(uint256 proposalId, address recipient) external {
+        Proposal storage proposal = proposals[proposalId];
+        if (proposal.submitter != msg.sender) {
+            revert OnlySubmitter(proposalId, proposal.submitter, msg.sender);
+        }
+        if (recipient == address(0)) revert InvalidCollateralRecipient();
+        if (proposal.proposalStatus != ProposalStatus.Cancelled && proposal.proposalStatus != ProposalStatus.Executed) {
+            revert CollateralNotReleasable(proposalId, uint8(proposal.proposalStatus));
+        }
+        collateralVault.withdrawCollateralFor(
+            proposalId,
+            msg.sender,
+            recipient,
+            arbitrableConfigs[proposal.arbitrableConfigVersion].submitterCollateralAmount
+        );
     }
 
     // Sig: 0x141e3b38
