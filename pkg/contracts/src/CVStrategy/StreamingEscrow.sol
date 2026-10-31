@@ -300,6 +300,9 @@ contract StreamingEscrow is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, Su
     }
 
     function _drainExcessToBeneficiary() internal {
+        // A stopped pool has no computable deposit reserve. Keep its balance
+        // for strategy recovery rather than treating the reserve as excess.
+        if (_currentGDAFlowRate() == 0) return;
         uint256 balance = superToken.balanceOf(address(this));
         uint256 reservedDeposit = reservedDepositAmount();
         if (balance > reservedDeposit) {

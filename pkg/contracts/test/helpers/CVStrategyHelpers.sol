@@ -172,6 +172,11 @@ contract MockCollateralVault is ICollateralVault {
     uint256 public lastProposalId;
     address public lastAccount;
     uint256 public lastAmount;
+    bool public rejectWithdrawal;
+
+    function setRejectWithdrawal(bool reject) external {
+        rejectWithdrawal = reject;
+    }
 
     function initialize() external {}
 
@@ -182,6 +187,7 @@ contract MockCollateralVault is ICollateralVault {
     }
 
     function withdrawCollateral(uint256 proposalId, address account, uint256 amount) external {
+        if (rejectWithdrawal) revert("collateral recipient rejected");
         lastProposalId = proposalId;
         lastAccount = account;
         lastAmount = amount;

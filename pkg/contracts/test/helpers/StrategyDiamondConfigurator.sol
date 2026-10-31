@@ -93,10 +93,11 @@ abstract contract StrategyDiamondConfiguratorBase {
             facetAddress: address(_powerFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: powerSelectors
         });
 
-        bytes4[] memory proposalSelectors = new bytes4[](3);
+        bytes4[] memory proposalSelectors = new bytes4[](4);
         proposalSelectors[0] = CVProposalFacet.registerRecipient.selector;
         proposalSelectors[1] = CVProposalFacet.cancelProposal.selector;
         proposalSelectors[2] = CVProposalFacet.editProposal.selector;
+        proposalSelectors[3] = CVProposalFacet.recoverFailedSubmitterCollateral.selector;
         cuts[5] = IDiamond.FacetCut({
             facetAddress: address(_proposalFacet),
             action: IDiamond.FacetCutAction.Auto,
