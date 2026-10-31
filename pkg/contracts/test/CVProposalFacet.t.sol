@@ -321,6 +321,15 @@ contract CVProposalFacetTest is Test {
         facet.recoverFailedSubmitterCollateral(1, beneficiary);
     }
 
+    function test_recoverFailedSubmitterCollateral_rejectsActiveProposal() public {
+        facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Active, block.timestamp, 0);
+        vm.prank(member);
+        vm.expectRevert(
+            abi.encodeWithSelector(CVProposalFacet.CollateralNotReleasable.selector, 1, uint8(ProposalStatus.Active))
+        );
+        facet.recoverFailedSubmitterCollateral(1, beneficiary);
+    }
+
     function test_cancelProposal_revertWhenNotActive() public {
         facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Executed, block.timestamp, 0);
         vm.prank(member);

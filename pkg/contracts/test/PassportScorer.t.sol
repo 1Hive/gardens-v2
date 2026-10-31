@@ -408,4 +408,29 @@ contract PassportScorerTest is Test {
         vm.prank(councilSafe);
         passportScorer.callOnlyCouncil(strategy);
     }
+
+    function testMalformedStrategyCannotAuthorizeCouncil() public {
+        address malformedStrategy = address(registry);
+
+        vm.prank(unauthorizedUser);
+        vm.expectRevert(PassportScorer.OnlyCouncilOrAuthorized.selector);
+        passportScorer.modifyThreshold(malformedStrategy, 10);
+
+        vm.prank(unauthorizedUser);
+        vm.expectRevert(PassportScorer.OnlyCouncil.selector);
+        passportScorer.callOnlyCouncil(malformedStrategy);
+    }
+
+    function testMalformedCommunityCannotAuthorizeCouncil() public {
+        address malformedCommunity = address(new MockStrategyMinimal(address(0)));
+        address malformedStrategy = address(new MockStrategyMinimal(malformedCommunity));
+
+        vm.prank(unauthorizedUser);
+        vm.expectRevert(PassportScorer.OnlyCouncilOrAuthorized.selector);
+        passportScorer.modifyThreshold(malformedStrategy, 10);
+
+        vm.prank(unauthorizedUser);
+        vm.expectRevert(PassportScorer.OnlyCouncil.selector);
+        passportScorer.callOnlyCouncil(malformedStrategy);
+    }
 }
