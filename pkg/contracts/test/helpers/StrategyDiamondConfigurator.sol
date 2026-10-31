@@ -29,7 +29,7 @@ abstract contract StrategyDiamondConfiguratorBase {
     ) internal pure returns (IDiamond.FacetCut[] memory cuts) {
         cuts = new IDiamond.FacetCut[](8);
 
-        bytes4[] memory adminSelectors = new bytes4[](5);
+        bytes4[] memory adminSelectors = new bytes4[](6);
         adminSelectors[0] = bytes4(
             keccak256(
                 "setPoolParams((address,address,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256),uint256,address[],address[],address)"
@@ -43,6 +43,7 @@ abstract contract StrategyDiamondConfiguratorBase {
         adminSelectors[2] = CVAdminFacet.connectSuperfluidGDA.selector;
         adminSelectors[3] = CVAdminFacet.disconnectSuperfluidGDA.selector;
         adminSelectors[4] = CVAdminFacet.setVotingPowerRegistry.selector;
+        adminSelectors[5] = CVAdminFacet.repairSuperfluidGDA.selector;
         cuts[0] = IDiamond.FacetCut({
             facetAddress: address(_adminFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: adminSelectors
         });
