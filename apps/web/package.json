@@ -28,6 +28,7 @@
     "@graphprotocol/client-urql": "^2.0.0",
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.1.1",
+    "@markee_team/sdk": "0.1.0-alpha.15",
     "@mdxeditor/editor": "^3.49.2",
     "@notionhq/client": "^5.4.0",
     "@pinata/sdk": "^2.1.0",
