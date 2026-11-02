@@ -47,7 +47,7 @@ import {
   RegisterMember,
   Statistic,
 } from "@/components";
-import { CommunityMarkeePlaceholder } from "@/components/CommunityMarkeePlaceholder";
+import { CommunityMarkeeSDK } from "@/components/CommunityMarkeeSDK";
 import { Divider } from "@/components/Divider";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { LoupeButton } from "@/components/LoupeButton";
@@ -1051,11 +1051,9 @@ export default function ClientPage({
             />
           </div>
           <div className="order-first col-span-12 empty:hidden xl:order-none">
-            <CommunityMarkeePlaceholder
-              canOptIn={Boolean(isCouncilMember || isCouncilSafe)}
+            <CommunityMarkeeSDK
               chainId={chain?.id}
               community={communityAddr as Address}
-              councilSafe={effectiveCouncilSafe}
             />
           </div>
         </div>

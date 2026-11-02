@@ -10,14 +10,20 @@ import { useModal } from "connectkit";
 import { useAccount } from "wagmi";
 import { useTheme } from "@/providers/ThemeProvider";
 
-// The existing Gardens root For Sale board. Communities keep their rental flow.
+// The existing Gardens root For Sale board.
 const ROOT_PLACEMENT: Placement = {
   kind: "board",
   chainId: 8453,
   address: "0x2768BC6e90266248BD8bCF5401C36D8049CdF671",
 };
 
-export default function MarkeeSign() {
+export default function MarkeeSign({
+  placement = ROOT_PLACEMENT,
+  className = "mx-auto mt-6 mb-4 w-full max-w-lg",
+}: {
+  placement?: Placement;
+  className?: string;
+}) {
   const { connector, isConnected } = useAccount();
   const { open: connectOpen, setOpen: setConnectOpen } = useModal();
   const { isDarkTheme } = useTheme();
@@ -66,10 +72,10 @@ export default function MarkeeSign() {
   }, [awaitingWallet, isConnected, connectOpen]);
 
   return (
-    <div className="mx-auto mt-6 mb-4 w-full max-w-lg">
+    <div className={className}>
       <SDKSign
         key={signRevision}
-        placement={ROOT_PLACEMENT}
+        placement={placement}
         theme={theme}
         wallet={wallet}
         onOpen={() => {
@@ -84,7 +90,7 @@ export default function MarkeeSign() {
       {modalOpen && (
         <SDKModal
           open
-          placement={ROOT_PLACEMENT}
+          placement={placement}
           wallet={wallet}
           theme={theme}
           onClose={() => setModalOpen(false)}
