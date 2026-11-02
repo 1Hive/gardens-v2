@@ -2,19 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MarkeeTheme, Placement, WalletAdapter } from "@markee_team/sdk";
+import {
+  MarkeeSign as SDKSign,
+  MarkeeModal as SDKModal,
+} from "@markee_team/sdk/react";
 import { useModal } from "connectkit";
-import dynamic from "next/dynamic";
 import { useAccount } from "wagmi";
 import { useTheme } from "@/providers/ThemeProvider";
-
-const SDKSign = dynamic(
-  () => import("@markee_team/sdk/react").then((sdk) => sdk.MarkeeSign),
-  { ssr: false },
-);
-const SDKModal = dynamic(
-  () => import("@markee_team/sdk/react").then((sdk) => sdk.MarkeeModal),
-  { ssr: false },
-);
 
 // The existing Gardens root For Sale board. Communities keep their rental flow.
 const ROOT_PLACEMENT: Placement = {
