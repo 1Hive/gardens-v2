@@ -173,8 +173,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.4(react@18.2.0)
       '@markee_team/sdk':
-        specifier: 0.1.0-alpha.21
-        version: 0.1.0-alpha.21(react@18.2.0)
+        specifier: 0.1.0-alpha.22
+        version: 0.1.0-alpha.22(react@18.2.0)
       '@mdxeditor/editor':
         specifier: ^3.49.2
         version: 3.50.0(@codemirror/language@6.12.1)(@lezer/highlight@1.2.3)(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(yjs@13.6.29)
@@ -2672,8 +2672,8 @@ packages:
   '@marijn/find-cluster-break@1.0.2':
     resolution: {integrity: sha512-l0h88YhZFyKdXIFNfSWpyjStDjGHwZ/U7iobcK1cQQD8sejsONdQtTVU+1wVN1PBw40PiiHB1vA5S7VTfQiP9g==}
 
-  '@markee_team/sdk@0.1.0-alpha.21':
-    resolution: {integrity: sha512-HMQioQf59pSgNxvnyPjx9fRVNuK9GoxHaYby35y5UMO7caffK9m08nWPD5gSATgA+RLigYtBv/UW9yyKrQX8Bg==}
+  '@markee_team/sdk@0.1.0-alpha.22':
+    resolution: {integrity: sha512-rkH/QAuwQwFaRMkuq+2dYqdXHJhokXaHkMY+cfU1qDadA1pZ8KQYD4uoMnn9R4MpJ9vEvspWWjRhwFMDzeFlJA==}
     engines: {node: '>=20'}
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
@@ -16869,7 +16869,7 @@ snapshots:
 
   '@marijn/find-cluster-break@1.0.2': {}
 
-  '@markee_team/sdk@0.1.0-alpha.21(react@18.2.0)':
+  '@markee_team/sdk@0.1.0-alpha.22(react@18.2.0)':
     optionalDependencies:
       react: 18.2.0
 
