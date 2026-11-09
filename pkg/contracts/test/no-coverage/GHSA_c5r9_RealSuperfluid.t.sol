@@ -96,6 +96,65 @@ contract GHSAc5r9RealSuperfluidPoC is FoundrySuperfluidTester {
         _assertReentrantBeneficiaryCannotStealEscrowBuffer(true);
     }
 
+    function test_issue974_setBeneficiaryCallbackCannotClaim() public {
+        ReentrantStreamingBeneficiary attacker = new ReentrantStreamingBeneficiary(sf.host, true, true);
+        (StreamingEscrow escrow,) = _createFundedStreamingEscrow(address(attacker));
+        attacker.setEscrow(escrow);
+        address replacement = address(0xBEEF);
+        uint256 attackerBalanceBefore = superToken.balanceOf(address(attacker));
+
+        escrow.setBeneficiary(replacement);
+
+        assertTrue(attacker.callbackEntered(), "old beneficiary callback was not exercised");
+        assertFalse(attacker.reentrySucceeded(), "claim succeeded inside beneficiary change");
+        assertEq(escrow.beneficiary(), replacement);
+        assertEq(superToken.balanceOf(address(attacker)), attackerBalanceBefore);
+        assertEq(ISuperToken(address(superToken)).getFlowRate(address(escrow), address(attacker)), 0);
+        assertEq(ISuperToken(address(superToken)).getFlowRate(address(escrow), replacement), FLOW_RATE);
+    }
+
+    function test_issue974_setBeneficiaryCallbackCannotResyncFlow() public {
+        ReentrantStreamingBeneficiary attacker = new ReentrantStreamingBeneficiary(sf.host, true, false);
+        (StreamingEscrow escrow,) = _createFundedStreamingEscrow(address(attacker));
+        attacker.setEscrow(escrow);
+        address replacement = address(0xBEEF);
+
+        escrow.setBeneficiary(replacement);
+
+        assertTrue(attacker.callbackEntered(), "old beneficiary callback was not exercised");
+        assertFalse(attacker.reentrySucceeded(), "flow resync succeeded inside beneficiary change");
+        assertEq(ISuperToken(address(superToken)).getFlowRate(address(escrow), address(attacker)), 0);
+        assertEq(ISuperToken(address(superToken)).getFlowRate(address(escrow), replacement), FLOW_RATE);
+    }
+
+    function test_issue974_setDisputedCallbackCannotClaim() public {
+        ReentrantStreamingBeneficiary attacker = new ReentrantStreamingBeneficiary(sf.host, true, true);
+        (StreamingEscrow escrow,) = _createFundedStreamingEscrow(address(attacker));
+        attacker.setEscrow(escrow);
+        uint256 attackerBalanceBefore = superToken.balanceOf(address(attacker));
+
+        escrow.setDisputed(true);
+
+        assertTrue(attacker.callbackEntered(), "beneficiary callback was not exercised");
+        assertFalse(attacker.reentrySucceeded(), "claim succeeded inside dispute transition");
+        assertTrue(escrow.disputed());
+        assertEq(superToken.balanceOf(address(attacker)), attackerBalanceBefore);
+        assertEq(ISuperToken(address(superToken)).getFlowRate(address(escrow), address(attacker)), 0);
+    }
+
+    function test_issue974_setDisputedCallbackCannotResyncFlow() public {
+        ReentrantStreamingBeneficiary attacker = new ReentrantStreamingBeneficiary(sf.host, true, false);
+        (StreamingEscrow escrow,) = _createFundedStreamingEscrow(address(attacker));
+        attacker.setEscrow(escrow);
+
+        escrow.setDisputed(true);
+
+        assertTrue(attacker.callbackEntered(), "beneficiary callback was not exercised");
+        assertFalse(attacker.reentrySucceeded(), "flow resync succeeded inside dispute transition");
+        assertTrue(escrow.disputed());
+        assertEq(ISuperToken(address(superToken)).getFlowRate(address(escrow), address(attacker)), 0);
+    }
+
     function _assertReentrantBeneficiaryCannotStealEscrowBuffer(bool reenterThroughClaim) internal {
         ReentrantStreamingBeneficiary attacker = new ReentrantStreamingBeneficiary(sf.host, true, reenterThroughClaim);
         (StreamingEscrow escrow, ISuperfluidPool pool) = _createFundedStreamingEscrow(address(attacker));

@@ -36,6 +36,22 @@ contract MockPowerStrategy {
     }
 }
 
+contract Issue974ReentrantPowerStrategy {
+    CommunityPowerFacet public community;
+    bool public increaseReentrySucceeded;
+    bool public decreaseReentrySucceeded;
+
+    constructor(CommunityPowerFacet _community) {
+        community = _community;
+    }
+
+    function decreasePower(address, uint256) external returns (uint256) {
+        (increaseReentrySucceeded,) = address(community).call(abi.encodeCall(community.increasePower, (10_000)));
+        (decreaseReentrySucceeded,) = address(community).call(abi.encodeCall(community.decreasePower, (1)));
+        return 0;
+    }
+}
+
 contract CommunityPowerFacetHarness is CommunityPowerFacet {
     function init(address token, uint256 stake) external {
         gardenToken = IERC20(token);
@@ -186,6 +202,24 @@ contract CommunityPowerFacetTest is Test {
     function test_increasePower_reverts_for_non_member() public {
         vm.expectRevert(CommunityPowerFacet.UserNotInRegistry.selector);
         facet.increasePower(1);
+    }
+
+    function test_issue974_strategy_callback_cannot_inflate_victim_power() public {
+        Issue974ReentrantPowerStrategy strategy = new Issue974ReentrantPowerStrategy(facet);
+        facet.setMember(member, true, 3_000);
+        facet.addStrategyForMember(member, address(strategy));
+        facet.setActivated(member, address(strategy), true, 3_000);
+        token.mint(address(facet), 3_000);
+
+        vm.prank(member);
+        facet.decreasePower(1_500);
+
+        assertFalse(strategy.increaseReentrySucceeded(), "strategy increased victim power");
+        assertFalse(strategy.decreaseReentrySucceeded(), "strategy reentered guarded decrease");
+        assertEq(facet.getMemberStakedAmount(member), 1_500);
+        assertEq(facet.memberPowerInStrategy(member, address(strategy)), 3_000);
+        assertEq(token.balanceOf(member), 1_500);
+        assertEq(token.balanceOf(address(facet)), 1_500);
     }
 
     function test_decreasePower_reverts_under_minimum() public {
