@@ -103,7 +103,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         // Keep escrow deposits and outflows in sync with the latest GDA member flow rates.
         for (uint256 i = 0; i < openProposalIds.length; i++) {
             address escrow = streamingEscrow(openProposalIds[i]);
-            if (escrow == address(0)) {
+            if (escrow == address(0) || CVStreamingStorage.layout().stoppedEscrows[escrow]) {
                 continue;
             }
 
@@ -137,6 +137,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             if (escrow == address(0)) {
                 continue; // Skip if no escrow (shouldn't happen for streaming proposals)
             }
+            if (CVStreamingStorage.layout().stoppedEscrows[escrow]) {
+                continue;
+            }
 
             // Ensure non-active proposals never keep receiving pool share.
             if (proposal.proposalStatus != ProposalStatus.Active && proposal.proposalStatus != ProposalStatus.Disputed)
@@ -169,7 +172,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             Proposal storage proposal = proposals[proposalId];
 
             address escrow = streamingEscrow(proposalId);
-            if (escrow == address(0)) {
+            if (escrow == address(0) || CVStreamingStorage.layout().stoppedEscrows[escrow]) {
                 continue;
             }
 
@@ -212,6 +215,7 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         if (!superfluidGDA.updateMemberUnits(escrow, 0)) {
             revert UpdateMemberUnitsFailed(escrow, 0);
         }
+        CVStreamingStorage.layout().stoppedEscrows[escrow] = true;
         emit StreamMemberUnitUpdated(escrow, 0);
 
         StreamingEscrow(escrow).drainToStrategy();
@@ -310,6 +314,9 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         view
         returns (bool)
     {
+        if (totalPointsActivated == 0) {
+            return false;
+        }
         uint256 threshold = ConvictionsUtils.calculateThreshold(
             0, // Streaming proposals use zero requestedAmount; calculateThreshold should still run its normal math for that input.
             poolAmount,

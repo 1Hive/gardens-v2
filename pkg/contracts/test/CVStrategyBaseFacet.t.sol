@@ -214,7 +214,7 @@ contract CVStrategyBaseFacetTest is Test {
         assertEq(thresholdSnapshot, 777);
     }
 
-    function test_conviction_snapshot_freezes_when_strategy_disabled_for_all_pool_types() public {
+    function test_disabled_strategy_touch_preserves_elapsed_conviction_window() public {
         uint256 proposalId = 1;
         facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: 9_000_000, minThresholdPoints: 0}));
         facet.setProposal(proposalId, member, block.number, 0);
@@ -229,13 +229,13 @@ contract CVStrategyBaseFacetTest is Test {
         vm.roll(block.number + 5);
         facet.exposedCalculateAndSetConviction(proposalId, 100);
         (uint256 blockAtSnapshot, uint256 convictionAtSnapshot) = facet.getProposalSnapshot(proposalId);
-        assertEq(blockAtSnapshot, block.number);
+        assertEq(blockAtSnapshot, blockBeforeDisable);
         assertEq(convictionAtSnapshot, convictionBeforeDisable);
 
         vm.roll(block.number + 5);
         facet.exposedCalculateAndSetConviction(proposalId, 100);
         (uint256 blockStillFrozen, uint256 convictionStillFrozen) = facet.getProposalSnapshot(proposalId);
-        assertEq(blockStillFrozen, block.number);
+        assertEq(blockStillFrozen, blockBeforeDisable);
         assertEq(convictionStillFrozen, convictionAtSnapshot);
 
         registryCommunity.setStrategyEnabled(true);
@@ -243,7 +243,9 @@ contract CVStrategyBaseFacetTest is Test {
         facet.exposedCalculateAndSetConviction(proposalId, 100);
         (uint256 blockAfterEnable, uint256 convictionAfterEnable) = facet.getProposalSnapshot(proposalId);
         assertEq(blockAfterEnable, block.number);
-        assertGt(convictionAfterEnable, convictionAtSnapshot);
+        assertEq(
+            convictionAfterEnable, ConvictionsUtils.calculateConviction(15, convictionBeforeDisable, 100, 9_000_000)
+        );
     }
 
     function test_pauseHelpers_enforceNotPaused() public {

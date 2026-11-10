@@ -72,6 +72,45 @@ contract ReentrantStreamingBeneficiary is SuperAppBase {
     }
 }
 
+contract VetoStreamingBeneficiary is SuperAppBase {
+    ISuperfluid internal immutable HOST;
+    bool public veto;
+
+    constructor(ISuperfluid host) {
+        HOST = host;
+        host.registerApp(
+            SuperAppDefinitions.APP_LEVEL_FINAL | SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP
+                | SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP
+                | SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP
+                | SuperAppDefinitions.AFTER_AGREEMENT_TERMINATED_NOOP
+        );
+    }
+
+    function setVeto(bool enabled) external {
+        veto = enabled;
+    }
+
+    function afterAgreementCreated(ISuperToken, address, bytes32, bytes calldata, bytes calldata, bytes calldata ctx)
+        external
+        override
+        returns (bytes memory)
+    {
+        require(msg.sender == address(HOST), "only host");
+        require(!veto, "veto");
+        return ctx;
+    }
+
+    function afterAgreementUpdated(ISuperToken, address, bytes32, bytes calldata, bytes calldata, bytes calldata ctx)
+        external
+        override
+        returns (bytes memory)
+    {
+        require(msg.sender == address(HOST), "only host");
+        require(!veto, "veto");
+        return ctx;
+    }
+}
+
 contract GHSAc5r9RealSuperfluidPoC is FoundrySuperfluidTester {
     using SuperTokenV1Library for ISuperToken;
 
@@ -140,6 +179,24 @@ contract GHSAc5r9RealSuperfluidPoC is FoundrySuperfluidTester {
             superToken.balanceOf(beneficiary), beneficiaryBalanceBefore, "EOA beneficiary received cancellation buffer"
         );
         assertEq(superToken.balanceOf(address(escrow)), 0, "escrow retained funds");
+    }
+
+    function test_GHSA_r72x_beneficiary_veto_cannot_keep_higher_outflow() public {
+        VetoStreamingBeneficiary beneficiary = new VetoStreamingBeneficiary(sf.host);
+        (StreamingEscrow escrow, ISuperfluidPool pool) = _createFundedStreamingEscrow(address(beneficiary));
+        pool.updateMemberUnits(address(0xBEEF), 1);
+        pool.updateMemberUnits(address(escrow), 3);
+        escrow.syncOutflow();
+        int96 oldRate = ISuperToken(address(superToken)).getFlowRate(address(escrow), address(beneficiary));
+
+        beneficiary.setVeto(true);
+        pool.updateMemberUnits(address(escrow), 1);
+        int96 reducedRate = pool.getMemberFlowRate(address(escrow));
+        assertLt(reducedRate, oldRate);
+        escrow.syncOutflow();
+
+        assertEq(ISuperToken(address(superToken)).getFlowRate(address(escrow), address(beneficiary)), 0);
+        assertGt(superToken.balanceOf(address(escrow)), 0, "reserve remains recoverable");
     }
 
     function _createFundedStreamingEscrow(address beneficiary)

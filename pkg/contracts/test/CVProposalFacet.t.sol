@@ -5,7 +5,13 @@ import "forge-std/Test.sol";
 
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 
-import {CreateProposal, ProposalType, ProposalStatus, ArbitrableConfig} from "../src/CVStrategy/CVStrategy.sol";
+import {
+    CreateProposal,
+    ProposalType,
+    ProposalStatus,
+    ArbitrableConfig,
+    CVParams
+} from "../src/CVStrategy/CVStrategy.sol";
 import {CVProposalFacet} from "../src/CVStrategy/facets/CVProposalFacet.sol";
 import {CVStrategyBaseFacet} from "../src/CVStrategy/CVStrategyBaseFacet.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
@@ -124,6 +130,28 @@ contract CVProposalFacetTest is Test {
 
         assertEq(facet.getProposalThresholdUpdatedAtBlock(1), block.number);
         assertEq(facet.getProposalThresholdPoints(1), 77);
+    }
+
+    function test_registerRecipient_usesSameWeightedBasisRegardlessOfCreationOrder() public {
+        CreateProposal memory proposal =
+            CreateProposal(1, beneficiary, 10, poolToken, Metadata({protocol: 1, pointer: "p"}));
+        facet.setCvParams(CVParams({maxRatio: 0, weight: 0, decay: 9_000_000, minThresholdPoints: 0}));
+        vm.roll(100);
+        facet.setTotalPointsActivatedDirect(100);
+        facet.setPoolThresholdState(100, block.number);
+
+        vm.deal(address(allo), 2 ether);
+        vm.prank(address(allo));
+        facet.registerRecipient{value: 1 ether}(abi.encode(proposal), member);
+
+        // A later activation changes the live points, but the pool threshold is still converging.
+        facet.setTotalPointsActivatedDirect(1_000);
+        vm.roll(block.number + 1);
+        vm.prank(address(allo));
+        facet.registerRecipient{value: 1 ether}(abi.encode(proposal), member);
+
+        assertEq(facet.getProposalThresholdPoints(1), 190);
+        assertEq(facet.getProposalThresholdPoints(2), 190);
     }
 
     function test_registerRecipient_revertWhenNotMember() public {
@@ -315,9 +343,7 @@ contract CVProposalFacetTest is Test {
     function test_recoverFailedSubmitterCollateral_rejectsOtherCaller() public {
         facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Cancelled, block.timestamp, 0);
         vm.prank(address(0xB0B));
-        vm.expectRevert(
-            abi.encodeWithSelector(CVStrategyBaseFacet.OnlySubmitter.selector, 1, member, address(0xB0B))
-        );
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyBaseFacet.OnlySubmitter.selector, 1, member, address(0xB0B)));
         facet.recoverFailedSubmitterCollateral(1, beneficiary);
     }
 
@@ -450,6 +476,20 @@ contract CVProposalFacetTest is Test {
         assertEq(blockLastAfter, 0);
         assertEq(convictionAfter, 0);
         assertEq(snapshotAfter, 0);
+    }
+
+    function test_editProposal_resetsConvictionStateWhenBeneficiaryChanges() public {
+        facet.seedProposal(1, member, beneficiary, poolToken, 10, ProposalStatus.Active, block.timestamp, 123);
+        facet.setProposalThresholdSnapshot(1, 456);
+
+        vm.prank(member);
+        facet.editProposal(1, Metadata({protocol: 1, pointer: "meta"}), address(0xB0B), 10);
+
+        (uint256 blockLast, uint256 conviction, uint256 snapshot) = facet.getProposalConvictionState(1);
+        assertEq(facet.getProposalBeneficiary(1), address(0xB0B));
+        assertEq(blockLast, 0);
+        assertEq(conviction, 0);
+        assertEq(snapshot, 0);
     }
 
     function test_editProposal_resetsTimeWeightedThresholdStateWhenRequestedAmountChanges() public {

@@ -1434,6 +1434,24 @@ contract CVStreamingFacetTest is Test {
         facet.stopEscrowStream(escrow1);
         assertEq(gdaPool.memberUnits(escrow1), 0);
         assertEq(MockStreamingEscrowSync(escrow1).drainToStrategyCount(), 1);
+
+        facet.rebalance();
+        assertEq(gdaPool.memberUnits(escrow1), 0);
+        assertEq(MockStreamingEscrowSync(escrow1).drainToStrategyCount(), 1);
+    }
+
+    function test_rebalance_zero_active_points_stops_existing_stream() public {
+        facet.setupProposal(1, ProposalStatus.Active, 1 ether, 0, block.number - 5);
+        facet.setStreamingEscrowExternal(1, escrow1);
+        facet.rebalance();
+        assertGt(gdaPool.memberUnits(escrow1), 0);
+
+        facet.setupTotalPointsActivated(0);
+        facet.rebalance();
+
+        assertEq(gdaPool.memberUnits(escrow1), 0);
+        assertEq(gdaAgreement.flowRate(), 0);
+        assertEq(MockStreamingEscrowSync(escrow1).drainToStrategyCount(), 1);
     }
 
     function test_stopEscrowStream_reverts_for_zero_address() public {

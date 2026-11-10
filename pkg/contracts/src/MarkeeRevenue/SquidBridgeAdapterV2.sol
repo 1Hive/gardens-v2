@@ -482,7 +482,12 @@ contract SquidBridgeAdapterV2 is Ownable, IBridgeAdapter {
         bool payerIsUser;
         (swap.recipient, swap.amountIn, swap.amountOutMinimum, path, payerIsUser) =
             abi.decode(inputs[0], (address, uint256, uint256, bytes, bool));
-        if (!payerIsUser || path.length < 43 || (path.length - 20) % 23 != 0) revert UnboundRoute();
+        inputs[0] = abi.encode(swap.recipient, swap.amountIn, swap.amountOutMinimum, path, payerIsUser);
+        if (
+            !payerIsUser || path.length < 43 || (path.length - 20) % 23 != 0
+                || keccak256(callData)
+                    != keccak256(abi.encodeWithSelector(UNIVERSAL_ROUTER_EXECUTE_SELECTOR, commands, inputs, deadline))
+        ) revert UnboundRoute();
         swap.tokenIn = _pathToken(path, 0);
         swap.tokenOut = _pathToken(path, path.length - 20);
         swap.inputPosition = 9;

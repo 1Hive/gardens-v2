@@ -117,6 +117,7 @@ Reports that frame these functions as direct proposal-beneficiary streaming DoS 
 ## Related Documents
 
 - `SECURITY.md`
+- `security/security-poc-coverage.md`
 - `security/known-non-eligible-findings.md`
 - `security/codex-security-scan-triage-2026-06-12.md`
 - `security/final-merged-security-report.md`

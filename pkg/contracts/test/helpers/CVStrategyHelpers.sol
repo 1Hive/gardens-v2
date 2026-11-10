@@ -22,6 +22,7 @@ import {
 import {CVProposalFacet} from "../../src/CVStrategy/facets/CVProposalFacet.sol";
 import {CVStrategyBaseFacet} from "../../src/CVStrategy/CVStrategyBaseFacet.sol";
 import {CVStreamingStorage} from "../../src/CVStrategy/CVStreamingStorage.sol";
+import {CVThresholdStorage} from "../../src/CVStrategy/CVThresholdStorage.sol";
 import {ICollateralVault} from "../../src/interfaces/ICollateralVault.sol";
 import {IArbitrator} from "../../src/interfaces/IArbitrator.sol";
 import {IVotingPowerRegistry} from "../../src/interfaces/IVotingPowerRegistry.sol";
@@ -202,6 +203,15 @@ contract MockCollateralVault is ICollateralVault {
 }
 
 contract CVProposalFacetHarness is CVProposalFacet {
+    function setCvParams(CVParams memory params) external {
+        cvParams = params;
+    }
+
+    function setPoolThresholdState(uint256 snapshot, uint256 updatedAtBlock) external {
+        CVThresholdStorage.layout().thresholdSnapshot = snapshot;
+        CVThresholdStorage.layout().thresholdUpdatedAtBlock = updatedAtBlock;
+    }
+
     function setAllo(address allo_) external {
         allo = IAllo(allo_);
     }

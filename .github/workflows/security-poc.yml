@@ -8,12 +8,20 @@ on:
       - dev
     paths:
       - pkg/contracts/src/**/*.sol
-      - pkg/contracts/test/no-coverage/SecurityPoC.t.sol
+      - pkg/contracts/test/**/*.sol
+      - pkg/contracts/scripts/check-security-poc-coverage.mjs
+      - apps/web/app/api/passport-oracle/write-score/**
+      - security/advisory-history.md
+      - security/security-poc-coverage.md
       - .github/workflows/security-poc.yml
   pull_request:
     paths:
       - pkg/contracts/src/**/*.sol
-      - pkg/contracts/test/no-coverage/SecurityPoC.t.sol
+      - pkg/contracts/test/**/*.sol
+      - pkg/contracts/scripts/check-security-poc-coverage.mjs
+      - apps/web/app/api/passport-oracle/write-score/**
+      - security/advisory-history.md
+      - security/security-poc-coverage.md
       - .github/workflows/security-poc.yml
 
 permissions:
@@ -38,5 +46,8 @@ jobs:
         with:
           version: nightly
 
-      - name: Run SecurityPoC tests
-        run: forge test --match-path 'pkg/contracts/test/no-coverage/SecurityPoC.t.sol' -vvv
+      - name: Check accepted advisory coverage
+        run: node pkg/contracts/scripts/check-security-poc-coverage.mjs
+
+      - name: Run SecurityPoC and contract regression tests
+        run: forge test --no-match-path 'pkg/contracts/test/fork/*' --summary

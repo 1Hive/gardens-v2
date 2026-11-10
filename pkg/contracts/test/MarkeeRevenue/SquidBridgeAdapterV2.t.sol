@@ -487,6 +487,52 @@ contract SquidBridgeAdapterV2Test is Test {
         assertEq(squidRouter.received(), 1.01 ether);
     }
 
+    function test_bridgeETH_rejectsNonCanonicalUniversalRouterInputOffset() public {
+        BridgeRequest memory request = _request(0.8 ether);
+        SquidBridgeAdapterV2.SquidCall[] memory sourceCalls = new SquidBridgeAdapterV2.SquidCall[](5);
+        sourceCalls[0] = SquidBridgeAdapterV2.SquidCall({
+            callType: 0,
+            target: BASE_WETH,
+            value: 1 ether,
+            callData: abi.encodePacked(bytes4(0xd0e30db0)),
+            payload: abi.encode(BASE_WETH, uint256(0))
+        });
+        sourceCalls[1] = _approval(BASE_WETH, BASE_UNIVERSAL_ROUTER, type(uint256).max, 0);
+        sourceCalls[2] = _universalSwap(BASE_WETH, BASE_USDC, SQUID_MULTICALL);
+        (bytes memory commands, bytes[] memory inputs, uint256 deadline) =
+            abi.decode(_withoutSelector(sourceCalls[2].callData), (bytes, bytes[], uint256));
+        bytes memory canonical = inputs[0];
+        bytes memory nonCanonical = new bytes(canonical.length + 32);
+        for (uint256 i; i < 160; ++i) {
+            nonCanonical[i] = canonical[i];
+        }
+        for (uint256 i = 160; i < canonical.length; ++i) {
+            nonCanonical[i + 32] = canonical[i];
+        }
+        assembly {
+            mstore(add(nonCanonical, 0x80), 0xc0)
+        }
+        inputs[0] = nonCanonical;
+        sourceCalls[2].callData = abi.encodeWithSelector(bytes4(0x3593564c), commands, inputs, deadline);
+        sourceCalls[3] = _approval(BASE_USDC, BASE_PANCAKE_ROUTER, type(uint256).max, 0);
+        sourceCalls[4] = _swap(BASE_USDC, BASE_AXL_USDC, address(squidRouter), BASE_PANCAKE_ROUTER);
+        bytes memory route = _encodeRoute(
+            sourceCalls,
+            _nativeDestinationCalls(request, 1 ether),
+            1 ether,
+            "optimism",
+            _toHexString(address(squidRouter)),
+            request.destinationReceiver,
+            request.refundRecipient,
+            true
+        );
+
+        vm.deal(gardensRouter, 1.01 ether);
+        vm.prank(gardensRouter);
+        vm.expectRevert(SquidBridgeAdapterV2.UnboundRoute.selector);
+        adapter.bridgeETH{value: 1.01 ether}(request, _quote(route, 0.9 ether, block.timestamp + 5 minutes));
+    }
+
     function test_bridgeETH_acceptsProductionShapedCeloDestinationPath() public {
         BridgeRequest memory request = _request(0.8 ether);
         request.destinationChainId = 42220;

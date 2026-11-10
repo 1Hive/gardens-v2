@@ -37,7 +37,10 @@ contract StreamingEscrow is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, Su
     error OnlyHost(address sender); // 0x1cb0a1d5
     error SuperTokenTransferFailed(address to, uint256 amount);
     error SetOutflowFailed(address receiver, int96 flowRate);
+    error OnlySelf(address sender);
     error MigrationNotRequired();
+
+    event OutflowRestartFailed(address indexed receiver, int96 requestedFlowRate, bytes reason);
 
     /*|--------------------------------------------|*/
     /*|              STORAGE                       |*/
@@ -204,10 +207,15 @@ contract StreamingEscrow is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, Su
     }
 
     function syncOutflow() public nonReentrant {
-        if (!disputed) {
+        bool outflowApplied = _setOutflow(disputed ? int96(0) : _currentGDAFlowRate(), beneficiary);
+        if (!disputed && outflowApplied) {
             _drainExcessToBeneficiary();
         }
-        _setOutflow(disputed ? int96(0) : _currentGDAFlowRate(), beneficiary);
+    }
+
+    function restartOutflowAfterDecrease(address receiver, int96 flowRate) external {
+        if (msg.sender != address(this)) revert OnlySelf(msg.sender);
+        if (!superToken.flow(receiver, flowRate)) revert SetOutflowFailed(receiver, flowRate);
     }
 
     function drainToBeneficiary() external onlyStrategy nonReentrant {
@@ -330,12 +338,22 @@ contract StreamingEscrow is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, Su
         return memberFlowRate > 0 ? memberFlowRate : int96(0);
     }
 
-    function _setOutflow(int96 flowRate, address receiver) internal {
+    function _setOutflow(int96 flowRate, address receiver) internal returns (bool) {
         if (receiver == address(0)) {
-            return;
+            return true;
+        }
+        if (flowRate > 0 && flowRate < superToken.getCFAFlowRate(address(this), receiver)) {
+            if (!superToken.flow(receiver, 0)) revert SetOutflowFailed(receiver, 0);
+            try this.restartOutflowAfterDecrease(receiver, flowRate) {
+                return true;
+            } catch (bytes memory reason) {
+                emit OutflowRestartFailed(receiver, flowRate, reason);
+                return false;
+            }
         }
         if (!superToken.flow(receiver, flowRate)) {
             revert SetOutflowFailed(receiver, flowRate);
         }
+        return true;
     }
 }
