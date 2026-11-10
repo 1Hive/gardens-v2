@@ -35,6 +35,11 @@ export default async function Home() {
         <option value="high">High</option><option value="medium">Medium</option>
         <option value="low">Low</option><option value="unknown">Unspecified</option>
       </select></label>
+      <label className="select-field"><span>Tag</span><select id="tag" defaultValue="all">
+        <option value="all">All tags</option><option value="replied">Replied</option>
+        <option value="proposal">Proposal</option><option value="fixed">Fixed</option>
+        <option value="github-draft">GitHub draft</option>
+      </select></label>
       <label className="select-field"><span>Order</span><select id="order" defaultValue="newest">
         <option value="newest">Newest first</option><option value="oldest">Oldest first</option>
         <option value="updated">Recently updated</option>

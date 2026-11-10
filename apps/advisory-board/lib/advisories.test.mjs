@@ -3,12 +3,26 @@ import test from "node:test";
 import { canTransition, loadActivity, loadAdvisories, parseFixedAdvisories, projectAdvisory, summarizeComments } from "./advisories.mjs";
 import { transitionAdvisory, TransitionError } from "./transition.mjs";
 import { stageFor } from "./workflow.mjs";
-import { requiresPublishConfirmation } from "../public/workflow.mjs";
+import { hasTag, requiresPublishConfirmation } from "../public/workflow.mjs";
 
 test("Fixed advisories publish without confirmation; others still require it", () => {
   assert.equal(requiresPublishConfirmation({ fixed: true }), false);
   assert.equal(requiresPublishConfirmation({ fixed: false }), true);
   assert.equal(requiresPublishConfirmation({}), true);
+});
+
+test("tag filter matches the badges shown on cards", () => {
+  const advisory = { state: "draft", fixed: true };
+  const activity = { hasReply: true };
+  const saved = { proposalUrl: "https://app.gardens.fund/proposal-1" };
+  for (const tag of ["all", "replied", "fixed", "proposal"]) {
+    assert.equal(hasTag(advisory, tag, activity, saved), true);
+  }
+  assert.equal(hasTag(advisory, "github-draft", activity, saved), false);
+  assert.equal(hasTag({ state: "draft" }, "github-draft"), true);
+  assert.equal(hasTag({ state: "triage" }, "github-draft"), false);
+  assert.equal(hasTag(advisory, "unknown", activity, saved), false);
+  assert.equal(hasTag(advisory, "proposal"), false);
 });
 
 test("saved accepted cards advance when a researcher supplies an address", () => {

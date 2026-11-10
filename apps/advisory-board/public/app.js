@@ -1,4 +1,4 @@
-import { requiresPublishConfirmation, stageFor as inferStage } from "./workflow.mjs";
+import { hasTag, requiresPublishConfirmation, stageFor as inferStage } from "./workflow.mjs";
 
 const stages = [
   { id: "triage", label: "Triage" },
@@ -17,6 +17,7 @@ const elements = {
   notice: document.querySelector("#notice"),
   search: document.querySelector("#search"),
   severity: document.querySelector("#severity"),
+  tag: document.querySelector("#tag"),
   order: document.querySelector("#order"),
   refresh: document.querySelector("#refresh"),
   count: document.querySelector("#result-count"),
@@ -164,10 +165,11 @@ function clearDragTargets() {
 function render() {
   const query = elements.search.value.trim().toLowerCase();
   const severity = elements.severity.value;
+  const tag = elements.tag.value;
   const visible = sorted(advisories.filter((advisory) => {
     const matchesSeverity = severity === "all" || advisory.severity === severity;
     const matchesQuery = !query || `${advisory.title} ${advisory.id} ${advisory.author}`.toLowerCase().includes(query);
-    return matchesSeverity && matchesQuery;
+    return matchesSeverity && matchesQuery && hasTag(advisory, tag, activity[advisory.id], workflow[advisory.id]);
   }));
 
   elements.count.textContent = `${visible.length} of ${advisories.length} advisories`;
@@ -355,6 +357,7 @@ async function refreshActivity(force = false) {
 
 elements.search.addEventListener("input", render);
 elements.severity.addEventListener("change", render);
+elements.tag.addEventListener("change", render);
 elements.order.addEventListener("change", render);
 elements.refresh.addEventListener("click", async () => {
   await refresh(true);

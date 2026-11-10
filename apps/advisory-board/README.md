@@ -63,7 +63,9 @@ pnpm --filter advisory-board test
 pnpm --filter advisory-board dev
 ```
 
-Drag cards or use the Move selector. Moving to a GitHub state updates GitHub
-using the signed-in account. Manual workflow moves do **not** post advisory
-comments or create bounty proposals. Publishing requires typing the advisory
-ID. Confirm affected versions and fixed rollout on GitHub before publishing.
+Filter cards by severity, tag, or search. Drag cards or use the Move selector.
+Moving to a GitHub state updates GitHub using the signed-in account. Manual
+workflow moves do **not** post advisory
+comments or create bounty proposals. Publishing an advisory without the Fixed
+tag requires typing its ID; Fixed advisories publish immediately. Confirm
+affected versions and fixed rollout on GitHub before publishing.
