@@ -46,7 +46,9 @@ exec > >(tee "$LOG") 2>&1
 
 echo "logging to $LOG"
 task verify-storage
-task sync-proxies NETWORK="$CHAIN"
+if [[ "${SYNC_PROXIES:-true}" == "true" ]]; then
+  task sync-proxies NETWORK="$CHAIN"
+fi
 
 NETWORKS_JSON="$CONTRACTS_ROOT/config/networks.json"
 COMMUNITY_COUNT="$(NETWORKS_JSON_PATH="$NETWORKS_JSON" CHAIN="$CHAIN" node - <<'NODE'
