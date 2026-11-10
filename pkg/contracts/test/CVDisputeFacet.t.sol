@@ -5,14 +5,14 @@ import "forge-std/Test.sol";
 
 import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
 import {CVStreamingStorage} from "../src/CVStrategy/CVStreamingStorage.sol";
+import {CollateralVault} from "../src/CollateralVault.sol";
 import {Proposal, ProposalStatus, ProposalType, ArbitrableConfig} from "../src/CVStrategy/ICVStrategy.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {ICollateralVault} from "../src/interfaces/ICollateralVault.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {IVotingPowerRegistry} from "../src/interfaces/IVotingPowerRegistry.sol";
-import {
-    ISuperfluidPool
-} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
+import {ISuperfluidPool} from
+    "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 
 import {MockRegistryCommunity, MockArbitrator, MockCollateralVault} from "./helpers/CVStrategyHelpers.sol";
 
@@ -34,6 +34,18 @@ contract MockStreamingEscrow {
     function drainToBeneficiary() external {
         resolved = true;
         drainToBeneficiaryCount++;
+    }
+}
+
+contract ToggleableReceiver {
+    bool public accepts;
+
+    function setAccepts(bool value) external {
+        accepts = value;
+    }
+
+    receive() external payable {
+        require(accepts, "rejects ETH");
     }
 }
 
@@ -96,6 +108,10 @@ contract CVDisputeFacetHarness is CVDisputeFacet {
         p.disputeInfo.disputeId = disputeId;
         p.disputeInfo.disputeTimestamp = disputeTimestamp;
         p.disputeInfo.challenger = challenger;
+    }
+
+    function proposalStatusOf(uint256 proposalId) external view returns (ProposalStatus) {
+        return proposals[proposalId].proposalStatus;
     }
 
     function setDisputeId(uint256 disputeId, uint256 proposalId) external {
@@ -373,5 +389,108 @@ contract CVDisputeFacetTest is Test {
 
         vm.prank(address(arbitrator));
         facet.rule(9, 1);
+    }
+
+    /*|--------------------------------------------|*/
+    /*|      FAILED COLLATERAL PAYOUT CLAIMS       |*/
+    /*|--------------------------------------------|*/
+
+    function _useRealVault() internal returns (CollateralVault realVault) {
+        realVault = new CollateralVault();
+        vm.prank(address(facet));
+        realVault.initialize();
+        facet.setCollateralVault(address(realVault));
+    }
+
+    function _deposit(CollateralVault realVault, uint256 proposalId, address user, uint256 amount) internal {
+        vm.deal(address(facet), amount);
+        vm.prank(address(facet));
+        realVault.depositCollateral{value: amount}(proposalId, user);
+    }
+
+    function _setupTimedOutRejectedDispute(address challenger, uint256 challengerCollateral) internal {
+        facet.setArbitrableConfig(1, _config(challengerCollateral, 2, 0));
+        facet.setProposal(1, ProposalStatus.Disputed, 1, 0);
+        facet.setDisputeInfo(1, 11, block.timestamp - 1, challenger);
+        facet.setDisputeId(11, 1);
+        facet.setDisputeCount(1);
+    }
+
+    function test_rule_failed_payout_is_recorded_and_claimable() public {
+        CollateralVault realVault = _useRealVault();
+        ToggleableReceiver challenger = new ToggleableReceiver();
+        _deposit(realVault, 1, address(challenger), 1 ether);
+        _deposit(realVault, 1, address(0xBEEF), 5);
+        _setupTimedOutRejectedDispute(address(challenger), 1 ether);
+
+        // Timed out: anyone can rule. The challenger refund fails, but the ruling still goes through.
+        vm.prank(makeAddr("anyone"));
+        facet.rule(11, 0);
+
+        assertEq(uint8(facet.proposalStatusOf(1)), uint8(ProposalStatus.Rejected));
+        assertEq(facet.pendingCollateralClaim(1, address(challenger), address(challenger)), 1 ether);
+        assertEq(realVault.proposalCollateral(1, address(challenger)), 1 ether);
+        assertEq(facet.pendingCollateralClaim(1, address(0xBEEF), address(0xBEEF)), 0);
+
+        // Still rejecting: the claim reverts and stays in place for a retry.
+        vm.expectRevert(CollateralVault.TransferFailed.selector);
+        facet.claimCollateral(1, address(challenger), address(challenger));
+        assertEq(facet.pendingCollateralClaim(1, address(challenger), address(challenger)), 1 ether);
+
+        // Anyone can push the payout once the recipient accepts ETH; the payee is fixed.
+        challenger.setAccepts(true);
+        vm.prank(makeAddr("keeper"));
+        facet.claimCollateral(1, address(challenger), address(challenger));
+
+        assertEq(address(challenger).balance, 1 ether);
+        assertEq(realVault.proposalCollateral(1, address(challenger)), 0);
+        assertEq(facet.pendingCollateralClaim(1, address(challenger), address(challenger)), 0);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVDisputeFacet.NoPendingCollateralClaim.selector, 1, address(challenger), address(challenger)
+            )
+        );
+        facet.claimCollateral(1, address(challenger), address(challenger));
+    }
+
+    function test_rule_failed_payout_for_other_recipient_is_claimable() public {
+        CollateralVault realVault = _useRealVault();
+        ToggleableReceiver council = new ToggleableReceiver();
+        registry.setCouncilSafe(address(council));
+        _deposit(realVault, 1, member, 1 ether);
+
+        facet.setArbitrableConfig(1, _config(1 ether, 1, 1000));
+        facet.setProposal(1, ProposalStatus.Disputed, 1, 0);
+        facet.setDisputeInfo(1, 12, block.timestamp, member);
+        facet.setDisputeId(12, 1);
+        facet.setDisputeCount(1);
+
+        // Ruling 1: the challenger's collateral goes to the council Safe, which rejects it.
+        vm.prank(address(arbitrator));
+        facet.rule(12, 1);
+        assertEq(facet.pendingCollateralClaim(1, member, address(council)), 1 ether);
+
+        council.setAccepts(true);
+        facet.claimCollateral(1, member, address(council));
+        assertEq(address(council).balance, 1 ether);
+        assertEq(realVault.proposalCollateral(1, member), 0);
+    }
+
+    function test_rule_successful_payout_records_no_claim() public {
+        CollateralVault realVault = _useRealVault();
+        _deposit(realVault, 1, member, 1 ether);
+        _setupTimedOutRejectedDispute(member, 1 ether);
+
+        uint256 balanceBefore = member.balance;
+        facet.rule(11, 0);
+
+        assertEq(member.balance, balanceBefore + 1 ether);
+        assertEq(facet.pendingCollateralClaim(1, member, member), 0);
+    }
+
+    function test_claimCollateral_reverts_without_claim() public {
+        vm.expectRevert(abi.encodeWithSelector(CVDisputeFacet.NoPendingCollateralClaim.selector, 1, member, member));
+        facet.claimCollateral(1, member, member);
     }
 }
