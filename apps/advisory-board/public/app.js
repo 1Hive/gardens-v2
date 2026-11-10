@@ -1,4 +1,4 @@
-import { stageFor as inferStage } from "./workflow.mjs";
+import { requiresPublishConfirmation, stageFor as inferStage } from "./workflow.mjs";
 
 const stages = [
   { id: "triage", label: "Triage" },
@@ -239,7 +239,7 @@ function requestMove(id, to) {
   const advisory = advisories.find((item) => item.id === id);
   if (!advisory || !canMove(advisory, to)) return;
 
-  const needsInput = to === "published" ||
+  const needsInput = (to === "published" && requiresPublishConfirmation(advisory)) ||
     (to === "recipient" && !recipientFor(advisory)) ||
     (to === "proposal" && !proposalUrlFor(advisory));
   const needsConfirmation = needsInput || to === "closed" ||

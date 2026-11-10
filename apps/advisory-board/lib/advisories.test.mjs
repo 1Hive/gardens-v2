@@ -3,6 +3,13 @@ import test from "node:test";
 import { canTransition, loadActivity, loadAdvisories, parseFixedAdvisories, projectAdvisory, summarizeComments } from "./advisories.mjs";
 import { transitionAdvisory, TransitionError } from "./transition.mjs";
 import { stageFor } from "./workflow.mjs";
+import { requiresPublishConfirmation } from "../public/workflow.mjs";
+
+test("Fixed advisories publish without confirmation; others still require it", () => {
+  assert.equal(requiresPublishConfirmation({ fixed: true }), false);
+  assert.equal(requiresPublishConfirmation({ fixed: false }), true);
+  assert.equal(requiresPublishConfirmation({}), true);
+});
 
 test("saved accepted cards advance when a researcher supplies an address", () => {
   const advisory = { state: "draft" };

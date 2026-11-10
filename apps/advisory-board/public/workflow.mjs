@@ -1,5 +1,9 @@
 const activeStages = ["triage", "accepted", "recipient", "proposal"];
 
+export function requiresPublishConfirmation(advisory) {
+  return !advisory.fixed;
+}
+
 export function stageFor(advisory, activity = {}, saved = {}) {
   if (advisory.state === "published" || advisory.state === "closed") return advisory.state;
 
