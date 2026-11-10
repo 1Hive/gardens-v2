@@ -1,0 +1,18 @@
+{
+  "name": "advisory-board",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 4318",
+    "build": "next build",
+    "start": "next start -p 4318",
+    "test": "node --test lib/*.test.mjs"
+  },
+  "dependencies": {
+    "@upstash/redis": "1.41.0",
+    "next": "15.5.28",
+    "next-auth": "4.24.15",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  }
+}
