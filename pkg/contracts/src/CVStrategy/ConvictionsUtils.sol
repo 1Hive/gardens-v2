@@ -59,6 +59,7 @@ library ConvictionsUtils {
 
         uint256 requestedAmountRationTerm = _poolAmount == 0 ? 0 : (_requestedAmount * 2 ** 64) / _poolAmount;
         uint256 denom = (_maxRatio * 2 ** 64) / D - requestedAmountRationTerm;
+        if (denom < 2 ** 32) return type(uint256).max;
         uint256 weightScaled = (_weight << 128) / D;
         uint256 ratioTerm = Math.mulDiv(weightScaled, D, (denom * denom) >> 64);
         uint256 decayAdjusted = ratioTerm / (D - _decay);

@@ -59,6 +59,7 @@ contract MockHost {
     address public cfa;
     uint256 public callAgreementCount;
     uint256 public callAgreementWithContextCount;
+    uint256 public revertAtCall;
     address public lastAgreement;
     address public lastAgreementWithCtx;
     bytes public callAgreementResponse;
@@ -81,9 +82,14 @@ contract MockHost {
     }
 
     function callAgreement(address agreementClass, bytes calldata, bytes calldata) external returns (bytes memory) {
+        if (callAgreementCount + 1 == revertAtCall) revert("mock agreement failure");
         callAgreementCount++;
         lastAgreement = agreementClass;
         return callAgreementResponse;
+    }
+
+    function setRevertAtCall(uint256 callNumber) external {
+        revertAtCall = callNumber;
     }
 
     function setCallAgreementResponse(bytes calldata response) external {
@@ -466,6 +472,56 @@ contract StreamingEscrowTest is Test {
 
         assertEq(token.balanceOf(address(escrow)), 100);
         assertEq(token.balanceOf(beneficiary), 0);
+    }
+
+    function test_restartOutflowAfterDecrease_rejectsExternalCaller() public {
+        vm.expectRevert(abi.encodeWithSelector(StreamingEscrow.OnlySelf.selector, address(this)));
+        escrow.restartOutflowAfterDecrease(beneficiary, 10);
+    }
+
+    function test_syncOutflow_decreasesExistingFlowBeforeDrainingExcess() public {
+        cfa.setFlowRate(100);
+        pool.setMemberFlowRate(address(escrow), 50);
+        forwarder.setDeposit(30);
+        token.mint(address(escrow), 100);
+
+        escrow.syncOutflow();
+
+        assertEq(host.callAgreementCount(), 3);
+        assertEq(token.balanceOf(address(escrow)), 31);
+        assertEq(token.balanceOf(beneficiary), 69);
+    }
+
+    function test_syncOutflow_failedRestartKeepsEscrowBalance() public {
+        cfa.setFlowRate(100);
+        pool.setMemberFlowRate(address(escrow), 50);
+        forwarder.setDeposit(30);
+        token.mint(address(escrow), 100);
+        host.setRevertAtCall(3);
+
+        escrow.syncOutflow();
+
+        assertEq(host.callAgreementCount(), 2);
+        assertEq(token.balanceOf(address(escrow)), 100);
+        assertEq(token.balanceOf(beneficiary), 0);
+    }
+
+    function test_zero_flow_claim_and_sync_preserve_reserve_for_strategy() public {
+        pool.setMemberFlowRate(address(escrow), 10);
+        token.mint(address(escrow), 100);
+        pool.setMemberFlowRate(address(escrow), 0);
+
+        vm.prank(other);
+        escrow.claim();
+        vm.prank(other);
+        escrow.syncOutflow();
+
+        assertEq(token.balanceOf(address(escrow)), 100);
+        assertEq(token.balanceOf(beneficiary), 0);
+
+        escrow.drainToStrategy();
+        assertEq(token.balanceOf(address(escrow)), 0);
+        assertEq(token.balanceOf(strategy), 100);
     }
 
     function test_setBeneficiary_updates_flow_when_not_disputed() public {

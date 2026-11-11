@@ -258,6 +258,16 @@ contract PowerAndConvictionUtilsTest is Test {
         assertEq(threshold, type(uint256).max);
     }
 
+    function test_convictionsUtils_calculateThreshold_nearMaxRatioDoesNotDivideByZero() public pure {
+        uint256 requested = 1.6 ether;
+        uint256 poolAmount = 4_376_142_583_477_654_869;
+        uint256 threshold = ConvictionsUtils.calculateThreshold(
+            requested, poolAmount, 1 ether, 9_940_581, 133_677, 3_656_188, 1
+        );
+
+        assertEq(threshold, type(uint256).max);
+    }
+
     function test_convictionsUtils_mul_revert_guards() public {
         vm.expectRevert(ConvictionsUtils.AShouldBeUnderOrEqTwo_128.selector);
         harness.mul((2 ** 128) + 1, 1);

@@ -5,6 +5,7 @@ import {CommunityBaseFacet, Member} from "../CommunityBaseFacet.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IRegistryFactory} from "../../IRegistryFactory.sol";
+import {FixedPowerStorage} from "../FixedPowerStorage.sol";
 import {CVStrategy} from "../../CVStrategy/CVStrategy.sol";
 
 /**
@@ -79,6 +80,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
         }
         if (!isMember(msg.sender)) {
             addressToMemberInfo[msg.sender].isRegistered = true;
+            FixedPowerStorage.layout().registrationBasisPlusOne[msg.sender] = 1;
             totalMembers += 1;
             emit MemberRegisteredWithCovenant(msg.sender, 0, "");
         }
@@ -94,6 +96,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
             addressToMemberInfo[msg.sender].isRegistered = true;
 
             addressToMemberInfo[msg.sender].stakedAmount = registerStakeAmount;
+            FixedPowerStorage.layout().registrationBasisPlusOne[msg.sender] = registerStakeAmount + 1;
 
             gardenToken.safeTransferFrom(
                 msg.sender, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount
@@ -126,6 +129,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
         // The per-member strategy list is capped, so unregister can clear activation
         // mappings without reopening the historical unbounded-loop gas risk.
         deactivateAllStrategies(_member, memberStrategies, true);
+        delete FixedPowerStorage.layout().registrationBasisPlusOne[_member];
         gardenToken.safeTransfer(_member, member.stakedAmount);
         emit MemberUnregistered(_member, member.stakedAmount);
     }
@@ -146,6 +150,7 @@ contract CommunityMemberFacet is CommunityBaseFacet {
         totalMembers -= 1;
 
         deactivateAllStrategies(_member, memberStrategies, true);
+        delete FixedPowerStorage.layout().registrationBasisPlusOne[_member];
         gardenToken.safeTransfer(_transferAddress, member.stakedAmount);
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);
     }

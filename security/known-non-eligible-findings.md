@@ -24,6 +24,8 @@ Actions that require trusted governance, council, owner, proxy owner, or explici
 
 Council allowlist maintenance through `councilSafe` is part of the trusted pool-management model. The `councilSafe` is typically a community multisig and is expected to maintain pool membership. Reports about accounting inconsistencies in this path are treated as correctness bugs unless they show an untrusted-user trigger, privilege bypass, theft, or unauthorized proposal execution.
 
+For the Gnosis Relay revenue route, the authorized keeper and LI.FI/Relay provider order mapping are trusted settlement inputs. Reports that require compromising those roles or their quote/order pipeline, without an independently reachable untrusted caller or a bypass of the configured trust boundary, are hardening recommendations rather than bounty-eligible vulnerabilities. See GHSA-2p8f-wvq2-gf6p.
+
 ### Self-penalizing actions
 
 Reports where the demonstrated attacker primarily harms their own funds, collateral, voting power, or execution path are not eligible unless the report also proves concrete loss, unauthorized state change, or material harm to other users or protocol funds.

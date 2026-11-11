@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 
 import {CommunityPowerFacet} from "../src/RegistryCommunity/facets/CommunityPowerFacet.sol";
+import {FixedPowerStorage} from "../src/RegistryCommunity/FixedPowerStorage.sol";
 import {PointSystem} from "../src/CVStrategy/ICVStrategy.sol";
 import {TERC20} from "./shared/TERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -53,6 +54,14 @@ contract CommunityPowerFacetHarness is CommunityPowerFacet {
         memberPowerInStrategy[member][strategy] = power;
     }
 
+    function setRegistrationBasis(address member, uint256 basis) external {
+        FixedPowerStorage.layout().registrationBasisPlusOne[member] = basis + 1;
+    }
+
+    function legacyStrategyBasis(address member, address strategy) external view returns (uint256) {
+        return FixedPowerStorage.layout().legacyStrategyBasisPlusOne[member][strategy];
+    }
+
     function setEnabledStrategy(address strategy, bool enabled) external {
         enabledStrategies[strategy] = enabled;
     }
@@ -94,6 +103,74 @@ contract CommunityPowerFacetTest is Test {
         assertTrue(facet.memberActivatedInStrategies(member, address(strategy)));
         assertEq(facet.strategiesByMemberLength(member), 1);
         assertEq(strategy.lastIncreaseAmount(), 0);
+    }
+
+    function test_fixed_power_does_not_reprice_on_reactivation_after_basis_raise() public {
+        MockPowerStrategy strategy = new MockPowerStrategy(PointSystem.Fixed, 0, 0);
+        facet.setMember(member, true, 100);
+        facet.setEnabledStrategy(address(strategy), true);
+        facet.setActivated(member, address(strategy), true, 100);
+        facet.init(address(token), 1000);
+
+        vm.prank(address(strategy));
+        facet.deactivateMemberInStrategy(member, address(strategy));
+        vm.prank(address(strategy));
+        facet.activateMemberInStrategy(member, address(strategy));
+
+        assertEq(facet.memberPowerInStrategy(member, address(strategy)), 100);
+    }
+
+    function test_fixed_power_legacy_inactive_member_cannot_gain_power_without_extra_stake() public {
+        MockPowerStrategy strategy = new MockPowerStrategy(PointSystem.Fixed, 0, 0);
+        facet.setMember(member, true, 100);
+        facet.setEnabledStrategy(address(strategy), true);
+        facet.init(address(token), 1000);
+
+        vm.prank(address(strategy));
+        facet.activateMemberInStrategy(member, address(strategy));
+
+        assertEq(facet.memberPowerInStrategy(member, address(strategy)), 100);
+    }
+
+    function test_fixed_power_legacy_member_keeps_original_basis_after_basis_decrease() public {
+        MockPowerStrategy strategy = new MockPowerStrategy(PointSystem.Fixed, 0, 0);
+        facet.setMember(member, true, 1000);
+        facet.setEnabledStrategy(address(strategy), true);
+        facet.setActivated(member, address(strategy), true, 1000);
+        facet.init(address(token), 100);
+
+        vm.prank(address(strategy));
+        facet.deactivateMemberInStrategy(member, address(strategy));
+        vm.prank(address(strategy));
+        facet.activateMemberInStrategy(member, address(strategy));
+
+        assertEq(facet.memberPowerInStrategy(member, address(strategy)), 1000);
+    }
+
+    function test_non_fixed_deactivation_does_not_seed_legacy_fixed_basis() public {
+        MockPowerStrategy strategy = new MockPowerStrategy(PointSystem.Unlimited, 0, 0);
+        facet.setMember(member, true, 100);
+        facet.setEnabledStrategy(address(strategy), true);
+        facet.setActivated(member, address(strategy), true, 500);
+        facet.init(address(token), 100);
+
+        vm.prank(address(strategy));
+        facet.deactivateMemberInStrategy(member, address(strategy));
+
+        assertEq(facet.legacyStrategyBasis(member, address(strategy)), 0);
+    }
+
+    function test_fixed_power_uses_registration_basis_not_extra_stake() public {
+        MockPowerStrategy strategy = new MockPowerStrategy(PointSystem.Fixed, 0, 0);
+        facet.setMember(member, true, 600);
+        facet.setRegistrationBasis(member, 100);
+        facet.setEnabledStrategy(address(strategy), true);
+        facet.init(address(token), 1000);
+
+        vm.prank(address(strategy));
+        facet.activateMemberInStrategy(member, address(strategy));
+
+        assertEq(facet.memberPowerInStrategy(member, address(strategy)), 100);
     }
 
     function test_activateMemberInStrategy_quadratic_and_unlimited_paths() public {

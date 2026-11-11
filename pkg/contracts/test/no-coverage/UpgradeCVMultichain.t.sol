@@ -488,6 +488,7 @@ contract UpgradeCVMultichainScript is Test {
         IDiamondCut.FacetCut[] memory communityCuts = newCommunityConfigurator.getFacetCuts();
 
         assertTrue(_cutsContainSelector(strategyCuts, CVAllocationFacet.getPoolAmount.selector));
+        assertTrue(_cutsContainSelector(strategyCuts, CVAdminFacet.repairSuperfluidGDA.selector));
         assertTrue(_cutsContainSelector(strategyCuts, CVStreamingFacet.wrapIfNeeded.selector));
         assertTrue(_cutsContainSelector(strategyCuts, CVStreamingFacet.getPoolThresholdPoints.selector));
         assertTrue(_cutsContainSelector(strategyCuts, CVStreamingFacet.setAuthorizedRebalanceCaller.selector));
@@ -516,6 +517,10 @@ contract UpgradeCVMultichainScript is Test {
         assertEq(_implementation(address(strategy)), newStrategyImpl);
         assertEq(
             IDiamondLoupe(address(strategy)).facetAddress(CVAdminFacet.setVotingPowerRegistry.selector),
+            updated.readAddress("$.networks[0].FACETS.CV_ADMIN")
+        );
+        assertEq(
+            IDiamondLoupe(address(strategy)).facetAddress(CVAdminFacet.repairSuperfluidGDA.selector),
             updated.readAddress("$.networks[0].FACETS.CV_ADMIN")
         );
         assertEq(
