@@ -358,7 +358,7 @@ export const ProposalsModalSupport = forwardRef<
         <div
           ref={cardRef}
           data-testid={`vote-proposal-${proposalNumber}`}
-          className={`flex flex-wrap section-layout scroll-my-4 ${isNewProposal ? "shadow-2xl" : ""} ${isFocusedProposal ? "ring-2 ring-secondary" : ""}`}
+          className={`flex flex-wrap section-layout scroll-my-4 ${isNewProposal ? "shadow-2xl" : ""} ${isFocusedProposal ? "ring-2 ring-primary-content !border-primary-content" : ""}`}
         >
           <div className="flex flex-col sm:flex-row w-full">
             {/* icon title and id */}
