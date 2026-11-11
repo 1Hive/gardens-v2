@@ -708,6 +708,33 @@ contract CVAllocationFacetTest is Test {
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
     }
 
+    function test_distribute_reverts_when_last_support_leaves_but_conviction_remains() public {
+        allo.setPoolToken(1, facet.nativeToken());
+        vm.deal(address(facet), 10 ether);
+        facet.setProposalType(ProposalType.Funding);
+        facet.setCvParams(CVParams({maxRatio: 10_000_000, weight: 0, decay: 1, minThresholdPoints: 10}));
+        facet.setTotalPointsActivated(1);
+        facet.setProposal(
+            1, ProposalStatus.Active, 1 ether, facet.nativeToken(), beneficiary, member, block.number, 100, 0
+        );
+
+        vm.prank(address(allo));
+        vm.expectRevert(abi.encodeWithSelector(CVAllocationFacet.NoProposalSupport.selector, 1));
+        facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
+
+        facet.setProposalStakedAmount(1, 1);
+        vm.prank(address(allo));
+        vm.expectRevert(
+            abi.encodeWithSelector(CVAllocationFacet.ConvictionUnderMinimumThreshold.selector, 1, 10, 1 ether)
+        );
+        facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
+
+        facet.setProposalStakedAmount(1, 100);
+        vm.prank(address(allo));
+        facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
+        assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Executed));
+    }
+
     function test_preUpgradeProposal_readsCurrentPointsBeforeMigration() public {
         allo.setPoolToken(1, facet.nativeToken());
         vm.deal(address(facet), 10_000 ether);
@@ -734,7 +761,7 @@ contract CVAllocationFacetTest is Test {
         facet.setProposalType(ProposalType.Funding);
 
         uint256 maxRatio = 3_656_188;
-        uint256 weight = 133_677;
+        uint256 weight = 13_367;
         uint256 decay = 9_940_581;
         uint256 requestedAmount = 1_071 ether;
         facet.setCvParams(CVParams({maxRatio: maxRatio, weight: weight, decay: decay, minThresholdPoints: 0}));
@@ -776,6 +803,7 @@ contract CVAllocationFacetTest is Test {
             conviction,
             0
         );
+        facet.setProposalStakedAmount(1, 100 ether);
 
         vm.prank(address(allo));
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
@@ -805,6 +833,35 @@ contract CVAllocationFacetTest is Test {
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
 
         assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Executed));
+    }
+
+    function test_distribute_rejectedCollateralDoesNotBlockPayout() public {
+        allo.setPoolToken(1, facet.nativeToken());
+        vm.deal(address(facet), 1 ether);
+        facet.setProposalType(ProposalType.Funding);
+        facet.setCvParams(CVParams({maxRatio: 10_000_000, weight: 0, decay: 1, minThresholdPoints: 0}));
+        facet.setTotalPointsActivated(1);
+        facet.setArbitrableConfig(
+            1,
+            ArbitrableConfig({
+                arbitrator: IArbitrator(address(0)),
+                tribunalSafe: address(0),
+                submitterCollateralAmount: 1,
+                challengerCollateralAmount: 0,
+                defaultRuling: 0,
+                defaultRulingTimeout: 0
+            })
+        );
+        facet.setProposal(1, ProposalStatus.Active, 1, facet.nativeToken(), beneficiary, member, block.number, 100, 1);
+        facet.setProposalStakedAmount(1, 1);
+        vault.setRejectWithdrawal(true);
+
+        uint256 beneficiaryBalance = beneficiary.balance;
+        vm.prank(address(allo));
+        facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));
+
+        assertEq(uint8(facet.getProposalStatus(1)), uint8(ProposalStatus.Executed));
+        assertEq(beneficiary.balance, beneficiaryBalance + 1);
     }
 
     function test_distribute_refunds_proposal_arbitrable_config_collateral() public {
@@ -869,6 +926,7 @@ contract CVAllocationFacetTest is Test {
         facet.setProposal(
             1, ProposalStatus.Active, 1 ether, address(underlying), beneficiary, member, block.number, 1, 1
         );
+        facet.setProposalStakedAmount(1, 1);
 
         vm.prank(address(allo));
         facet.distribute(new address[](0), abi.encode(uint256(1)), address(0));

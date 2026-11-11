@@ -299,7 +299,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             // ERC20 transfer
             vm.deal(address(this), poolAmount);
             // allo().fundPool{value: poolAmount}(poolId, poolAmount);
-            payable(address(strategy)).transfer(poolAmount);
+            (bool funded,) = payable(address(strategy)).call{value: poolAmount}("");
+            assertTrue(funded, "native pool funding failed");
         } else {
             GV2ERC20(useTokenPool).mint(address(this), poolAmount);
             // ERC20 transfer

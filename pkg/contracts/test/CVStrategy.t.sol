@@ -453,6 +453,22 @@ contract CVStrategyCoverageTest is Test {
         assertEq(sybil.lastStrategy(), address(strategy));
     }
 
+    function test_disabled_window_touch_does_not_erase_conviction_decay() public {
+        CVParams memory params = CVParams(5_000_000, 1_000_000, 5_000_000, 0);
+        strategy.setCvParams(params);
+        vm.roll(100);
+        strategy.setProposal(1, member, 10, ProposalStatus.Active, block.number, 100 ether);
+
+        registryCommunity.setStrategyEnabled(false);
+        vm.roll(block.number + 20);
+        assertEq(strategy.updateProposalConviction(1), 100 ether);
+
+        registryCommunity.setStrategyEnabled(true);
+        uint256 expected = ConvictionsUtils.calculateConviction(20, 100 ether, 0, params.decay);
+        assertEq(strategy.updateProposalConviction(1), expected);
+        assertLt(expected, 100 ether);
+    }
+
     function test_proposalExists_and_conviction_helpers() public {
         assertFalse(strategy.exposedProposalExists(1));
 

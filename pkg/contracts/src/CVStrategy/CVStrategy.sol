@@ -770,7 +770,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         returns (uint256 conviction, uint256 blockNumber)
     {
         if (!_isStrategyEnabled()) {
-            return (_proposal.convictionLast, block.number);
+            return (0, 0);
         }
 
         blockNumber = block.number;

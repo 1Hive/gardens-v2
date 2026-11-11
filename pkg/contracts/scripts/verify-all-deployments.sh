@@ -60,7 +60,7 @@ run_with_rpc_retry() {
 }
 
 cooldown_after_network() {
-  if [[ "$VERIFY_RPC_SUCCESS_DELAY" -gt 0 ]]; then
+  if [[ "$VERIFY_RPC_SUCCESS_DELAY" != "0" ]]; then
     sleep "$VERIFY_RPC_SUCCESS_DELAY"
   fi
 }
@@ -161,9 +161,10 @@ run_global_scope() {
   if output="$(timeout --foreground "$VERIFY_COMMAND_TIMEOUT" "${cmd[@]}" 2>&1)"; then
     printf '%s\n' "$output"
     return 0
+  else
+    status=$?
   fi
 
-  status=$?
   printf '%s\n' "$output" >&2
   if [[ "$status" -eq 124 ]]; then
     echo "Command timed out after ${VERIFY_COMMAND_TIMEOUT}s while running global verifier" >&2

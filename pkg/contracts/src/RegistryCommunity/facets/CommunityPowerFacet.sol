@@ -5,6 +5,7 @@ import {CommunityBaseFacet, Member} from "../CommunityBaseFacet.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {CVStrategy} from "../../CVStrategy/CVStrategy.sol";
+import {FixedPowerStorage} from "../FixedPowerStorage.sol";
 import {PointSystem} from "../../CVStrategy/ICVStrategy.sol";
 
 /**
@@ -119,6 +120,14 @@ contract CommunityPowerFacet is CommunityBaseFacet {
             pointsToIncrease = CVStrategy(payable(_strategy)).increasePower(_member, 0);
         } else if (ps == PointSystem.Quadratic) {
             pointsToIncrease = CVStrategy(payable(_strategy)).increasePower(_member, 0);
+        } else if (ps == PointSystem.Fixed) {
+            uint256 basisPlusOne = FixedPowerStorage.layout().registrationBasisPlusOne[_member];
+            if (basisPlusOne == 0) {
+                basisPlusOne = FixedPowerStorage.layout().legacyStrategyBasisPlusOne[_member][_strategy];
+            }
+            pointsToIncrease = basisPlusOne == 0
+                ? (totalStakedAmount < registerStakeAmount ? totalStakedAmount : registerStakeAmount)
+                : basisPlusOne - 1;
         } else if (ps != PointSystem.Fixed) {
             pointsToIncrease = CVStrategy(payable(_strategy)).increasePower(_member, totalStakedAmount);
         }
@@ -149,6 +158,14 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         onlyStrategyAddress(msg.sender, _strategy);
         if (!memberActivatedInStrategies[_member][_strategy]) {
             return;
+        }
+
+        if (
+            FixedPowerStorage.layout().registrationBasisPlusOne[_member] == 0
+                && CVStrategy(payable(_strategy)).getPointSystem() == PointSystem.Fixed
+        ) {
+            FixedPowerStorage.layout().legacyStrategyBasisPlusOne[_member][_strategy] =
+                memberPowerInStrategy[_member][_strategy] + 1;
         }
 
         memberActivatedInStrategies[_member][_strategy] = false;

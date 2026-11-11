@@ -12,6 +12,7 @@ library CVStreamingStorage {
         bool __deprecated_disabledConvictionSnapshotTaken;
         mapping(uint256 => address) proposalEscrow;
         mapping(address => bool) authorizedRebalanceCallers;
+        mapping(address => bool) stoppedEscrows;
     }
 
     function layout() internal pure returns (Layout storage l) {

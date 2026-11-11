@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 
 import {CommunityMemberFacet} from "../src/RegistryCommunity/facets/CommunityMemberFacet.sol";
+import {FixedPowerStorage} from "../src/RegistryCommunity/FixedPowerStorage.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TERC20} from "./shared/TERC20.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -88,6 +89,10 @@ contract CommunityMemberFacetHarness is CommunityMemberFacet {
     function grantCouncil(address member) external {
         _grantRole(COUNCIL_MEMBER, member);
     }
+
+    function registrationBasisPlusOne(address member) external view returns (uint256) {
+        return FixedPowerStorage.layout().registrationBasisPlusOne[member];
+    }
 }
 
 contract CommunityMemberFacetTest is Test {
@@ -138,6 +143,8 @@ contract CommunityMemberFacetTest is Test {
 
         vm.prank(member);
         facet.stakeAndRegisterMember("sig");
+
+        assertEq(facet.registrationBasisPlusOne(member), 10_001);
 
         assertTrue(facet.isMember(member));
         assertEq(token.balanceOf(address(facet)), 10_000);

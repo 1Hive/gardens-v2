@@ -11,6 +11,14 @@ interface IStrategyRegistryStatus {
     function enabledStrategies(address strategy) external view returns (bool);
 }
 
+interface IScorerStrategyCommunity {
+    function registryCommunity() external view returns (address);
+}
+
+interface IScorerCommunityCouncil {
+    function councilSafe() external view returns (address);
+}
+
 /// @custom:oz-upgrades-from PassportScorer
 contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
     address public listManager;
@@ -49,10 +57,9 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
     }
 
     modifier onlyCouncilOrAuthorized(address _strategy) {
-        address registryCommunity = address(CVStrategy(payable(_strategy)).registryCommunity());
         if (
-            msg.sender == owner() || msg.sender == _strategy || msg.sender == registryCommunity
-                || msg.sender == listManager || msg.sender == strategies[_strategy].councilSafe
+            msg.sender == owner() || msg.sender == _strategy || msg.sender == listManager
+                || _isCurrentCouncilOrCommunity(_strategy, msg.sender)
         ) {
             _;
         } else {
@@ -61,10 +68,39 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
     }
 
     modifier onlyCouncil(address _strategy) {
-        if (msg.sender == strategies[_strategy].councilSafe) {
+        if (_isCurrentCouncil(_strategy, msg.sender)) {
             _;
         } else {
             revert OnlyCouncil();
+        }
+    }
+
+    function _isCurrentCouncilOrCommunity(address strategy, address caller) internal view returns (bool) {
+        if (strategy.code.length == 0) return false;
+        try IScorerStrategyCommunity(strategy).registryCommunity() returns (address community) {
+            if (community == address(0) || community.code.length == 0) return false;
+            if (caller == community) return true;
+            try IScorerCommunityCouncil(community).councilSafe() returns (address currentCouncil) {
+                return currentCouncil != address(0) && caller == currentCouncil;
+            } catch {
+                return false;
+            }
+        } catch {
+            return false;
+        }
+    }
+
+    function _isCurrentCouncil(address strategy, address caller) internal view returns (bool) {
+        if (strategy.code.length == 0) return false;
+        try IScorerStrategyCommunity(strategy).registryCommunity() returns (address community) {
+            if (community == address(0) || community.code.length == 0) return false;
+            try IScorerCommunityCouncil(community).councilSafe() returns (address currentCouncil) {
+                return currentCouncil != address(0) && caller == currentCouncil;
+            } catch {
+                return false;
+            }
+        } catch {
+            return false;
         }
     }
 
