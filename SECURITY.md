@@ -64,6 +64,8 @@ Duplicate reports are not eligible for rewards.
 
 Researchers should also review [Known Non-Eligible Findings](./security/known-non-eligible-findings.md) before submitting a report.
 
+Before submitting or automatically drafting a report, search both linked files for the affected component and underlying root cause, not just the report title or reproduction steps. A matching closed decision is a duplicate or non-eligible precedent unless the new report demonstrates a distinct production-reachable root cause or impact. The public history omits unresolved private exploit details, so the absence of an entry does not establish eligibility.
+
 ---
 
 ## Reporting a Vulnerability
