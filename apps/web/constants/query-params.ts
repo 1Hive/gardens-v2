@@ -11,6 +11,7 @@ export const QUERY_PARAMS = {
   poolPage: {
     newProposal: "newProposal",
     allocationView: "allocationView",
+    focusedProposal: "focusedProposal",
     goodDollar: "goodDollar",
     goodDollarVerified: "verified",
   },

@@ -948,7 +948,11 @@ export default function ClientPage({ params }: ClientPageProps) {
       pathSegments.pop();
     }
     const newPath = pathSegments.join("/");
-    router.push(newPath + `?${QUERY_PARAMS.poolPage.allocationView}=true`);
+    const voteParams = new URLSearchParams({
+      [QUERY_PARAMS.poolPage.allocationView]: "true",
+      [QUERY_PARAMS.poolPage.focusedProposal]: proposalNumber.toString(),
+    });
+    router.push(`${newPath}?${voteParams}`);
   };
   const distributeErrorName = useErrorDetails(errorDistribute);
 

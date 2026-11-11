@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 "use client";
 
-import { forwardRef, useImperativeHandle } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import {
   HandRaisedIcon,
   ExclamationTriangleIcon,
@@ -138,6 +138,25 @@ export const ProposalsModalSupport = forwardRef<
     const isNewProposal =
       searchParams[QUERY_PARAMS.poolPage.newProposal] ==
       proposalNumber.toString();
+    const isFocusedProposal =
+      searchParams[QUERY_PARAMS.poolPage.focusedProposal] ===
+      proposalNumber.toString();
+    const cardRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (!isAllocationView || !isFocusedProposal) return;
+
+      // Wait until the parent dialog is open and has a scrollable layout.
+      const frame = requestAnimationFrame(() => {
+        cardRef.current?.scrollIntoView({
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ?
+            "instant"
+          : "smooth",
+          block: "center",
+        });
+      });
+      return () => cancelAnimationFrame(frame);
+    }, [isAllocationView, isFocusedProposal]);
 
     const {
       currentConvictionPct,
@@ -337,7 +356,9 @@ export const ProposalsModalSupport = forwardRef<
     return (
       <>
         <div
-          className={`flex flex-wrap section-layout ${isNewProposal ? "shadow-2xl" : ""}`}
+          ref={cardRef}
+          data-testid={`vote-proposal-${proposalNumber}`}
+          className={`flex flex-wrap section-layout scroll-my-4 ${isNewProposal ? "shadow-2xl" : ""} ${isFocusedProposal ? "ring-2 ring-secondary" : ""}`}
         >
           <div className="flex flex-col sm:flex-row w-full">
             {/* icon title and id */}
