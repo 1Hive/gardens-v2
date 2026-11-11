@@ -18,6 +18,14 @@ This is not eligible unless the report proves that requested amount can be chang
 
 Proposal metadata and beneficiary edits are intentionally allowed during the configured early edit window. Reports about edits that stay within that window are not eligible unless they bypass the intended restrictions or cause an independent production impact.
 
+### Disputed proposal conviction
+
+Disputing a proposal pauses its execution until a ruling; it does not reset its support or stop conviction from accruing. A favorable ruling restores the existing proposal, which may then meet its threshold. Reports must show execution while still disputed, an adverse-ruling bypass, or another independent impact.
+
+### Proposal token metadata mismatch
+
+Funding distributions pay the strategy's actual Allo pool token and enforce the normal amount, active-points, and conviction checks. A mismatch between proposal token metadata and that pool token is a correctness issue unless it enables an independent payout bypass or materially deceptive production signing path.
+
 ### Trusted governance and admin actions
 
 Actions that require trusted governance, council, owner, proxy owner, or explicitly authorized admin permissions are not eligible by themselves. Reports must show a privilege bypass, unauthorized access, or a concrete failure mode that affects production users despite the trusted-role assumption.
@@ -33,6 +41,14 @@ Reports where the demonstrated attacker primarily harms their own funds, collate
 ### Persistent personhood verification
 
 The GoodDollar scorer is used as evidence that a wallet successfully completed a personhood check. Gardens does not treat a later loss of GoodDollar eligibility as revocation of that historical verification. Reports that only show retained authorization after a previously successful GoodDollar verification are therefore not eligible unless they demonstrate a separate bypass that lets an unverified wallet obtain authorization.
+
+### Permissionless pool creation
+
+Creating a new pool under a community profile is permissionless. A pool with caller-supplied registry configuration does not gain access to existing approved pool funds. Reports that require a user to voluntarily fund or interact with the newly created pool are not separately eligible without an unauthorized effect on an existing pool; see GHSA-f2q9-8426-497x and its duplicates in the advisory history.
+
+### Reverting transactions
+
+If a transaction reverts after an external contract call, the earlier call and its state changes revert too. A report claiming persistent effects from an earlier step must demonstrate a successful enclosing transaction or another independently committed path.
 
 ## Not Production Reachable
 
@@ -103,7 +119,7 @@ Reports that frame these functions as direct proposal-beneficiary streaming DoS 
 Duplicate reports are not eligible. Before submitting, review:
 
 - GitHub Security Advisories: <https://github.com/1Hive/gardens-v2/security/advisories>
-- Advisory history and bounty decisions: `security/advisory-history.md`
+- [Advisory history and bounty decisions](./advisory-history.md)
 - Security reports in this directory, including `security/scv-scan.md` and `security/final-merged-security-report.md`
 
 Reports with the same root cause as an existing advisory or previously submitted finding are treated as duplicates, even if they use a different PoC or describe a different symptom.
