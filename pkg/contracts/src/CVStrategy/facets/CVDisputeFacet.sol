@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
 import {CVStreamingStorage} from "../CVStreamingStorage.sol";
+import {CVCollateralClaimStorage} from "../CVCollateralClaimStorage.sol";
 import {StreamingEscrow} from "../StreamingEscrow.sol";
 import {IArbitrator} from "../../interfaces/IArbitrator.sol";
 import {Proposal, ProposalStatus, ProposalType, ArbitrableConfig} from "../ICVStrategy.sol";
@@ -32,6 +33,7 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
     error InvalidRuling(uint256 ruling);
     error DisputeIdMismatch(uint256 proposalId, uint256 expectedDisputeId, uint256 providedDisputeId);
     error UpdateMemberUnitsFailed(address member, uint128 units);
+    error NoPendingCollateralClaim(uint256 proposalId, address fromUser, address toUser);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -47,6 +49,9 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
     event Ruling(IArbitrator indexed _arbitrator, uint256 indexed _disputeID, uint256 _ruling);
     event CollateralPayoutFailed(
         uint256 indexed proposalId, address indexed fromUser, address indexed toUser, uint256 amount, bytes reason
+    );
+    event CollateralClaimed(
+        uint256 indexed proposalId, address indexed fromUser, address indexed toUser, uint256 amount
     );
 
     /*|--------------------------------------------|*/
@@ -231,17 +236,63 @@ contract CVDisputeFacet is CVStrategyBaseFacet {
         }
     }
 
+    /// @notice Pays out dispute collateral whose transfer failed during `rule()`.
+    /// @dev Anyone may call this: the payee is fixed by the recorded claim. Any failure reverts, so the claim
+    ///      stays in place and can be retried with more gas. A caller cannot turn a starved call into a lost
+    ///      payout (Glamsterdam INV-1/INV-6).
+    // slither-disable-next-line reentrancy-events
+    function claimCollateral(uint256 proposalId, address fromUser, address toUser) external {
+        mapping(address => uint256) storage claims =
+            CVCollateralClaimStorage.layout().pendingCollateralClaims[proposalId][fromUser];
+        uint256 amount = claims[toUser];
+        if (amount == 0) {
+            revert NoPendingCollateralClaim(proposalId, fromUser, toUser);
+        }
+        delete claims[toUser];
+
+        if (fromUser == toUser) {
+            collateralVault.withdrawCollateral(proposalId, fromUser, amount);
+        } else {
+            collateralVault.withdrawCollateralFor(proposalId, fromUser, toUser, amount);
+        }
+
+        emit CollateralClaimed(proposalId, fromUser, toUser, amount);
+    }
+
+    function pendingCollateralClaim(uint256 proposalId, address fromUser, address toUser)
+        external
+        view
+        returns (uint256)
+    {
+        return CVCollateralClaimStorage.layout().pendingCollateralClaims[proposalId][fromUser][toUser];
+    }
+
     function _tryWithdrawCollateral(uint256 proposalId, address fromUser, address toUser, uint256 amount) internal {
         try collateralVault.withdrawCollateral(proposalId, fromUser, amount) {}
         catch (bytes memory reason) {
-            emit CollateralPayoutFailed(proposalId, fromUser, toUser, amount, reason);
+            _recordFailedPayout(proposalId, fromUser, toUser, amount, reason);
         }
     }
 
     function _tryWithdrawCollateralFor(uint256 proposalId, address fromUser, address toUser, uint256 amount) internal {
         try collateralVault.withdrawCollateralFor(proposalId, fromUser, toUser, amount) {}
         catch (bytes memory reason) {
-            emit CollateralPayoutFailed(proposalId, fromUser, toUser, amount, reason);
+            _recordFailedPayout(proposalId, fromUser, toUser, amount, reason);
         }
+    }
+
+    /// @dev The vault balance is untouched when its withdrawal reverts, so the collateral is still there.
+    ///      Record it so `claimCollateral` can pay it out later instead of leaving it stranded.
+    function _recordFailedPayout(
+        uint256 proposalId,
+        address fromUser,
+        address toUser,
+        uint256 amount,
+        bytes memory reason
+    ) internal {
+        if (amount != 0) {
+            CVCollateralClaimStorage.layout().pendingCollateralClaims[proposalId][fromUser][toUser] += amount;
+        }
+        emit CollateralPayoutFailed(proposalId, fromUser, toUser, amount, reason);
     }
 }
