@@ -41,6 +41,11 @@ abstract contract SharedImplementationRouter is ProxyOwnableUpgrader, IDiamondLo
 
     function _isStrategy() internal pure virtual returns (bool);
 
+    /// @notice Identifies which factory release family this router dispatches.
+    function routesStrategies() external pure returns (bool) {
+        return _isStrategy();
+    }
+
     function _target(bytes4 selector) internal view returns (address target, bool isFacet) {
         IRegistryFactory factory = IRegistryFactory(routingFactory);
         target = _isStrategy() ? factory.strategyFacet(selector) : factory.communityFacet(selector);

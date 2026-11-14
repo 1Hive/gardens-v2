@@ -10,6 +10,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const implementationSlot = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
 const abi = parseAbi([
   'function routingFactory() view returns (address)',
+  'function routesStrategies() view returns (bool)',
   'function proxiableUUID() view returns (bytes32)',
   'function owner() view returns (address)',
   'function registryFactory() view returns (address)',
@@ -92,6 +93,8 @@ async function main() {
   for (const [router, label] of [[strategyRouter, 'strategy'], [communityRouter, 'community']]) {
     const wired = await client.readContract({ address: router, abi, functionName: 'routingFactory' });
     assert(same(wired, factory), `${label} router points to a different factory`);
+    const routesStrategies = await client.readContract({ address: router, abi, functionName: 'routesStrategies' });
+    assert(routesStrategies === (label === 'strategy'), `${label} router dispatches the wrong release family`);
     const slot = await client.readContract({ address: router, abi, functionName: 'proxiableUUID' });
     assert(same(slot, implementationSlot), `${label} router is not UUPS compatible`);
   }

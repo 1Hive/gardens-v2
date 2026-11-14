@@ -103,14 +103,14 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     }
 
     function setRegistryCommunityTemplate(address template) external virtual onlyOwner {
-        if (communityImplementation != address(0) && !_isRouterForThisFactory(template)) {
+        if (communityImplementation != address(0) && !_isRouterForThisFactory(template, false)) {
             revert InvalidRoutingTarget(template);
         }
         registryCommunityTemplate = template;
     }
 
     function setStrategyTemplate(address template) external virtual onlyOwner {
-        if (strategyImplementation != address(0) && !_isRouterForThisFactory(template)) {
+        if (strategyImplementation != address(0) && !_isRouterForThisFactory(template, true)) {
             revert InvalidRoutingTarget(template);
         }
         strategyTemplate = template;
@@ -170,8 +170,10 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         emit CommunityImplementationSet(implementation);
     }
 
-    function _isRouterForThisFactory(address target) internal view returns (bool) {
-        return _routerFactory(target) == address(this);
+    function _isRouterForThisFactory(address target, bool strategy) internal view returns (bool) {
+        if (_routerFactory(target) != address(this)) return false;
+        (bool ok, bytes memory data) = target.staticcall(abi.encodeWithSignature("routesStrategies()"));
+        return ok && data.length == 32 && abi.decode(data, (bool)) == strategy;
     }
 
     function _routerFactory(address target) internal view returns (address) {
@@ -213,6 +215,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
             || selector == bytes4(keccak256("upgradeToAndCall(address,bytes)"))
             || selector == bytes4(keccak256("proxiableUUID()"))
             || selector == bytes4(keccak256("routingFactory()"))
+            || selector == bytes4(keccak256("routesStrategies()"))
             || selector == bytes4(keccak256("runImplementationMigration(bytes)"))
             || selector == bytes4(keccak256("getFacets()"))
             || selector == IDiamondCut.diamondCut.selector;

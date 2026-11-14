@@ -115,6 +115,13 @@ contract SharedImplementationRouterTest is Test {
         assertEq(RoutedCoreV2(anotherStrategy).version(), 2);
     }
 
+    function test_factoryRejectsSwappedRouterFamilies() public {
+        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.InvalidRoutingTarget.selector, address(communityRouter)));
+        factory.setStrategyTemplate(address(communityRouter));
+        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.InvalidRoutingTarget.selector, address(strategyRouter)));
+        factory.setRegistryCommunityTemplate(address(strategyRouter));
+    }
+
     function test_removedSelectorCannotReachStaleFacet() public {
         RoutedCoreV2 coreV2 = new RoutedCoreV2();
         factory.setStrategyRelease(_cuts(address(facetV2), true), address(coreV2));
