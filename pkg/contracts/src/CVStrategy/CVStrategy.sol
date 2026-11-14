@@ -1006,6 +1006,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     /// @dev Used by stub functions to delegate to their respective facets
     /// @dev This function never returns - it either reverts or returns via assembly
     function _delegateToFacet() private {
+        if (_usingSharedRouter()) revert StrategyFunctionDoesNotExist(msg.sig);
         LibDiamond.DiamondStorage storage ds;
         bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
 
@@ -1076,6 +1077,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     /// @notice Fallback function delegates calls to facets based on function selector
     /// @dev Uses Diamond storage to find facet address for the called function
     fallback() external payable {
+        if (_usingSharedRouter()) revert StrategyFunctionDoesNotExist(msg.sig);
         LibDiamond.DiamondStorage storage ds;
         bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
 
@@ -1102,6 +1104,13 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     }
 
     receive() external payable {}
+
+    function _usingSharedRouter() private view returns (bool) {
+        address currentImplementation = _getImplementation();
+        if (currentImplementation == address(0)) return false;
+        (bool ok, bytes memory data) = currentImplementation.staticcall(abi.encodeWithSignature("routingFactory()"));
+        return ok && data.length == 32 && abi.decode(data, (address)) != address(0);
+    }
 
     // Sig: 0x662ea47d
     /// @notice Returns the configured facets registered with the diamond

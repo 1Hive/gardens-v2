@@ -7,6 +7,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {ISafe} from "../interfaces/ISafe.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
+import {IDiamond} from "../diamonds/interfaces/IDiamond.sol";
 
 struct CommunityInfo {
     uint256 fee;
@@ -43,6 +44,14 @@ contract RegistryFactory is ProxyOwnableUpgrader {
 
     uint256[38] private __gap;
 
+    // Shared routing is opt-in. Existing proxies keep their local diamond until migrated.
+    address public strategyImplementation;
+    address public communityImplementation;
+    mapping(bytes4 => address) private strategyFacetBySelector;
+    mapping(bytes4 => address) private communityFacetBySelector;
+    bytes4[] private strategyRoutedSelectors;
+    bytes4[] private communityRoutedSelectors;
+
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
     /*|--------------------------------------------|*/
@@ -60,6 +69,10 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     event ProtopianDelegationMigrated(address indexed holder, address indexed to);
     event ContractRegistered(address indexed target);
     event ContractUnregistered(address indexed target);
+    event StrategyImplementationSet(address indexed implementation);
+    event CommunityImplementationSet(address indexed implementation);
+    event StrategyRoutingSet(address indexed implementation);
+    event CommunityRoutingSet(address indexed implementation);
 
     /*|--------------------------------------------|*/
     /*|                 ERRORS                     |*/
@@ -70,6 +83,11 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     error UnauthorizedProtopianDelegation(address caller, address holder);
     error ProtopianHolderRequired(address holder);
     error ProtopianDelegateUnavailable(address delegate);
+    error InvalidRoutingTarget(address target);
+    error DuplicateRoutingSelector(bytes4 selector);
+    error UnsupportedRoutingCut();
+    error ReservedRoutingSelector(bytes4 selector);
+    error UseAtomicRoutingRelease();
 
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
@@ -85,11 +103,127 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     }
 
     function setRegistryCommunityTemplate(address template) external virtual onlyOwner {
+        if (communityImplementation != address(0) && !_isRouterForThisFactory(template)) {
+            revert InvalidRoutingTarget(template);
+        }
         registryCommunityTemplate = template;
     }
 
     function setStrategyTemplate(address template) external virtual onlyOwner {
+        if (strategyImplementation != address(0) && !_isRouterForThisFactory(template)) {
+            revert InvalidRoutingTarget(template);
+        }
         strategyTemplate = template;
+    }
+
+    function setStrategyImplementation(address implementation) external onlyOwner {
+        _setStrategyImplementation(implementation);
+        if (strategyRoutedSelectors.length == 0 && strategyFacetCuts.length > 0) {
+            _syncFacetRouting(strategyFacetCuts, strategyFacetBySelector, strategyRoutedSelectors);
+        }
+    }
+
+    function setCommunityImplementation(address implementation) external onlyOwner {
+        _setCommunityImplementation(implementation);
+        if (communityRoutedSelectors.length == 0 && communityFacetCuts.length > 0) {
+            _syncFacetRouting(communityFacetCuts, communityFacetBySelector, communityRoutedSelectors);
+        }
+    }
+
+    /// @notice Atomically activate new code and a complete selector set for all routed strategies.
+    function setStrategyRelease(IDiamondCut.FacetCut[] memory cuts, address implementation) external onlyOwner {
+        _setStrategyImplementation(implementation);
+        _setFacetCuts(cuts, strategyFacetCuts);
+        _syncFacetRouting(strategyFacetCuts, strategyFacetBySelector, strategyRoutedSelectors);
+        emit StrategyRoutingSet(implementation);
+    }
+
+    /// @notice Atomically activate new code and a complete selector set for all routed communities.
+    function setCommunityRelease(IDiamondCut.FacetCut[] memory cuts, address implementation) external onlyOwner {
+        _setCommunityImplementation(implementation);
+        _setFacetCuts(cuts, communityFacetCuts);
+        _syncFacetRouting(communityFacetCuts, communityFacetBySelector, communityRoutedSelectors);
+        emit CommunityRoutingSet(implementation);
+    }
+
+    function strategyFacet(bytes4 selector) external view returns (address) {
+        return strategyFacetBySelector[selector];
+    }
+
+    function communityFacet(bytes4 selector) external view returns (address) {
+        return communityFacetBySelector[selector];
+    }
+
+    function _setStrategyImplementation(address implementation) internal {
+        if (implementation.code.length == 0 || _routerFactory(implementation) != address(0)) {
+            revert InvalidRoutingTarget(implementation);
+        }
+        strategyImplementation = implementation;
+        emit StrategyImplementationSet(implementation);
+    }
+
+    function _setCommunityImplementation(address implementation) internal {
+        if (implementation.code.length == 0 || _routerFactory(implementation) != address(0)) {
+            revert InvalidRoutingTarget(implementation);
+        }
+        communityImplementation = implementation;
+        emit CommunityImplementationSet(implementation);
+    }
+
+    function _isRouterForThisFactory(address target) internal view returns (bool) {
+        return _routerFactory(target) == address(this);
+    }
+
+    function _routerFactory(address target) internal view returns (address) {
+        (bool ok, bytes memory data) = target.staticcall(abi.encodeWithSignature("routingFactory()"));
+        return ok && data.length == 32 ? abi.decode(data, (address)) : address(0);
+    }
+
+    function _syncFacetRouting(
+        IDiamondCut.FacetCut[] storage cuts,
+        mapping(bytes4 => address) storage targets,
+        bytes4[] storage selectors
+    ) internal {
+        for (uint256 i; i < selectors.length; i++) delete targets[selectors[i]];
+        while (selectors.length > 0) selectors.pop();
+        for (uint256 i; i < cuts.length; i++) {
+            IDiamondCut.FacetCut storage cut = cuts[i];
+            if (cut.action == IDiamond.FacetCutAction.Remove) revert UnsupportedRoutingCut();
+            if (cut.facetAddress.code.length == 0 || _routerFactory(cut.facetAddress) != address(0)) {
+                revert InvalidRoutingTarget(cut.facetAddress);
+            }
+            for (uint256 j; j < cut.functionSelectors.length; j++) {
+                bytes4 selector = cut.functionSelectors[j];
+                if (_isLoupeSelector(selector)) continue;
+                if (_isRouterSelector(selector)) revert ReservedRoutingSelector(selector);
+                if (targets[selector] != address(0)) revert DuplicateRoutingSelector(selector);
+                targets[selector] = cut.facetAddress;
+                selectors.push(selector);
+            }
+        }
+    }
+
+    function _isRouterSelector(bytes4 selector) internal pure returns (bool) {
+        return selector == bytes4(keccak256("initialize(address)"))
+            || selector == bytes4(keccak256("owner()"))
+            || selector == bytes4(keccak256("proxyOwner()"))
+            || selector == bytes4(keccak256("transferOwnership(address)"))
+            || selector == bytes4(keccak256("renounceOwnership()"))
+            || selector == bytes4(keccak256("upgradeTo(address)"))
+            || selector == bytes4(keccak256("upgradeToAndCall(address,bytes)"))
+            || selector == bytes4(keccak256("proxiableUUID()"))
+            || selector == bytes4(keccak256("routingFactory()"))
+            || selector == bytes4(keccak256("runImplementationMigration(bytes)"))
+            || selector == bytes4(keccak256("getFacets()"))
+            || selector == IDiamondCut.diamondCut.selector;
+    }
+
+    function _isLoupeSelector(bytes4 selector) internal pure returns (bool) {
+        return selector == bytes4(keccak256("facets()"))
+            || selector == bytes4(keccak256("facetFunctionSelectors(address)"))
+            || selector == bytes4(keccak256("facetAddresses()"))
+            || selector == bytes4(keccak256("facetAddress(bytes4)"))
+            || selector == bytes4(keccak256("supportsInterface(bytes4)"));
     }
 
     function setCollateralVaultTemplate(address template) external virtual onlyOwner {
@@ -160,6 +294,9 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         bytes memory communityInitCalldata_
     ) public onlyOwner {
         _setFacetCuts(communityFacetCuts_, communityFacetCuts);
+        if (communityImplementation != address(0)) {
+            _syncFacetRouting(communityFacetCuts, communityFacetBySelector, communityRoutedSelectors);
+        }
         communityInit = communityInit_;
         communityInitCalldata = communityInitCalldata_;
     }
@@ -170,15 +307,20 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         bytes memory strategyInitCalldata_
     ) public onlyOwner {
         _setFacetCuts(strategyFacetCuts_, strategyFacetCuts);
+        if (strategyImplementation != address(0)) {
+            _syncFacetRouting(strategyFacetCuts, strategyFacetBySelector, strategyRoutedSelectors);
+        }
         strategyInit = strategyInit_;
         strategyInitCalldata = strategyInitCalldata_;
     }
 
     function clearCommunityFacetCuts() external onlyOwner {
+        if (communityImplementation != address(0)) revert UseAtomicRoutingRelease();
         _clearFacetCuts(communityFacetCuts);
     }
 
     function clearStrategyFacetCuts() external onlyOwner {
+        if (strategyImplementation != address(0)) revert UseAtomicRoutingRelease();
         _clearFacetCuts(strategyFacetCuts);
     }
 
@@ -188,6 +330,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         IDiamondCut.FacetCutAction action,
         bytes4[] memory selectors
     ) external onlyOwner {
+        if (communityImplementation != address(0)) revert UseAtomicRoutingRelease();
         _upsertFacetCut(communityFacetCuts, index, facetAddress, action, selectors);
     }
 
@@ -197,6 +340,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         IDiamondCut.FacetCutAction action,
         bytes4[] memory selectors
     ) external onlyOwner {
+        if (strategyImplementation != address(0)) revert UseAtomicRoutingRelease();
         _upsertFacetCut(strategyFacetCuts, index, facetAddress, action, selectors);
     }
 
