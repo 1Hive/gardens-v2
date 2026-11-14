@@ -9,6 +9,8 @@ Each CVStrategy and RegistryCommunity remains an ERC1967 proxy with its own stat
 - `setStrategyFacets` and `setCommunityFacets` still replace the complete facet set and sync routing in one call. Once shared routing is active, the split `clear*FacetCuts` and `upsert*FacetCut` methods revert, because intermediate transactions would expose incomplete routing.
 - A change that adds or changes per-instance state also needs an explicit, separately authorized `runImplementationMigration(data)` call on every affected proxy. A factory write cannot initialize individual proxy storage.
 
+New routed strategies execute the factory's configured `strategyInit` and `strategyInitCalldata` during proxy construction, after the core's `init` state setup. The router's factory must match the creating community's factory. Existing strategies do not rerun this initializer when they migrate to a router.
+
 The factory validates code-bearing implementation and facet targets, duplicate/reserved selectors, and that routed templates point back to this factory. Its owner controls shared releases. Existing proxy owners control migration and router UUPS upgrades. Owner permissions must be checked on the actual chain before preparing a release.
 
 ## Initial migration

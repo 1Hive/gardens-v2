@@ -108,6 +108,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     error StrategySelectorPaused(bytes4 selector, address controller);
     error SuperfluidPoolCreationFailed();
     error MigrationBatchSizeCannotBeZero();
+    error StrategyRoutingFactoryMismatch(address routerFactory, address communityFactory);
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -231,6 +232,16 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         super.init(_allo, "CVStrategy", _owner);
         LibDiamond.setContractOwner(_owner);
         collateralVaultTemplate = _collateralVaultTemplate;
+
+        address routerFactory = _routingFactory();
+        if (routerFactory != address(0)) {
+            address communityFactory = RegistryCommunity(payable(_owner)).registryFactory();
+            if (routerFactory != communityFactory) {
+                revert StrategyRoutingFactoryMismatch(routerFactory, communityFactory);
+            }
+            (, address facetInit, bytes memory facetInitCalldata) = IRegistryFactory(routerFactory).getStrategyFacets();
+            LibDiamond.initializeDiamondCut(facetInit, facetInitCalldata);
+        }
     }
 
     /// @notice Initialize state required by proposals created before this upgrade.
@@ -1106,10 +1117,14 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     receive() external payable {}
 
     function _usingSharedRouter() private view returns (bool) {
+        return _routingFactory() != address(0);
+    }
+
+    function _routingFactory() private view returns (address) {
         address currentImplementation = _getImplementation();
-        if (currentImplementation == address(0)) return false;
+        if (currentImplementation == address(0)) return address(0);
         (bool ok, bytes memory data) = currentImplementation.staticcall(abi.encodeWithSignature("routingFactory()"));
-        return ok && data.length == 32 && abi.decode(data, (address)) != address(0);
+        return ok && data.length == 32 ? abi.decode(data, (address)) : address(0);
     }
 
     // Sig: 0x662ea47d

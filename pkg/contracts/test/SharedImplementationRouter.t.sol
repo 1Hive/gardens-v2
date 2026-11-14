@@ -27,6 +27,23 @@ contract RouterMockAllo {
     function getRegistry() external view returns (address) { return registry; }
 }
 
+contract RouterMockCommunity {
+    address public registryFactory;
+    constructor(address factory_) { registryFactory = factory_; }
+}
+
+contract RouterStatefulStrategyInit {
+    error InitFailed();
+    bytes32 internal constant SLOT = keccak256("gardens.test.router.strategy.init");
+
+    function init(uint256 value) external {
+        bytes32 slot = SLOT;
+        assembly { sstore(slot, value) }
+    }
+
+    function fail() external pure { revert InitFailed(); }
+}
+
 contract RoutedCoreV1 {
     function version() external pure returns (uint256) { return 1; }
 }
@@ -200,6 +217,47 @@ contract SharedImplementationRouterTest is Test {
         assertEq(IDiamondLoupe(existing).facetAddress(RoutedFacetV2.doubledValue.selector), address(0));
         vm.expectRevert();
         RoutedFacetV2(existing).doubledValue();
+    }
+
+    function test_newRoutedStrategyRunsConfiguredInitializer() public {
+        factory.setStrategyImplementation(address(new CVStrategy()));
+        RouterStatefulStrategyInit facetInit = new RouterStatefulStrategyInit();
+        factory.setStrategyFacetInit(address(facetInit), abi.encodeCall(facetInit.init, (77)));
+        RouterMockCommunity community = new RouterMockCommunity(address(factory));
+
+        address created = address(new ERC1967Proxy(
+            address(strategyRouter),
+            abi.encodeCall(CVStrategy.init, (address(0x1111), address(0x2222), address(community)))
+        ));
+
+        assertEq(uint256(vm.load(created, keccak256("gardens.test.router.strategy.init"))), 77);
+        assertEq(CVStrategy(payable(created)).proxyOwner(), address(community));
+    }
+
+    function test_newRoutedStrategyRejectsDifferentCommunityFactory() public {
+        factory.setStrategyImplementation(address(new CVStrategy()));
+        RouterMockCommunity community = new RouterMockCommunity(address(0xBEEF));
+
+        vm.expectRevert(abi.encodeWithSelector(
+            CVStrategy.StrategyRoutingFactoryMismatch.selector, address(factory), address(0xBEEF)
+        ));
+        new ERC1967Proxy(
+            address(strategyRouter),
+            abi.encodeCall(CVStrategy.init, (address(0x1111), address(0x2222), address(community)))
+        );
+    }
+
+    function test_newRoutedStrategyRevertsWhenConfiguredInitializerFails() public {
+        factory.setStrategyImplementation(address(new CVStrategy()));
+        RouterStatefulStrategyInit facetInit = new RouterStatefulStrategyInit();
+        factory.setStrategyFacetInit(address(facetInit), abi.encodeCall(facetInit.fail, ()));
+        RouterMockCommunity community = new RouterMockCommunity(address(factory));
+
+        vm.expectRevert(RouterStatefulStrategyInit.InitFailed.selector);
+        new ERC1967Proxy(
+            address(strategyRouter),
+            abi.encodeCall(CVStrategy.init, (address(0x1111), address(0x2222), address(community)))
+        );
     }
 
     function test_realCommunityMigratesThroughUUPS() public {
