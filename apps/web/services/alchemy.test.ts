@@ -74,6 +74,25 @@ describe("Alchemy wallet NFT reads", () => {
       "rejected",
       "rejected",
     ]);
+    expect(results[0]).toMatchObject({
+      reason: { message: "Alchemy monthly capacity exceeded" },
+    });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops when Alchemy repeats an NFT page key", async () => {
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ ownedNfts: [], pageKey: "same-page" }), {
+          status: 200,
+        }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getNFTsForWallet(owner, base, collection)).rejects.toThrow(
+      "Alchemy returned a repeated NFT page key",
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

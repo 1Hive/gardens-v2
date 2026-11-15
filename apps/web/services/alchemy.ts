@@ -7,6 +7,14 @@ export type NftHolderFlags = {
 };
 
 const pendingNftHolderChecks = new Map<string, Promise<NftHolderFlags>>();
+const MAX_NFT_PAGES = 50;
+
+class AlchemyMonthlyCapacityError extends Error {
+  constructor() {
+    super("Alchemy monthly capacity exceeded");
+    this.name = "AlchemyMonthlyCapacityError";
+  }
+}
 
 function resolveAlchemyKey(): string {
   const key =
@@ -44,7 +52,10 @@ async function fetchWithRetry(
           .clone()
           .text()
           .catch(() => "");
-        if (body.includes("Monthly capacity limit exceeded")) return res;
+        if (body.includes("Monthly capacity limit exceeded")) {
+          console.warn("Alchemy monthly capacity exceeded; skipping retries");
+          throw new AlchemyMonthlyCapacityError();
+        }
       }
       if (res.status === 429 || (res.status >= 500 && res.status < 600)) {
         if (i === attempts - 1) return res;
@@ -56,6 +67,7 @@ async function fetchWithRetry(
       }
       return res;
     } catch (err) {
+      if (err instanceof AlchemyMonthlyCapacityError) throw err;
       lastError = err;
       // Exponential backoff on network failures
       if (i < attempts - 1) {
@@ -77,8 +89,9 @@ export async function getNFTsForWallet(
   const ownedNfts: Array<{ tokenId: string; contract: { address: string } }> =
     [];
   let pageKey: string | undefined;
+  const seenPageKeys = new Set<string>();
 
-  do {
+  for (let page = 0; page < MAX_NFT_PAGES; page++) {
     const params = new URLSearchParams({
       owner: ownerAddress,
       withMetadata: "false",
@@ -99,9 +112,14 @@ export async function getNFTsForWallet(
     };
     ownedNfts.push(...data.ownedNfts);
     pageKey = data.pageKey;
-  } while (pageKey);
+    if (!pageKey) return ownedNfts;
+    if (seenPageKeys.has(pageKey)) {
+      throw new Error("Alchemy returned a repeated NFT page key");
+    }
+    seenPageKeys.add(pageKey);
+  }
 
-  return ownedNfts;
+  throw new Error(`Alchemy NFT pagination exceeded ${MAX_NFT_PAGES} pages`);
 }
 
 type AlchemyNftOwner = {

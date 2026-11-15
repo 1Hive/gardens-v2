@@ -11,6 +11,7 @@ type ProposalTupleWithStatus = readonly unknown[] & {
 };
 
 const PROPOSAL_STATUS_TUPLE_INDEX = 5;
+// ICVStrategy.sol ProposalStatus enum: Cancelled=3, Executed=4, Rejected=6.
 const TERMINAL_PROPOSAL_STATUSES = new Set([3, 4, 6]);
 
 export const isTerminalProposalStatus = (status?: string | number | null) =>
