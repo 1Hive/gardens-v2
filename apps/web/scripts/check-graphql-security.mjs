@@ -59,6 +59,15 @@ function assertClean() {
   );
 }
 function verifySecurity(utils) {
+  const poisoned = JSON.parse(`{"constructor":{"__proto__":{"${probe}":true}}}`);
+  try {
+    const merged = utils.mergeDeep([{}, poisoned]);
+    assert.equal(Object.hasOwn(merged ?? {}, "constructor"), false);
+    assertClean();
+  } finally {
+    delete Object.prototype[probe];
+    delete Function.prototype[probe];
+  }
   const merge = (executionResult, incrementalResult) => {
     try {
       utils.mergeIncrementalResult({ executionResult, incrementalResult });

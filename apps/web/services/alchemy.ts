@@ -6,8 +6,19 @@ export type NftHolderFlags = {
   isKeeper: boolean;
 };
 
+const pendingNftHolderChecks = new Map<string, Promise<NftHolderFlags>>();
+const MAX_NFT_PAGES = 50;
+
+class AlchemyMonthlyCapacityError extends Error {
+  constructor() {
+    super("Alchemy monthly capacity exceeded");
+    this.name = "AlchemyMonthlyCapacityError";
+  }
+}
+
 function resolveAlchemyKey(): string {
-  const key = process.env.SERVER_ALCHEMY_KEY || process.env.NEXT_PUBLIC_ALCHEMY_KEY;
+  const key =
+    process.env.SERVER_ALCHEMY_KEY || process.env.NEXT_PUBLIC_ALCHEMY_KEY;
   if (!key) {
     throw new Error("Missing Alchemy API key (set SERVER_ALCHEMY_KEY)");
   }
@@ -34,14 +45,29 @@ async function fetchWithRetry(
   for (let i = 0; i < attempts; i++) {
     try {
       const res = await fetch(url, init);
+      // Monthly capacity cannot recover through retries. Short throughput
+      // limits can, so retain the existing backoff for other 429 responses.
+      if (res.status === 429) {
+        const body = await res
+          .clone()
+          .text()
+          .catch(() => "");
+        if (body.includes("Monthly capacity limit exceeded")) {
+          console.warn("Alchemy monthly capacity exceeded; skipping retries");
+          throw new AlchemyMonthlyCapacityError();
+        }
+      }
       if (res.status === 429 || (res.status >= 500 && res.status < 600)) {
+        if (i === attempts - 1) return res;
         const retryAfter = Number(res.headers.get("retry-after") ?? "0");
-        const delayMs = retryAfter > 0 ? retryAfter * 1000 : baseBackoff * (i + 1) ** 2;
+        const delayMs =
+          retryAfter > 0 ? retryAfter * 1000 : baseBackoff * (i + 1) ** 2;
         await new Promise((r) => setTimeout(r, delayMs));
         continue;
       }
       return res;
     } catch (err) {
+      if (err instanceof AlchemyMonthlyCapacityError) throw err;
       lastError = err;
       // Exponential backoff on network failures
       if (i < attempts - 1) {
@@ -57,27 +83,43 @@ async function fetchWithRetry(
 export async function getNFTsForWallet(
   ownerAddress: Address,
   alchemyApiBaseUrl?: string,
+  contractAddress?: Address | string,
 ) {
   const base = (alchemyApiBaseUrl ?? getAlchemyNftApiBase()).replace(/\/$/, "");
-  const response = await fetchWithRetry(
-    `${base}/getNFTsForOwner?owner=${ownerAddress}`,
-  );
+  const ownedNfts: Array<{ tokenId: string; contract: { address: string } }> =
+    [];
+  let pageKey: string | undefined;
+  const seenPageKeys = new Set<string>();
 
-  if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    console.error(`Alchemy API error: ${response.status} ${response.statusText}`);
-    if (body) console.error(`Response body: ${body}`);
-    throw new Error("Failed to fetch NFTs from Alchemy");
+  for (let page = 0; page < MAX_NFT_PAGES; page++) {
+    const params = new URLSearchParams({
+      owner: ownerAddress,
+      withMetadata: "false",
+    });
+    if (contractAddress) params.append("contractAddresses[]", contractAddress);
+    if (pageKey) params.set("pageKey", pageKey);
+
+    const response = await fetchWithRetry(
+      `${base}/getNFTsForOwner?${params.toString()}`,
+    );
+    if (!response.ok) {
+      throw new Error(`Failed to fetch NFTs from Alchemy (${response.status})`);
+    }
+
+    const data = (await response.json()) as {
+      ownedNfts: typeof ownedNfts;
+      pageKey?: string;
+    };
+    ownedNfts.push(...data.ownedNfts);
+    pageKey = data.pageKey;
+    if (!pageKey) return ownedNfts;
+    if (seenPageKeys.has(pageKey)) {
+      throw new Error("Alchemy returned a repeated NFT page key");
+    }
+    seenPageKeys.add(pageKey);
   }
 
-  const data = (await response.json()) as {
-    ownedNfts: Array<{
-      tokenId: string;
-      contract: { address: string };
-    }>;
-  };
-
-  return data.ownedNfts;
+  throw new Error(`Alchemy NFT pagination exceeded ${MAX_NFT_PAGES} pages`);
 }
 
 type AlchemyNftOwner = {
@@ -131,6 +173,24 @@ export async function getNftHolderFlagsForWallet(
   ownerAddress: Address,
   alchemyApiBaseUrl?: string,
 ): Promise<NftHolderFlags> {
+  const base = (alchemyApiBaseUrl ?? getAlchemyNftApiBase()).replace(/\/$/, "");
+  const requestKey = `${base}:${ownerAddress.toLowerCase()}`;
+  const pending = pendingNftHolderChecks.get(requestKey);
+  if (pending) return pending;
+
+  const request = fetchNftHolderFlagsForWallet(ownerAddress, base);
+  pendingNftHolderChecks.set(requestKey, request);
+  try {
+    return await request;
+  } finally {
+    pendingNftHolderChecks.delete(requestKey);
+  }
+}
+
+async function fetchNftHolderFlagsForWallet(
+  ownerAddress: Address,
+  alchemyApiBaseUrl: string,
+): Promise<NftHolderFlags> {
   const [protopianCollectionAddress, protopianSelector] = NFTs.Protopian;
   const [keeperCollectionAddress, keeperSelector] = NFTs.Keeper;
 
@@ -141,20 +201,15 @@ export async function getNftHolderFlagsForWallet(
     throw new Error("Protopian and Keeper NFTs must share the same collection");
   }
 
-  const owners = await getOwnersForContract(
-    protopianCollectionAddress,
+  const nfts = await getNFTsForWallet(
+    ownerAddress,
     alchemyApiBaseUrl,
-  );
-  const owner = owners.find(
-    (candidate) =>
-      candidate.ownerAddress.toLowerCase() === ownerAddress.toLowerCase(),
+    protopianCollectionAddress,
   );
 
   return {
-    isProtopian:
-      owner?.tokenBalances.some((tb) => protopianSelector(tb.tokenId)) ?? false,
-    isKeeper:
-      owner?.tokenBalances.some((tb) => keeperSelector(tb.tokenId)) ?? false,
+    isProtopian: nfts.some((nft) => protopianSelector(nft.tokenId)),
+    isKeeper: nfts.some((nft) => keeperSelector(nft.tokenId)),
   };
 }
 

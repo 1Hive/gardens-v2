@@ -9,9 +9,9 @@
     },
     "1241230|@graphprotocol/client-urql>@graphql-mesh/urql-exchange>@graphql-mesh/runtime>@envelop/extended-validation>@graphql-tools/utils": {
       "decision": "ignore",
-      "madeAt": 1791670590000,
-      "reason": "The GraphQL Mesh client uses static generated configuration and does not pass user-controlled objects to mergeDeep; the available fix requires an incompatible dependency-line change.",
-      "expiresAt": 1794373199000
+      "madeAt": 1794772935030,
+      "reason": "The installed GraphQL utils 10.11.0 and 11.0.0 carry the upstream mergeDeep security backport in pnpm.patchedDependencies. audit:check first verifies all installed affected copies in CJS and ESM; npm audit cannot model these pnpm patches. A global utils 12 override breaks the current GraphQL 16 Mesh caller API. Retire after a compatible caller upgrade.",
+      "expiresAt": 1797364935030
     },
     "1123686|@allo-team/allo-v2-sdk>@typechain/hardhat>hardhat>@ethersproject/abi>@ethersproject/hash>@ethersproject/abstract-signer>@ethersproject/abstract-provider>@ethersproject/transactions>@ethersproject/signing-key>elliptic>@sentry/node>cookie>adm-zip": {
       "decision": "ignore",
@@ -60,6 +60,30 @@
       "madeAt": 1792702800000,
       "reason": "The installed 10.11.0 and 11.0.0 packages carry the upstream mergeIncrementalResult and mergeDeep security backports in pnpm.patchedDependencies (CJS and ESM). audit:check first runs check-graphql-security.mjs against every installed affected copy and fails if the backport is absent or unsafe. The sanitized npm audit cannot model pnpm patches. A blanket utils 12 override breaks the GraphQL 16 variable API used by the current Mesh executor/delegate; retire this decision after a coordinated compatible upgrade. See patches/README.md.",
       "expiresAt": 1795294800000
+    },
+    "1243857|@wagmi/core>@wagmi/connectors>@walletconnect/ethereum-provider>@walletconnect/sign-client>@walletconnect/core>@walletconnect/utils>query-string>decode-uri-component": {
+      "decision": "ignore",
+      "madeAt": 1794772935030,
+      "reason": "The installed CommonJS decode-uri-component 0.2.2 carries the upstream 0.5.1 single-pass decoder backport via pnpm.patchedDependencies. audit:check verifies every installed copy and its runtime behavior before npm audit. The published 0.5.1 is ESM-only and breaks the installed CommonJS query-string 6/7 callers; retire after a compatible WalletConnect upgrade.",
+      "expiresAt": 1797364935030
+    },
+    "1243857|@walletconnect/core>@walletconnect/utils>query-string>decode-uri-component": {
+      "decision": "ignore",
+      "madeAt": 1794772935030,
+      "reason": "The installed CommonJS decode-uri-component 0.2.2 carries the upstream 0.5.1 single-pass decoder backport via pnpm.patchedDependencies. audit:check verifies every installed copy and its runtime behavior before npm audit. The published 0.5.1 is ESM-only and breaks the installed CommonJS query-string 6/7 callers; retire after a compatible WalletConnect upgrade.",
+      "expiresAt": 1797364935030
+    },
+    "1243857|@walletconnect/legacy-modal>@walletconnect/legacy-utils>query-string>decode-uri-component": {
+      "decision": "ignore",
+      "madeAt": 1794772935030,
+      "reason": "The installed CommonJS decode-uri-component 0.2.2 carries the upstream 0.5.1 single-pass decoder backport via pnpm.patchedDependencies. audit:check verifies every installed copy and its runtime behavior before npm audit. The published 0.5.1 is ESM-only and breaks the installed CommonJS query-string 6/7 callers; retire after a compatible WalletConnect upgrade.",
+      "expiresAt": 1797364935030
+    },
+    "1243857|wagmi>@wagmi/core>@wagmi/connectors>@walletconnect/ethereum-provider>@walletconnect/sign-client>@walletconnect/core>@walletconnect/utils>query-string>decode-uri-component": {
+      "decision": "ignore",
+      "madeAt": 1794772935030,
+      "reason": "The installed CommonJS decode-uri-component 0.2.2 carries the upstream 0.5.1 single-pass decoder backport via pnpm.patchedDependencies. audit:check verifies every installed copy and its runtime behavior before npm audit. The published 0.5.1 is ESM-only and breaks the installed CommonJS query-string 6/7 callers; retire after a compatible WalletConnect upgrade.",
+      "expiresAt": 1797364935030
     }
   }
 }

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Address } from "wagmi";
-import { useAccount, useChainId } from "wagmi";
 import { usePreferredReadClient } from "./usePreferredReadClient";
 import { useResolvedChainId } from "./useResolvedChainId";
 import { cvStrategyABI } from "@/src/generated";
@@ -19,14 +18,8 @@ export const usePoolAmount = ({
   throughBalanceOf?: boolean;
 }) => {
   const resolvedChainId = useResolvedChainId(chainId);
-  const { isConnected } = useAccount();
-  const walletChainId = useChainId();
   const readClient = usePreferredReadClient(resolvedChainId);
   const [poolAmount, setPoolAmount] = useState<bigint | undefined>(undefined);
-  const shouldUseWalletClient =
-    isConnected &&
-    resolvedChainId != null &&
-    walletChainId === resolvedChainId;
 
   useEffect(() => {
     if (
@@ -75,7 +68,7 @@ export const usePoolAmount = ({
 
     const intervalId = window.setInterval(() => {
       void fetchPoolAmount();
-    }, 15_000);
+    }, 60_000);
 
     return () => {
       cancelled = true;
@@ -83,13 +76,10 @@ export const usePoolAmount = ({
     };
   }, [
     enabled,
-    isConnected,
     poolAddress,
     readClient,
     resolvedChainId,
-    shouldUseWalletClient,
     throughBalanceOf,
-    walletChainId,
     watch,
   ]);
 
