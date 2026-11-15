@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "./BaseMultiChain.s.sol";
+import {LegacyRoutingGuard} from "./LegacyRoutingGuard.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
@@ -38,6 +39,7 @@ contract UpgradeRegistryCommunityDiamond is BaseMultiChain, CommunityDiamondConf
     DiamondLoupeFacet public loupeFacet;
 
     function runCurrentNetwork(string memory networkJson) public override {
+        LegacyRoutingGuard.requireUnroutedFactory(networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY")));
         // Auto-detect direct broadcast mode based on network config
         // Testnets with "no-safe": true will use direct broadcast
         // Production networks will generate Safe Transaction Builder JSON

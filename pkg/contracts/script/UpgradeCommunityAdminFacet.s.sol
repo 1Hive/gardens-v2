@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "./BaseMultiChain.s.sol";
+import {LegacyRoutingGuard} from "./LegacyRoutingGuard.sol";
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
@@ -13,6 +14,7 @@ contract UpgradeCommunityAdminFacet is BaseMultiChain, CommunityDiamondConfigura
     using stdJson for string;
 
     function runCurrentNetwork(string memory networkJson) public override {
+        LegacyRoutingGuard.requireUnroutedFactory(networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY")));
         address adminFacetAddress = _flagEnabled("DEPLOY_COMMUNITY_ADMIN_FACET")
             ? address(new CommunityAdminFacet())
             : networkJson.readAddress(getKeyNetwork(".FACETS.COMMUNITY_ADMIN"));

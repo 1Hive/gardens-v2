@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "./BaseMultiChain.s.sol";
+import {LegacyRoutingGuard} from "./LegacyRoutingGuard.sol";
 import "forge-std/console2.sol";
 import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol";
 import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
@@ -17,6 +18,7 @@ contract ReplaceStreamingAllocationFacet is BaseMultiChain {
     string internal constant CV_ALLOCATION_ARTIFACT = "src/CVStrategy/facets/CVAllocationFacet.sol:CVAllocationFacet";
 
     function runCurrentNetwork(string memory networkJson) public override {
+        LegacyRoutingGuard.requireUnroutedFactory(networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY")));
         address allocationFacet = _getOrDeployAllocationFacet();
 
         if (!vm.envOr("SKIP_FACTORY_SYNC", false)) {

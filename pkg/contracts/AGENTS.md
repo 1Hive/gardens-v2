@@ -75,15 +75,15 @@ For mainnet upgrade operations, default to this sequence unless the user explici
 
 Operational details for step 1:
 
-- Distinguish future-pool template updates from live pool upgrades. `RegistryFactory.setStrategyFacets(...)` only updates future pools; existing strategies may still require `upgradeTo(...)` and `diamondCut(...)`.
+- Check whether shared routing is active on the factory. On routed chains, a full strategy or community release is one `setStrategyRelease(...)` or `setCommunityRelease(...)` factory transaction, and existing proxies remain on their family router. Use `scripts/prepare-shared-release.mjs` for Safe payloads. The per-proxy `upgradeTo(...)` and local `diamondCut(...)` flow is only for unmigrated chains.
 - When base facet or shared storage logic changes, assume all strategy facets may need to be refreshed unless verified otherwise.
-- Use `test/helpers/StrategyDiamondConfigurator.sol` and the upgrade scripts under `script/` as the canonical selector and facet-cut source.
+- For shared releases, use the factory's live complete cuts as the selector source. `scripts/prepare-shared-release.mjs` replaces only the specified facet addresses and retains every other selector. The test configurators and old upgrade scripts apply to unmigrated local diamonds.
 - Treat linked Solidity libraries as chain-local runtime dependencies. `CVStrategy`, `CVAllocationFacet`, `CVProposalFacet`, and `CVStreamingFacet` can contain hardcoded `ConvictionsUtils` addresses in their deployed bytecode; before preparing or approving an implementation/facet payload, extract the artifact `deployedBytecode.linkReferences`, read the linked address from the deployed bytecode on the target chain, and confirm `cast code <linked-library>` is non-empty.
 - Do not assume a library address that is valid on one chain exists on another. For `ConvictionsUtils`, keep `IMPLEMENTATIONS.CV_UTIL_LIB` in `config/networks.json` aligned with the chain-local linked library and verify that every configured `CV_STRATEGY` implementation links to it.
 
 Operational details for step 2:
 
-- Generate one Safe Transaction Builder payload per chain. Safe imports should stay split by chain instead of one aggregate JSON blob.
+- Keep Safe Transaction Builder payloads split by chain. The shared release generator prepares one factory transaction for one family; a core and facet update in the same family belongs in that one transaction.
 - Prefer payloads under `transaction-builder/` and keep the chain name aligned with the Safe service key (`mainnet`, `arbitrum`, `optimism`, `polygon`, `gnosis`, `base`, `celo`).
 
 Operational details for step 3:
