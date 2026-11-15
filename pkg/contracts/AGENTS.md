@@ -75,7 +75,7 @@ For mainnet upgrade operations, default to this sequence unless the user explici
 
 Operational details for step 1:
 
-- Check whether shared routing is active on the factory. On routed chains, a full strategy or community release is one `setStrategyRelease(...)` or `setCommunityRelease(...)` factory transaction, and existing proxies remain on their family router. Use `scripts/prepare-shared-release.mjs` for Safe payloads. The per-proxy `upgradeTo(...)` and local `diamondCut(...)` flow is only for unmigrated chains.
+- Check whether shared routing is active on the factory. On routed chains, a full strategy or community core/facet release is one `setStrategyRelease(...)` or `setCommunityRelease(...)` factory transaction, and existing proxies remain on their family router. Use `scripts/prepare-shared-release.mjs` for Safe payloads. The legacy per-proxy core upgrade and local `diamondCut(...)` flow is only for unmigrated chains; router code upgrades still need per-proxy `upgradeTo(...)` calls.
 - When base facet or shared storage logic changes, assume all strategy facets may need to be refreshed unless verified otherwise.
 - For shared releases, use the factory's live complete cuts as the selector source. `scripts/prepare-shared-release.mjs` replaces only the specified facet addresses and retains every other selector. The test configurators and old upgrade scripts apply to unmigrated local diamonds.
 - Treat linked Solidity libraries as chain-local runtime dependencies. `CVStrategy`, `CVAllocationFacet`, `CVProposalFacet`, and `CVStreamingFacet` can contain hardcoded `ConvictionsUtils` addresses in their deployed bytecode; before preparing or approving an implementation/facet payload, extract the artifact `deployedBytecode.linkReferences`, read the linked address from the deployed bytecode on the target chain, and confirm `cast code <linked-library>` is non-empty.
@@ -83,7 +83,7 @@ Operational details for step 1:
 
 Operational details for step 2:
 
-- Keep Safe Transaction Builder payloads split by chain. The shared release generator prepares one factory transaction for one family; a core and facet update in the same family belongs in that one transaction.
+- Keep Safe Transaction Builder payloads split by chain. The shared release generator prepares one factory transaction for one family; a core and facet update in the same family belongs in that one transaction. A router code change additionally requires a factory template switch and one UUPS upgrade per existing proxy, emitted as ordered batches by `prepare-shared-release.mjs --router`. Supply the actual effective owner Safe with `--safe`; the payload generator checks its threshold and populates the Safe metadata needed for rehearsal.
 - Prefer payloads under `transaction-builder/` and keep the chain name aligned with the Safe service key (`mainnet`, `arbitrum`, `optimism`, `polygon`, `gnosis`, `base`, `celo`).
 
 Operational details for step 3:

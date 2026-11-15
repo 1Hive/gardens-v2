@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Prepare, but never submit, the phased Safe transactions for shared routing.
-import { readFile, mkdir, writeFile } from 'node:fs/promises';
+import { readFile, mkdir, readdir, writeFile } from 'node:fs/promises';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -13,6 +13,7 @@ const abi = parseAbi([
   'function routesStrategies() view returns (bool)',
   'function proxiableUUID() view returns (bytes32)',
   'function owner() view returns (address)',
+  'function getThreshold() view returns (uint256)',
   'function registryFactory() view returns (address)',
   'function registryCommunity() view returns (address)',
   'function strategyTemplate() view returns (address)',
@@ -33,12 +34,12 @@ const { values } = parseArgs({ options: {
   'strategy-router': { type: 'string' }, 'community-router': { type: 'string' },
   'strategy-logic': { type: 'string' }, 'community-logic': { type: 'string' },
   'community-pool-facet': { type: 'string' }, out: { type: 'string' },
-  'expected-owner': { type: 'string' },
+  safe: { type: 'string' }, 'expected-owner': { type: 'string' },
   'batch-size': { type: 'string', default: '10' }, help: { type: 'boolean' },
 }});
 
 if (values.help) {
-  process.stdout.write('Usage: node scripts/prepare-shared-routing.mjs --network <name> --rpc <url> --expected-owner <Safe-or-upgrade-wallet> --strategy-router <address> --community-router <address> --strategy-logic <address> --community-logic <address> --community-pool-facet <address> --out <directory> [--batch-size 10]\n');
+  process.stdout.write('Usage: node scripts/prepare-shared-routing.mjs --network <name> --rpc <url> --safe <effective-owner-safe> --strategy-router <address> --community-router <address> --strategy-logic <address> --community-logic <address> --community-pool-facet <address> --out <directory> [--batch-size 10]\n');
   process.exit(0);
 }
 
@@ -57,10 +58,10 @@ async function assertCode(client, target, label) {
 function tx(to, functionName, args) {
   return { to, value: '0', data: encodeFunctionData({ abi, functionName, args }) };
 }
-function payload(network, name, transactions) {
+function payload(network, safe, name, transactions) {
   return {
     version: '1.0', chainId: String(network.chainId), createdAt: Date.now(),
-    meta: { name: `${network.name} shared routing ${name}`, description: 'Review and simulate before Safe submission.', txBuilderVersion: '1.18.0', createdFromSafeAddress: '', createdFromOwnerAddress: '', checksum: '' },
+    meta: { name: `${network.name} shared routing ${name}`, description: 'Review and simulate before Safe submission.', txBuilderVersion: '1.18.0', createdFromSafeAddress: safe, createdFromOwnerAddress: '', checksum: '' },
     transactions,
   };
 }
@@ -71,7 +72,7 @@ async function currentImplementation(client, proxy) {
 }
 async function main() {
   const networkName = values.network;
-  assert(networkName && values.rpc && values.out, 'Missing --network, --rpc or --out');
+  assert(networkName && values.rpc && values.out && values.safe, 'Missing --network, --rpc, --safe or --out');
   const batchSize = Number(values['batch-size']);
   assert(Number.isSafeInteger(batchSize) && batchSize > 0 && batchSize <= 30, 'Batch size must be 1..30');
   const config = JSON.parse(await readFile(resolve(here, '../config/networks.json'), 'utf8'));
@@ -86,10 +87,16 @@ async function main() {
   const strategyLogic = addressArg('strategy-logic');
   const communityLogic = addressArg('community-logic');
   const poolFacet = addressArg('community-pool-facet');
-  const expectedOwner = addressArg('expected-owner');
-  for (const target of [factory, strategyRouter, communityRouter, strategyLogic, communityLogic, poolFacet]) {
+  const expectedOwner = addressArg('safe');
+  if (values['expected-owner']) {
+    assert(same(getAddress(values['expected-owner']), expectedOwner),
+      'Safe must be the effective owner to execute this payload');
+  }
+  for (const target of [expectedOwner, factory, strategyRouter, communityRouter, strategyLogic, communityLogic, poolFacet]) {
     await assertCode(client, target, 'Routing target');
   }
+  assert((await client.readContract({ address: expectedOwner, abi, functionName: 'getThreshold' })) > 0n,
+    'Safe threshold is zero');
   for (const [router, label] of [[strategyRouter, 'strategy'], [communityRouter, 'community']]) {
     const wired = await client.readContract({ address: router, abi, functionName: 'routingFactory' });
     assert(same(wired, factory), `${label} router points to a different factory`);
@@ -180,8 +187,9 @@ async function main() {
 
   const out = resolve(values.out);
   await mkdir(out, { recursive: true });
+  assert((await readdir(out)).length === 0, `Output directory must be empty: ${out}`);
   for (const [name, transactions] of stages) {
-    await writeFile(join(out, `${network.name}-${name}.json`), `${JSON.stringify(payload(network, name, transactions), null, 2)}\n`);
+    await writeFile(join(out, `${network.name}-${name}.json`), `${JSON.stringify(payload(network, expectedOwner, name, transactions), null, 2)}\n`);
   }
   await writeFile(join(out, `${network.name}-manifest.json`), `${JSON.stringify({
     chainId: network.chainId, factory, oldCommunityTemplate, oldStrategyTemplate,

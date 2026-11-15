@@ -151,22 +151,50 @@ tasks:
       - echo "🔍 Verifying diamond storage layouts..."
       - ./scripts/verify-storage-layout.sh || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
       - echo "✅ Storage verification passed"
+  prepare-shared-routing:
+    desc: Prepare ordered Safe payloads for the initial migration to shared routing
+    cmds:
+      - cmd: |
+          : "${NETWORK:?set NETWORK}"
+          : "${RPC_URL:?set RPC_URL}"
+          : "${SAFE_ADDRESS:?set SAFE_ADDRESS to the effective owner Safe}"
+          : "${STRATEGY_ROUTER:?set STRATEGY_ROUTER}"
+          : "${COMMUNITY_ROUTER:?set COMMUNITY_ROUTER}"
+          : "${STRATEGY_LOGIC:?set STRATEGY_LOGIC}"
+          : "${COMMUNITY_LOGIC:?set COMMUNITY_LOGIC}"
+          : "${COMMUNITY_POOL_FACET:?set COMMUNITY_POOL_FACET}"
+          : "${OUT:?set OUT to an empty directory}"
+          node scripts/prepare-shared-routing.mjs \
+            --network "${NETWORK}" --rpc "${RPC_URL}" --safe "${SAFE_ADDRESS}" \
+            --strategy-router "${STRATEGY_ROUTER}" --community-router "${COMMUNITY_ROUTER}" \
+            --strategy-logic "${STRATEGY_LOGIC}" --community-logic "${COMMUNITY_LOGIC}" \
+            --community-pool-facet "${COMMUNITY_POOL_FACET}" \
+            --batch-size "${BATCH_SIZE:-10}" --out "${OUT}"
   prepare-shared-release:
-    desc: Prepare one read-only Safe payload for an already-routed strategy or community release
+    desc: Prepare Safe payloads for an already-routed strategy or community release, including optional router upgrades
     cmds:
       - cmd: |
           : "${NETWORK:?set NETWORK}"
           : "${RPC_URL:?set RPC_URL}"
           : "${FAMILY:?set FAMILY to strategy or community}"
-          : "${EXPECTED_OWNER:?set EXPECTED_OWNER to the factory effective owner}"
-          : "${OUT:?set OUT to a JSON output file}"
-          set -- --network "${NETWORK}" --rpc "${RPC_URL}" --family "${FAMILY}" --expected-owner "${EXPECTED_OWNER}" --out "${OUT}"
+          : "${SAFE_ADDRESS:?set SAFE_ADDRESS to the factory effective owner Safe}"
+          : "${OUT:?set OUT to a JSON file, or a directory for router upgrades or state migrations}"
+          set -- --network "${NETWORK}" --rpc "${RPC_URL}" --family "${FAMILY}" --safe "${SAFE_ADDRESS}" --out "${OUT}" --batch-size "${BATCH_SIZE:-10}"
+          if [ -n "${NEW_ROUTER:-}" ]; then
+            set -- "$@" --router "${NEW_ROUTER}"
+          fi
+          if [ -n "${NEW_IMPLEMENTATION:-}" ] || [ -n "${NEW_ROUTER:-}" ] || [ -n "${MIGRATIONS:-}" ]; then
+            [ "${STORAGE_REVIEWED:-false}" = "true" ] || { echo "Set STORAGE_REVIEWED=true after core/router/state layout review" >&2; exit 1; }
+            set -- "$@" --storage-reviewed
+          fi
           if [ -n "${NEW_IMPLEMENTATION:-}" ]; then
-            [ "${STORAGE_REVIEWED:-false}" = "true" ] || { echo "Set STORAGE_REVIEWED=true after layout review" >&2; exit 1; }
-            set -- "$@" --implementation "${NEW_IMPLEMENTATION}" --storage-reviewed
+            set -- "$@" --implementation "${NEW_IMPLEMENTATION}"
           fi
           for replacement in ${FACET_REPLACEMENTS:-}; do
             set -- "$@" --facet "${replacement}"
+          done
+          for migration in ${MIGRATIONS:-}; do
+            set -- "$@" --migration "${migration}"
           done
           node scripts/prepare-shared-release.mjs "$@"
   deploy-shared-routing-targets:

@@ -66,6 +66,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Test shared release Safe payloads
+        run: node pkg/contracts/scripts/test-prepare-shared-release.mjs
+
       # - name: Build and Test
       #   run: pnpm test
 
@@ -106,3 +109,4 @@ jobs:
           node --check scripts/prepare-shared-release.mjs
           node --check scripts/verify-shared-routing.mjs
           bash -n scripts/verify-all-deployments.sh
+          bash -n scripts/rehearse-safe-payload.sh
