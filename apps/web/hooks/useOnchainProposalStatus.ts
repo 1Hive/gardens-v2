@@ -11,6 +11,11 @@ type ProposalTupleWithStatus = readonly unknown[] & {
 };
 
 const PROPOSAL_STATUS_TUPLE_INDEX = 5;
+// ICVStrategy.sol ProposalStatus enum: Cancelled=3, Executed=4, Rejected=6.
+const TERMINAL_PROPOSAL_STATUSES = new Set([3, 4, 6]);
+
+export const isTerminalProposalStatus = (status?: string | number | null) =>
+  status != null && TERMINAL_PROPOSAL_STATUSES.has(Number(status));
 
 export const getProposalStatusFromTuple = (
   proposal: unknown,
@@ -53,7 +58,7 @@ export function useOnchainProposalStatus({
     args: proposalNumber != null ? [proposalNumber] : undefined,
     chainId,
     enabled: enabled && !!strategyAddress && proposalNumber != null,
-    watch,
+    watch: watch && !isTerminalProposalStatus(fallbackStatus),
   });
 
   const onchainStatus = getProposalStatusFromTuple(data);
@@ -91,29 +96,42 @@ export function useOnchainProposalStatuses<
   chainId?: number;
   enabled?: boolean;
 }) {
+  const liveProposals = useMemo(
+    () =>
+      proposals.filter(
+        (proposal) => !isTerminalProposalStatus(proposal.proposalStatus),
+      ),
+    [proposals],
+  );
   const contracts = useMemo(
     () =>
-      proposals.map((proposal) => ({
+      liveProposals.map((proposal) => ({
         address: strategyAddress,
         abi: cvStrategyABI,
         functionName: "getProposal",
         args: [BigInt(proposal.proposalNumber)],
         chainId,
       })),
-    [chainId, proposals, strategyAddress],
+    [chainId, liveProposals, strategyAddress],
   );
 
   const { data } = useContractReads({
     contracts,
-    enabled: enabled && !!strategyAddress && proposals.length > 0,
+    enabled: enabled && !!strategyAddress && liveProposals.length > 0,
     watch: true,
   });
 
   return useMemo(() => {
+    const liveStatuses = new Map(
+      liveProposals.map((proposal, index) => [
+        proposal.id,
+        getProposalStatusFromTuple(data?.[index]),
+      ]),
+    );
     return proposals.reduce<Record<string, number | undefined>>(
-      (acc, proposal, index) => {
+      (acc, proposal) => {
         acc[proposal.id] =
-          getProposalStatusFromTuple(data?.[index]) ??
+          liveStatuses.get(proposal.id) ??
           (proposal.proposalStatus == null ?
             undefined
           : Number(proposal.proposalStatus));
@@ -121,5 +139,5 @@ export function useOnchainProposalStatuses<
       },
       {},
     );
-  }, [data, proposals]);
+  }, [data, liveProposals, proposals]);
 }

@@ -21,9 +21,20 @@ module formats. It fails closed if dependency inspection fails, an affected
 installed copy is missing, or a security check fails. Only then does the existing
 npm audit gate run. Its single path-specific, expiring decision for advisory
 1242879 accounts for npm's inability to model pnpm patches; it does not waive the
-installed-package checks. No other advisory is newly ignored.
+installed-package checks. The same backport covers `mergeDeep` advisory 1241230;
+its separate, expiring decision is also gated by installed-package checks.
 
 Remove the patches, regression compatibility requirement, and audit decision only
 after upgrading the entire affected GraphQL Tools caller chain compatibly. Keep
 security regression coverage after that migration. The older utils 8/9 lines are
 outside advisory GHSA-c4qx-w738-7hr3 and are intentionally unchanged.
+
+## decode-uri-component 0.2.2
+
+WalletConnect's `query-string` 6/7 dependencies require the CommonJS decoder.
+The fixed 0.5.1 release is ESM-only, so a direct override breaks these callers.
+`decode-uri-component-security.patch` backports the upstream 0.5.1 single-pass
+decoder while retaining CommonJS exports and the installed plus-to-space behavior.
+`audit:check` verifies the installed patch and a 32,000-run malformed input before
+applying path-specific, 30-day decisions for advisory 1243857. Remove the patch
+and decisions after upgrading the WalletConnect/query-string caller chain.

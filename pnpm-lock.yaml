@@ -8,7 +8,7 @@ overrides:
   '@typescript-eslint/parser': 6.18.2-alpha.2
   sharp: 0.35.5
   axios: 1.20.0
-  follow-redirects: 1.16.1
+  follow-redirects: 1.16.2
   '@pinata/sdk>axios': 1.20.0
   '@stackso/js-core>axios': 1.20.0
   '@tenderly/sdk>axios': 1.20.0
@@ -97,6 +97,9 @@ patchedDependencies:
   '@synthetixio/synpress-metamask@0.0.14':
     hash: klj2zdg32j2ncpqt2rx3pjprbu
     path: patches/@synthetixio__synpress-metamask@0.0.14.patch
+  decode-uri-component@0.2.2:
+    hash: 7euuzdfmhcenzbh3dwgdjb4boq
+    path: patches/decode-uri-component-security.patch
 
 importers:
 
@@ -8167,8 +8170,8 @@ packages:
   flexsearch@0.7.43:
     resolution: {integrity: sha512-c5o/+Um8aqCSOXGcZoqZOm+NqtVwNsvVpWv6lfmSclU954O3wvQKxxK8zj74fPaSJbXpSLTs4PRhh+wnoCXnKg==}
 
-  follow-redirects@1.16.1:
-    resolution: {integrity: sha512-FNvFGzoMLWmE6Yj9spb/zjd7yiNCHiAW9/Tg9CXrQ8wuu32HtlJOwWO11OJafl5FfY3DxTdQ0vj42zU1kvv5jg==}
+  follow-redirects@1.16.2:
+    resolution: {integrity: sha512-/kVP2U8z596Ia0gwFrwyIeo74ta5aVmSeU1FfAUMAmcEP5EP7zydmag3SLiN64NaRKef3lxsq7i/g7ltJQDGow==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -21337,7 +21340,7 @@ snapshots:
 
   axios@1.20.0(debug@4.4.3):
     dependencies:
-      follow-redirects: 1.16.1(debug@4.4.3)
+      follow-redirects: 1.16.2(debug@4.4.3)
       form-data: 4.0.6
       https-proxy-agent: 5.0.1
       proxy-from-env: 2.1.0
@@ -22483,7 +22486,7 @@ snapshots:
     dependencies:
       character-entities: 2.0.2
 
-  decode-uri-component@0.2.2: {}
+  decode-uri-component@0.2.2(patch_hash=7euuzdfmhcenzbh3dwgdjb4boq): {}
 
   decompress-response@6.0.0:
     dependencies:
@@ -23836,11 +23839,11 @@ snapshots:
 
   flexsearch@0.7.43: {}
 
-  follow-redirects@1.16.1(debug@4.3.5):
+  follow-redirects@1.16.2(debug@4.3.5):
     optionalDependencies:
       debug: 4.3.5
 
-  follow-redirects@1.16.1(debug@4.4.3):
+  follow-redirects@1.16.2(debug@4.4.3):
     optionalDependencies:
       debug: 4.4.3(supports-color@8.1.1)
 
@@ -24671,7 +24674,7 @@ snapshots:
   http-proxy@1.18.1:
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.16.1(debug@4.4.3)
+      follow-redirects: 1.16.2(debug@4.4.3)
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -27496,14 +27499,14 @@ snapshots:
 
   query-string@6.14.1:
     dependencies:
-      decode-uri-component: 0.2.2
+      decode-uri-component: 0.2.2(patch_hash=7euuzdfmhcenzbh3dwgdjb4boq)
       filter-obj: 1.1.0
       split-on-first: 1.1.0
       strict-uri-encode: 2.0.0
 
   query-string@7.1.3:
     dependencies:
-      decode-uri-component: 0.2.2
+      decode-uri-component: 0.2.2(patch_hash=7euuzdfmhcenzbh3dwgdjb4boq)
       filter-obj: 1.1.0
       split-on-first: 1.1.0
       strict-uri-encode: 2.0.0
@@ -28440,7 +28443,7 @@ snapshots:
     dependencies:
       command-exists: 1.2.9
       commander: 3.0.2
-      follow-redirects: 1.16.1(debug@4.3.5)
+      follow-redirects: 1.16.2(debug@4.3.5)
       fs-extra: 0.30.0
       js-sha3: 0.8.0
       memorystream: 0.3.1

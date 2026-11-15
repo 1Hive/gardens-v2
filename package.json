@@ -32,7 +32,7 @@
     "overrides": {
       "sharp": "0.35.5",
       "axios": "1.20.0",
-      "follow-redirects": "1.16.1",
+      "follow-redirects": "1.16.2",
       "@pinata/sdk>axios": "1.20.0",
       "@stackso/js-core>axios": "1.20.0",
       "@tenderly/sdk>axios": "1.20.0",
@@ -112,7 +112,8 @@
       "@synthetixio/synpress-cache@0.0.14": "patches/@synthetixio__synpress-cache@0.0.14.patch",
       "@synthetixio/synpress-metamask@0.0.14": "patches/@synthetixio__synpress-metamask@0.0.14.patch",
       "@graphql-tools/utils@10.11.0": "patches/@graphql-tools__utils-security.patch",
-      "@graphql-tools/utils@11.0.0": "patches/@graphql-tools__utils-security.patch"
+      "@graphql-tools/utils@11.0.0": "patches/@graphql-tools__utils-security.patch",
+      "decode-uri-component@0.2.2": "patches/decode-uri-component-security.patch"
     }
   }
 }
