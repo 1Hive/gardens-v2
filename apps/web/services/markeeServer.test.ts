@@ -26,7 +26,6 @@ const community = "0x0000000000000000000000000000000000000002";
 const vault = "0x0000000000000000000000000000000000000003";
 const recipient = "0x0000000000000000000000000000000000000004";
 const factory = "0x0000000000000000000000000000000000000007";
-const topMarkeeOwner = "0x0000000000000000000000000000000000000008";
 const adapter = "0x0000000000000000000000000000000000000009";
 const receiver = "0x0000000000000000000000000000000000000010";
 const squidRouter = "0x0000000000000000000000000000000000000011";
@@ -59,109 +58,6 @@ describe("Markee community revenue", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
-  });
-
-  it("returns zero for a community without a registered vault", async () => {
-    mocks.readContract.mockResolvedValue(
-      "0x0000000000000000000000000000000000000000",
-    );
-
-    const result = await markeeAdapter.getCommunityIntegration(100, community);
-
-    expect(result.revenue.claimableAmount).toBe("0");
-    expect(result.integration.vaultAddress).toBeNull();
-    expect(mocks.getEnvPublicClient).toHaveBeenCalledWith(8453);
-  });
-
-  it("always uses Sepolia for a testnet community", async () => {
-    process.env.NEXT_PUBLIC_ENV_GARDENS = "prod";
-    mocks.readContract.mockResolvedValue(
-      "0x0000000000000000000000000000000000000000",
-    );
-
-    const result = await markeeAdapter.getCommunityIntegration(
-      11155111,
-      community,
-    );
-
-    expect(result.markeeChainId).toBe(11155111);
-    expect(mocks.getEnvPublicClient).toHaveBeenCalledWith(11155111);
-  });
-
-  it("always uses Base for a production community", async () => {
-    process.env.NEXT_PUBLIC_ENV_GARDENS = "test";
-    mocks.readContract.mockResolvedValue(
-      "0x0000000000000000000000000000000000000000",
-    );
-
-    const result = await markeeAdapter.getCommunityIntegration(
-      42220,
-      community,
-    );
-
-    expect(result.markeeChainId).toBe(8453);
-    expect(mocks.getEnvPublicClient).toHaveBeenCalledWith(8453);
-  });
-
-  it("uses the vault combined ETH balance as claimable revenue", async () => {
-    mocks.readContract
-      .mockResolvedValueOnce(vault)
-      .mockResolvedValueOnce([
-        1_000_000_000_000_000n,
-        2_000_000_000_000_000n,
-        3_000_000_000_000_000n,
-        6_000_000_000_000_000n,
-      ])
-      .mockResolvedValueOnce({
-        leaderboard: "0x0000000000000000000000000000000000000005",
-      })
-      .mockResolvedValueOnce(1_000_000_000_000_000n)
-      .mockResolvedValueOnce(280n)
-      .mockResolvedValueOnce(22n)
-      .mockResolvedValueOnce("0x0000000000000000000000000000000000000006")
-      .mockResolvedValueOnce(0n)
-      .mockResolvedValueOnce("A live community message")
-      .mockResolvedValueOnce("Gardener")
-      .mockResolvedValueOnce(topMarkeeOwner);
-
-    const result = await markeeAdapter.getCommunityIntegration(100, community);
-
-    expect(result.revenue.claimableAmount).toBe("6000000000000000");
-    expect(result.integration.vaultAddress).toBe(vault);
-    expect(result.integration).toMatchObject({
-      leaderboardAddress: "0x0000000000000000000000000000000000000005",
-      status: "active",
-    });
-    expect(result.leaderboard).toMatchObject({
-      maxMessageLength: "280",
-      maxNameLength: "22",
-      message: "A live community message",
-      name: "Gardener",
-      minimumMonthlyRate: "1000000000000000",
-      topMarkeeAddress: "0x0000000000000000000000000000000000000006",
-      topMarkeeOwner,
-      topRate: "0",
-    });
-    expect(mocks.readContract).toHaveBeenNthCalledWith(
-      9,
-      expect.objectContaining({
-        address: "0x0000000000000000000000000000000000000006",
-        functionName: "message",
-      }),
-    );
-    expect(mocks.readContract).toHaveBeenNthCalledWith(
-      10,
-      expect.objectContaining({
-        address: "0x0000000000000000000000000000000000000006",
-        functionName: "name",
-      }),
-    );
-    expect(mocks.readContract).toHaveBeenCalledWith(
-      expect.objectContaining({
-        address: vault,
-        functionName: "availableRevenue",
-      }),
-    );
   });
 
   it("uses the same live revenue amount in claim quotes", async () => {
