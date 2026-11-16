@@ -74,7 +74,10 @@ describe("GET /api/markee/community", () => {
 
   it("does not present an incomplete snapshot as a valid integration", async () => {
     fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ apiVersion: 1 }), { status: 200 }),
+      new Response(
+        JSON.stringify({ community: { ...integration, preview: undefined } }),
+        { status: 200 },
+      ),
     );
     const consoleError = vi
       .spyOn(console, "error")

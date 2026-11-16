@@ -49,7 +49,9 @@ export async function GET(request: NextRequest) {
     if (
       result?.integration == null ||
       result.leaderboard == null ||
-      result.revenue == null
+      result.revenue == null ||
+      typeof result.markeeChainId !== "number" ||
+      typeof result.preview !== "boolean"
     ) {
       throw new Error("Markee SDK snapshot omitted community data");
     }
