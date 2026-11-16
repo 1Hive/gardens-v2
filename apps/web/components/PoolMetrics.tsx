@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useEffect, useRef, useState } from "react";
+import { FC, useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowPathRoundedSquareIcon,
   ArrowTopRightOnSquareIcon,
@@ -118,10 +118,10 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     !!accountAddress && !!poolToken.address,
     `${chainId}:${accountAddress}:${poolToken.address}`,
   );
-  const refreshFundingBalances = () => {
+  const refreshFundingBalances = useCallback(() => {
     refreshWalletBalance();
     onRefreshSuperTokenBalance();
-  };
+  }, [onRefreshSuperTokenBalance, refreshWalletBalance]);
 
   const showUseSuperTokenBalance = useFlag("showUseSuperTokenBalance");
   const {

@@ -12,6 +12,7 @@ export function useVisibleRefetch(
   refetchRef.current = refetch;
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
+  // The query fetches on mount, so its first timed refresh is due after a full interval.
   const lastRefreshAt = useRef(Date.now());
 
   const refresh = useCallback(() => {
