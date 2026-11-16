@@ -641,7 +641,7 @@ function CommunityMarkeePreviewModal({
     {
       address: connectedAccount,
       chainId: markeeChainId,
-      enabled: isLive && connectedAccount != null,
+      enabled: isLive && isOpen && connectedAccount != null,
       watch: true,
     },
   );
