@@ -63,6 +63,7 @@ import {
 } from "@/hooks/useSubgraphQuery";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
 import { useSuperfluidToken } from "@/hooks/useSuperfluidToken";
+import { useVisibleRefetch } from "@/hooks/useVisibleRefetch";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { logOnce } from "@/utils/log";
@@ -704,13 +705,19 @@ export default function ClientPage({
     enabled: !!effectiveSuperToken,
   });
 
-  const { data: superTokenBalance } = useBalance({
-    address: wallet as Address,
-    token: effectiveSuperToken as Address,
-    chainId,
-    watch: true,
-    enabled: !!effectiveSuperToken && !!wallet,
-  });
+  const { data: superTokenBalance, refetch: refetchSuperTokenBalance } =
+    useBalance({
+      address: wallet as Address,
+      token: effectiveSuperToken as Address,
+      chainId,
+      watch: false,
+      enabled: !!effectiveSuperToken && !!wallet,
+    });
+  const refreshSuperTokenBalance = useVisibleRefetch(
+    refetchSuperTokenBalance,
+    !!effectiveSuperToken && !!wallet,
+    `${chainId}:${wallet}:${effectiveSuperToken}`,
+  );
 
   const superTokenInfo = getSuperTokenInfo({
     address: effectiveSuperToken as Address | undefined,
@@ -1509,6 +1516,7 @@ export default function ClientPage({
                   poolId={poolId}
                   poolToken={poolToken}
                   chainId={Number(chain)}
+                  onRefreshSuperTokenBalance={refreshSuperTokenBalance}
                   streamReceiver={
                     effectiveStrategy.stream?.superfluidGDA as
                       | Address
@@ -1588,6 +1596,7 @@ export default function ClientPage({
                     poolId={poolId}
                     poolToken={poolToken}
                     chainId={Number(chain)}
+                    onRefreshSuperTokenBalance={refreshSuperTokenBalance}
                     streamReceiver={
                       effectiveStrategy.stream?.superfluidGDA as
                         | Address
