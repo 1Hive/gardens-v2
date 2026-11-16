@@ -113,7 +113,7 @@ After submission:
 
 ## Reward Structure
 
-Rewards are determined as a percentage of the total pool funds:
+The severity tier sets the starting reward as a percentage of the total pool funds:
 
 | Severity | CVSS Score | Reward            |
 | -------- | ---------- | ----------------- |
@@ -126,6 +126,14 @@ Notes:
 * Final severity assessment is determined by Core Contributors
 * Evaluation may include contextual and systemic impact beyond raw CVSS score
 * Rewards scale dynamically with pool size
+
+### Prospective Fund-Loss Cap
+
+For an advisory whose demonstrated impact is direct theft, diversion, or unrecoverable loss of user or pool funds, the bounty is the **lesser of the severity-tier reward and the maximum reasonably demonstrable funds at risk**. We assess the funds exposed in currently deployed and actively used Gardens flows, the amount an attacker can extract per attempt, realistic repeatability, and the time available before detection or mitigation. Hypothetical future deposits, adoption, or transaction volume do not increase the cap. The team will document the exposure estimate and its assumptions when setting the bounty amount; non-USD assets are valued in USD at the time of assessment for comparison with the pool's payout token.
+
+Findings whose accepted impact is governance integrity, availability, or another non-theft outcome remain eligible for the severity-tier reward; a zero stolen-funds amount does not make those findings ineligible.
+
+**Effective date:** This cap applies only to reports first submitted after this policy update is published on the repository's `main` branch, beginning with the next triage of new advisories. Reports submitted earlier, including those already in triage or accepted, retain the reward terms in effect when they were submitted, even if their review or bounty proposal occurs later. Reopening or resubmitting the same root cause does not change its original submission date.
 
 ---
 
