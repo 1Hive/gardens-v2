@@ -3662,25 +3662,56 @@ export function CommunityMarkeePlaceholder({
 
     const controller = new AbortController();
     let refreshTimeout: ReturnType<typeof setTimeout> | undefined;
+    let consecutiveFailures = 0;
+    let nextRefreshAt = 0;
+    let inFlight = false;
 
     const refresh = async () => {
+      if (document.visibilityState === "hidden") {
+        refreshTimeout = setTimeout(refresh, 60_000);
+        return;
+      }
+
+      inFlight = true;
       try {
         await refreshMarkee(controller.signal);
+        consecutiveFailures = 0;
       } catch (error) {
         if (!(error instanceof DOMException && error.name === "AbortError")) {
-          console.error("Unable to load Markee community status", error);
+          consecutiveFailures += 1;
+          logOnce("warn", "Unable to load Markee community status", error);
         }
       } finally {
+        inFlight = false;
         if (!controller.signal.aborted) {
-          refreshTimeout = setTimeout(refresh, 5_000);
+          const delay =
+            consecutiveFailures === 0 ? 60_000 : (
+              Math.min(60_000 * 2 ** (consecutiveFailures - 1), 900_000)
+            );
+          nextRefreshAt = Date.now() + delay;
+          refreshTimeout = setTimeout(refresh, delay);
         }
       }
     };
 
+    const refreshWhenVisible = () => {
+      if (
+        document.visibilityState !== "visible" ||
+        inFlight ||
+        Date.now() < nextRefreshAt
+      ) {
+        return;
+      }
+      if (refreshTimeout != null) clearTimeout(refreshTimeout);
+      void refresh();
+    };
+
+    document.addEventListener("visibilitychange", refreshWhenVisible);
     void refresh();
 
     return () => {
       controller.abort();
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
       if (refreshTimeout != null) clearTimeout(refreshTimeout);
     };
   }, [chainId, refreshMarkee]);
