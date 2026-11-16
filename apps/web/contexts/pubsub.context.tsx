@@ -213,30 +213,11 @@ type LatestIndexedBlockResult = {
   } | null;
 };
 
-type SubgraphIndexingStatusResult = {
-  indexingStatusForCurrentVersion?: {
-    chains?: Array<{
-      currentBlock?: {
-        number?: number | string | null;
-      } | null;
-      finalBlock?: {
-        number?: number | string | null;
-      } | null;
-      latestBlock?: {
-        number?: number | string | null;
-      } | null;
-      chainHeadBlock?: {
-        number?: number | string | null;
-      } | null;
-    } | null> | null;
-  } | null;
-};
-
 export type RouteIndexingLagStatus = {
   indexedBlock: string;
   comparisonBlock: string;
   lagBlocks: string;
-  source: "subgraph-status" | "rpc";
+  source: "rpc";
 };
 
 const INDEXING_STORAGE_KEY = "gardens.pending-indexed-publishes.v1";
@@ -265,27 +246,6 @@ const LATEST_INDEXED_BLOCK_QUERY = `
         number
       }
       hasIndexingErrors
-    }
-  }
-`;
-
-const SUBGRAPH_INDEXING_STATUS_QUERY = `
-  query IndexingStatusForCurrentVersion($subgraphName: String!) {
-    indexingStatusForCurrentVersion(subgraphName: $subgraphName) {
-      chains {
-        currentBlock {
-          number
-        }
-        finalBlock {
-          number
-        }
-        latestBlock {
-          number
-        }
-        chainHeadBlock {
-          number
-        }
-      }
     }
   }
 `;
@@ -346,27 +306,6 @@ const parseBlockNumber = (value: number | string | null | undefined) => {
   } catch (error) {
     console.debug(`${INDEXING_LOG_PREFIX} failed to parse block number`, {
       value,
-      error,
-    });
-    return null;
-  }
-};
-
-const getSubgraphStatusContext = (subgraphUrl: string) => {
-  try {
-    const url = new URL(subgraphUrl);
-    const parts = url.pathname.split("/").filter(Boolean);
-    if (parts.length < 3 || parts[0] !== "query") {
-      return null;
-    }
-
-    return {
-      url: `${url.origin}/index-node/graphql`,
-      subgraphName: parts[2],
-    };
-  } catch (error) {
-    console.debug(`${INDEXING_LOG_PREFIX} failed to derive subgraph status url`, {
-      subgraphUrl,
       error,
     });
     return null;
@@ -1125,72 +1064,6 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       const indexedBlock = await fetchLatestIndexedBlockForChain(targetChainId);
       if (indexedBlock == null) {
         return null;
-      }
-
-      const config = getConfigByChain(targetChainId);
-      if (!config?.subgraphUrl) {
-        return null;
-      }
-
-      const statusContext = getSubgraphStatusContext(config.subgraphUrl);
-      if (statusContext) {
-        try {
-          const statusResult = await queryByChain<
-            SubgraphIndexingStatusResult,
-            { subgraphName: string }
-          >(
-            config,
-            SUBGRAPH_INDEXING_STATUS_QUERY,
-            {
-              subgraphName: statusContext.subgraphName,
-            },
-            {
-              url: statusContext.url,
-            },
-            true,
-          );
-
-          if (!statusResult.error) {
-            const statusChain =
-              statusResult.data?.indexingStatusForCurrentVersion?.chains?.find(
-                (chain) => chain != null,
-              ) ?? null;
-            const statusIndexedBlock =
-              parseBlockNumber(statusChain?.currentBlock?.number) ?? indexedBlock;
-            const comparisonBlock =
-              parseBlockNumber(statusChain?.finalBlock?.number) ??
-              parseBlockNumber(statusChain?.chainHeadBlock?.number) ??
-              parseBlockNumber(statusChain?.latestBlock?.number);
-
-            if (
-              comparisonBlock != null &&
-              comparisonBlock >= statusIndexedBlock
-            ) {
-              return {
-                indexedBlock: statusIndexedBlock,
-                comparisonBlock,
-                lagBlocks: comparisonBlock - statusIndexedBlock,
-                source: "subgraph-status" as const,
-              };
-            }
-          } else {
-            console.debug(
-              `${INDEXING_LOG_PREFIX} subgraph status query unavailable, falling back to rpc`,
-              {
-                chainId: targetChainId,
-                error: statusResult.error,
-              },
-            );
-          }
-        } catch (error) {
-          console.debug(
-            `${INDEXING_LOG_PREFIX} subgraph status query failed, falling back to rpc`,
-            {
-              chainId: targetChainId,
-              error,
-            },
-          );
-        }
       }
 
       try {
