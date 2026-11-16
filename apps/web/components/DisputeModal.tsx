@@ -85,7 +85,7 @@ export const DisputeModal: FC<Props> = ({
 }) => {
   const [isModalOpened, setIsModalOpened] = useState(false);
   const [reason, setReason] = useState("");
-  const [isEnoughBalance, setIsEnoughBalance] = useState(true);
+  const [isEnoughBalance, setIsEnoughBalance] = useState(false);
   const { publishAfterIndexed } = usePubSubContext();
   const { address } = useAccount();
   const [isDisputeCreateLoading, setIsDisputeCreateLoading] = useState(false);
@@ -592,7 +592,10 @@ export const DisputeModal: FC<Props> = ({
                 "btn-dispute-proposal"
               )
             }
-            onClick={() => setIsModalOpened(true)}
+            onClick={() => {
+              setIsEnoughBalance(false);
+              setIsModalOpened(true);
+            }}
             className="w-full"
           >
             {((isDisputed === true) || isProposalEnded) ?
@@ -605,7 +608,7 @@ export const DisputeModal: FC<Props> = ({
             isOpen={isModalOpened}
             size="extra-large"
             testId="dispute-proposal"
-            footer={!isProposalEnded ? buttons : undefined}
+            footer={isModalOpened && !isProposalEnded ? buttons : undefined}
           >
             <div className="">{content}</div>
           </Modal>
