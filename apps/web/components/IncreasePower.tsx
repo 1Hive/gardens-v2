@@ -87,15 +87,26 @@ export const IncreasePower = ({
       watch: false,
       enabled: !!accountAddress && !!registerToken,
     });
+  const lastBalanceRefreshAt = useRef(Date.now());
 
   useEffect(() => {
     if (!accountAddress || !registerToken) return;
-    const interval = window.setInterval(() => {
-      if (document.visibilityState === "visible") {
+    lastBalanceRefreshAt.current = Date.now();
+    const refreshIfStale = () => {
+      if (
+        document.visibilityState === "visible" &&
+        Date.now() - lastBalanceRefreshAt.current >= 60_000
+      ) {
+        lastBalanceRefreshAt.current = Date.now();
         void refetchAccountTokenBalance();
       }
-    }, 60_000);
-    return () => window.clearInterval(interval);
+    };
+    const interval = window.setInterval(refreshIfStale, 60_000);
+    document.addEventListener("visibilitychange", refreshIfStale);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshIfStale);
+    };
   }, [accountAddress, refetchAccountTokenBalance, registerToken]);
 
   const initialStakedAmountBn = BigInt(
@@ -154,6 +165,7 @@ export const IncreasePower = ({
     fallbackErrorMessage:
       "Error staking governance token, please report a bug.",
     onConfirmations: (receipt) => {
+      lastBalanceRefreshAt.current = Date.now();
       void refetchAccountTokenBalance();
       publishAfterIndexed(
         receipt,
@@ -188,6 +200,7 @@ export const IncreasePower = ({
       args: [stakeDifferenceBn * -1n],
       fallbackErrorMessage: "Error decreasing power, please report a bug.",
       onConfirmations: (receipt) => {
+        lastBalanceRefreshAt.current = Date.now();
         void refetchAccountTokenBalance();
         publishAfterIndexed(
           receipt,
