@@ -73,6 +73,12 @@
       "reason": "The installed CommonJS decode-uri-component 0.2.2 carries the upstream 0.5.1 single-pass decoder backport via pnpm.patchedDependencies. audit:check verifies every installed copy and its runtime behavior before npm audit. The published 0.5.1 is ESM-only and breaks the installed CommonJS query-string 6/7 callers; retire after a compatible WalletConnect upgrade.",
       "expiresAt": 1797364935030
     },
+    "1243857|@walletconnect/legacy-client>@walletconnect/legacy-utils>query-string>decode-uri-component": {
+      "decision": "ignore",
+      "madeAt": 1794772935030,
+      "reason": "The installed CommonJS decode-uri-component 0.2.2 carries the upstream 0.5.1 single-pass decoder backport via pnpm.patchedDependencies. audit:check verifies every installed copy and its runtime behavior before npm audit. The published 0.5.1 is ESM-only and breaks the installed CommonJS query-string 6/7 callers; retire after a compatible WalletConnect upgrade.",
+      "expiresAt": 1797364935030
+    },
     "1243857|@walletconnect/legacy-modal>@walletconnect/legacy-utils>query-string>decode-uri-component": {
       "decision": "ignore",
       "madeAt": 1794772935030,

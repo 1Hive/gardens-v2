@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Address } from "viem";
 import { useContractRead, useContractReads } from "wagmi";
 import { cvStrategyABI } from "@/src/generated";
@@ -11,6 +11,7 @@ type ProposalTupleWithStatus = readonly unknown[] & {
 };
 
 const PROPOSAL_STATUS_TUPLE_INDEX = 5;
+const PROPOSAL_STATUS_POLL_INTERVAL_MS = 60_000;
 // ICVStrategy.sol ProposalStatus enum: Cancelled=3, Executed=4, Rejected=6.
 const TERMINAL_PROPOSAL_STATUSES = new Set([3, 4, 6]);
 
@@ -51,17 +52,30 @@ export function useOnchainProposalStatus({
   enabled?: boolean;
   watch?: boolean;
 }) {
+  const shouldRead = enabled && !!strategyAddress && proposalNumber != null;
   const { data, isLoading, isFetched, refetch } = useContractRead({
     address: strategyAddress,
     abi: cvStrategyABI,
     functionName: "getProposal",
     args: proposalNumber != null ? [proposalNumber] : undefined,
     chainId,
-    enabled: enabled && !!strategyAddress && proposalNumber != null,
-    watch: watch && !isTerminalProposalStatus(fallbackStatus),
+    enabled: shouldRead,
+    watch: false,
   });
-
   const onchainStatus = getProposalStatusFromTuple(data);
+  const shouldPoll =
+    shouldRead &&
+    watch &&
+    !isTerminalProposalStatus(fallbackStatus) &&
+    !isTerminalProposalStatus(onchainStatus);
+
+  useEffect(() => {
+    if (!shouldPoll) return;
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refetch();
+    }, PROPOSAL_STATUS_POLL_INTERVAL_MS);
+    return () => window.clearInterval(interval);
+  }, [refetch, shouldPoll]);
 
   const status = useMemo(() => {
     if (onchainStatus != null) return onchainStatus;
@@ -96,12 +110,19 @@ export function useOnchainProposalStatuses<
   chainId?: number;
   enabled?: boolean;
 }) {
+  const [terminalOnchainStatuses, setTerminalOnchainStatuses] = useState<
+    Record<string, number>
+  >({});
   const liveProposals = useMemo(
     () =>
       proposals.filter(
-        (proposal) => !isTerminalProposalStatus(proposal.proposalStatus),
+        (proposal) =>
+          !isTerminalProposalStatus(proposal.proposalStatus) &&
+          terminalOnchainStatuses[
+            `${chainId}:${strategyAddress}:${proposal.id}`
+          ] == null,
       ),
-    [proposals],
+    [chainId, proposals, strategyAddress, terminalOnchainStatuses],
   );
   const contracts = useMemo(
     () =>
@@ -115,11 +136,37 @@ export function useOnchainProposalStatuses<
     [chainId, liveProposals, strategyAddress],
   );
 
-  const { data } = useContractReads({
+  const shouldRead = enabled && !!strategyAddress && liveProposals.length > 0;
+  const { data, refetch } = useContractReads({
     contracts,
-    enabled: enabled && !!strategyAddress && liveProposals.length > 0,
-    watch: true,
+    enabled: shouldRead,
+    watch: false,
   });
+
+  useEffect(() => {
+    if (!data || data.length !== liveProposals.length) return;
+    const newlyTerminal = liveProposals.flatMap((proposal, index) => {
+      const status = getProposalStatusFromTuple(data[index]);
+      return status != null && isTerminalProposalStatus(status) ?
+          [[`${chainId}:${strategyAddress}:${proposal.id}`, status] as const]
+        : [];
+    });
+    if (newlyTerminal.length === 0) return;
+    setTerminalOnchainStatuses((current) => {
+      if (newlyTerminal.every(([key, status]) => current[key] === status)) {
+        return current;
+      }
+      return { ...current, ...Object.fromEntries(newlyTerminal) };
+    });
+  }, [chainId, data, liveProposals, strategyAddress]);
+
+  useEffect(() => {
+    if (!shouldRead) return;
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refetch();
+    }, PROPOSAL_STATUS_POLL_INTERVAL_MS);
+    return () => window.clearInterval(interval);
+  }, [refetch, shouldRead]);
 
   return useMemo(() => {
     const liveStatuses = new Map(
@@ -131,6 +178,9 @@ export function useOnchainProposalStatuses<
     return proposals.reduce<Record<string, number | undefined>>(
       (acc, proposal) => {
         acc[proposal.id] =
+          terminalOnchainStatuses[
+            `${chainId}:${strategyAddress}:${proposal.id}`
+          ] ??
           liveStatuses.get(proposal.id) ??
           (proposal.proposalStatus == null ?
             undefined
@@ -139,5 +189,12 @@ export function useOnchainProposalStatuses<
       },
       {},
     );
-  }, [data, liveProposals, proposals]);
+  }, [
+    chainId,
+    data,
+    liveProposals,
+    proposals,
+    strategyAddress,
+    terminalOnchainStatuses,
+  ]);
 }
