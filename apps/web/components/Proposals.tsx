@@ -61,6 +61,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useOnchainProposalStatuses } from "@/hooks/useOnchainProposalStatus";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { useVisibleRefetch } from "@/hooks/useVisibleRefetch";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { useErrorDetails } from "@/utils/getErrorName";
@@ -354,8 +355,13 @@ export function Proposals({
     args: [wallet as Address, strategy.id as Address],
     chainId,
     enabled: !!wallet && !!strategy.id && !!votingPowerRegistryAddress,
-    watch: true,
+    watch: false,
   });
+  const refreshVotingRegistryMemberPower = useVisibleRefetch(
+    refetchVotingRegistryMemberPower,
+    !!wallet && !!strategy.id && !!votingPowerRegistryAddress,
+    `${chainId}:${wallet}:${strategy.id}:${votingPowerRegistryAddress}`,
+  );
 
   // Derived state
   const isMemberCommunity =
@@ -740,6 +746,7 @@ export function Proposals({
       setAllocationView(false);
     },
     onConfirmations: (receipt) => {
+      refreshVotingRegistryMemberPower();
       const submittedAllocation = submittedAllocationRef.current;
       publishAfterIndexed(
         receipt,
@@ -1228,7 +1235,11 @@ export function Proposals({
                             <AdjustmentsHorizontalIcon height={24} width={24} />
                           }
                           className="!w-full sm:!w-auto"
-                          onClick={() => setAllocationView((prev) => !prev)}
+                          onClick={() => {
+                            if (!allocationView && votingPowerRegistryAddress)
+                              refreshVotingRegistryMemberPower();
+                            setAllocationView((prev) => !prev);
+                          }}
                           popTooltip={showManageSupportTooltip}
                           disabled={
                             !isConnected ||
