@@ -79,13 +79,24 @@ export const IncreasePower = ({
   const [hasInteracted, setHasInteracted] = useState(false);
   const roundedStakedAmount = roundToSignificant(+stakedAmount, 4);
 
-  const { data: accountTokenBalance } = useBalance({
-    address: accountAddress,
-    token: registerToken as Address,
-    chainId: urlChainId,
-    watch: true,
-    enabled: !!accountAddress && !!registerToken,
-  });
+  const { data: accountTokenBalance, refetch: refetchAccountTokenBalance } =
+    useBalance({
+      address: accountAddress,
+      token: registerToken as Address,
+      chainId: urlChainId,
+      watch: false,
+      enabled: !!accountAddress && !!registerToken,
+    });
+
+  useEffect(() => {
+    if (!accountAddress || !registerToken) return;
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void refetchAccountTokenBalance();
+      }
+    }, 60_000);
+    return () => window.clearInterval(interval);
+  }, [accountAddress, refetchAccountTokenBalance, registerToken]);
 
   const initialStakedAmountBn = BigInt(
     memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
@@ -143,6 +154,7 @@ export const IncreasePower = ({
     fallbackErrorMessage:
       "Error staking governance token, please report a bug.",
     onConfirmations: (receipt) => {
+      void refetchAccountTokenBalance();
       publishAfterIndexed(
         receipt,
         {
@@ -176,6 +188,7 @@ export const IncreasePower = ({
       args: [stakeDifferenceBn * -1n],
       fallbackErrorMessage: "Error decreasing power, please report a bug.",
       onConfirmations: (receipt) => {
+        void refetchAccountTokenBalance();
         publishAfterIndexed(
           receipt,
           {

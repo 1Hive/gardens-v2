@@ -3662,17 +3662,29 @@ export function CommunityMarkeePlaceholder({
 
     const controller = new AbortController();
     let refreshTimeout: ReturnType<typeof setTimeout> | undefined;
+    let consecutiveFailures = 0;
 
     const refresh = async () => {
+      if (document.visibilityState === "hidden") {
+        refreshTimeout = setTimeout(refresh, 60_000);
+        return;
+      }
+
       try {
         await refreshMarkee(controller.signal);
+        consecutiveFailures = 0;
       } catch (error) {
         if (!(error instanceof DOMException && error.name === "AbortError")) {
-          console.error("Unable to load Markee community status", error);
+          consecutiveFailures += 1;
+          logOnce("warn", "Unable to load Markee community status", error);
         }
       } finally {
         if (!controller.signal.aborted) {
-          refreshTimeout = setTimeout(refresh, 5_000);
+          const delay =
+            consecutiveFailures === 0 ? 60_000 : (
+              Math.min(60_000 * 2 ** (consecutiveFailures - 1), 900_000)
+            );
+          refreshTimeout = setTimeout(refresh, delay);
         }
       }
     };
