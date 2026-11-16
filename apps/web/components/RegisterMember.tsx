@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { TransactionReceipt } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
 import {
@@ -31,6 +31,8 @@ type RegisterMemberProps = {
   >;
   memberData: isMemberQuery | undefined;
 };
+
+const BALANCE_REFRESH_INTERVAL_MS = 60_000;
 
 export function RegisterMember({
   registrationCost,
@@ -79,14 +81,39 @@ export function RegisterMember({
     } as { address: string; decimals: number; symbol: string };
   }, [tokenAddress, token]);
 
-  const { data: accountTokenBalance } = useBalance({
-    address: accountAddress,
-    token: tokenAddress as Address,
-    chainId: urlChainId,
-    watch: true,
-    // only enabled when we have both account and token address
-    enabled: !!accountAddress && !!tokenAddress,
-  });
+  const { data: accountTokenBalance, refetch: refetchAccountTokenBalance } =
+    useBalance({
+      address: accountAddress,
+      token: tokenAddress as Address,
+      chainId: urlChainId,
+      watch: false,
+      // The balance only controls joining; leaving does not need this read.
+      enabled: !!accountAddress && !!tokenAddress && !isMember,
+    });
+  const lastBalanceRefreshAt = useRef(Date.now());
+
+  useEffect(() => {
+    if (!accountAddress || !tokenAddress || isMember) return;
+    lastBalanceRefreshAt.current = Date.now();
+    const refreshIfStale = () => {
+      if (
+        document.visibilityState === "visible" &&
+        Date.now() - lastBalanceRefreshAt.current >= BALANCE_REFRESH_INTERVAL_MS
+      ) {
+        lastBalanceRefreshAt.current = Date.now();
+        void refetchAccountTokenBalance();
+      }
+    };
+    const interval = window.setInterval(
+      refreshIfStale,
+      BALANCE_REFRESH_INTERVAL_MS,
+    );
+    document.addEventListener("visibilitychange", refreshIfStale);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshIfStale);
+    };
+  }, [accountAddress, isMember, refetchAccountTokenBalance, tokenAddress]);
 
   const accountHasBalance = useMemo(
     () => gte(accountTokenBalance?.value, registrationCost, token.decimals),
