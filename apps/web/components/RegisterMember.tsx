@@ -32,6 +32,8 @@ type RegisterMemberProps = {
   memberData: isMemberQuery | undefined;
 };
 
+const BALANCE_REFRESH_INTERVAL_MS = 60_000;
+
 export function RegisterMember({
   registrationCost,
   registrationStakeAmount,
@@ -85,6 +87,7 @@ export function RegisterMember({
       token: tokenAddress as Address,
       chainId: urlChainId,
       watch: false,
+      // The balance only controls joining; leaving does not need this read.
       enabled: !!accountAddress && !!tokenAddress && !isMember,
     });
   const lastBalanceRefreshAt = useRef(Date.now());
@@ -95,13 +98,16 @@ export function RegisterMember({
     const refreshIfStale = () => {
       if (
         document.visibilityState === "visible" &&
-        Date.now() - lastBalanceRefreshAt.current >= 60_000
+        Date.now() - lastBalanceRefreshAt.current >= BALANCE_REFRESH_INTERVAL_MS
       ) {
         lastBalanceRefreshAt.current = Date.now();
         void refetchAccountTokenBalance();
       }
     };
-    const interval = window.setInterval(refreshIfStale, 60_000);
+    const interval = window.setInterval(
+      refreshIfStale,
+      BALANCE_REFRESH_INTERVAL_MS,
+    );
     document.addEventListener("visibilitychange", refreshIfStale);
     return () => {
       window.clearInterval(interval);
