@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Address } from "viem";
 import { useContractRead, useContractReads } from "wagmi";
 import { cvStrategyABI } from "@/src/generated";
@@ -11,6 +11,7 @@ type ProposalTupleWithStatus = readonly unknown[] & {
 };
 
 const PROPOSAL_STATUS_TUPLE_INDEX = 5;
+const PROPOSAL_STATUS_POLL_INTERVAL_MS = 60_000;
 // ICVStrategy.sol ProposalStatus enum: Cancelled=3, Executed=4, Rejected=6.
 const TERMINAL_PROPOSAL_STATUSES = new Set([3, 4, 6]);
 
@@ -51,15 +52,26 @@ export function useOnchainProposalStatus({
   enabled?: boolean;
   watch?: boolean;
 }) {
+  const shouldRead = enabled && !!strategyAddress && proposalNumber != null;
+  const shouldPoll =
+    shouldRead && watch && !isTerminalProposalStatus(fallbackStatus);
   const { data, isLoading, isFetched, refetch } = useContractRead({
     address: strategyAddress,
     abi: cvStrategyABI,
     functionName: "getProposal",
     args: proposalNumber != null ? [proposalNumber] : undefined,
     chainId,
-    enabled: enabled && !!strategyAddress && proposalNumber != null,
-    watch: watch && !isTerminalProposalStatus(fallbackStatus),
+    enabled: shouldRead,
+    watch: false,
   });
+
+  useEffect(() => {
+    if (!shouldPoll) return;
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refetch();
+    }, PROPOSAL_STATUS_POLL_INTERVAL_MS);
+    return () => window.clearInterval(interval);
+  }, [refetch, shouldPoll]);
 
   const onchainStatus = getProposalStatusFromTuple(data);
 
@@ -115,11 +127,20 @@ export function useOnchainProposalStatuses<
     [chainId, liveProposals, strategyAddress],
   );
 
-  const { data } = useContractReads({
+  const shouldRead = enabled && !!strategyAddress && liveProposals.length > 0;
+  const { data, refetch } = useContractReads({
     contracts,
-    enabled: enabled && !!strategyAddress && liveProposals.length > 0,
-    watch: true,
+    enabled: shouldRead,
+    watch: false,
   });
+
+  useEffect(() => {
+    if (!shouldRead) return;
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refetch();
+    }, PROPOSAL_STATUS_POLL_INTERVAL_MS);
+    return () => window.clearInterval(interval);
+  }, [refetch, shouldRead]);
 
   return useMemo(() => {
     const liveStatuses = new Map(
