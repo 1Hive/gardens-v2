@@ -30,6 +30,7 @@ import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useFlag } from "@/hooks/useFlag";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { useSuperfluidStream } from "@/hooks/useSuperfluidStream";
+import { useVisibleRefetch } from "@/hooks/useVisibleRefetch";
 import { superfluidCFAv1ForwarderAbi } from "@/src/customAbis";
 import { abiWithErrors } from "@/utils/abi";
 import {
@@ -65,6 +66,7 @@ interface PoolMetricsProps {
   communityAddress: Address;
   poolId: number;
   chainId: number;
+  onRefreshSuperTokenBalance: () => void;
   superToken:
     | {
         value: bigint;
@@ -87,6 +89,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   poolToken,
   chainId,
   superToken,
+  onRefreshSuperTokenBalance,
   streamReceiver,
   streamSender,
 }) => {
@@ -101,6 +104,24 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const [forceAllBalanceUsage, setForceAllBalanceUsage] = useState(false);
   const [useMaxStreamAmount, setUseMaxStreamAmount] = useState(false);
   const addFundsDropdownRef = useRef<HTMLDivElement>(null);
+
+  const { data: walletBalance, refetch: refetchWalletBalance } = useBalance({
+    address: accountAddress,
+    formatUnits: poolToken.decimals,
+    token: poolToken.address as Address,
+    watch: false,
+    chainId,
+    enabled: !!accountAddress && !!poolToken.address,
+  });
+  const refreshWalletBalance = useVisibleRefetch(
+    refetchWalletBalance,
+    !!accountAddress && !!poolToken.address,
+    `${chainId}:${accountAddress}:${poolToken.address}`,
+  );
+  const refreshFundingBalances = () => {
+    refreshWalletBalance();
+    onRefreshSuperTokenBalance();
+  };
 
   const showUseSuperTokenBalance = useFlag("showUseSuperTokenBalance");
   const {
@@ -138,6 +159,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       functionName: "transfer",
       contractName: "ERC20",
       args: [poolAddress as Address, requestedAmountBn],
+      onConfirmations: refreshFundingBalances,
     });
 
   const displayedIncomingFlowRateBn = getDisplayedIncomingFlowRate(
@@ -232,6 +254,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       contractName: "SuperFluid Constant Flow Agreement",
       showNotification: !shouldBatchStreamFunding,
       onConfirmations: () => {
+        refreshFundingBalances();
         setCurrentFlowRateBn(
           (old) =>
             (old ?? 0n) + (streamRequestedAmountPerSecScaledUpBn as bigint),
@@ -256,6 +279,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       functionName: "updateFlow",
       contractName: "SuperFluid Constant Flow Agreement",
       onConfirmations: () => {
+        refreshFundingBalances();
         setCurrentFlowRateBn(
           (old) =>
             (old ?? 0n) +
@@ -288,6 +312,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
         "0x",
       ],
       onConfirmations: () => {
+        refreshFundingBalances();
         setCurrentFlowRateBn(
           (old) => (old ?? 0n) - (currentUserFlowRateBn ?? 0n),
         );
@@ -318,6 +343,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     contractName: "Superfluid Host",
     showNotification: false,
     onConfirmations: () => {
+      refreshFundingBalances();
       setCurrentFlowRateBn(
         (old) =>
           (old ?? 0n) +
@@ -342,15 +368,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     () => writeUpgradeAndStream(),
     { resetAllowanceIfNeeded: false },
   );
-
-  const { data: walletBalance } = useBalance({
-    address: accountAddress,
-    formatUnits: poolToken.decimals,
-    token: poolToken.address as Address,
-    watch: true,
-    chainId: chainId,
-    enabled: !!accountAddress && !!poolToken.address,
-  });
 
   const walletBalanceScaledUpBn =
     walletBalance && superToken ?
@@ -952,7 +969,10 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               }
               icon={<PlusIcon className="w-5 h-5" />}
               className="!w-full mt-1"
-              onClick={() => setIsAddFundsMenuOpen((isOpen) => !isOpen)}
+              onClick={() => {
+                if (!isAddFundsMenuOpen) refreshFundingBalances();
+                setIsAddFundsMenuOpen((isOpen) => !isOpen);
+              }}
             >
               Add Funds
             </Button>
