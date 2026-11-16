@@ -3634,7 +3634,8 @@ export function CommunityMarkeePlaceholder({
   );
 
   const refreshMarkeeUntilActive = useCallback(async () => {
-    const maxAttempts = 6;
+    // Markee SDK snapshots can remain fresh in its cache for 30 seconds.
+    const maxAttempts = 10;
     let lastError: unknown;
 
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
@@ -3645,7 +3646,7 @@ export function CommunityMarkeePlaceholder({
         lastError = error;
       }
       if (attempt < maxAttempts - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 1_000));
+        await new Promise((resolve) => setTimeout(resolve, 5_000));
       }
     }
 
