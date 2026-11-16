@@ -79,13 +79,35 @@ export const IncreasePower = ({
   const [hasInteracted, setHasInteracted] = useState(false);
   const roundedStakedAmount = roundToSignificant(+stakedAmount, 4);
 
-  const { data: accountTokenBalance } = useBalance({
-    address: accountAddress,
-    token: registerToken as Address,
-    chainId: urlChainId,
-    watch: true,
-    enabled: !!accountAddress && !!registerToken,
-  });
+  const { data: accountTokenBalance, refetch: refetchAccountTokenBalance } =
+    useBalance({
+      address: accountAddress,
+      token: registerToken as Address,
+      chainId: urlChainId,
+      watch: false,
+      enabled: !!accountAddress && !!registerToken,
+    });
+  const lastBalanceRefreshAt = useRef(Date.now());
+
+  useEffect(() => {
+    if (!accountAddress || !registerToken) return;
+    lastBalanceRefreshAt.current = Date.now();
+    const refreshIfStale = () => {
+      if (
+        document.visibilityState === "visible" &&
+        Date.now() - lastBalanceRefreshAt.current >= 60_000
+      ) {
+        lastBalanceRefreshAt.current = Date.now();
+        void refetchAccountTokenBalance();
+      }
+    };
+    const interval = window.setInterval(refreshIfStale, 60_000);
+    document.addEventListener("visibilitychange", refreshIfStale);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshIfStale);
+    };
+  }, [accountAddress, refetchAccountTokenBalance, registerToken]);
 
   const initialStakedAmountBn = BigInt(
     memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0,
@@ -143,6 +165,8 @@ export const IncreasePower = ({
     fallbackErrorMessage:
       "Error staking governance token, please report a bug.",
     onConfirmations: (receipt) => {
+      lastBalanceRefreshAt.current = Date.now();
+      void refetchAccountTokenBalance();
       publishAfterIndexed(
         receipt,
         {
@@ -176,6 +200,8 @@ export const IncreasePower = ({
       args: [stakeDifferenceBn * -1n],
       fallbackErrorMessage: "Error decreasing power, please report a bug.",
       onConfirmations: (receipt) => {
+        lastBalanceRefreshAt.current = Date.now();
+        void refetchAccountTokenBalance();
         publishAfterIndexed(
           receipt,
           {
