@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Address } from "viem";
 import { useContractRead, useContractReads } from "wagmi";
 import { cvStrategyABI } from "@/src/generated";
@@ -53,8 +53,6 @@ export function useOnchainProposalStatus({
   watch?: boolean;
 }) {
   const shouldRead = enabled && !!strategyAddress && proposalNumber != null;
-  const shouldPoll =
-    shouldRead && watch && !isTerminalProposalStatus(fallbackStatus);
   const { data, isLoading, isFetched, refetch } = useContractRead({
     address: strategyAddress,
     abi: cvStrategyABI,
@@ -64,6 +62,12 @@ export function useOnchainProposalStatus({
     enabled: shouldRead,
     watch: false,
   });
+  const onchainStatus = getProposalStatusFromTuple(data);
+  const shouldPoll =
+    shouldRead &&
+    watch &&
+    !isTerminalProposalStatus(fallbackStatus) &&
+    !isTerminalProposalStatus(onchainStatus);
 
   useEffect(() => {
     if (!shouldPoll) return;
@@ -72,8 +76,6 @@ export function useOnchainProposalStatus({
     }, PROPOSAL_STATUS_POLL_INTERVAL_MS);
     return () => window.clearInterval(interval);
   }, [refetch, shouldPoll]);
-
-  const onchainStatus = getProposalStatusFromTuple(data);
 
   const status = useMemo(() => {
     if (onchainStatus != null) return onchainStatus;
@@ -108,12 +110,19 @@ export function useOnchainProposalStatuses<
   chainId?: number;
   enabled?: boolean;
 }) {
+  const [terminalOnchainStatuses, setTerminalOnchainStatuses] = useState<
+    Record<string, number>
+  >({});
   const liveProposals = useMemo(
     () =>
       proposals.filter(
-        (proposal) => !isTerminalProposalStatus(proposal.proposalStatus),
+        (proposal) =>
+          !isTerminalProposalStatus(proposal.proposalStatus) &&
+          terminalOnchainStatuses[
+            `${chainId}:${strategyAddress}:${proposal.id}`
+          ] == null,
       ),
-    [proposals],
+    [chainId, proposals, strategyAddress, terminalOnchainStatuses],
   );
   const contracts = useMemo(
     () =>
@@ -135,6 +144,23 @@ export function useOnchainProposalStatuses<
   });
 
   useEffect(() => {
+    if (!data || data.length !== liveProposals.length) return;
+    const newlyTerminal = liveProposals.flatMap((proposal, index) => {
+      const status = getProposalStatusFromTuple(data[index]);
+      return status != null && isTerminalProposalStatus(status) ?
+          [[`${chainId}:${strategyAddress}:${proposal.id}`, status] as const]
+        : [];
+    });
+    if (newlyTerminal.length === 0) return;
+    setTerminalOnchainStatuses((current) => {
+      if (newlyTerminal.every(([key, status]) => current[key] === status)) {
+        return current;
+      }
+      return { ...current, ...Object.fromEntries(newlyTerminal) };
+    });
+  }, [chainId, data, liveProposals, strategyAddress]);
+
+  useEffect(() => {
     if (!shouldRead) return;
     const interval = window.setInterval(() => {
       if (document.visibilityState === "visible") void refetch();
@@ -152,6 +178,9 @@ export function useOnchainProposalStatuses<
     return proposals.reduce<Record<string, number | undefined>>(
       (acc, proposal) => {
         acc[proposal.id] =
+          terminalOnchainStatuses[
+            `${chainId}:${strategyAddress}:${proposal.id}`
+          ] ??
           liveStatuses.get(proposal.id) ??
           (proposal.proposalStatus == null ?
             undefined
@@ -160,5 +189,12 @@ export function useOnchainProposalStatuses<
       },
       {},
     );
-  }, [data, liveProposals, proposals]);
+  }, [
+    chainId,
+    data,
+    liveProposals,
+    proposals,
+    strategyAddress,
+    terminalOnchainStatuses,
+  ]);
 }
