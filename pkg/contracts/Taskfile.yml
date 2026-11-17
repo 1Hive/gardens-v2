@@ -229,15 +229,28 @@ tasks:
     desc: Deploy code targets for a shared routing migration or later family release
     cmds:
       - cmd: |
+          set -eu
           : "${NETWORK:?set NETWORK}"
           : "${RPC_URL:?set RPC_URL}"
           : "${PK_DEPLOYER_PW:?set PK_DEPLOYER_PW}"
           : "${SHARED_TARGET_MODE:?set SHARED_TARGET_MODE to migration or release}"
           if [ "${SHARED_TARGET_MODE}" = "release" ]; then : "${SHARED_TARGET_FAMILY:?set SHARED_TARGET_FAMILY}"; fi
-          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+          expected_chain="$(jq -r --arg network "${NETWORK}" '.networks[] | select(.name == $network) | .chainId' config/networks.json)"
+          library="$(jq -r --arg network "${NETWORK}" '.networks[] | select(.name == $network) | .IMPLEMENTATIONS.CV_UTIL_LIB' config/networks.json)"
+          : "${expected_chain:?unknown NETWORK}"
+          : "${library:?CV_UTIL_LIB missing from network config}"
+          [ "$(cast chain-id --rpc-url "${RPC_URL}")" = "${expected_chain}" ] || { echo "RPC chain ID does not match NETWORK" >&2; exit 1; }
+          [ "$(cast code "${library}" --rpc-url "${RPC_URL}")" != "0x" ] || { echo "configured CV_UTIL_LIB has no code" >&2; exit 1; }
+          password_file="$(mktemp)"
+          chmod 600 "${password_file}"
+          trap 'rm -f "${password_file}"' EXIT
+          printf '%s' "${PK_DEPLOYER_PW}" > "${password_file}"
+          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password-file "${password_file}")"
           ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/DeploySharedRoutingTargets.s.sol:DeploySharedRoutingTargets \
-            --rpc-url "${RPC_URL}" --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}" \
-            --sig "run(string)" "${NETWORK}" --ffi --broadcast -vvv
+            --rpc-url "${RPC_URL}" --account PK_DEPLOYER --password-file "${password_file}" \
+            --sig "run(string)" "${NETWORK}" --ffi --via-ir \
+            --libraries "pkg/contracts/src/CVStrategy/ConvictionsUtils.sol:ConvictionsUtils:${library}" \
+            --slow --broadcast -vvv
   verify-storage-quick:
     desc: Verify storage quick
     cmds:
