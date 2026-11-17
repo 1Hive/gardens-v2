@@ -152,11 +152,12 @@ tasks:
       - ./scripts/verify-storage-layout.sh || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
       - echo "✅ Storage verification passed"
   prepare-shared-routing:
-    desc: Prepare ordered direct-owner or Safe payloads for initial shared routing migration
+    desc: Prepare one verified phase of the initial shared routing migration
     cmds:
       - cmd: |
           : "${NETWORK:?set NETWORK}"
           : "${RPC_URL:?set RPC_URL}"
+          : "${PHASE:?set PHASE to activate, communities, switch-strategy, strategies, or verify}"
           if [ -n "${SAFE_ADDRESS:-}" ]; then
             if [ -n "${MIGRATION_EXECUTOR:-}" ]; then
               echo "set only SAFE_ADDRESS or MIGRATION_EXECUTOR" >&2
@@ -184,8 +185,15 @@ tasks:
           : "${COMMUNITY_LOGIC:?set COMMUNITY_LOGIC}"
           : "${COMMUNITY_POOL_FACET:?set COMMUNITY_POOL_FACET}"
           : "${OUT:?set OUT to an empty directory}"
-          node scripts/prepare-shared-routing.mjs \
-            --network "${NETWORK}" --rpc "${RPC_URL}" "${executor_flag}" "${executor_address}" \
+          set -- --phase "${PHASE}" --network "${NETWORK}" --rpc "${RPC_URL}" "${executor_flag}" "${executor_address}"
+          case "${PHASE}" in
+            communities|strategies|verify)
+              : "${SUBGRAPH_URL:?set SUBGRAPH_URL to the chain subgraph endpoint}"
+              : "${SWITCH_TX:?set SWITCH_TX to the confirmed template switch transaction hash}"
+              set -- "$@" --subgraph-url "${SUBGRAPH_URL}" --switch-tx "${SWITCH_TX}"
+              ;;
+          esac
+          node scripts/prepare-shared-routing.mjs "$@" \
             --strategy-router "${STRATEGY_ROUTER}" --community-router "${COMMUNITY_ROUTER}" \
             --strategy-logic "${STRATEGY_LOGIC}" --community-logic "${COMMUNITY_LOGIC}" \
             --community-pool-facet "${COMMUNITY_POOL_FACET}" \

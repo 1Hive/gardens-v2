@@ -89,6 +89,9 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     error ReservedRoutingSelector(bytes4 selector);
     error UseAtomicRoutingRelease();
 
+    event CommunityTemplateSet(address indexed template);
+    event StrategyTemplateSet(address indexed template);
+
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
@@ -107,6 +110,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
             revert InvalidRoutingTarget(template);
         }
         registryCommunityTemplate = template;
+        emit CommunityTemplateSet(template);
     }
 
     function setStrategyTemplate(address template) external virtual onlyOwner {
@@ -114,6 +118,7 @@ contract RegistryFactory is ProxyOwnableUpgrader {
             revert InvalidRoutingTarget(template);
         }
         strategyTemplate = template;
+        emit StrategyTemplateSet(template);
     }
 
     function setStrategyImplementation(address implementation) external onlyOwner {

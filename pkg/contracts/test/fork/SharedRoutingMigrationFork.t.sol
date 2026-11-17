@@ -29,12 +29,12 @@ contract ForkFacetV2 {
     }
 }
 
-/// @notice Migrates the configured Optimism fleet, then releases new core and facet code.
+/// @notice Migrates the configured Base fleet in the staged production order, then releases new code.
 contract SharedRoutingMigrationForkTest is Test {
     using stdJson for string;
 
     bytes32 internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
-    address internal constant FACTORY = 0x1FAC47Cf25f1ca9F20ba366099D26b28401F5715;
+    address internal constant FACTORY = 0xc93830dd463516ED5f28f6cd4F837173B87FF389;
     address internal constant EXPECTED_OWNER = 0x00BcC26E792E393217bA895f5e85AE628FC994E9;
 
     RegistryFactory internal factory;
@@ -49,15 +49,16 @@ contract SharedRoutingMigrationForkTest is Test {
 
     function test_migrateEntireConfiguredFleetThenUpgradeAgain() public {
         vm.createSelectFork(vm.envString("FORK_RPC_URL"));
-        assertEq(block.chainid, 10);
+        assertEq(block.chainid, 8453);
         string memory json = vm.readFile(string.concat(vm.projectRoot(), "/pkg/contracts/config/networks.json"));
-        communities = json.readAddressArray(".networks[4].PROXIES.REGISTRY_COMMUNITIES");
-        strategies = json.readAddressArray(".networks[4].PROXIES.CV_STRATEGIES");
-        assertEq(json.readAddress(".networks[4].PROXIES.REGISTRY_FACTORY"), FACTORY);
+        communities = json.readAddressArray(".networks[7].PROXIES.REGISTRY_COMMUNITIES");
+        strategies = json.readAddressArray(".networks[7].PROXIES.CV_STRATEGIES");
+        assertEq(json.readAddress(".networks[7].PROXIES.REGISTRY_FACTORY"), FACTORY);
         factory = RegistryFactory(payable(FACTORY));
         assertEq(factory.owner(), EXPECTED_OWNER);
         assertGt(communities.length, 0);
         assertGt(strategies.length, 0);
+        assertEq(factory.nonce(), communities.length);
         _snapshotState();
         _migrate();
         _assertMigration();
@@ -86,11 +87,13 @@ contract SharedRoutingMigrationForkTest is Test {
         strategyRouter = new CVStrategyRouter(FACTORY);
         communityRouter = new RegistryCommunityRouter(FACTORY);
         _activateRelease();
+        factory.setRegistryCommunityTemplate(address(communityRouter));
+        assertEq(factory.registryCommunityTemplate(), address(communityRouter));
         for (uint256 i; i < communities.length; i++) {
             RegistryCommunity(payable(communities[i])).upgradeTo(address(communityRouter));
         }
-        factory.setRegistryCommunityTemplate(address(communityRouter));
         factory.setStrategyTemplate(address(strategyRouter));
+        assertEq(factory.strategyTemplate(), address(strategyRouter));
         for (uint256 i; i < strategies.length; i++) {
             CVStrategy(payable(strategies[i])).upgradeTo(address(strategyRouter));
         }

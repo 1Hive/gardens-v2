@@ -4,7 +4,7 @@ import { readFile, mkdir, readdir, writeFile } from 'node:fs/promises';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import { createPublicClient, encodeFunctionData, getAddress, http, isAddress, parseAbi } from 'viem';
+import { createPublicClient, encodeFunctionData, getAddress, http, isAddress, parseAbi, parseEventLogs } from 'viem';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const implementationSlot = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
@@ -13,6 +13,7 @@ const abi = parseAbi([
   'function routesStrategies() view returns (bool)',
   'function proxiableUUID() view returns (bytes32)',
   'function owner() view returns (address)',
+  'function nonce() view returns (uint256)',
   'function getThreshold() view returns (uint256)',
   'function registryFactory() view returns (address)',
   'function registryCommunity() view returns (address)',
@@ -27,10 +28,13 @@ const abi = parseAbi([
   'function setStrategyTemplate(address template)',
   'function setRegistryCommunityTemplate(address template)',
   'function upgradeTo(address newImplementation)',
+  'event CommunityTemplateSet(address indexed template)',
+  'event StrategyTemplateSet(address indexed template)',
 ]);
 
 const { values } = parseArgs({ options: {
   network: { type: 'string' }, rpc: { type: 'string' },
+  phase: { type: 'string' }, 'subgraph-url': { type: 'string' }, 'switch-tx': { type: 'string' },
   'strategy-router': { type: 'string' }, 'community-router': { type: 'string' },
   'strategy-logic': { type: 'string' }, 'community-logic': { type: 'string' },
   'community-pool-facet': { type: 'string' }, out: { type: 'string' },
@@ -39,7 +43,7 @@ const { values } = parseArgs({ options: {
 }});
 
 if (values.help) {
-  process.stdout.write('Usage: node scripts/prepare-shared-routing.mjs --network <name> --rpc <url> (--executor <effective-owner-eoa> | --safe <effective-owner-safe>) --strategy-router <address> --community-router <address> --strategy-logic <address> --community-logic <address> --community-pool-facet <address> --out <directory> [--batch-size 10]\n');
+  process.stdout.write('Usage: node scripts/prepare-shared-routing.mjs --phase activate|communities|switch-strategy|strategies|verify --network <name> --rpc <url> (--executor <effective-owner-eoa> | --safe <effective-owner-safe>) --strategy-router <address> --community-router <address> --strategy-logic <address> --community-logic <address> --community-pool-facet <address> --out <empty-directory> [--subgraph-url <url> --switch-tx <hash>] [--batch-size 10]\n');
   process.exit(0);
 }
 
@@ -70,8 +74,43 @@ async function currentImplementation(client, proxy) {
   assert(word && word.length === 66, `Cannot read implementation slot for ${proxy}`);
   return getAddress(`0x${word.slice(-40)}`);
 }
+async function verifyInventory(client, factory, communities, strategies, eventName, router) {
+  assert(values['subgraph-url'] && values['switch-tx'],
+    'This phase requires --subgraph-url and --switch-tx for post-switch inventory verification');
+  assert(/^0x[0-9a-fA-F]{64}$/.test(values['switch-tx']), 'Invalid --switch-tx');
+  const receipt = await client.getTransactionReceipt({ hash: values['switch-tx'] });
+  assert(receipt.status === 'success', 'Switch transaction did not succeed');
+  const events = parseEventLogs({ abi, logs: receipt.logs, eventName, strict: true });
+  assert(events.some((event) => same(event.address, factory) && same(event.args.template, router)),
+    `Switch transaction did not emit ${eventName} for this factory and router`);
+  const response = await fetch(values['subgraph-url'], {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ query: '{ _meta { block { number } hasIndexingErrors } registryFactories(first: 1000) { id } registryCommunities(first: 1000) { id } cvstrategies(first: 1000) { id } }' }),
+  });
+  assert(response.ok, `Subgraph returned HTTP ${response.status}`);
+  const body = await response.json();
+  assert(!body.errors && body.data, 'Subgraph returned errors or no data');
+  const indexed = body.data;
+  assert(!indexed._meta.hasIndexingErrors, 'Subgraph has indexing errors');
+  assert(BigInt(indexed._meta.block.number) >= receipt.blockNumber,
+    'Subgraph has not indexed the template switch transaction');
+  assert(indexed.registryFactories.length === 1 && same(indexed.registryFactories[0].id, factory),
+    'Subgraph indexes a different factory');
+  for (const [kind, configured] of [['registryCommunities', communities], ['cvstrategies', strategies]]) {
+    const entries = indexed[kind];
+    assert(entries.length < 1000, `${kind} inventory may be truncated`);
+    const actual = new Set(entries.map((item) => getAddress(item.id)));
+    const expected = new Set(configured);
+    assert(actual.size === expected.size && [...actual].every((item) => expected.has(item)),
+      `${kind} differs between the indexed inventory and networks.json; run task sync-proxies`);
+  }
+  return { switchTx: values['switch-tx'], switchBlock: Number(receipt.blockNumber), indexedBlock: Number(indexed._meta.block.number) };
+}
 async function main() {
   const networkName = values.network;
+  const phase = values.phase;
+  assert(['activate', 'communities', 'switch-strategy', 'strategies', 'verify'].includes(phase),
+    'Specify --phase activate|communities|switch-strategy|strategies|verify');
   assert(networkName && values.rpc && values.out, 'Missing --network, --rpc or --out');
   assert(Boolean(values.safe) !== Boolean(values.executor), 'Specify exactly one of --safe or --executor');
   const batchSize = Number(values['batch-size']);
@@ -119,8 +158,8 @@ async function main() {
   }
 
   // The factory must already be upgraded through its existing governed upgrade flow.
-  await client.readContract({ address: factory, abi, functionName: 'strategyImplementation' });
-  await client.readContract({ address: factory, abi, functionName: 'communityImplementation' });
+  const activeStrategyLogic = await client.readContract({ address: factory, abi, functionName: 'strategyImplementation' });
+  const activeCommunityLogic = await client.readContract({ address: factory, abi, functionName: 'communityImplementation' });
   const [strategyCuts] = await client.readContract({ address: factory, abi, functionName: 'getStrategyFacets' });
   const [communityCuts] = await client.readContract({ address: factory, abi, functionName: 'getCommunityFacets' });
   assert(strategyCuts.length > 0 && communityCuts.length > 0, 'Factory facet sets are empty');
@@ -146,6 +185,9 @@ async function main() {
   const strategyProxies = network.PROXIES.CV_STRATEGIES.map((address) => getAddress(address));
   assert(new Set(communityProxies).size === communityProxies.length, 'Duplicate community in networks.json');
   assert(new Set(strategyProxies).size === strategyProxies.length, 'Duplicate strategy in networks.json');
+  const communityNonce = await client.readContract({ address: factory, abi, functionName: 'nonce' });
+  assert(communityNonce === BigInt(communityProxies.length),
+    'Factory community nonce differs from networks.json; run task sync-proxies and reconcile creation events');
   for (const proxy of communityProxies) {
     await assertCode(client, proxy, 'Community proxy');
     const wired = await client.readContract({ address: proxy, abi, functionName: 'registryFactory' });
@@ -172,25 +214,52 @@ async function main() {
   for (const proxy of strategyProxies) {
     if (!same(await currentImplementation(client, proxy), strategyRouter)) pendingStrategies.push(proxy);
   }
-  assert(!same(oldStrategyTemplate, strategyRouter) || pendingCommunities.length === 0,
-    'Strategy template already points to router while some communities still use old pool creation code');
-
   const stages = [];
-  stages.push(['01-activate-routing', [
-    tx(factory, 'setCommunityRelease', [nextCommunityCuts, communityLogic]),
-    tx(factory, 'setStrategyRelease', [strategyCuts, strategyLogic]),
-  ]]);
-  for (let i = 0; i < pendingCommunities.length; i += batchSize) {
-    stages.push([`02-migrate-communities-${String(i / batchSize + 1).padStart(2, '0')}`,
-      pendingCommunities.slice(i, i + batchSize).map((proxy) => tx(proxy, 'upgradeTo', [communityRouter]))]);
-  }
-  stages.push(['03-switch-templates', [
-    tx(factory, 'setRegistryCommunityTemplate', [communityRouter]),
-    tx(factory, 'setStrategyTemplate', [strategyRouter]),
-  ]]);
-  for (let i = 0; i < pendingStrategies.length; i += batchSize) {
-    stages.push([`04-migrate-strategies-${String(i / batchSize + 1).padStart(2, '0')}`,
-      pendingStrategies.slice(i, i + batchSize).map((proxy) => tx(proxy, 'upgradeTo', [strategyRouter]))]);
+  let inventoryEvidence;
+  const zero = '0x0000000000000000000000000000000000000000';
+  if (phase === 'activate') {
+    assert(!same(oldStrategyTemplate, strategyRouter), 'Strategy template already routed; choose a later phase');
+    const transactions = [];
+    if (same(activeCommunityLogic, zero)) transactions.push(tx(factory, 'setCommunityRelease', [nextCommunityCuts, communityLogic]));
+    else {
+      assert(same(activeCommunityLogic, communityLogic), 'Factory uses another community core');
+      assert(communityCuts.some((cut) => same(cut.facetAddress, poolFacet)),
+        'Active community release uses another CommunityPoolFacet');
+    }
+    if (same(activeStrategyLogic, zero)) transactions.push(tx(factory, 'setStrategyRelease', [strategyCuts, strategyLogic]));
+    else assert(same(activeStrategyLogic, strategyLogic), 'Factory uses another strategy core');
+    if (!same(oldCommunityTemplate, communityRouter)) transactions.push(tx(factory, 'setRegistryCommunityTemplate', [communityRouter]));
+    assert(transactions.length > 0, 'Activation already complete; choose communities phase');
+    stages.push(['01-activate-routing', transactions]);
+  } else {
+    assert(same(activeStrategyLogic, strategyLogic) && same(activeCommunityLogic, communityLogic),
+      'Both factory releases must be active before this phase');
+    assert(same(oldCommunityTemplate, communityRouter), 'Community template must point to the router');
+    assert(communityCuts.some((cut) => same(cut.facetAddress, poolFacet)),
+      'CommunityPoolFacet release is not active');
+    if (phase === 'communities') {
+      assert(!same(oldStrategyTemplate, strategyRouter), 'Strategy template already routed; choose strategies phase');
+      inventoryEvidence = await verifyInventory(client, factory, communityProxies, strategyProxies,
+        'CommunityTemplateSet', communityRouter);
+      for (let i = 0; i < pendingCommunities.length; i += batchSize) {
+        stages.push([`02-migrate-communities-${String(i / batchSize + 1).padStart(2, '0')}`,
+          pendingCommunities.slice(i, i + batchSize).map((proxy) => tx(proxy, 'upgradeTo', [communityRouter]))]);
+      }
+    } else if (phase === 'switch-strategy') {
+      assert(!same(oldStrategyTemplate, strategyRouter), 'Strategy template already routed');
+      assert(pendingCommunities.length === 0, 'Unmigrated communities remain');
+      stages.push(['03-switch-strategy-template', [tx(factory, 'setStrategyTemplate', [strategyRouter])]]);
+    } else {
+      assert(same(oldStrategyTemplate, strategyRouter), 'Strategy template must point to the router');
+      assert(pendingCommunities.length === 0, 'Unmigrated communities remain');
+      inventoryEvidence = await verifyInventory(client, factory, communityProxies, strategyProxies,
+        'StrategyTemplateSet', strategyRouter);
+      if (phase === 'verify') assert(pendingStrategies.length === 0, 'Unmigrated strategies remain');
+      else for (let i = 0; i < pendingStrategies.length; i += batchSize) {
+        stages.push([`04-migrate-strategies-${String(i / batchSize + 1).padStart(2, '0')}`,
+          pendingStrategies.slice(i, i + batchSize).map((proxy) => tx(proxy, 'upgradeTo', [strategyRouter]))]);
+      }
+    }
   }
 
   const out = resolve(values.out);
@@ -200,13 +269,14 @@ async function main() {
     await writeFile(join(out, `${network.name}-${name}.json`), `${JSON.stringify(payload(network, expectedOwner, isSafe, name, transactions), null, 2)}\n`);
   }
   await writeFile(join(out, `${network.name}-manifest.json`), `${JSON.stringify({
-    chainId: network.chainId, factory, executor: expectedOwner, executionMode: isSafe ? 'safe' : 'direct-owner', oldCommunityTemplate, oldStrategyTemplate,
+    chainId: network.chainId, phase, factory, executor: expectedOwner, executionMode: isSafe ? 'safe' : 'direct-owner', oldCommunityTemplate, oldStrategyTemplate,
     strategyRouter, communityRouter, strategyLogic, communityLogic, poolFacet,
+    inventoryEvidence,
     communities: communityProxies.length, pendingCommunities: pendingCommunities.length,
     strategies: strategyProxies.length, pendingStrategies: pendingStrategies.length,
     stages: stages.map(([name, transactions]) => ({ name, transactions: transactions.length })),
   }, null, 2)}\n`);
-  process.stdout.write(`Prepared ${stages.length} payload files in ${out}\n`);
+  process.stdout.write(`Prepared ${stages.length} ${phase} payload files in ${out}\n`);
 }
 
 main().catch((error) => {
