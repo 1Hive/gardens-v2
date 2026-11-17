@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "chainId": "42161",
+  "createdAt": 1794894065334,
+  "meta": {
+    "name": "arbitrum shared routing 03-switch-strategy-template",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xc1c2E092b7DbC8413E1aC02e92C161b0BDA783f6",
+      "value": "0",
+      "data": "0x1b71f0e40000000000000000000000008c715288d693ce06eac408463e4878cdaf731dbb"
+    }
+  ]
+}

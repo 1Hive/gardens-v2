@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "chainId": "100",
+  "createdAt": 1794892468466,
+  "meta": {
+    "name": "gnosis shared routing 02-migrate-communities-03",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xE2396fe2169ca026962971d3B2E373Ba925B6257",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000085465653b370aeae2588d635ad85ea5ea7d30af5"
+    },
+    {
+      "to": "0xe2F9574b07cbbF5F09feaedc6dfdc6831a2D8c6C",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000085465653b370aeae2588d635ad85ea5ea7d30af5"
+    },
+    {
+      "to": "0xe33E18b5887cf16ad4E351E98980eb5f50727c31",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000085465653b370aeae2588d635ad85ea5ea7d30af5"
+    }
+  ]
+}

@@ -101,7 +101,7 @@ async function extractProxies(chainId, expectedFactory) {
       throw new Error('Factory nonce differs from event-backed community inventory');
     }
     const normalized = (addresses) => addresses.map((address) => address.toLowerCase()).sort();
-    console.log(`Reconciled Etherscan creation and pool events through Polygon block ${toBlock}`);
+    console.log(`Reconciled Etherscan creation and pool events through chain ${chainId} block ${toBlock}`);
     return { REGISTRY_FACTORY: expectedFactory.toLowerCase(),
       REGISTRY_COMMUNITIES: normalized(inventory.communities),
       CV_STRATEGIES: normalized(inventory.strategies) };

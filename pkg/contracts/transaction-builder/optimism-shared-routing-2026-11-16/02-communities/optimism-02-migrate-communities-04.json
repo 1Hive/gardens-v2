@@ -1,0 +1,55 @@
+{
+  "version": "1.0",
+  "chainId": "10",
+  "createdAt": 1794891488694,
+  "meta": {
+    "name": "optimism shared routing 02-migrate-communities-04",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xd3345828914b740FdDd1B8ae4f4d2ce03d1e0960",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000616150e0939858a0712310f0db0464b5eaff98f8"
+    },
+    {
+      "to": "0xd58c8122831c2F4705E59A33dA1723690b310239",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000616150e0939858a0712310f0db0464b5eaff98f8"
+    },
+    {
+      "to": "0xD95Bf6dA95c77466674bd1210E77a23492F6EeF9",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000616150e0939858a0712310f0db0464b5eaff98f8"
+    },
+    {
+      "to": "0xE5b10dE982897a60CfaE8481BAC5848816c0f705",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000616150e0939858a0712310f0db0464b5eaff98f8"
+    },
+    {
+      "to": "0xE6B60735F5bFFD8C255195f2Db5CC35b78021872",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000616150e0939858a0712310f0db0464b5eaff98f8"
+    },
+    {
+      "to": "0xEE1A9CF8625c2F1F25201AC1A9a9e81f53d5E846",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000616150e0939858a0712310f0db0464b5eaff98f8"
+    },
+    {
+      "to": "0xF3630EA5ED1D9695AcAb2a3db408b56E3a6C600c",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000616150e0939858a0712310f0db0464b5eaff98f8"
+    },
+    {
+      "to": "0xF515B83F7e0Ab851f822e56b0fe63dfA973E74F0",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000616150e0939858a0712310f0db0464b5eaff98f8"
+    }
+  ]
+}

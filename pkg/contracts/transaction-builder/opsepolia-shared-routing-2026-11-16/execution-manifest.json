@@ -1,0 +1,156 @@
+{
+  "network": "opsepolia",
+  "chainId": 11155420,
+  "factoryUpgrade": {
+    "transactionHash": "0x52a7c2b1c84cbf2a5dae5f41d908a4a4d73c14919881386842065cfdd4877db3",
+    "status": "0x1",
+    "blockNumber": "0x3127e16",
+    "gasUsed": "0xc645"
+  },
+  "activation": [
+    {
+      "transactionHash": "0x4bf4ed3ad155685f528f02919a9315a05fc556442031e284a14a72286331923e",
+      "status": "0x1",
+      "blockNumber": "0x3127e7a",
+      "gasUsed": "0x182a42"
+    },
+    {
+      "transactionHash": "0xe78ae2ce9108175a162ef8177b6db97040b3908355eb2e196f2fee81de3716d7",
+      "status": "0x1",
+      "blockNumber": "0x3127e7b",
+      "gasUsed": "0x16e55d"
+    },
+    {
+      "transactionHash": "0x5a62efb1545a2ca9df853a3c0546c70719e9270e7ccbea0c53f71650892dfeb7",
+      "status": "0x1",
+      "blockNumber": "0x3127e8d",
+      "gasUsed": "0xcf93"
+    }
+  ],
+  "communityReceipts": [
+    {
+      "file": "transaction-builder/opsepolia-shared-routing-2026-11-16/opsepolia-02-migrate-communities-01.json",
+      "index": 0,
+      "target": "0x1F786ad20046a55651AD66Fb456Ab2ef2596727B",
+      "transactionHash": "0xc81627b01e8caa6611c30dc503d93b747012557c20cbea80ea6645634e5bcf79",
+      "status": "0x1",
+      "blockNumber": "0x3127ee5",
+      "gasUsed": "0xc564"
+    },
+    {
+      "file": "transaction-builder/opsepolia-shared-routing-2026-11-16/opsepolia-02-migrate-communities-01.json",
+      "index": 1,
+      "target": "0x394542fc04478AB3F8C7D9abb25d192eF60EC675",
+      "transactionHash": "0x937f49bbe8735235a13dc1441f9c806b3ff30c4c1e664bec9e940629ee5ab519",
+      "status": "0x1",
+      "blockNumber": "0x3127ee7",
+      "gasUsed": "0xc564"
+    },
+    {
+      "file": "transaction-builder/opsepolia-shared-routing-2026-11-16/opsepolia-02-migrate-communities-01.json",
+      "index": 2,
+      "target": "0xc46A732ebFC0fbb35b0142077D68De91888DD53C",
+      "transactionHash": "0xf92c9ca32d89e7944dce28750edb16970d480f756caa3a49c64bacd4e369c9ab",
+      "status": "0x1",
+      "blockNumber": "0x3127ee8",
+      "gasUsed": "0xc564"
+    },
+    {
+      "file": "transaction-builder/opsepolia-shared-routing-2026-11-16/opsepolia-02-migrate-communities-01.json",
+      "index": 3,
+      "target": "0xF0E5c2dE79E3eD66Ed9322C4545d30551D048fD0",
+      "transactionHash": "0x1afda995be7e31fe4e4996953c00323490afa4367dea8b0ffffb58b3ee852847",
+      "status": "0x1",
+      "blockNumber": "0x3127eea",
+      "gasUsed": "0xc57a"
+    }
+  ],
+  "strategyTemplateSwitch": {
+    "transactionHash": "0x19bce3f3d188666b319b499d9e2b7a5f2bfa3c8624b4383057c60fc602b5d90f",
+    "status": "0x1",
+    "blockNumber": "0x3127f19",
+    "gasUsed": "0xce18"
+  },
+  "strategyReceipts": [
+    {
+      "file": "transaction-builder/opsepolia-shared-routing-2026-11-16/opsepolia-04-migrate-strategies-01.json",
+      "index": 0,
+      "target": "0x08f731dDf35411eED2293b5b3638721326246686",
+      "transactionHash": "0xae033fd4be8dad88a76df04699a684b2237c542a838156a0361afcceb86d6093",
+      "status": "0x1",
+      "blockNumber": "0x3127f3b",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/opsepolia-shared-routing-2026-11-16/opsepolia-04-migrate-strategies-01.json",
+      "index": 1,
+      "target": "0x093F75D851a874E506f1830CBC99fCD652E9b520",
+      "transactionHash": "0xad17efeae699f863649fef53d021de80e1eb54cbb3463f89bb42c3dc07a2798f",
+      "status": "0x1",
+      "blockNumber": "0x3127f3d",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/opsepolia-shared-routing-2026-11-16/opsepolia-04-migrate-strategies-01.json",
+      "index": 2,
+      "target": "0x280976EaeCF349B054e9EEF80f1f8306c8b4149c",
+      "transactionHash": "0x32946514d8266ad394dc0e5172d3eeffe4b4c1826048db374ad6914b54ce9b90",
+      "status": "0x1",
+      "blockNumber": "0x3127f3e",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/opsepolia-shared-routing-2026-11-16/opsepolia-04-migrate-strategies-01.json",
+      "index": 3,
+      "target": "0x7FfF1689B505146949485C0DF2194dd0BaaCc319",
+      "transactionHash": "0xfe055caf81adb38b616eed9210d10f0dd89ef9fabf63e3f1a86db00c3efea039",
+      "status": "0x1",
+      "blockNumber": "0x3127f40",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/opsepolia-shared-routing-2026-11-16/opsepolia-04-migrate-strategies-01.json",
+      "index": 4,
+      "target": "0xB1F46E01cCe016ab1C3c8ae6D4Bd77C977Fa24A0",
+      "transactionHash": "0x7c36c24ecdc7724a3f5cf2788e50adcf1028b4873179f05508e4eb7546fd4cb7",
+      "status": "0x1",
+      "blockNumber": "0x3127f41",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/opsepolia-shared-routing-2026-11-16/opsepolia-04-migrate-strategies-01.json",
+      "index": 5,
+      "target": "0xB9B419d9330008F60c42e8dC40A48a8f00c158DD",
+      "transactionHash": "0x65391d919e17b462b6169ebdf3304e22e5e0f38b166dd8a9ec016f76531ebbc8",
+      "status": "0x1",
+      "blockNumber": "0x3127f42",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/opsepolia-shared-routing-2026-11-16/opsepolia-04-migrate-strategies-01.json",
+      "index": 6,
+      "target": "0xC30aB02B25ca2667dD0efA1DeB269C0F568c6147",
+      "transactionHash": "0x819948a2058890fbb18157a1fa2396d66fa0d3b9b89b03afbb13c1eea0982f4d",
+      "status": "0x1",
+      "blockNumber": "0x3127f44",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/opsepolia-shared-routing-2026-11-16/opsepolia-04-migrate-strategies-01.json",
+      "index": 7,
+      "target": "0xd880E7D2af2baB5709c3A48B740fb2ecEA563bf0",
+      "transactionHash": "0x2c768e95eab16abdbc3faf6e8e5c1960eb492b2b1fed7d339056a624c07cc322",
+      "status": "0x1",
+      "blockNumber": "0x3127f45",
+      "gasUsed": "0xc620"
+    }
+  ],
+  "verified": {
+    "pendingProxyTransactions": 0,
+    "communities": 4,
+    "strategies": 8,
+    "routedVerifier": true,
+    "stateVerifier": true,
+    "inventory": "subgraph"
+  }
+}

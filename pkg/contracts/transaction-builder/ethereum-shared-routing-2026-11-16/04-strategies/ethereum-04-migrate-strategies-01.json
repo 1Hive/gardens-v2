@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "chainId": "1",
+  "createdAt": 1794892152172,
+  "meta": {
+    "name": "ethereum shared routing 04-migrate-strategies-01",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xAb21dbef27EBf5a58DCD16C555b478bF7CD2307c",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000d1e7fdc8067fe654c97aae0ba83fcdbab206b156"
+    },
+    {
+      "to": "0xDD2De4862bF9a435aFf95636D19297a21f10958F",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000d1e7fdc8067fe654c97aae0ba83fcdbab206b156"
+    },
+    {
+      "to": "0xf128a85C4EeD583527d91cD7FA8eB453e0D49397",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000d1e7fdc8067fe654c97aae0ba83fcdbab206b156"
+    }
+  ]
+}

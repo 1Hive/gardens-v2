@@ -259,6 +259,7 @@ tasks:
             --rpc-url "${RPC_URL}" --account PK_DEPLOYER --password-file "${password_file}" \
             --sig "run(string)" "${NETWORK}" --ffi --via-ir \
             --libraries "pkg/contracts/src/CVStrategy/ConvictionsUtils.sol:ConvictionsUtils:${library}" \
+            --gas-estimate-multiplier "${SHARED_GAS_ESTIMATE_MULTIPLIER:-130}" \
             --slow --broadcast -vvv
   verify-storage-quick:
     desc: Verify storage quick

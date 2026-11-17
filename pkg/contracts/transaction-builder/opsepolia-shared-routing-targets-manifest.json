@@ -1,0 +1,64 @@
+{
+  "chain": "opsepolia",
+  "chainId": 11155420,
+  "sourceCommit": "6a02a2f05c72a78ecba7f0014316c3611ac15b68",
+  "deployer": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+  "factoryProxy": "0xec8824e9a9498520891ec678e98c5bd3e65229c2",
+  "deployments": [
+    {
+      "contract": "RegistryFactory",
+      "address": "0x8b9e50f9431adc7dfa3b83ee7fa1fdee93076127",
+      "transactionHash": "0xcbe810f24b0aab337bbd3f721bd42ed7683b3e13c79a35e554307dec401daa91",
+      "blockNumber": 51543536,
+      "gasUsed": 4575626,
+      "runtimeBytes": 20866,
+      "runtimeCodeHash": "0x6d57acd77cd67ecd98d535729763d08f7c367603892525e9f08426d63fd0b66f"
+    },
+    {
+      "contract": "CVStrategyRouter",
+      "address": "0x0a67b8cac4659bef5b2b59d75eac6364338a2964",
+      "transactionHash": "0xb1c199bdeb72d1a7579dd7ed1c2d6882079fe3344cfc7b426315345363960379",
+      "blockNumber": 51543537,
+      "gasUsed": 1893592,
+      "runtimeBytes": 8376,
+      "runtimeCodeHash": "0x9142da278d3f8a36e0839286fdc20e80b8ba6b2357cb80e2e150cf5f900d2376"
+    },
+    {
+      "contract": "RegistryCommunityRouter",
+      "address": "0x7b9c28301320a7d733c53c0268439e6649ba7000",
+      "transactionHash": "0x2b95557902997b9d5909e52cde94a241c375b6b5ec70b104aa41a4f8582c3b3f",
+      "blockNumber": 51543538,
+      "gasUsed": 1892704,
+      "runtimeBytes": 8372,
+      "runtimeCodeHash": "0x31a70a8877377024a62ee9c926ca90eb0dbfdb0df80a2b88d4082e34d537011e"
+    },
+    {
+      "contract": "CVStrategy",
+      "address": "0xbba5916e5c8d332f1f354d10c37cb39903be7236",
+      "transactionHash": "0x68da13b9fcd95ffb096d467589796ef874971e50eeb00fda8cc2f16be9ca4f53",
+      "blockNumber": 51543539,
+      "gasUsed": 5016378,
+      "runtimeBytes": 22831,
+      "runtimeCodeHash": "0xf47b1afbb37477d8037fa9ee25d020a7ffff51ad99db517b9f03159cfa0621d3"
+    },
+    {
+      "contract": "RegistryCommunity",
+      "address": "0x82de6a9babd897fa61f7f0a3739e826adf51eef2",
+      "transactionHash": "0xfbf9c373a44fc3eebe7ffaff8424196d51bc8714cb0aef37e0581ad15bf30edb",
+      "blockNumber": 51543540,
+      "gasUsed": 3795684,
+      "runtimeBytes": 17197,
+      "runtimeCodeHash": "0x40bad379915967da26731be7c034fef85e67d9d79df05876b9a9243eaad953f0"
+    },
+    {
+      "contract": "CommunityPoolFacet",
+      "address": "0xe169ffcd4d2ee1580d82c961b347a0d43f580098",
+      "transactionHash": "0x83d368db645f7797c8b5e1d707354a3e4a522dc441bf9533a2d808b409691350",
+      "blockNumber": 51543541,
+      "gasUsed": 2766173,
+      "runtimeBytes": 12463,
+      "runtimeCodeHash": "0x8f6fdb40c5fddef99a15af27a016f889ad220fbde138632e6f65f8cce922bd3d"
+    }
+  ],
+  "status": "deployed-candidates-inactive"
+}

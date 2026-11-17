@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "chainId": "421614",
+  "createdAt": 1794894177803,
+  "meta": {
+    "name": "arbsepolia shared routing 02-migrate-communities-02",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xbE7b830623707babc4b46fF73279c73e2D1bc177",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000f84263be90b4e80fd1136f2fea4478e5a1b8ead4"
+    },
+    {
+      "to": "0xc219730Ec703c9525748c3b80184d57F1d57699b",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000f84263be90b4e80fd1136f2fea4478e5a1b8ead4"
+    }
+  ]
+}

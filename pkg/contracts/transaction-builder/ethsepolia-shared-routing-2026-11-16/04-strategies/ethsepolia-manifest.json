@@ -1,0 +1,149 @@
+{
+  "chainId": 11155111,
+  "phase": "strategies",
+  "factory": "0xE01464829B1B888bF92A8D1CeC3114BB9787984d",
+  "executor": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+  "executionMode": "direct-owner",
+  "oldCommunityTemplate": "0x6f5c4bEdD8B2Cc573C98708F4B4C1678E2C66c94",
+  "oldStrategyTemplate": "0x16a0c53dbF55eE19E260f2219dEA55D42f1FAc4C",
+  "strategyRouter": "0x16a0c53dbF55eE19E260f2219dEA55D42f1FAc4C",
+  "communityRouter": "0x6f5c4bEdD8B2Cc573C98708F4B4C1678E2C66c94",
+  "strategyLogic": "0x3f59A9668FC830E7d5c382999D2Dd3BE25139208",
+  "communityLogic": "0x8769F5485cA5a6b2e1F401D116B27FFD80001Aa9",
+  "poolFacet": "0x2C3492141BEd07CeA8587b1991A52a1C443ABb0a",
+  "inventoryEvidence": {
+    "switchTx": "0xae91090796b816bbe14a566f1c23374b0af004a7d8b6b8078fbcc2b51d7a1b61",
+    "switchBlock": 12152496,
+    "indexedBlock": 12152502
+  },
+  "communities": 2,
+  "pendingCommunities": 0,
+  "strategies": 303,
+  "pendingStrategies": 303,
+  "stages": [
+    {
+      "name": "04-migrate-strategies-01",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-02",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-03",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-04",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-05",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-06",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-07",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-08",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-09",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-10",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-11",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-12",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-13",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-14",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-15",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-16",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-17",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-18",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-19",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-20",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-21",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-22",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-23",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-24",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-25",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-26",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-27",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-28",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-29",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-30",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-31",
+      "transactions": 3
+    }
+  ]
+}

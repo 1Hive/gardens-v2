@@ -1,0 +1,48 @@
+{
+  "network": "arbitrum",
+  "chainId": 42161,
+  "targets": [
+    {
+      "name": "REGISTRY_FACTORY",
+      "address": "0xf254c9062934ab4db351f8a9cfeae3a68146b320",
+      "transactionHash": "0x4b706ae8efb54ce1a0a27e17c9fd17af80cdd2192a35438eb5e8a9ad1ca911f8",
+      "status": "0x1",
+      "blockNumber": "0x1f4a1eea"
+    },
+    {
+      "name": "CV_STRATEGY_ROUTER",
+      "address": "0x8c715288d693ce06eac408463e4878cdaf731dbb",
+      "transactionHash": "0x8c60998cd651090cb92a244c88d5f408cc6181a070c9fea49fb5ba6f5a813188",
+      "status": "0x1",
+      "blockNumber": "0x1f4a1eec"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY_ROUTER",
+      "address": "0x1b37918ac46ed3ed4e363b8d8582d276583a4f0e",
+      "transactionHash": "0x90384a30302dd706bcc8c39fc3442da8edcf590551a4bf37aaec66f8be090e16",
+      "status": "0x1",
+      "blockNumber": "0x1f4a1eee"
+    },
+    {
+      "name": "CV_STRATEGY",
+      "address": "0x0871606d730278e5c43aca2d715d442f4b47fb05",
+      "transactionHash": "0xe658341c295159793a9579d295bb6793a2e10239b4604c3bf5ffae897ef1d405",
+      "status": "0x1",
+      "blockNumber": "0x1f4a1ef4"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY",
+      "address": "0x6bdeb3fdae8ce67446f8b27b04a5a7e7d3c73422",
+      "transactionHash": "0x8b3d8e7c49940729c5ec67371c345af024be44ea71e7d0a9cb9bdae034c6db67",
+      "status": "0x1",
+      "blockNumber": "0x1f4a1efc"
+    },
+    {
+      "name": "COMMUNITY_POOL",
+      "address": "0x519f19cb1e935634b0dc27b6af550fd2176a92eb",
+      "transactionHash": "0x4ebbe84c0df3ae7fb66a8727aafdfc3ec3e5bf6bcf44eef6eedd4957b6b5c3b6",
+      "status": "0x1",
+      "blockNumber": "0x1f4a1f00"
+    }
+  ]
+}

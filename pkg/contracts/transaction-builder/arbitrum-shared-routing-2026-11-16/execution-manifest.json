@@ -1,0 +1,1128 @@
+{
+  "network": "arbitrum",
+  "chainId": 42161,
+  "factoryUpgrade": {
+    "transactionHash": "0xf6db586e53864786863ef6000dea3e5b0d9e953ace92fe9204731db60452b131",
+    "status": "0x1",
+    "blockNumber": "0x1f4a1f9c",
+    "gasUsed": "0xc84a"
+  },
+  "activation": [
+    {
+      "transactionHash": "0xee2eaac120af325852205800b7e73505b413f4c4e0ce70b0c94281a83fe3b388",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2076",
+      "gasUsed": "0x18358f"
+    },
+    {
+      "transactionHash": "0x033628121630d01ac5c245cb395f5b5267b8ab466d8d3b829a43e23a3d47db88",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2078",
+      "gasUsed": "0x16f0f4"
+    },
+    {
+      "transactionHash": "0x1651c5b6b952b85d13b674394ebb64e2d61123148132e4535e5f8634038df13a",
+      "status": "0x1",
+      "blockNumber": "0x1f4a207b",
+      "gasUsed": "0xd1a2"
+    }
+  ],
+  "communityReceipts": [
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-01.json",
+      "index": 0,
+      "target": "0x01A2c3C4e7C38885bf3D01E38847184ff2368Fea",
+      "transactionHash": "0xd549c400ad45c9e30bd5b657a127732d2196fbc730c5a2f285b4d5b84fc20663",
+      "status": "0x1",
+      "blockNumber": "0x1f4a22c7",
+      "gasUsed": "0xc722"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-01.json",
+      "index": 1,
+      "target": "0x050ebb32303a724b0b3Ef84C917DA5b76b772d51",
+      "transactionHash": "0x49c7b3a190ea72fc55eb182c4c92beb8c340db7572a49c46bf9a3733c2c23734",
+      "status": "0x1",
+      "blockNumber": "0x1f4a22ca",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-01.json",
+      "index": 2,
+      "target": "0x072C84bd770a9f2B527237a0B7DbD3908e2CB9fC",
+      "transactionHash": "0x708f0e1fff60933424395133f6056a9024edd1a8a022272ef44322137cbdbe0d",
+      "status": "0x1",
+      "blockNumber": "0x1f4a22cc",
+      "gasUsed": "0xc73f"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-01.json",
+      "index": 3,
+      "target": "0x0F143Af46Eef341b3F0dBF98c3ecb47F57067fEf",
+      "transactionHash": "0xdb306eb361d741c16d3b3171a69861a18851baeece7c23f050318a3d10c5e159",
+      "status": "0x1",
+      "blockNumber": "0x1f4a22cf",
+      "gasUsed": "0xc722"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-01.json",
+      "index": 4,
+      "target": "0x110F4A8153c04EACe288e712eB4B975B46376B8C",
+      "transactionHash": "0x451671803cd26267fe708ed42e56742df5a1394f1831580ef7958d609620c228",
+      "status": "0x1",
+      "blockNumber": "0x1f4a22d1",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-01.json",
+      "index": 5,
+      "target": "0x2789f2D1b8050C724D3fc8258faF7f1e45f5707c",
+      "transactionHash": "0x5657736d3f59015d400e23984b430585d03a84b9a891b62f1c695fa610a8ef67",
+      "status": "0x1",
+      "blockNumber": "0x1f4a22d3",
+      "gasUsed": "0xc73f"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-01.json",
+      "index": 6,
+      "target": "0x2851B7e3D1ad8Ba5637AfE196968F1A4A9875E03",
+      "transactionHash": "0xd4e6b142aca8b58bc59d96ec44eb2aaff2a1e8d13b9c9c5794e66f33db15ad4b",
+      "status": "0x1",
+      "blockNumber": "0x1f4a22d5",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-01.json",
+      "index": 7,
+      "target": "0x2E8b031Ae32DeBcE51126b17356F122e4C07E941",
+      "transactionHash": "0x98f7ee710b403e99e312a52d59d0cb37e26da2df7a6daa2f9b347bb1d45bf870",
+      "status": "0x1",
+      "blockNumber": "0x1f4a22d8",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-01.json",
+      "index": 8,
+      "target": "0x2eD599A96ea90C5C777abb0a13dFb6aF1D5FBE76",
+      "transactionHash": "0x332a2f9d840e4e744a184d7d7c97ba18b85edf2c04a1f584955cf1bd38eeda4d",
+      "status": "0x1",
+      "blockNumber": "0x1f4a22da",
+      "gasUsed": "0xc718"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-01.json",
+      "index": 9,
+      "target": "0x3056C5f59994b8c1d2949c38758d0672a5cb7cC9",
+      "transactionHash": "0x1b86b07b69dab95a3a9b91d5a87e27ca4dc54c4f5cc876575999c30e36dcd200",
+      "status": "0x1",
+      "blockNumber": "0x1f4a22dd",
+      "gasUsed": "0xc73f"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-02.json",
+      "index": 0,
+      "target": "0x374874383fCA7E1236fa5Db8Bb89d62FaB9252E7",
+      "transactionHash": "0xc65ab38527ceca60fbd2ac881fd03ecc164474ef382d5698b7320957cd44f818",
+      "status": "0x1",
+      "blockNumber": "0x1f4a233b",
+      "gasUsed": "0xc73f"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-02.json",
+      "index": 1,
+      "target": "0x3F69323378E45f8D1D90e24e4aD7B772D8Afa2e0",
+      "transactionHash": "0x4188bf013ea01be23be7b1bc668d1f605926034af29ad699f1a24078f36e16f2",
+      "status": "0x1",
+      "blockNumber": "0x1f4a233e",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-02.json",
+      "index": 2,
+      "target": "0x400b3316447a4362ABe36206c145550080046831",
+      "transactionHash": "0x50bea58c2b85edff7369366abe7a1757edca92f25c2cb53e6e293513c478dbc7",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2340",
+      "gasUsed": "0xc722"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-02.json",
+      "index": 3,
+      "target": "0x40F44E992CC53eff241F51c825C7a1853EEDAEB0",
+      "transactionHash": "0x53905a572dbbd4a685c0439f124f701636eb55f15f4fd3902ca73c6f0d51dd48",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2343",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-02.json",
+      "index": 4,
+      "target": "0x41A9eD5dE7998583Cd20bF738cA38e649e0eaFe3",
+      "transactionHash": "0x7b3754333633984048f74be3cf60ebb2d0ff8a7775fb30bd57aace51af9eec13",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2346",
+      "gasUsed": "0xc71f"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-02.json",
+      "index": 5,
+      "target": "0x44b7bE0eC29a831C847895CE7B2a045C28C907B1",
+      "transactionHash": "0xaec462f2dabe197b9722a2246dc6c0f7e292e8342e6be8136b4815795b9f3cf9",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2349",
+      "gasUsed": "0xc736"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-02.json",
+      "index": 6,
+      "target": "0x46CBcF5879c0279119512b621BE056755F99e836",
+      "transactionHash": "0xe9e214dd6ab404099264fa06ce85487b6055eb6b147c8b3c963a9d050f64d7f7",
+      "status": "0x1",
+      "blockNumber": "0x1f4a234c",
+      "gasUsed": "0xc73c"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-02.json",
+      "index": 7,
+      "target": "0x4c6D1E6afd4DA230868Ec492872c634CF0FF02E8",
+      "transactionHash": "0xef0c57c6275cbcafc1b5878ecf9e7469d350848612329956075ffed2b6427f12",
+      "status": "0x1",
+      "blockNumber": "0x1f4a234e",
+      "gasUsed": "0xc739"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-02.json",
+      "index": 8,
+      "target": "0x5396C94eA47916F5661734FEE769d0D7Cc8b14c6",
+      "transactionHash": "0x3b2f18c90fb66aa2be1c1d95e870acc12865e9c7007e42b3edc2ca6ffefe1b1e",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2351",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-02.json",
+      "index": 9,
+      "target": "0x561F7C4c65f42aF17Eab52B7065a5D2C080a3904",
+      "transactionHash": "0xff6b5ac7b2acdb6932e41ba0966dfe7ce560f63bfd81a58ede3bdbb43b3e3e57",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2354",
+      "gasUsed": "0xc722"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-03.json",
+      "index": 0,
+      "target": "0x5A48Adf540Cb5c79Edb027BEF3EBF551Ce63661F",
+      "transactionHash": "0xd2dd73502719eacf74aca149f975fad5725dd70c5bc6f4a9b74ccc054eed6254",
+      "status": "0x1",
+      "blockNumber": "0x1f4a23b3",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-03.json",
+      "index": 1,
+      "target": "0x625CB91Ad17cf9b4A2b6B20B2b494Ddf123C290C",
+      "transactionHash": "0xb6ee9c5cd61f97b010504e1fe227432e914e3bb191714a5c75044cc3906520ae",
+      "status": "0x1",
+      "blockNumber": "0x1f4a23b5",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-03.json",
+      "index": 2,
+      "target": "0x68a2dC70d3fA0fF990979C5467d62Bdcd2e6e9B4",
+      "transactionHash": "0x4d0f4830c8d7a60d69cfd12d29c5bc2ae7096740bb769d6b69042ce00982d6fd",
+      "status": "0x1",
+      "blockNumber": "0x1f4a23b7",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-03.json",
+      "index": 3,
+      "target": "0x6A34bE42B61698Ba8A103CF9C3d022F59BF8F4F2",
+      "transactionHash": "0xba4fcac972cff389445fed9bdedd92927c90c2942945118c9d94a45eeed86f8e",
+      "status": "0x1",
+      "blockNumber": "0x1f4a23ba",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-03.json",
+      "index": 4,
+      "target": "0x6dd6b0A9a9b94Aa169e5CE31cff34a46c7bea9cD",
+      "transactionHash": "0xc495f40ea84b3ae596d941e6d56ae955e6ac403f04a2694d81193705bfb4ec50",
+      "status": "0x1",
+      "blockNumber": "0x1f4a23be",
+      "gasUsed": "0xc720"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-03.json",
+      "index": 5,
+      "target": "0x7508c3bCC2ce964ef858762cFbFA8Bbbcf406Ec9",
+      "transactionHash": "0x78fc4b4dc2d9eb2c1bfe1a49dbd8ada3eb6eb679e108b452e2486f57817744f3",
+      "status": "0x1",
+      "blockNumber": "0x1f4a23c1",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-03.json",
+      "index": 6,
+      "target": "0x7C31DB900D9c0DB7CF005a862C12A0c298D47220",
+      "transactionHash": "0xb6c43acfaf3641b261345ed4805876895db0f23fb7134bd95bc69f1d4683f531",
+      "status": "0x1",
+      "blockNumber": "0x1f4a23c4",
+      "gasUsed": "0xc73e"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-03.json",
+      "index": 7,
+      "target": "0x8281fD9C5f709a681813c49843a253a05D9b837c",
+      "transactionHash": "0xd83059458dae1aa0e60568f216b2a013f5c60f7557ab254e329f8db78b1dd739",
+      "status": "0x1",
+      "blockNumber": "0x1f4a23c7",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-03.json",
+      "index": 8,
+      "target": "0x8619e82A70fC412602e51f5056769DDB27D1b412",
+      "transactionHash": "0x77e40a7819c3794088743e612c238e7c6dd7c0bbadaba2857290ee84f0212478",
+      "status": "0x1",
+      "blockNumber": "0x1f4a23ca",
+      "gasUsed": "0xc73f"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-03.json",
+      "index": 9,
+      "target": "0x8c3e27F075BB82e8730660828a1159c9438F3e58",
+      "transactionHash": "0x6594d915681080aeadfbd91a1f5fa5b3fbbf1865dec29283dc2175e0fcd0e447",
+      "status": "0x1",
+      "blockNumber": "0x1f4a23cd",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-04.json",
+      "index": 0,
+      "target": "0x9082908714e7119854da2DFA20Fd8f268356F3AD",
+      "transactionHash": "0x1122afbdae316959e5ef2b4767997166dbaa9525fc2fd472dc5159c8ac75147d",
+      "status": "0x1",
+      "blockNumber": "0x1f4a242b",
+      "gasUsed": "0xc720"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-04.json",
+      "index": 1,
+      "target": "0x939eD754E012b2a79658CA370B723c17fa4b64be",
+      "transactionHash": "0x2636ddcc0ddce0cf919b7ffeb75424dc3b4cf578419d6115795b58221335c126",
+      "status": "0x1",
+      "blockNumber": "0x1f4a242d",
+      "gasUsed": "0xc739"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-04.json",
+      "index": 2,
+      "target": "0x95302d002738e44fc5F771a4F04C05B6848e5168",
+      "transactionHash": "0xec7d524d46f28e9a0efbf9745faa0043199cda1a41344938169b944f8998e59e",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2430",
+      "gasUsed": "0xc739"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-04.json",
+      "index": 3,
+      "target": "0x98d84697794F4AAe7540C1F85433E2aB39AB1206",
+      "transactionHash": "0xefd21b76744378a3da291f89550a20fa8657cb3bc03f50c8f5719c93b327686d",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2433",
+      "gasUsed": "0xc722"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-04.json",
+      "index": 4,
+      "target": "0x9C90920DF8051340bd7250bcE83e6770D634a132",
+      "transactionHash": "0xf1875c90d9d5b8665c5529d193f6da32118b8edcd48034a9275436902de22a65",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2435",
+      "gasUsed": "0xc73f"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-04.json",
+      "index": 5,
+      "target": "0xA50d2cE829Ea7b731c3B0A244032b639Ff94CB92",
+      "transactionHash": "0xed05c86ff772f14be6e95d131c7c614a72249da37fd937217a11dd585a357730",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2438",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-04.json",
+      "index": 6,
+      "target": "0xab3f879c6db8EA7B152E8C7ca408A2CcA76813B4",
+      "transactionHash": "0x794dbe4e769f8c3e2954c3ead1a3bfcfd83a7433876a773eeffad5fb9062efb1",
+      "status": "0x1",
+      "blockNumber": "0x1f4a243a",
+      "gasUsed": "0xc739"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-04.json",
+      "index": 7,
+      "target": "0xAB90f7D562eDac4fdfCac4D1Cd93A45Ac4A1fdAb",
+      "transactionHash": "0x0ea9e8b84ad8c4b3fd4bb5c5fbd3b6c90b7560c925cf679268abc8fed5f5d5b5",
+      "status": "0x1",
+      "blockNumber": "0x1f4a243d",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-04.json",
+      "index": 8,
+      "target": "0xB747bF0e9Bc114c2ED63B3e5cdac9C5afdc93Ea3",
+      "transactionHash": "0x14f8f4072d98cb4733d4abfb4d8fbfbb057b3e647ff932c423f32d36323dd7bd",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2440",
+      "gasUsed": "0xc722"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-04.json",
+      "index": 9,
+      "target": "0xBB8B8DdC3775d825B6cf33BFA9ddcd771b88c6ee",
+      "transactionHash": "0xb90d3990ebff33db57d8c4b38de7404f036155a64ba3030ea81ea1012f767dda",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2443",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-05.json",
+      "index": 0,
+      "target": "0xBD881199F09502621093616AB08dE83F4491ba36",
+      "transactionHash": "0x5c5947f047ebc67c41aee97caddcaa267aee09705763d38c94849ea42112a550",
+      "status": "0x1",
+      "blockNumber": "0x1f4a249f",
+      "gasUsed": "0xc739"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-05.json",
+      "index": 1,
+      "target": "0xc3Ba42da1d9F6B09d4d1315AC04F873A5ba64D3c",
+      "transactionHash": "0x0c90eea1b51e5076733d6ce385d8554baec04958de1068cd0bab467ec24142ec",
+      "status": "0x1",
+      "blockNumber": "0x1f4a24a2",
+      "gasUsed": "0xc722"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-05.json",
+      "index": 2,
+      "target": "0xD6C828E18114683208d24be26494B038357A829e",
+      "transactionHash": "0x15bdd642e6504ccd0b336eeb3aa432c9b101049724d32af4dc6e94f6b88de129",
+      "status": "0x1",
+      "blockNumber": "0x1f4a24a5",
+      "gasUsed": "0xc73f"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-05.json",
+      "index": 3,
+      "target": "0xDD65D3eac26D91F1040Fe3bEca11863cD354788E",
+      "transactionHash": "0x4d770924ba9ce3e564552a952ec4b28cfa20d95195826ca7ff93ef988c00a5e4",
+      "status": "0x1",
+      "blockNumber": "0x1f4a24a8",
+      "gasUsed": "0xc722"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-05.json",
+      "index": 4,
+      "target": "0xe0902356a984540CA097021DBd9e0650974C7f7D",
+      "transactionHash": "0xfbf2dab252e1f1fdaf92aa9222a1f0a7744e409b4581be0cc1ae9b96d3be703b",
+      "status": "0x1",
+      "blockNumber": "0x1f4a24ab",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-05.json",
+      "index": 5,
+      "target": "0xe2E9dA541d8BCFF895444e7C001FFD5e7192B87D",
+      "transactionHash": "0x73566db26cc28f48d4642504d948514a4a93fb2e1db9b54c93ae2a233aa7474d",
+      "status": "0x1",
+      "blockNumber": "0x1f4a24ad",
+      "gasUsed": "0xc73f"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-05.json",
+      "index": 6,
+      "target": "0xe5937A5D9eF051643C0B7Cb8226B61ef82f7A20B",
+      "transactionHash": "0x764479eea02695fa22050ad5d385fc1385a0f5bbf91c32d174ab2da4ef1db488",
+      "status": "0x1",
+      "blockNumber": "0x1f4a24af",
+      "gasUsed": "0xc73f"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-05.json",
+      "index": 7,
+      "target": "0xE8cB705f0F29c554e71972AF1bfBE16bb2673683",
+      "transactionHash": "0x19bc2f2f7bffecedf35dd15f6eb62de815b45aeadb502dde0d0b6c735dc6f51e",
+      "status": "0x1",
+      "blockNumber": "0x1f4a24b2",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-05.json",
+      "index": 8,
+      "target": "0xeE843AC13F23Ce668845f7e82384730F5e6721C0",
+      "transactionHash": "0xebaf9782a232484abf87553da0249aa1d6e34e35304a95b2cbd17199e8f9e487",
+      "status": "0x1",
+      "blockNumber": "0x1f4a24b4",
+      "gasUsed": "0xc73f"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-05.json",
+      "index": 9,
+      "target": "0xee86b4e71a740Bf37483a76351379F56B47f0eD2",
+      "transactionHash": "0x32450129672335562603a761ab6fbed3a985c97da7757927be00640549669e22",
+      "status": "0x1",
+      "blockNumber": "0x1f4a24b7",
+      "gasUsed": "0xc738"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-06.json",
+      "index": 0,
+      "target": "0xEE9CC69179697F3bF8172624C5803B58Bf6bF73F",
+      "transactionHash": "0xe821127375aee058cb475c1d6e0e421c0479d2a68ff2599b6e12029206d0275b",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2508",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-06.json",
+      "index": 1,
+      "target": "0xf62a2E4eCf3BF73313B3BBBFb1563cB4433c8933",
+      "transactionHash": "0x5da0911b59a887f59941d655cd92386934a9f0b23246334bed103200173f6db5",
+      "status": "0x1",
+      "blockNumber": "0x1f4a250a",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-06.json",
+      "index": 2,
+      "target": "0xFA1D8BdB95E0288779dF13f40fF32567647e7ffa",
+      "transactionHash": "0x0ecae353a54896b26a1f8137ffe87ee6425946806e5080c485a203fe368e9e25",
+      "status": "0x1",
+      "blockNumber": "0x1f4a250c",
+      "gasUsed": "0xc723"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/02-communities/arbitrum-02-migrate-communities-06.json",
+      "index": 3,
+      "target": "0xFC2bb6b0824805ceE6d7A4Af90Bd395f663651C8",
+      "transactionHash": "0xddd7eee6216c5683465ae861bd53a451ee2532598fd866cd61f59a1992730a43",
+      "status": "0x1",
+      "blockNumber": "0x1f4a250f",
+      "gasUsed": "0xc723"
+    }
+  ],
+  "strategyTemplateSwitch": {
+    "transactionHash": "0xc649ed30bb5477780015de34233e27697bd14df3afe02b448ff2afc4093fa808",
+    "status": "0x1",
+    "blockNumber": "0x1f4a2a53",
+    "gasUsed": "0xcfe0"
+  },
+  "strategyReceipts": [
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-01.json",
+      "index": 0,
+      "target": "0x020885A90d7C72079856C3EE7F7bB1E1d30C6E71",
+      "transactionHash": "0x96177416ece4f405e012e32ab4d1fccc497c03145067e2d6513ef8e4fdf2cbfe",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2c9a",
+      "gasUsed": "0xc7f3"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-01.json",
+      "index": 1,
+      "target": "0x031DaFE062DD49294050617c4d3f40b41549D5FC",
+      "transactionHash": "0xcedb5f2169c8979da0d81c4542435642adced71a9b331fc8c0fc5aae5aadd8a2",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2c9d",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-01.json",
+      "index": 2,
+      "target": "0x07d06036498751050F68d3aA9EbB5f217E312935",
+      "transactionHash": "0xbfee6ff3cb62301ab497123166b77b3c60e0b90b9d1e261654d429b69d0857de",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2ca0",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-01.json",
+      "index": 3,
+      "target": "0x083De9Da44EBd145368440c9c88cad95536Fc2b3",
+      "transactionHash": "0x036ae88926a5cd061f4817723e09d8fcc0efb989cdfcf3e58a2382930b136a8e",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2ca3",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-01.json",
+      "index": 4,
+      "target": "0x0d90b66320d48748644E2F97d4380E4d54528BF3",
+      "transactionHash": "0x8ae399afad91f59304cb9b5b38bb4dee3523244b2449a60deb1ce0d68f472dda",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2ca6",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-01.json",
+      "index": 5,
+      "target": "0x13c78c09CB4d99a3Dbe75A1D9509EBFDaDe221c4",
+      "transactionHash": "0xd8377fa19f06067e80f9dd653b5a9e557b3ed550bfc1441ad7aa8db0ae3d3f3f",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2caf",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-01.json",
+      "index": 6,
+      "target": "0x14328c6d6cd5521a08eb08b3b3a08409bc366009",
+      "transactionHash": "0x02c971eabc9e7214e4b8c08b17b718019f9884be3c485a450b01b15b1f73a7bc",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2cb1",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-01.json",
+      "index": 7,
+      "target": "0x19a0f3D7734dCa40F1847C44EF717Ef3ef5C50a5",
+      "transactionHash": "0x1fd4ebcd4e8e9fd5bfb19afafe12c1071a0e81f86c5e8862c671244c70a2546a",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2cb4",
+      "gasUsed": "0xc7fd"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-01.json",
+      "index": 8,
+      "target": "0x2B033AeB251eD96eaB3B23663a6FCC29A7065930",
+      "transactionHash": "0x04397245fb511b983137252eddb8c968e110a19d55c67674406d007531a0728a",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2cb7",
+      "gasUsed": "0xc813"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-01.json",
+      "index": 9,
+      "target": "0x2e00FD8fFF4417c9D76AC44E35F039861B7e8F86",
+      "transactionHash": "0x1c8ae18c818b9f5de3fd19325d01bac6f171d6c70770678bdffe7632dc5ea651",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2cbb",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-02.json",
+      "index": 0,
+      "target": "0x2E19245cba9871B811a362fA1D6Ce508806Df978",
+      "transactionHash": "0x515010baae2781f14e580b464a65d2afc6fec741cf18f817a0d04ca79bd42fc5",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d09",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-02.json",
+      "index": 1,
+      "target": "0x32Af53026578d8C10D2fE051D3A46dc15B697410",
+      "transactionHash": "0xaf20395ee4e49b737d8020514b6fda539185702480789e0ab09bdb92bf01fd62",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d0b",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-02.json",
+      "index": 2,
+      "target": "0x348dC2A7a75bcf5a0487f3cb68Fa5aE5B28bF59A",
+      "transactionHash": "0xe38d372ef1e030d6a319df865660526cefba41f59bce61fa2f0886b8e9cf0341",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d0e",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-02.json",
+      "index": 3,
+      "target": "0x41474014B6809E8a1AEc0E265204A85627c3490D",
+      "transactionHash": "0x3fb3d0c7f37df5139919b61cac1bd8ffc41c42af6593ddbefaae37189204aacf",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d10",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-02.json",
+      "index": 4,
+      "target": "0x424Fc753aF82BFf026B839A2E8f92709242dEC97",
+      "transactionHash": "0x15dbaf7d4e17bd58e83352b93df63e1ab0d45b288d7caf5ee00561fffb8d1d03",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d12",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-02.json",
+      "index": 5,
+      "target": "0x42DD83119c915e75B9F92D64786E0acAaD6D0eEA",
+      "transactionHash": "0x7e3e7e1c980f7780471fd2d0a3d04cc50addfd8be181588b66bbce618ab3acf0",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d15",
+      "gasUsed": "0xc816"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-02.json",
+      "index": 6,
+      "target": "0x457027FeF40D9894e8Ae33b25B60b5116eCF3014",
+      "transactionHash": "0x8e498d570b4226415f5f1ab5cf323b85cb3783b60906f0a7992c7463120c34a9",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d18",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-02.json",
+      "index": 7,
+      "target": "0x46408B210e77408c17c183470c4693F458f5aeD8",
+      "transactionHash": "0x59b4427eeea6089f2bf5938565b58011e3cf459dbd58e99d97ce17407275494f",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d1a",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-02.json",
+      "index": 8,
+      "target": "0x4Af17c4929aE03e5Ea839e3db11a98947f320f27",
+      "transactionHash": "0x73ca50b3ad1683741baa03be8420b218c1b41f7d62a8fed967ba510bf66e37d7",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d1c",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-02.json",
+      "index": 9,
+      "target": "0x4c74A1b63F40e3f6cD718BCc088c5890C5eaea3b",
+      "transactionHash": "0xe1547b4be2458a6f780e22880681ee4bb679cc90fed5bd211898847133596e95",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d1f",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-03.json",
+      "index": 0,
+      "target": "0x4D2c9571bD9F157Fb558fE6Ca3Cf366067e7515e",
+      "transactionHash": "0x6060ccd369d34a2be11675ba3252511ce4359169d6b70b6f289eb6a5f4df3e66",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d6b",
+      "gasUsed": "0xc800"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-03.json",
+      "index": 1,
+      "target": "0x55b309Ee4270448d312A15C4f71eb9eF38b35F8d",
+      "transactionHash": "0xfedfd7f43e1cc1d83d57edfcc4e821229953d9557d34dcd56883754f677229f4",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d6e",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-03.json",
+      "index": 2,
+      "target": "0x5b7d4523862981219c74B9E081221011e4F45182",
+      "transactionHash": "0x05c36da423b93971a2e1c151ee091403de7e19174686c6b319fb4a56e49e3468",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d72",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-03.json",
+      "index": 3,
+      "target": "0x5F34955AE9B11cd0b94A3D92D5A61aDE4EB47c67",
+      "transactionHash": "0xfd17b4e53b699b6afcbdf94b6fdddc5ced004877dce6180e204606f93095a237",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d75",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-03.json",
+      "index": 4,
+      "target": "0x6098D6E300Df853187517482a1FA9fd4388A4840",
+      "transactionHash": "0x0176cfde31e6bf0b1f5bdf8622ec5580b5a266e542c656e5be98190ea519de34",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d78",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-03.json",
+      "index": 5,
+      "target": "0x61FD2b423f5c2A388306aD8C6E1D373d194Bd8f5",
+      "transactionHash": "0x69e1459ef258baaf35e72e4adbe22b6cebc7e9f9e30151d292a767ab281e4cb6",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d7b",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-03.json",
+      "index": 6,
+      "target": "0x64b67685b2A4272df0f700ad216B47Be1d502dC1",
+      "transactionHash": "0x28d8a872ee7c3749121f5cacb4394f7adbbbe722289867a4c323df0381bdceba",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d7e",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-03.json",
+      "index": 7,
+      "target": "0x66Bc7ABBC2e39670bbe34F0a294043A9d5284b4a",
+      "transactionHash": "0x6e7077252e9a02c0b204737c6bd06b67f5193a07464faafc489a14d52e569e68",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d80",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-03.json",
+      "index": 8,
+      "target": "0x67198E95715cdDae1e40C24dB131caB32A39905f",
+      "transactionHash": "0xca627c65d8e1f615c27588ca52223dcb1d672c9a2d81860ea881095f509a448c",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d81",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-03.json",
+      "index": 9,
+      "target": "0x67291AA22149FA55ef2fd210A619937b247F0621",
+      "transactionHash": "0xfa73d18b9adc4a4ce72749c2cd93ccab96aed19bb0d56d98a0b7d36ba3c4aa15",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2d83",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-04.json",
+      "index": 0,
+      "target": "0x68764aae68630a0B9A3F3219d496dE38037C38FD",
+      "transactionHash": "0x8195837cbb88634848dce24f6e33342fbc19b0038e6ddb5450a86b012071881e",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2df6",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-04.json",
+      "index": 1,
+      "target": "0x6F29C8E529Df6cE316299E9Df90bF3B11A65458B",
+      "transactionHash": "0xc786e3836001b4e67184ce9c473703c7f6fc273c47b4018a4be3ff46d0045e78",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2df9",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-04.json",
+      "index": 2,
+      "target": "0x73aeae331CB6Ce374c0c496abCE52db2F6d5364c",
+      "transactionHash": "0x9c38d4329ad6412c129d0daaf32fe10d46e52f852324056eb538b85ddee7d3bd",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2dfc",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-04.json",
+      "index": 3,
+      "target": "0x7629b8eaeD2cAfE4B3370F85d251D40A0acD1D51",
+      "transactionHash": "0x4e58d746b557c0da2a2142cc872b790d9524fce28f26892215cfb028701d93e2",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e00",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-04.json",
+      "index": 4,
+      "target": "0x7749aEE50faecA5d7EED53BCbcF07Db5aAF72E51",
+      "transactionHash": "0xe0de093b54616a72d95e6c1dd921f365c4ce98c64df903d1a28c9bed8bc7bc46",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e04",
+      "gasUsed": "0xc800"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-04.json",
+      "index": 5,
+      "target": "0x7aC5B73eB757f64d69Cfa89F4050e5a598F289F2",
+      "transactionHash": "0x772a28845aaae1305eed5ea85eba43b395fb12efdf81aa200ec8fa031296edc6",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e08",
+      "gasUsed": "0xc814"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-04.json",
+      "index": 6,
+      "target": "0x7f79a423464b8BdD7A4dC43FE6736A0936E0D6f2",
+      "transactionHash": "0x72fa326c2eff732c4445ffbcb289943b34618a22c4ecb1bcddae6ae39e05edca",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e0a",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-04.json",
+      "index": 7,
+      "target": "0x99A1cC81b0F5931570D7Ea5700f29F0A7a32a7C2",
+      "transactionHash": "0xb4ae5ad7a0641f5379b0299fb49d76f1c9d9ff82062fdd16bd09deb25d7668c7",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e0d",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-04.json",
+      "index": 8,
+      "target": "0x9b40Cd69d4bFb28f82C0FD64Df979449974e659f",
+      "transactionHash": "0xec8705dd3b97dabb19ad62a3f6c618a4e6b9c4e734d4d8427262746673b39c28",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e0f",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-04.json",
+      "index": 9,
+      "target": "0x9e2b9F2BceAD1d15A064379030E9F7715e79c64E",
+      "transactionHash": "0x4fe0a47a226a96dfff9524b12bf64e73a6faa9f0c85c643e43a7db28b66fcaaa",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e12",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-05.json",
+      "index": 0,
+      "target": "0x9e39CEa859B30BB88AA2Ad2ea259B1f3549F8918",
+      "transactionHash": "0x70291636504db2109ab3e0eb0955919bab61a10a76e3a2f117020681ba24166d",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e68",
+      "gasUsed": "0xc816"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-05.json",
+      "index": 1,
+      "target": "0xa2E69FFEf428865bf6A4EbC25ccf41F72E54fD17",
+      "transactionHash": "0x658328f5a2bd90a58e7ef8d3ff5c766154db477b28fc5ee6656bd3ad62712f34",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e6b",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-05.json",
+      "index": 2,
+      "target": "0xa59fc898E3A3A21319e1deda879630FF0A4aeEa3",
+      "transactionHash": "0x5bcb2de2be20c610312037211ea4ccc6faec0dd829f83d78c6354d033a5ce288",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e6e",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-05.json",
+      "index": 3,
+      "target": "0xAD3D78eD1b03F26238845612eEb3C5b2677Fa359",
+      "transactionHash": "0x4af15362cad081a7040339963bb83d017a9e07d0ef6fe0ac1c7ae417a810df2b",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e70",
+      "gasUsed": "0xc7fd"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-05.json",
+      "index": 4,
+      "target": "0xAe366D30DaEF92fb6b927CF3eC721090803b2dc0",
+      "transactionHash": "0xf62540c87f5c7cddbe2f36cd2929a2e3422cb20dd0c5bfb78779ecb80bf352af",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e73",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-05.json",
+      "index": 5,
+      "target": "0xAf893ffEb244AdA520e842Eea4A6F3864113f1f5",
+      "transactionHash": "0xa95cd5836b028f50bcb24cb2346806448fdf16434ca67b955564de6e05ba8db8",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e74",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-05.json",
+      "index": 6,
+      "target": "0xB105A0317cD6BB0CBcbEA4F7F8AaD2CC35446489",
+      "transactionHash": "0xeb37f731c53036f362ab96e234b509a79e2bbf772a50887ebb1a5564650a2c4b",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e77",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-05.json",
+      "index": 7,
+      "target": "0xb9739585E54374268c231F042d384BfA57E41C95",
+      "transactionHash": "0xfa2310c4079e7cb54d2801ba7cb34d3f9d066876ff942fb628987f7c16c93775",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e7a",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-05.json",
+      "index": 8,
+      "target": "0xBa18F15ecC881b7606B5C6e28Cb900dFb29e8139",
+      "transactionHash": "0x034f087f34309edb819c15772544f08b8b672d0f20cddf948b1501b1850b4ea4",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e7d",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-05.json",
+      "index": 9,
+      "target": "0xBD0c6Aa5A670eBe77BD0225f345aBe0058ECE703",
+      "transactionHash": "0x0228b1a265c0e34cdd4abe2ecc2b0980698e282a382bc84d93ab41b6db9ebc02",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2e81",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-06.json",
+      "index": 0,
+      "target": "0xC979b5C6a49bd04550DE60BacEb3783a8c13bf25",
+      "transactionHash": "0xd8ee2929420825fa595bfdc7ba6041f70ff27f9c6205d5009244a65214cf8dae",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2eda",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-06.json",
+      "index": 1,
+      "target": "0xCfcf6E13B28C08739EEF56693c4E0FFea94e09d6",
+      "transactionHash": "0xc236d1fa6c73c0ca38380d53f9648a7c4f7ef7f9153b4ba9c8ae51849a6c1b57",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2edd",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-06.json",
+      "index": 2,
+      "target": "0xd5f8C11478ed2Ef892DDc7866F07f7c4584C06Aa",
+      "transactionHash": "0x5c457b9962b85096d35f57aa75f645ab2a478d0662d94e748f1aa3ce7948e241",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2edf",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-06.json",
+      "index": 3,
+      "target": "0xdeE2346Ce1450c5AD1E27d8FdB156B0DA7AB07Fd",
+      "transactionHash": "0x340014a35c5094f5e4021f2bf4fef1754f43ffc7a3644aa6a92e7d653f9ade20",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2ee2",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-06.json",
+      "index": 4,
+      "target": "0xE1143D0a5B313B3F4da2d2bE24F0EdD8CE923AC5",
+      "transactionHash": "0x3a8fb523d310c0ebd08ba3de6d51ece9ce0f5c3694456a2b428fb3ee1a0af61b",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2ee4",
+      "gasUsed": "0xc800"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-06.json",
+      "index": 5,
+      "target": "0xe2954Cf5F730d00b3D9C9Fc253e339C459989f52",
+      "transactionHash": "0x2e9522ee3329ad4ab5ac5e464cb057af6de2c85b591d84f3493c641e4921aeb5",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2ee6",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-06.json",
+      "index": 6,
+      "target": "0xE3eeA894eAFED23241a7B89D534de932b85e0b2A",
+      "transactionHash": "0x3ef639764f2abc468866a1a122f0c45353d744889a087cd401af3e7af080b521",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2ee8",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-06.json",
+      "index": 7,
+      "target": "0xE6bE17d426E9d5062eB55c0757014A03AFe59b47",
+      "transactionHash": "0xfb4b09e950d40f8fd90e07580cf0ab1fc6e9002e290e39fea7030b4d77e342f3",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2eeb",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-06.json",
+      "index": 8,
+      "target": "0xEa03978DB787d89572cB7a07b60AC65B98111143",
+      "transactionHash": "0xd8a258bf6f3c4baaec0912a2c67f4ce6e2827c317db663e128746b49d1829d74",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2eef",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-06.json",
+      "index": 9,
+      "target": "0xEd53F090a4a0183570f7ec7A304BC0D9295c1903",
+      "transactionHash": "0xeb3982f05e04a3c4397e2a2d2af7fb42cd8924b0b86165a43af4bb26f898db83",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2ef3",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-07.json",
+      "index": 0,
+      "target": "0xeeFd5923d88bdcC74aFA56943DCc163f1De2be4D",
+      "transactionHash": "0x952c17d8276b1eaab94b3fb3a6e41cd3ddaa8a3309b0c465dc94db16e832e086",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2f44",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-07.json",
+      "index": 1,
+      "target": "0xf014BAc1d94cb79A6b6c6ba95B6B648f558CC0E3",
+      "transactionHash": "0x447ac724db778a54bc406da6aa420be649f60e2bbbd0d56f1b3f0a121ef48eef",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2f47",
+      "gasUsed": "0xc817"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-07.json",
+      "index": 2,
+      "target": "0xf474D3d714b89ca0aDA658A8105838f34cbBE1FA",
+      "transactionHash": "0x842566f0c01a2811d34704cf799469473fbf68465d1f9f6753d94e38b54a9ce1",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2f4b",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-07.json",
+      "index": 3,
+      "target": "0xF659101919E1de3DCa2Fd7aa47840189506055ff",
+      "transactionHash": "0x3c33e00f01d4257d4f13214fc1074f2274fc8641bad274c399aa14863a08f2aa",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2f4f",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-07.json",
+      "index": 4,
+      "target": "0xf97acfdaD5D9996560a14947eBA2575aBC7D0492",
+      "transactionHash": "0x8748a7d64deb096c61332b165e163834c947968a739508773d8ee2c277fdbc06",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2f52",
+      "gasUsed": "0xc801"
+    },
+    {
+      "file": "transaction-builder/arbitrum-shared-routing-2026-11-16/04-strategies/arbitrum-04-migrate-strategies-07.json",
+      "index": 5,
+      "target": "0xFa7299335E6B6d1305ec968eF23471d27002d682",
+      "transactionHash": "0x0bfae570b0eed934dbd1225383d056e00ed23dcc310278835367486077a778db",
+      "status": "0x1",
+      "blockNumber": "0x1f4a2f55",
+      "gasUsed": "0xc801"
+    }
+  ],
+  "verified": {
+    "pendingProxyTransactions": 0,
+    "communities": 54,
+    "strategies": 66,
+    "routedVerifier": true,
+    "stateVerifier": true,
+    "inventory": "events"
+  }
+}

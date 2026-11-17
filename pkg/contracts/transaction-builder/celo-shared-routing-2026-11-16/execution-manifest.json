@@ -1,0 +1,1226 @@
+{
+  "network": "celo",
+  "chainId": 42220,
+  "factoryUpgrade": {
+    "transactionHash": "0x23ed46cc39f41efabb9581c59e396f6084ea48d58422a36c8f8990d87fb20c4a",
+    "status": "0x1",
+    "blockNumber": "0x4f25bd4",
+    "gasUsed": "0xc645"
+  },
+  "activation": [
+    {
+      "transactionHash": "0xa44a13d5d5a7916e5b9f5afca810f295c1fde860e65a0ae60f74d0fc86310d6f",
+      "status": "0x1",
+      "blockNumber": "0x4f25c2b",
+      "gasUsed": "0x182a5a"
+    },
+    {
+      "transactionHash": "0x502b1322b3c8e47830d390d0deab5f7232956a4a1557f2d50a82fbeed368c196",
+      "status": "0x1",
+      "blockNumber": "0x4f25c2e",
+      "gasUsed": "0x16e569"
+    },
+    {
+      "transactionHash": "0xe31204c8060720a35e77b66ba4bba9915f9ad53c970b81d886e0eb310358f26f",
+      "status": "0x1",
+      "blockNumber": "0x4f25c30",
+      "gasUsed": "0xcf9f"
+    }
+  ],
+  "communityReceipts": [
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-01.json",
+      "index": 0,
+      "target": "0x01F43aAfD844bBBaF0e9277bCF25d155CC88D9eb",
+      "transactionHash": "0xf5ae39bfd060f0f61d23c0685f6acf3aceee7cf301040aa34c3ae81995fe465b",
+      "status": "0x1",
+      "blockNumber": "0x4f25c92",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-01.json",
+      "index": 1,
+      "target": "0x0eEc46f8431BBd669CBb6Dae4655006bA650CBba",
+      "transactionHash": "0x9a3f95344c143c65ef57a5aeca3154104d28e640873589b66d03b5467e528d3b",
+      "status": "0x1",
+      "blockNumber": "0x4f25c95",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-01.json",
+      "index": 2,
+      "target": "0x0F7Ef308643F44a933aC4a8BD661c8C47A54e495",
+      "transactionHash": "0x1c50c73416786adba83778ae204206700d022e4215464cce2284d379f47cda7c",
+      "status": "0x1",
+      "blockNumber": "0x4f25c98",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-01.json",
+      "index": 3,
+      "target": "0x13987FE4A6660Facb8771199da4e6B3388d61bDD",
+      "transactionHash": "0xec874605ffa7023456c23e7b5bc3b5fbf8c916245dafe015bbc2c724c45ee709",
+      "status": "0x1",
+      "blockNumber": "0x4f25c9a",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-01.json",
+      "index": 4,
+      "target": "0x13e71c56c5B048E9b8B6a9dbB4a4f346B5dAB986",
+      "transactionHash": "0xe9ba74bf7a192c7f384aafe8f9930e215ca48e9526ecc6df6c942c9ae43592a3",
+      "status": "0x1",
+      "blockNumber": "0x4f25c9d",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-01.json",
+      "index": 5,
+      "target": "0x299ED29eBEf17309d3e86638A7879485cD09dd59",
+      "transactionHash": "0x6071608ba738ebe019158a2582f2bcbf60c22e42308186af6f08a0dce260a95a",
+      "status": "0x1",
+      "blockNumber": "0x4f25ca0",
+      "gasUsed": "0xc58c"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-01.json",
+      "index": 6,
+      "target": "0x2aC2b63689A33FE0C8d3D4F70A45cF589eCDD0AC",
+      "transactionHash": "0xfc315231ea800afaa8e47b9e3e86e530d25ca6c2122045a8c19f42a660e79d2d",
+      "status": "0x1",
+      "blockNumber": "0x4f25ca2",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-01.json",
+      "index": 7,
+      "target": "0x2ce7C24c2BfE110872381af57a1E3EB161f01650",
+      "transactionHash": "0x2710fdb8c1758748bfd860b840d45b29bc4758c34eed355acf70ab5c1f702347",
+      "status": "0x1",
+      "blockNumber": "0x4f25ca5",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-01.json",
+      "index": 8,
+      "target": "0x2eb49e06bA584079EF797EcF2118f73f6527ADB4",
+      "transactionHash": "0x2a51d08752d38cb7d034387aed6121f6eb6320c38f764e9a72073bbe149ebf8c",
+      "status": "0x1",
+      "blockNumber": "0x4f25ca8",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-01.json",
+      "index": 9,
+      "target": "0x37E2eb2b9565AFd6C572180197FEc6A99C587f9a",
+      "transactionHash": "0xfc837f42d9cc339833901285f587210333f1b0d76f42cdca2f3217e68a0cf2fa",
+      "status": "0x1",
+      "blockNumber": "0x4f25caa",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-02.json",
+      "index": 0,
+      "target": "0x427C36CfF8Bb49Ee384F1DC2c678037D197fd542",
+      "transactionHash": "0x98b50e38be9faf85aa8344169d6ee97536ccf95747b0e1a657fa850a16be709e",
+      "status": "0x1",
+      "blockNumber": "0x4f25cad",
+      "gasUsed": "0xc586"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-02.json",
+      "index": 1,
+      "target": "0x5045aa46eB1eBD6882d6981C25A2C091D966B4B1",
+      "transactionHash": "0xe6ffb49a7be1cdbea7d2df070314b4d30f61a21cc2b90f961181b7dd5e0c3817",
+      "status": "0x1",
+      "blockNumber": "0x4f25cb0",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-02.json",
+      "index": 2,
+      "target": "0x5C6570C2e48B1E8E6dd156Ee1D8d6273d867Cd3E",
+      "transactionHash": "0x9c446de2e946acef8f7f72ee3a8e021df2c1e5b811e3cf19fb3ab3b312fb5bce",
+      "status": "0x1",
+      "blockNumber": "0x4f25cb2",
+      "gasUsed": "0xc586"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-02.json",
+      "index": 3,
+      "target": "0x60558c002F0D08451A5f5Ea983b3eA44E35F6500",
+      "transactionHash": "0x520c01199f330519db5ab4bb744aedf4997b61c8c60f4c9d46947e51068415fb",
+      "status": "0x1",
+      "blockNumber": "0x4f25cb5",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-02.json",
+      "index": 4,
+      "target": "0x6068dfc4F2Aeca09d8d5845896f3aA76d0fE6960",
+      "transactionHash": "0x2a754276126a422f850cfc9defff1b1ede693e5a028db595bf0b05a849177de8",
+      "status": "0x1",
+      "blockNumber": "0x4f25cb8",
+      "gasUsed": "0xc586"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-02.json",
+      "index": 5,
+      "target": "0x6f9074A0bc5b92e839dA4FD52f84BE9D50e065a9",
+      "transactionHash": "0x3769d6a8c4a7d5fa0b938af8c31984690fd8f4b88c503c5aae7d9f3577f50fa8",
+      "status": "0x1",
+      "blockNumber": "0x4f25cba",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-02.json",
+      "index": 6,
+      "target": "0x7A3A5607E4109Aa39fc0c86f94f490812722eA61",
+      "transactionHash": "0x386a6973378aa6b9d67cf8d08880d3e0ac0c16935429281749635d105e97bdf0",
+      "status": "0x1",
+      "blockNumber": "0x4f25cbd",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-02.json",
+      "index": 7,
+      "target": "0x7f7A53514f9F9e83FFD15228579dC51E9Ef8AE71",
+      "transactionHash": "0x0c0ccd2a38ebc9f5ecba1014a4260f2643d903a6d8b98e49a7bd115dc89fc858",
+      "status": "0x1",
+      "blockNumber": "0x4f25cbf",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-02.json",
+      "index": 8,
+      "target": "0x8041Ba180Ad873a52576Aa5eCFf8aa5053F16e48",
+      "transactionHash": "0xb202cf0ce473330e6645feb64287dfe67c0f367b13c932ea30aae6e08da7c72e",
+      "status": "0x1",
+      "blockNumber": "0x4f25cc2",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-02.json",
+      "index": 9,
+      "target": "0x81E8cc3aE05355702967790eaDBC1b3C62430Fa0",
+      "transactionHash": "0xb36b39bb61106e82062313359255ca7ad610944d859d1f22783bd3902456596e",
+      "status": "0x1",
+      "blockNumber": "0x4f25cc5",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-03.json",
+      "index": 0,
+      "target": "0x8B94e55B225349Ca10F8B27697E576bD9EDB08BB",
+      "transactionHash": "0x3b5b8ef1a1a6394f9e256e01ca2416968fe83f5716ca717967ad07f493035fc4",
+      "status": "0x1",
+      "blockNumber": "0x4f25cc8",
+      "gasUsed": "0xc586"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-03.json",
+      "index": 1,
+      "target": "0x910318A9203dF4bE96a19a60C34F0FFb32cd69eE",
+      "transactionHash": "0x19eadc36958ad5c2ac329119cd55e0b25259ce595f016a10e5cd81a51fff3fcc",
+      "status": "0x1",
+      "blockNumber": "0x4f25ccb",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-03.json",
+      "index": 2,
+      "target": "0xa236D7443CAEFBdAB26EBF261Ce6f05660b51B95",
+      "transactionHash": "0x83479b65ec9097e8c899b247aa6f6e9029ec676686b6d4a7494c764b20eeaa75",
+      "status": "0x1",
+      "blockNumber": "0x4f25ccd",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-03.json",
+      "index": 3,
+      "target": "0xa76525F22Ccf391b66b7Bb2990a238dE97785Cfa",
+      "transactionHash": "0x39d219007f493016a93445f893814fd345d9da0317a8079a99c24976aa05edfc",
+      "status": "0x1",
+      "blockNumber": "0x4f25cd0",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-03.json",
+      "index": 4,
+      "target": "0xb499593950aa6b45aFdAD3dc237c72Da09292bBb",
+      "transactionHash": "0xb1a0eb83a75556bf7341a76886c1e4bfc406239e59a376e5605da53e564167f5",
+      "status": "0x1",
+      "blockNumber": "0x4f25cd3",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-03.json",
+      "index": 5,
+      "target": "0xB5F19cEf9efda3ceC99ea0242E972D04ceA44E87",
+      "transactionHash": "0xca74ca1b3ea3ec61b385af8e2b7ff748cc30364b8a31a2b1625565f3787ab68c",
+      "status": "0x1",
+      "blockNumber": "0x4f25cd6",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-03.json",
+      "index": 6,
+      "target": "0xBa87b18CA5774eD18a3c801058FBbE94B98edDa1",
+      "transactionHash": "0xcc0a37b110cfff5c49bcc4738b0dbf2cb4afec9d6962a2562da0d9ad7f1f7082",
+      "status": "0x1",
+      "blockNumber": "0x4f25cd9",
+      "gasUsed": "0xc586"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-03.json",
+      "index": 7,
+      "target": "0xbD62F4bBF704D34b7dE0247155157b4552AAA70f",
+      "transactionHash": "0x98f5378d4d96b73bafec987955b2cf2d6285c883c45eccd736323f8f067b51ff",
+      "status": "0x1",
+      "blockNumber": "0x4f25cdb",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-03.json",
+      "index": 8,
+      "target": "0xc42B34E33160fD5D5257d89E283436df2C71f1f0",
+      "transactionHash": "0xec6cc744281f3f7f4993e51a3aeab7912ee30b0c61f4ba97810dce932ab1ede8",
+      "status": "0x1",
+      "blockNumber": "0x4f25cde",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-03.json",
+      "index": 9,
+      "target": "0xcA60F3370795a22dcD1C13bFE85Cd6A2ff0e6954",
+      "transactionHash": "0xdfbdccbc2a185fc23caa086c35e3e0de3ec714c9670a181951d7bf1aa2827908",
+      "status": "0x1",
+      "blockNumber": "0x4f25ce0",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-04.json",
+      "index": 0,
+      "target": "0xe0713CFfC8fD5EcbE9C5CD0cA71B662d948C35BD",
+      "transactionHash": "0x43e255baa56f28bf03005365da83d9b36ec4e7c6d9c54fbfd4d06e2f557465cf",
+      "status": "0x1",
+      "blockNumber": "0x4f25cf1",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-04.json",
+      "index": 1,
+      "target": "0xe0d1abcdebD629F4a9c373b7D44d90d8595b774E",
+      "transactionHash": "0x5dbb87b8a9c53928ae798de17e5bfaf659d079b5af7c953dd0929122fb84aba3",
+      "status": "0x1",
+      "blockNumber": "0x4f25cf3",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-04.json",
+      "index": 2,
+      "target": "0xf26f9DC2a30F5b7623C6d2A59ADB9Ad9bFbFe824",
+      "transactionHash": "0x4df9ad1990cc57a307ccacba5add4032d7447bc2f5e137f1aedd2410e1bf71d9",
+      "status": "0x1",
+      "blockNumber": "0x4f25cf6",
+      "gasUsed": "0xc586"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-04.json",
+      "index": 3,
+      "target": "0xF42C9Ca2b10010142e2bAc34eBdDDB0b82177684",
+      "transactionHash": "0xbd008fe3ddfbf2d21d507a653d8e850e5f802d90e5ea0fc12ef99ee5f7555e8a",
+      "status": "0x1",
+      "blockNumber": "0x4f25cf9",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-04.json",
+      "index": 4,
+      "target": "0xfd023438Ff003d06bF62097372021A7Ba89CCc64",
+      "transactionHash": "0x3b7cf2c511a7c9a0e18d8d00e44e93531d77cd804e12d6ae250ad3b4b41add88",
+      "status": "0x1",
+      "blockNumber": "0x4f25cfb",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/02-communities/celo-02-migrate-communities-04.json",
+      "index": 5,
+      "target": "0xfDc5de023A8A1919A37208ea89e2d3Fe4D7C7991",
+      "transactionHash": "0xa267adcfa94c4983322dc04aace4103f9d96cc210d0fc06eaf332933897767e1",
+      "status": "0x1",
+      "blockNumber": "0x4f25cfe",
+      "gasUsed": "0xc586"
+    }
+  ],
+  "strategyTemplateSwitch": {
+    "transactionHash": "0x77de14cae7ff825ed52c9384493f3708381ab19f817e502cc090f5cb25c0ae7d",
+    "status": "0x1",
+    "blockNumber": "0x4f25d47",
+    "gasUsed": "0xce18"
+  },
+  "strategyReceipts": [
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-01.json",
+      "index": 0,
+      "target": "0x0F52002482c3188575F2E751Dc948AB2FDD39D10",
+      "transactionHash": "0xfbea2a815c4f6071f006ef83e53aeb576fe1e9c462e7c3c1072749dcbc6d8210",
+      "status": "0x1",
+      "blockNumber": "0x4f25db9",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-01.json",
+      "index": 1,
+      "target": "0x0Fd1b99Da7a2802934B16373D1A3cB2f9DB50B08",
+      "transactionHash": "0x362151d1c74214786397e2f67eb3445f93ac41c735775280b7376061b9d10b90",
+      "status": "0x1",
+      "blockNumber": "0x4f25dbb",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-01.json",
+      "index": 2,
+      "target": "0x186660411eF4B1975834F29b5912B64DE91252a2",
+      "transactionHash": "0x437c58ce7c19bd181d31c48bdd7a2c78669ed2480208094278c4564bb04c4933",
+      "status": "0x1",
+      "blockNumber": "0x4f25dbe",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-01.json",
+      "index": 3,
+      "target": "0x1BE2332bF33969Ca23D27FDE238a8F3892d0dF42",
+      "transactionHash": "0x016b5313d74f2df2085ee88683d68f5965a332dbdef5ebdf281dcfc17f59fead",
+      "status": "0x1",
+      "blockNumber": "0x4f25dc0",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-01.json",
+      "index": 4,
+      "target": "0x1ef2C3A529Af71b575C788bfe5300161c1861b79",
+      "transactionHash": "0xb33b8ab4fa274309d80b64fca101713ff7943ab1a63f75f559bf8b487a31b55f",
+      "status": "0x1",
+      "blockNumber": "0x4f25dc3",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-01.json",
+      "index": 5,
+      "target": "0x20454a1d4613529C8e1947217241910848664413",
+      "transactionHash": "0x77c60c0f7228eaa6ca8cd84dea1df1b3beb1cc68c64d5ca5bd4ab191ab467489",
+      "status": "0x1",
+      "blockNumber": "0x4f25dc6",
+      "gasUsed": "0xc63c"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-01.json",
+      "index": 6,
+      "target": "0x2085Aa46b04ba20F93F24cc51e26e4fC3f0B631D",
+      "transactionHash": "0xc61aef07317636a28bac5e7574900144e8c1de811153889d2f88cc3021e8158e",
+      "status": "0x1",
+      "blockNumber": "0x4f25dc8",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-01.json",
+      "index": 7,
+      "target": "0x24B703C965D5EA0347ECeFEE0F60785655ed45Cf",
+      "transactionHash": "0x54e6bd3c3034afbf3b09dbd221827607df7b4357118bd44d8ad12fb626a41236",
+      "status": "0x1",
+      "blockNumber": "0x4f25dcb",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-01.json",
+      "index": 8,
+      "target": "0x255Ced14C5380a4995338491c85ce7De8558F1a0",
+      "transactionHash": "0xb6a54c61f3480dc816b574b089805b28efba03e3bd1a1a0bb1f3eda3143def6d",
+      "status": "0x1",
+      "blockNumber": "0x4f25dce",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-01.json",
+      "index": 9,
+      "target": "0x33080d27F98747f092021BdEE4A006eDA42FF2f7",
+      "transactionHash": "0x2f98db323597082ebf3c2b7f21106b9668026cc400f2ebbd95b77417a420250a",
+      "status": "0x1",
+      "blockNumber": "0x4f25dd0",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-02.json",
+      "index": 0,
+      "target": "0x335af2C52fd700639f7CeB2cBB86544fB0739EE5",
+      "transactionHash": "0xac4443c9a737dd07b10254926769ca3a8db5d1898349d0116eb722bbd2c01d3a",
+      "status": "0x1",
+      "blockNumber": "0x4f25dd4",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-02.json",
+      "index": 1,
+      "target": "0x3764607A0a721981780B798a02C2B1691D6bAa39",
+      "transactionHash": "0x6944d229ab41f3cf657bec10d4da562cc37124d5c5feff94e74dfc274076f0a8",
+      "status": "0x1",
+      "blockNumber": "0x4f25dd6",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-02.json",
+      "index": 2,
+      "target": "0x38258ae8832BF6F1DE12586DF0b1Ea96cd839134",
+      "transactionHash": "0xe086362116b303f3682c2a24f5a3e26a0f43dbaa8b36c288bc110cbc3804582d",
+      "status": "0x1",
+      "blockNumber": "0x4f25dd9",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-02.json",
+      "index": 3,
+      "target": "0x38c0Ce3fB948c86dBDa17d573d66a7A05C8a7A56",
+      "transactionHash": "0x746608f077f1cca700491e830faa0b4ed02e8abf29fd8cb3bb3c7b0ef4b04354",
+      "status": "0x1",
+      "blockNumber": "0x4f25ddc",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-02.json",
+      "index": 4,
+      "target": "0x3911cf457544cDbF949A58E592b0e4964e4a0c53",
+      "transactionHash": "0x4d9c2e09e5ed1eb3f45a89ecdcf9375fe8d016a1e85f51bb13b2ca1948cbb57d",
+      "status": "0x1",
+      "blockNumber": "0x4f25ddf",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-02.json",
+      "index": 5,
+      "target": "0x3A97e66C40c77e6c4e643a1C651015c4D73d26b2",
+      "transactionHash": "0x7e8236e5c0d8a605e398e06486ad103df5f7e80e863e572ee1e289aaac201989",
+      "status": "0x1",
+      "blockNumber": "0x4f25de2",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-02.json",
+      "index": 6,
+      "target": "0x3D6b8aa69171ffDAb46ff18545ABC83e61C62Dd8",
+      "transactionHash": "0x4c421ebfb68329f60fcf623bce034a95759f6340c25de40f4b0c4aa34ce97fc3",
+      "status": "0x1",
+      "blockNumber": "0x4f25de4",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-02.json",
+      "index": 7,
+      "target": "0x3F39AF5C2d5356c1c0a8d0D67c2C4CF68374b59E",
+      "transactionHash": "0x89832f7c9682bbcd7c4d168489a5861c12368a12902a456ec17aee6fe6cbe775",
+      "status": "0x1",
+      "blockNumber": "0x4f25de7",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-02.json",
+      "index": 8,
+      "target": "0x432952e34729f92B08443A573b8A9CD60557Cea7",
+      "transactionHash": "0x52deb5bbb6ca2ea72cc80187ef53b3a7bb14a9c1d90bffe372e880b7602784d7",
+      "status": "0x1",
+      "blockNumber": "0x4f25de9",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-02.json",
+      "index": 9,
+      "target": "0x464483534e745A8b30Ed373A001245a3770dC0b6",
+      "transactionHash": "0xaceee7ff0b0f1992f9e9ae5735c82c67a0894bf71cd9ce34c256405d96db7d73",
+      "status": "0x1",
+      "blockNumber": "0x4f25dec",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-03.json",
+      "index": 0,
+      "target": "0x4864C18Af19d5b32C566b2046930B9c4F1A666e5",
+      "transactionHash": "0xbda2a8d33b6c600130a739094394d1a307a99d310bcc7edd866eff22f138502d",
+      "status": "0x1",
+      "blockNumber": "0x4f25def",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-03.json",
+      "index": 1,
+      "target": "0x4AFf6D90e295360a012d2f1F42D9c7CcAB44e5f4",
+      "transactionHash": "0x32831192336c3f4ab318d965cba3e1aeb571c30c81cc3bd94b63c02057a53ade",
+      "status": "0x1",
+      "blockNumber": "0x4f25df2",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-03.json",
+      "index": 2,
+      "target": "0x4c3925eA9996923025d951498c18691D785fBf21",
+      "transactionHash": "0xe488867a5851aaf6020514137796925cc73d2ad046bab6df8059fa11cc64423b",
+      "status": "0x1",
+      "blockNumber": "0x4f25df4",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-03.json",
+      "index": 3,
+      "target": "0x4CE39A977961befa4D4bD546f8454AB798f1ec1D",
+      "transactionHash": "0xcf8c8778e8320f53c414b4700a962fa6c3c384b56be18f0b438cd4b12381adc4",
+      "status": "0x1",
+      "blockNumber": "0x4f25df7",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-03.json",
+      "index": 4,
+      "target": "0x4d28599ddCBa0b041dcA0cfEe3337048120405cF",
+      "transactionHash": "0x5a108c7a33cd9b4d1bbb43ef4a059e689f6fb4a3e8e659cee0d0a4a564a83698",
+      "status": "0x1",
+      "blockNumber": "0x4f25df9",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-03.json",
+      "index": 5,
+      "target": "0x4Db6295640c3d87E3Fae7bD150b4aC58E33870fA",
+      "transactionHash": "0xd976567340e61349d3273c56863b2d74d0355aae4614a1acdf371e43a2913835",
+      "status": "0x1",
+      "blockNumber": "0x4f25dfc",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-03.json",
+      "index": 6,
+      "target": "0x523b362913b56e10E9dDE785952e5e0EFdab4AAd",
+      "transactionHash": "0x4ccd0aa7e89e406cc15611d996a98126141babe3eafcb9a13db6e2ad2bbf1a87",
+      "status": "0x1",
+      "blockNumber": "0x4f25dfe",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-03.json",
+      "index": 7,
+      "target": "0x562d2a137278Ce0722844a091791D0c4AEDDAB79",
+      "transactionHash": "0x00bf27f0396e2eb0a87ad80dc3b2899aa04be55d0528cd52f99d8b7ea4998a57",
+      "status": "0x1",
+      "blockNumber": "0x4f25e01",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-03.json",
+      "index": 8,
+      "target": "0x56eF770D72E0bC6363dB2991941bFDa8a1f25dcA",
+      "transactionHash": "0x21ec52750ca36c2330cd17c7b91d279e6bd49c20eae2fa50480d0e6071ba8df9",
+      "status": "0x1",
+      "blockNumber": "0x4f25e04",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-03.json",
+      "index": 9,
+      "target": "0x57db3264a363379b2C66A6914C0BF1D70f4763f6",
+      "transactionHash": "0x920acac906de695886bc7177d02765dab2db59e7d446ad8dd4ce31a5f74949b5",
+      "status": "0x1",
+      "blockNumber": "0x4f25e07",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-04.json",
+      "index": 0,
+      "target": "0x5999073f8ec583A60513940B477dE4c07805aB58",
+      "transactionHash": "0x13df9cdf3a1b57ef031bb635a261f6958024166d4cf573b0b8dc889fecb19a45",
+      "status": "0x1",
+      "blockNumber": "0x4f25e0a",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-04.json",
+      "index": 1,
+      "target": "0x66320E7517F899f51de3D8Cb2bC2D425B0412cfb",
+      "transactionHash": "0x862aea401ee4560d46f8cd8ac624a27fb684b6d318703e69254fd8a56e43ba96",
+      "status": "0x1",
+      "blockNumber": "0x4f25e0d",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-04.json",
+      "index": 2,
+      "target": "0x6A8c3A4Da74b18E01594bE66d43FdC32762456Fd",
+      "transactionHash": "0x9be0013e604359521519b8aa5edc5a4a709c8fc90f175795014c5f41c99ec7b2",
+      "status": "0x1",
+      "blockNumber": "0x4f25e0f",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-04.json",
+      "index": 3,
+      "target": "0x6F09F999fE1aF06738a0B12678eF2DF2fC0635e6",
+      "transactionHash": "0x1f22353e29897d274048b91fd209cf8f22d950eff728cd5dcb8b959e0bfbdafa",
+      "status": "0x1",
+      "blockNumber": "0x4f25e12",
+      "gasUsed": "0xc63c"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-04.json",
+      "index": 4,
+      "target": "0x6f98919fCFf18a1fA82585090a61E6678CA38826",
+      "transactionHash": "0x4713421938844a8b0a90ccdb2ffd7f0f6dcfba6c2c0040de8f530c5c01c7ad2a",
+      "status": "0x1",
+      "blockNumber": "0x4f25e14",
+      "gasUsed": "0xc63c"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-04.json",
+      "index": 5,
+      "target": "0x76ffd1d4317D351C3834a60818a9E5784b523154",
+      "transactionHash": "0xf46b2adfb0caa2f37a93a932368b3030bbe7fd93089ba50c7197053a017dd159",
+      "status": "0x1",
+      "blockNumber": "0x4f25e17",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-04.json",
+      "index": 6,
+      "target": "0x7789aD82B8C0E8726325fbA6363600dE56Eb60A0",
+      "transactionHash": "0xc24a1ac85cfdc83c799edb4f1dc192b503cf76937697a4ae152ffe130797052f",
+      "status": "0x1",
+      "blockNumber": "0x4f25e19",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-04.json",
+      "index": 7,
+      "target": "0x78c316103297B2ccaCD01E422804Ded636709826",
+      "transactionHash": "0x88ac141cab42a969b7c1f94d01ca328fa4d8adb1edec578f3c20b67ef5683eb5",
+      "status": "0x1",
+      "blockNumber": "0x4f25e1c",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-04.json",
+      "index": 8,
+      "target": "0x7b37d228bA42629BDDF2b16f52294C28dA523897",
+      "transactionHash": "0x96a67769c5096b1a60fba147b1867d4cdcd24623da0bcea3891e8434f3166ccd",
+      "status": "0x1",
+      "blockNumber": "0x4f25e1e",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-04.json",
+      "index": 9,
+      "target": "0x84Ca383b4C254806b30D2D49fd75B4B5adF7B8AE",
+      "transactionHash": "0x987a1fe54d68d04c5f0cf2eb6921117eef4e5453495eafd6d703b2f49fc83a5e",
+      "status": "0x1",
+      "blockNumber": "0x4f25e21",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-05.json",
+      "index": 0,
+      "target": "0x86888c171c280676B15D63AE443a901640f182C1",
+      "transactionHash": "0x75cbfc84ebcdd947858a5ab5d2e8b9301c58f19904487bb56d80be02e21e5cfd",
+      "status": "0x1",
+      "blockNumber": "0x4f25e24",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-05.json",
+      "index": 1,
+      "target": "0x86B5da0cD4c9eC00145BC763E44D12Ad9fFb2CBb",
+      "transactionHash": "0xb4bad9acfc9cb1313f8353c2f0d96ce85e7f4d873760b6393da6953ff94f1f9f",
+      "status": "0x1",
+      "blockNumber": "0x4f25e27",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-05.json",
+      "index": 2,
+      "target": "0x89619e34997fEb323DF1Dee7579F7694Ea33a4E0",
+      "transactionHash": "0x2f1617d9bdc53176f88e1053fbea94ddb5b213c26aca1bb9226ab2f5ae36203c",
+      "status": "0x1",
+      "blockNumber": "0x4f25e29",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-05.json",
+      "index": 3,
+      "target": "0x8A8E6AC00D93aC766a25b7d6BBf0CA2E873f7725",
+      "transactionHash": "0x6d6f86a93262df9e6ec5475f5328aac4d845e5cc4e9202aaedae5047798ff8d1",
+      "status": "0x1",
+      "blockNumber": "0x4f25e2c",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-05.json",
+      "index": 4,
+      "target": "0x8ADec3ABE2b44480a1094D50830676971e06049d",
+      "transactionHash": "0x136f049fe705fee9d4e5baa82096dc8068ab890bb6041b7d667cda3420f52a0c",
+      "status": "0x1",
+      "blockNumber": "0x4f25e2f",
+      "gasUsed": "0xc63c"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-05.json",
+      "index": 5,
+      "target": "0x8B0471cd6a521Cd296b838cA7942632E03e56179",
+      "transactionHash": "0xecf2363a9025f7c9007f28bc898caef462c704d6da59946ab1a38eef7c0d73b9",
+      "status": "0x1",
+      "blockNumber": "0x4f25e31",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-05.json",
+      "index": 6,
+      "target": "0x8c5f9fecE33dEa4958A9fD794a549129b2E88742",
+      "transactionHash": "0x40f206107c6b0903e79c6f338fee7a36d01d95c34366fe397c3f64ce3727388d",
+      "status": "0x1",
+      "blockNumber": "0x4f25e34",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-05.json",
+      "index": 7,
+      "target": "0x8d930AA3440Cc957B28D3C8fe6a3bFA46883Ba09",
+      "transactionHash": "0x8fd30ba5acd4fc065ffe7fc082a7c13773d036f533d77693728ec318e9b42394",
+      "status": "0x1",
+      "blockNumber": "0x4f25e36",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-05.json",
+      "index": 8,
+      "target": "0x8df8bb227f48569e6c4B9D343a510F0029447BCd",
+      "transactionHash": "0x9b7d181061fe274398ebceb67f6c07afde8cbba06fe8f6a7091cefe0c6613708",
+      "status": "0x1",
+      "blockNumber": "0x4f25e39",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-05.json",
+      "index": 9,
+      "target": "0x8fA3aF336D9C22A403840C4014e594606aF3C0c2",
+      "transactionHash": "0xc8efbc1b2071326ba1d41935bb35c35bd8b1fbd459e3434b8cbb3e35d424a013",
+      "status": "0x1",
+      "blockNumber": "0x4f25e3b",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-06.json",
+      "index": 0,
+      "target": "0x93c3858432Cd9cBF4b7E0c5e74CB8026bDE472CF",
+      "transactionHash": "0x260756310877490ec5bfbcbb45a1c5cd968c7a5f46017d916a49f952261e3668",
+      "status": "0x1",
+      "blockNumber": "0x4f25e3f",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-06.json",
+      "index": 1,
+      "target": "0x946363039924B52BbEF550DA4A7C3AE1e3004500",
+      "transactionHash": "0xdf465c3da1c3df57954f4ec2e302ada5d71814e1a9139e9063d6702c05f8a8ff",
+      "status": "0x1",
+      "blockNumber": "0x4f25e41",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-06.json",
+      "index": 2,
+      "target": "0x997e013E45ceF53dc417BcE1D48167dB0622fA3c",
+      "transactionHash": "0x025cf3f937cd6e57993090c3baf0f31e07b2504e772dd9da245d454e464ebfda",
+      "status": "0x1",
+      "blockNumber": "0x4f25e44",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-06.json",
+      "index": 3,
+      "target": "0x99927B3864BCd7DB7F9B331B7EAdDb998dbb8b66",
+      "transactionHash": "0x2a4d1cf414ae504cea2793bd8e5450cae936cd19bf0da025bc3779eed766cd8c",
+      "status": "0x1",
+      "blockNumber": "0x4f25e46",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-06.json",
+      "index": 4,
+      "target": "0x9A6d52cd1D617078e1063cc2aFa8324196d9C840",
+      "transactionHash": "0x623c488db2afbde7c77c6c403be4dc722bf2b559d4af17b185d14f9930ca712b",
+      "status": "0x1",
+      "blockNumber": "0x4f25e49",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-06.json",
+      "index": 5,
+      "target": "0x9aa0C8e231F2bFD6e50F658C10FedFc9624131dE",
+      "transactionHash": "0x6aa244ca598b6c9f87e482508707b5c652c3b028029902183d385a98fe6455a9",
+      "status": "0x1",
+      "blockNumber": "0x4f25e4c",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-06.json",
+      "index": 6,
+      "target": "0x9c5FFaaC33968b64f38faDcCaEd353BE626E4042",
+      "transactionHash": "0x3f10853d4da44d58c3636a4e8508d87ca06bc7531d9e7c9d95f95b08972913f9",
+      "status": "0x1",
+      "blockNumber": "0x4f25e4e",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-06.json",
+      "index": 7,
+      "target": "0xa16B7532CCE9FEE3eFf390682055B48C7a485aF7",
+      "transactionHash": "0x86c27b25ed7f87e2cdc26b9b11efd054049f153cbebe9ff6ecce3c1950905ff0",
+      "status": "0x1",
+      "blockNumber": "0x4f25e51",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-06.json",
+      "index": 8,
+      "target": "0xa25C5756EE48211185bCFFa9E12d219bE151d29d",
+      "transactionHash": "0xdd3f42a18053739dd8e89f7b753edd806f5e4ce34919af78405678c10ef6e5bf",
+      "status": "0x1",
+      "blockNumber": "0x4f25e54",
+      "gasUsed": "0xc63c"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-06.json",
+      "index": 9,
+      "target": "0xA3162a0Ec1dd06F7f7c1B54748836757ca64EA7B",
+      "transactionHash": "0xc5a06b671d97e03ae7a28d17ce184e507cf8268124e598ce0f86cd993a957046",
+      "status": "0x1",
+      "blockNumber": "0x4f25e56",
+      "gasUsed": "0xc63c"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-07.json",
+      "index": 0,
+      "target": "0xa6a408914DC6E1AC9a8DB8ce472923374B1B6beB",
+      "transactionHash": "0x7147ad7ef40d0380c303a1440ee8fee80d1330d4a3a81356e88ad27fb05c107e",
+      "status": "0x1",
+      "blockNumber": "0x4f25e59",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-07.json",
+      "index": 1,
+      "target": "0xa8558a901d12a72492D8716B6E02C7c6ef324F5e",
+      "transactionHash": "0x2bbe9aad9daa1aad929dd0600ef823f7f561124204eaff8be77f53f86eec4d37",
+      "status": "0x1",
+      "blockNumber": "0x4f25e5c",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-07.json",
+      "index": 2,
+      "target": "0xaa168d604199FF164F8449aAD72e743428Aa2574",
+      "transactionHash": "0xbd05c7f1ad4cc4368ed48115125e6e18fce0410922fffa787967fdc4f0cdf607",
+      "status": "0x1",
+      "blockNumber": "0x4f25e5f",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-07.json",
+      "index": 3,
+      "target": "0xAB40bcfcFe2d742A7E4Eeb9c6d0A66bF322177de",
+      "transactionHash": "0x9b5129df2da45d01d02fdcee37074907ca2e2eed75a61fbbc7e09ffe82bae98d",
+      "status": "0x1",
+      "blockNumber": "0x4f25e61",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-07.json",
+      "index": 4,
+      "target": "0xAbbdC98302A55DfaD457843b2c0f2E9306854267",
+      "transactionHash": "0xbff91aa491a66368a9ee9151207ee88d29b9081ed88e95315f1b8bf612331f86",
+      "status": "0x1",
+      "blockNumber": "0x4f25e64",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-07.json",
+      "index": 5,
+      "target": "0xad9a2A0e62D5c2B429dBc042a724Af5DdE21869F",
+      "transactionHash": "0x2a0836a2832d73d5c116f638242b45f9b19698b22efb1360f81892fa0266f243",
+      "status": "0x1",
+      "blockNumber": "0x4f25e67",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-07.json",
+      "index": 6,
+      "target": "0xB90CAbB1863Ed341BAbe31a2d0126A5985E4C770",
+      "transactionHash": "0x34d232841c1c11961793c31cb216ef38090fd7ee6d619a3b5a02c58e52189075",
+      "status": "0x1",
+      "blockNumber": "0x4f25e69",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-07.json",
+      "index": 7,
+      "target": "0xbBe2A2A0E48bacE7271325F5501C01fdDA7F3D54",
+      "transactionHash": "0xbbbcc91de5c57bc051dc888626b82ab0a6287810e899e023a4521a6c3df05492",
+      "status": "0x1",
+      "blockNumber": "0x4f25e6c",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-07.json",
+      "index": 8,
+      "target": "0xbcEa5D6c19303e4F3eBA367CA87AA4D0Df063544",
+      "transactionHash": "0xb0ad06b8b1cf8e1822361e05a0a07d9a7a2f8106f15ff63d6415869cbaf09c75",
+      "status": "0x1",
+      "blockNumber": "0x4f25e6e",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-07.json",
+      "index": 9,
+      "target": "0xBd9f40CC8fAEf45bDC1768304ED8D60468d2BEC7",
+      "transactionHash": "0x7f6ce540765427bde55c09b6118c50a21121ebceee1ac2bb9f96f97570199252",
+      "status": "0x1",
+      "blockNumber": "0x4f25e71",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-08.json",
+      "index": 0,
+      "target": "0xc07652AD0F4C8ec5a613fF54aFBbB3bCAe59e46a",
+      "transactionHash": "0xa5543caca8423c84e45d11a0d696bc62ddca09d38fa4da375c03c496e02d1c86",
+      "status": "0x1",
+      "blockNumber": "0x4f25e74",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-08.json",
+      "index": 1,
+      "target": "0xc3eC9d39fb870D077b58f567F92dc2F5De7520af",
+      "transactionHash": "0x3e10841fce3be361436b26ac389e99324c31f91b533e10171a2b307654225fbb",
+      "status": "0x1",
+      "blockNumber": "0x4f25e77",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-08.json",
+      "index": 2,
+      "target": "0xC4b8e51858DF30123B3C4f74f6e4a1dAee946c99",
+      "transactionHash": "0x70ac4ab020b2c1282106abd04eeecfcd18b937a24ae95845e587d522f7b5a115",
+      "status": "0x1",
+      "blockNumber": "0x4f25e7a",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-08.json",
+      "index": 3,
+      "target": "0xc60252C03Ea4Ad1c7b1662401539646063649b2E",
+      "transactionHash": "0xe8ddba970bdd2d7587a8a4052e460c22fbbf35f018c2761f3c71cf28ec632c85",
+      "status": "0x1",
+      "blockNumber": "0x4f25e7c",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-08.json",
+      "index": 4,
+      "target": "0xc7Cf1A0496C358a3B51AC1822BF878FF7a93b76F",
+      "transactionHash": "0xebf210f16226a59720179d54e9e51ce4888652d43e5b570aaafa9aa19a8f81fd",
+      "status": "0x1",
+      "blockNumber": "0x4f25e7f",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-08.json",
+      "index": 5,
+      "target": "0xcb857F1f2E36E0eE393125efa39802Ece6363F80",
+      "transactionHash": "0xd558616d35ca818570f0ec5f141f0545011bc8b3f14b397a7533b0da28469504",
+      "status": "0x1",
+      "blockNumber": "0x4f25e81",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-08.json",
+      "index": 6,
+      "target": "0xd20A0C8F6Ec1026A1960C6f0F4A6dF1A381D9938",
+      "transactionHash": "0x448f77b668a12e82eeb08f2870321deddc0f02e7be02aff9cead31e9fc079ef9",
+      "status": "0x1",
+      "blockNumber": "0x4f25e84",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-08.json",
+      "index": 7,
+      "target": "0xD251C52c091C54a14e00ad1a31A4CfFb9E6c8197",
+      "transactionHash": "0xc02507ae3b19814c9f74e70556295beb3165a0d9c9b1e567be6f98110251ac0a",
+      "status": "0x1",
+      "blockNumber": "0x4f25e87",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-08.json",
+      "index": 8,
+      "target": "0xd339C8f96E25743733A2019ecE30b1C15C00CE55",
+      "transactionHash": "0x4104f9c91160a8033c0565c9cf87b44a45d418a1badd8bce001fe48de577055f",
+      "status": "0x1",
+      "blockNumber": "0x4f25e89",
+      "gasUsed": "0xc63c"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-08.json",
+      "index": 9,
+      "target": "0xd5d2fBF2019A8F1D02C9E8cB0dD32B8cfd149f6E",
+      "transactionHash": "0xdc06596de8818c149e98e0d5aeb4721319232ca36362be9c3be5ccb97e931c26",
+      "status": "0x1",
+      "blockNumber": "0x4f25e8c",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-09.json",
+      "index": 0,
+      "target": "0xD9720538780F5F8043667e57Fb17cbd714B2Aae7",
+      "transactionHash": "0x836cd8cd92d378c3ba77ac0f16d1fda95e0b652ef899551538940b67b66f9b1e",
+      "status": "0x1",
+      "blockNumber": "0x4f25e8f",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-09.json",
+      "index": 1,
+      "target": "0xDAEEED0e9f48e5efd023d774AB19415de8aEdd8F",
+      "transactionHash": "0x044f32797bfc5f77abc122bb73aa1f498933387b73bc42ff6c8a3e24f409b84a",
+      "status": "0x1",
+      "blockNumber": "0x4f25e92",
+      "gasUsed": "0xc63c"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-09.json",
+      "index": 2,
+      "target": "0xdc1567c66c63EeFd1cFBA84720E3Bad73d0dF930",
+      "transactionHash": "0x59e5042d62126ce6790f4bae00a9d3905a6ec15ef6eaa410a865653cb966e825",
+      "status": "0x1",
+      "blockNumber": "0x4f25e95",
+      "gasUsed": "0xc63c"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-09.json",
+      "index": 3,
+      "target": "0xdFD5ca1bEEF648999c5691e815Ee5C27BBC1d8C6",
+      "transactionHash": "0xea51d1c89b12bc0178996fe9cd575bcb2fbdc15bbe157d1187bde534417390a7",
+      "status": "0x1",
+      "blockNumber": "0x4f25e97",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-09.json",
+      "index": 4,
+      "target": "0xe1F018a670fE348e376Ce8aDa0Fe9e12F1d90fd4",
+      "transactionHash": "0x616b736392da0e67173c92cef1f287f85c6060daa7319f6e4361e3302afbed58",
+      "status": "0x1",
+      "blockNumber": "0x4f25e9a",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-09.json",
+      "index": 5,
+      "target": "0xE38e44de6b3537AA74081b6C3120F512a06fdd8d",
+      "transactionHash": "0x06dd3a96a5145a7906fcab17c5597a79d281a3e9acefe1e6acf5c19eeceed9e1",
+      "status": "0x1",
+      "blockNumber": "0x4f25e9c",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-09.json",
+      "index": 6,
+      "target": "0xE544b4e163Ab96A006fB1e6ED85f805D7373dC4c",
+      "transactionHash": "0xbede715ff22bebfbe207cb631ca9b7ea1c8e2eec286b46d724bf7516d79eb956",
+      "status": "0x1",
+      "blockNumber": "0x4f25e9f",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-09.json",
+      "index": 7,
+      "target": "0xE67566F8CDd30d426668D84189550c64289a1867",
+      "transactionHash": "0x89f00e56646d2a868ecec61967b9cad273c70d7102b246cdc4fa47ca2e7cc74b",
+      "status": "0x1",
+      "blockNumber": "0x4f25ea2",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-09.json",
+      "index": 8,
+      "target": "0xea024E39A5e0FaB4F96297C2415BB4Ee6290e1Ac",
+      "transactionHash": "0xa23dcf42af6b5326f5a4737216d505b21096ed1da54cead432567afdefcceb6f",
+      "status": "0x1",
+      "blockNumber": "0x4f25ea4",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-09.json",
+      "index": 9,
+      "target": "0xEa81067acA38C4977a5808e293d43F1266173a74",
+      "transactionHash": "0x07d44aa402ab264a058eea5f48d091b533f32794542cfe8de56c15d185ed9a2c",
+      "status": "0x1",
+      "blockNumber": "0x4f25ea7",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-10.json",
+      "index": 0,
+      "target": "0xF2035BE756FaCD19e0bF068f7f17f1171d88E56F",
+      "transactionHash": "0x2ba4639f46402ed24cfe6658508250fbcebd0f83e0cd1b89772a6a59feb9a99d",
+      "status": "0x1",
+      "blockNumber": "0x4f25eaa",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-10.json",
+      "index": 1,
+      "target": "0xf26Cb186DE2a5637FF5873Bf0f4b3Fb67a7cE462",
+      "transactionHash": "0x0477623661f190efd03263ef5a34c365bed590258775c3eda6956f73bc330927",
+      "status": "0x1",
+      "blockNumber": "0x4f25ead",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-10.json",
+      "index": 2,
+      "target": "0xf3d67757C2a3b68c090572962113D7e5DB530425",
+      "transactionHash": "0xf4da4802df162071e27da5eed71cbd978076a7556e35bf626986f09b31f3619a",
+      "status": "0x1",
+      "blockNumber": "0x4f25eb0",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-10.json",
+      "index": 3,
+      "target": "0xf917F955CA02eb7455A399cD4E1B2ca7eD1B84B4",
+      "transactionHash": "0x6d21a7036b1dcee44349c7ad2e58753a1166c62076f4947c497b10f7bff97f69",
+      "status": "0x1",
+      "blockNumber": "0x4f25eb2",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/celo-shared-routing-2026-11-16/04-strategies/celo-04-migrate-strategies-10.json",
+      "index": 4,
+      "target": "0xfD4Aa4530DE29181C3DDaC433B2fA60E7ba38EdE",
+      "transactionHash": "0x64c7d571d7fbbcaecfccce63b71b7b22d6f7700643f69088d52f2a0cd8dd7005",
+      "status": "0x1",
+      "blockNumber": "0x4f25eb5",
+      "gasUsed": "0xc636"
+    }
+  ],
+  "verified": {
+    "pendingProxyTransactions": 0,
+    "communities": 36,
+    "strategies": 95,
+    "routedVerifier": true,
+    "stateVerifier": true
+  }
+}

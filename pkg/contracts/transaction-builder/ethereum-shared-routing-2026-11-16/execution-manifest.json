@@ -1,0 +1,102 @@
+{
+  "network": "ethereum",
+  "chainId": 1,
+  "factoryUpgrade": {
+    "transactionHash": "0xc183d7d2a4efbce9cb6db3c277a9c48b83d75c720aff013ebd6e0d1cc00a4c55",
+    "status": "0x1",
+    "blockNumber": "0x1935428",
+    "gasUsed": "0xc671"
+  },
+  "activation": [
+    {
+      "transactionHash": "0xe8e9f8c5c15ad03d26f4eee0b8e17c0023f40a05c4a0a666510c443d15984dfb",
+      "status": "0x1",
+      "blockNumber": "0x1935430",
+      "gasUsed": "0x182a6e"
+    },
+    {
+      "transactionHash": "0x67c9409a6596adba3af2ddc10499a7d185282e83ec8b7c6e5ad480ee01b09f76",
+      "status": "0x1",
+      "blockNumber": "0x1935431",
+      "gasUsed": "0x16e595"
+    },
+    {
+      "transactionHash": "0x4b586f4bb4f85e054cef72717648705f0823c38547e586ce205ddd4524a0427a",
+      "status": "0x1",
+      "blockNumber": "0x1935433",
+      "gasUsed": "0xcfcb"
+    }
+  ],
+  "communityReceipts": [
+    {
+      "file": "transaction-builder/ethereum-shared-routing-2026-11-16/02-communities/ethereum-02-migrate-communities-01.json",
+      "index": 0,
+      "target": "0x7C4Bbd0E690090531BB05b37C6dEbC677cfE1703",
+      "transactionHash": "0x38e70453bb063a1033ca7ad2df2c36ebcd73e98d28dd06ebc8d7e441dcea0946",
+      "status": "0x1",
+      "blockNumber": "0x1935438",
+      "gasUsed": "0xc59c"
+    },
+    {
+      "file": "transaction-builder/ethereum-shared-routing-2026-11-16/02-communities/ethereum-02-migrate-communities-01.json",
+      "index": 1,
+      "target": "0xEE637307e9CA4efE5Bea26Ad2a395d0736e0F904",
+      "transactionHash": "0x47c589c9391443fb722403e195dd4372c87785e9b6028f3c38b2340fab713f02",
+      "status": "0x1",
+      "blockNumber": "0x1935439",
+      "gasUsed": "0xc59c"
+    },
+    {
+      "file": "transaction-builder/ethereum-shared-routing-2026-11-16/02-communities/ethereum-02-migrate-communities-01.json",
+      "index": 2,
+      "target": "0xF3BfC1F278aD4E62E64Fe52a49459c72D71789D9",
+      "transactionHash": "0x63480a1c02924d157a95313f4580f2f9462a727ca7445422e352066abc7019a8",
+      "status": "0x1",
+      "blockNumber": "0x193543a",
+      "gasUsed": "0xc59c"
+    }
+  ],
+  "strategyTemplateSwitch": {
+    "transactionHash": "0x642779e6bc297af5ee05e053fe79a779f211736c4bd14bbffd77c080d74aa245",
+    "status": "0x1",
+    "blockNumber": "0x193543e",
+    "gasUsed": "0xce44"
+  },
+  "strategyReceipts": [
+    {
+      "file": "transaction-builder/ethereum-shared-routing-2026-11-16/04-strategies/ethereum-04-migrate-strategies-01.json",
+      "index": 0,
+      "target": "0xAb21dbef27EBf5a58DCD16C555b478bF7CD2307c",
+      "transactionHash": "0xcfec4fcf3a507181d04933f97ac970ffd157300f38981f58bd91d05ab301f0c1",
+      "status": "0x1",
+      "blockNumber": "0x1935445",
+      "gasUsed": "0xc64c"
+    },
+    {
+      "file": "transaction-builder/ethereum-shared-routing-2026-11-16/04-strategies/ethereum-04-migrate-strategies-01.json",
+      "index": 1,
+      "target": "0xDD2De4862bF9a435aFf95636D19297a21f10958F",
+      "transactionHash": "0x5cd0b2b17e1daf8f5510b1d0fe0ed9d8a7520f3ae5ed42d171f0f023c8ccb5cf",
+      "status": "0x1",
+      "blockNumber": "0x1935447",
+      "gasUsed": "0xc64c"
+    },
+    {
+      "file": "transaction-builder/ethereum-shared-routing-2026-11-16/04-strategies/ethereum-04-migrate-strategies-01.json",
+      "index": 2,
+      "target": "0xf128a85C4EeD583527d91cD7FA8eB453e0D49397",
+      "transactionHash": "0xfdaf3bfdfd5240230f63a6eaab3778e88d2a12c7cbb39c48cb5e7e63804d9daf",
+      "status": "0x1",
+      "blockNumber": "0x1935448",
+      "gasUsed": "0xc64c"
+    }
+  ],
+  "verified": {
+    "pendingProxyTransactions": 0,
+    "communities": 3,
+    "strategies": 3,
+    "routedVerifier": true,
+    "stateVerifier": true,
+    "inventory": "events"
+  }
+}

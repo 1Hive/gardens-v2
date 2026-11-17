@@ -1,0 +1,49 @@
+{
+  "network": "ethsepolia",
+  "chainId": 11155111,
+  "targets": [
+    {
+      "name": "REGISTRY_FACTORY",
+      "address": "0x9707dca9f5643ba1f5b16add72a6e3073e6289c6",
+      "transactionHash": "0x7a80e18a47bbe177f993f95c83f4b24bb812e2582fe23fc7bbac4e8ed57bfe57",
+      "status": "0x1",
+      "blockNumber": "0xb96e70"
+    },
+    {
+      "name": "CV_STRATEGY_ROUTER",
+      "address": "0x16a0c53dbf55ee19e260f2219dea55d42f1fac4c",
+      "transactionHash": "0x0d763f21a8ecdfc7d8fbd56da91bcf42baf817c6781aa9688ec9d23f3a4ba67a",
+      "status": "0x1",
+      "blockNumber": "0xb96e71"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY_ROUTER",
+      "address": "0x6f5c4bedd8b2cc573c98708f4b4c1678e2c66c94",
+      "transactionHash": "0x30e808ffedbe2dbf817e6eae98ddcfc6dd0648ca3ac383d0bc68c64ecc5954c7",
+      "status": "0x1",
+      "blockNumber": "0xb96e72"
+    },
+    {
+      "name": "CV_STRATEGY",
+      "address": "0x3f59a9668fc830e7d5c382999d2dd3be25139208",
+      "transactionHash": "0xa708845b5590c6945bef40c63e5d1a918af0029afde11731fc2693b6fbd80ec6",
+      "status": "0x1",
+      "blockNumber": "0xb96e73"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY",
+      "address": "0x8769f5485ca5a6b2e1f401d116b27ffd80001aa9",
+      "transactionHash": "0x9dc41a135cc45b6efb1b0a6325c8bb3186c860e4823291563a0e2d6bc9f39a35",
+      "status": "0x1",
+      "blockNumber": "0xb96e74"
+    },
+    {
+      "name": "COMMUNITY_POOL",
+      "address": "0x2c3492141bed07cea8587b1991a52a1c443abb0a",
+      "transactionHash": "0xd0ee789c74d7f77d425f4c55b319f19a082adb749173e47e8a3b50690f053251",
+      "status": "0x1",
+      "blockNumber": "0xb96e75"
+    }
+  ],
+  "failedInitialAttempt": "0x5f44a626ee75e25ea28cd9c72125d00fc194860adcd03b9036c06f62efe182e9"
+}

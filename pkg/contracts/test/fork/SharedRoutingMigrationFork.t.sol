@@ -50,11 +50,10 @@ contract SharedRoutingMigrationForkTest is Test {
     function test_migrateEntireConfiguredFleetThenUpgradeAgain() public {
         vm.createSelectFork(vm.envString("FORK_RPC_URL"));
         string memory network = vm.envOr("FORK_NETWORK", string("base"));
-        bool polygon = keccak256(bytes(network)) == keccak256("polygon");
-        assertTrue(polygon || keccak256(bytes(network)) == keccak256("base"), "unsupported fork network");
-        assertEq(block.chainid, polygon ? 137 : 8453);
-        string memory configKey = polygon ? ".networks[5]" : ".networks[7]";
+        uint256 index = _networkIndex(network);
+        string memory configKey = string.concat(".networks[", vm.toString(index), "]");
         string memory json = vm.readFile(string.concat(vm.projectRoot(), "/pkg/contracts/config/networks.json"));
+        assertEq(block.chainid, json.readUint(string.concat(configKey, ".chainId")));
         communities = json.readAddressArray(string.concat(configKey, ".PROXIES.REGISTRY_COMMUNITIES"));
         strategies = json.readAddressArray(string.concat(configKey, ".PROXIES.CV_STRATEGIES"));
         factoryAddress = json.readAddress(string.concat(configKey, ".PROXIES.REGISTRY_FACTORY"));
@@ -67,6 +66,21 @@ contract SharedRoutingMigrationForkTest is Test {
         _migrate();
         _assertMigration();
         _upgradeAgain();
+    }
+
+    function _networkIndex(string memory network) internal pure returns (uint256) {
+        bytes32 name = keccak256(bytes(network));
+        if (name == keccak256("ethsepolia")) return 0;
+        if (name == keccak256("arbsepolia")) return 1;
+        if (name == keccak256("opsepolia")) return 2;
+        if (name == keccak256("arbitrum")) return 3;
+        if (name == keccak256("optimism")) return 4;
+        if (name == keccak256("polygon")) return 5;
+        if (name == keccak256("gnosis")) return 6;
+        if (name == keccak256("base")) return 7;
+        if (name == keccak256("celo")) return 8;
+        if (name == keccak256("ethereum")) return 9;
+        revert("unsupported fork network");
     }
 
     function _snapshotState() internal {

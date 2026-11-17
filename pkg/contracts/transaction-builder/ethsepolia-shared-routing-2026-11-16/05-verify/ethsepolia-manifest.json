@@ -1,0 +1,24 @@
+{
+  "chainId": 11155111,
+  "phase": "verify",
+  "factory": "0xE01464829B1B888bF92A8D1CeC3114BB9787984d",
+  "executor": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+  "executionMode": "direct-owner",
+  "oldCommunityTemplate": "0x6f5c4bEdD8B2Cc573C98708F4B4C1678E2C66c94",
+  "oldStrategyTemplate": "0x16a0c53dbF55eE19E260f2219dEA55D42f1FAc4C",
+  "strategyRouter": "0x16a0c53dbF55eE19E260f2219dEA55D42f1FAc4C",
+  "communityRouter": "0x6f5c4bEdD8B2Cc573C98708F4B4C1678E2C66c94",
+  "strategyLogic": "0x3f59A9668FC830E7d5c382999D2Dd3BE25139208",
+  "communityLogic": "0x8769F5485cA5a6b2e1F401D116B27FFD80001Aa9",
+  "poolFacet": "0x2C3492141BEd07CeA8587b1991A52a1C443ABb0a",
+  "inventoryEvidence": {
+    "switchTx": "0xae91090796b816bbe14a566f1c23374b0af004a7d8b6b8078fbcc2b51d7a1b61",
+    "switchBlock": 12152496,
+    "indexedBlock": 12152553
+  },
+  "communities": 2,
+  "pendingCommunities": 0,
+  "strategies": 303,
+  "pendingStrategies": 0,
+  "stages": []
+}

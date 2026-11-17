@@ -1,0 +1,426 @@
+{
+  "network": "arbsepolia",
+  "chainId": 421614,
+  "factoryUpgrade": {
+    "transactionHash": "0xd0b80c231fe2e34acafb9a6cd80c2fc2400db2eabb829c028f4ef66a4650c3a0",
+    "status": "0x1",
+    "blockNumber": "0x13ab7725",
+    "gasUsed": "0xc645"
+  },
+  "activation": [
+    {
+      "transactionHash": "0x47d7e4e3f4d78c0e925f6ab9bb0190fa11a46eb7b4ad549d938b247ded3749f1",
+      "status": "0x1",
+      "blockNumber": "0x13ab7804",
+      "gasUsed": "0x182a5a"
+    },
+    {
+      "transactionHash": "0x4518d70884b7f8a61192a54b300b115cb70386d1994b2608936151e4d7d1d3bf",
+      "status": "0x1",
+      "blockNumber": "0x13ab7807",
+      "gasUsed": "0x15bc65"
+    },
+    {
+      "transactionHash": "0x4bdcdc97c89f5243e8c0e684b749b911a9fe7b3997650b58eb2aab1265b17834",
+      "status": "0x1",
+      "blockNumber": "0x13ab780a",
+      "gasUsed": "0xcf9f"
+    }
+  ],
+  "communityReceipts": [
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/02-communities/arbsepolia-02-migrate-communities-01.json",
+      "index": 0,
+      "target": "0x0418f78eC03c974Ca5B88463F4a5Da3e2333c4ab",
+      "transactionHash": "0x3bf2cdcf4842263eef4e387be4ef5330cf5b9ea7651e295e34635e4f9e8177b9",
+      "status": "0x1",
+      "blockNumber": "0x13ab7e2c",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/02-communities/arbsepolia-02-migrate-communities-01.json",
+      "index": 1,
+      "target": "0x0dCe74CF0CCEf1fFF89469F3bEfc08806F8e4a3B",
+      "transactionHash": "0xf66d2837630be513c1bb08c3d479831e4d113251647e9f09d27fa3e379b6b4f5",
+      "status": "0x1",
+      "blockNumber": "0x13ab7e2f",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/02-communities/arbsepolia-02-migrate-communities-01.json",
+      "index": 2,
+      "target": "0x16A8d4fc921b8B1Cc8729f4dA72745e950499296",
+      "transactionHash": "0x82ed6a1027013ae125d7088b2304e3dfb1b13637af653f9c78e7733608eb1b12",
+      "status": "0x1",
+      "blockNumber": "0x13ab7e32",
+      "gasUsed": "0xc58c"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/02-communities/arbsepolia-02-migrate-communities-01.json",
+      "index": 3,
+      "target": "0x2F8a9454DE2E74bc9a0761703b3F7da0470B1e56",
+      "transactionHash": "0xc2611991c7389b5a4e3b6eed9727c440ff21c7c6f4a4eb39dcb8f042abc552ca",
+      "status": "0x1",
+      "blockNumber": "0x13ab7e35",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/02-communities/arbsepolia-02-migrate-communities-01.json",
+      "index": 4,
+      "target": "0x8036Ac3D1685E3603b8a0418E7e1eE033b794485",
+      "transactionHash": "0xeee2321f289ae13442762d1d44d72095adf9e2e83233339073ca8b6ecb40dc96",
+      "status": "0x1",
+      "blockNumber": "0x13ab7e38",
+      "gasUsed": "0xc58c"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/02-communities/arbsepolia-02-migrate-communities-01.json",
+      "index": 5,
+      "target": "0x88eFB94f3c0AC2d31eFceDE444264CaF8D594aB8",
+      "transactionHash": "0x22329a66ef239f0e3b607d59afd1b6afd8ad55d279d567896eb08672ef2f480b",
+      "status": "0x1",
+      "blockNumber": "0x13ab7e3b",
+      "gasUsed": "0xc58c"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/02-communities/arbsepolia-02-migrate-communities-01.json",
+      "index": 6,
+      "target": "0x8b8732dAc9c30AC89BF660B99fB90000D826Ab83",
+      "transactionHash": "0x137fd8b2588276819fa7a60981450089df0e8536879fbf793db5c216cf74e0f6",
+      "status": "0x1",
+      "blockNumber": "0x13ab7e3e",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/02-communities/arbsepolia-02-migrate-communities-01.json",
+      "index": 7,
+      "target": "0xA488aC456c7C5964Af7d323B7ce795D02E7c5154",
+      "transactionHash": "0x5203cc1a6a6539f0c5c334288802d90f09d5c3391ba3ab833e430dcbf786a736",
+      "status": "0x1",
+      "blockNumber": "0x13ab7e40",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/02-communities/arbsepolia-02-migrate-communities-01.json",
+      "index": 8,
+      "target": "0xA502fffB9082700Cad62366BC6CE37b15207680F",
+      "transactionHash": "0x8fc904b0c55070866f2d5daf6f5bafe6563eef57bacd4b58defddb34d83adbd4",
+      "status": "0x1",
+      "blockNumber": "0x13ab7e43",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/02-communities/arbsepolia-02-migrate-communities-01.json",
+      "index": 9,
+      "target": "0xb1f9ed8b752e81FCB0B9482e475c7035043f5994",
+      "transactionHash": "0xa54428a82991912bebe05d65a67b420e33c9be486ab4d1bf8364c0d651ebe5dc",
+      "status": "0x1",
+      "blockNumber": "0x13ab7e45",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/02-communities/arbsepolia-02-migrate-communities-02.json",
+      "index": 0,
+      "target": "0xbE7b830623707babc4b46fF73279c73e2D1bc177",
+      "transactionHash": "0x8ad3e16b28643d8e889bcc2cbeba1a893eea50bfcc613f7ea0ec5ab26e9c1054",
+      "status": "0x1",
+      "blockNumber": "0x13ab7e8f",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/02-communities/arbsepolia-02-migrate-communities-02.json",
+      "index": 1,
+      "target": "0xc219730Ec703c9525748c3b80184d57F1d57699b",
+      "transactionHash": "0x4e624b2e36038edcf6baaf4f12891de4eceb04e2697dd39bc0b1cb44b729f28c",
+      "status": "0x1",
+      "blockNumber": "0x13ab7e92",
+      "gasUsed": "0xc570"
+    }
+  ],
+  "strategyTemplateSwitch": {
+    "transactionHash": "0xb2ca086a4fa4031421ab4e772fc5745c2b5c6c3838ec74dbf20949a305d739e5",
+    "status": "0x1",
+    "blockNumber": "0x13ab80a6",
+    "gasUsed": "0xce18"
+  },
+  "strategyReceipts": [
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-01.json",
+      "index": 0,
+      "target": "0x00d33E504517a03FE14e05863bb95983660B0C2c",
+      "transactionHash": "0x9f47ff70a5ee7d2edfb5455f66d992c287fffd7a22c79b84c783f01f72803edc",
+      "status": "0x1",
+      "blockNumber": "0x13ab8487",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-01.json",
+      "index": 1,
+      "target": "0x07563FCE80B58A67F5D4a5332ee84747bFb829b9",
+      "transactionHash": "0xc88c52dbe849f12cfa3d98b1ff21d8a114fcc25f3390ce67f8388b00572441c1",
+      "status": "0x1",
+      "blockNumber": "0x13ab848a",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-01.json",
+      "index": 2,
+      "target": "0x14507F0e947E1547a86fB187A4959858E5aaAdbD",
+      "transactionHash": "0x9bec33272001ada342a780d689df3541671732ece349e810045abbfc01d20c31",
+      "status": "0x1",
+      "blockNumber": "0x13ab848d",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-01.json",
+      "index": 3,
+      "target": "0x15f3E3C557f0a9BEd0eBA3eadCC5837D964C50Fd",
+      "transactionHash": "0x116c3fcf58bc0203f0dff8ab0ccb36c33ed751e807b5b1c0c46be8a70ace2cbf",
+      "status": "0x1",
+      "blockNumber": "0x13ab8490",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-01.json",
+      "index": 4,
+      "target": "0x194a593887a27200Bf5A2b6713c1072882136b6C",
+      "transactionHash": "0x62a0a7296fda42a1f8d8f2d4b32e4ae17dfcb56f12b4a0a556419cc90949016e",
+      "status": "0x1",
+      "blockNumber": "0x13ab8493",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-01.json",
+      "index": 5,
+      "target": "0x2155378db737b5382d05Bdc204f335B7dA88aF2b",
+      "transactionHash": "0x09194cf98c40fc72eb19a8ed4133d6d59cc7ffb5a238713c86b0831b2e40512d",
+      "status": "0x1",
+      "blockNumber": "0x13ab8496",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-01.json",
+      "index": 6,
+      "target": "0x2B08977D2CeB9520F4FaA1556CFE0098e3B6306a",
+      "transactionHash": "0x9a7dc588dfab369daebfc72cc822baabbfbfba8dc1b99c7a66d15912014ddbed",
+      "status": "0x1",
+      "blockNumber": "0x13ab8499",
+      "gasUsed": "0xc63c"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-01.json",
+      "index": 7,
+      "target": "0x2C668E36496b2acD69e46418d5C1De0F43C9c4D2",
+      "transactionHash": "0x581a799d1aa3165613f8f6a5e36920b62d4df53c8b955d8e2805d241a9e527af",
+      "status": "0x1",
+      "blockNumber": "0x13ab849c",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-01.json",
+      "index": 8,
+      "target": "0x2F0af7438699d6B9eE6849A906F85f7c5851b3E6",
+      "transactionHash": "0xbeba99935801b4c2ad44caff98d127a5fbbb8f33136dbcd038efbe132952af53",
+      "status": "0x1",
+      "blockNumber": "0x13ab849f",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-01.json",
+      "index": 9,
+      "target": "0x316e665465960b79aEA9bF53e33a9A2bBcdE39e6",
+      "transactionHash": "0x845aaaaadd691af539ab296ee8cc9b57d5d5c863ff675408290cbc829a9dc6e7",
+      "status": "0x1",
+      "blockNumber": "0x13ab84a2",
+      "gasUsed": "0xc63c"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-02.json",
+      "index": 0,
+      "target": "0x33482037160b54625e7844cBaA90f808B4dCc1eE",
+      "transactionHash": "0xb76316b8419754dd9d41f3f128e51581be66444bec902ce9c12373a187100588",
+      "status": "0x1",
+      "blockNumber": "0x13ab84c0",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-02.json",
+      "index": 1,
+      "target": "0x39E279272604B7C09ccFfB23d4Ab5311B5754D7D",
+      "transactionHash": "0x1e7f676a23c711bc9aec9f3c21f6000bf450ed3a41da9c5484057a5da7ca200d",
+      "status": "0x1",
+      "blockNumber": "0x13ab84c3",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-02.json",
+      "index": 2,
+      "target": "0x3bd8c9056a448C7aB3F398dF2fFea114fEBd9139",
+      "transactionHash": "0xc7d289858e10a5c5abea97b19b465f62c5baf6101e5aa15ea34c588517265130",
+      "status": "0x1",
+      "blockNumber": "0x13ab84c6",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-02.json",
+      "index": 3,
+      "target": "0x4023E514A47C87a507623f08e748Db7AE05Da1C4",
+      "transactionHash": "0xb8605e57dc00bee92ef3bddeb0e4ebeaf9f02e442c9b04ff96b72653e26cb237",
+      "status": "0x1",
+      "blockNumber": "0x13ab84c9",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-02.json",
+      "index": 4,
+      "target": "0x4440e05839eAACc4927178756fAa48EcC23386F8",
+      "transactionHash": "0x5ff5d2c06d0420d55a867620912905b33064a2bbf06b104458bb438c1bbd2e78",
+      "status": "0x1",
+      "blockNumber": "0x13ab84cc",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-02.json",
+      "index": 5,
+      "target": "0x464F010f343BB52689e8579c84e76C8e04C7dbDc",
+      "transactionHash": "0xad5373d29ec32b34d334cfb4c8ec1d7ff0d524f85048b98cce55f7e7e8f90739",
+      "status": "0x1",
+      "blockNumber": "0x13ab84cf",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-02.json",
+      "index": 6,
+      "target": "0x565F8f945d08A7dD3C67a926B2b0B25704718D8a",
+      "transactionHash": "0x6fd16de3c998e5a8d768c027976ba2ae93082ee8305adb677c41d709d38762db",
+      "status": "0x1",
+      "blockNumber": "0x13ab84d3",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-02.json",
+      "index": 7,
+      "target": "0x61f0d03B1F00b872c7C9Ee03A12224cB70E93eA2",
+      "transactionHash": "0x36cd5120d5be105a851403410a82f086cbfd3f0d38014959e604af23e92208f6",
+      "status": "0x1",
+      "blockNumber": "0x13ab84d6",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-02.json",
+      "index": 8,
+      "target": "0x62884d6a9B30cFbe52eddd3E365A996123D28c47",
+      "transactionHash": "0xd077cfb89e3e7b850b22b7c74adfc8edbb3a3f66f0675342bff7c52ac095ebfd",
+      "status": "0x1",
+      "blockNumber": "0x13ab84d9",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-02.json",
+      "index": 9,
+      "target": "0x6b999ed850De2C5C923eAafC3C15781bd2CcF9d6",
+      "transactionHash": "0xfa3b369001d6609ab385ffc7fd37c76d0049662e6a78665300234976611d2faa",
+      "status": "0x1",
+      "blockNumber": "0x13ab84dc",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-03.json",
+      "index": 0,
+      "target": "0x8a3004467f9A4c3233F0CA20ab126D322CE14dc5",
+      "transactionHash": "0xe9505c82cf31c2dca1b274a14ee85a5eceee6ec974dab01f709e308d0cbdca2a",
+      "status": "0x1",
+      "blockNumber": "0x13ab84fd",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-03.json",
+      "index": 1,
+      "target": "0x8B02e15E5e78a3e0BAF99205fabAB0b971f30AC3",
+      "transactionHash": "0x5ba24132f087ee9cbab0e7b6bea399ece8b8801d74888796834bd659f77192ae",
+      "status": "0x1",
+      "blockNumber": "0x13ab8500",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-03.json",
+      "index": 2,
+      "target": "0x9dCa528CD12c62CEc0d37c17A9D23a4B8777d329",
+      "transactionHash": "0x71eee3dab145bd7c9f0ba326b49c6038b85b6f78ccc463808e1c5aff85f8cc98",
+      "status": "0x1",
+      "blockNumber": "0x13ab8503",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-03.json",
+      "index": 3,
+      "target": "0x9E9321526d2F36D521aD4f70786B1adba73023a2",
+      "transactionHash": "0xca7dffa44b6a2be3fd3ac4469353d21a840ab9ab893840dbf9b5a706d14d3467",
+      "status": "0x1",
+      "blockNumber": "0x13ab8506",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-03.json",
+      "index": 4,
+      "target": "0xBf1bE81e895DdF480333e0AA7f23A17d170CE662",
+      "transactionHash": "0xb5d96adde3adc04f5e381c2879420217f08cd6d71749ff7bca5b8c233c676881",
+      "status": "0x1",
+      "blockNumber": "0x13ab8509",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-03.json",
+      "index": 5,
+      "target": "0xC63CeC086a031119a2570f9164b268b1bcDc790F",
+      "transactionHash": "0x9abe960492888aa5162fc07a0bc57545ed3abacf6ae88ef12fe006012ea8613b",
+      "status": "0x1",
+      "blockNumber": "0x13ab850c",
+      "gasUsed": "0xc63c"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-03.json",
+      "index": 6,
+      "target": "0xD37fa4Ad1791Ac2c27B8dEc1FDEa5b318B9A444e",
+      "transactionHash": "0x57ff5dd4641146f77dd77c5675e4af5659df5a76a145b89da22aeec9adb5beca",
+      "status": "0x1",
+      "blockNumber": "0x13ab850f",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-03.json",
+      "index": 7,
+      "target": "0xd682fF9FB3c4C28c35dFA8830280d9A1C5BBfEE4",
+      "transactionHash": "0xf9966402c3af513b9324c9b81ac35f25e05323564ed5a16d72e4d7074a1a6f36",
+      "status": "0x1",
+      "blockNumber": "0x13ab8512",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-03.json",
+      "index": 8,
+      "target": "0xe0280d4e1d62e298cB2f98978087F455EF0086C6",
+      "transactionHash": "0x74cf60800b2a2a2f18215d272b3ed97a2932f6c687d7784a7c7c8748f25f2b36",
+      "status": "0x1",
+      "blockNumber": "0x13ab8515",
+      "gasUsed": "0xc63c"
+    },
+    {
+      "file": "transaction-builder/arbsepolia-shared-routing-2026-11-16/04-strategies/arbsepolia-04-migrate-strategies-03.json",
+      "index": 9,
+      "target": "0xE6DeDD7A954C51DDB283B751db6970A75d067cAd",
+      "transactionHash": "0xb93e54214f2200b3fa0b5f99e9c9636d419ad98c42f94522e3e7713e45e3bdcd",
+      "status": "0x1",
+      "blockNumber": "0x13ab8518",
+      "gasUsed": "0xc620"
+    }
+  ],
+  "verified": {
+    "pendingProxyTransactions": 0,
+    "communities": 12,
+    "strategies": 30,
+    "routedVerifier": true,
+    "stateVerifier": true,
+    "inventory": "events"
+  }
+}
