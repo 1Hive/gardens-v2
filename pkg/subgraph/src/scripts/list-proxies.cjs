@@ -93,7 +93,13 @@ async function extractProxies(chainId, expectedFactory) {
     if (await client.getChainId() !== chainId) throw new Error('Event RPC chain ID mismatch');
     const toBlock = Number(await client.getBlockNumber());
     const inventory = await getProxyEventInventory({ chainId, factory: expectedFactory,
-      toBlock, apiKey: process.env.ETHERSCAN_API_KEY });
+      toBlock, apiKey: process.env.ETHERSCAN_API_KEY, client });
+    const nonce = await client.readContract({ address: expectedFactory,
+      abi: [{ type: 'function', name: 'nonce', stateMutability: 'view', inputs: [],
+        outputs: [{ type: 'uint256' }] }], functionName: 'nonce' });
+    if (nonce !== BigInt(inventory.communities.length)) {
+      throw new Error('Factory nonce differs from event-backed community inventory');
+    }
     const normalized = (addresses) => addresses.map((address) => address.toLowerCase()).sort();
     console.log(`Reconciled Etherscan creation and pool events through Polygon block ${toBlock}`);
     return { REGISTRY_FACTORY: expectedFactory.toLowerCase(),

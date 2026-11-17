@@ -1,4 +1,4 @@
-import { getAddress, keccak256, stringToBytes } from 'viem';
+import { getAddress, keccak256, stringToBytes, toHex } from 'viem';
 
 const signatures = {
   community: 'CommunityCreated(address)',
@@ -45,7 +45,8 @@ async function logs(chainId, apiKey, address, eventTopic, fromBlock, toBlock) {
   }
 }
 
-export async function getProxyEventInventory({ chainId, factory, toBlock, apiKey, switchTx, switchBlock, switchFamily, router }) {
+export async function getProxyEventInventory({ chainId, factory, toBlock, apiKey, client, switchTx, switchBlock, switchFamily, router }) {
+  assert(client, 'A chain RPC client is required for recent event reconciliation');
   const creation = await etherscan(chainId, apiKey, {
     module: 'contract', action: 'getcontractcreation', contractaddresses: factory,
   });
@@ -65,6 +66,22 @@ export async function getProxyEventInventory({ chainId, factory, toBlock, apiKey
     }
   }
   assert(new Set(strategies).size === strategies.length, 'Duplicate PoolCreated strategy');
+  const recentFrom = Math.max(fromBlock, toBlock - 100);
+  const recentLogs = async (address, eventTopic) => client.request({ method: 'eth_getLogs', params: [{
+    address, fromBlock: toHex(recentFrom), toBlock: toHex(toBlock), topics: [eventTopic],
+  }] });
+  const communitySet = new Set(communities.map((address) => address.toLowerCase()));
+  for (const log of await recentLogs(factory, topic(signatures.community))) {
+    assert(communitySet.has(addressWord(log.data).toLowerCase()),
+      'Etherscan is missing a recent CommunityCreated event');
+  }
+  const strategySet = new Set(strategies.map((address) => address.toLowerCase()));
+  for (const community of communities) {
+    for (const log of await recentLogs(community, topic(signatures.pool))) {
+      assert(strategySet.has(addressWord(log.data.slice(66, 130)).toLowerCase()),
+        `Etherscan is missing a recent PoolCreated event for ${community}`);
+    }
+  }
   if (switchTx) {
     assert(switchFamily === 'community' || switchFamily === 'strategy', 'Invalid switch family');
     assert(Number.isSafeInteger(switchBlock) && switchBlock <= toBlock, 'Invalid switch block');
@@ -75,5 +92,5 @@ export async function getProxyEventInventory({ chainId, factory, toBlock, apiKey
     'Etherscan has not indexed the template switch at the requested block');
   }
   return { factory: getAddress(factory), communities, strategies, fromBlock, queriedThroughBlock: toBlock,
-    source: 'Etherscan creation, CommunityCreated, and PoolCreated logs' };
+    recentRpcFromBlock: recentFrom, source: 'Etherscan creation and pool logs reconciled with recent RPC logs' };
 }

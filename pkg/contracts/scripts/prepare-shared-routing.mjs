@@ -87,7 +87,7 @@ async function verifyInventory(client, factory, communities, strategies, eventNa
   if (values['inventory-source'] === 'events') {
     const toBlock = Number(await client.getBlockNumber());
     const inventory = await getProxyEventInventory({ chainId: await client.getChainId(), factory,
-      toBlock, apiKey: process.env.ETHERSCAN_API_KEY, switchTx: values['switch-tx'],
+      toBlock, apiKey: process.env.ETHERSCAN_API_KEY, client, switchTx: values['switch-tx'],
       switchBlock: Number(receipt.blockNumber),
       switchFamily: eventName === 'CommunityTemplateSet' ? 'community' : 'strategy', router });
     for (const [kind, configured] of [['communities', communities], ['strategies', strategies]]) {
@@ -97,7 +97,8 @@ async function verifyInventory(client, factory, communities, strategies, eventNa
         `${kind} differs between creation events and networks.json; run event-backed proxy sync`);
     }
     return { switchTx: values['switch-tx'], switchBlock: Number(receipt.blockNumber),
-      queriedThroughBlock: toBlock, source: inventory.source };
+      queriedThroughBlock: toBlock, recentRpcFromBlock: inventory.recentRpcFromBlock,
+      source: inventory.source };
   }
   assert(values['inventory-source'] === 'subgraph' && values['subgraph-url'],
     'This phase requires --subgraph-url or --inventory-source events');
