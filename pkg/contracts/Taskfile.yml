@@ -152,12 +152,23 @@ tasks:
       - ./scripts/verify-storage-layout.sh || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
       - echo "✅ Storage verification passed"
   prepare-shared-routing:
-    desc: Prepare ordered Safe payloads for the initial migration to shared routing
+    desc: Prepare ordered direct-owner or Safe payloads for initial shared routing migration
     cmds:
       - cmd: |
           : "${NETWORK:?set NETWORK}"
           : "${RPC_URL:?set RPC_URL}"
-          : "${SAFE_ADDRESS:?set SAFE_ADDRESS to the effective owner Safe}"
+          if [ -n "${MIGRATION_EXECUTOR:-}" ]; then
+            if [ -n "${SAFE_ADDRESS:-}" ]; then
+              echo "set only MIGRATION_EXECUTOR or SAFE_ADDRESS" >&2
+              exit 1
+            fi
+            executor_flag="--executor"
+            executor_address="${MIGRATION_EXECUTOR}"
+          else
+            : "${SAFE_ADDRESS:?set MIGRATION_EXECUTOR for an EOA or SAFE_ADDRESS for a Safe}"
+            executor_flag="--safe"
+            executor_address="${SAFE_ADDRESS}"
+          fi
           : "${STRATEGY_ROUTER:?set STRATEGY_ROUTER}"
           : "${COMMUNITY_ROUTER:?set COMMUNITY_ROUTER}"
           : "${STRATEGY_LOGIC:?set STRATEGY_LOGIC}"
@@ -165,7 +176,7 @@ tasks:
           : "${COMMUNITY_POOL_FACET:?set COMMUNITY_POOL_FACET}"
           : "${OUT:?set OUT to an empty directory}"
           node scripts/prepare-shared-routing.mjs \
-            --network "${NETWORK}" --rpc "${RPC_URL}" --safe "${SAFE_ADDRESS}" \
+            --network "${NETWORK}" --rpc "${RPC_URL}" "${executor_flag}" "${executor_address}" \
             --strategy-router "${STRATEGY_ROUTER}" --community-router "${COMMUNITY_ROUTER}" \
             --strategy-logic "${STRATEGY_LOGIC}" --community-logic "${COMMUNITY_LOGIC}" \
             --community-pool-facet "${COMMUNITY_POOL_FACET}" \

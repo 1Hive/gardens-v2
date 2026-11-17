@@ -69,6 +69,9 @@ jobs:
       - name: Test shared release Safe payloads
         run: node pkg/contracts/scripts/test-prepare-shared-release.mjs
 
+      - name: Test shared routing migration payloads
+        run: node pkg/contracts/scripts/test-prepare-shared-routing.mjs
+
       # - name: Build and Test
       #   run: pnpm test
 

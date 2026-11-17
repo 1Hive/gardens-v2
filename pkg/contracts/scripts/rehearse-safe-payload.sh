@@ -33,7 +33,8 @@ if [ "$#" -gt 0 ]; then
 else
   PAYLOAD_FILES=("${PAYLOAD_FILE:-transaction-builder/${PAYLOAD_CHAIN}-facet-upgrade-payload.json}")
 fi
-SAFE_ADDRESS=""
+EXECUTOR_ADDRESS=""
+EXECUTOR_MODE=""
 for payload_file in "${PAYLOAD_FILES[@]}"; do
   if [ ! -f "$payload_file" ]; then
     echo "missing payload file: $payload_file" >&2
@@ -45,15 +46,24 @@ for payload_file in "${PAYLOAD_FILES[@]}"; do
     exit 1
   fi
   payload_safe="$(jq -r '.meta.createdFromSafeAddress // empty' "$payload_file")"
-  if [ -z "$payload_safe" ] || [ "$payload_safe" = "null" ]; then
-    echo "payload missing meta.createdFromSafeAddress: $payload_file" >&2
+  payload_owner="$(jq -r '.meta.createdFromOwnerAddress // empty' "$payload_file")"
+  if { [ -z "$payload_safe" ] && [ -z "$payload_owner" ]; } || { [ -n "$payload_safe" ] && [ -n "$payload_owner" ]; }; then
+    echo "payload must specify exactly one Safe or owner executor: $payload_file" >&2
     exit 1
   fi
-  if [ -n "$SAFE_ADDRESS" ] && [ "${payload_safe,,}" != "${SAFE_ADDRESS,,}" ]; then
-    echo "payloads use different Safe addresses: $payload_file" >&2
+  if [ -n "$payload_safe" ]; then
+    payload_executor="$payload_safe"
+    payload_mode="Safe"
+  else
+    payload_executor="$payload_owner"
+    payload_mode="direct owner"
+  fi
+  if [ -n "$EXECUTOR_ADDRESS" ] && { [ "${payload_executor,,}" != "${EXECUTOR_ADDRESS,,}" ] || [ "$payload_mode" != "$EXECUTOR_MODE" ]; }; then
+    echo "payloads use different executors or execution modes: $payload_file" >&2
     exit 1
   fi
-  SAFE_ADDRESS="$payload_safe"
+  EXECUTOR_ADDRESS="$payload_executor"
+  EXECUTOR_MODE="$payload_mode"
 done
 
 PORT="${ANVIL_PORT:-8545}"
@@ -90,9 +100,9 @@ for attempt in $(seq 1 30); do
   fi
 done
 
-echo "Rehearsing ${#PAYLOAD_FILES[@]} payload file(s) on $CHAIN fork via Safe $SAFE_ADDRESS"
-cast rpc --rpc-url "$LOCAL_RPC_URL" anvil_setBalance "$SAFE_ADDRESS" 0x3635C9ADC5DEA00000 >/dev/null
-cast rpc --rpc-url "$LOCAL_RPC_URL" anvil_impersonateAccount "$SAFE_ADDRESS" >/dev/null
+echo "Rehearsing ${#PAYLOAD_FILES[@]} payload file(s) on $CHAIN fork via $EXECUTOR_MODE $EXECUTOR_ADDRESS"
+cast rpc --rpc-url "$LOCAL_RPC_URL" anvil_setBalance "$EXECUTOR_ADDRESS" 0x3635C9ADC5DEA00000 >/dev/null
+cast rpc --rpc-url "$LOCAL_RPC_URL" anvil_impersonateAccount "$EXECUTOR_ADDRESS" >/dev/null
 
 for payload_file in "${PAYLOAD_FILES[@]}"; do
   tx_count="$(jq '.transactions | length' "$payload_file")"
@@ -114,14 +124,14 @@ for payload_file in "${PAYLOAD_FILES[@]}"; do
     cast send \
       --rpc-url "$LOCAL_RPC_URL" \
       --unlocked \
-      --from "$SAFE_ADDRESS" \
+      --from "$EXECUTOR_ADDRESS" \
       --value "$value" \
       "$to" \
       "$data" >/dev/null
   done
 done
 
-cast rpc --rpc-url "$LOCAL_RPC_URL" anvil_stopImpersonatingAccount "$SAFE_ADDRESS" >/dev/null
+cast rpc --rpc-url "$LOCAL_RPC_URL" anvil_stopImpersonatingAccount "$EXECUTOR_ADDRESS" >/dev/null
 
 if [ "${SKIP_SMOKE:-false}" = "true" ]; then
   echo "SKIP_SMOKE=true; leaving smoke test to caller"
