@@ -72,6 +72,9 @@ jobs:
       - name: Test shared routing migration payloads
         run: node pkg/contracts/scripts/test-prepare-shared-routing.mjs
 
+      - name: Test facet snapshot config safety
+        run: node pkg/contracts/scripts/test-sync-refreshed-facets.mjs
+
       # - name: Build and Test
       #   run: pnpm test
 
@@ -111,5 +114,7 @@ jobs:
           node --check scripts/prepare-shared-routing.mjs
           node --check scripts/prepare-shared-release.mjs
           node --check scripts/verify-shared-routing.mjs
+          node --check scripts/sync-refreshed-facets.js
+          bash -n scripts/assert-unrouted-factory.sh
           bash -n scripts/verify-all-deployments.sh
           bash -n scripts/rehearse-safe-payload.sh
