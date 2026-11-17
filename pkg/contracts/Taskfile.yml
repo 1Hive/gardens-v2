@@ -157,17 +157,26 @@ tasks:
       - cmd: |
           : "${NETWORK:?set NETWORK}"
           : "${RPC_URL:?set RPC_URL}"
-          if [ -n "${MIGRATION_EXECUTOR:-}" ]; then
-            if [ -n "${SAFE_ADDRESS:-}" ]; then
-              echo "set only MIGRATION_EXECUTOR or SAFE_ADDRESS" >&2
+          if [ -n "${SAFE_ADDRESS:-}" ]; then
+            if [ -n "${MIGRATION_EXECUTOR:-}" ]; then
+              echo "set only SAFE_ADDRESS or MIGRATION_EXECUTOR" >&2
+              exit 1
+            fi
+            executor_flag="--safe"
+            executor_address="${SAFE_ADDRESS}"
+          else
+            : "${PK_DEPLOYER_PW:?set PK_DEPLOYER_PW to derive the PK_DEPLOYER address}"
+            : "${HOME:?set HOME}"
+            if [ ! -f "${HOME}/.foundry/keystores/PK_DEPLOYER" ]; then
+              echo "missing Foundry keystore PK_DEPLOYER" >&2
               exit 1
             fi
             executor_flag="--executor"
-            executor_address="${MIGRATION_EXECUTOR}"
-          else
-            : "${SAFE_ADDRESS:?set MIGRATION_EXECUTOR for an EOA or SAFE_ADDRESS for a Safe}"
-            executor_flag="--safe"
-            executor_address="${SAFE_ADDRESS}"
+            executor_address="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+            if [ -n "${MIGRATION_EXECUTOR:-}" ] && [ "$(printf '%s' "${MIGRATION_EXECUTOR}" | tr '[:upper:]' '[:lower:]')" != "$(printf '%s' "${executor_address}" | tr '[:upper:]' '[:lower:]')" ]; then
+              echo "MIGRATION_EXECUTOR does not match PK_DEPLOYER keystore address" >&2
+              exit 1
+            fi
           fi
           : "${STRATEGY_ROUTER:?set STRATEGY_ROUTER}"
           : "${COMMUNITY_ROUTER:?set COMMUNITY_ROUTER}"
