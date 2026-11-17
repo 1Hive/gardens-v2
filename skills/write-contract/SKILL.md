@@ -9,6 +9,7 @@ description: Prepare Gardens V2 state-changing contract transactions. Use this s
 
 Use this skill to prepare state-changing contract interactions for Gardens V2.
 Optimize for calldata generation, transaction assembly, and safe review, not direct automatic execution.
+For CVStrategy or RegistryCommunity upgrades on a shared-router chain, follow `skills/gardens-shared-upgrade/SKILL.md` for the release, test, rehearsal, and approval procedure before using this skill for generic calldata mechanics.
 
 ## Foundry Requirement
 

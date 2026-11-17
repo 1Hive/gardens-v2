@@ -1,0 +1,33 @@
+---
+name: gardens-shared-upgrade
+description: Prepare and verify Gardens V2 CVStrategy or RegistryCommunity upgrades on chains using shared routers, through a reviewed Safe payload and an approval gate before submission.
+---
+
+# Gardens shared-router upgrade
+
+Use this for a routed CVStrategy or RegistryCommunity core, facet, router, or per-instance state upgrade. Work from `pkg/contracts` unless a command says otherwise. Read `pkg/contracts/docs/shared-routing.md` and `pkg/contracts/AGENTS.md` for the current architecture and chain conventions. If the factory has not migrated to shared routing, follow the initial migration section of that document instead of using a routed release payload.
+
+## Prepare and prove the candidate
+
+1. Identify the target chain, family, exact source diff, deployed candidate addresses, expected new behavior, and affected proxy inventory. Read `config/networks.json` and live factory/template/implementation/selector state. Reconcile configured proxies with live creation events; a missing proxy makes router upgrades incomplete. Check chain-local linked libraries and effective owners. Do not treat a local build or an old payload as proof of deployed code.
+2. Make the relevant unit and upgrade tests pass. Run the full non-fork contract suite, which includes SecurityPoC, and the advisory coverage check from the repo root:
+
+   ```bash
+   node pkg/contracts/scripts/check-security-poc-coverage.mjs
+   forge test --no-match-path 'pkg/contracts/test/fork/*' --summary
+   ```
+
+   Run focused `SharedImplementationRouter.t.sol`, `RegistryFactory.t.sol`, and affected contract tests when those paths are involved. Fix failures before proceeding. For each proposed release, add or update a **next-upgrade test** that applies the candidate release to existing proxies and proves the new version is active through a candidate-specific observable result: a version value, new selector/behavior, or runtime code hash. Assert previous per-instance state and ownership survive. For a router change, also assert each upgraded proxy's ERC1967 slot points to the new router and new instances use the new template. Merely checking the factory's new address is insufficient.
+3. Run `bash scripts/verify-storage-layout.sh` from `pkg/contracts`. This checks facet/core alignment and RegistryFactory invariants; it does **not** compare the deployed old implementation with the candidate. Review that old-to-new layout separately, including inherited fields, gaps, router storage, and any required per-proxy `runImplementationMigration(data)` calls. Stop if compatibility or migration order is unresolved.
+
+## Rehearse the exact transaction sequence
+
+4. Generate draft read-only Safe Transaction Builder payloads with `task prepare-shared-release` (`NETWORK`, `RPC_URL`, `FAMILY`, `SAFE_ADDRESS`, `OUT`, and candidate variables). Use `NEW_IMPLEMENTATION` and `FACET_REPLACEMENTS` for a factory release; use `NEW_ROUTER` for the template switch and per-proxy UUPS batches; use `MIGRATIONS` for per-proxy state calls. Set `STORAGE_REVIEWED=true` only after the layout review. The output is one factory transaction for a core/facet release, or ordered files when router or state migration steps are needed. The generator requires an empty output directory for staged files. For initial migration, use `task prepare-shared-routing` instead.
+5. Rehearse **the generated files in order** on a fork using `KEEP_ANVIL=true bash scripts/rehearse-safe-payload.sh <chain> <ordered-payload-files...>`. Run the relevant fork lifecycle and candidate-specific next-upgrade test against that modified local fork, then stop the Anvil instance. The rehearsal smoke check alone can skip implementation checks. Prove the expected candidate behavior on existing proxies, new creation when applicable, selector routing, storage continuity, and ownership. Stop and revise the candidate or payload if any assertion fails; then repeat preparation and rehearsal. Do not use the legacy `rehearse-upgrade-chain` flow on routed chains because it executes the old per-instance upgrade script.
+6. Review the final payloads after rehearsal: chain ID, Safe, factory/proxy targets, full selector sets, implementation/router addresses, ordering, transaction count, linked-library bytecode, and any state migration calldata. Record SHA-256 hashes of the exact files reviewed. Re-read live state and Safe nonce/pending queue immediately before submission; regenerate and rehearse if the relevant state changed. Use `scripts/verify-shared-routing.mjs` or `scripts/verify-all-deployments.sh` as appropriate for current-state checks.
+
+## Approval and submission
+
+The intended Safe is `0x9a17De1f0caD0c592F656410997E4B685d339029`. Confirm on the target chain that it is the effective factory/proxy owner for every payload, that payload metadata names this Safe, and that its threshold and nonce are correct. The proposer named `pkGARDEN` uses the local `~/.foundry/keystores/pkGarden` keystore; verify its address and Safe Transaction Service proposer/delegate authorization. A proposer need not appear in `getOwners()`. Never expose the key or keystore password.
+
+Once tests, storage review, rehearsal, and final payload review are complete, present the exact ordered files, target chain, transaction count, Safe, proposer, and expected effect to the user. **Ask for explicit approval to submit these specific payloads to the Safe Transaction Service.** Submission creates pending Safe transactions; it does not execute them. Do not submit before that approval. After approval, recheck owner, payload hashes, and nonce; if these changed, stop and obtain approval for the revised plan. Otherwise use `scripts/submit_safe_payloads.py` with `--safe 0x9a17De1f0caD0c592F656410997E4B685d339029`, `--keystore ~/.foundry/keystores/pkGarden`, `--service-chain <chain>`, and repeated `--payload-file <ordered-file>` arguments. Select nonce behavior deliberately (`--skip-pending` unless the approved plan says otherwise). Report the Safe transaction links and distinguish submitted, executed, and verified on-chain states.

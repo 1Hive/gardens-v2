@@ -67,6 +67,8 @@ task submit-safe-payloads-optimism
 
 ## Default Upgrade Flow
 
+For upgrades on a factory already using shared routers, follow `skills/gardens-shared-upgrade/SKILL.md`. It requires passing SecurityPoC and upgrade tests, storage review, a fork rehearsal with a candidate-version assertion, and an explicit approval gate before Safe submission. The named proposer for that flow is the `pkGarden` keystore, as requested by the user. The generic sequence below applies to other upgrades.
+
 For mainnet upgrade operations, default to this sequence unless the user explicitly asks for something else:
 
 1. Determine what must be upgraded.
