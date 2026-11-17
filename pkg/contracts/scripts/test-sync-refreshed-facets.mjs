@@ -5,9 +5,11 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 const run = promisify(execFile);
+const contractsDirectory = fileURLToPath(new URL('..', import.meta.url));
 const candidate = '0x1111111111111111111111111111111111111111';
 const current = '0x2222222222222222222222222222222222222222';
 const factory = '0x3333333333333333333333333333333333333333';
@@ -60,16 +62,16 @@ try {
     mode = scenario.mode;
     await writeFile(configPath, `${JSON.stringify(original)}\n`);
     if (scenario.fails) {
-      await assert.rejects(run(process.execPath, args, { cwd: join(import.meta.dirname, '..') }));
+      await assert.rejects(run(process.execPath, args, { cwd: contractsDirectory }));
     } else {
-      await run(process.execPath, args, { cwd: join(import.meta.dirname, '..') });
+      await run(process.execPath, args, { cwd: contractsDirectory });
     }
     const config = JSON.parse(await readFile(configPath, 'utf8'));
     assert.equal(config.networks[0].FACETS.COMMUNITY_POOL, scenario.expected, scenario.mode);
     if (scenario.mode === 'legacy') {
-      await run('bash', guardArgs, { cwd: join(import.meta.dirname, '..') });
+      await run('bash', guardArgs, { cwd: contractsDirectory });
     } else {
-      await assert.rejects(run('bash', guardArgs, { cwd: join(import.meta.dirname, '..') }));
+      await assert.rejects(run('bash', guardArgs, { cwd: contractsDirectory }));
     }
   }
   process.stdout.write('Facet sync and legacy upgrade guard respect shared releases and RPC errors.\n');

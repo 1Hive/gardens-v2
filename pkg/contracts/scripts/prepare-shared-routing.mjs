@@ -5,6 +5,7 @@ import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { createPublicClient, encodeFunctionData, getAddress, http, isAddress, parseAbi, parseEventLogs } from 'viem';
+import { getProxyEventInventory } from '../../subgraph/src/scripts/proxy-event-inventory.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const implementationSlot = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
@@ -35,6 +36,7 @@ const abi = parseAbi([
 const { values } = parseArgs({ options: {
   network: { type: 'string' }, rpc: { type: 'string' },
   phase: { type: 'string' }, 'subgraph-url': { type: 'string' }, 'switch-tx': { type: 'string' },
+  'inventory-source': { type: 'string', default: 'subgraph' },
   'strategy-router': { type: 'string' }, 'community-router': { type: 'string' },
   'strategy-logic': { type: 'string' }, 'community-logic': { type: 'string' },
   'community-pool-facet': { type: 'string' }, out: { type: 'string' },
@@ -43,7 +45,7 @@ const { values } = parseArgs({ options: {
 }});
 
 if (values.help) {
-  process.stdout.write('Usage: node scripts/prepare-shared-routing.mjs --phase activate|communities|switch-strategy|strategies|verify --network <name> --rpc <url> (--executor <effective-owner-eoa> | --safe <effective-owner-safe>) --strategy-router <address> --community-router <address> --strategy-logic <address> --community-logic <address> --community-pool-facet <address> --out <empty-directory> [--subgraph-url <url> --switch-tx <hash>] [--batch-size 10]\n');
+  process.stdout.write('Usage: node scripts/prepare-shared-routing.mjs --phase activate|communities|switch-strategy|strategies|verify --network <name> --rpc <url> (--executor <effective-owner-eoa> | --safe <effective-owner-safe>) --strategy-router <address> --community-router <address> --strategy-logic <address> --community-logic <address> --community-pool-facet <address> --out <empty-directory> [--subgraph-url <url> | --inventory-source events with ETHERSCAN_API_KEY] [--switch-tx <hash>] [--batch-size 10]\n');
   process.exit(0);
 }
 
@@ -75,14 +77,30 @@ async function currentImplementation(client, proxy) {
   return getAddress(`0x${word.slice(-40)}`);
 }
 async function verifyInventory(client, factory, communities, strategies, eventName, router) {
-  assert(values['subgraph-url'] && values['switch-tx'],
-    'This phase requires --subgraph-url and --switch-tx for post-switch inventory verification');
+  assert(values['switch-tx'], 'This phase requires --switch-tx for post-switch inventory verification');
   assert(/^0x[0-9a-fA-F]{64}$/.test(values['switch-tx']), 'Invalid --switch-tx');
   const receipt = await client.getTransactionReceipt({ hash: values['switch-tx'] });
   assert(receipt.status === 'success', 'Switch transaction did not succeed');
   const events = parseEventLogs({ abi, logs: receipt.logs, eventName, strict: true });
   assert(events.some((event) => same(event.address, factory) && same(event.args.template, router)),
     `Switch transaction did not emit ${eventName} for this factory and router`);
+  if (values['inventory-source'] === 'events') {
+    const toBlock = Number(await client.getBlockNumber());
+    const inventory = await getProxyEventInventory({ chainId: await client.getChainId(), factory,
+      toBlock, apiKey: process.env.ETHERSCAN_API_KEY, switchTx: values['switch-tx'],
+      switchBlock: Number(receipt.blockNumber),
+      switchFamily: eventName === 'CommunityTemplateSet' ? 'community' : 'strategy', router });
+    for (const [kind, configured] of [['communities', communities], ['strategies', strategies]]) {
+      const actual = new Set(inventory[kind].map((address) => address.toLowerCase()));
+      const expected = new Set(configured.map((address) => address.toLowerCase()));
+      assert(actual.size === expected.size && [...actual].every((address) => expected.has(address)),
+        `${kind} differs between creation events and networks.json; run event-backed proxy sync`);
+    }
+    return { switchTx: values['switch-tx'], switchBlock: Number(receipt.blockNumber),
+      queriedThroughBlock: toBlock, source: inventory.source };
+  }
+  assert(values['inventory-source'] === 'subgraph' && values['subgraph-url'],
+    'This phase requires --subgraph-url or --inventory-source events');
   const response = await fetch(values['subgraph-url'], {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ query: '{ _meta { block { number } hasIndexingErrors } registryFactories(first: 1000) { id } registryCommunities(first: 1000) { id } cvstrategies(first: 1000) { id } }' }),
@@ -111,6 +129,7 @@ async function main() {
   const phase = values.phase;
   assert(['activate', 'communities', 'switch-strategy', 'strategies', 'verify'].includes(phase),
     'Specify --phase activate|communities|switch-strategy|strategies|verify');
+  assert(['subgraph', 'events'].includes(values['inventory-source']), 'Invalid --inventory-source');
   assert(networkName && values.rpc && values.out, 'Missing --network, --rpc or --out');
   assert(Boolean(values.safe) !== Boolean(values.executor), 'Specify exactly one of --safe or --executor');
   const batchSize = Number(values['batch-size']);

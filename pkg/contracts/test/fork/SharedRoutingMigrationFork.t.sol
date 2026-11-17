@@ -29,14 +29,14 @@ contract ForkFacetV2 {
     }
 }
 
-/// @notice Migrates the configured Base fleet in the staged production order, then releases new code.
+/// @notice Migrates a configured fleet in the staged production order, then releases new code.
 contract SharedRoutingMigrationForkTest is Test {
     using stdJson for string;
 
     bytes32 internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
-    address internal constant FACTORY = 0xc93830dd463516ED5f28f6cd4F837173B87FF389;
     address internal constant EXPECTED_OWNER = 0x00BcC26E792E393217bA895f5e85AE628FC994E9;
 
+    address internal factoryAddress;
     RegistryFactory internal factory;
     CVStrategyRouter internal strategyRouter;
     RegistryCommunityRouter internal communityRouter;
@@ -49,12 +49,16 @@ contract SharedRoutingMigrationForkTest is Test {
 
     function test_migrateEntireConfiguredFleetThenUpgradeAgain() public {
         vm.createSelectFork(vm.envString("FORK_RPC_URL"));
-        assertEq(block.chainid, 8453);
+        string memory network = vm.envOr("FORK_NETWORK", string("base"));
+        bool polygon = keccak256(bytes(network)) == keccak256("polygon");
+        assertTrue(polygon || keccak256(bytes(network)) == keccak256("base"), "unsupported fork network");
+        assertEq(block.chainid, polygon ? 137 : 8453);
+        string memory configKey = polygon ? ".networks[5]" : ".networks[7]";
         string memory json = vm.readFile(string.concat(vm.projectRoot(), "/pkg/contracts/config/networks.json"));
-        communities = json.readAddressArray(".networks[7].PROXIES.REGISTRY_COMMUNITIES");
-        strategies = json.readAddressArray(".networks[7].PROXIES.CV_STRATEGIES");
-        assertEq(json.readAddress(".networks[7].PROXIES.REGISTRY_FACTORY"), FACTORY);
-        factory = RegistryFactory(payable(FACTORY));
+        communities = json.readAddressArray(string.concat(configKey, ".PROXIES.REGISTRY_COMMUNITIES"));
+        strategies = json.readAddressArray(string.concat(configKey, ".PROXIES.CV_STRATEGIES"));
+        factoryAddress = json.readAddress(string.concat(configKey, ".PROXIES.REGISTRY_FACTORY"));
+        factory = RegistryFactory(payable(factoryAddress));
         assertEq(factory.owner(), EXPECTED_OWNER);
         assertGt(communities.length, 0);
         assertGt(strategies.length, 0);
@@ -70,7 +74,7 @@ contract SharedRoutingMigrationForkTest is Test {
             address owner = RegistryCommunity(payable(communities[i])).owner();
             communityOwners.push(owner);
             assertEq(owner, EXPECTED_OWNER);
-            assertEq(RegistryCommunity(payable(communities[i])).registryFactory(), FACTORY);
+            assertEq(RegistryCommunity(payable(communities[i])).registryFactory(), factoryAddress);
         }
         for (uint256 i; i < strategies.length; i++) {
             address owner = CVStrategy(payable(strategies[i])).owner();
@@ -84,8 +88,8 @@ contract SharedRoutingMigrationForkTest is Test {
     function _migrate() internal {
         vm.startPrank(EXPECTED_OWNER);
         factory.upgradeTo(address(new RegistryFactory()));
-        strategyRouter = new CVStrategyRouter(FACTORY);
-        communityRouter = new RegistryCommunityRouter(FACTORY);
+        strategyRouter = new CVStrategyRouter(factoryAddress);
+        communityRouter = new RegistryCommunityRouter(factoryAddress);
         _activateRelease();
         factory.setRegistryCommunityTemplate(address(communityRouter));
         assertEq(factory.registryCommunityTemplate(), address(communityRouter));

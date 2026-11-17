@@ -1,0 +1,144 @@
+{
+  "chain": "polygon",
+  "chainId": 137,
+  "status": "routed-verified",
+  "recordedAt": "2026-11-17T04:02:17.280Z",
+  "sourceCommit": "8dba49ca4f53f13c7f7333e0b43b000eb01dc84e",
+  "executor": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+  "safe": "0x9a17De1f0caD0c592F656410997E4B685d339029",
+  "factoryProxy": "0x57a9835b204dbcc101dbf981625a3625e8043b9c",
+  "communities": 8,
+  "strategies": 21,
+  "deployments": [
+    {
+      "contract": "RegistryFactory",
+      "address": "0xfa9fb37560be53ee90105273bcaef8a114b9a495",
+      "transactionHash": "0xa0b63b65e3e58c521ed81be6c51a2a6127914f26126afcfbf97355b8fdbaa026",
+      "blockNumber": 97454481,
+      "runtimeBytes": 20866,
+      "runtimeCodeHash": "0x7e4f516a8568abd9f79522c90fceb930555197f472fb937bf3a6407ec3b88d29"
+    },
+    {
+      "contract": "CVStrategyRouter",
+      "address": "0xa637ed512fcf3e4798d541172fb7842652929ec5",
+      "transactionHash": "0x3514eb0464282c8b5a050aa6a01150fe420d85933270e7d7530eca7feb3c3486",
+      "blockNumber": 97454483,
+      "runtimeBytes": 8376,
+      "runtimeCodeHash": "0x450e3c6a68e3df7d6373c74276c96c9369ef7aa785cdee3b1f1c7fbe12fd375f"
+    },
+    {
+      "contract": "RegistryCommunityRouter",
+      "address": "0xcfcb381a40df0f0bf604f3c2e293c3d0c5ae61e2",
+      "transactionHash": "0xefe5e2bdd8c0770f212b40784fc6c7286308bbc8b75bd8a3fd78d3570d201f61",
+      "blockNumber": 97454485,
+      "runtimeBytes": 8372,
+      "runtimeCodeHash": "0xbd005dd94e46c4511a1c2c788fc419ac8185736b2fb089996e1491d7315c0538"
+    },
+    {
+      "contract": "CVStrategy",
+      "address": "0x8cc91e42f10ceb6b945a438a113e66d95c6caa6e",
+      "transactionHash": "0xb429473e5a8ee91d88976662494fd7a5090298fbd83db52df76c271c385ad94e",
+      "blockNumber": 97454487,
+      "runtimeBytes": 22831,
+      "runtimeCodeHash": "0x69fd556881692d292ea700cf2bec6a989776612e8f9cc0f1588b31b031eb25c5"
+    },
+    {
+      "contract": "RegistryCommunity",
+      "address": "0xd975b9f0e721aea744839be53d02b5e823c5bc52",
+      "transactionHash": "0xb5a6f9108289806005e0a1c16f7e2fb5299e4053e0ec6a76b669af9982925d83",
+      "blockNumber": 97454488,
+      "runtimeBytes": 17197,
+      "runtimeCodeHash": "0xd8361ef4450e7fb5d9e3ac5b89e7710356c3d46f856076081ab28454f4b1ae05"
+    },
+    {
+      "contract": "CommunityPoolFacet",
+      "address": "0xe41e506087639f22e9ae59e94dd4d2a6b649ccf0",
+      "transactionHash": "0x95aa1ad68bab73aacd440473cc33b8b943d690c04dddad46e7846729476c80ae",
+      "blockNumber": 97454490,
+      "runtimeBytes": 12463,
+      "runtimeCodeHash": "0x1dc40dfc91a367881e3a3ead70d340f8bb930aa3d71b259517bf918fa11c5dc4"
+    }
+  ],
+  "phases": {
+    "factoryUpgrade": [
+      "0xb00e43c070194b537587f76e4918482ccfc2adbcc7a373d589be3383f07a6e5f"
+    ],
+    "activation": [
+      "0x08f5857d7e4e15b5d14e87a8822db0be1ef22ff27a2058353dd58904fa5f54c0",
+      "0xe08f572beab19363fc88ce1ce699f6d40d5bfc3a5c147b39c62ff423340c1894",
+      "0xaae21532ad2f2703860eee7e88c9dbf3ca95b98f0c67835b772447734635fd7e"
+    ],
+    "communityMigrations": [
+      "0x86b57ac99eba969ec75cfd63cc79a06e3877cfb6e60f20ed934870e0348d4eba",
+      "0x094ea486feee1dd855f68baa9c437878697911526056f0f98c506881b5f35257",
+      "0x6f8a7cc3d2f0ce6391b2db3f371238de4fc6dd768a52a01e1bcbbcf6e713041e",
+      "0xca96de7d3339df902a6b5a6daf1b7571c208a239a832f5e7c33843f589044c5f",
+      "0xc1f869afe2c6282e25fa8f6e0a703f5eb6edbc807ad14df032c931c02b53e6e7",
+      "0xa797b7796f3926d9ed8f41caf00dc3c6b3ac9695920fce63adef95df4064ef89",
+      "0x5a8bebbeb4df24ef71e9477b3f9ad3ddeb4c01a1961a377cd129c26431b60c56",
+      "0xc911123d84eb81a4bd8817290b2d1bc32fd61357361af358dea24d7093a836b0"
+    ],
+    "strategyTemplateSwitch": [
+      "0x3647829154d13d8b1b707ad91f18a28844fb839c1e973697bbb79bdcce8c373c"
+    ],
+    "strategyMigrations": [
+      "0x66990e717bf560d4eaa0396ee7443c0834e785daed185fbccd83bb700ca29873",
+      "0x17067256e61bfdccd26f3f95ff225d58600ec8ac1c171f6d789439b948aaee4e",
+      "0x48520545686580b4c95f6f68a52952da148cc1308bb6906c51d6051ae0725c58",
+      "0xd10733fc33d1592d21ef7c5103726413fc3b32df70c6085dacef3c0a14cb0f1a",
+      "0x55f8a9b167ccd8ca9bd1bd634da63b5531b0a0128dbc196a07d3938eedd64936",
+      "0xcfdafac8cc2856014af8fdf1e7ada85fc3bfcbfc3fe09b843d7001cb0bf2d2ca",
+      "0xaefe70321ec464718f9b10bf4f6b3be1fe048373778734348624fd72733b936c",
+      "0x5c68acce4e42f6df627ca76da2e3005d4f2ef31d6e6f2540e53bd725f9ad48a5",
+      "0x4bd3eb2186d7d6cb187547fae769c25fcdae80f365d7695eed2e99a91c24ecc2",
+      "0x04deaccd677038a3b41abc49761fcf3fc17a45e85d7e57f8533ffb47250eb98f",
+      "0x353553df63e666fb6aa55d4ecb57f5d6f9aec43eaac3c08ba1dde48c86144d68",
+      "0x406c64e11d58ed8ea4d52acd725547864ebec5bae4003cdce6d2dafa2458f879",
+      "0x0d15029708ac4bef29503e44baac19056eceaa9a15f9a6aeaa228f6beeed2e8a",
+      "0xfdd691d8938331a4d8f4fad3fb41e8bfe5d6219f05b3e491ccf75b7fbb2bac63",
+      "0x52bc87e0b80e90ccd5a1304dae97497a5c302f97df8f311221308dd0213cee40",
+      "0x6ce9ac3f61e439bfe80f8cd1cf4ab8d8dfbf582628cec821c08fa01e611297f2",
+      "0x275b5f73ce885db72d110939b6b8ee46891704ac1f85da0c794768408251cdcb",
+      "0x61252f8a561dbe29b382bb1b0daae81ab90602a4c8cb3d421a1358e4d4a36eb0",
+      "0xc38830adc17b18964820e489a00a0b16f36d4997d19adb57419f1d2d62c6be26",
+      "0x7fab2d90d19404bf7a305359cdc7c2cf6773c51b30a7501b1403573b95f7ced8",
+      "0x74115de88f196d7e23b69a38b4ec5ed87c06c8c422273c12b984258961a5b84c"
+    ]
+  },
+  "handoff": "ProxyOwner upgradeAccess remains assigned to executor; renounceUpgradeAccess not executed",
+  "payloads": [
+    {
+      "file": "00-factory-upgrade.json",
+      "sha256": "fe6a67c90dabb083ad25cb18c03f5ab190e1f94d0459f8619d43b652d59cd299"
+    },
+    {
+      "file": "polygon-01-activate-routing.json",
+      "sha256": "c452816d7654246210fc1d33d34ba7cd6b4918f76acbc51b7087a0f9b77a389f"
+    },
+    {
+      "file": "polygon-02-migrate-communities-01.json",
+      "sha256": "6e6d08df9af377ab86eecbafda5739ea6d0dfc16f4c8ae8f4a856d751932dc55"
+    },
+    {
+      "file": "polygon-03-switch-strategy-template.json",
+      "sha256": "ebed392a14b37ee6068c122e0b81c1bb16b7a9e5b7113285c41e2310f5494cb6"
+    },
+    {
+      "file": "polygon-04-migrate-strategies-01.json",
+      "sha256": "6c0d0c23a2615274ba00ffbcecd8eff26755d2f241bd8766e9db2fafb06b5d37"
+    },
+    {
+      "file": "polygon-04-migrate-strategies-02.json",
+      "sha256": "26ad7ea3d51ceae2cf29bde9f17226c8fbac5466d8b42a9099218662165275a6"
+    },
+    {
+      "file": "polygon-04-migrate-strategies-03.json",
+      "sha256": "49cc74647936495cace08f9fb9f443c0c403f3752ab2cc1ad05a661751b33562"
+    }
+  ],
+  "sourceVerification": {
+    "provider": "Polygonscan",
+    "status": "all-six-verified",
+    "verifiedAt": "2026-11-17T04:08:56.837Z"
+  }
+}

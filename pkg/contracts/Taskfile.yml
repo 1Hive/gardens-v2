@@ -173,7 +173,11 @@ tasks:
               exit 1
             fi
             executor_flag="--executor"
-            executor_address="$(cast wallet address --account PK_DEPLOYER --password "${PK_DEPLOYER_PW}")"
+            password_file="$(mktemp)"
+            chmod 600 "${password_file}"
+            trap 'shred -u "${password_file}"' EXIT
+            printf '%s' "${PK_DEPLOYER_PW}" > "${password_file}"
+            executor_address="$(cast wallet address --account PK_DEPLOYER --password-file "${password_file}")"
             if [ -n "${MIGRATION_EXECUTOR:-}" ] && [ "$(printf '%s' "${MIGRATION_EXECUTOR}" | tr '[:upper:]' '[:lower:]')" != "$(printf '%s' "${executor_address}" | tr '[:upper:]' '[:lower:]')" ]; then
               echo "MIGRATION_EXECUTOR does not match PK_DEPLOYER keystore address" >&2
               exit 1
@@ -188,9 +192,14 @@ tasks:
           set -- --phase "${PHASE}" --network "${NETWORK}" --rpc "${RPC_URL}" "${executor_flag}" "${executor_address}"
           case "${PHASE}" in
             communities|strategies|verify)
-              : "${SUBGRAPH_URL:?set SUBGRAPH_URL to the chain subgraph endpoint}"
               : "${SWITCH_TX:?set SWITCH_TX to the confirmed template switch transaction hash}"
-              set -- "$@" --subgraph-url "${SUBGRAPH_URL}" --switch-tx "${SWITCH_TX}"
+              if [ "${INVENTORY_SOURCE:-subgraph}" = "events" ]; then
+                : "${ETHERSCAN_API_KEY:?set ETHERSCAN_API_KEY for event-backed inventory}"
+                set -- "$@" --inventory-source events --switch-tx "${SWITCH_TX}"
+              else
+                : "${SUBGRAPH_URL:?set SUBGRAPH_URL to the chain subgraph endpoint}"
+                set -- "$@" --subgraph-url "${SUBGRAPH_URL}" --switch-tx "${SWITCH_TX}"
+              fi
               ;;
           esac
           node scripts/prepare-shared-routing.mjs "$@" \

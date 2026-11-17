@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import { createPublicClient, getAddress, http, parseAbi } from 'viem';
+import { createPublicClient, getAddress, http, parseAbi, toFunctionSelector } from 'viem';
 
 const implementationSlot = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
 const abi = parseAbi([
@@ -19,9 +19,14 @@ const abi = parseAbi([
   'function communityImplementation() view returns (address)',
   'function strategyFacet(bytes4 selector) view returns (address)',
   'function communityFacet(bytes4 selector) view returns (address)',
+  'function facetAddress(bytes4 selector) view returns (address)',
   'function getStrategyFacets() view returns ((address facetAddress,uint8 action,bytes4[] functionSelectors)[] cuts,address init,bytes initCalldata)',
   'function getCommunityFacets() view returns ((address facetAddress,uint8 action,bytes4[] functionSelectors)[] cuts,address init,bytes initCalldata)',
 ]);
+const loupeSelectors = new Set([
+  'facets()', 'facetFunctionSelectors(address)', 'facetAddresses()',
+  'facetAddress(bytes4)', 'supportsInterface(bytes4)',
+].map(toFunctionSelector));
 const { values } = parseArgs({ options: {
   network: { type: 'string' }, rpc: { type: 'string' },
   family: { type: 'string' }, help: { type: 'boolean' },
@@ -76,7 +81,18 @@ async function main() {
         assert(!selectors.has(selector), `${label} duplicate selector: ${selector}`);
         selectors.add(selector);
         const target = await client.readContract({ address: factory, abi, functionName: facetName, args: [selector] });
-        assert(same(target, cut.facetAddress), `${label} selector routing mismatch: ${selector}`);
+        if (loupeSelectors.has(selector)) {
+          assert(same(target, '0x0000000000000000000000000000000000000000'),
+            `${label} loupe selector unexpectedly routes through a facet: ${selector}`);
+          if (rawProxies.length) {
+            const proxy = getAddress(rawProxies[0]);
+            const loupeTarget = await client.readContract({ address: proxy, abi,
+              functionName: 'facetAddress', args: [selector] });
+            assert(same(loupeTarget, proxy), `${label} router does not serve loupe selector: ${selector}`);
+          }
+        } else {
+          assert(same(target, cut.facetAddress), `${label} selector routing mismatch: ${selector}`);
+        }
       }
     }
     const seen = new Set();
