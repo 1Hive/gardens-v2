@@ -1,0 +1,965 @@
+{
+  "network": "gnosis",
+  "chainId": 100,
+  "factoryUpgrade": {
+    "transactionHash": "0x49657035b408bb457fd6aa8fdb1fbfad4257968a4205e80cdef4094f0126870a",
+    "status": "0x1",
+    "blockNumber": "0x2f0943d",
+    "gasUsed": "0xc645"
+  },
+  "activation": [
+    {
+      "transactionHash": "0xf720d008503cdfe92a7a512735ee41c4820ccfb0c9f3877fb074914623661a8e",
+      "status": "0x1",
+      "blockNumber": "0x2f0944d",
+      "gasUsed": "0x182a4e"
+    },
+    {
+      "transactionHash": "0x13fe65cdfa6c48e7bc9e551a45fac528b31accf98cb3a29b8238254e3604ee69",
+      "status": "0x1",
+      "blockNumber": "0x2f0944e",
+      "gasUsed": "0x16e575"
+    },
+    {
+      "transactionHash": "0x94222290249803a07412150dd8e1aefd599a6389ecfb8ce3f4ff80d9b52a4041",
+      "status": "0x1",
+      "blockNumber": "0x2f0944f",
+      "gasUsed": "0xcf9f"
+    }
+  ],
+  "communityReceipts": [
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-01.json",
+      "index": 0,
+      "target": "0x2038F3b00ce19261fa558b2Bd06404c912Da3e85",
+      "transactionHash": "0x7849ede3c7568dbd048565ddf161af723415ad966eef991942b22cf1545eee01",
+      "status": "0x1",
+      "blockNumber": "0x2f09463",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-01.json",
+      "index": 1,
+      "target": "0x4D7a042B2Fb2504DD98E4C871CC134A8deD712Da",
+      "transactionHash": "0x3f81f71c972d69678239e39edc872aad3452f1ffe53d30cdb7ed5faa049d2b09",
+      "status": "0x1",
+      "blockNumber": "0x2f09464",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-01.json",
+      "index": 2,
+      "target": "0x57412C2483E686d1e180c59A6640322680F5A6D9",
+      "transactionHash": "0x033bdb14c8ced03b6eeeafbaf45028499f898f64796d482f10e12954f5bb395b",
+      "status": "0x1",
+      "blockNumber": "0x2f09465",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-01.json",
+      "index": 3,
+      "target": "0x6221D5E286cCE0d22fC6e0B2597D5D3cA98daCb1",
+      "transactionHash": "0xe5ed1fd4fa305657aee2d770c21f4d48ccc5f100f889f92b6ab56e6fdfbd6792",
+      "status": "0x1",
+      "blockNumber": "0x2f09466",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-01.json",
+      "index": 4,
+      "target": "0x62Ce2d154D34b5AEfB9be02525CFffDBf934fF27",
+      "transactionHash": "0x78f9a5cb25c5f9ff8eb623e4cc9c52fd4de7f37f44b6f437a4ae1c25ce33ed49",
+      "status": "0x1",
+      "blockNumber": "0x2f09467",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-01.json",
+      "index": 5,
+      "target": "0x69cAfe304Ac3c03C2ACD8F241BCc60A0BB4EAB82",
+      "transactionHash": "0x0f30a682b0150f3796f6a650c85d783b9fbac339471680182c7a19bdb8abaf07",
+      "status": "0x1",
+      "blockNumber": "0x2f09468",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-01.json",
+      "index": 6,
+      "target": "0x87c2B76AE6e2c18c852BfbD6ACFAf4dB36377F75",
+      "transactionHash": "0x70d80999013d17c47f3dabe2777401a097404ae799b21194de7dfd96b65df517",
+      "status": "0x1",
+      "blockNumber": "0x2f0946a",
+      "gasUsed": "0xc586"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-01.json",
+      "index": 7,
+      "target": "0x8F3112BceE3fB967a06DcB245F78F25E638ad56a",
+      "transactionHash": "0x96a22f73907940ee91d78f5c6dfeec11b08510db4c2943d0f014760bfe6a5e72",
+      "status": "0x1",
+      "blockNumber": "0x2f0946b",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-01.json",
+      "index": 8,
+      "target": "0x99a454785C9859E5B61647D77a05Be1fA53f4D04",
+      "transactionHash": "0x55c3b24418cbd648809ddbd70b2d3d41a1f91345d8ed21428f0dd5b1aa0f5df3",
+      "status": "0x1",
+      "blockNumber": "0x2f0946c",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-01.json",
+      "index": 9,
+      "target": "0xA332129dD298D66f283A4cb48aE62641d9C276dd",
+      "transactionHash": "0x5e1218d7b7cca423f6555c3b2f1a50012354019594c170f2229c30e8704fce1d",
+      "status": "0x1",
+      "blockNumber": "0x2f0946d",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-02.json",
+      "index": 0,
+      "target": "0xa8935addAbca48A9FC63A009f9313Fc59417B20C",
+      "transactionHash": "0xb26fe3fb28d616608f3d44d831c6cc35dd121b5481f04d7a09b6d2a949531fd4",
+      "status": "0x1",
+      "blockNumber": "0x2f0946e",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-02.json",
+      "index": 1,
+      "target": "0xA9257a428dC6B192bd1ccc14c0a5a61476C767B9",
+      "transactionHash": "0x0b10c413a7be61a9eee04f7679241b4d356c22838726ae21a1f63783ed10bac0",
+      "status": "0x1",
+      "blockNumber": "0x2f0946f",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-02.json",
+      "index": 2,
+      "target": "0xaEb5c6c69cC5B9C10Dd5c5176Af83E632320FCeA",
+      "transactionHash": "0xaf2ff5be7398c3351aeed59ad50eac5ab26c86ac59270e7f10a7798dd45783cf",
+      "status": "0x1",
+      "blockNumber": "0x2f09470",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-02.json",
+      "index": 3,
+      "target": "0xb1c68994C857C76a0eDd8E4fa2bA77FBCC8A8199",
+      "transactionHash": "0x7768e2523d6dfbeffce70bdce942880a8842c3a041c500318fe7db31c01225bb",
+      "status": "0x1",
+      "blockNumber": "0x2f09472",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-02.json",
+      "index": 4,
+      "target": "0xb8AD4B6ba0fDe413fdeE6f84Fc989858c2894092",
+      "transactionHash": "0xc97550bac8f89abeefab8b00e83742143941126822198b09b3f9897375c2e126",
+      "status": "0x1",
+      "blockNumber": "0x2f09473",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-02.json",
+      "index": 5,
+      "target": "0xc071Cf74624e3c810d73c60025f15d4891A7D8bF",
+      "transactionHash": "0xd5dbfb3216d2c3ea2dd05e05f56c5a22724e73b3b39f6201a0fa8a6dca3a1ee1",
+      "status": "0x1",
+      "blockNumber": "0x2f09475",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-02.json",
+      "index": 6,
+      "target": "0xD1762a765cd0abAC9A004Fb95194Aa022da76Abe",
+      "transactionHash": "0xd8320df9ff513276baa7e619c58393bd3e4cae9cd6012ae395d36c67714a1b12",
+      "status": "0x1",
+      "blockNumber": "0x2f09476",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-02.json",
+      "index": 7,
+      "target": "0xD4b7557d8d859c2A3ddC8DeE4bFB3d6f6EA55B6B",
+      "transactionHash": "0x3ae827585dc2cd7d6371a5b6d4d29e493aa4578290ca66840037c4484be3c0cf",
+      "status": "0x1",
+      "blockNumber": "0x2f09477",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-02.json",
+      "index": 8,
+      "target": "0xDA9Bcf61d7CB66475C34784c328232d2e7e2F6cF",
+      "transactionHash": "0x549fc1c375a39a0969a34baea24e227067953bd78d870b01afc36503378f2cfd",
+      "status": "0x1",
+      "blockNumber": "0x2f09478",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-02.json",
+      "index": 9,
+      "target": "0xdC58b6A18E343cde31ea070DEf9f950141d71865",
+      "transactionHash": "0x37c7097ccabef9aa8601c159b7fb9816f65cfc9822dda09014d7ce0f20c3b5f2",
+      "status": "0x1",
+      "blockNumber": "0x2f09479",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-03.json",
+      "index": 0,
+      "target": "0xE2396fe2169ca026962971d3B2E373Ba925B6257",
+      "transactionHash": "0x81e91a9a35d181e37a249ce0a8bc09c39d6c2eef962799addc2c33d7b88e3b25",
+      "status": "0x1",
+      "blockNumber": "0x2f0947a",
+      "gasUsed": "0xc570"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-03.json",
+      "index": 1,
+      "target": "0xe2F9574b07cbbF5F09feaedc6dfdc6831a2D8c6C",
+      "transactionHash": "0x92e9bbeda7b3cb4ca28252568715e9891018b17d13eb899ccdbc431b2c01020d",
+      "status": "0x1",
+      "blockNumber": "0x2f0947b",
+      "gasUsed": "0xc586"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/02-communities/gnosis-02-migrate-communities-03.json",
+      "index": 2,
+      "target": "0xe33E18b5887cf16ad4E351E98980eb5f50727c31",
+      "transactionHash": "0xd9b453ad7b15f837cd1322d9bee43db30731d8b974953873f436ac93dfd31ae4",
+      "status": "0x1",
+      "blockNumber": "0x2f0947c",
+      "gasUsed": "0xc570"
+    }
+  ],
+  "strategyTemplateSwitch": {
+    "transactionHash": "0xc15d81831a21ed790d23fa8773b50693381417d5e66bea9269d4aa361815b85d",
+    "status": "0x1",
+    "blockNumber": "0x2f09489",
+    "gasUsed": "0xce18"
+  },
+  "strategyReceipts": [
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-01.json",
+      "index": 0,
+      "target": "0x0108617cA2e05546C49383D9392ed8Db5D12304c",
+      "transactionHash": "0x8e014acd64d17d950bec8289828f31e47e33674b797edc78f43aac32f4138403",
+      "status": "0x1",
+      "blockNumber": "0x2f0949e",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-01.json",
+      "index": 1,
+      "target": "0x0421dA9346e4DCb1f9DAcD64DD791D13E5cE2A8F",
+      "transactionHash": "0x81cddb2b24681914b96e01a3a7fe08059f79428d1bd940dcc10a01f8ffc54e13",
+      "status": "0x1",
+      "blockNumber": "0x2f0949f",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-01.json",
+      "index": 2,
+      "target": "0x051e8d96D4e9cDE57d584b8d59a5116784F0D3C7",
+      "transactionHash": "0xf38a940ee9cd00643d53c4ca7239169fd93587df6373533ecb53a25bbc984ccf",
+      "status": "0x1",
+      "blockNumber": "0x2f094a0",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-01.json",
+      "index": 3,
+      "target": "0x0A2ecc1f687Ec4E1c19d337a5aC926865e30E818",
+      "transactionHash": "0xa31b91673dc6197b05e1a40443e98db626b566102840e2ae4dda9fa4911dff54",
+      "status": "0x1",
+      "blockNumber": "0x2f094a1",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-01.json",
+      "index": 4,
+      "target": "0x0FD15b2142a257fa8713Cad2C14ec52C00f71865",
+      "transactionHash": "0x8ede0ce02d5c46691c002c30d69ce30aa279564a59374b03d7f6c88c78d4c312",
+      "status": "0x1",
+      "blockNumber": "0x2f094a2",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-01.json",
+      "index": 5,
+      "target": "0x105900650FFF3cf4fE52bCE72f26572fe4Fa1FaF",
+      "transactionHash": "0x3f129b2d6522847e5f04fdc0d903542642b510a5007b4f457ffd30cfda7be481",
+      "status": "0x1",
+      "blockNumber": "0x2f094a3",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-01.json",
+      "index": 6,
+      "target": "0x107fBe971A1457A7a442A7fE3e2124d689a66E92",
+      "transactionHash": "0x05fbeb66775600d10268d8b3d442a015e9d0b9e49f78851e4d6d09673b51facc",
+      "status": "0x1",
+      "blockNumber": "0x2f094a4",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-01.json",
+      "index": 7,
+      "target": "0x149e1D84858993B6ec3A41e11488C86C289620Ef",
+      "transactionHash": "0x320a5de8d2aa662eccc07372810387ea5d69de7710f221fda585e0dbacf8af7a",
+      "status": "0x1",
+      "blockNumber": "0x2f094a5",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-01.json",
+      "index": 8,
+      "target": "0x1Bd2212C9aA332d22D61a0Be6bCc55b2A1de6C63",
+      "transactionHash": "0x8c77ceea040da6d221ecbc2791a54325141f423b99d1b240389b044d9df2be29",
+      "status": "0x1",
+      "blockNumber": "0x2f094a6",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-01.json",
+      "index": 9,
+      "target": "0x1C265d5392dbfc0f43C85384C925F8D147E4d6Bc",
+      "transactionHash": "0x27f03e0b3516686631e8401c2e9764305cdae770338d9f57d6d27e40f3a57fb8",
+      "status": "0x1",
+      "blockNumber": "0x2f094a7",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-02.json",
+      "index": 0,
+      "target": "0x1E595cD639d9A835e3Cf5dCEF8e740E2BFe15494",
+      "transactionHash": "0x488c1a6962da94d5a29da6e43a541d25247c46e63ab9abcc13a81e659380e8f1",
+      "status": "0x1",
+      "blockNumber": "0x2f094a8",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-02.json",
+      "index": 1,
+      "target": "0x1f6fD908DB173f591Aa6eA4A037D157Ea4E31F68",
+      "transactionHash": "0x30a5d32fa77f1c651849f4c01ccf646696d8374f8cdd2df69080b4e310b99435",
+      "status": "0x1",
+      "blockNumber": "0x2f094a9",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-02.json",
+      "index": 2,
+      "target": "0x1f768f218F214339616d7F368114401d66ee2219",
+      "transactionHash": "0x9cd191d2e56ce77b99e4a45d295040d4f429a5b79d4df9f7a89eb6b41e654f1f",
+      "status": "0x1",
+      "blockNumber": "0x2f094aa",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-02.json",
+      "index": 3,
+      "target": "0x2833d75F02aF58D3cD96E22685d2e4ae774e999D",
+      "transactionHash": "0x3f7ee3f604642c726e0ac98d699b6a99d651d7df4c971c2aabd5881ab0babb7f",
+      "status": "0x1",
+      "blockNumber": "0x2f094ab",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-02.json",
+      "index": 4,
+      "target": "0x2945DAC39A380Bcf6D82334c75bfB15e569DD38e",
+      "transactionHash": "0x387580c1d2864f47fd6adba0f00f22ff0799fc3a6ffedc99a67e44549a83dd77",
+      "status": "0x1",
+      "blockNumber": "0x2f094ac",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-02.json",
+      "index": 5,
+      "target": "0x2B64e4838bb7E0f4794fE3E40AD5cB71C2BEDDb5",
+      "transactionHash": "0xf13618fc497ac7ad5c0f7e3e2095ca771534d45c2dcbce733dc0b6fbd2457a1c",
+      "status": "0x1",
+      "blockNumber": "0x2f094ad",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-02.json",
+      "index": 6,
+      "target": "0x2E3ab6F45e407283E719dA6Eeb7844a2f6bccD07",
+      "transactionHash": "0x81144fa597e6cebae812d87f9d34bb4a49c6c2a10a3607eeb853e48417c76d8e",
+      "status": "0x1",
+      "blockNumber": "0x2f094ae",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-02.json",
+      "index": 7,
+      "target": "0x36F9176031e7dE875659a3d1044Cb62D1C2A9D2d",
+      "transactionHash": "0x5a288f26c1660e0ab533cdaf8d3ada0798ac7cb880b3043b7b759ae663ce5a0b",
+      "status": "0x1",
+      "blockNumber": "0x2f094af",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-02.json",
+      "index": 8,
+      "target": "0x3D62928a1b27Cd21fbC2633020C5B7c53d8C123d",
+      "transactionHash": "0x568e9ca3f394eb71c414aa316633705dc46e63b6af474e12b8daf301f9428308",
+      "status": "0x1",
+      "blockNumber": "0x2f094b0",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-02.json",
+      "index": 9,
+      "target": "0x4082579717EBFf10D8B7fFD2eE6582a9274dbEeC",
+      "transactionHash": "0xfe84b92d65f0e9621112ba7ad7b252601ca56c6bf41a8ce3fb629026dd2b3522",
+      "status": "0x1",
+      "blockNumber": "0x2f094b1",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-03.json",
+      "index": 0,
+      "target": "0x46592a1897763a2ACc3636679A5C6bb94bBef7c8",
+      "transactionHash": "0x8b1ca3385208fa1a2f098dd88c7a5166335a18fd35fe90191d3f99c9cb358db0",
+      "status": "0x1",
+      "blockNumber": "0x2f094b2",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-03.json",
+      "index": 1,
+      "target": "0x48eD3dB635557079F8E1d0b83b37097abe78D6F1",
+      "transactionHash": "0x0a42ca9cb18b3bd3be8906bc23d0cfc04918695de5b58b873ddc86f16f031d29",
+      "status": "0x1",
+      "blockNumber": "0x2f094b3",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-03.json",
+      "index": 2,
+      "target": "0x48fdb39d6Dc7064F6a3F5f48369Fe26f2E434f5B",
+      "transactionHash": "0xd28b4195d209496317fdac82134005e9b282dfb9cab091e830de131f6eaaa07c",
+      "status": "0x1",
+      "blockNumber": "0x2f094b4",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-03.json",
+      "index": 3,
+      "target": "0x561989F8f5F2bCAE9c25BAb1448efB8e2674eBe6",
+      "transactionHash": "0xc0047193b4d83ca7dfd1d7dedac7f54ea494065b999e89a0e8c23be51107d082",
+      "status": "0x1",
+      "blockNumber": "0x2f094b5",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-03.json",
+      "index": 4,
+      "target": "0x56E020883204ea163bd610272Fc3AE66B3462c6F",
+      "transactionHash": "0x0312db6a08a44aad7c47524c50e118b9a10cc6fe38945337da40c38722390ad4",
+      "status": "0x1",
+      "blockNumber": "0x2f094b6",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-03.json",
+      "index": 5,
+      "target": "0x5AB65fACFc0ae022f65A5C64Cb3Bf38812bD042a",
+      "transactionHash": "0xa86bd72993fcd98ed1959fea1594f76be82c90ac1cbd0d199a7e25a8b5456e25",
+      "status": "0x1",
+      "blockNumber": "0x2f094b7",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-03.json",
+      "index": 6,
+      "target": "0x5CCB743C930271eBD7f254f3cCF909097532c7Be",
+      "transactionHash": "0xab6d3b0e63c55ec4a826891db15caba4f1d0d27db8797d94c4113d844ad8b1a0",
+      "status": "0x1",
+      "blockNumber": "0x2f094b8",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-03.json",
+      "index": 7,
+      "target": "0x5Ee0aAA1d51C4284dfcd2EaD9D14BA7561b83000",
+      "transactionHash": "0xc50a5ec667ac79be6d45178f6294c0de02790260e75344644b97860a84a1c6fa",
+      "status": "0x1",
+      "blockNumber": "0x2f094b9",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-03.json",
+      "index": 8,
+      "target": "0x5F7E9967B940F47623Ad7fce9d59C899A1a114E7",
+      "transactionHash": "0xef77fc1aeab0790f1537dfb68da72623f1fbf887031b5bf6a7f8838a150c0e71",
+      "status": "0x1",
+      "blockNumber": "0x2f094ba",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-03.json",
+      "index": 9,
+      "target": "0x61CBD792c9310fC2d9fa03E99118bD163301cD0A",
+      "transactionHash": "0x4d0dafc10feb5db8147110f14cc67497103d624b214742c082d52789b0af9d54",
+      "status": "0x1",
+      "blockNumber": "0x2f094bb",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-04.json",
+      "index": 0,
+      "target": "0x67fea1EC7Ed0aDfb4026923b4779e4f830Af8E1c",
+      "transactionHash": "0x256f9201e29893fb8a9487f24f57df2850c51cb4d9dd7ff56d2dfebffefc8b4c",
+      "status": "0x1",
+      "blockNumber": "0x2f094bc",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-04.json",
+      "index": 1,
+      "target": "0x681D02F86578922d33a5e3b7954abDEDF4e3064D",
+      "transactionHash": "0x32a46ae253d2ed5aa02af5208e3bf805104bacf33ae48d96ae743eb223bc1326",
+      "status": "0x1",
+      "blockNumber": "0x2f094bd",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-04.json",
+      "index": 2,
+      "target": "0x69bCAbc41DAe5DDc5CB2370f7BA472612115e8CE",
+      "transactionHash": "0x61067e21e67208d966fc371e30708d380419dc0773e74d892251dd783a86b102",
+      "status": "0x1",
+      "blockNumber": "0x2f094be",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-04.json",
+      "index": 3,
+      "target": "0x6cc78e32004429b39c1fB8d7c6620E8511832CC4",
+      "transactionHash": "0x92ce3ec7a4a6e252c00b0a5dc05188b7505ed967821cc2135042f2b84ce0cee7",
+      "status": "0x1",
+      "blockNumber": "0x2f094bf",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-04.json",
+      "index": 4,
+      "target": "0x6D3E7D4271Cdc083609faE18461Ea1e1589e4e8d",
+      "transactionHash": "0x8ef97aa9d8603654b6180112101e2723b2e77cd613944ec41bc589fb65174ada",
+      "status": "0x1",
+      "blockNumber": "0x2f094c0",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-04.json",
+      "index": 5,
+      "target": "0x6d5acCc797cC20414f1206CEb2e7665eF777480A",
+      "transactionHash": "0xf2b9217e4480c7d678c7f683c0ff61385d6359f1f1246664c8f373512560a0eb",
+      "status": "0x1",
+      "blockNumber": "0x2f094c1",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-04.json",
+      "index": 6,
+      "target": "0x6E7E8b56d16C577ee9C765A756dEB5E6959088af",
+      "transactionHash": "0x683f279a063b4c0018b20070efa4c318cfa9dc593ed72c1eb405a4fb801dcdaa",
+      "status": "0x1",
+      "blockNumber": "0x2f094c2",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-04.json",
+      "index": 7,
+      "target": "0x6E7eD4a6AC5665d55eD779595F2cDB689f205f0f",
+      "transactionHash": "0xa80aaf626e40ef1be36c8aff330b8d246de73dde69d7d56a142d246b789e257a",
+      "status": "0x1",
+      "blockNumber": "0x2f094c3",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-04.json",
+      "index": 8,
+      "target": "0x6Fbb932Dc0645EF63ca0a65340E390498A817d57",
+      "transactionHash": "0x26b2a62a59e072bb9a00920f76cc5a1031ca84c4701d118cfc13b0310029cf2b",
+      "status": "0x1",
+      "blockNumber": "0x2f094c5",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-04.json",
+      "index": 9,
+      "target": "0x728333c30444294CbeA2C2F1A19C84e6Ee77D96B",
+      "transactionHash": "0x9c4022689256206775dc9fdc4a87cd0f667dd84a7f5d626b51f516cf3df5efdd",
+      "status": "0x1",
+      "blockNumber": "0x2f094c6",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-05.json",
+      "index": 0,
+      "target": "0x7336aB83Ec05ccB0D328390e50Ac8b59b1229DA1",
+      "transactionHash": "0x81a111aa65580fb35305a5bc1d54ce0cdf5e16a75bc1718718e5c8dcb008e441",
+      "status": "0x1",
+      "blockNumber": "0x2f094c7",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-05.json",
+      "index": 1,
+      "target": "0x74545010e013E5601009305288193cBd5c8702b4",
+      "transactionHash": "0x484209324511a6945be1ef70eeb81c8809596bfdc267fdbdd25ac55ce625fb58",
+      "status": "0x1",
+      "blockNumber": "0x2f094c8",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-05.json",
+      "index": 2,
+      "target": "0x777dDF053FB46A48CCCF5b91D3417d4daf3ec9e2",
+      "transactionHash": "0xb9e3a690219052ac07680b17cd2e46ba3d97449c3466371e4074f20ef88c4b20",
+      "status": "0x1",
+      "blockNumber": "0x2f094c9",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-05.json",
+      "index": 3,
+      "target": "0x7C86C9a368324F51C6ef2fe88a1F5A332cAc3c2d",
+      "transactionHash": "0x8e74005607f2a9a65f0034b43d49c37bf2fb66f600735a3ff37064bfb22592b6",
+      "status": "0x1",
+      "blockNumber": "0x2f094ca",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-05.json",
+      "index": 4,
+      "target": "0x7cC039C127D2e655974F9106567Cdb86f7895c87",
+      "transactionHash": "0xaa452002cea2d0b21d2d3221f88398c6f2774ecdfc643f03a4255ba0a26538d6",
+      "status": "0x1",
+      "blockNumber": "0x2f094cb",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-05.json",
+      "index": 5,
+      "target": "0x7dE5cd9bCcD6D15CA7ebFd9cD37AafBEf6b8d1aD",
+      "transactionHash": "0xa8420cdf23878e2c22a6c8f73f99dc2b6828acf5915834eadfb0df083b914b28",
+      "status": "0x1",
+      "blockNumber": "0x2f094cc",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-05.json",
+      "index": 6,
+      "target": "0x7Fe71a32D39954844D1954AcaE5191116ad116AC",
+      "transactionHash": "0x95ba2a8acc5109831f94860df5785faa241e0d0d9e2ab40d684b51ed11c89788",
+      "status": "0x1",
+      "blockNumber": "0x2f094cd",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-05.json",
+      "index": 7,
+      "target": "0x831fa1BbcDfe199d56213c40340544aEB7912349",
+      "transactionHash": "0xcbec4eadf65d375cb896414464659e489b73fb2de746580a8e8b844087ec1792",
+      "status": "0x1",
+      "blockNumber": "0x2f094ce",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-05.json",
+      "index": 8,
+      "target": "0x873360FBeBBd5b074bcA9E49433Cc2052037b2DD",
+      "transactionHash": "0x1740ad1b8c6372b9cf3e45180f928462a68828b7de36e40f1e57ed08b67f800a",
+      "status": "0x1",
+      "blockNumber": "0x2f094cf",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-05.json",
+      "index": 9,
+      "target": "0x8a26D8290A65F952f945734fcE1c5dAB23c5Ff29",
+      "transactionHash": "0xd20b444ab9969cd5a9d119743fd1842a5a770c57c39cd4f62f0e4625c95bc0b2",
+      "status": "0x1",
+      "blockNumber": "0x2f094d0",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-06.json",
+      "index": 0,
+      "target": "0x8bA5D67c25422d59Db51F8abAbb62c4623b80143",
+      "transactionHash": "0xf1c9ce8111e9ae781b467ac559da855bd77da48e39a7e4522be7fd27a8de9deb",
+      "status": "0x1",
+      "blockNumber": "0x2f094d1",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-06.json",
+      "index": 1,
+      "target": "0x8D66aec094cA5052196C6605634fD50C22b514Aa",
+      "transactionHash": "0xa9a77a84519d0e5c3929eef3684d417818b9fcdcb24768700aa446609f9d1591",
+      "status": "0x1",
+      "blockNumber": "0x2f094d2",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-06.json",
+      "index": 2,
+      "target": "0x94A2Df1DD41580478fF7Cd26b86C555AA0220469",
+      "transactionHash": "0x9e6a2367254e29ddba99f17fc100709ee9662f1929f21553ef85fb730c1e933f",
+      "status": "0x1",
+      "blockNumber": "0x2f094d4",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-06.json",
+      "index": 3,
+      "target": "0x96dEe4849A6AB9E51ae36712794318001515DC91",
+      "transactionHash": "0x76f551caa1a75e9e739519f53c0eb7133f80081557a08bbb445efc6fbd1bc4ac",
+      "status": "0x1",
+      "blockNumber": "0x2f094d5",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-06.json",
+      "index": 4,
+      "target": "0x9Fb2f1813228a97f559E29A6492EE27357FAF8A2",
+      "transactionHash": "0x792d9b2692a6a601d29d1c01102dd5746e250ce6ddf65fe7e08097a9e7ce47f3",
+      "status": "0x1",
+      "blockNumber": "0x2f094d6",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-06.json",
+      "index": 5,
+      "target": "0xA65228C5661BbA89532b2941ea86853eEBa8a4b9",
+      "transactionHash": "0xf0ae08cfe46442b8bd71e65b65bffe73d2b757d6a31c7b87f2d35dd1a2bd1887",
+      "status": "0x1",
+      "blockNumber": "0x2f094d7",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-06.json",
+      "index": 6,
+      "target": "0xa774B5c30Fc203811D41Dfc6EDBc5d295f2afF86",
+      "transactionHash": "0x15225000de9236097384c0e1ef62d7b304da15d8b9baadbb29a018a1298d287c",
+      "status": "0x1",
+      "blockNumber": "0x2f094d8",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-06.json",
+      "index": 7,
+      "target": "0xa7Ff31BBA33D421c2Fb3aa3688cF64EA60ab4199",
+      "transactionHash": "0xb8ac0f60a82ce53ed0240f9727a4cc0645d7264aed44405eda5d8199a89817f8",
+      "status": "0x1",
+      "blockNumber": "0x2f094d9",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-06.json",
+      "index": 8,
+      "target": "0xa8116D32A742e2323DE416808A9768ebc2A8D179",
+      "transactionHash": "0xc5b0664a69df6cc78c372f59b9d670b6c51196ff8fad45fd2389ceeaead2c7aa",
+      "status": "0x1",
+      "blockNumber": "0x2f094da",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-06.json",
+      "index": 9,
+      "target": "0xA840a7506B866EE71d487bF76a8F698249ea9836",
+      "transactionHash": "0x7c49a8e8265e2b9464d766ff7f054645bd9cbb90522f952e5754692a4bbb250a",
+      "status": "0x1",
+      "blockNumber": "0x2f094db",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-07.json",
+      "index": 0,
+      "target": "0xAa0195986FFE8F3371444fa77Ee3ED04AC787EEa",
+      "transactionHash": "0xf2cad79bde770a147183b66a262f91d993aa4f75059c059bbbda3a284584fb2e",
+      "status": "0x1",
+      "blockNumber": "0x2f094df",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-07.json",
+      "index": 1,
+      "target": "0xAc948bcA716B080df41AFC70F37B7A9f6F3d9C9A",
+      "transactionHash": "0x85ea7394b89004e7ab45ac7c1951a615d070c9172952c15a549be88512f4477f",
+      "status": "0x1",
+      "blockNumber": "0x2f094e0",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-07.json",
+      "index": 2,
+      "target": "0xaEE688D041859839Ea3918a6Dfc0165848AcE6EB",
+      "transactionHash": "0x8b082e8da78327143fd2f3fcd35c614dd8bdc329def1915597b080a3042b4ee9",
+      "status": "0x1",
+      "blockNumber": "0x2f094e2",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-07.json",
+      "index": 3,
+      "target": "0xAF8FCE9d1FC193fA71B477E2fDf53775C3995fE2",
+      "transactionHash": "0x994f3ff6039a2560cbddaa89fc8439d05c66ec67290de026cc7cffd2b982e5d4",
+      "status": "0x1",
+      "blockNumber": "0x2f094e4",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-07.json",
+      "index": 4,
+      "target": "0xb1A275419c817273F470ee1A102CAD7507A25B6f",
+      "transactionHash": "0xd75974af192b378cb9c8ac5ec8e322490cb1670a6ada16245cd165da8b9210dc",
+      "status": "0x1",
+      "blockNumber": "0x2f094e5",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-07.json",
+      "index": 5,
+      "target": "0xB26d40C2dC96f35010e9bD1b044e0bDb4224DFb1",
+      "transactionHash": "0x61e2846ad50994bbfc0d952f1b090b622b58426293109d900eeebeb78dbbe146",
+      "status": "0x1",
+      "blockNumber": "0x2f094e6",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-07.json",
+      "index": 6,
+      "target": "0xB48FE96FCB6b3f7228247690F6a0F21D60002e52",
+      "transactionHash": "0x57e978b4a42bf13b70eab587cef2d538924a232122f399043edcc8d0bdc9d798",
+      "status": "0x1",
+      "blockNumber": "0x2f094e7",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-07.json",
+      "index": 7,
+      "target": "0xBa5c9429472E9e0AA1D4F0276c7fb45374E2Af6c",
+      "transactionHash": "0xa7f77e0ec1795708859c36aa3af0311c33ae1b20cd7d5cc11905d3c4f238242d",
+      "status": "0x1",
+      "blockNumber": "0x2f094e8",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-07.json",
+      "index": 8,
+      "target": "0xbf1D2E31fA3D927673d2E95bFb2d940F5CC8890E",
+      "transactionHash": "0x6db6ce2c2e1d61901e511deeadebcffa9225e82ff4ea2ed6d6a9b951aed8dca7",
+      "status": "0x1",
+      "blockNumber": "0x2f094e9",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-07.json",
+      "index": 9,
+      "target": "0xC3dC12Ff1aDa788e86c0daC4935e63975AdD5263",
+      "transactionHash": "0xe9e4936a27ca5a8ae347abda811626675a23bbca2b58830262cf1651a2d5f297",
+      "status": "0x1",
+      "blockNumber": "0x2f094ea",
+      "gasUsed": "0xc636"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-08.json",
+      "index": 0,
+      "target": "0xcDd52A838B602910D582ebebE91f24cf284fddD2",
+      "transactionHash": "0x19aa4b6ac01438d125f48fbb07939df159326e0bfc7fab474f20ae48e9fd1283",
+      "status": "0x1",
+      "blockNumber": "0x2f094eb",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-08.json",
+      "index": 1,
+      "target": "0xd12F4Faab3A770175f5D7E19bD32b1A7AaDc0A31",
+      "transactionHash": "0x7e984a39087b25b218e5a91792b62e2834df645a374fd7c1023d4498940fa1ae",
+      "status": "0x1",
+      "blockNumber": "0x2f094ec",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-08.json",
+      "index": 2,
+      "target": "0xD59884C190277f56A3dBf4B094e5fE9327150c24",
+      "transactionHash": "0x592a841fd8c9e9bfe3b5d12e3bc5e166235481244f29f70e81381ab2f7404136",
+      "status": "0x1",
+      "blockNumber": "0x2f094ed",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-08.json",
+      "index": 3,
+      "target": "0xd7cD912eED8e0d8b9F16f362B5239E9419CE9DB9",
+      "transactionHash": "0x22b208ace45fe00abc922e44c6114f82e3d3e082a8a444a4e43a0532c7035c01",
+      "status": "0x1",
+      "blockNumber": "0x2f094ee",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-08.json",
+      "index": 4,
+      "target": "0xe652081deB52afA56fB2958994427C662356007B",
+      "transactionHash": "0x040c3559431360386abcce567b978adcee9031071edcd574302ba7465e458424",
+      "status": "0x1",
+      "blockNumber": "0x2f094ef",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-08.json",
+      "index": 5,
+      "target": "0xe8320380D56C4319aab593E45de868b002b3e357",
+      "transactionHash": "0x5452b7699a1472d8e3a5efaae036cb7ea5b82ecb09e26129f6102be6eb779af5",
+      "status": "0x1",
+      "blockNumber": "0x2f094f0",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-08.json",
+      "index": 6,
+      "target": "0xF1eC3cb9A862844aAd68Df495955832a242e39E7",
+      "transactionHash": "0x9e283e00b62a4e5d70529349e16c4eec8f21f9cf2b3e537e88405837ae07af94",
+      "status": "0x1",
+      "blockNumber": "0x2f094f1",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-08.json",
+      "index": 7,
+      "target": "0xFB075faD5f629124f27787fDa26a774C727661C9",
+      "transactionHash": "0x796ed0e1e0fef66afcf22a94c0dbcafd7a4f97a16b93f816e1524b3c9161bf14",
+      "status": "0x1",
+      "blockNumber": "0x2f094f2",
+      "gasUsed": "0xc620"
+    },
+    {
+      "file": "transaction-builder/gnosis-shared-routing-2026-11-16/04-strategies/gnosis-04-migrate-strategies-08.json",
+      "index": 8,
+      "target": "0xFbad687A935390FF59B36Cd6c9462d0b1948E378",
+      "transactionHash": "0x79a86311051634b099670411c6a0aa764d51db07c9d78c376e0b509ac87316c1",
+      "status": "0x1",
+      "blockNumber": "0x2f094f3",
+      "gasUsed": "0xc620"
+    }
+  ],
+  "verified": {
+    "pendingProxyTransactions": 0,
+    "communities": 23,
+    "strategies": 79,
+    "routedVerifier": true,
+    "stateVerifier": true
+  }
+}

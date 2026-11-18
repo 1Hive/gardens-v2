@@ -5,9 +5,9 @@ permissions:
 
 on:
   push:
-    branches: ["master"]
+    branches: ["main", "dev"]
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, reopened, synchronize]
 
 jobs:
   build:
@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: false
 
@@ -41,19 +41,19 @@ jobs:
           version: 9.0.0
 
       - name: Setup Node.js environment
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: "pnpm"
 
       - name: Cache pnpm modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: "**/node_modules"
           key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Cache turbo build
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ".turbo"
           key: ${{ runner.os }}-turbo-${{ github.sha }}
@@ -61,10 +61,60 @@ jobs:
             ${{ runner.os }}-turbo-
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
         run: pnpm lint
 
+      - name: Test shared release Safe payloads
+        run: node pkg/contracts/scripts/test-prepare-shared-release.mjs
+
+      - name: Test shared routing migration payloads
+        run: node pkg/contracts/scripts/test-prepare-shared-routing.mjs
+
+      - name: Test facet snapshot config safety
+        run: node pkg/contracts/scripts/test-sync-refreshed-facets.mjs
+
       # - name: Build and Test
       #   run: pnpm test
+
+  contract-release:
+    name: Contract release tooling and storage
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Initialize required submodules
+        run: .github/scripts/init-contract-submodules.sh
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build contracts and deployment scripts
+        run: forge build --quiet
+
+      - name: Verify diamond and factory storage layouts
+        working-directory: pkg/contracts
+        run: bash scripts/verify-storage-layout.sh --skip-build
+
+      - name: Check shared routing release scripts
+        working-directory: pkg/contracts
+        run: |
+          node --check scripts/prepare-shared-routing.mjs
+          node --check scripts/prepare-shared-release.mjs
+          node --check scripts/verify-shared-routing.mjs
+          node --check scripts/sync-refreshed-facets.js
+          bash -n scripts/assert-unrouted-factory.sh
+          bash -n scripts/verify-all-deployments.sh
+          bash -n scripts/rehearse-safe-payload.sh

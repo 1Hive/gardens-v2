@@ -1,0 +1,65 @@
+{
+  "version": "1.0",
+  "chainId": "11155111",
+  "createdAt": 1794895417955,
+  "meta": {
+    "name": "ethsepolia shared routing 04-migrate-strategies-24",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xc7023A4243E578ba7fF157667c765DFcb21317C7",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000016a0c53dbf55ee19e260f2219dea55d42f1fac4c"
+    },
+    {
+      "to": "0xc73ab581a57544FC9D846B18516e510c2c91788A",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000016a0c53dbf55ee19e260f2219dea55d42f1fac4c"
+    },
+    {
+      "to": "0xc78be88cd10224c3F5FeeCB140a04eD2856298a9",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000016a0c53dbf55ee19e260f2219dea55d42f1fac4c"
+    },
+    {
+      "to": "0xCA2Fd860043497063F6dda6e93ba0Ee45AaD87A0",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000016a0c53dbf55ee19e260f2219dea55d42f1fac4c"
+    },
+    {
+      "to": "0xCaD88AA3327197821aF56303d7a03FD1b9492965",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000016a0c53dbf55ee19e260f2219dea55d42f1fac4c"
+    },
+    {
+      "to": "0xCB4C0BDCb01d77ff87E267B21CEb79d88c6Ce7F0",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000016a0c53dbf55ee19e260f2219dea55d42f1fac4c"
+    },
+    {
+      "to": "0xcbCCCF339368CF60CA5ad0B803a665009dbb24B0",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000016a0c53dbf55ee19e260f2219dea55d42f1fac4c"
+    },
+    {
+      "to": "0xCC5025064A56A56Ae217A81B93af2e3871678288",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000016a0c53dbf55ee19e260f2219dea55d42f1fac4c"
+    },
+    {
+      "to": "0xCC6f0dD68d6AD6562426A589Ec5CdB96c37F7b23",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000016a0c53dbf55ee19e260f2219dea55d42f1fac4c"
+    },
+    {
+      "to": "0xCCBB73fc9BD4C300392fF577B447c0189251638A",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000016a0c53dbf55ee19e260f2219dea55d42f1fac4c"
+    }
+  ]
+}

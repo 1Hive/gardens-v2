@@ -151,6 +151,116 @@ tasks:
       - echo "🔍 Verifying diamond storage layouts..."
       - ./scripts/verify-storage-layout.sh || (echo "❌ Storage verification FAILED! Fix storage alignment before deploying." && exit 1)
       - echo "✅ Storage verification passed"
+  prepare-shared-routing:
+    desc: Prepare one verified phase of the initial shared routing migration
+    cmds:
+      - cmd: |
+          : "${NETWORK:?set NETWORK}"
+          : "${RPC_URL:?set RPC_URL}"
+          : "${PHASE:?set PHASE to activate, communities, switch-strategy, strategies, or verify}"
+          if [ -n "${SAFE_ADDRESS:-}" ]; then
+            if [ -n "${MIGRATION_EXECUTOR:-}" ]; then
+              echo "set only SAFE_ADDRESS or MIGRATION_EXECUTOR" >&2
+              exit 1
+            fi
+            executor_flag="--safe"
+            executor_address="${SAFE_ADDRESS}"
+          else
+            : "${PK_DEPLOYER_PW:?set PK_DEPLOYER_PW to derive the PK_DEPLOYER address}"
+            : "${HOME:?set HOME}"
+            if [ ! -f "${HOME}/.foundry/keystores/PK_DEPLOYER" ]; then
+              echo "missing Foundry keystore PK_DEPLOYER" >&2
+              exit 1
+            fi
+            executor_flag="--executor"
+            password_file="$(mktemp)"
+            chmod 600 "${password_file}"
+            trap 'shred -u "${password_file}"' EXIT
+            printf '%s' "${PK_DEPLOYER_PW}" > "${password_file}"
+            executor_address="$(cast wallet address --account PK_DEPLOYER --password-file "${password_file}")"
+            if [ -n "${MIGRATION_EXECUTOR:-}" ] && [ "$(printf '%s' "${MIGRATION_EXECUTOR}" | tr '[:upper:]' '[:lower:]')" != "$(printf '%s' "${executor_address}" | tr '[:upper:]' '[:lower:]')" ]; then
+              echo "MIGRATION_EXECUTOR does not match PK_DEPLOYER keystore address" >&2
+              exit 1
+            fi
+          fi
+          : "${STRATEGY_ROUTER:?set STRATEGY_ROUTER}"
+          : "${COMMUNITY_ROUTER:?set COMMUNITY_ROUTER}"
+          : "${STRATEGY_LOGIC:?set STRATEGY_LOGIC}"
+          : "${COMMUNITY_LOGIC:?set COMMUNITY_LOGIC}"
+          : "${COMMUNITY_POOL_FACET:?set COMMUNITY_POOL_FACET}"
+          : "${OUT:?set OUT to an empty directory}"
+          set -- --phase "${PHASE}" --network "${NETWORK}" --rpc "${RPC_URL}" "${executor_flag}" "${executor_address}"
+          case "${PHASE}" in
+            communities|strategies|verify)
+              : "${SWITCH_TX:?set SWITCH_TX to the confirmed template switch transaction hash}"
+              if [ "${INVENTORY_SOURCE:-subgraph}" = "events" ]; then
+                : "${ETHERSCAN_API_KEY:?set ETHERSCAN_API_KEY for event-backed inventory}"
+                set -- "$@" --inventory-source events --switch-tx "${SWITCH_TX}"
+              else
+                : "${SUBGRAPH_URL:?set SUBGRAPH_URL to the chain subgraph endpoint}"
+                set -- "$@" --subgraph-url "${SUBGRAPH_URL}" --switch-tx "${SWITCH_TX}"
+              fi
+              ;;
+          esac
+          node scripts/prepare-shared-routing.mjs "$@" \
+            --strategy-router "${STRATEGY_ROUTER}" --community-router "${COMMUNITY_ROUTER}" \
+            --strategy-logic "${STRATEGY_LOGIC}" --community-logic "${COMMUNITY_LOGIC}" \
+            --community-pool-facet "${COMMUNITY_POOL_FACET}" \
+            --batch-size "${BATCH_SIZE:-10}" --out "${OUT}"
+  prepare-shared-release:
+    desc: Prepare Safe payloads for an already-routed strategy or community release, including optional router upgrades
+    cmds:
+      - cmd: |
+          : "${NETWORK:?set NETWORK}"
+          : "${RPC_URL:?set RPC_URL}"
+          : "${FAMILY:?set FAMILY to strategy or community}"
+          : "${SAFE_ADDRESS:?set SAFE_ADDRESS to the factory effective owner Safe}"
+          : "${OUT:?set OUT to a JSON file, or a directory for router upgrades or state migrations}"
+          set -- --network "${NETWORK}" --rpc "${RPC_URL}" --family "${FAMILY}" --safe "${SAFE_ADDRESS}" --out "${OUT}" --batch-size "${BATCH_SIZE:-10}"
+          if [ -n "${NEW_ROUTER:-}" ]; then
+            set -- "$@" --router "${NEW_ROUTER}"
+          fi
+          if [ -n "${NEW_IMPLEMENTATION:-}" ] || [ -n "${NEW_ROUTER:-}" ] || [ -n "${MIGRATIONS:-}" ]; then
+            [ "${STORAGE_REVIEWED:-false}" = "true" ] || { echo "Set STORAGE_REVIEWED=true after core/router/state layout review" >&2; exit 1; }
+            set -- "$@" --storage-reviewed
+          fi
+          if [ -n "${NEW_IMPLEMENTATION:-}" ]; then
+            set -- "$@" --implementation "${NEW_IMPLEMENTATION}"
+          fi
+          for replacement in ${FACET_REPLACEMENTS:-}; do
+            set -- "$@" --facet "${replacement}"
+          done
+          for migration in ${MIGRATIONS:-}; do
+            set -- "$@" --migration "${migration}"
+          done
+          node scripts/prepare-shared-release.mjs "$@"
+  deploy-shared-routing-targets:
+    desc: Deploy code targets for a shared routing migration or later family release
+    cmds:
+      - cmd: |
+          set -eu
+          : "${NETWORK:?set NETWORK}"
+          : "${RPC_URL:?set RPC_URL}"
+          : "${PK_DEPLOYER_PW:?set PK_DEPLOYER_PW}"
+          : "${SHARED_TARGET_MODE:?set SHARED_TARGET_MODE to migration or release}"
+          if [ "${SHARED_TARGET_MODE}" = "release" ]; then : "${SHARED_TARGET_FAMILY:?set SHARED_TARGET_FAMILY}"; fi
+          expected_chain="$(jq -r --arg network "${NETWORK}" '.networks[] | select(.name == $network) | .chainId' config/networks.json)"
+          library="$(jq -r --arg network "${NETWORK}" '.networks[] | select(.name == $network) | .IMPLEMENTATIONS.CV_UTIL_LIB' config/networks.json)"
+          : "${expected_chain:?unknown NETWORK}"
+          : "${library:?CV_UTIL_LIB missing from network config}"
+          [ "$(cast chain-id --rpc-url "${RPC_URL}")" = "${expected_chain}" ] || { echo "RPC chain ID does not match NETWORK" >&2; exit 1; }
+          [ "$(cast code "${library}" --rpc-url "${RPC_URL}")" != "0x" ] || { echo "configured CV_UTIL_LIB has no code" >&2; exit 1; }
+          password_file="$(mktemp)"
+          chmod 600 "${password_file}"
+          trap 'rm -f "${password_file}"' EXIT
+          printf '%s' "${PK_DEPLOYER_PW}" > "${password_file}"
+          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password-file "${password_file}")"
+          ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/DeploySharedRoutingTargets.s.sol:DeploySharedRoutingTargets \
+            --rpc-url "${RPC_URL}" --account PK_DEPLOYER --password-file "${password_file}" \
+            --sig "run(string)" "${NETWORK}" --ffi --via-ir \
+            --libraries "pkg/contracts/src/CVStrategy/ConvictionsUtils.sol:ConvictionsUtils:${library}" \
+            --gas-estimate-multiplier "${SHARED_GAS_ESTIMATE_MULTIPLIER:-130}" \
+            --slow --broadcast -vvv
   verify-storage-quick:
     desc: Verify storage quick
     cmds:
@@ -290,6 +400,8 @@ tasks:
             echo "missing ${RPC_ENV}" >&2
             exit 1
           fi
+
+          bash ./scripts/assert-unrouted-factory.sh "${CHAIN}" "${RPC_URL}"
 
           PORT="${ANVIL_PORT:-8545}"
           LOCAL_RPC_URL="http://127.0.0.1:${PORT}"
@@ -617,6 +729,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - cmd: bash ./scripts/assert-unrouted-factory.sh ethsepolia "${RPC_URL_SEP_TESTNET}"
       - task: sync-proxies
         vars:
           NETWORK: ethsepolia
@@ -882,7 +995,7 @@ tasks:
       - upgrade-ethsep
     cmds: []
   refresh-facets-ethsep:
-    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (ethsepolia)
+    desc: Deploy changed facet snapshots; sync active FACETS only for unrouted chains (ethsepolia)
     cmds:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -909,21 +1022,17 @@ tasks:
           --rpc-url ${RPC_URL_SEP_TESTNET} \
           --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-ethsep:
-    desc: Verify live diamond facets on ethsepolia
+    desc: Verify live facets on ethsepolia using shared routing when active
     cmds:
       - cmd: |
-          ./scripts/verify-diamond-facets.sh \
-          --network ethsepolia \
-          --rpc-url ${RPC_URL_SEP_TESTNET} \
-          --chain-id 11155111 \
-          --etherscan-key ${ETHERSCAN_API_KEY}
+          bash ./scripts/verify-all-deployments.sh --scope facets --network ethsepolia
   refresh-facets-and-verify-ethsep:
     desc: Refresh facet snapshots and verify live diamond facets on ethsepolia
     cmds:
       - task: refresh-facets-ethsep
       - task: verify-diamond-facets-ethsep
   refresh-facets-opsep:
-    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (opsepolia)
+    desc: Deploy changed facet snapshots; sync active FACETS only for unrouted chains (opsepolia)
     cmds:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -950,21 +1059,17 @@ tasks:
           --rpc-url ${RPC_URL_OP_TESTNET} \
           --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-opsep:
-    desc: Verify live diamond facets on opsepolia
+    desc: Verify live facets on opsepolia using shared routing when active
     cmds:
       - cmd: |
-          ./scripts/verify-diamond-facets.sh \
-          --network opsepolia \
-          --rpc-url ${RPC_URL_OP_TESTNET} \
-          --chain-id 11155420 \
-          --etherscan-key ${ETHERSCAN_API_KEY}
+          bash ./scripts/verify-all-deployments.sh --scope facets --network opsepolia
   refresh-facets-and-verify-opsep:
     desc: Refresh facet snapshots and verify live diamond facets on opsepolia
     cmds:
       - task: refresh-facets-opsep
       - task: verify-diamond-facets-opsep
   refresh-facets-arbsep:
-    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (arbsepolia)
+    desc: Deploy changed facet snapshots; sync active FACETS only for unrouted chains (arbsepolia)
     cmds:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -991,21 +1096,17 @@ tasks:
           --rpc-url ${RPC_URL_ARB_TESTNET} \
           --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-arbsep:
-    desc: Verify live diamond facets on arbsepolia
+    desc: Verify live facets on arbsepolia using shared routing when active
     cmds:
       - cmd: |
-          ./scripts/verify-diamond-facets.sh \
-          --network arbsepolia \
-          --rpc-url ${RPC_URL_ARB_TESTNET} \
-          --chain-id 421614 \
-          --etherscan-key ${ETHERSCAN_API_KEY}
+          bash ./scripts/verify-all-deployments.sh --scope facets --network arbsepolia
   refresh-facets-and-verify-arbsep:
     desc: Refresh facet snapshots and verify live diamond facets on arbsepolia
     cmds:
       - task: refresh-facets-arbsep
       - task: verify-diamond-facets-arbsep
   refresh-facets-arbitrum:
-    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (arbitrum)
+    desc: Deploy changed facet snapshots; sync active FACETS only for unrouted chains (arbitrum)
     cmds:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -1032,21 +1133,17 @@ tasks:
           --rpc-url ${RPC_URL_ARB} \
           --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-arbitrum:
-    desc: Verify live diamond facets on arbitrum
+    desc: Verify live facets on arbitrum using shared routing when active
     cmds:
       - cmd: |
-          ./scripts/verify-diamond-facets.sh \
-          --network arbitrum \
-          --rpc-url ${RPC_URL_ARB} \
-          --chain-id 42161 \
-          --etherscan-key ${ETHERSCAN_API_KEY}
+          bash ./scripts/verify-all-deployments.sh --scope facets --network arbitrum
   refresh-facets-and-verify-arbitrum:
     desc: Refresh facet snapshots and verify live diamond facets on arbitrum
     cmds:
       - task: refresh-facets-arbitrum
       - task: verify-diamond-facets-arbitrum
   refresh-facets-optimism:
-    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (optimism)
+    desc: Deploy changed facet snapshots; sync active FACETS only for unrouted chains (optimism)
     cmds:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -1073,21 +1170,17 @@ tasks:
           --rpc-url ${RPC_URL_OPT} \
           --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-optimism:
-    desc: Verify live diamond facets on optimism
+    desc: Verify live facets on optimism using shared routing when active
     cmds:
       - cmd: |
-          ./scripts/verify-diamond-facets.sh \
-          --network optimism \
-          --rpc-url ${RPC_URL_OPT} \
-          --chain-id 10 \
-          --etherscan-key ${ETHERSCAN_API_KEY}
+          bash ./scripts/verify-all-deployments.sh --scope facets --network optimism
   refresh-facets-and-verify-optimism:
     desc: Refresh facet snapshots and verify live diamond facets on optimism
     cmds:
       - task: refresh-facets-optimism
       - task: verify-diamond-facets-optimism
   refresh-facets-polygon:
-    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (polygon)
+    desc: Deploy changed facet snapshots; sync active FACETS only for unrouted chains (polygon)
     cmds:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -1114,21 +1207,17 @@ tasks:
           --rpc-url ${RPC_URL_POLYGON} \
           --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-polygon:
-    desc: Verify live diamond facets on polygon
+    desc: Verify live facets on polygon using shared routing when active
     cmds:
       - cmd: |
-          ./scripts/verify-diamond-facets.sh \
-          --network polygon \
-          --rpc-url ${RPC_URL_POLYGON} \
-          --chain-id 137 \
-          --etherscan-key ${ETHERSCAN_API_KEY}
+          bash ./scripts/verify-all-deployments.sh --scope facets --network polygon
   refresh-facets-and-verify-polygon:
     desc: Refresh facet snapshots and verify live diamond facets on polygon
     cmds:
       - task: refresh-facets-polygon
       - task: verify-diamond-facets-polygon
   refresh-facets-gnosis:
-    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (gnosis)
+    desc: Deploy changed facet snapshots; sync active FACETS only for unrouted chains (gnosis)
     cmds:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -1155,21 +1244,17 @@ tasks:
           --rpc-url ${RPC_URL_GNOSIS} \
           --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-gnosis:
-    desc: Verify live diamond facets on gnosis
+    desc: Verify live facets on gnosis using shared routing when active
     cmds:
       - cmd: |
-          ./scripts/verify-diamond-facets.sh \
-          --network gnosis \
-          --rpc-url ${RPC_URL_GNOSIS} \
-          --chain-id 100 \
-          --etherscan-key ${ETHERSCAN_API_KEY}
+          bash ./scripts/verify-all-deployments.sh --scope facets --network gnosis
   refresh-facets-and-verify-gnosis:
     desc: Refresh facet snapshots and verify live diamond facets on gnosis
     cmds:
       - task: refresh-facets-gnosis
       - task: verify-diamond-facets-gnosis
   refresh-facets-base:
-    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (base)
+    desc: Deploy changed facet snapshots; sync active FACETS only for unrouted chains (base)
     cmds:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -1196,21 +1281,17 @@ tasks:
           --rpc-url ${RPC_URL_BASE} \
           --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-base:
-    desc: Verify live diamond facets on base
+    desc: Verify live facets on base using shared routing when active
     cmds:
       - cmd: |
-          ./scripts/verify-diamond-facets.sh \
-          --network base \
-          --rpc-url ${RPC_URL_BASE} \
-          --chain-id 8453 \
-          --etherscan-key ${ETHERSCAN_API_KEY}
+          bash ./scripts/verify-all-deployments.sh --scope facets --network base
   refresh-facets-and-verify-base:
     desc: Refresh facet snapshots and verify live diamond facets on base
     cmds:
       - task: refresh-facets-base
       - task: verify-diamond-facets-base
   refresh-facets-celo:
-    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (celo)
+    desc: Deploy changed facet snapshots; sync active FACETS only for unrouted chains (celo)
     cmds:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -1237,14 +1318,10 @@ tasks:
           --rpc-url ${RPC_URL_CELO} \
           --min-mtime-ms "${START_TIME_MS}"
   verify-diamond-facets-celo:
-    desc: Verify live diamond facets on celo
+    desc: Verify live facets on celo using shared routing when active
     cmds:
       - cmd: |
-          ./scripts/verify-diamond-facets.sh \
-          --network celo \
-          --rpc-url ${RPC_URL_CELO} \
-          --chain-id 42220 \
-          --etherscan-key ${ETHERSCAN_API_KEY}
+          bash ./scripts/verify-all-deployments.sh --scope facets --network celo
   refresh-facets-and-verify-celo:
     desc: Refresh facet snapshots and verify live diamond facets on celo
     cmds:
@@ -1295,7 +1372,7 @@ tasks:
         ignore_error: true
 
   refresh-facets-mainnet:
-    desc: Redeploy changed facet snapshots and write .FACETS addresses in networks.json (mainnet)
+    desc: Deploy changed facet snapshots; sync active FACETS only for unrouted chains (mainnet)
     cmds:
       - cmd: |
           : "${PK_DEPLOYER_PW:?missing PK_DEPLOYER_PW}"
@@ -1327,14 +1404,10 @@ tasks:
     cmds:
       - task: refresh-facets-mainnet
   verify-diamond-facets-mainnet:
-    desc: Verify live diamond facets on mainnet
+    desc: Verify live facets on mainnet using shared routing when active
     cmds:
       - cmd: |
-          ./scripts/verify-diamond-facets.sh \
-          --network ethereum \
-          --rpc-url ${RPC_URL_ETHEREUM} \
-          --chain-id 1 \
-          --etherscan-key ${ETHERSCAN_API_KEY}
+          bash ./scripts/verify-all-deployments.sh --scope facets --network ethereum
   refresh-facets-and-verify-mainnet:
     desc: Refresh facet snapshots and verify live diamond facets on mainnet
     cmds:
@@ -1914,6 +1987,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - cmd: bash ./scripts/assert-unrouted-factory.sh opsepolia "${RPC_URL_OP_TESTNET}"
       - task: sync-proxies
         vars:
           NETWORK: opsepolia
@@ -2727,6 +2801,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - cmd: bash ./scripts/assert-unrouted-factory.sh arbsepolia "${RPC_URL_ARB_TESTNET}"
       - task: sync-proxies
         vars:
           NETWORK: arbsepolia
@@ -3505,6 +3580,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - cmd: bash ./scripts/assert-unrouted-factory.sh arbitrum "${RPC_URL_ARB}"
       - task: sync-proxies
         vars:
           NETWORK: arbitrum
@@ -3887,6 +3963,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - cmd: bash ./scripts/assert-unrouted-factory.sh optimism "${RPC_URL_OPT}"
       - task: sync-proxies
         vars:
           NETWORK: optimism
@@ -4349,6 +4426,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - cmd: bash ./scripts/assert-unrouted-factory.sh polygon "${RPC_URL_POLYGON}"
       - task: sync-proxies
         vars:
           NETWORK: polygon
@@ -4744,6 +4822,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - cmd: bash ./scripts/assert-unrouted-factory.sh gnosis "${RPC_URL_GNOSIS}"
       - task: sync-proxies
         vars:
           NETWORK: gnosis
@@ -5117,6 +5196,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - cmd: bash ./scripts/assert-unrouted-factory.sh base "${RPC_URL_BASE}"
       - task: sync-proxies
         vars:
           NETWORK: base
@@ -6209,6 +6289,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - cmd: bash ./scripts/assert-unrouted-factory.sh celo "${RPC_URL_CELO}"
       - task: sync-proxies
         vars:
           NETWORK: celo
@@ -6533,6 +6614,7 @@ tasks:
     deps:
       - verify-storage
     cmds:
+      - cmd: bash ./scripts/assert-unrouted-factory.sh ethereum "${RPC_URL_ETHEREUM}"
       - task: sync-proxies
         vars:
           NETWORK: ethereum

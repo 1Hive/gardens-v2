@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "chainId": "137",
+  "createdAt": 1794887677120,
+  "meta": {
+    "name": "polygon shared routing 03-switch-strategy-template",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0x57a9835B204DbCc101Dbf981625A3625e8043B9c",
+      "value": "0",
+      "data": "0x1b71f0e4000000000000000000000000a637ed512fcf3e4798d541172fb7842652929ec5"
+    }
+  ]
+}

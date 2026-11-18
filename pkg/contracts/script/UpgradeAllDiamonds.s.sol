@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "./BaseMultiChain.s.sol";
+import {LegacyRoutingGuard} from "./LegacyRoutingGuard.sol";
 import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
 import {CVAdminFacet} from "../src/CVStrategy/facets/CVAdminFacet.sol";
 import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol";
@@ -80,6 +81,7 @@ contract UpgradeAllDiamonds is BaseMultiChain, StrategyDiamondConfiguratorBase, 
     }
 
     function runCurrentNetwork(string memory networkJson) public override {
+        LegacyRoutingGuard.requireUnroutedFactory(networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY")));
         bool directBroadcast = directBroadcastOverride || networkJson.readBool(getKeyNetwork(".no-safe"));
 
         RunContext memory context = _buildRunContext(networkJson);

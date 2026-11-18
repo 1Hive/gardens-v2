@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "chainId": "11155420",
+  "createdAt": 1794890049453,
+  "meta": {
+    "name": "opsepolia shared routing 02-migrate-communities-01",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0x1F786ad20046a55651AD66Fb456Ab2ef2596727B",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000007b9c28301320a7d733c53c0268439e6649ba7000"
+    },
+    {
+      "to": "0x394542fc04478AB3F8C7D9abb25d192eF60EC675",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000007b9c28301320a7d733c53c0268439e6649ba7000"
+    },
+    {
+      "to": "0xc46A732ebFC0fbb35b0142077D68De91888DD53C",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000007b9c28301320a7d733c53c0268439e6649ba7000"
+    },
+    {
+      "to": "0xF0E5c2dE79E3eD66Ed9322C4545d30551D048fD0",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000007b9c28301320a7d733c53c0268439e6649ba7000"
+    }
+  ]
+}

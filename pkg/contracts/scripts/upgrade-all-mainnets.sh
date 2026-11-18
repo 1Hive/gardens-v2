@@ -75,6 +75,8 @@ run_upgrade_network() {
   local tmp_networks_json
   local -a cmd
 
+  bash "$CONTRACTS_DIR/scripts/assert-unrouted-factory.sh" "$network" "$rpc_url"
+
   sig="$(resolve_sig)"
 
   if [[ "${RESUME:-false}" == "true" ]]; then
@@ -115,6 +117,19 @@ run_upgrade_network() {
 }
 
 declare -a pids=()
+for entry in \
+  "ethereum|${RPC_URL_ETHEREUM}" \
+  "arbitrum|${RPC_URL_ARB}" \
+  "optimism|${RPC_URL_OPT}" \
+  "polygon|${RPC_URL_POLYGON}" \
+  "gnosis|${RPC_URL_GNOSIS}" \
+  "base|${RPC_URL_BASE}" \
+  "celo|${RPC_URL_CELO}"; do
+  network="${entry%%|*}"
+  rpc_url="${entry#*|}"
+  bash "$CONTRACTS_DIR/scripts/assert-unrouted-factory.sh" "$network" "$rpc_url"
+done
+
 declare -a names=()
 failed=0
 

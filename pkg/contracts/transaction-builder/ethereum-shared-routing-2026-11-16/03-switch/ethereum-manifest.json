@@ -1,0 +1,24 @@
+{
+  "chainId": 1,
+  "phase": "switch-strategy",
+  "factory": "0x7D26c5B083B85B848645fcBd18Fe01168989333b",
+  "executor": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+  "executionMode": "direct-owner",
+  "oldCommunityTemplate": "0x6dd2a4fe3D59e90Bb6C26f5511e048AE8Bd953a1",
+  "oldStrategyTemplate": "0x8d6bB0CEBF0989B930bccb53Ee39096d3581EbAa",
+  "strategyRouter": "0xd1E7fdc8067Fe654c97aaE0bA83fcDbaB206B156",
+  "communityRouter": "0x6dd2a4fe3D59e90Bb6C26f5511e048AE8Bd953a1",
+  "strategyLogic": "0x1805c563eFE616851215B154791D9D7EB3658EB1",
+  "communityLogic": "0x4d9c3B31424b14A442aB7C0488C0172ae3Da5820",
+  "poolFacet": "0x95B08EEED52060FB529b9268B65f3bEe5046eE92",
+  "communities": 3,
+  "pendingCommunities": 0,
+  "strategies": 3,
+  "pendingStrategies": 3,
+  "stages": [
+    {
+      "name": "03-switch-strategy-template",
+      "transactions": 1
+    }
+  ]
+}

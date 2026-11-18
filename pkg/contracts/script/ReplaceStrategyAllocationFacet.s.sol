@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
+import {LegacyRoutingGuard} from "./LegacyRoutingGuard.sol";
 import {CVAllocationFacet} from "../src/CVStrategy/facets/CVAllocationFacet.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
@@ -14,6 +15,7 @@ contract ReplaceStrategyAllocationFacet is Script {
     function run(string memory network) public {
         string memory json = vm.readFile(string.concat(vm.projectRoot(), "/pkg/contracts/config/networks.json"));
         string memory networkKey = string.concat("$.networks[?(@.name=='", network, "')]");
+        LegacyRoutingGuard.requireUnroutedFactory(json.readAddress(string.concat(networkKey, ".PROXIES.REGISTRY_FACTORY")));
         address allocationFacet = json.readAddress(string.concat(networkKey, ".FACETS.CV_ALLOCATION"));
         address[] memory strategies = json.readAddressArray(string.concat(networkKey, ".PROXIES.CV_STRATEGIES"));
         uint256 startIndex = _bounded(vm.envOr("STRATEGY_START_INDEX", uint256(0)), strategies.length);

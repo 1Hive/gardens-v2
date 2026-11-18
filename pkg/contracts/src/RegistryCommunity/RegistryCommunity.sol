@@ -298,7 +298,11 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
         super.initialize(_owner);
         LibDiamond.setContractOwner(_owner);
 
-        LibDiamond.diamondCut(facetCuts, init, initCalldata);
+        if (_usingSharedRouter()) {
+            LibDiamond.initializeDiamondCut(init, initCalldata);
+        } else {
+            LibDiamond.diamondCut(facetCuts, init, initCalldata);
+        }
 
         __ReentrancyGuard_init();
         __AccessControl_init();
@@ -558,6 +562,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     /// @dev Used by stub functions to delegate to their respective facets
     /// @dev This function never returns - it either reverts or returns via assembly
     function _delegateToFacet() private {
+        if (_usingSharedRouter()) revert CommunityFunctionDoesNotExist(msg.sig);
         LibDiamond.DiamondStorage storage ds;
         bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
 
@@ -628,6 +633,7 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     /// @notice Fallback function delegates calls to facets based on function selector
     /// @dev Uses Diamond storage to find facet address for the called function
     fallback() external {
+        if (_usingSharedRouter()) revert CommunityFunctionDoesNotExist(msg.sig);
         LibDiamond.DiamondStorage storage ds;
         bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
 
@@ -654,5 +660,12 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     }
 
     // receive() external payable {}
+
+    function _usingSharedRouter() private view returns (bool) {
+        address currentImplementation = _getImplementation();
+        if (currentImplementation == address(0)) return false;
+        (bool ok, bytes memory data) = currentImplementation.staticcall(abi.encodeWithSignature("routingFactory()"));
+        return ok && data.length == 32 && abi.decode(data, (address)) != address(0);
+    }
 }
 // slither-disable-end uninitialized-state

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./UpgradeCVMultichainBase.s.sol";
+import {LegacyRoutingGuard} from "./LegacyRoutingGuard.sol";
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
@@ -103,6 +104,7 @@ contract UpgradeCVMultichainScript is UpgradeCVMultichainBase {
         if (context.pauseController == address(0)) revert("PAUSE_CONTROLLER not set in networks.json");
         context.streamingEscrowFactory = _readAddressOrZero(".ENVS.STREAMING_ESCROW_FACTORY");
         context.registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
+        LegacyRoutingGuard.requireUnroutedFactory(context.registryFactoryProxy);
 
         if (!_flagEnabled("SKIP_PREFLIGHT")) {
             _runPreflightChecks(context, networkJson, _shouldDoFactory(), _shouldDoCommunities(), _shouldDoStrategies());

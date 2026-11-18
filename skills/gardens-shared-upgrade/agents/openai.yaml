@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gardens Shared Upgrade"
+  short_description: "Verify routed upgrades and prepare Safe payloads"
+  default_prompt: "Use $gardens-shared-upgrade to test and rehearse a Gardens shared-router upgrade, prepare Safe payloads, and request approval before submission."

@@ -1,0 +1,48 @@
+{
+  "network": "gnosis",
+  "chainId": 100,
+  "targets": [
+    {
+      "name": "REGISTRY_FACTORY",
+      "address": "0x3101fb68661c574780da296fe5faf185c3afabb1",
+      "transactionHash": "0x10dad78a840f05a27e2e05b7e053633ee45d825e6d54378b09e1a0d56ef89403",
+      "status": "0x1",
+      "blockNumber": "0x2f0942f"
+    },
+    {
+      "name": "CV_STRATEGY_ROUTER",
+      "address": "0x23e0a686014707c0aa81c7e991981c2dbd63bc17",
+      "transactionHash": "0x5c88050ec480c22727a952653103131a5227c8a8d0ed8591c02e07749654e12d",
+      "status": "0x1",
+      "blockNumber": "0x2f09430"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY_ROUTER",
+      "address": "0x85465653b370aeae2588d635ad85ea5ea7d30af5",
+      "transactionHash": "0x62d1f0efc14ab601a638a80d4375661da627e3c68cb22d0b783f35aea599d75e",
+      "status": "0x1",
+      "blockNumber": "0x2f09431"
+    },
+    {
+      "name": "CV_STRATEGY",
+      "address": "0x0196b31303f6f521df9ca1bda46458b404599e2b",
+      "transactionHash": "0xbbbc8866a47f082c148afac6f1b49f669aab1f7da8e2b92a1590d149379c8cb3",
+      "status": "0x1",
+      "blockNumber": "0x2f09432"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY",
+      "address": "0xd75261b541a5d26b6f8e397063f1f89a71d2c617",
+      "transactionHash": "0x340f63a823018bca97efd5388ecea58f99a941e29584b8606601406f0da144d3",
+      "status": "0x1",
+      "blockNumber": "0x2f09433"
+    },
+    {
+      "name": "COMMUNITY_POOL",
+      "address": "0x9c1194d96b47419f59a0831a493df101bad28cb6",
+      "transactionHash": "0x9375ba3e98d6b5531884a67eefd8e6d5fbb7d7ecbe978560afd960335163d741",
+      "status": "0x1",
+      "blockNumber": "0x2f09434"
+    }
+  ]
+}

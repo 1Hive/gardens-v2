@@ -43,15 +43,15 @@ function parseArgs(argv) {
   return args;
 }
 
-async function getCode(rpcUrl, address) {
+async function rpcCall(rpcUrl, method, params) {
   const response = await fetch(rpcUrl, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       jsonrpc: "2.0",
       id: 1,
-      method: "eth_getCode",
-      params: [address, "latest"],
+      method,
+      params,
     }),
   });
 
@@ -60,11 +60,25 @@ async function getCode(rpcUrl, address) {
   }
 
   const payload = await response.json();
-  if (payload.error) {
-    throw new Error(`RPC error: ${payload.error.message || JSON.stringify(payload.error)}`);
-  }
+  return payload;
+}
 
+async function getCode(rpcUrl, address) {
+  const payload = await rpcCall(rpcUrl, "eth_getCode", [address, "latest"]);
+  if (payload.error) throw new Error(`RPC error: ${payload.error.message || JSON.stringify(payload.error)}`);
   return payload.result;
+}
+
+async function readRelease(rpcUrl, factory, selector) {
+  const payload = await rpcCall(rpcUrl, "eth_call", [{ to: factory, data: selector }, "latest"]);
+  if (payload.error) {
+    if (/revert|function selector was not recognized/i.test(payload.error.message || "")) return null;
+    throw new Error(`Cannot check factory routing: ${payload.error.message || JSON.stringify(payload.error)}`);
+  }
+  if (!/^0x[0-9a-fA-F]{64}$/.test(payload.result || "")) {
+    throw new Error(`Invalid factory release response: ${payload.result}`);
+  }
+  return `0x${payload.result.slice(-40)}`.toLowerCase();
 }
 
 async function main() {
@@ -134,6 +148,31 @@ async function main() {
   const networkConfig = networksJson.networks.find((entry) => entry.name === network);
   if (!networkConfig) {
     throw new Error(`Network ${network} not found in ${networksJsonPath}`);
+  }
+  if (Number(chainId) !== networkConfig.chainId) {
+    throw new Error(`Chain ID ${chainId} does not match ${network} config`);
+  }
+  const chainResponse = await rpcCall(rpcUrl, "eth_chainId", []);
+  if (chainResponse.error || Number(chainResponse.result) !== networkConfig.chainId) {
+    throw new Error(`RPC chain ID does not match ${network} config`);
+  }
+
+  const factory = networkConfig.PROXIES?.REGISTRY_FACTORY;
+  if (!factory) throw new Error(`Missing ${network} factory proxy`);
+  const releases = await Promise.all([
+    readRelease(rpcUrl, factory, "0xbd922b1c"), // strategyImplementation()
+    readRelease(rpcUrl, factory, "0x8e4254f4"), // communityImplementation()
+  ]);
+  if (releases.filter((release) => release === null).length === 1) {
+    throw new Error(`Cannot determine ${network} routing state: factory release getters disagree`);
+  }
+  if (releases.some((release) => release && release !== "0x0000000000000000000000000000000000000000")) {
+    console.log(`${network} uses shared routing; deployed facets are candidates until a factory release executes:`);
+    for (const [facetKey, contractAddress] of verifiedUpdates) {
+      console.log(`  ${facetKey}: ${contractAddress}`);
+    }
+    console.log("Active FACETS config was not changed. Prepare a shared release for these candidates.");
+    return;
   }
 
   networkConfig.FACETS ||= {};

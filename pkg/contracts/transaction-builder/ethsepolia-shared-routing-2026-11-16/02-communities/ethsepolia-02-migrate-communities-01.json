@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "chainId": "11155111",
+  "createdAt": 1794895106020,
+  "meta": {
+    "name": "ethsepolia shared routing 02-migrate-communities-01",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0x116eaA654E867D15E9def43560D9145ec12F4838",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000006f5c4bedd8b2cc573c98708f4b4c1678e2c66c94"
+    },
+    {
+      "to": "0x7c25939D24aE7677086a1e0a4F6784aDe10147C1",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000006f5c4bedd8b2cc573c98708f4b4c1678e2c66c94"
+    }
+  ]
+}

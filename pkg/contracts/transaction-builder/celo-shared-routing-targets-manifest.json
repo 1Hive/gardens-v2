@@ -1,0 +1,48 @@
+{
+  "network": "celo",
+  "chainId": 42220,
+  "targets": [
+    {
+      "name": "REGISTRY_FACTORY",
+      "address": "0x4291054d271d4e8a2278bed084ebda606d1b980a",
+      "transactionHash": "0x5a20ee4d488c4a6fb43e7ccad61e760d8c253074eeefa1f6b366f5ae1dcbeaca",
+      "status": "0x1",
+      "blockNumber": "0x4f25afd"
+    },
+    {
+      "name": "CV_STRATEGY_ROUTER",
+      "address": "0x17d2b6857c85ce8318e487d5106cfb55e814bb9a",
+      "transactionHash": "0x643f3a9c433d6af341637d6c1d7bb5b65c4097ba36d94747797614ae1fe61822",
+      "status": "0x1",
+      "blockNumber": "0x4f25aff"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY_ROUTER",
+      "address": "0x7a20fdd6bb17f16260a3f23c4c229a88eef40193",
+      "transactionHash": "0xb1fb3eb4889dc5d30f25e8c786232f0982ff23fc15fa1b7e4d803beb320c2427",
+      "status": "0x1",
+      "blockNumber": "0x4f25b01"
+    },
+    {
+      "name": "CV_STRATEGY",
+      "address": "0x5dd44151dc4586271c6d41842311288eb35f3697",
+      "transactionHash": "0xe08375908bdd1312a7b8c010487659a814b28ba6b17833aea009e7184f6404a4",
+      "status": "0x1",
+      "blockNumber": "0x4f25b03"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY",
+      "address": "0x134aa4d7861bb79693ae522d6deeddd208169196",
+      "transactionHash": "0x12c2e7b4182ba5e7e64d6b97daa46e64ec658435f3beec18ace6021a159785a3",
+      "status": "0x1",
+      "blockNumber": "0x4f25b05"
+    },
+    {
+      "name": "COMMUNITY_POOL",
+      "address": "0x68a65d07d74c22109bf65b12a22934272695ddea",
+      "transactionHash": "0xa6e8dda5b31b7b9375dc032f5cb6c7cec6d19847e39b6ec4ae79d9c3013bd4e3",
+      "status": "0x1",
+      "blockNumber": "0x4f25b07"
+    }
+  ]
+}
