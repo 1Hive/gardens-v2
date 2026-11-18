@@ -87,10 +87,15 @@ contract CommunityPoolFacet is CommunityBaseFacet {
     }
 
     function _configureStrategyFacets(address strategyProxy) internal {
-        (IDiamondCut.FacetCut[] memory strategyFacetCuts_, address strategyInit_, bytes memory strategyInitCalldata_) =
-            IRegistryFactory(registryFactory).getStrategyFacets();
-        if (strategyFacetCuts_.length > 0 || strategyInit_ != address(0)) {
-            IDiamondCut(strategyProxy).diamondCut(strategyFacetCuts_, strategyInit_, strategyInitCalldata_);
+        address template = IRegistryFactory(registryFactory).strategyTemplate();
+        (bool ok, bytes memory data) = template.staticcall(abi.encodeWithSignature("routingFactory()"));
+        bool sharedRouter = ok && data.length == 32 && abi.decode(data, (address)) == registryFactory;
+        if (!sharedRouter) {
+            (IDiamondCut.FacetCut[] memory strategyFacetCuts_, address strategyInit_, bytes memory strategyInitCalldata_) =
+                IRegistryFactory(registryFactory).getStrategyFacets();
+            if (strategyFacetCuts_.length > 0 || strategyInit_ != address(0)) {
+                IDiamondCut(strategyProxy).diamondCut(strategyFacetCuts_, strategyInit_, strategyInitCalldata_);
+            }
         }
         address pauseController = IRegistryFactory(registryFactory).globalPauseController();
         if (pauseController != address(0)) {

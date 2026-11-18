@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "./BaseMultiChain.s.sol";
+import {LegacyRoutingGuard} from "./LegacyRoutingGuard.sol";
 import "forge-std/console2.sol";
 import {CVStreamingFacet} from "../src/CVStrategy/facets/CVStreamingFacet.sol";
 import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
@@ -16,6 +17,7 @@ contract ReplaceStreamingFacet is BaseMultiChain {
     function runCurrentNetwork(string memory) public override {
         address strategy = vm.envAddress("TARGET_STRATEGY");
         require(strategy.code.length != 0, "target strategy has no code");
+        LegacyRoutingGuard.requireLocalProxy(strategy);
         require(
             CVStrategy(payable(strategy)).proposalType() == ProposalType.Streaming,
             "target strategy is not streaming"

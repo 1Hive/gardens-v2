@@ -1,0 +1,48 @@
+{
+  "network": "polygon",
+  "chainId": 137,
+  "targets": [
+    {
+      "name": "REGISTRY_FACTORY",
+      "address": "0xfa9fb37560be53ee90105273bcaef8a114b9a495",
+      "transactionHash": "0xa0b63b65e3e58c521ed81be6c51a2a6127914f26126afcfbf97355b8fdbaa026",
+      "status": "0x1",
+      "blockNumber": "0x5cf0991"
+    },
+    {
+      "name": "CV_STRATEGY_ROUTER",
+      "address": "0xa637ed512fcf3e4798d541172fb7842652929ec5",
+      "transactionHash": "0x3514eb0464282c8b5a050aa6a01150fe420d85933270e7d7530eca7feb3c3486",
+      "status": "0x1",
+      "blockNumber": "0x5cf0993"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY_ROUTER",
+      "address": "0xcfcb381a40df0f0bf604f3c2e293c3d0c5ae61e2",
+      "transactionHash": "0xefe5e2bdd8c0770f212b40784fc6c7286308bbc8b75bd8a3fd78d3570d201f61",
+      "status": "0x1",
+      "blockNumber": "0x5cf0995"
+    },
+    {
+      "name": "CV_STRATEGY",
+      "address": "0x8cc91e42f10ceb6b945a438a113e66d95c6caa6e",
+      "transactionHash": "0xb429473e5a8ee91d88976662494fd7a5090298fbd83db52df76c271c385ad94e",
+      "status": "0x1",
+      "blockNumber": "0x5cf0997"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY",
+      "address": "0xd975b9f0e721aea744839be53d02b5e823c5bc52",
+      "transactionHash": "0xb5a6f9108289806005e0a1c16f7e2fb5299e4053e0ec6a76b669af9982925d83",
+      "status": "0x1",
+      "blockNumber": "0x5cf0998"
+    },
+    {
+      "name": "COMMUNITY_POOL",
+      "address": "0xe41e506087639f22e9ae59e94dd4d2a6b649ccf0",
+      "transactionHash": "0x95aa1ad68bab73aacd440473cc33b8b943d690c04dddad46e7846729476c80ae",
+      "status": "0x1",
+      "blockNumber": "0x5cf099a"
+    }
+  ]
+}

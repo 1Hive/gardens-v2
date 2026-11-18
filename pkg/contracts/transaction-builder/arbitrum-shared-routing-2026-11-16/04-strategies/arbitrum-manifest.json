@@ -1,0 +1,55 @@
+{
+  "chainId": 42161,
+  "phase": "strategies",
+  "factory": "0xc1c2E092b7DbC8413E1aC02e92C161b0BDA783f6",
+  "executor": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+  "executionMode": "direct-owner",
+  "oldCommunityTemplate": "0x1b37918aC46Ed3ed4E363b8D8582d276583a4F0e",
+  "oldStrategyTemplate": "0x8c715288D693Ce06eAc408463E4878cdAf731DBB",
+  "strategyRouter": "0x8c715288D693Ce06eAc408463E4878cdAf731DBB",
+  "communityRouter": "0x1b37918aC46Ed3ed4E363b8D8582d276583a4F0e",
+  "strategyLogic": "0x0871606d730278e5c43ACA2d715D442f4B47fb05",
+  "communityLogic": "0x6bDEB3fDae8Ce67446f8b27B04a5a7E7d3C73422",
+  "poolFacet": "0x519f19CB1e935634B0Dc27b6Af550FD2176A92eB",
+  "inventoryEvidence": {
+    "switchTx": "0xc649ed30bb5477780015de34233e27697bd14df3afe02b448ff2afc4093fa808",
+    "switchBlock": 524954195,
+    "queriedThroughBlock": 524954407,
+    "recentRpcFromBlock": 524954307,
+    "source": "Etherscan creation and pool logs reconciled with recent RPC logs"
+  },
+  "communities": 54,
+  "pendingCommunities": 0,
+  "strategies": 66,
+  "pendingStrategies": 66,
+  "stages": [
+    {
+      "name": "04-migrate-strategies-01",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-02",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-03",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-04",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-05",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-06",
+      "transactions": 10
+    },
+    {
+      "name": "04-migrate-strategies-07",
+      "transactions": 6
+    }
+  ]
+}

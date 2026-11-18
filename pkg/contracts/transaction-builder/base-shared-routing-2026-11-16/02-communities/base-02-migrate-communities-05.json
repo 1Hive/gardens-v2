@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "chainId": "8453",
+  "createdAt": 1794890722532,
+  "meta": {
+    "name": "base shared routing 02-migrate-communities-05",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xec83D957F8aa4E9601BC74608eBCBc862ECA52ab",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c6cefec154113c19191a511f0963d0014ab51f9e"
+    },
+    {
+      "to": "0xf8a75F2a6937475a67A5CDE2B4508d3527d6b0A2",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000c6cefec154113c19191a511f0963d0014ab51f9e"
+    }
+  ]
+}

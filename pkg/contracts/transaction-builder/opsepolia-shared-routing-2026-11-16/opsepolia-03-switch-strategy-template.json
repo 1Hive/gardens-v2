@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "chainId": "11155420",
+  "createdAt": 1794890166727,
+  "meta": {
+    "name": "opsepolia shared routing 03-switch-strategy-template",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xEC8824e9a9498520891ec678e98c5bd3e65229c2",
+      "value": "0",
+      "data": "0x1b71f0e40000000000000000000000000a67b8cac4659bef5b2b59d75eac6364338a2964"
+    }
+  ]
+}

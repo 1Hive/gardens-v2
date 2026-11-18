@@ -47,8 +47,9 @@ Monorepo entrypoint for coding agents working in `gardens-v2`.
 - For Gardens indexed data or entity lookup tasks, consult `skills/query-subgraph/SKILL.md`.
 - For Gardens on-chain read tasks, address/ABI resolution, or `cast call` usage, consult `skills/read-contracts/SKILL.md`.
 - For Gardens state-changing transactions, calldata encoding, multisig payloads, or write preparation, consult `skills/write-contract/SKILL.md`.
+- For CVStrategy or RegistryCommunity upgrades on shared-router chains, consult `skills/gardens-shared-upgrade/SKILL.md` before preparing or submitting Safe payloads.
 - When multiple skills apply, prefer this order: `query-subgraph`, `read-contracts`, `write-contract`.
-- Users may invoke these skills explicitly with `$e2e-test-maker`, `$query-subgraph`, `$read-contracts`, or `$write-contract`.
+- Users may invoke these skills explicitly with `$e2e-test-maker`, `$query-subgraph`, `$read-contracts`, `$write-contract`, or `$gardens-shared-upgrade`.
 
 ## Root Commands
 

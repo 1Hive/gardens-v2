@@ -1,0 +1,48 @@
+{
+  "network": "arbsepolia",
+  "chainId": 421614,
+  "targets": [
+    {
+      "name": "REGISTRY_FACTORY",
+      "address": "0xec5d17e030cb9bf75917665284021f7ee89d8685",
+      "transactionHash": "0x0c857a34a8ec59cbeb8ac0b7cbac09fa603e6bb7b864657217e640d0230d8383",
+      "status": "0x1",
+      "blockNumber": "0x13ab7599"
+    },
+    {
+      "name": "CV_STRATEGY_ROUTER",
+      "address": "0xd4392a6b2bda3eb29e8169111d1d173f20eb0973",
+      "transactionHash": "0x6ff7df7d32600e7d2d5bd2d5d3d2c5f564801e6565a82695b5174293755e1400",
+      "status": "0x1",
+      "blockNumber": "0x13ab759b"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY_ROUTER",
+      "address": "0xf84263be90b4e80fd1136f2fea4478e5a1b8ead4",
+      "transactionHash": "0xc629be356682611711619c67a2c0343cb7ef04784cc62704b17290ae78dc2c44",
+      "status": "0x1",
+      "blockNumber": "0x13ab759d"
+    },
+    {
+      "name": "CV_STRATEGY",
+      "address": "0x5c2d88405b6e91c9c29e13a46394563e4950c756",
+      "transactionHash": "0x507967af9dac68f70f6e62f5d199c7bb21f31a5ed3f26ce3a1c583fbf3b351dd",
+      "status": "0x1",
+      "blockNumber": "0x13ab759f"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY",
+      "address": "0x55946c10cf936f71abaef97a76584fd585114131",
+      "transactionHash": "0x6e4f3afb812c4bb3c04acc101d5d2b16e8539b6cdf90df02cd1165c433e75d34",
+      "status": "0x1",
+      "blockNumber": "0x13ab75a1"
+    },
+    {
+      "name": "COMMUNITY_POOL",
+      "address": "0x2d0a304c018a0513350b210ca882611bb5f28d78",
+      "transactionHash": "0xf1dff100dcd4bde5ea58d39d1972d7eec4b9dbe7989fe19b22b5619c379a9fa1",
+      "status": "0x1",
+      "blockNumber": "0x13ab75a3"
+    }
+  ]
+}

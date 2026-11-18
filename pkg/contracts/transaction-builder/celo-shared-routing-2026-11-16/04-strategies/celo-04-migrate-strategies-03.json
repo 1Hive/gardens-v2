@@ -1,0 +1,65 @@
+{
+  "version": "1.0",
+  "chainId": "42220",
+  "createdAt": 1794893260484,
+  "meta": {
+    "name": "celo shared routing 04-migrate-strategies-03",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0x4864C18Af19d5b32C566b2046930B9c4F1A666e5",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000017d2b6857c85ce8318e487d5106cfb55e814bb9a"
+    },
+    {
+      "to": "0x4AFf6D90e295360a012d2f1F42D9c7CcAB44e5f4",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000017d2b6857c85ce8318e487d5106cfb55e814bb9a"
+    },
+    {
+      "to": "0x4c3925eA9996923025d951498c18691D785fBf21",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000017d2b6857c85ce8318e487d5106cfb55e814bb9a"
+    },
+    {
+      "to": "0x4CE39A977961befa4D4bD546f8454AB798f1ec1D",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000017d2b6857c85ce8318e487d5106cfb55e814bb9a"
+    },
+    {
+      "to": "0x4d28599ddCBa0b041dcA0cfEe3337048120405cF",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000017d2b6857c85ce8318e487d5106cfb55e814bb9a"
+    },
+    {
+      "to": "0x4Db6295640c3d87E3Fae7bD150b4aC58E33870fA",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000017d2b6857c85ce8318e487d5106cfb55e814bb9a"
+    },
+    {
+      "to": "0x523b362913b56e10E9dDE785952e5e0EFdab4AAd",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000017d2b6857c85ce8318e487d5106cfb55e814bb9a"
+    },
+    {
+      "to": "0x562d2a137278Ce0722844a091791D0c4AEDDAB79",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000017d2b6857c85ce8318e487d5106cfb55e814bb9a"
+    },
+    {
+      "to": "0x56eF770D72E0bC6363dB2991941bFDa8a1f25dcA",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000017d2b6857c85ce8318e487d5106cfb55e814bb9a"
+    },
+    {
+      "to": "0x57db3264a363379b2C66A6914C0BF1D70f4763f6",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000017d2b6857c85ce8318e487d5106cfb55e814bb9a"
+    }
+  ]
+}

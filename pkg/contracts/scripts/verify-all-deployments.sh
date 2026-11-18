@@ -252,6 +252,22 @@ run_diamond_scope() {
     fi
 
     echo "### $network"
+    local factory_address=""
+    local shared_implementation=""
+    factory_address="$(jq -r --arg n "$network" '.networks[] | select(.name == $n) | .PROXIES.REGISTRY_FACTORY // empty' "$CONTRACTS_ROOT/config/networks.json")"
+    if [[ -n "$factory_address" ]]; then
+      shared_implementation="$(cast call "$factory_address" 'strategyImplementation()(address)' --rpc-url "$rpc_url" 2>/dev/null || true)"
+    fi
+    if [[ -n "$shared_implementation" && "$shared_implementation" != "0x0000000000000000000000000000000000000000" ]]; then
+      if run_with_rpc_retry "$network shared facets" node "$CONTRACTS_ROOT/scripts/verify-shared-routing.mjs" \
+        --network "$network" --rpc "$rpc_url"; then
+        echo "✅ $network facets (shared routing)"
+      else
+        echo "❌ $network facets (shared routing)"
+        failed=1
+      fi
+      continue
+    fi
     if run_with_rpc_retry "$network facets" bash "$CONTRACTS_ROOT/scripts/verify-diamond-facets.sh" \
       --network "$network" \
       --rpc-url "$rpc_url" \
@@ -502,8 +518,6 @@ run_upgrade_scope() {
 
   echo "==> Running ${scope} verifier (skipping pre/postflight)"
 
-  : "${ETHERSCAN_API_KEY:?missing ETHERSCAN_API_KEY}"
-
   for network in "${NETWORKS[@]}"; do
     local rpc_url
     local network_chain_id
@@ -522,6 +536,28 @@ run_upgrade_scope() {
       failed=1
       continue
     fi
+
+    local factory_address=""
+    local shared_implementation=""
+    factory_address="$(jq -r --arg n "$network" '.networks[] | select(.name == $n) | .PROXIES.REGISTRY_FACTORY // empty' "$CONTRACTS_ROOT/config/networks.json")"
+    if [[ -n "$factory_address" ]]; then
+      shared_implementation="$(cast call "$factory_address" 'strategyImplementation()(address)' --rpc-url "$rpc_url" 2>/dev/null || true)"
+    fi
+    if [[ -n "$shared_implementation" && "$shared_implementation" != "0x0000000000000000000000000000000000000000" ]]; then
+      local shared_family="both"
+      if [[ "$scope" == "communities" ]]; then shared_family="community"; fi
+      if [[ "$scope" == "strategies" ]]; then shared_family="strategy"; fi
+      if run_with_rpc_retry "$network shared routing" node "$CONTRACTS_ROOT/scripts/verify-shared-routing.mjs" \
+        --network "$network" --rpc "$rpc_url" --family "$shared_family"; then
+        echo "✅ $network $scope (shared routing)"
+      else
+        echo "❌ $network $scope (shared routing)"
+        failed=1
+      fi
+      continue
+    fi
+
+    : "${ETHERSCAN_API_KEY:?missing ETHERSCAN_API_KEY}"
 
     deployer_address="$(resolve_deployer_address "$network")"
     if [[ -z "$deployer_address" || "$deployer_address" == "null" ]]; then

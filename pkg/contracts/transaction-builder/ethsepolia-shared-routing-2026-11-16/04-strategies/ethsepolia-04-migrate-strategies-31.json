@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "chainId": "11155111",
+  "createdAt": 1794895417956,
+  "meta": {
+    "name": "ethsepolia shared routing 04-migrate-strategies-31",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xfdA1Efa0a5b989E47aC05dF827D992137dAA04F4",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000016a0c53dbf55ee19e260f2219dea55d42f1fac4c"
+    },
+    {
+      "to": "0xFeD3917E4189064AA645BbbEEa2367eC56c8A0a6",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000016a0c53dbf55ee19e260f2219dea55d42f1fac4c"
+    },
+    {
+      "to": "0xff1678e6B0BA63f7042F05C64eA91Faf4F1e805a",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000016a0c53dbf55ee19e260f2219dea55d42f1fac4c"
+    }
+  ]
+}

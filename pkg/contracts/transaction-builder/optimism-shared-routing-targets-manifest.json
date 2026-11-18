@@ -1,0 +1,48 @@
+{
+  "network": "optimism",
+  "chainId": 10,
+  "targets": [
+    {
+      "name": "REGISTRY_FACTORY",
+      "address": "0xd1696df90e56dec3ca690ec929b4598df0381d2b",
+      "transactionHash": "0x8bf467f29c4e70039ade0547521c9d3b15505e1b0e867328b98c120a12342a23",
+      "status": "0x1",
+      "blockNumber": "0x9840235"
+    },
+    {
+      "name": "CV_STRATEGY_ROUTER",
+      "address": "0xe72fbbf46046929bb52a9a18aec4007bd0322c8e",
+      "transactionHash": "0x6bee10e6438780f62600a8e1b300d9a9516f75f8a69f0ce966b4a7ecbd58c9ed",
+      "status": "0x1",
+      "blockNumber": "0x9840236"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY_ROUTER",
+      "address": "0x616150e0939858a0712310f0db0464b5eaff98f8",
+      "transactionHash": "0x9239ca2d1337eb3dec2e75f8d7500eca9622fb4cc6bec85aae9c1fca3f16cdf9",
+      "status": "0x1",
+      "blockNumber": "0x9840237"
+    },
+    {
+      "name": "CV_STRATEGY",
+      "address": "0xd095d5b90193d58c473b7986f90b3f4999e1a6b5",
+      "transactionHash": "0xef2404cca2a6546c36ac49062a8a5b123a62640c8a3e4ba9359dc9943dd7e2e1",
+      "status": "0x1",
+      "blockNumber": "0x9840238"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY",
+      "address": "0xa4506c41bf46ce8153558de37cd3d467ae2de4ff",
+      "transactionHash": "0x2737708f7f9c6a7a7aaa51fbc4ee35f4a75016a45c0b5c9e09366e97171b2c7b",
+      "status": "0x1",
+      "blockNumber": "0x9840239"
+    },
+    {
+      "name": "COMMUNITY_POOL",
+      "address": "0xd44bd9f8fa8537d363234602e1d2cee624298868",
+      "transactionHash": "0x39e6b947a003847dcce73c70fe7ce3ed9383c1f742f940f0caa0751cad7fc97f",
+      "status": "0x1",
+      "blockNumber": "0x984023a"
+    }
+  ]
+}

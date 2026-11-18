@@ -83,7 +83,29 @@ if (gatewayKey) {
   }
 }
 
-async function extractProxies(chainId) {
+async function extractProxies(chainId, expectedFactory) {
+  if (process.env.PROXY_SOURCE === 'events') {
+    const rpc = process.env.PROXY_EVENTS_RPC_URL;
+    if (!rpc) throw new Error('PROXY_EVENTS_RPC_URL is required when PROXY_SOURCE=events');
+    const { createPublicClient, http } = await import('viem');
+    const { getProxyEventInventory } = await import('./proxy-event-inventory.mjs');
+    const client = createPublicClient({ transport: http(rpc) });
+    if (await client.getChainId() !== chainId) throw new Error('Event RPC chain ID mismatch');
+    const toBlock = Number(await client.getBlockNumber());
+    const inventory = await getProxyEventInventory({ chainId, factory: expectedFactory,
+      toBlock, apiKey: process.env.ETHERSCAN_API_KEY, client });
+    const nonce = await client.readContract({ address: expectedFactory,
+      abi: [{ type: 'function', name: 'nonce', stateMutability: 'view', inputs: [],
+        outputs: [{ type: 'uint256' }] }], functionName: 'nonce' });
+    if (nonce !== BigInt(inventory.communities.length)) {
+      throw new Error('Factory nonce differs from event-backed community inventory');
+    }
+    const normalized = (addresses) => addresses.map((address) => address.toLowerCase()).sort();
+    console.log(`Reconciled Etherscan creation and pool events through chain ${chainId} block ${toBlock}`);
+    return { REGISTRY_FACTORY: expectedFactory.toLowerCase(),
+      REGISTRY_COMMUNITIES: normalized(inventory.communities),
+      CV_STRATEGIES: normalized(inventory.strategies) };
+  }
   let registryFactoryProxy;
   let registryCommunityProxies = [];
   let cvStrategiesProxies = [];
@@ -209,7 +231,7 @@ async function main() {
       process.exitCode = 1;
       return;
     }
-    const proxies = await extractProxies(netFound.chainId);
+    const proxies = await extractProxies(netFound.chainId, netFound.PROXIES.REGISTRY_FACTORY);
     netFound["PROXIES"] = proxies;
     netFound["hash"] = hash(proxies);
 

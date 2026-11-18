@@ -1,0 +1,427 @@
+{
+  "checkedAt": "2026-11-17T06:38:15.034Z",
+  "totalTargets": 60,
+  "verifiedTargets": 60,
+  "networks": [
+    {
+      "name": "ethsepolia",
+      "chainId": 11155111,
+      "targets": [
+        {
+          "name": "REGISTRY_FACTORY",
+          "address": "0x9707dca9f5643ba1f5b16add72a6e3073e6289c6",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY_ROUTER",
+          "address": "0x16a0c53dbf55ee19e260f2219dea55d42f1fac4c",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY_ROUTER",
+          "address": "0x6f5c4bedd8b2cc573c98708f4b4c1678e2c66c94",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY",
+          "address": "0x3f59a9668fc830e7d5c382999d2dd3be25139208",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY",
+          "address": "0x8769f5485ca5a6b2e1f401d116b27ffd80001aa9",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "COMMUNITY_POOL",
+          "address": "0x2c3492141bed07cea8587b1991a52a1c443abb0a",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        }
+      ]
+    },
+    {
+      "name": "arbsepolia",
+      "chainId": 421614,
+      "targets": [
+        {
+          "name": "REGISTRY_FACTORY",
+          "address": "0xec5d17e030cb9bf75917665284021f7ee89d8685",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY_ROUTER",
+          "address": "0xd4392a6b2bda3eb29e8169111d1d173f20eb0973",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY_ROUTER",
+          "address": "0xf84263be90b4e80fd1136f2fea4478e5a1b8ead4",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY",
+          "address": "0x5c2d88405b6e91c9c29e13a46394563e4950c756",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY",
+          "address": "0x55946c10cf936f71abaef97a76584fd585114131",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "COMMUNITY_POOL",
+          "address": "0x2d0a304c018a0513350b210ca882611bb5f28d78",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        }
+      ]
+    },
+    {
+      "name": "opsepolia",
+      "chainId": 11155420,
+      "targets": [
+        {
+          "name": "RegistryFactory",
+          "address": "0x8b9e50f9431adc7dfa3b83ee7fa1fdee93076127",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CVStrategyRouter",
+          "address": "0x0a67b8cac4659bef5b2b59d75eac6364338a2964",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "RegistryCommunityRouter",
+          "address": "0x7b9c28301320a7d733c53c0268439e6649ba7000",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CVStrategy",
+          "address": "0xbba5916e5c8d332f1f354d10c37cb39903be7236",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "RegistryCommunity",
+          "address": "0x82de6a9babd897fa61f7f0a3739e826adf51eef2",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CommunityPoolFacet",
+          "address": "0xe169ffcd4d2ee1580d82c961b347a0d43f580098",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        }
+      ]
+    },
+    {
+      "name": "arbitrum",
+      "chainId": 42161,
+      "targets": [
+        {
+          "name": "REGISTRY_FACTORY",
+          "address": "0xf254c9062934ab4db351f8a9cfeae3a68146b320",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY_ROUTER",
+          "address": "0x8c715288d693ce06eac408463e4878cdaf731dbb",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY_ROUTER",
+          "address": "0x1b37918ac46ed3ed4e363b8d8582d276583a4f0e",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY",
+          "address": "0x0871606d730278e5c43aca2d715d442f4b47fb05",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY",
+          "address": "0x6bdeb3fdae8ce67446f8b27b04a5a7e7d3c73422",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "COMMUNITY_POOL",
+          "address": "0x519f19cb1e935634b0dc27b6af550fd2176a92eb",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        }
+      ]
+    },
+    {
+      "name": "optimism",
+      "chainId": 10,
+      "targets": [
+        {
+          "name": "REGISTRY_FACTORY",
+          "address": "0xd1696df90e56dec3ca690ec929b4598df0381d2b",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY_ROUTER",
+          "address": "0xe72fbbf46046929bb52a9a18aec4007bd0322c8e",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY_ROUTER",
+          "address": "0x616150e0939858a0712310f0db0464b5eaff98f8",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY",
+          "address": "0xd095d5b90193d58c473b7986f90b3f4999e1a6b5",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY",
+          "address": "0xa4506c41bf46ce8153558de37cd3d467ae2de4ff",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "COMMUNITY_POOL",
+          "address": "0xd44bd9f8fa8537d363234602e1d2cee624298868",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        }
+      ]
+    },
+    {
+      "name": "polygon",
+      "chainId": 137,
+      "targets": [
+        {
+          "name": "REGISTRY_FACTORY",
+          "address": "0xfa9fb37560be53ee90105273bcaef8a114b9a495",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY_ROUTER",
+          "address": "0xa637ed512fcf3e4798d541172fb7842652929ec5",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY_ROUTER",
+          "address": "0xcfcb381a40df0f0bf604f3c2e293c3d0c5ae61e2",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY",
+          "address": "0x8cc91e42f10ceb6b945a438a113e66d95c6caa6e",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY",
+          "address": "0xd975b9f0e721aea744839be53d02b5e823c5bc52",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "COMMUNITY_POOL",
+          "address": "0xe41e506087639f22e9ae59e94dd4d2a6b649ccf0",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        }
+      ]
+    },
+    {
+      "name": "gnosis",
+      "chainId": 100,
+      "targets": [
+        {
+          "name": "REGISTRY_FACTORY",
+          "address": "0x3101fb68661c574780da296fe5faf185c3afabb1",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY_ROUTER",
+          "address": "0x23e0a686014707c0aa81c7e991981c2dbd63bc17",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY_ROUTER",
+          "address": "0x85465653b370aeae2588d635ad85ea5ea7d30af5",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY",
+          "address": "0x0196b31303f6f521df9ca1bda46458b404599e2b",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY",
+          "address": "0xd75261b541a5d26b6f8e397063f1f89a71d2c617",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "COMMUNITY_POOL",
+          "address": "0x9c1194d96b47419f59a0831a493df101bad28cb6",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        }
+      ]
+    },
+    {
+      "name": "base",
+      "chainId": 8453,
+      "targets": [
+        {
+          "name": "RegistryFactory",
+          "address": "0x81f37f2eb657313e5e816236d795bdf819be41db",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CVStrategyRouter",
+          "address": "0x1343df449cf53cf9d69fab19dc9947b238d312d7",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "RegistryCommunityRouter",
+          "address": "0xc6cefec154113c19191a511f0963d0014ab51f9e",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CVStrategy",
+          "address": "0x0aa858614dc961749e29a1207d4981ecfec1f758",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "RegistryCommunity",
+          "address": "0x28f8583557bd027518b083d89085e9e8d36a35e6",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CommunityPoolFacet",
+          "address": "0xcfee91f612c5601ff7e4a7edaf8188cf26c27334",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        }
+      ]
+    },
+    {
+      "name": "celo",
+      "chainId": 42220,
+      "targets": [
+        {
+          "name": "REGISTRY_FACTORY",
+          "address": "0x4291054d271d4e8a2278bed084ebda606d1b980a",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY_ROUTER",
+          "address": "0x17d2b6857c85ce8318e487d5106cfb55e814bb9a",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY_ROUTER",
+          "address": "0x7a20fdd6bb17f16260a3f23c4c229a88eef40193",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY",
+          "address": "0x5dd44151dc4586271c6d41842311288eb35f3697",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY",
+          "address": "0x134aa4d7861bb79693ae522d6deeddd208169196",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "COMMUNITY_POOL",
+          "address": "0x68a65d07d74c22109bf65b12a22934272695ddea",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        }
+      ]
+    },
+    {
+      "name": "ethereum",
+      "chainId": 1,
+      "targets": [
+        {
+          "name": "REGISTRY_FACTORY",
+          "address": "0xc8d7ab119646a2bed11a688d8bd989136db1b798",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY_ROUTER",
+          "address": "0xd1e7fdc8067fe654c97aae0ba83fcdbab206b156",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY_ROUTER",
+          "address": "0x6dd2a4fe3d59e90bb6c26f5511e048ae8bd953a1",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "CV_STRATEGY",
+          "address": "0x1805c563efe616851215b154791d9d7eb3658eb1",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "REGISTRY_COMMUNITY",
+          "address": "0x4d9c3b31424b14a442ab7c0488c0172ae3da5820",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        },
+        {
+          "name": "COMMUNITY_POOL",
+          "address": "0x95b08eeed52060fb529b9268b65f3bee5046ee92",
+          "sourceVerified": true,
+          "compilerVersion": "v0.8.23+commit.f704f362"
+        }
+      ]
+    }
+  ]
+}

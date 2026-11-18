@@ -1,0 +1,55 @@
+{
+  "version": "1.0",
+  "chainId": "11155420",
+  "createdAt": 1794890235281,
+  "meta": {
+    "name": "opsepolia shared routing 04-migrate-strategies-01",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0x08f731dDf35411eED2293b5b3638721326246686",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000000a67b8cac4659bef5b2b59d75eac6364338a2964"
+    },
+    {
+      "to": "0x093F75D851a874E506f1830CBC99fCD652E9b520",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000000a67b8cac4659bef5b2b59d75eac6364338a2964"
+    },
+    {
+      "to": "0x280976EaeCF349B054e9EEF80f1f8306c8b4149c",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000000a67b8cac4659bef5b2b59d75eac6364338a2964"
+    },
+    {
+      "to": "0x7FfF1689B505146949485C0DF2194dd0BaaCc319",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000000a67b8cac4659bef5b2b59d75eac6364338a2964"
+    },
+    {
+      "to": "0xB1F46E01cCe016ab1C3c8ae6D4Bd77C977Fa24A0",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000000a67b8cac4659bef5b2b59d75eac6364338a2964"
+    },
+    {
+      "to": "0xB9B419d9330008F60c42e8dC40A48a8f00c158DD",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000000a67b8cac4659bef5b2b59d75eac6364338a2964"
+    },
+    {
+      "to": "0xC30aB02B25ca2667dD0efA1DeB269C0F568c6147",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000000a67b8cac4659bef5b2b59d75eac6364338a2964"
+    },
+    {
+      "to": "0xd880E7D2af2baB5709c3A48B740fb2ecEA563bf0",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000000a67b8cac4659bef5b2b59d75eac6364338a2964"
+    }
+  ]
+}

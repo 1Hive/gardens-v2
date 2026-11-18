@@ -1,0 +1,24 @@
+{
+  "chainId": 42220,
+  "phase": "verify",
+  "factory": "0xA71023bc64c9711C2037ab491DE80fd74504bd55",
+  "executor": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+  "executionMode": "direct-owner",
+  "oldCommunityTemplate": "0x7A20FdD6Bb17F16260A3F23c4c229A88eEf40193",
+  "oldStrategyTemplate": "0x17d2b6857c85cE8318E487D5106CFb55e814bB9A",
+  "strategyRouter": "0x17d2b6857c85cE8318E487D5106CFb55e814bB9A",
+  "communityRouter": "0x7A20FdD6Bb17F16260A3F23c4c229A88eEf40193",
+  "strategyLogic": "0x5Dd44151DC4586271c6D41842311288Eb35f3697",
+  "communityLogic": "0x134AA4d7861Bb79693aE522D6DEEDdD208169196",
+  "poolFacet": "0x68A65D07D74C22109Bf65b12A22934272695dDEA",
+  "inventoryEvidence": {
+    "switchTx": "0x77de14cae7ff825ed52c9384493f3708381ab19f817e502cc090f5cb25c0ae7d",
+    "switchBlock": 82992455,
+    "indexedBlock": 82992937
+  },
+  "communities": 36,
+  "pendingCommunities": 0,
+  "strategies": 95,
+  "pendingStrategies": 0,
+  "stages": []
+}

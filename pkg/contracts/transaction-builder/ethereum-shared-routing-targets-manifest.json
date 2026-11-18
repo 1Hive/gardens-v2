@@ -1,0 +1,48 @@
+{
+  "network": "ethereum",
+  "chainId": 1,
+  "targets": [
+    {
+      "name": "REGISTRY_FACTORY",
+      "address": "0xc8d7ab119646a2bed11a688d8bd989136db1b798",
+      "transactionHash": "0x992b672fc49b2c3c3a3a271249b71246d89a328384edf906f08e02f7f5bbce45",
+      "status": "0x1",
+      "blockNumber": "0x193541d"
+    },
+    {
+      "name": "CV_STRATEGY_ROUTER",
+      "address": "0xd1e7fdc8067fe654c97aae0ba83fcdbab206b156",
+      "transactionHash": "0x7ec671531eead51bcc2e9c15ae21679c3cb0435557f10a52048f5a8d387c79e0",
+      "status": "0x1",
+      "blockNumber": "0x193541e"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY_ROUTER",
+      "address": "0x6dd2a4fe3d59e90bb6c26f5511e048ae8bd953a1",
+      "transactionHash": "0x3ba5ff316bf49c5dbc4a1b6d4e47804b131976e96c5f407f0a4f4342e939a223",
+      "status": "0x1",
+      "blockNumber": "0x193541f"
+    },
+    {
+      "name": "CV_STRATEGY",
+      "address": "0x1805c563efe616851215b154791d9d7eb3658eb1",
+      "transactionHash": "0xd960e0f3b9329cf7125ffb1c67ea85ee7fe2bc33d267757e0baada12a8c9ece3",
+      "status": "0x1",
+      "blockNumber": "0x1935420"
+    },
+    {
+      "name": "REGISTRY_COMMUNITY",
+      "address": "0x4d9c3b31424b14a442ab7c0488c0172ae3da5820",
+      "transactionHash": "0x4a77537aedf7b0565ab721a79bb95379fb790b85006096058baf99465e10003c",
+      "status": "0x1",
+      "blockNumber": "0x1935423"
+    },
+    {
+      "name": "COMMUNITY_POOL",
+      "address": "0x95b08eeed52060fb529b9268b65f3bee5046ee92",
+      "transactionHash": "0xafe146ff4ddf7faf3ca9fdd90f7dcb85d8ba1deb20d7065a3031054ea3967415",
+      "status": "0x1",
+      "blockNumber": "0x1935424"
+    }
+  ]
+}

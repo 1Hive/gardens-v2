@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "chainId": "11155111",
+  "createdAt": 1794895297603,
+  "meta": {
+    "name": "ethsepolia shared routing 03-switch-strategy-template",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xE01464829B1B888bF92A8D1CeC3114BB9787984d",
+      "value": "0",
+      "data": "0x1b71f0e400000000000000000000000016a0c53dbf55ee19e260f2219dea55d42f1fac4c"
+    }
+  ]
+}

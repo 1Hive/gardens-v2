@@ -1,0 +1,45 @@
+{
+  "version": "1.0",
+  "chainId": "42161",
+  "createdAt": 1794894577390,
+  "meta": {
+    "name": "arbitrum shared routing 04-migrate-strategies-07",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xeeFd5923d88bdcC74aFA56943DCc163f1De2be4D",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000008c715288d693ce06eac408463e4878cdaf731dbb"
+    },
+    {
+      "to": "0xf014BAc1d94cb79A6b6c6ba95B6B648f558CC0E3",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000008c715288d693ce06eac408463e4878cdaf731dbb"
+    },
+    {
+      "to": "0xf474D3d714b89ca0aDA658A8105838f34cbBE1FA",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000008c715288d693ce06eac408463e4878cdaf731dbb"
+    },
+    {
+      "to": "0xF659101919E1de3DCa2Fd7aa47840189506055ff",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000008c715288d693ce06eac408463e4878cdaf731dbb"
+    },
+    {
+      "to": "0xf97acfdaD5D9996560a14947eBA2575aBC7D0492",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000008c715288d693ce06eac408463e4878cdaf731dbb"
+    },
+    {
+      "to": "0xFa7299335E6B6d1305ec968eF23471d27002d682",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000008c715288d693ce06eac408463e4878cdaf731dbb"
+    }
+  ]
+}

@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import "./BaseMultiChain.s.sol";
 import "forge-std/Script.sol";
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
+import {CVStrategyRouter, RegistryCommunityRouter} from "../src/routing/SharedImplementationRouter.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {RegistryCommunityDiamondInit} from "../src/RegistryCommunity/RegistryCommunityDiamondInit.sol";
 import {CommunityAdminFacet} from "../src/RegistryCommunity/facets/CommunityAdminFacet.sol";
@@ -103,20 +104,22 @@ contract DeployCoreContracts is BaseMultiChain {
         address superfluidHost = networkJson.readAddress(getKeyNetwork(".ENVS.SUPERFLUID_HOST"));
         require(superfluidHost != address(0), "SUPERFLUID_HOST not set");
 
+        CoreDeployments memory phase1Deployed;
         if (_runPhase1()) {
-            CoreDeployments memory deployed;
-            (deployed.proxyOwner, deployed.proxyOwnerImplementation) = _deployProxyOwner();
+            (phase1Deployed.proxyOwner, phase1Deployed.proxyOwnerImplementation) = _deployProxyOwner();
             (
-                deployed.registryFactory,
-                deployed.registryFactoryImplementation,
-                deployed.registryCommunityImplementation,
-                deployed.cvStrategyImplementation,
-                deployed.collateralVaultImplementation
+                phase1Deployed.registryFactory,
+                phase1Deployed.registryFactoryImplementation,
+                phase1Deployed.registryCommunityImplementation,
+                phase1Deployed.cvStrategyImplementation,
+                phase1Deployed.collateralVaultImplementation
             ) = _deployRegistryFactory();
-            if (_shouldPrintDeploymentSummary()) _logPhase1Summary(deployed);
+            if (_shouldPrintDeploymentSummary()) _logPhase1Summary(phase1Deployed);
         }
 
-        address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
+        address registryFactoryProxy = _runPhase1()
+            ? phase1Deployed.registryFactory
+            : networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
         if (_runPhase2() || _runPhase3()) {
             require(registryFactoryProxy != address(0), "REGISTRY_FACTORY not set");
         }
@@ -124,6 +127,11 @@ contract DeployCoreContracts is BaseMultiChain {
         RegistryFactory registryFactory = RegistryFactory(payable(registryFactoryProxy));
 
         if (_runPhase2()) {
+            require(
+                registryFactory.communityImplementation() == address(0)
+                    && registryFactory.strategyImplementation() == address(0) && registryFactory.nonce() == 0,
+                "phase2 requires an unrouted new factory"
+            );
             (IDiamond.FacetCut[] memory communityCuts, CommunityFacetDeployments memory communityFacets) =
                 _deployCommunityFacets();
             (IDiamond.FacetCut[] memory strategyCuts, StrategyFacetDeployments memory strategyFacets) =
@@ -135,9 +143,30 @@ contract DeployCoreContracts is BaseMultiChain {
                 strategyCuts, strategyFacets.init, abi.encodeCall(CVStrategyDiamondInit.init, ())
             );
 
+            // A fresh factory has no existing instance proxies. Activate shared routing
+            // before any community or strategy can be created from its templates.
+            address communityRouter = address(new RegistryCommunityRouter(registryFactoryProxy));
+            address strategyRouter = address(new CVStrategyRouter(registryFactoryProxy));
+            address communityImplementation = _runPhase1()
+                ? phase1Deployed.registryCommunityImplementation
+                : networkJson.readAddress(getKeyNetwork(".IMPLEMENTATIONS.REGISTRY_COMMUNITY"));
+            address strategyImplementation = _runPhase1()
+                ? phase1Deployed.cvStrategyImplementation
+                : networkJson.readAddress(getKeyNetwork(".IMPLEMENTATIONS.CV_STRATEGY"));
+            registryFactory.setCommunityRelease(communityCuts, communityImplementation);
+            registryFactory.setStrategyRelease(strategyCuts, strategyImplementation);
+            registryFactory.setRegistryCommunityTemplate(communityRouter);
+            registryFactory.setStrategyTemplate(strategyRouter);
+            _writeNetworkAddress(".IMPLEMENTATIONS.REGISTRY_COMMUNITY_ROUTER", communityRouter);
+            _writeNetworkAddress(".IMPLEMENTATIONS.CV_STRATEGY_ROUTER", strategyRouter);
+
             _snapshotCommunityFacetDeployments(communityFacets);
             _snapshotStrategyFacetDeployments(strategyFacets);
-            if (_shouldPrintDeploymentSummary()) _logFacetAndInitSummary(communityFacets, strategyFacets);
+            if (_shouldPrintDeploymentSummary()) {
+                console2.log("  REGISTRY_COMMUNITY_ROUTER", communityRouter);
+                console2.log("  CV_STRATEGY_ROUTER", strategyRouter);
+                _logFacetAndInitSummary(communityFacets, strategyFacets);
+            }
         }
 
         if (_runPhase3()) {

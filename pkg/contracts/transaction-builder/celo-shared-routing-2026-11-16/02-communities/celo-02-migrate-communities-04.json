@@ -1,0 +1,45 @@
+{
+  "version": "1.0",
+  "chainId": "42220",
+  "createdAt": 1794892990116,
+  "meta": {
+    "name": "celo shared routing 02-migrate-communities-04",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xe0713CFfC8fD5EcbE9C5CD0cA71B662d948C35BD",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000007a20fdd6bb17f16260a3f23c4c229a88eef40193"
+    },
+    {
+      "to": "0xe0d1abcdebD629F4a9c373b7D44d90d8595b774E",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000007a20fdd6bb17f16260a3f23c4c229a88eef40193"
+    },
+    {
+      "to": "0xf26f9DC2a30F5b7623C6d2A59ADB9Ad9bFbFe824",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000007a20fdd6bb17f16260a3f23c4c229a88eef40193"
+    },
+    {
+      "to": "0xF42C9Ca2b10010142e2bAc34eBdDDB0b82177684",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000007a20fdd6bb17f16260a3f23c4c229a88eef40193"
+    },
+    {
+      "to": "0xfd023438Ff003d06bF62097372021A7Ba89CCc64",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000007a20fdd6bb17f16260a3f23c4c229a88eef40193"
+    },
+    {
+      "to": "0xfDc5de023A8A1919A37208ea89e2d3Fe4D7C7991",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000007a20fdd6bb17f16260a3f23c4c229a88eef40193"
+    }
+  ]
+}

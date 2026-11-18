@@ -1,0 +1,65 @@
+{
+  "version": "1.0",
+  "chainId": "421614",
+  "createdAt": 1794894177800,
+  "meta": {
+    "name": "arbsepolia shared routing 02-migrate-communities-01",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0x0418f78eC03c974Ca5B88463F4a5Da3e2333c4ab",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000f84263be90b4e80fd1136f2fea4478e5a1b8ead4"
+    },
+    {
+      "to": "0x0dCe74CF0CCEf1fFF89469F3bEfc08806F8e4a3B",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000f84263be90b4e80fd1136f2fea4478e5a1b8ead4"
+    },
+    {
+      "to": "0x16A8d4fc921b8B1Cc8729f4dA72745e950499296",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000f84263be90b4e80fd1136f2fea4478e5a1b8ead4"
+    },
+    {
+      "to": "0x2F8a9454DE2E74bc9a0761703b3F7da0470B1e56",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000f84263be90b4e80fd1136f2fea4478e5a1b8ead4"
+    },
+    {
+      "to": "0x8036Ac3D1685E3603b8a0418E7e1eE033b794485",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000f84263be90b4e80fd1136f2fea4478e5a1b8ead4"
+    },
+    {
+      "to": "0x88eFB94f3c0AC2d31eFceDE444264CaF8D594aB8",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000f84263be90b4e80fd1136f2fea4478e5a1b8ead4"
+    },
+    {
+      "to": "0x8b8732dAc9c30AC89BF660B99fB90000D826Ab83",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000f84263be90b4e80fd1136f2fea4478e5a1b8ead4"
+    },
+    {
+      "to": "0xA488aC456c7C5964Af7d323B7ce795D02E7c5154",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000f84263be90b4e80fd1136f2fea4478e5a1b8ead4"
+    },
+    {
+      "to": "0xA502fffB9082700Cad62366BC6CE37b15207680F",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000f84263be90b4e80fd1136f2fea4478e5a1b8ead4"
+    },
+    {
+      "to": "0xb1f9ed8b752e81FCB0B9482e475c7035043f5994",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000f84263be90b4e80fd1136f2fea4478e5a1b8ead4"
+    }
+  ]
+}

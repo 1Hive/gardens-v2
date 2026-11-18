@@ -6,6 +6,10 @@ import {IDiamondCut} from "./diamonds/interfaces/IDiamondCut.sol";
 
 interface IRegistryFactory {
     function strategyTemplate() external view returns (address);
+    function strategyImplementation() external view returns (address);
+    function communityImplementation() external view returns (address);
+    function strategyFacet(bytes4 selector) external view returns (address);
+    function communityFacet(bytes4 selector) external view returns (address);
 
     function getGardensFeeReceiver() external view returns (address);
 

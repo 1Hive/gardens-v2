@@ -35,7 +35,6 @@ NC='\033[0m' # No Color
 SPECIFIC_PATH=""
 VERBOSE=false
 SKIP_BUILD=false
-CACHE_DIR="cache/storage-layout"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -88,6 +87,12 @@ verify_facet_storage() {
     build_storage_layout "$main_contract" "$main_contract_path" "$main_tmp"
     build_storage_layout "$facet_contract" "$facet_contract_path" "$facet_tmp"
 
+    if [ ! -s "$main_tmp" ] || [ ! -s "$facet_tmp" ]; then
+        echo -e "${RED}✗ INSPECTION FAILED${NC}"
+        rm -f "$main_tmp" "$facet_tmp"
+        return 1
+    fi
+
     # Compare
     if diff "$main_tmp" "$facet_tmp" > /dev/null 2>&1; then
         echo -e "${GREEN}✓ MATCH${NC}"
@@ -134,92 +139,10 @@ verify_facet_storage() {
 
 build_storage_layout() {
     local contract_name="$1"
-    local contract_path="$2"
     local output_file="$3"
-
-    mkdir -p "$CACHE_DIR"
-    local cache_file
-    cache_file=$(cache_file_for_contract "$contract_name" "$contract_path")
-
-    if [ -f "$cache_file" ]; then
-        echo -e "${BLUE}  Cache hit:${NC} ${cache_file}"
-        cp "$cache_file" "$output_file"
-        return 0
-    fi
 
     FOUNDRY_DISABLE_NIGHTLY_WARNING=1 forge inspect "$contract_name" storageLayout 2>&1 | \
         grep -E "^\| [a-zA-Z_][a-zA-Z0-9_]* " | grep -v "__gap" | awk '{print $2, $4, $6, $8}' > "$output_file" || true
-
-    if [ -s "$output_file" ]; then
-        cp "$output_file" "$cache_file"
-        echo -e "${BLUE}  Cached layout:${NC} ${cache_file}"
-    fi
-}
-
-cache_file_for_contract() {
-    local contract_name="$1"
-    local contract_path="$2"
-    local hash
-    hash=$(sha256sum "$contract_path" | awk '{print $1}')
-    echo "$CACHE_DIR/${contract_name}-${hash}.txt"
-}
-
-all_cached_for_directory() {
-    local dir_path="$1"
-
-    local main_contract_file=""
-    local main_contract_name=""
-
-    for sol_file in "$dir_path"/*.sol; do
-        if [ -f "$sol_file" ] && has_fallback "$sol_file"; then
-            main_contract_file="$sol_file"
-            main_contract_name=$(basename "$sol_file" .sol)
-            break
-        fi
-    done
-
-    if [ -z "$main_contract_file" ]; then
-        return 0
-    fi
-
-    local cache_file
-    cache_file=$(cache_file_for_contract "$main_contract_name" "$main_contract_file")
-    if [ ! -f "$cache_file" ]; then
-        return 1
-    fi
-
-    local facets_dir="$dir_path/facets"
-    if [ ! -d "$facets_dir" ]; then
-        return 0
-    fi
-
-    local skip_facets=("DiamondLoupeFacet")
-    for facet_file in "$facets_dir"/*Facet.sol; do
-        if [ ! -f "$facet_file" ]; then
-            continue
-        fi
-
-        local facet_name
-        facet_name=$(basename "$facet_file" .sol)
-        local skip=false
-        for skip_facet in "${skip_facets[@]}"; do
-            if [ "$facet_name" == "$skip_facet" ]; then
-                skip=true
-                break
-            fi
-        done
-
-        if [ "$skip" = true ]; then
-            continue
-        fi
-
-        cache_file=$(cache_file_for_contract "$facet_name" "$facet_file")
-        if [ ! -f "$cache_file" ]; then
-            return 1
-        fi
-    done
-
-    return 0
 }
 
 # Function to process a directory with facets
@@ -372,36 +295,10 @@ verify_registry_factory_storage() {
 
 # Build contracts if not skipped
 if [ "$SKIP_BUILD" = false ]; then
-    mkdir -p "$CACHE_DIR"
-    all_cached=true
-
-    if [ -n "$SPECIFIC_PATH" ]; then
-        if ! all_cached_for_directory "$SPECIFIC_PATH"; then
-            all_cached=false
-        fi
-    else
-        for facets_dir in src/*/facets; do
-            if [ -d "$facets_dir" ]; then
-                parent_dir=$(dirname "$facets_dir")
-                dir_name=$(basename "$parent_dir")
-
-                if [ "$dir_name" == "diamonds" ]; then
-                    continue
-                fi
-
-                if ! all_cached_for_directory "$parent_dir"; then
-                    all_cached=false
-                    break
-                fi
-            fi
-        done
-    fi
-
-    if [ "$all_cached" = true ]; then
-        echo -e "${BLUE}All storage layouts cached in ${CACHE_DIR}; skipping build.${NC}"
-    else
-        echo -e "${BLUE}Building contracts...${NC}"
-        FOUNDRY_DISABLE_NIGHTLY_WARNING=1 forge build > /dev/null 2>&1
+    echo -e "${BLUE}Building contracts...${NC}"
+    if ! FOUNDRY_DISABLE_NIGHTLY_WARNING=1 forge build > /dev/null 2>&1; then
+        echo -e "${RED}Contract build failed; storage layout cannot be verified.${NC}"
+        exit 1
     fi
 fi
 

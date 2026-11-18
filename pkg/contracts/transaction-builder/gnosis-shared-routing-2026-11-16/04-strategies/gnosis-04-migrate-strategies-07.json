@@ -1,0 +1,65 @@
+{
+  "version": "1.0",
+  "chainId": "100",
+  "createdAt": 1794892739982,
+  "meta": {
+    "name": "gnosis shared routing 04-migrate-strategies-07",
+    "description": "Review and simulate before direct owner execution; this is not a Safe proposal.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xAa0195986FFE8F3371444fa77Ee3ED04AC787EEa",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000023e0a686014707c0aa81c7e991981c2dbd63bc17"
+    },
+    {
+      "to": "0xAc948bcA716B080df41AFC70F37B7A9f6F3d9C9A",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000023e0a686014707c0aa81c7e991981c2dbd63bc17"
+    },
+    {
+      "to": "0xaEE688D041859839Ea3918a6Dfc0165848AcE6EB",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000023e0a686014707c0aa81c7e991981c2dbd63bc17"
+    },
+    {
+      "to": "0xAF8FCE9d1FC193fA71B477E2fDf53775C3995fE2",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000023e0a686014707c0aa81c7e991981c2dbd63bc17"
+    },
+    {
+      "to": "0xb1A275419c817273F470ee1A102CAD7507A25B6f",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000023e0a686014707c0aa81c7e991981c2dbd63bc17"
+    },
+    {
+      "to": "0xB26d40C2dC96f35010e9bD1b044e0bDb4224DFb1",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000023e0a686014707c0aa81c7e991981c2dbd63bc17"
+    },
+    {
+      "to": "0xB48FE96FCB6b3f7228247690F6a0F21D60002e52",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000023e0a686014707c0aa81c7e991981c2dbd63bc17"
+    },
+    {
+      "to": "0xBa5c9429472E9e0AA1D4F0276c7fb45374E2Af6c",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000023e0a686014707c0aa81c7e991981c2dbd63bc17"
+    },
+    {
+      "to": "0xbf1D2E31fA3D927673d2E95bFb2d940F5CC8890E",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000023e0a686014707c0aa81c7e991981c2dbd63bc17"
+    },
+    {
+      "to": "0xC3dC12Ff1aDa788e86c0daC4935e63975AdD5263",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000023e0a686014707c0aa81c7e991981c2dbd63bc17"
+    }
+  ]
+}

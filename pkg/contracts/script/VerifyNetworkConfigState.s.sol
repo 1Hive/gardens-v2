@@ -46,6 +46,16 @@ contract VerifyNetworkConfigState is Script {
         address expectedCommunityImpl =
             _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.REGISTRY_COMMUNITY");
         address expectedStrategyImpl = _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.CV_STRATEGY");
+        (bool routingAvailable, bytes memory routingData) =
+            address(factory).staticcall(abi.encodeWithSignature("strategyImplementation()"));
+        bool sharedRouting =
+            routingAvailable && routingData.length == 32 && abi.decode(routingData, (address)) != address(0);
+        address expectedCommunityTemplate = sharedRouting
+            ? _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.REGISTRY_COMMUNITY_ROUTER")
+            : expectedCommunityImpl;
+        address expectedStrategyTemplate = sharedRouting
+            ? _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.CV_STRATEGY_ROUTER")
+            : expectedStrategyImpl;
         address expectedCollateralVaultImpl =
             _readRequiredAddress(networkJson, networkKey, ".IMPLEMENTATIONS.COLLATERAL_VAULT");
         address configuredStreamingEscrowFactory =
@@ -54,9 +64,16 @@ contract VerifyNetworkConfigState is Script {
             _readOptionalAddress(networkJson, networkKey, ".IMPLEMENTATIONS.STREAMING_ESCROW");
 
         require(
-            factory.registryCommunityTemplate() == expectedCommunityImpl, "factory registryCommunityTemplate mismatch"
+            factory.registryCommunityTemplate() == expectedCommunityTemplate,
+            "factory registryCommunityTemplate mismatch"
         );
-        require(factory.strategyTemplate() == expectedStrategyImpl, "factory strategyTemplate mismatch");
+        require(factory.strategyTemplate() == expectedStrategyTemplate, "factory strategyTemplate mismatch");
+        if (sharedRouting) {
+            require(factory.communityImplementation() == expectedCommunityImpl, "factory community core mismatch");
+            require(factory.strategyImplementation() == expectedStrategyImpl, "factory strategy core mismatch");
+            _verifyConfiguredCode(expectedCommunityTemplate, "community router");
+            _verifyConfiguredCode(expectedStrategyTemplate, "strategy router");
+        }
         require(
             factory.collateralVaultTemplate() == expectedCollateralVaultImpl, "factory collateralVaultTemplate mismatch"
         );
@@ -86,10 +103,14 @@ contract VerifyNetworkConfigState is Script {
 
         _verifyFactoryCuts(factory, networkJson, networkKey);
         address[] memory communityProxies = _verifyProxyFleet(
-            networkJson, networkKey, ".PROXIES.REGISTRY_COMMUNITIES", expectedCommunityImpl, "community"
+            networkJson, networkKey, ".PROXIES.REGISTRY_COMMUNITIES", expectedCommunityTemplate, "community"
         );
-        _verifyProxyFleetAnyImplementation(networkJson, networkKey, ".PROXIES.CV_STRATEGIES", "strategy");
-        _verifyExpectedCommunityCutSelectors(factory, communityProxies);
+        if (sharedRouting) {
+            _verifyProxyFleet(networkJson, networkKey, ".PROXIES.CV_STRATEGIES", expectedStrategyTemplate, "strategy");
+        } else {
+            _verifyProxyFleetAnyImplementation(networkJson, networkKey, ".PROXIES.CV_STRATEGIES", "strategy");
+            _verifyExpectedCommunityCutSelectors(factory, communityProxies);
+        }
 
         if (configuredStreamingEscrowFactory != address(0)) {
             address liveEscrowImplementation = abi.decode(

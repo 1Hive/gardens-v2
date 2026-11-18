@@ -39,6 +39,8 @@ if [[ -z "$RPC_URL" ]]; then
   exit 1
 fi
 
+bash scripts/assert-unrouted-factory.sh "$CHAIN" "$RPC_URL"
+
 mkdir -p logs
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 LOG="${LOG:-logs/upgrade-${CHAIN}-chunked-${TS}.log}"

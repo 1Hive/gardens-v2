@@ -1,0 +1,45 @@
+{
+  "chainId": 8453,
+  "phase": "communities",
+  "factory": "0xc93830dd463516ED5f28f6cd4F837173B87FF389",
+  "executor": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+  "executionMode": "direct-owner",
+  "oldCommunityTemplate": "0xc6cefEc154113c19191A511F0963d0014aB51F9e",
+  "oldStrategyTemplate": "0x24F674a69e027a983E1F0F2f12bCe30b1A99DAD6",
+  "strategyRouter": "0x1343DF449cF53cf9d69Fab19dC9947b238D312D7",
+  "communityRouter": "0xc6cefEc154113c19191A511F0963d0014aB51F9e",
+  "strategyLogic": "0x0aa858614Dc961749E29A1207d4981eCFEc1f758",
+  "communityLogic": "0x28f8583557BD027518B083d89085E9e8d36A35E6",
+  "poolFacet": "0xCfEE91f612c5601ff7E4A7eDaF8188CF26C27334",
+  "inventoryEvidence": {
+    "switchTx": "0xa55b51b75884bf45575f342c99941582658a08b9204f9b9d94b7e020ca455103",
+    "switchBlock": 58501257,
+    "indexedBlock": 58501701
+  },
+  "communities": 42,
+  "pendingCommunities": 42,
+  "strategies": 32,
+  "pendingStrategies": 32,
+  "stages": [
+    {
+      "name": "02-migrate-communities-01",
+      "transactions": 10
+    },
+    {
+      "name": "02-migrate-communities-02",
+      "transactions": 10
+    },
+    {
+      "name": "02-migrate-communities-03",
+      "transactions": 10
+    },
+    {
+      "name": "02-migrate-communities-04",
+      "transactions": 10
+    },
+    {
+      "name": "02-migrate-communities-05",
+      "transactions": 2
+    }
+  ]
+}
