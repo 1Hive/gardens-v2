@@ -12,6 +12,7 @@ import {PauseFacetBase} from "../../pausing/PauseFacetBase.sol";
  */
 contract CVPauseFacet is CVStrategyBaseFacet, PauseFacetBase {
     function _pauseOwner() internal view override returns (address) {
-        return proxyOwner();
+        address directOwner = proxyOwner();
+        return msg.sender == directOwner ? directOwner : effectiveOwner();
     }
 }

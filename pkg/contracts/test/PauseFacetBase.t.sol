@@ -10,6 +10,7 @@ import {CommunityPauseFacet} from "../src/RegistryCommunity/facets/CommunityPaus
 import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 import {LibDiamond} from "../src/diamonds/libraries/LibDiamond.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {ProxyOwner} from "../src/ProxyOwner.sol";
 
 contract PauseFacetBaseHarness is PauseFacetBase {
     address public owner;
@@ -186,7 +187,7 @@ contract PauseFacetBaseTest is Test {
         cv.setPauseController(address(controller));
     }
 
-    function test_cvPauseFacet_uses_raw_proxy_owner_not_resolved_owner() public {
+    function test_cvPauseFacet_accepts_direct_and_resolved_owner() public {
         CVPauseFacetHarness cv = new CVPauseFacetHarness();
         MockOwnableOwner rawOwner = new MockOwnableOwner(address(this));
         cv.setOwner(address(rawOwner));
@@ -195,7 +196,32 @@ contract PauseFacetBaseTest is Test {
         cv.setPauseController(address(controller));
         assertEq(cv.pauseController(), address(controller));
 
-        vm.expectRevert(abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(this), address(rawOwner)));
+        cv.setPauseController(address(controller));
+
+        vm.prank(address(0xCAFE));
+        vm.expectRevert(abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(0xCAFE), address(this)));
+        cv.setPauseController(address(controller));
+    }
+
+    function test_cvPauseFacet_follows_proxyOwner_upgrade_access() public {
+        ProxyOwner ownerProxy = ProxyOwner(
+            address(new ERC1967Proxy(address(new ProxyOwner()), abi.encodeCall(ProxyOwner.initialize, (address(this)))))
+        );
+        address upgradeWallet = address(0xA11CE);
+        ownerProxy.grantUpgradeAccess(upgradeWallet);
+
+        CVPauseFacetHarness cv = new CVPauseFacetHarness();
+        cv.setOwner(address(ownerProxy));
+
+        vm.prank(upgradeWallet);
+        cv.setPauseController(address(controller));
+        assertEq(cv.pauseController(), address(controller));
+
+        vm.expectRevert(abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(this), upgradeWallet));
+        cv.setPauseController(address(controller));
+
+        vm.prank(upgradeWallet);
+        ownerProxy.renounceUpgradeAccess();
         cv.setPauseController(address(controller));
     }
 
