@@ -41,7 +41,8 @@ contract MockSquidRouter {}
 
 contract RejectingReceiver {
     // No receive/fallback: any plain ETH transfer to this contract reverts.
-}
+
+    }
 
 /// @dev A "keeper" contract that reverts on plain ETH transfers, so gas
 /// reimbursement failure can be exercised.
@@ -62,6 +63,11 @@ contract MockStreamingLeaderboardFactory {
     address public lastBeneficiary;
     string public lastPlatformName;
     string public lastPlatformId;
+    bool public pilotMode;
+
+    function setPilotMode(bool enabled) external {
+        pilotMode = enabled;
+    }
 
     function createLeaderboard(
         address beneficiary,
@@ -73,7 +79,7 @@ contract MockStreamingLeaderboardFactory {
         lastBeneficiary = beneficiary;
         lastPlatformName = platformName;
         lastPlatformId = platformId;
-        leaderboard = address(new MockLeaderboard());
+        leaderboard = pilotMode ? 0x5B9eF23a155Fd97d29fa463af824cFA53C4FAA11 : address(new MockLeaderboard());
         seedMarkee = address(new MockSeedMarkee());
     }
 }
@@ -81,6 +87,99 @@ contract MockStreamingLeaderboardFactory {
 contract MockLeaderboard {}
 
 contract MockSeedMarkee {}
+
+contract MockPilotLeaderboard {
+    address public beneficiaryAddress;
+    address public admin;
+
+    function setup(address beneficiary, address admin_) external {
+        beneficiaryAddress = beneficiary;
+        admin = admin_;
+    }
+
+    function setBeneficiaryAddress(address beneficiary) external {
+        require(msg.sender == admin, "only admin");
+        beneficiaryAddress = beneficiary;
+    }
+}
+
+contract MockPilotGenericRouter {
+    bytes32 public platformId;
+    bytes32 public communityId;
+    uint256 public destinationChainId;
+    address public vault;
+    address public receiver;
+    address public bridge;
+
+    function configure(
+        bytes32 platform,
+        bytes32 community,
+        uint256 chainId,
+        address vault_,
+        address receiver_,
+        address bridge_
+    ) external {
+        platformId = platform;
+        communityId = community;
+        destinationChainId = chainId;
+        vault = vault_;
+        receiver = receiver_;
+        bridge = bridge_;
+    }
+
+    function communities(bytes32) external view returns (bytes32, bytes32, uint256, address) {
+        return (platformId, communityId, destinationChainId, vault);
+    }
+
+    function receivers(uint256) external view returns (address) {
+        return receiver;
+    }
+
+    function bridgeAdapters(uint256, bytes32) external view returns (address) {
+        return bridge;
+    }
+}
+
+contract MockPilotGenericVault {
+    address public router;
+    bytes32 public communityKey;
+
+    constructor(address router_, bytes32 key) {
+        router = router_;
+        communityKey = key;
+    }
+}
+
+/// @notice Opt-in fork simulation. It deploys mocks and upgrades the proxy only
+/// inside Foundry's ephemeral fork; no live transaction or signing is involved.
+contract GardensMarkeePilotForkTest is Test {
+    function testForkMigratesDocumentedLiveBoardWithoutChangingOldVault() public {
+        string memory rpc = vm.envOr("MARKEE_PILOT_BASE_FORK_RPC", string(""));
+        vm.skip(bytes(rpc).length == 0);
+        vm.createSelectFork(rpc, vm.envOr("MARKEE_PILOT_BASE_FORK_BLOCK", uint256(58464687)));
+        GardensMarkeeRouter router = GardensMarkeeRouter(payable(0xa9d9b3a9CE7edA7000A4baD8Af0863F716eA9d30));
+        address owner = router.owner();
+        address board = 0x5B9eF23a155Fd97d29fa463af824cFA53C4FAA11;
+        address community = 0xE2396fe2169ca026962971d3B2E373Ba925B6257;
+        bytes32 legacyKey = CommunityKeyLib.communityKey(100, community);
+        address oldVault = router.communityVault(legacyKey);
+        uint256 oldBalance = oldVault.balance;
+        address implementation = address(new GardensMarkeeRouter());
+        vm.prank(owner);
+        router.upgradeTo(implementation);
+        bytes32 platform = keccak256("gardens");
+        bytes32 id = bytes32(uint256(uint160(community)));
+        bytes32 key = keccak256(abi.encode(platform, uint256(100), id));
+        MockPilotGenericRouter generic = new MockPilotGenericRouter();
+        MockPilotGenericVault newVault = new MockPilotGenericVault(address(generic), key);
+        generic.configure(platform, id, 100, address(newVault), address(0xBEEF), address(0xCAFE));
+        vm.prank(owner);
+        router.migrateGnosisPilotBeneficiary(address(newVault), address(generic));
+        assertEq(MockPilotLeaderboard(board).beneficiaryAddress(), address(newVault));
+        assertEq(router.communityVault(legacyKey), oldVault);
+        assertEq(oldVault.balance, oldBalance);
+    }
+}
 
 contract GardensMarkeeRouterTest is Test {
     GardensMarkeeRouter internal router;
@@ -199,6 +298,38 @@ contract GardensMarkeeRouterTest is Test {
         assertEq(firstLeaderboard, secondLeaderboard);
         assertEq(firstSeedMarkee, secondSeedMarkee);
         assertEq(leaderboardFactory.createCount(), 1);
+    }
+
+    function test_gnosisPilotMigrationRequiresReadyRouteAndRunsOnlyOnce() public {
+        address community = 0xE2396fe2169ca026962971d3B2E373Ba925B6257;
+        address board = 0x5B9eF23a155Fd97d29fa463af824cFA53C4FAA11;
+        MockPilotLeaderboard template = new MockPilotLeaderboard();
+        vm.etch(board, address(template).code);
+        leaderboardFactory.setPilotMode(true);
+        vm.prank(keeper);
+        (address legacyVault,,) = router.createCommunityLeaderboard(100, community, "Pilot", "gardens");
+        MockPilotLeaderboard(board).setup(legacyVault, address(router));
+
+        bytes32 platform = keccak256("gardens");
+        bytes32 id = bytes32(uint256(uint160(community)));
+        bytes32 key = keccak256(abi.encode(platform, uint256(100), id));
+        MockPilotGenericRouter generic = new MockPilotGenericRouter();
+        MockPilotGenericVault newVault = new MockPilotGenericVault(address(generic), key);
+        generic.configure(platform, id, 100, address(newVault), address(0xBEEF), address(0));
+        vm.prank(proxyOwner);
+        vm.expectRevert(GardensMarkeeRouter.InvalidPilotMigration.selector);
+        router.migrateGnosisPilotBeneficiary(address(newVault), address(generic));
+        generic.configure(platform, id, 100, address(newVault), address(0xBEEF), address(0xCAFE));
+        vm.prank(address(0xBAD));
+        vm.expectRevert();
+        router.migrateGnosisPilotBeneficiary(address(newVault), address(generic));
+        vm.prank(proxyOwner);
+        router.migrateGnosisPilotBeneficiary(address(newVault), address(generic));
+        assertEq(MockPilotLeaderboard(board).beneficiaryAddress(), address(newVault));
+        assertEq(router.communityVault(CommunityKeyLib.communityKey(100, community)), legacyVault);
+        vm.prank(proxyOwner);
+        vm.expectRevert(GardensMarkeeRouter.InvalidPilotMigration.selector);
+        router.migrateGnosisPilotBeneficiary(address(newVault), address(generic));
     }
 
     function test_createCommunityLeaderboard_revertsForNonKeeper() public {
