@@ -1,476 +1,169 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+vi.mock("@/configs/chains", () => ({ chainConfigMap: { 42220: {} } }));
+import { GET, POST } from "./route";
 
-const mocks = vi.hoisted(() => ({
-  estimateContractGas: vi.fn(),
-  getBalance: vi.fn(),
-  getEnvPublicClient: vi.fn(),
-  getGasPrice: vi.fn(),
-  readContract: vi.fn(),
-  simulateContract: vi.fn(),
-  verifyTypedData: vi.fn(),
-  waitForTransactionReceipt: vi.fn(),
-  writeContract: vi.fn(),
-}));
-
-vi.mock("viem", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("viem")>();
-  return {
-    ...actual,
-    createWalletClient: vi.fn(() => ({
-      writeContract: mocks.writeContract,
-    })),
-  };
-});
-
-vi.mock("viem/accounts", () => ({
-  privateKeyToAccount: vi.fn(() => ({
-    address: "0x0000000000000000000000000000000000000006",
-  })),
-}));
-
-vi.mock("@/configs/chains", () => ({
-  chainConfigMap: {
-    100: { isTestnet: false },
-    11155111: { isTestnet: true },
-  },
-}));
-
-vi.mock("@/src/generated", () => ({
-  registryCommunityABI: [],
-}));
-
-vi.mock("@/utils/publicClient", () => ({
-  getEnvPublicClient: mocks.getEnvPublicClient,
-  getRpcUrlForChain: vi.fn(() => "http://markee.test"),
-  resolveClientChain: vi.fn((chainId: number) => ({ id: chainId })),
-}));
-
-import { clearMarkeeAuthorizationChallengesForTests, GET, POST } from "./route";
-
-const community = "0x0000000000000000000000000000000000000001";
-const councilSafe = "0x0000000000000000000000000000000000000002";
-const otherAccount = "0x0000000000000000000000000000000000000003";
-const rotatedSafe = "0x0000000000000000000000000000000000000004";
-const keeperAddress = "0x0000000000000000000000000000000000000006";
+const community = "0x215b9ed0182d200563921f46ecbcb86111e9ad6b";
+const account = "0x809c9f8dd8ca93a41c3adca4972fa234c28f7714";
+const challenge = { action: "challenge", chainId: 42220, community, account };
 const signature = `0x${"11".repeat(65)}`;
-const leaderboardFactory = "0x37f420fdE5c98e611EB7cb9b74ef579D84697039";
-const rotatedLeaderboardFactory = "0x0000000000000000000000000000000000000005";
-const sepoliaRouter = "0x0000000000000000000000000000000000000007";
-const baseRouter = "0x0000000000000000000000000000000000000008";
-const keeperPrivateKey = `0x${"22".repeat(32)}`;
-const vault = "0x0000000000000000000000000000000000000009";
-const leaderboard = "0x0000000000000000000000000000000000000010";
-const seedMarkee = "0x0000000000000000000000000000000000000011";
-const transactionHash = `0x${"22".repeat(32)}`;
-
-const callRoute = (body: Record<string, unknown>) =>
+const id = "a".repeat(64);
+const hash = `0x${"bb".repeat(32)}`;
+const post = (body: unknown) =>
   POST(
     new Request("http://localhost/api/markee/authorize", {
-      body: JSON.stringify(body),
-      headers: { "Content-Type": "application/json" },
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-forwarded-for": "192.0.2.10",
+      },
+      body: JSON.stringify(body),
     }),
   );
 
-const issueChallenge = async (account = councilSafe, chainId = 100) => {
-  const response = await callRoute({
-    account,
-    action: "challenge",
-    chainId,
-    community,
-  });
-
-  return {
-    body: await response.json(),
-    response,
-  };
-};
-
-const checkKeeperEligibility = (account: string) =>
-  GET(
-    new Request(
-      `http://localhost/api/markee/authorize?account=${encodeURIComponent(account)}`,
-    ),
-  );
-
-describe("Markee council Safe authorization", () => {
+describe("Markee activation gateway", () => {
+  const fetchMock = vi.fn();
   beforeEach(() => {
-    vi.clearAllMocks();
-    clearMarkeeAuthorizationChallengesForTests();
-    mocks.readContract.mockImplementation(
-      ({ functionName }: { functionName: string }) =>
-        functionName === "keepers" ? true
-        : functionName === "isOwner" ? false
-        : councilSafe,
-    );
-    mocks.simulateContract.mockResolvedValue({
-      request: { test: true },
-      result: [vault, leaderboard, seedMarkee],
-    });
-    mocks.estimateContractGas.mockResolvedValue(500_000n);
-    mocks.getGasPrice.mockResolvedValue(1_000_000_000n);
-    mocks.getBalance.mockResolvedValue(10n ** 18n);
-    mocks.writeContract.mockResolvedValue(transactionHash);
-    mocks.waitForTransactionReceipt.mockResolvedValue({ status: "success" });
-    mocks.verifyTypedData.mockResolvedValue(true);
-    mocks.getEnvPublicClient.mockReturnValue({
-      estimateContractGas: mocks.estimateContractGas,
-      getBalance: mocks.getBalance,
-      getGasPrice: mocks.getGasPrice,
-      readContract: mocks.readContract,
-      simulateContract: mocks.simulateContract,
-      verifyTypedData: mocks.verifyTypedData,
-      waitForTransactionReceipt: mocks.waitForTransactionReceipt,
-    });
-    process.env.NEXT_PUBLIC_ENV_GARDENS = "test";
-    process.env.KEEPER_WALLET_PK = keeperPrivateKey;
-    process.env.MARKEE_ROUTER_ADDRESS_SEPOLIA = sepoliaRouter;
-    process.env.MARKEE_ROUTER_ADDRESS_BASE = baseRouter;
-    process.env.MARKEE_STREAMING_LEADERBOARD_FACTORY_ADDRESS_SEPOLIA =
-      leaderboardFactory;
-    process.env.MARKEE_STREAMING_LEADERBOARD_FACTORY_ADDRESS_BASE =
-      leaderboardFactory;
-    delete process.env.MARKEE_STREAMING_LEADERBOARD_FACTORY_ADDRESS;
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
   });
-
-  it("issues an EIP-712 challenge bound to the current council Safe", async () => {
-    const { body, response } = await issueChallenge();
-
-    expect(response.status).toBe(201);
-    expect(response.headers.get("Cache-Control")).toBe("no-store");
-    expect(body).toMatchObject({
-      authorizationRole: "councilSafe",
-      chainId: 100,
-      community,
-      councilSafe,
-      leaderboardFactory,
-      typedData: {
-        domain: {
-          chainId: 100,
-          name: "Gardens Markee",
-          verifyingContract: community,
-          version: "1",
-        },
-        message: {
-          communityChainId: "100",
-          leaderboardFactory,
-          registryCommunity: community,
-        },
-        primaryType: "OptInAuthorization",
-      },
-    });
-    expect(body.nonce).toMatch(/^[1-9][0-9]{0,77}$/u);
-    expect(body.typedData.message.nonce).toBe(body.nonce);
-    expect(body.typedData.message.communityKey).toMatch(/^0x[0-9a-f]{64}$/u);
-    expect(body.typedData.message.leaderboardMetadataHash).toMatch(
-      /^0x[0-9a-f]{64}$/u,
-    );
-    expect(mocks.readContract).toHaveBeenCalledWith(
-      expect.objectContaining({
-        address: community,
-        functionName: "councilSafe",
-      }),
-    );
-  });
-
-  it("rejects an account that is not a current council Safe owner", async () => {
-    const { body, response } = await issueChallenge(otherAccount);
-
-    expect(response.status).toBe(403);
-    expect(body).toEqual({
-      error:
-        "Connect with the community council Safe or one of its current owners to authorize Markee.",
-    });
-    expect(mocks.verifyTypedData).not.toHaveBeenCalled();
-  });
-
-  it("allows a current owner to sign and deploy without the Safe threshold", async () => {
-    mocks.readContract.mockImplementation(({ functionName }) =>
-      functionName === "councilSafe" ? councilSafe : true,
-    );
-    const { body: challenge, response: issued } =
-      await issueChallenge(otherAccount);
-    expect(issued.status).toBe(201);
-    expect(challenge.authorizationRole).toBe("councilOwner");
-    const response = await callRoute({
-      action: "verify",
-      nonce: challenge.nonce,
-      signature,
-    });
-    expect(response.status).toBe(200);
-    expect(mocks.readContract).toHaveBeenCalledWith(
-      expect.objectContaining({
-        address: councilSafe,
-        functionName: "isOwner",
-        args: [otherAccount],
-      }),
-    );
-    expect(mocks.verifyTypedData).toHaveBeenCalledWith(
-      expect.objectContaining({ address: otherAccount }),
-    );
-    expect(mocks.writeContract).toHaveBeenCalledTimes(1);
-  });
-
-  it("rejects an owner removed after issuing the challenge", async () => {
-    mocks.readContract.mockImplementation(({ functionName }) =>
-      functionName === "councilSafe" ? councilSafe : true,
-    );
-    const { body: challenge } = await issueChallenge(otherAccount);
-    mocks.readContract.mockImplementation(({ functionName }) =>
-      functionName === "councilSafe" ? councilSafe : false,
-    );
-    const response = await callRoute({
-      action: "verify",
-      nonce: challenge.nonce,
-      signature,
-    });
-    expect(response.status).toBe(403);
-    expect(mocks.verifyTypedData).not.toHaveBeenCalled();
-    expect(mocks.writeContract).not.toHaveBeenCalled();
-  });
-
-  it("rejects an invalid owner signature without deploying", async () => {
-    mocks.readContract.mockImplementation(({ functionName }) =>
-      functionName === "councilSafe" ? councilSafe : true,
-    );
-    const { body: challenge } = await issueChallenge(otherAccount);
-    mocks.verifyTypedData.mockResolvedValue(false);
-    const response = await callRoute({
-      action: "verify",
-      nonce: challenge.nonce,
-      signature,
-    });
-    expect(response.status).toBe(401);
-    expect(mocks.writeContract).not.toHaveBeenCalled();
-  });
-
-  it("accepts a threshold-valid Safe signature through ERC-1271", async () => {
-    const { body: challenge } = await issueChallenge();
-    const response = await callRoute({
-      action: "verify",
-      nonce: challenge.nonce,
-      signature,
-    });
-
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
+  afterEach(() => vi.unstubAllGlobals());
+  it.each([account, "0x705a58f9c33d0a5be425b87dc34b157c508fe467"])(
+    "delegates the GoodDollar challenge for %s to Markee",
+    async (authorizer) => {
+      const body = { nonce: "123", typedData: { domain: { chainId: 42220 } } };
+      fetchMock.mockResolvedValue(Response.json(body, { status: 201 }));
+      const response = await post({ ...challenge, account: authorizer });
+      expect(response.status).toBe(201);
+      expect(await response.json()).toEqual(body);
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toBe("https://www.markee.xyz/api/sdk/v1/community/activate");
+      expect(JSON.parse(init.body)).toEqual({
+        ...challenge,
+        account: authorizer,
+      });
+      expect(init.headers["X-Forwarded-For"]).toBe("192.0.2.10");
+      expect(init.cache).toBe("no-store");
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
+    },
+  );
+  it("retains legacy result fields alongside durable completed operations", async () => {
+    const result = {
       authorized: true,
-      authorizationRole: "councilSafe",
-      chainId: 100,
-      community,
-      councilSafe,
-      leaderboardFactory,
+      transactionHash: hash,
       markeeChainId: 8453,
-      router: baseRouter,
-      transactionHash,
-    });
-    expect(mocks.verifyTypedData).toHaveBeenCalledWith(
-      expect.objectContaining({
-        address: councilSafe,
-        message: expect.objectContaining({
-          nonce: BigInt(challenge.nonce),
-          leaderboardFactory,
-          registryCommunity: community,
-        }),
-        primaryType: "OptInAuthorization",
-        signature,
-      }),
-    );
-    expect(mocks.getEnvPublicClient).toHaveBeenCalledWith(8453);
-    expect(mocks.simulateContract).toHaveBeenCalledWith(
-      expect.objectContaining({
-        address: baseRouter,
-        args: [BigInt(100), community, "Gardens Community", "Gardens"],
-        functionName: "createCommunityLeaderboard",
-      }),
-    );
-    expect(mocks.writeContract).toHaveBeenCalledWith(
-      expect.objectContaining({ gas: 625_000n, test: true }),
-    );
-    expect(mocks.waitForTransactionReceipt).toHaveBeenCalledWith({
-      hash: transactionHash,
-    });
-  });
-
-  it("allows the configured keeper to authorize and execute creation", async () => {
-    const { body: challenge, response: challengeResponse } =
-      await issueChallenge(keeperAddress);
-
-    expect(challengeResponse.status).toBe(201);
-    expect(challenge.authorizationRole).toBe("keeper");
-
-    const response = await callRoute({
-      action: "verify",
-      nonce: challenge.nonce,
-      signature,
-    });
-
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toMatchObject({
-      authorized: true,
-      authorizationRole: "keeper",
-      transactionHash,
-    });
-    expect(mocks.verifyTypedData).toHaveBeenCalledWith(
-      expect.objectContaining({
-        address: keeperAddress,
-        signature,
-      }),
-    );
-    expect(mocks.writeContract).toHaveBeenCalled();
-  });
-
-  it("reports keeper eligibility without exposing keeper credentials", async () => {
-    const keeperResponse = await checkKeeperEligibility(keeperAddress);
-    const otherResponse = await checkKeeperEligibility(otherAccount);
-
-    expect(keeperResponse.status).toBe(200);
-    await expect(keeperResponse.json()).resolves.toEqual({ isKeeper: true });
-    expect(otherResponse.status).toBe(200);
-    await expect(otherResponse.json()).resolves.toEqual({ isKeeper: false });
-  });
-
-  it("executes the router call on Base for a production community", async () => {
-    const { body: challenge } = await issueChallenge();
-
-    const response = await callRoute({
-      action: "verify",
-      nonce: challenge.nonce,
-      signature,
-    });
-
-    expect(response.status).toBe(200);
-    expect(mocks.getEnvPublicClient).toHaveBeenCalledWith(8453);
-    expect(mocks.simulateContract).toHaveBeenCalledWith(
-      expect.objectContaining({ address: baseRouter }),
-    );
-  });
-
-  it("executes the router call on Sepolia for a testnet community", async () => {
-    const { body: challenge } = await issueChallenge(councilSafe, 11155111);
-
-    const response = await callRoute({
-      action: "verify",
-      nonce: challenge.nonce,
-      signature,
-    });
-
-    expect(response.status).toBe(200);
-    expect(mocks.getEnvPublicClient).toHaveBeenCalledWith(11155111);
-    expect(mocks.simulateContract).toHaveBeenCalledWith(
-      expect.objectContaining({ address: sepoliaRouter }),
-    );
-  });
-
-  it("consumes a challenge before verification to reject replays", async () => {
-    const { body: challenge } = await issueChallenge();
-    const request = {
-      action: "verify",
-      nonce: challenge.nonce,
-      signature,
     };
-
-    expect((await callRoute(request)).status).toBe(200);
-    const replay = await callRoute(request);
-
-    expect(replay.status).toBe(401);
-    await expect(replay.json()).resolves.toEqual({
-      error: "Authorization challenge is invalid, expired, or already used.",
-    });
-    expect(mocks.verifyTypedData).toHaveBeenCalledTimes(1);
+    const operation = { id, status: "complete", result };
+    fetchMock.mockResolvedValue(Response.json(operation));
+    const response = await post({ action: "verify", nonce: "123", signature });
+    expect(await response.json()).toEqual({ ...result, operation });
   });
-
-  it("rejects a challenge after the community rotates its council Safe", async () => {
-    const { body: challenge } = await issueChallenge();
-    mocks.readContract.mockResolvedValueOnce(rotatedSafe);
-
-    const response = await callRoute({
-      action: "verify",
-      nonce: challenge.nonce,
-      signature,
-    });
-
-    expect(response.status).toBe(409);
-    await expect(response.json()).resolves.toEqual({
-      error: "The community council Safe changed. Request a new challenge.",
-    });
-    expect(mocks.verifyTypedData).not.toHaveBeenCalled();
+  it.each(["working", "submitted", "failed"])(
+    "preserves %s operations without claiming confirmation",
+    async (status) => {
+      const operation = {
+        id,
+        status,
+        ...(status === "submitted" ?
+          { result: { transactionHash: hash } }
+        : {}),
+      };
+      fetchMock.mockResolvedValue(Response.json(operation));
+      const body = await (
+        await post({ action: "verify", nonce: "123", signature })
+      ).json();
+      expect(body.operation).toEqual(operation);
+      expect(body.authorized).not.toBe(true);
+      expect(fetchMock).toHaveBeenCalledOnce();
+    },
+  );
+  it("recovers operation status with a GET to Markee", async () => {
+    const operation = {
+      id,
+      status: "submitted",
+      result: { transactionHash: hash },
+    };
+    fetchMock.mockResolvedValue(Response.json(operation));
+    const response = await GET(
+      new Request(`http://localhost/api/markee/authorize?operationId=${id}`),
+    );
+    expect(await response.json()).toEqual(operation);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `https://www.markee.xyz/api/sdk/v1/operations/${id}`,
+    );
+    expect(fetchMock.mock.calls[0][1].method).toBeUndefined();
   });
-
-  it("rejects an invalid Safe signature and consumes its challenge", async () => {
-    mocks.verifyTypedData.mockResolvedValue(false);
-    const { body: challenge } = await issueChallenge();
-
-    const firstResponse = await callRoute({
-      action: "verify",
-      nonce: challenge.nonce,
-      signature,
+  it("checks permissions using Markee's current snapshot", async () => {
+    fetchMock.mockResolvedValue(
+      Response.json({ community: { permissions: { canActivate: true } } }),
+    );
+    const response = await GET(
+      new Request(
+        `http://localhost/api/markee/authorize?chainId=42220&community=${community}&account=${account}`,
+      ),
+    );
+    expect(await response.json()).toEqual({ isKeeper: true });
+    const url = fetchMock.mock.calls[0][0] as URL;
+    expect(url.pathname).toBe("/api/sdk/v1/snapshot");
+    expect(JSON.parse(url.searchParams.get("placement")!)).toMatchObject({
+      kind: "gardens-community",
+      chainId: 42220,
     });
-    const replayResponse = await callRoute({
-      action: "verify",
-      nonce: challenge.nonce,
-      signature,
-    });
-
-    expect(firstResponse.status).toBe(401);
-    await expect(firstResponse.json()).resolves.toEqual({
-      error: "Invalid Markee authorization signature.",
-    });
-    expect(replayResponse.status).toBe(401);
   });
-
-  it("rejects an expired challenge", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-08-06T12:00:00Z"));
-
-    try {
-      const { body: challenge } = await issueChallenge();
-      vi.advanceTimersByTime(5 * 60 * 1000 + 1000);
-
-      const response = await callRoute({
-        action: "verify",
-        nonce: challenge.nonce,
-        signature,
-      });
-
-      expect(response.status).toBe(401);
-      await expect(response.json()).resolves.toEqual({
-        error: "Authorization challenge is invalid, expired, or already used.",
-      });
-      expect(mocks.verifyTypedData).not.toHaveBeenCalled();
-    } finally {
-      vi.useRealTimers();
-    }
+  it("treats absent optional permissions as disabled", async () => {
+    fetchMock.mockResolvedValue(Response.json({ community: {} }));
+    expect(
+      await (
+        await GET(
+          new Request(
+            `http://localhost/api/markee/authorize?chainId=42220&community=${community}&account=${account}`,
+          ),
+        )
+      ).json(),
+    ).toEqual({ isKeeper: false });
   });
-
-  it("fails closed when the leaderboard factory is not configured", async () => {
-    delete process.env.MARKEE_STREAMING_LEADERBOARD_FACTORY_ADDRESS_BASE;
-    delete process.env.MARKEE_STREAMING_LEADERBOARD_FACTORY_ADDRESS;
-
-    const { body, response } = await issueChallenge();
-
-    expect(response.status).toBe(503);
-    expect(body).toEqual({
-      error: "Markee streaming leaderboard factory is not configured.",
-    });
-    expect(mocks.readContract).not.toHaveBeenCalled();
+  it.each([401, 403, 409, 429, 503])(
+    "preserves upstream HTTP %s errors",
+    async (status) => {
+      fetchMock.mockResolvedValue(
+        Response.json({ error: "upstream error" }, { status }),
+      );
+      const response = await post(challenge);
+      expect(response.status).toBe(status);
+      expect(await response.json()).toEqual({ error: "upstream error" });
+    },
+  );
+  it("does not retry a verification after an upstream timeout", async () => {
+    fetchMock.mockRejectedValue(new Error("timeout"));
+    expect(
+      (await post({ action: "verify", nonce: "123", signature })).status,
+    ).toBe(502);
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
-
-  it("rejects a challenge after the configured factory changes", async () => {
-    const { body: challenge } = await issueChallenge();
-    process.env.MARKEE_STREAMING_LEADERBOARD_FACTORY_ADDRESS_BASE =
-      rotatedLeaderboardFactory;
-
-    const response = await callRoute({
-      action: "verify",
-      nonce: challenge.nonce,
-      signature,
-    });
-
-    expect(response.status).toBe(409);
-    await expect(response.json()).resolves.toEqual({
-      error: "The Markee leaderboard factory changed. Request a new challenge.",
-    });
-    expect(mocks.verifyTypedData).not.toHaveBeenCalled();
+  it.each([
+    { ...challenge, chainId: 9 },
+    { action: "verify", nonce: "0", signature },
+    { action: "verify", nonce: "123", signature: "bad" },
+    { action: "delete" },
+  ])("rejects invalid inputs without upstream work: %j", async (body) => {
+    expect((await post(body)).status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+  it("rejects oversized streamed bodies", async () => {
+    expect(
+      (await post({ ...challenge, padding: "x".repeat(17000) })).status,
+    ).toBe(413);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+  it("does not allow arbitrary URLs in operation identifiers", async () => {
+    expect(
+      (
+        await GET(
+          new Request(
+            "http://localhost/api/markee/authorize?operationId=https://example.com",
+          ),
+        )
+      ).status,
+    ).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
