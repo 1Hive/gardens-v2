@@ -203,23 +203,25 @@ function PlaceholderSign({
   isPlaceholder,
   message,
   totalViews,
+  onActivate,
 }: {
   hint: string;
   isEmpty: boolean;
   isPlaceholder: boolean;
   message: string;
   totalViews: number | null;
+  onActivate?: () => void;
 }) {
   if (isPlaceholder) {
     return (
       <div
-        className="group w-full min-w-0"
+        className="group w-full min-w-0 pb-8"
         style={{ containerType: "inline-size" }}
       >
-        <div className="relative isolate flex min-w-0 flex-col gap-4 rounded-2xl border-2 border-dashed border-primary-content/50 bg-neutral/50 p-4">
-          <span className="relative z-10 text-left font-mono text-[10px] font-semibold uppercase leading-relaxed tracking-wider text-warning-content">
+        <fieldset className="relative isolate min-w-0 rounded-2xl border-2 border-dashed border-primary-content/50 bg-neutral/50 px-4 pb-0 pt-3">
+          <legend className="max-w-full px-2 font-mono text-[10px] font-semibold uppercase leading-relaxed tracking-wider text-warning-content">
             Hidden, except for community admins
-          </span>
+          </legend>
           <span
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center overflow-hidden rounded-2xl"
@@ -236,7 +238,7 @@ function PlaceholderSign({
             />
           </span>
           <p
-            className="relative z-10 py-3 text-center font-mono font-semibold leading-snug text-primary-content"
+            className="relative z-10 py-5 text-center font-mono font-semibold leading-snug text-primary-content"
             style={{
               fontSize: "clamp(16px, 3.2cqw, 32px)",
               textWrap: "balance",
@@ -244,16 +246,16 @@ function PlaceholderSign({
           >
             {message}
           </p>
-          <span
-            className="relative z-10 inline-flex max-w-full items-center justify-center gap-2 self-center rounded-lg bg-primary-content px-3 py-2 text-center font-mono font-semibold leading-snug text-neutral-inverted-content"
-            style={{ fontSize: "clamp(12px, 1.7cqw, 18px)" }}
-          >
-            <span className="min-w-0">Activate to start earning</span>
-            <span aria-hidden="true" className="shrink-0">
-              →
-            </span>
-          </span>
-        </div>
+          <div className="relative z-10 mx-auto w-full max-w-[18rem] translate-y-1/2">
+            <Button
+              onClick={onActivate}
+              className="!w-full"
+              testId="markee-activate-open"
+            >
+              Activate to start earning →
+            </Button>
+          </div>
+        </fieldset>
       </div>
     );
   }
@@ -4125,29 +4127,40 @@ export function CommunityMarkeePlaceholder({
             </Button>
           </div>
         )}
-        <button
-          type="button"
-          className="w-full cursor-pointer rounded-xl text-left focus:outline-none"
-          aria-label={
-            hasActiveMarkee ? "Open this Markee" : (
-              "Activate Markee to start earning for this community"
-            )
-          }
-          onClick={() => {
-            if (hasActiveMarkee) setIsPreviewOpen(true);
-            else setIsOpen(true);
-          }}
-        >
-          <PlaceholderSign
-            hint={signHint}
-            isEmpty={
-              hasActiveMarkee && markee.leaderboard.message.trim().length === 0
+        {hasActiveMarkee ?
+          <button
+            type="button"
+            className="w-full cursor-pointer rounded-xl text-left focus:outline-none"
+            aria-label={
+              hasActiveMarkee ? "Open this Markee" : (
+                "Activate Markee to start earning for this community"
+              )
             }
-            isPlaceholder={!hasActiveMarkee}
+            onClick={() => {
+              if (hasActiveMarkee) setIsPreviewOpen(true);
+              else setIsOpen(true);
+            }}
+          >
+            <PlaceholderSign
+              hint={signHint}
+              isEmpty={
+                hasActiveMarkee &&
+                markee.leaderboard.message.trim().length === 0
+              }
+              isPlaceholder={!hasActiveMarkee}
+              message={displayedMessage}
+              totalViews={totalViews}
+            />
+          </button>
+        : <PlaceholderSign
+            hint={signHint}
+            isEmpty={false}
+            isPlaceholder={true}
             message={displayedMessage}
             totalViews={totalViews}
+            onActivate={() => setIsOpen(true)}
           />
-        </button>
+        }
 
         {hasActiveMarkee &&
           connectedAccount != null &&
