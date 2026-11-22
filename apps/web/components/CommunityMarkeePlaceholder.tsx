@@ -69,6 +69,13 @@ import { formatAddress } from "@/utils/formatAddress";
 import { logOnce } from "@/utils/log";
 import { recordMarkeeView } from "@/utils/markee";
 import {
+  ActivationOperation,
+  checkActivation,
+  clearPendingActivation,
+  readPendingActivation,
+  submitActivation,
+} from "@/utils/markeeActivation";
+import {
   buildMarkeeOpenStreamOperations,
   buildMarkeeStopStreamOperations,
   CFA_AGREEMENT_ID,
@@ -3528,6 +3535,8 @@ export function CommunityMarkeePlaceholder({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isClaimOpen, setIsClaimOpen] = useState(false);
   const [hasPendingClaim, setHasPendingClaim] = useState(false);
+  const [hasPendingActivation, setHasPendingActivation] = useState(false);
+  const [checkingActivation, setCheckingActivation] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isOptInTransactionModalOpen, setIsOptInTransactionModalOpen] =
     useState(false);
@@ -3540,6 +3549,7 @@ export function CommunityMarkeePlaceholder({
   const [optInTransactionNotification, setOptInTransactionNotification] =
     useState<MarkeeTransactionNotification | null>(null);
   const optInTransactionAttempt = useRef(0);
+  const activationInFlight = useRef(false);
   const { address: connectedAccount, connector } = useAccount();
   const { chain: connectedChain } = useNetwork();
   const { switchNetworkAsync } = useSwitchNetwork();
@@ -3578,9 +3588,14 @@ export function CommunityMarkeePlaceholder({
   useEffect(() => {
     const controller = new AbortController();
     setIsConnectedKeeper(false);
-    if (connectedAccount == null) return () => controller.abort();
+    if (connectedAccount == null || chainId == null)
+      return () => controller.abort();
 
-    const params = new URLSearchParams({ account: connectedAccount });
+    const params = new URLSearchParams({
+      account: connectedAccount,
+      chainId: String(chainId),
+      community,
+    });
     void fetch(`/api/markee/authorize?${params.toString()}`, {
       cache: "no-store",
       signal: controller.signal,
@@ -3605,7 +3620,7 @@ export function CommunityMarkeePlaceholder({
       });
 
     return () => controller.abort();
-  }, [connectedAccount]);
+  }, [connectedAccount, chainId, community]);
 
   useTransactionNotification({
     chainId: markee?.markeeChainId ?? chainId,
@@ -3666,6 +3681,83 @@ export function CommunityMarkeePlaceholder({
       );
     }
   }, [refreshMarkee]);
+
+  const applyActivation = useCallback(
+    (operation: ActivationOperation) => {
+      if (chainId == null) return;
+      const terminal =
+        operation.status === "complete" || operation.status === "failed";
+      if (terminal) clearPendingActivation(chainId, community);
+      setHasPendingActivation(!terminal);
+      setAuthorizationStatus(
+        operation.status === "complete" ? "authorized"
+        : terminal ? "idle"
+        : "verifying",
+      );
+      setOptInTransactionNotification((current) => ({
+        contractName: "Create Markee leaderboard",
+        status:
+          operation.status === "complete" ? "success"
+          : operation.status === "failed" ? "error"
+          : "loading",
+        toastId: current?.toastId ?? `markee-activation-${operation.id}`,
+        transactionHash: operation.result?.transactionHash,
+        targetAddress: operation.result?.router,
+        error:
+          operation.status === "failed" ?
+            new Error(operation.error ?? "Markee activation failed.")
+          : undefined,
+      }));
+      if (operation.status === "complete")
+        void refreshMarkeeUntilActive().catch(() => {});
+    },
+    [chainId, community, refreshMarkeeUntilActive],
+  );
+
+  const handleCheckActivation = async () => {
+    if (chainId == null) return;
+    setCheckingActivation(true);
+    try {
+      const pending = readPendingActivation(chainId, community);
+      if (pending) applyActivation(await checkActivation(pending));
+    } catch (error) {
+      toast.error(
+        getTransactionErrorMessage(
+          error,
+          "Unable to check activation. Try checking again.",
+        ),
+      );
+    } finally {
+      setCheckingActivation(false);
+    }
+  };
+
+  useEffect(() => {
+    if (chainId == null) return;
+    let cancelled = false;
+    try {
+      const pending = readPendingActivation(chainId, community);
+      setHasPendingActivation(pending != null);
+      if (!pending) setAuthorizationStatus("idle");
+      if (pending) {
+        setAuthorizationStatus("verifying");
+        // Recovery only reads operation status. Never repeat the signed POST.
+        void checkActivation(pending)
+          .then((operation) => {
+            if (!cancelled) applyActivation(operation);
+          })
+          .catch(() => {});
+      }
+    } catch (error) {
+      setHasPendingActivation(true);
+      toast.error(
+        getTransactionErrorMessage(error, "Unable to read pending activation."),
+      );
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [chainId, community, applyActivation]);
 
   useEffect(() => {
     if (chainId == null) return;
@@ -3751,10 +3843,16 @@ export function CommunityMarkeePlaceholder({
     markee?.leaderboard.topMarkeeAddress,
   ]);
 
-  if (markee == null || (!hasActiveMarkee && !canAuthorizeMarkee)) return null;
+  if (
+    markee == null ||
+    (!hasActiveMarkee && !canAuthorizeMarkee && !hasPendingActivation)
+  )
+    return null;
 
   const handleAuthorize = async () => {
     if (
+      activationInFlight.current ||
+      hasPendingActivation ||
       !canAuthorizeMarkee ||
       connectedAccount == null ||
       connector == null ||
@@ -3763,6 +3861,7 @@ export function CommunityMarkeePlaceholder({
       return;
     }
 
+    activationInFlight.current = true;
     const originalChainId = connectedChain?.id;
     setAuthorizationStatus("requesting");
     optInTransactionAttempt.current += 1;
@@ -3832,41 +3931,26 @@ export function CommunityMarkeePlaceholder({
           { ...current, status: "loading" }
         : current,
       );
-      const verification = await postAuthorization<VerifyResponse>({
-        action: "verify",
-        nonce: challenge.nonce,
+      setHasPendingActivation(true);
+      const operation = await submitActivation(
+        chainId,
+        community,
+        challenge.nonce,
         signature,
-      });
-      if (!verification.authorized) {
-        throw new Error("The Markee authorization was not accepted.");
-      }
-      if (verification.transactionHash == null) {
-        throw new Error(
-          "The Markee creation API did not return a transaction hash.",
-        );
-      }
-
-      transactionHash = verification.transactionHash;
-      router = verification.router;
-      setOptInTransactionNotification((current) =>
-        current?.toastId === toastId ?
-          {
-            ...current,
-            status: "success",
-            targetAddress: router,
-            transactionHash,
-          }
-        : current,
       );
-      setAuthorizationStatus("authorized");
-      void refreshMarkeeUntilActive().catch((error: unknown) => {
-        console.error(
-          "Unable to refresh the new Markee community integration",
-          error,
-        );
-      });
+      transactionHash = operation.result?.transactionHash;
+      router = operation.result?.router;
+      applyActivation(operation);
     } catch (error) {
-      setAuthorizationStatus("idle");
+      let pending = true;
+      try {
+        pending =
+          chainId != null && readPendingActivation(chainId, community) != null;
+      } catch {
+        /* Keep submission blocked if recovery storage is unavailable. */
+      }
+      setHasPendingActivation(pending);
+      setAuthorizationStatus(pending ? "verifying" : "idle");
       setOptInTransactionNotification((current) =>
         current?.toastId === toastId ?
           {
@@ -3905,6 +3989,8 @@ export function CommunityMarkeePlaceholder({
         );
         reportClientError(error, errorContext);
       }
+    } finally {
+      activationInFlight.current = false;
     }
   };
 
@@ -3974,6 +4060,24 @@ export function CommunityMarkeePlaceholder({
   return (
     <>
       <section aria-label="Markee leaderboard">
+        {hasPendingActivation && (
+          <div
+            className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary-content/30 p-4"
+            role="status"
+          >
+            <p className="text-sm text-neutral-content">
+              A Markee activation is pending. Check its status before
+              authorizing another.
+            </p>
+            <Button
+              onClick={handleCheckActivation}
+              isLoading={checkingActivation}
+              testId="markee-activation-check"
+            >
+              Check activation
+            </Button>
+          </div>
+        )}
         <button
           type="button"
           className="w-full cursor-pointer rounded-xl text-left focus:outline-none"
@@ -4084,6 +4188,7 @@ export function CommunityMarkeePlaceholder({
               color="primary"
               className="w-full sm:w-auto"
               disabled={
+                hasPendingActivation ||
                 !canAuthorizeMarkee ||
                 chainId == null ||
                 authorizationStatus === "authorized"
