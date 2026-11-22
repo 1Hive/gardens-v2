@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   estimateContractGas: vi.fn(),
@@ -31,6 +31,7 @@ vi.mock("viem/accounts", () => ({
 vi.mock("@/configs/chains", () => ({
   chainConfigMap: {
     100: { isTestnet: false },
+    42220: { isTestnet: false },
     11155111: { isTestnet: true },
   },
 }));
@@ -132,6 +133,45 @@ describe("Markee council Safe authorization", () => {
       leaderboardFactory;
     delete process.env.MARKEE_STREAMING_LEADERBOARD_FACTORY_ADDRESS;
   });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it.each([
+    ["EOA owner", "0x809c9f8dd8ca93a41c3adca4972fa234c28f7714"],
+    ["council Safe", "0x705a58f9c33d0a5be425b87dc34b157c508fe467"],
+  ])(
+    "fails before RPC or signing for the Celo %s when Redis rejects credentials",
+    async (_role, account) => {
+      vi.stubEnv("MARKEE_AUTH_REDIS_REST_URL", "https://redis.example.test");
+      vi.stubEnv("MARKEE_AUTH_REDIS_REST_TOKEN", "invalid-test-token");
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        Response.json(
+          {
+            error:
+              "WRONGPASS invalid username-password pair or user is disabled",
+          },
+          { status: 401 },
+        ),
+      );
+      const response = await callRoute({
+        action: "challenge",
+        chainId: 42220,
+        community: "0x215b9ed0182d200563921f46ecbcb86111e9ad6b",
+        account,
+      });
+      expect(response.status).toBe(503);
+      expect((await response.json()).error).toContain(
+        "temporarily unavailable",
+      );
+      expect(mocks.readContract).not.toHaveBeenCalled();
+      expect(mocks.verifyTypedData).not.toHaveBeenCalled();
+      expect(mocks.writeContract).not.toHaveBeenCalled();
+    },
+  );
 
   it("issues an EIP-712 challenge bound to the current council Safe", async () => {
     const { body, response } = await issueChallenge();
