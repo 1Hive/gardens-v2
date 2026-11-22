@@ -210,6 +210,53 @@ function PlaceholderSign({
   message: string;
   totalViews: number | null;
 }) {
+  if (isPlaceholder) {
+    return (
+      <div
+        className="group w-full min-w-0"
+        style={{ containerType: "inline-size" }}
+      >
+        <div className="relative isolate flex min-w-0 flex-col gap-4 rounded-2xl border-2 border-dashed border-primary-content/50 bg-neutral/50 p-4">
+          <span className="relative z-10 text-left font-mono text-[10px] font-semibold uppercase leading-relaxed tracking-wider text-warning-content">
+            Hidden, except for community admins
+          </span>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center overflow-hidden rounded-2xl"
+          >
+            <Image
+              src={markeeLogoBlack}
+              alt=""
+              className="h-24 w-24 object-contain opacity-0 transition-opacity duration-200 group-hover:opacity-[0.12] dark:hidden"
+            />
+            <Image
+              src={markeeLogoWhite}
+              alt=""
+              className="hidden h-24 w-24 object-contain opacity-0 transition-opacity duration-200 group-hover:opacity-[0.12] dark:block"
+            />
+          </span>
+          <p
+            className="relative z-10 py-3 text-center font-mono font-semibold leading-snug text-primary-content"
+            style={{
+              fontSize: "clamp(16px, 3.2cqw, 32px)",
+              textWrap: "balance",
+            }}
+          >
+            {message}
+          </p>
+          <span
+            className="relative z-10 inline-flex max-w-full items-center justify-center gap-2 self-center rounded-lg bg-primary-content px-3 py-2 text-center font-mono font-semibold leading-snug text-neutral-inverted-content"
+            style={{ fontSize: "clamp(12px, 1.7cqw, 18px)" }}
+          >
+            <span className="min-w-0">Activate to start earning</span>
+            <span aria-hidden="true" className="shrink-0">
+              →
+            </span>
+          </span>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="group relative w-full pb-3">
       <div
