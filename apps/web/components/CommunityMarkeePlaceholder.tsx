@@ -2,11 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowTrendingUpIcon,
   ArrowTopRightOnSquareIcon,
   ArrowsRightLeftIcon,
   BanknotesIcon,
-  ChatBubbleBottomCenterTextIcon,
   CheckCircleIcon,
   CheckIcon,
   ClipboardDocumentIcon,
@@ -215,16 +213,16 @@ function PlaceholderSign({
   if (isPlaceholder) {
     return (
       <div
-        className="group w-full min-w-0 pb-8"
+        className="group relative isolate w-full min-w-0 pb-8"
         style={{ containerType: "inline-size" }}
       >
-        <fieldset className="relative isolate min-w-0 rounded-2xl border-2 border-dashed border-primary-content/50 bg-neutral/50 px-4 pb-0 pt-3">
+        <fieldset className="relative min-w-0 rounded-2xl border-2 border-dashed border-primary-content/50 bg-neutral/50 px-4 pb-0 pt-3">
           <legend className="max-w-full px-2 font-mono text-[10px] font-semibold uppercase leading-relaxed tracking-wider text-warning-content">
             Hidden, except for community admins
           </legend>
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center overflow-hidden rounded-2xl"
+            className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden rounded-2xl"
           >
             <Image
               src={markeeLogoBlack}
@@ -246,7 +244,8 @@ function PlaceholderSign({
           >
             {message}
           </p>
-          <div className="relative z-10 mx-auto w-full max-w-[18rem] translate-y-1/2">
+
+          <div className="relative z-20 mx-auto w-full max-w-[18rem] translate-y-1/2">
             <Button
               onClick={onActivate}
               className="!w-full"
@@ -256,6 +255,14 @@ function PlaceholderSign({
             </Button>
           </div>
         </fieldset>
+        <button
+          type="button"
+          aria-hidden="true"
+          tabIndex={-1}
+          onClick={onActivate}
+          className="absolute inset-0 z-10 cursor-pointer rounded-2xl"
+          data-testid="markee-activate-surface"
+        />
       </div>
     );
   }
@@ -301,6 +308,65 @@ function PlaceholderSign({
       >
         {hint}
       </span>
+    </div>
+  );
+}
+
+function ActivationExplanation({ monthlyRate }: { monthlyRate?: string }) {
+  const hasRate =
+    monthlyRate != null &&
+    /^\d+$/u.test(monthlyRate) &&
+    BigInt(monthlyRate) > 0n;
+  return (
+    <div className="flex flex-col gap-7">
+      <div className="rounded-2xl border border-neutral-content/15 bg-neutral/30 p-4 sm:p-5">
+        <p className="mb-4 font-mono text-xs font-semibold uppercase tracking-widest text-neutral-soft-content">
+          What everyone will see
+        </p>
+        <div className="relative mb-3 rounded-2xl border-2 border-dashed border-primary-content px-4 pb-9 pt-7">
+          <p className="text-center font-mono text-lg font-semibold leading-snug text-primary-content sm:text-2xl">
+            Your community’s message here
+          </p>
+          <span className="absolute bottom-0 left-1/2 max-w-[calc(100%-1rem)] -translate-x-1/2 translate-y-1/2 whitespace-nowrap rounded-xl bg-primary-content px-4 py-2 text-center font-mono text-sm font-semibold text-primary">
+            {hasRate ?
+              `${formatEthAmountRoundedUp(BigInt(monthlyRate ?? "0"), 3)} ETH/mo to change`
+            : "ETH/mo to change"}
+          </span>
+        </div>
+      </div>
+      <h2 className="text-2xl font-semibold leading-snug text-neutral-content sm:text-3xl">
+        Let supporters fund your community, one message at a time
+      </h2>
+      <ol className="flex flex-col gap-5">
+        {[
+          [
+            "Anyone can buy a message",
+            "Supporters compete for your community’s message spot.",
+          ],
+          [
+            "The top-funded message is shown",
+            "The message with the highest ETH/mo stream stays on top.",
+          ],
+          [
+            "Your community gets paid",
+            "Community revenue is collected for your council Safe.",
+          ],
+        ].map(([title, description], index) => (
+          <li key={title} className="flex items-start gap-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-primary-dark-base font-mono text-lg text-primary-content">
+              {index + 1}
+            </span>
+            <div className="min-w-0">
+              <p className="text-lg font-semibold leading-snug text-neutral-content">
+                {title}
+              </p>
+              <p className="mt-1 text-base leading-snug text-neutral-soft-content">
+                {description}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
@@ -4223,8 +4289,9 @@ export function CommunityMarkeePlaceholder({
       <Modal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        size="small"
-        title="Create a Markee leaderboard"
+        size="large"
+        title="Activate your Markee sign"
+        className="[&_.modal-box]:border [&_.modal-box]:border-neutral-content/15 [&_.modal-action]:p-6 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:text-neutral-content sm:[&_h3]:text-2xl [&_.modal-box>div:first-child]:text-neutral-content [&_.modal-box>div:first-child>div:last-child]:shrink-0 [&_.modal-box>div:first-child>div:last-child]:pl-2 [&_.modal-box>div:first-child>div:first-child]:min-w-0"
         icon={
           <div className="flex h-11 w-11 items-center justify-center">
             <span className="text-2xl" aria-hidden="true">
@@ -4234,38 +4301,47 @@ export function CommunityMarkeePlaceholder({
         }
         testId="markee-opt-in"
         footer={
-          <div className="flex w-full flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <Button
-              btnStyle="ghost"
-              color="secondary"
-              className="w-full sm:w-auto"
-              onClick={() => setIsOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              btnStyle="filled"
-              color="primary"
-              className="w-full sm:w-auto"
-              disabled={
-                hasPendingActivation ||
-                !canAuthorizeMarkee ||
-                chainId == null ||
-                authorizationStatus === "authorized"
-              }
-              isLoading={isAuthorizing}
-              onClick={handleAuthorize}
-              testId="markee-opt-in-create"
-              tooltip={
-                !canAuthorizeMarkee ?
-                  "Connect with the council Safe or one of its owners to continue."
-                : undefined
-              }
-              tooltipClassName="flex justify-end"
-              tooltipSide="tooltip-top-left"
-            >
-              {authorizationStatus === "authorized" ? "Authorized" : "Create"}
-            </Button>
+          <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm leading-relaxed text-neutral-soft-content">
+              No fee to activate.
+              <br />
+              Opens a signature in your wallet.
+            </p>
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+              <Button
+                btnStyle="ghost"
+                color="secondary"
+                className="w-full sm:w-auto"
+                onClick={() => setIsOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                btnStyle="filled"
+                color="primary"
+                className="w-full sm:w-auto"
+                disabled={
+                  hasPendingActivation ||
+                  !canAuthorizeMarkee ||
+                  chainId == null ||
+                  authorizationStatus === "authorized"
+                }
+                isLoading={isAuthorizing}
+                onClick={handleAuthorize}
+                testId="markee-opt-in-create"
+                tooltip={
+                  !canAuthorizeMarkee ?
+                    "Connect with the council Safe or one of its owners to continue."
+                  : undefined
+                }
+                tooltipClassName="flex justify-end"
+                tooltipSide="tooltip-top-left"
+              >
+                {authorizationStatus === "authorized" ?
+                  "Activated"
+                : "Activate sign"}
+              </Button>
+            </div>
           </div>
         }
       >
@@ -4320,54 +4396,9 @@ export function CommunityMarkeePlaceholder({
             </div>
           )}
 
-          <div className="rounded-2xl border border-primary-content/20 bg-primary-soft/60 p-5 dark:border-primary-dark-border/30 dark:bg-primary-dark-base/10">
-            <p className="text-lg font-semibold text-neutral-content">
-              Give your community a sign worth supporting
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-neutral-soft-content">
-              Create a leaderboard for community messages. The message with the
-              highest stream is promoted to the top.
-            </p>
-          </div>
-
-          <div className="grid gap-3">
-            <div className="flex items-start gap-3 rounded-xl border border-neutral-content/15 p-4">
-              <ChatBubbleBottomCenterTextIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary-content" />
-              <div>
-                <p className="font-medium text-neutral-content">
-                  Community messages compete
-                </p>
-                <p className="mt-1 text-sm leading-relaxed text-neutral-soft-content">
-                  Supporters back the messages they want everyone to see.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 rounded-xl border border-neutral-content/15 p-4">
-              <ArrowTrendingUpIcon className="mt-0.5 h-5 w-5 shrink-0 text-tertiary-content" />
-              <div>
-                <p className="font-medium text-neutral-content">
-                  The leading message stays on top
-                </p>
-                <p className="mt-1 text-sm leading-relaxed text-neutral-soft-content">
-                  More support moves a message into the community spotlight.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 rounded-xl border border-neutral-content/15 p-4">
-              <BanknotesIcon className="mt-0.5 h-5 w-5 shrink-0 text-secondary-content" />
-              <div>
-                <p className="font-medium text-neutral-content">
-                  Revenue flows back to the community
-                </p>
-                <p className="mt-1 text-sm leading-relaxed text-neutral-soft-content">
-                  A share of the winning stream is automatically sent to the
-                  council Safe once enough has accumulated.
-                </p>
-              </div>
-            </div>
-          </div>
+          <ActivationExplanation
+            monthlyRate={markee.leaderboard.minimumMonthlyRate}
+          />
         </div>
       </Modal>
 
