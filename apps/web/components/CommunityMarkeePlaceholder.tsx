@@ -248,7 +248,7 @@ function PlaceholderSign({
           <div className="relative z-20 mx-auto w-full max-w-[18rem] translate-y-1/2">
             <Button
               onClick={onActivate}
-              className="!w-full"
+              className="!w-full group-hover:bg-primary-hover-content dark:group-hover:bg-primary-dark-hover"
               testId="markee-activate-open"
             >
               Activate to start earning →
