@@ -125,6 +125,7 @@ type AuthorizationStatus =
 const CLAIM_QUOTE_CHANGED_MESSAGE =
   "The claim quote changed. Refreshing the latest quote…";
 const MARKEE_WIN_INCREMENT = parseEther("0.001");
+const INACTIVE_SIGN_MESSAGE = "This sign funds your community";
 
 type ChallengeResponse = {
   nonce: string;
@@ -197,82 +198,26 @@ async function postClaimAuthorization<T>(body: Record<string, unknown>) {
 
 function PlaceholderSign({
   hint,
-  isEmpty,
   isPlaceholder,
   message,
   totalViews,
   onActivate,
+  showAdminLabel = false,
 }: {
   hint: string;
-  isEmpty: boolean;
   isPlaceholder: boolean;
   message: string;
   totalViews: number | null;
   onActivate?: () => void;
+  showAdminLabel?: boolean;
 }) {
-  if (isPlaceholder) {
-    return (
+  const sign = (
+    <>
       <div
-        className="group relative isolate w-full min-w-0 pb-8"
-        style={{ containerType: "inline-size" }}
+        className={`relative z-0 rounded-xl bg-neutral/50 px-6 py-8 transition-all duration-200 sm:group-hover:-translate-y-0.5 sm:group-hover:border-primary-content/50 sm:group-hover:shadow-xl sm:group-hover:shadow-primary-content/20 ${isPlaceholder ? "border-2 border-dashed border-primary-content/50" : "border border-neutral-content/15"}`}
       >
-        <fieldset className="relative min-w-0 rounded-2xl border-2 border-dashed border-primary-content/50 bg-neutral/50 px-4 pb-0 pt-3">
-          <legend className="max-w-full px-2 font-mono text-[10px] font-semibold uppercase leading-relaxed tracking-wider text-warning-content">
-            Hidden, except for community admins
-          </legend>
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden rounded-2xl"
-          >
-            <Image
-              src={markeeLogoBlack}
-              alt=""
-              className="h-24 w-24 object-contain opacity-0 transition-opacity duration-200 group-hover:opacity-[0.12] dark:hidden"
-            />
-            <Image
-              src={markeeLogoWhite}
-              alt=""
-              className="hidden h-24 w-24 object-contain opacity-0 transition-opacity duration-200 group-hover:opacity-[0.12] dark:block"
-            />
-          </span>
-          <p
-            className="relative z-10 py-5 text-center font-mono font-semibold leading-snug text-primary-content"
-            style={{
-              fontSize: "clamp(16px, 3.2cqw, 32px)",
-              textWrap: "balance",
-            }}
-          >
-            {message}
-          </p>
-
-          <div className="relative z-20 mx-auto w-full max-w-[18rem] translate-y-1/2">
-            <Button
-              onClick={onActivate}
-              className="!w-full group-hover:bg-primary-hover-content dark:group-hover:bg-primary-dark-hover"
-              testId="markee-activate-open"
-            >
-              Activate to start earning →
-            </Button>
-          </div>
-        </fieldset>
-        <button
-          type="button"
-          aria-hidden="true"
-          tabIndex={-1}
-          onClick={onActivate}
-          className="absolute inset-0 z-10 cursor-pointer rounded-2xl"
-          data-testid="markee-activate-surface"
-        />
-      </div>
-    );
-  }
-  return (
-    <div className="group relative w-full pb-3">
-      <div
-        className={`relative z-0 rounded-xl bg-neutral/50 px-6 py-8 transition-all duration-200 sm:group-hover:-translate-y-0.5 sm:group-hover:border-primary-content/50 sm:group-hover:shadow-xl sm:group-hover:shadow-primary-content/20 ${isEmpty ? "opacity-50 group-hover:opacity-70" : "opacity-100"} ${isPlaceholder ? "min-h-[152px] border-2 border-dashed border-primary-content/50 sm:min-h-[216px] flex items-center" : "border border-neutral-content/15"}`}
-      >
-        {isPlaceholder && (
-          <span className="absolute -top-3 left-4 bg-base-100 px-2 font-mono text-[10px] font-semibold uppercase tracking-widest text-warning-content sm:left-8 sm:text-xs">
+        {showAdminLabel && (
+          <span className="pointer-events-none absolute -top-3 left-1/2 z-10 max-w-[calc(100%-1rem)] -translate-x-1/2 overflow-hidden text-ellipsis whitespace-nowrap bg-base-100 px-2 font-mono text-[10px] font-semibold uppercase tracking-widest text-warning-content opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
             Hidden, except for community admins
           </span>
         )}
@@ -283,12 +228,12 @@ function PlaceholderSign({
           <Image
             src={markeeLogoBlack}
             alt=""
-            className={`h-full w-auto max-w-none transition-opacity duration-200 sm:group-hover:opacity-[0.16] dark:hidden ${isPlaceholder ? "opacity-[0.16]" : "opacity-0"}`}
+            className="h-full w-auto max-w-none opacity-0 transition-opacity duration-200 sm:group-hover:opacity-[0.16] dark:hidden"
           />
           <Image
             src={markeeLogoWhite}
             alt=""
-            className={`hidden h-full w-auto max-w-none transition-opacity duration-200 sm:group-hover:opacity-[0.16] dark:block ${isPlaceholder ? "opacity-[0.16]" : "opacity-0"}`}
+            className="hidden h-full w-auto max-w-none opacity-0 transition-opacity duration-200 sm:group-hover:opacity-[0.16] dark:block"
           />
         </span>
         {totalViews !== null && (
@@ -297,19 +242,29 @@ function PlaceholderSign({
             {totalViews.toLocaleString()}
           </span>
         )}
-        <p
-          className={`relative z-10 w-full text-center font-mono leading-snug transition-colors duration-200 group-hover:text-primary-content ${isPlaceholder ? "text-xl font-semibold text-primary-content sm:text-3xl" : "text-lg text-neutral-content"}`}
-        >
+        <p className="relative z-10 w-full text-center font-mono text-lg leading-snug text-neutral-content transition-colors duration-200 group-hover:text-primary-content group-focus-within:text-primary-content">
           {message}
         </p>
       </div>
       <span
-        className={`absolute bottom-0 left-1/2 z-20 max-w-[calc(100%-1rem)] -translate-x-1/2 rounded-lg border border-primary-content bg-primary-content text-center font-mono font-semibold text-neutral-inverted-content transition-all duration-200 ${isPlaceholder ? "translate-y-1 px-4 py-2 text-sm sm:px-6 sm:text-lg" : "translate-y-0 whitespace-nowrap px-4 py-0.5 text-xs opacity-100 shadow-lg shadow-primary-content/30 sm:translate-y-1 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100"}`}
+        className={`pointer-events-none absolute bottom-0 left-1/2 z-20 max-w-[calc(100%-1rem)] -translate-x-1/2 overflow-hidden text-ellipsis whitespace-nowrap rounded-lg border border-primary-content bg-primary-content px-4 py-0.5 text-center font-mono text-xs font-semibold text-neutral-inverted-content shadow-lg shadow-primary-content/30 transition-all duration-200 sm:translate-y-1 sm:group-hover:translate-y-0 sm:group-hover:opacity-100 ${onActivate ? "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100" : "opacity-100 sm:opacity-0"}`}
       >
         {hint}
       </span>
-    </div>
+    </>
   );
+
+  return onActivate ?
+      <button
+        type="button"
+        className="group relative w-full cursor-pointer rounded-xl pb-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-content"
+        aria-label="Activate Markee to start earning for this community"
+        onClick={onActivate}
+        data-testid="markee-activate-open"
+      >
+        {sign}
+      </button>
+    : <div className="group relative w-full pb-3">{sign}</div>;
 }
 
 function ActivationExplanation({ monthlyRate }: { monthlyRate?: string }) {
@@ -323,16 +278,16 @@ function ActivationExplanation({ monthlyRate }: { monthlyRate?: string }) {
         <p className="mb-4 font-mono text-xs font-semibold uppercase tracking-widest text-neutral-soft-content">
           What everyone will see
         </p>
-        <div className="relative mb-3 rounded-2xl border-2 border-dashed border-primary-content px-4 pb-9 pt-7">
-          <p className="text-center font-mono text-lg font-semibold leading-snug text-primary-content sm:text-2xl">
-            Your community’s message here
-          </p>
-          <span className="absolute bottom-0 left-1/2 max-w-[calc(100%-1rem)] -translate-x-1/2 translate-y-1/2 whitespace-nowrap rounded-xl bg-primary-content px-4 py-2 text-center font-mono text-sm font-semibold text-primary">
-            {hasRate ?
-              `${formatEthAmountRoundedUp(BigInt(monthlyRate ?? "0"), 3)} ETH/mo to change`
-            : "ETH/mo to change"}
-          </span>
-        </div>
+        <PlaceholderSign
+          hint={
+            hasRate ?
+              `${formatEthAmountRoundedUp(BigInt(monthlyRate ?? "0"), 3)} ETH/mo to add a message`
+            : "ETH/mo to add a message"
+          }
+          isPlaceholder={true}
+          message={INACTIVE_SIGN_MESSAGE}
+          totalViews={null}
+        />
       </div>
       <h2 className="text-2xl font-semibold leading-snug text-neutral-content sm:text-3xl">
         Let supporters fund your community, one message at a time
@@ -3668,6 +3623,7 @@ export function CommunityMarkeePlaceholder({
   const { address: connectedAccount, connector } = useAccount();
   const { chain: connectedChain } = useNetwork();
   const { switchNetworkAsync } = useSwitchNetwork();
+  const isSimulatedWallet = connector?.id === "mock";
   const isConnectedCouncilSafe =
     councilSafe != null &&
     connectedAccount != null &&
@@ -3679,10 +3635,14 @@ export function CommunityMarkeePlaceholder({
     authorizationStatus === "signing" ||
     authorizationStatus === "verifying";
   const hasActiveMarkee = markee?.integration.status === "active";
+  const hasPublishedMessage =
+    hasActiveMarkee && markee.leaderboard.message.trim().length > 0;
   const displayedMessage =
     hasActiveMarkee ?
       markee.leaderboard.message || "No message yet"
-    : "This sign funds your community";
+    : INACTIVE_SIGN_MESSAGE;
+  const signMessage =
+    hasPublishedMessage ? displayedMessage : INACTIVE_SIGN_MESSAGE;
   const topMarkeeMonthlyRate =
     markee != null ?
       BigInt(markee.leaderboard.topRate) * MARKEE_SECONDS_IN_MONTH
@@ -3694,7 +3654,7 @@ export function CommunityMarkeePlaceholder({
   const signHint =
     !hasActiveMarkee ?
       "Activate to start earning →"
-    : `${formatEthAmountRoundedUp(topMarkeeChallengeRate, 3)} ETH/mo to change`;
+    : `${formatEthAmountRoundedUp(topMarkeeChallengeRate, 3)} ETH/mo to ${hasPublishedMessage ? "change" : "add a message"}`;
 
   useEffect(() => {
     setHasPendingClaim(readPendingMarkeeClaim(chainId, community) != null);
@@ -3969,6 +3929,7 @@ export function CommunityMarkeePlaceholder({
       activationInFlight.current ||
       hasPendingActivation ||
       !canAuthorizeMarkee ||
+      isSimulatedWallet ||
       connectedAccount == null ||
       connector == null ||
       chainId == null
@@ -4209,22 +4170,18 @@ export function CommunityMarkeePlaceholder({
           >
             <PlaceholderSign
               hint={signHint}
-              isEmpty={
-                hasActiveMarkee &&
-                markee.leaderboard.message.trim().length === 0
-              }
-              isPlaceholder={!hasActiveMarkee}
-              message={displayedMessage}
+              isPlaceholder={!hasPublishedMessage}
+              message={signMessage}
               totalViews={totalViews}
             />
           </button>
         : <PlaceholderSign
             hint={signHint}
-            isEmpty={false}
             isPlaceholder={true}
-            message={displayedMessage}
+            message={signMessage}
             totalViews={totalViews}
             onActivate={() => setIsOpen(true)}
+            showAdminLabel
           />
         }
 
@@ -4323,6 +4280,7 @@ export function CommunityMarkeePlaceholder({
                 disabled={
                   hasPendingActivation ||
                   !canAuthorizeMarkee ||
+                  isSimulatedWallet ||
                   chainId == null ||
                   authorizationStatus === "authorized"
                 }
@@ -4330,7 +4288,9 @@ export function CommunityMarkeePlaceholder({
                 onClick={handleAuthorize}
                 testId="markee-opt-in-create"
                 tooltip={
-                  !canAuthorizeMarkee ?
+                  isSimulatedWallet ?
+                    "A simulated wallet cannot sign. Connect a real council Safe owner wallet."
+                  : !canAuthorizeMarkee ?
                     "Connect with the council Safe or one of its owners to continue."
                   : undefined
                 }
@@ -4346,6 +4306,20 @@ export function CommunityMarkeePlaceholder({
         }
       >
         <div className="flex flex-col gap-6">
+          {isSimulatedWallet && (
+            <div
+              className="rounded-xl border border-warning-content/30 bg-warning-soft/50 p-4"
+              role="status"
+            >
+              <p className="font-medium text-neutral-content">
+                A simulated wallet cannot activate this sign
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-neutral-soft-content">
+                Reload this page without wallet simulation, then connect a
+                real council Safe owner wallet to sign the activation request.
+              </p>
+            </div>
+          )}
           {!canAuthorizeMarkee && councilSafe && (
             <div className="flex items-start gap-3 rounded-xl border border-warning-content/30 bg-warning-soft/50 p-4">
               <ArrowsRightLeftIcon className="mt-0.5 h-5 w-5 shrink-0 text-warning-content" />
