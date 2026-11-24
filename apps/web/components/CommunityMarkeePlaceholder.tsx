@@ -217,7 +217,7 @@ function PlaceholderSign({
         className={`relative z-0 rounded-xl px-6 py-8 transition-all duration-200 sm:group-hover:-translate-y-0.5 sm:group-hover:border-primary-content/50 sm:group-hover:shadow-xl sm:group-hover:shadow-primary-content/20 ${isPlaceholder ? "border-2 border-dashed border-primary-content/50 bg-transparent" : "border border-neutral-content/15 bg-neutral/50"}`}
       >
         {showAdminLabel && (
-          <span className="pointer-events-none absolute -top-2.5 left-1/2 z-10 max-w-[calc(100%-1rem)] -translate-x-1/2 overflow-hidden text-ellipsis whitespace-nowrap px-2 font-mono text-[10px] font-medium uppercase tracking-widest text-neutral-content/80 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+          <span className="pointer-events-none absolute -top-2.5 left-1/2 z-10 max-w-[calc(100%-1rem)] -translate-x-1/2 overflow-hidden text-ellipsis whitespace-nowrap bg-primary px-2 font-mono text-[10px] font-medium uppercase tracking-widest text-neutral-content/80 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
             Hidden, except for community admins
           </span>
         )}
@@ -242,7 +242,7 @@ function PlaceholderSign({
             {totalViews.toLocaleString()}
           </span>
         )}
-        <p className="relative z-10 w-full text-center font-mono text-lg leading-snug text-neutral-content transition-colors duration-200 group-hover:text-primary-content group-focus-within:text-primary-content">
+        <p className={`relative z-10 w-full text-center font-mono text-lg leading-snug text-neutral-content transition-colors duration-200 group-hover:text-primary-content group-focus-within:text-primary-content ${isPlaceholder ? "opacity-80" : ""}`}>
           {message}
         </p>
       </div>
