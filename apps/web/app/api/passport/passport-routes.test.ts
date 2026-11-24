@@ -43,8 +43,10 @@ describe("Passport API proxy routes", () => {
     );
   });
 
-  it("submits an address to the current Passport host", async () => {
-    fetchMock.mockResolvedValue(Response.json({ score: "21.75" }));
+  it("retrieves the latest score through Passport v2", async () => {
+    fetchMock.mockResolvedValue(
+      Response.json({ address: account, score: "21.75" }),
+    );
 
     const response = await submitPassport(
       new Request("http://localhost/api/passport/submit-passport", {
@@ -55,16 +57,19 @@ describe("Passport API proxy routes", () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ score: "21.75" });
+    await expect(response.json()).resolves.toMatchObject({
+      address: account,
+      score: "21.75",
+    });
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://api.passport.xyz/registry/submit-passport",
+      `https://api.passport.xyz/v2/stamps/42/score/${account}`,
       {
-        body: JSON.stringify({ address: account, scorer_id: "42" }),
+        cache: "no-store",
         headers: {
           "Content-Type": "application/json",
           "X-API-KEY": apiKey,
         },
-        method: "POST",
+        method: "GET",
       },
     );
   });

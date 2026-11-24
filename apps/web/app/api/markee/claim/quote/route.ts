@@ -1,107 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAddress, isAddress, zeroAddress } from "viem";
-import {
-  MarkeeChallengeRateLimitError,
-  MarkeeChallengeStoreUnavailableError,
-  reserveMarkeeChallengeIssue,
-} from "../../../../../utils/markeeChallengeStore";
-import { saveClaimQuoteSnapshot } from "../../../../../utils/markeeClaimQuoteSnapshot";
+import { isAddress } from "viem";
 import { chainConfigMap } from "@/configs/chains";
-import {
-  MarkeeClaimExecutionError,
-  markeeAdapter,
-} from "@/services/markeeServer";
-import { registryCommunityABI } from "@/src/generated";
-import { getEnvPublicClient } from "@/utils/publicClient";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
-const jsonError = (
-  error: string,
-  status: number,
-  code?: string,
-  retryable = status >= 500 || status === 429,
-) =>
-  NextResponse.json(
-    { error, code, retryable },
-    { headers: { "Cache-Control": "no-store" }, status },
-  );
+const API = "https://www.markee.xyz/api/sdk/v1";
+const headers = { "Cache-Control": "no-store" };
 
 export async function GET(request: NextRequest) {
   const chainId = Number(request.nextUrl.searchParams.get("chainId"));
   const community = request.nextUrl.searchParams.get("community");
-
   if (
     !Number.isSafeInteger(chainId) ||
     !Object.prototype.hasOwnProperty.call(chainConfigMap, chainId) ||
     community == null ||
     !isAddress(community)
   ) {
-    return jsonError("Invalid Markee claim quote request.", 400);
+    return NextResponse.json(
+      { error: "Invalid Markee claim quote request." },
+      { status: 400, headers },
+    );
   }
 
   try {
-    await reserveMarkeeChallengeIssue({
-      namespace: "claim-quote",
-      subject: `${chainId}:${community.toLowerCase()}`,
+    const params = new URLSearchParams({ chainId: String(chainId), community });
+    const response = await fetch(`${API}/community/quote?${params}`, {
+      cache: "no-store",
+      redirect: "error",
+      signal: AbortSignal.timeout(45_000),
     });
-    const registryCommunity = getAddress(community);
-    const client = getEnvPublicClient(chainId);
-    const councilSafe = await client.readContract({
-      abi: registryCommunityABI,
-      address: registryCommunity,
-      functionName: "councilSafe",
-    });
-
-    if (
-      typeof councilSafe !== "string" ||
-      !isAddress(councilSafe) ||
-      getAddress(councilSafe) === zeroAddress
-    ) {
-      return jsonError("This community does not have a council Safe.", 409);
-    }
-
-    const quote = await markeeAdapter.getClaimQuote(
-      chainId,
-      registryCommunity,
-      getAddress(councilSafe),
-    );
-    const snapshot = await saveClaimQuoteSnapshot(
-      chainId,
-      registryCommunity,
-      quote,
-    );
-
+    const result: unknown = await response.json();
+    if (typeof result !== "object" || result === null || Array.isArray(result))
+      throw new Error("Invalid Markee quote response");
+    return NextResponse.json(result, { status: response.status, headers });
+  } catch {
     return NextResponse.json(
-      {
-        ...quote,
-        ...snapshot,
-        maxFeeAmount: snapshot.maxFeeAmount.toString(),
-        claimAmount: quote.claimAmount.toString(),
-        estimatedFeeAmount: quote.estimatedFeeAmount.toString(),
-        estimatedNetworkFeeAmount: quote.estimatedNetworkFeeAmount.toString(),
-        expectedAmountOut: quote.expectedAmountOut.toString(),
-      },
-      { headers: { "Cache-Control": "no-store" } },
+      { error: "Unable to reach Markee for the community revenue quote." },
+      { status: 502, headers },
     );
-  } catch (error) {
-    console.error("[Markee claim quote] Quote failed", error);
-    if (error instanceof MarkeeChallengeRateLimitError)
-      return jsonError("Too many quote requests. Please wait a minute.", 429);
-    if (error instanceof MarkeeChallengeStoreUnavailableError)
-      return jsonError(
-        "Claim quote storage is temporarily unavailable. Please try again shortly.",
-        503,
-      );
-    if (error instanceof MarkeeClaimExecutionError) {
-      return jsonError(
-        error.message,
-        error.status,
-        error.code,
-        error.retryable,
-      );
-    }
-    return jsonError("Unable to prepare the community revenue quote.", 502);
   }
 }
