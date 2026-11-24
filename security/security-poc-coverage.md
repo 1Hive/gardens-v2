@@ -17,6 +17,8 @@ need a second test for the same root cause.
 
 | Advisory | Regression test |
 | --- | --- |
+| GHSA-8qp5-hcc9-h6qc | `RegistryCommunity.t.sol::test_initialize_recoversOccupiedAlloProfileId`, `test_initialize_success_sets_fields` |
+| GHSA-fp82-9qv4-2fjx | `SecurityPoC.t.sol::test_F09_DeployCVInitializesArbitratorProxyBeforeExposure` |
 | GHSA-f2mf-mf7h-6jqv (GDN-01, GDN-02, GDN-05) | `SecurityPoC.t.sol::test_GDN01_FirstSupportBlocksRequestedAmountEdit`, `test_GDN02_DeactivatePointsPreservesConvictionFromOldTotalStake`, `test_GDN05_CancelledProposalsDoNotExhaustCreation` |
 | GHSA-94f2-r637-wcpv (same GDN-02 root cause) | `SecurityPoC.t.sol::test_GDN02_DeactivatePointsPreservesConvictionFromOldTotalStake` |
 | GHSA-jwvq-5xmf-f377 | `GHSA_c5r9_RealSuperfluid.t.sol::test_realSuperfluid_eoaBeneficiaryReturnsEscrowBufferToStrategy` |
