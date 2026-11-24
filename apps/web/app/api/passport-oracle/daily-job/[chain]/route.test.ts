@@ -11,14 +11,14 @@ vi.mock("@/configs/chains", () => ({ getConfigByChain: vi.fn() }));
 vi.mock("@/providers/urql", () => ({ initUrqlClient: vi.fn() }));
 vi.mock("@/src/generated", () => ({ passportScorerABI: [] }));
 vi.mock("@/utils/gitcoin-passport", () => ({
-  fetchAllPassportScores: vi.fn(),
+  fetchPassportScoreRecord: vi.fn(),
   getEffectivePassportScore: (
-    score: { expiration_date: string | null; score: string },
+    score: { expiration_timestamp?: string | null; score: string },
     nowMs: number,
   ) =>
     (
-      score.expiration_date != null &&
-      Date.parse(score.expiration_date) <= nowMs
+      score.expiration_timestamp != null &&
+      Date.parse(score.expiration_timestamp) <= nowMs
     ) ?
       0
     : Number(score.score),
@@ -39,12 +39,9 @@ const passportUser = (lastUpdated: number, score = "2000") => ({
 const apiScore = (expirationDate: string | null = null) => ({
   address: userAddress,
   score: "20",
-  status: "DONE",
   last_score_timestamp: new Date(nowSeconds * 1000).toISOString(),
-  expiration_date: expirationDate,
-  evidence: null,
+  expiration_timestamp: expirationDate,
   error: null,
-  stamp_scores: {},
 });
 
 describe("Passport daily score comparison", () => {
@@ -123,5 +120,68 @@ describe("Passport daily score comparison", () => {
       { first: 1000, skip: 1000 },
       expect.anything(),
     );
+  });
+
+  it("rotates a bounded batch through all users each quarter hour", async () => {
+    const { selectPassportUsersForRefresh } = await import("./route");
+    const users = Array.from({ length: 9 }, (_, index) => ({
+      ...passportUser(nowSeconds),
+      id: `user-${index}`,
+    }));
+    const first = selectPassportUsersForRefresh(users, 0);
+    const second = selectPassportUsersForRefresh(users, 15 * 60 * 1000);
+    const third = selectPassportUsersForRefresh(users, 30 * 60 * 1000);
+    expect(first.map((user) => user.id)).toEqual([
+      "user-0",
+      "user-1",
+      "user-2",
+      "user-3",
+    ]);
+    expect(second.map((user) => user.id)).toEqual([
+      "user-4",
+      "user-5",
+      "user-6",
+      "user-7",
+    ]);
+    expect(third.map((user) => user.id)).toEqual([
+      "user-8",
+      "user-0",
+      "user-1",
+      "user-2",
+    ]);
+  });
+
+  it("falls back to the studio subgraph when the published endpoint has no data", async () => {
+    const query = vi
+      .fn()
+      .mockReturnValueOnce({
+        toPromise: vi.fn().mockResolvedValue({
+          data: null,
+          error: new Error("gateway unavailable"),
+        }),
+      })
+      .mockReturnValueOnce({
+        toPromise: vi.fn().mockResolvedValue({
+          data: { passportUsers: [passportUser(nowSeconds)] },
+        }),
+      });
+    const warning = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+    const { fetchPassportUsers } = await import("./route");
+    await expect(
+      fetchPassportUsers(
+        { query } as never,
+        "https://studio.example",
+        "https://gateway.example",
+      ),
+    ).resolves.toHaveLength(1);
+    expect(query).toHaveBeenNthCalledWith(
+      2,
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({ url: "https://studio.example" }),
+    );
+    warning.mockRestore();
   });
 });

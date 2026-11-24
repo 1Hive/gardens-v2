@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import {
   createWalletClient,
   encodeAbiParameters,
@@ -15,11 +14,6 @@ import {
   getCommunityDeliveryVault,
   getDeliveryAdapter,
 } from "./markeeDelivery";
-import {
-  acquireMarkeeDeliveryLease,
-  releaseMarkeeDeliveryLease,
-  renewMarkeeDeliveryLease,
-} from "@/utils/markeeChallengeStore";
 import {
   getEnvPublicClient,
   getRpcUrlForChain,
@@ -49,89 +43,82 @@ export async function runMarkeeDeliveryKeeper() {
   if (!key || !/^0x[\da-f]{64}$/iu.test(key))
     throw new Error("Dedicated delivery keeper is not configured.");
   const account = privateKeyToAccount(key as Hex);
-  const lease = randomUUID();
-  if (!(await acquireMarkeeDeliveryLease(lease)))
-    return { status: "busy", deliveries: [] };
   const deliveries: Array<{ community: string; status: string; hash?: Hex }> =
     [];
-  try {
-    const client = getEnvPublicClient(100);
-    const wallet = createWalletClient({
-      account,
-      chain: resolveClientChain(100),
-      transport: http(getRpcUrlForChain(100), {
-        retryCount: 0,
-        timeout: 20_000,
-      }),
-    });
-    for (const raw of [...new Set(communities as string[])]) {
-      const community = getAddress(raw);
-      const communityKey = keccak256(
-        encodeAbiParameters(
-          [{ type: "uint256" }, { type: "address" }],
-          [100n, community],
-        ),
-      );
-      const vault = await getCommunityDeliveryVault(
-        adapter,
-        communityKey,
-        community,
-      );
-      if ((await deliveryBalance(vault)) < 1_000_000_000_000n) {
-        deliveries.push({ community, status: "below_threshold" });
-        continue;
-      }
-      const latest = await client.getTransactionCount({
-        address: account.address,
-        blockTag: "latest",
-      });
-      if (
-        (await client.getTransactionCount({
-          address: account.address,
-          blockTag: "pending",
-        })) !== latest
-      )
-        throw new Error(
-          "Delivery signer has a pending transaction; wait for confirmation.",
-        );
-      const simulation = await client.simulateContract({
-        address: vault,
-        abi: deliveryABI,
-        functionName: "deliver",
-        account,
-      });
-      const gas =
-        ((await client.estimateContractGas(simulation.request)) * 125n) / 100n;
-      const gasPrice = (await client.getGasPrice()) * 2n;
-      if (
-        gas * gasPrice > 20_000_000_000_000_000n ||
-        (await client.getBalance({ address: account.address })) <
-          gas * gasPrice + 100_000_000_000_000_000n
-      )
-        throw new Error("Delivery keeper gas limit or reserve check failed.");
-      if (!(await renewMarkeeDeliveryLease(lease)))
-        throw new Error("Delivery lease expired; no transaction submitted.");
-      const hash = await wallet.writeContract({
-        address: vault,
-        abi: deliveryABI,
-        functionName: "deliver",
-        nonce: latest,
-        gas,
-        gasPrice,
-      });
-      // If receipt waiting fails, do not resubmit here. The next run checks nonce
-      // and vault balance. deliver() can only forward to the live council Safe.
-      const receipt = await client.waitForTransactionReceipt({
-        hash,
-        timeout: 45_000,
-        confirmations: 2,
-      });
-      if (receipt.status !== "success")
-        throw new Error(`Delivery reverted: ${hash}`);
-      deliveries.push({ community, status: "delivered", hash });
+  const client = getEnvPublicClient(100);
+  const wallet = createWalletClient({
+    account,
+    chain: resolveClientChain(100),
+    transport: http(getRpcUrlForChain(100), {
+      retryCount: 0,
+      timeout: 20_000,
+    }),
+  });
+  for (const raw of [...new Set(communities as string[])]) {
+    const community = getAddress(raw);
+    const communityKey = keccak256(
+      encodeAbiParameters(
+        [{ type: "uint256" }, { type: "address" }],
+        [100n, community],
+      ),
+    );
+    const vault = await getCommunityDeliveryVault(
+      adapter,
+      communityKey,
+      community,
+    );
+    if ((await deliveryBalance(vault)) < 1_000_000_000_000n) {
+      deliveries.push({ community, status: "below_threshold" });
+      continue;
     }
-    return { status: "complete", deliveries };
-  } finally {
-    await releaseMarkeeDeliveryLease(lease);
+    const latest = await client.getTransactionCount({
+      address: account.address,
+      blockTag: "latest",
+    });
+    if (
+      (await client.getTransactionCount({
+        address: account.address,
+        blockTag: "pending",
+      })) !== latest
+    )
+      throw new Error(
+        "Delivery signer has a pending transaction; wait for confirmation.",
+      );
+    const simulation = await client.simulateContract({
+      address: vault,
+      abi: deliveryABI,
+      functionName: "deliver",
+      account,
+    });
+    const gas =
+      ((await client.estimateContractGas(simulation.request)) * 125n) / 100n;
+    const gasPrice = (await client.getGasPrice()) * 2n;
+    if (
+      gas * gasPrice > 20_000_000_000_000_000n ||
+      (await client.getBalance({ address: account.address })) <
+        gas * gasPrice + 100_000_000_000_000_000n
+    )
+      throw new Error("Delivery keeper gas limit or reserve check failed.");
+    // The vault forwards its current balance only once. A concurrent cron
+    // invocation may race this nonce, but cannot deliver the same funds twice.
+    const hash = await wallet.writeContract({
+      address: vault,
+      abi: deliveryABI,
+      functionName: "deliver",
+      nonce: latest,
+      gas,
+      gasPrice,
+    });
+    // If receipt waiting fails, do not resubmit here. The next run checks nonce
+    // and vault balance. deliver() can only forward to the live council Safe.
+    const receipt = await client.waitForTransactionReceipt({
+      hash,
+      timeout: 45_000,
+      confirmations: 2,
+    });
+    if (receipt.status !== "success")
+      throw new Error(`Delivery reverted: ${hash}`);
+    deliveries.push({ community, status: "delivered", hash });
   }
+  return { status: "complete", deliveries };
 }

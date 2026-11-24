@@ -13,7 +13,7 @@ import { initUrqlClient } from "@/providers/urql";
 import { passportScorerABI } from "@/src/generated";
 import {
   ApiScore,
-  fetchAllPassportScores,
+  fetchPassportScoreRecord,
   getEffectivePassportScore,
 } from "@/utils/gitcoin-passport";
 import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
@@ -32,6 +32,10 @@ interface PassportUser {
 }
 
 const PASSPORT_USER_PAGE_SIZE = 1000;
+// Eight scheduled chains share one Passport API key. Four reads per chain
+// leave headroom below Passport's default 125 requests / 15 minutes.
+const PASSPORT_REFRESH_BATCH_SIZE = 4;
+const PASSPORT_REFRESH_SLOT_MS = 15 * 60 * 1000;
 
 const query = gql`
   query PassportUsers($first: Int!, $skip: Int!) {
@@ -149,47 +153,124 @@ const updateScoresOnChain = async (
 };
 
 const updateScores = async (chain: string) => {
-  const subgraphUrl = getConfigByChain(chain)?.subgraphUrl as string;
+  const config = getConfigByChain(chain);
+  if (!config?.subgraphUrl)
+    throw new Error("Passport subgraph is not configured");
   const { urqlClient } = initUrqlClient({ chainId: chain });
 
-  const subgraphUsers = await fetchPassportUsers(urqlClient, subgraphUrl);
+  const subgraphUsers = await fetchPassportUsers(
+    urqlClient,
+    config.subgraphUrl,
+    config.publishedSubgraphUrl,
+  );
+  const selectedUsers = selectPassportUsersForRefresh(subgraphUsers);
+  const results = await Promise.allSettled(
+    selectedUsers.map((user) => fetchPassportScoreRecord(user.userAddress)),
+  );
+  const apiScores: ApiScore[] = [];
+  const failures: { userAddress: Address; error: string }[] = [];
+  results.forEach((result, index) => {
+    const userAddress = selectedUsers[index].userAddress as Address;
+    if (result.status === "rejected") {
+      failures.push({
+        userAddress,
+        error:
+          result.reason instanceof Error ?
+            result.reason.message
+          : "Passport score request failed",
+      });
+      return;
+    }
+    try {
+      if (result.value.error != null) throw new Error(result.value.error);
+      getEffectivePassportScore(result.value);
+      if (!Number.isFinite(Date.parse(result.value.last_score_timestamp)))
+        throw new Error("Passport API returned an invalid score timestamp");
+      apiScores.push(result.value);
+    } catch (error) {
+      failures.push({
+        userAddress,
+        error:
+          error instanceof Error ? error.message : "Invalid Passport score",
+      });
+    }
+  });
 
-  const apiScores = await fetchAllPassportScores();
+  const updates = compareScores(selectedUsers, apiScores);
+  if (updates.length > 0)
+    failures.push(...(await updateScoresOnChain(chain, updates)));
 
-  const updates = compareScores(subgraphUsers, apiScores);
+  return {
+    updates,
+    failures,
+    processed: selectedUsers.length,
+    totalUsers: subgraphUsers.length,
+  };
+};
 
-  const failures =
-    updates.length > 0 ? await updateScoresOnChain(chain, updates) : [];
-
-  return { updates, failures };
+export const selectPassportUsersForRefresh = (
+  users: PassportUser[],
+  nowMs = Date.now(),
+): PassportUser[] => {
+  if (users.length <= PASSPORT_REFRESH_BATCH_SIZE) return users;
+  const start =
+    (Math.floor(nowMs / PASSPORT_REFRESH_SLOT_MS) *
+      PASSPORT_REFRESH_BATCH_SIZE) %
+    users.length;
+  return Array.from(
+    { length: PASSPORT_REFRESH_BATCH_SIZE },
+    (_, offset) => users[(start + offset) % users.length],
+  );
 };
 
 export const fetchPassportUsers = async (
   urqlClient: Client,
   subgraphUrl: string,
+  publishedSubgraphUrl?: string,
 ) => {
-  const subgraphUsers: PassportUser[] = [];
-  for (let skip = 0; ; skip += PASSPORT_USER_PAGE_SIZE) {
-    const subgraphResponse = await urqlClient
-      .query<{ passportUsers: PassportUser[] }>(
-        query,
-        { first: PASSPORT_USER_PAGE_SIZE, skip },
-        {
-          url: subgraphUrl,
-          requestPolicy: "network-only",
-        },
-      )
-      .toPromise();
-
-    if (!subgraphResponse.data) {
-      throw new Error("Failed to fetch data from subgraph");
+  const endpoints =
+    publishedSubgraphUrl && publishedSubgraphUrl !== subgraphUrl ?
+      [publishedSubgraphUrl, subgraphUrl]
+    : [subgraphUrl];
+  let lastError = "Subgraph returned no data";
+  for (const [index, endpoint] of endpoints.entries()) {
+    try {
+      const subgraphUsers: PassportUser[] = [];
+      for (let skip = 0; ; skip += PASSPORT_USER_PAGE_SIZE) {
+        const response = await urqlClient
+          .query<{
+            passportUsers: PassportUser[];
+          }>(
+            query,
+            { first: PASSPORT_USER_PAGE_SIZE, skip },
+            { url: endpoint, requestPolicy: "network-only" },
+          )
+          .toPromise();
+        if (!Array.isArray(response.data?.passportUsers)) {
+          const error = response.error;
+          const status =
+            error?.networkError && "response" in error.networkError ?
+              (error.networkError.response as Response | undefined)?.status
+            : undefined;
+          lastError = `Subgraph returned no users data${status != null ? ` (HTTP ${status})` : ""}`;
+          throw new Error(lastError);
+        }
+        const page = response.data?.passportUsers as PassportUser[];
+        subgraphUsers.push(...page);
+        if (page.length < PASSPORT_USER_PAGE_SIZE) return subgraphUsers;
+      }
+    } catch (error) {
+      lastError =
+        error instanceof Error && error.message === lastError ?
+          lastError
+        : "Subgraph request failed";
+      console.warn("[passport-oracle] Subgraph lookup failed", {
+        source: index === 0 && endpoints.length > 1 ? "published" : "studio",
+        reason: lastError,
+      });
     }
-
-    const page = subgraphResponse.data.passportUsers ?? [];
-    subgraphUsers.push(...page);
-    if (page.length < PASSPORT_USER_PAGE_SIZE) break;
   }
-  return subgraphUsers;
+  throw new Error(`Failed to fetch Passport users: ${lastError}`);
 };
 
 type RouteContext = {
@@ -211,15 +292,26 @@ export async function GET(req: Request, { params }: RouteContext) {
   }
 
   try {
-    const { updates, failures } = await updateScores(chain);
+    const { updates, failures, processed, totalUsers } =
+      await updateScores(chain);
+    if (failures.length > 0)
+      console.error("[passport-oracle] Score refresh failures", {
+        chain,
+        failures,
+        processed,
+      });
     return NextResponse.json(
       {
         message:
-          updates.length ?
+          failures.length > 0 ?
+            "Some Passport scores could not be refreshed"
+          : updates.length ?
             "Scores updated successfully"
           : "No updates required",
         updates,
         failures,
+        processed,
+        totalUsers,
       },
       { status: 200 },
     );

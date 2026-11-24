@@ -75,6 +75,15 @@ import {
 } from "@/utils/markeeActivation";
 import { simulateCommunityMarkeeActivation } from "@/utils/markeeActivationSimulation";
 import {
+  checkClaimOperation,
+  ClaimOperation,
+  ClaimOperationResult,
+  clearPendingClaimOperation,
+  PendingClaimOperation,
+  readPendingClaimOperation,
+  submitClaimOperation,
+} from "@/utils/markeeClaimOperation";
+import {
   buildMarkeeOpenStreamOperations,
   buildMarkeeStopStreamOperations,
   CFA_AGREEMENT_ID,
@@ -132,17 +141,6 @@ type ChallengeResponse = {
   authorizationRole?: "councilSafe" | "councilOwner" | "keeper";
   nonce: string;
   typedData: Eip712TypedData;
-};
-
-type VerifyResponse = {
-  authorized: boolean;
-  bridgeName?: string | null;
-  bridged?: boolean;
-  estimatedRouteDurationSeconds?: number;
-  markeeChainId?: number;
-  router?: Address;
-  transactionHash?: `0x${string}`;
-  transactionUrl?: string;
 };
 
 const formatBridgeDuration = (seconds: number) => {
@@ -2816,6 +2814,9 @@ function CommunityRevenueClaimModal({
     null,
   );
   const [claimStatus, setClaimStatus] = useState<AuthorizationStatus>("idle");
+  const [pendingClaimOperation, setPendingClaimOperation] =
+    useState<PendingClaimOperation | null>(null);
+  const [checkingClaimOperation, setCheckingClaimOperation] = useState(false);
   const [quote, setQuote] = useState<MarkeeClaimQuoteResponse | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
@@ -3088,6 +3089,112 @@ function CommunityRevenueClaimModal({
     onClose();
   };
 
+  const applyClaimOperation = useCallback(
+    (operation: ClaimOperation) => {
+      if (chainId == null) return;
+      if (operation.status === "failed") {
+        clearPendingClaimOperation(chainId, community);
+        setPendingClaimOperation(null);
+        setClaimStatus("idle");
+        setClaimError(
+          operation.error ?? "Markee could not complete this claim.",
+        );
+        return;
+      }
+      if (operation.status !== "complete") {
+        setPendingClaimOperation(readPendingClaimOperation(chainId, community));
+        setClaimStatus("idle");
+        return;
+      }
+      const result: ClaimOperationResult | undefined = operation.result;
+      if (!result?.transactionHash)
+        throw new Error("Markee returned an incomplete claim result.");
+      const bridgeName =
+        result.bridgeName ??
+        (result.bridgeProtocol === "lifi" ? "LI.FI"
+        : result.bridgeProtocol === "squid" ? "Squid"
+        : null);
+      clearPendingClaimOperation(chainId, community);
+      setPendingClaimOperation(null);
+      setClaimTransactionUrl(result.transactionUrl ?? null);
+      setClaimTransactionHash(result.transactionHash);
+      setClaimBridgeName(bridgeName);
+      setClaimSourceChainId(result.markeeChainId ?? markeeChainId ?? null);
+      setEstimatedRouteDurationSeconds(
+        result.estimatedRouteDurationSeconds ?? null,
+      );
+      if (
+        (bridgeName === "Squid" || bridgeName === "LI.FI") &&
+        result.bridged
+      ) {
+        const saved = writePendingMarkeeClaim(chainId, community, {
+          bridgeName,
+          createdAt: Date.now(),
+          estimatedRouteDurationSeconds:
+            result.estimatedRouteDurationSeconds ?? null,
+          fromChainId: result.markeeChainId ?? markeeChainId ?? chainId,
+          toChainId: chainId,
+          transactionHash: result.transactionHash,
+          transactionUrl: result.transactionUrl ?? null,
+          version: 1,
+        });
+        onPendingClaimChange(saved);
+      }
+      setClaimStatus("authorized");
+      setIsClaimComplete(true);
+      void onClaimSuccess().catch((error: unknown) => {
+        logOnce(
+          "warn",
+          "[CommunityMarkee] Unable to refresh community revenue after claim",
+          error,
+        );
+      });
+    },
+    [chainId, community, markeeChainId, onClaimSuccess, onPendingClaimChange],
+  );
+
+  const handleCheckClaimOperation = useCallback(async () => {
+    if (chainId == null) return;
+    setCheckingClaimOperation(true);
+    try {
+      const pending = readPendingClaimOperation(chainId, community);
+      if (pending) applyClaimOperation(await checkClaimOperation(pending));
+    } catch (error) {
+      setClaimError(
+        getTransactionErrorMessage(error, "Unable to check the claim status."),
+      );
+    } finally {
+      setCheckingClaimOperation(false);
+    }
+  }, [applyClaimOperation, chainId, community]);
+
+  const applyClaimOperationRef = useRef(applyClaimOperation);
+  applyClaimOperationRef.current = applyClaimOperation;
+
+  useEffect(() => {
+    if (!isOpen || chainId == null) return;
+    try {
+      const pending = readPendingClaimOperation(chainId, community);
+      setPendingClaimOperation(pending);
+      if (pending) {
+        void checkClaimOperation(pending)
+          .then((operation) => applyClaimOperationRef.current(operation))
+          .catch((error) =>
+            setClaimError(
+              getTransactionErrorMessage(
+                error,
+                "Unable to check the claim status.",
+              ),
+            ),
+          );
+      }
+    } catch (error) {
+      setClaimError(
+        getTransactionErrorMessage(error, "Unable to read the pending claim."),
+      );
+    }
+  }, [chainId, community, isOpen]);
+
   const handleClaimAuthorization = async () => {
     if (
       connectedAccount == null ||
@@ -3095,6 +3202,7 @@ function CommunityRevenueClaimModal({
       chainId == null ||
       councilSafe == null ||
       quote == null ||
+      pendingClaimOperation != null ||
       !hasClaimableRevenue ||
       areClaimFeesAboveRevenue
     ) {
@@ -3128,7 +3236,6 @@ function CommunityRevenueClaimModal({
         action: "challenge",
         chainId,
         community,
-        quoteId: quote.quoteId,
       });
       if (challenge.nonce.length === 0) {
         throw new Error(
@@ -3137,12 +3244,12 @@ function CommunityRevenueClaimModal({
       }
       const challengeClaimAmountValue = challenge.typedData.message.claimAmount;
       const challengeGasCost = challenge.typedData.message.gasCost;
-      const challengeMinAmountOut = challenge.typedData.message.minAmountOut;
+      const challengeMaxFeeAmount = challenge.typedData.message.maxFeeAmount;
       const challengeRecipient = challenge.typedData.message.recipient;
       if (
         typeof challengeClaimAmountValue !== "string" ||
         typeof challengeGasCost !== "string" ||
-        typeof challengeMinAmountOut !== "string" ||
+        typeof challengeMaxFeeAmount !== "string" ||
         typeof challengeRecipient !== "string"
       ) {
         throw new Error(
@@ -3152,31 +3259,38 @@ function CommunityRevenueClaimModal({
       const challengeClaimAmount = BigInt(challengeClaimAmountValue);
       const quotedClaimAmount = BigInt(quote.claimAmount);
       const isSameChainClaim = quote.markeeChainId === chainId;
-      const claimAmountIsInvalid =
-        isSameChainClaim ?
-          challengeClaimAmount < quotedClaimAmount
-        : challengeClaimAmount !== quotedClaimAmount;
+      // Streaming revenue may increase between the reviewed quote and the
+      // challenge. Only accept terms that do not worsen the reviewed amount
+      // or fee ceiling; Markee binds the signed amount during execution.
       if (
-        claimAmountIsInvalid ||
-        challengeGasCost !== quote.estimatedNetworkFeeAmount ||
-        challenge.typedData.message.maxFeeAmount !==
-          (quote.maxFeeAmount ?? quote.estimatedFeeAmount) ||
-        challengeMinAmountOut !== quote.expectedAmountOut ||
+        challengeClaimAmount < quotedClaimAmount ||
+        BigInt(challengeGasCost) > BigInt(quote.estimatedNetworkFeeAmount) ||
+        BigInt(challengeMaxFeeAmount) >
+          BigInt(quote.maxFeeAmount ?? quote.estimatedFeeAmount) ||
         challenge.typedData.message.markeeChainId !==
           quote.markeeChainId.toString() ||
         challengeRecipient.toLowerCase() !== quote.recipient.toLowerCase()
       ) {
         throw new Error(CLAIM_QUOTE_CHANGED_MESSAGE);
       }
-      if (isSameChainClaim && challengeClaimAmount > quotedClaimAmount) {
+      if (
+        challengeClaimAmount > quotedClaimAmount ||
+        challengeGasCost !== quote.estimatedNetworkFeeAmount ||
+        challengeMaxFeeAmount !==
+          (quote.maxFeeAmount ?? quote.estimatedFeeAmount)
+      ) {
         setQuote((currentQuote) =>
           currentQuote == null ? currentQuote : (
             {
               ...currentQuote,
               claimAmount: challengeClaimAmount.toString(),
-              expectedAmountOut: (
-                challengeClaimAmount - BigInt(challengeGasCost)
-              ).toString(),
+              maxFeeAmount: challengeMaxFeeAmount,
+              estimatedFeeAmount: challengeMaxFeeAmount,
+              estimatedNetworkFeeAmount: challengeGasCost,
+              expectedAmountOut:
+                isSameChainClaim ?
+                  (challengeClaimAmount - BigInt(challengeGasCost)).toString()
+                : currentQuote.expectedAmountOut,
             }
           ),
         );
@@ -3190,60 +3304,20 @@ function CommunityRevenueClaimModal({
       });
       claimWasSigned = true;
       setClaimStatus("verifying");
-      const verification = await postClaimAuthorization<VerifyResponse>({
-        action: "verify",
-        nonce: challenge.nonce,
+      const operation = await submitClaimOperation(
+        chainId,
+        community,
+        challenge.nonce,
         signature,
-      });
-      if (!verification.authorized) {
-        throw new Error("The claim authorization was not accepted.");
-      }
-
-      setClaimTransactionUrl(verification.transactionUrl ?? null);
-      setClaimTransactionHash(verification.transactionHash ?? null);
-      setClaimBridgeName(verification.bridgeName ?? null);
-      setClaimSourceChainId(quote.markeeChainId);
-      setEstimatedRouteDurationSeconds(
-        verification.estimatedRouteDurationSeconds ??
-          quote.estimatedRouteDurationSeconds ??
-          null,
       );
-      if (
-        (verification.bridgeName === "Squid" ||
-          verification.bridgeName === "LI.FI") &&
-        verification.transactionHash != null &&
-        quote.bridged
-      ) {
-        const wasPendingClaimSaved = writePendingMarkeeClaim(
-          chainId,
-          community,
-          {
-            bridgeName: verification.bridgeName,
-            createdAt: Date.now(),
-            estimatedRouteDurationSeconds:
-              verification.estimatedRouteDurationSeconds ??
-              quote.estimatedRouteDurationSeconds ??
-              null,
-            fromChainId: quote.markeeChainId,
-            toChainId: chainId,
-            transactionHash: verification.transactionHash,
-            transactionUrl: verification.transactionUrl ?? null,
-            version: 1,
-          },
-        );
-        onPendingClaimChange(wasPendingClaimSaved);
-      }
-      setClaimStatus("authorized");
-      setIsClaimComplete(true);
-      void onClaimSuccess().catch((error: unknown) => {
-        logOnce(
-          "warn",
-          "[CommunityMarkee] Unable to refresh community revenue after claim",
-          error,
-        );
-      });
+      applyClaimOperation(operation);
     } catch (error) {
       setClaimStatus("idle");
+      try {
+        setPendingClaimOperation(readPendingClaimOperation(chainId, community));
+      } catch {
+        // Keep the error from the original claim attempt.
+      }
       if (!isUserRejectedTransactionError(error)) {
         logOnce("error", "[CommunityMarkee] Claim authorization failed", error);
         setClaimError(
@@ -3339,6 +3413,18 @@ function CommunityRevenueClaimModal({
             >
               Cancel
             </Button>
+            {pendingClaimOperation != null && (
+              <Button
+                btnStyle="filled"
+                color="primary"
+                className="w-full sm:w-auto"
+                disabled={checkingClaimOperation}
+                isLoading={checkingClaimOperation}
+                onClick={handleCheckClaimOperation}
+              >
+                Check claim status
+              </Button>
+            )}
             <Button
               btnStyle="filled"
               color="primary"
@@ -3349,6 +3435,7 @@ function CommunityRevenueClaimModal({
                 connector == null ||
                 chainId == null ||
                 quote == null ||
+                pendingClaimOperation != null ||
                 isQuoteLoading ||
                 !hasClaimableRevenue ||
                 areClaimFeesAboveRevenue
@@ -3489,6 +3576,16 @@ function CommunityRevenueClaimModal({
                 title="Claim unsuccessful"
                 content={claimError}
               />
+            </div>
+          )}
+
+          {pendingClaimOperation != null && (
+            <div
+              role="status"
+              className="rounded-xl border border-primary-content/30 px-4 py-3 text-sm text-neutral-soft-content"
+            >
+              A signed claim is pending. Check its status before starting
+              another claim.
             </div>
           )}
 
@@ -3991,7 +4088,9 @@ export function CommunityMarkeePlaceholder({
           ...result,
         });
         setAuthorizationStatus("idle");
-        toast.success("Activation simulation passed. See the console for the result.");
+        toast.success(
+          "Activation simulation passed. See the console for the result.",
+        );
         return;
       }
 
@@ -4298,7 +4397,8 @@ export function CommunityMarkeePlaceholder({
                   No fee to activate.
                   <br />
                   Opens a signature in your wallet.
-                </>}
+                </>
+              }
             </p>
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
               <Button

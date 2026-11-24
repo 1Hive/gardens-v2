@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  fetchAllPassportScores,
   fetchPassportScore,
-  type ApiScore,
+  fetchPassportScoreRecord,
 } from "./gitcoin-passport";
 
 const account = "0x1234567890abcdef1234567890abcdef12345678";
@@ -17,7 +16,6 @@ describe("Gitcoin Passport scorer client", () => {
     vi.stubEnv("GITCOIN_PASSPORT_API_KEY", apiKey);
     vi.stubEnv("SCORER_ID", scorerId);
     vi.stubGlobal("fetch", fetchMock);
-    vi.spyOn(console, "info").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -30,7 +28,9 @@ describe("Gitcoin Passport scorer client", () => {
   it("fetches and parses a score from the Passport API", async () => {
     fetchMock.mockResolvedValue(
       Response.json({
-        expiration_date: "2099-01-01T00:00:00Z",
+        address: account,
+        expiration_timestamp: "2099-01-01T00:00:00Z",
+        last_score_timestamp: "2026-11-23T00:00:00Z",
         score: "21.75",
       }),
     );
@@ -38,8 +38,9 @@ describe("Gitcoin Passport scorer client", () => {
     await expect(fetchPassportScore(account)).resolves.toBe(21.75);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      `https://api.passport.xyz/registry/score/${scorerId}/${account}`,
+      `https://api.passport.xyz/v2/stamps/${scorerId}/score/${account}`,
       {
+        cache: "no-store",
         headers: {
           "Content-Type": "application/json",
           "X-API-KEY": apiKey,
@@ -52,7 +53,9 @@ describe("Gitcoin Passport scorer client", () => {
   it("returns zero when the Passport credential has expired", async () => {
     fetchMock.mockResolvedValue(
       Response.json({
-        expiration_date: "2020-01-01T00:00:00Z",
+        address: account,
+        expiration_timestamp: "2020-01-01T00:00:00Z",
+        last_score_timestamp: "2020-01-01T00:00:00Z",
         score: "21.75",
       }),
     );
@@ -86,31 +89,19 @@ describe("Gitcoin Passport scorer client", () => {
     );
   });
 
-  it("fetches every score for the configured scorer", async () => {
-    const scores: ApiScore[] = [
-      {
-        address: account,
-        error: null,
-        evidence: null,
-        expiration_date: null,
-        last_score_timestamp: "2026-10-14T00:00:00Z",
-        score: "21.75",
-        stamp_scores: { Github: 5 },
-        status: "DONE",
-      },
-    ];
-    fetchMock.mockResolvedValue(Response.json(scores));
-
-    await expect(fetchAllPassportScores()).resolves.toEqual(scores);
-    expect(fetchMock).toHaveBeenCalledWith(
-      `https://api.passport.xyz/registry/score/${scorerId}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-KEY": apiKey,
-        },
-        method: "GET",
-      },
+  it("rejects a bulk or mismatched response instead of treating it as a score", async () => {
+    fetchMock.mockResolvedValueOnce(Response.json({ results: [] }));
+    await expect(fetchPassportScoreRecord(account)).rejects.toThrow(
+      "invalid score response",
+    );
+    fetchMock.mockResolvedValueOnce(
+      Response.json({
+        address: "0x0000000000000000000000000000000000000001",
+        score: "20",
+      }),
+    );
+    await expect(fetchPassportScoreRecord(account)).rejects.toThrow(
+      "invalid score response",
     );
   });
 });

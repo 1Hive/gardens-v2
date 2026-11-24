@@ -1,61 +1,40 @@
-// api/passport/submit-passport
-
 import { NextResponse } from "next/server";
+import {
+  fetchPassportScoreRecord,
+  getEffectivePassportScore,
+} from "../../../../utils/gitcoin-passport";
 
-interface PassportData {
-  address: string;
-  signature: string;
-  nonce: string;
-}
-
+// Keep the existing Gardens POST contract for its callers. Passport v2
+// calculates the latest score through GET, without a separate submission.
 export async function POST(request: Request) {
-  const apiKey = process.env.GITCOIN_PASSPORT_API_KEY;
-  const scorerId = process.env.SCORER_ID;
-  const endpoint = "https://api.passport.xyz/registry/submit-passport";
-
-  if (!apiKey) {
-    return NextResponse.json({ error: "API key is missing" }, { status: 500 });
-  }
-
-  let requestBody: PassportData;
+  let body: unknown;
   try {
-    requestBody = await request.json();
-  } catch (error) {
-    console.error("Error parsing JSON:", error);
+    body = await request.json();
+  } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
-
-  const { address } = requestBody;
-
-  if (!address) {
-    return NextResponse.json({ error: "Address is required" }, { status: 400 });
-  }
+  const address =
+    typeof body === "object" && body !== null && "address" in body ?
+      body.address
+    : undefined;
+  if (typeof address !== "string" || !/^0x[a-fA-F0-9]{40}$/u.test(address))
+    return NextResponse.json(
+      { error: "A valid address is required" },
+      { status: 400 },
+    );
 
   try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-KEY": apiKey,
-      },
-      body: JSON.stringify({ address, scorer_id: scorerId }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      return NextResponse.json(data, { status: 200 });
-    } else {
-      const errorData = await response.json();
-      return NextResponse.json(
-        { error: errorData.statusText },
-        { status: response.status },
-      );
-    }
-  } catch (error) {
-    console.error("Request error:", error);
+    const score = await fetchPassportScoreRecord(address);
+    if (score.error != null) throw new Error(score.error);
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
+      { ...score, score: String(getEffectivePassportScore(score)) },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  } catch (error) {
+    console.error("Unable to retrieve Passport score", error);
+    return NextResponse.json(
+      { error: "Unable to retrieve Passport score" },
+      { status: 502 },
     );
   }
 }
