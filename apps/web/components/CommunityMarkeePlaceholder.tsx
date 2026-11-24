@@ -73,6 +73,7 @@ import {
   readPendingActivation,
   submitActivation,
 } from "@/utils/markeeActivation";
+import { simulateCommunityMarkeeActivation } from "@/utils/markeeActivationSimulation";
 import {
   buildMarkeeOpenStreamOperations,
   buildMarkeeStopStreamOperations,
@@ -128,6 +129,7 @@ const MARKEE_WIN_INCREMENT = parseEther("0.001");
 const INACTIVE_SIGN_MESSAGE = "This sign funds your community";
 
 type ChallengeResponse = {
+  authorizationRole?: "councilSafe" | "councilOwner" | "keeper";
   nonce: string;
   typedData: Eip712TypedData;
 };
@@ -214,10 +216,10 @@ function PlaceholderSign({
   const sign = (
     <>
       <div
-        className={`relative z-0 rounded-xl bg-neutral/50 px-6 py-8 transition-all duration-200 sm:group-hover:-translate-y-0.5 sm:group-hover:border-primary-content/50 sm:group-hover:shadow-xl sm:group-hover:shadow-primary-content/20 ${isPlaceholder ? "border-2 border-dashed border-primary-content/50" : "border border-neutral-content/15"}`}
+        className={`relative z-0 rounded-xl px-6 py-8 transition-all duration-200 sm:group-hover:-translate-y-0.5 sm:group-hover:border-primary-content/50 sm:group-hover:shadow-xl sm:group-hover:shadow-primary-content/20 ${isPlaceholder ? "border-2 border-dashed border-primary-content/50 bg-transparent" : "border border-neutral-content/15 bg-neutral/50"}`}
       >
         {showAdminLabel && (
-          <span className="pointer-events-none absolute -top-3 left-1/2 z-10 max-w-[calc(100%-1rem)] -translate-x-1/2 overflow-hidden text-ellipsis whitespace-nowrap bg-base-100 px-2 font-mono text-[10px] font-semibold uppercase tracking-widest text-warning-content opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+          <span className="pointer-events-none absolute -top-2.5 left-1/2 z-10 max-w-[calc(100%-1rem)] -translate-x-1/2 overflow-hidden text-ellipsis whitespace-nowrap px-2 font-mono text-[10px] font-medium uppercase tracking-widest text-neutral-content/80 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
             Hidden, except for community admins
           </span>
         )}
@@ -3929,7 +3931,6 @@ export function CommunityMarkeePlaceholder({
       activationInFlight.current ||
       hasPendingActivation ||
       !canAuthorizeMarkee ||
-      isSimulatedWallet ||
       connectedAccount == null ||
       connector == null ||
       chainId == null
@@ -3945,14 +3946,16 @@ export function CommunityMarkeePlaceholder({
     let activeStep: "challenge" | "execute" | "sign" = "challenge";
     let transactionHash: `0x${string}` | undefined;
     let router: Address | undefined;
-    setOptInTransactionNotification({
-      contractName: "Create Markee leaderboard",
-      status: "waiting",
-      toastId,
-    });
+    if (!isSimulatedWallet) {
+      setOptInTransactionNotification({
+        contractName: "Create Markee leaderboard",
+        status: "waiting",
+        toastId,
+      });
+    }
 
     try {
-      if (connectedChain?.id !== chainId) {
+      if (!isSimulatedWallet && connectedChain?.id !== chainId) {
         if (switchNetworkAsync == null) {
           throw new Error(
             `Switch your wallet to ${chainConfigMap[chainId]?.name ?? `chain ${chainId}`} to continue.`,
@@ -3969,6 +3972,27 @@ export function CommunityMarkeePlaceholder({
       });
       if (challenge.nonce.length === 0) {
         throw new Error("The authorization API returned an invalid challenge.");
+      }
+
+      if (isSimulatedWallet) {
+        activeStep = "execute";
+        setAuthorizationStatus("verifying");
+        const result = await simulateCommunityMarkeeActivation({
+          chainId,
+          community,
+          markeeChainId: markee.markeeChainId,
+        });
+        console.info("[CommunityMarkee] Activation simulation", {
+          account: connectedAccount,
+          authorizationRole: challenge.authorizationRole,
+          community,
+          communityChainId: chainId,
+          status: "success",
+          ...result,
+        });
+        setAuthorizationStatus("idle");
+        toast.success("Activation simulation passed. See the console for the result.");
+        return;
       }
 
       setAuthorizationStatus("signing");
@@ -4018,6 +4042,14 @@ export function CommunityMarkeePlaceholder({
       router = operation.result?.router;
       applyActivation(operation);
     } catch (error) {
+      if (isSimulatedWallet) {
+        console.error("[CommunityMarkee] Activation simulation failed", error);
+        toast.error(
+          getTransactionErrorMessage(error, "Activation simulation failed."),
+        );
+        setAuthorizationStatus("idle");
+        return;
+      }
       let pending = true;
       try {
         pending =
@@ -4260,9 +4292,13 @@ export function CommunityMarkeePlaceholder({
         footer={
           <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm leading-relaxed text-neutral-soft-content">
-              No fee to activate.
-              <br />
-              Opens a signature in your wallet.
+              {isSimulatedWallet ?
+                "Read-only simulation. Results appear in the console."
+              : <>
+                  No fee to activate.
+                  <br />
+                  Opens a signature in your wallet.
+                </>}
             </p>
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
               <Button
@@ -4280,7 +4316,6 @@ export function CommunityMarkeePlaceholder({
                 disabled={
                   hasPendingActivation ||
                   !canAuthorizeMarkee ||
-                  isSimulatedWallet ||
                   chainId == null ||
                   authorizationStatus === "authorized"
                 }
@@ -4288,9 +4323,7 @@ export function CommunityMarkeePlaceholder({
                 onClick={handleAuthorize}
                 testId="markee-opt-in-create"
                 tooltip={
-                  isSimulatedWallet ?
-                    "A simulated wallet cannot sign. Connect a real council Safe owner wallet."
-                  : !canAuthorizeMarkee ?
+                  !canAuthorizeMarkee ?
                     "Connect with the council Safe or one of its owners to continue."
                   : undefined
                 }
@@ -4299,6 +4332,8 @@ export function CommunityMarkeePlaceholder({
               >
                 {authorizationStatus === "authorized" ?
                   "Activated"
+                : isSimulatedWallet ?
+                  "Simulate activation"
                 : "Activate sign"}
               </Button>
             </div>
@@ -4306,20 +4341,6 @@ export function CommunityMarkeePlaceholder({
         }
       >
         <div className="flex flex-col gap-6">
-          {isSimulatedWallet && (
-            <div
-              className="rounded-xl border border-warning-content/30 bg-warning-soft/50 p-4"
-              role="status"
-            >
-              <p className="font-medium text-neutral-content">
-                A simulated wallet cannot activate this sign
-              </p>
-              <p className="mt-1 text-sm leading-relaxed text-neutral-soft-content">
-                Reload this page without wallet simulation, then connect a
-                real council Safe owner wallet to sign the activation request.
-              </p>
-            </div>
-          )}
           {!canAuthorizeMarkee && councilSafe && (
             <div className="flex items-start gap-3 rounded-xl border border-warning-content/30 bg-warning-soft/50 p-4">
               <ArrowsRightLeftIcon className="mt-0.5 h-5 w-5 shrink-0 text-warning-content" />
