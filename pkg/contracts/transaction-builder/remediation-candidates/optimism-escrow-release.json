@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "chainId": "10",
+  "createdAt": 1795465611674,
+  "meta": {
+    "name": "optimism streaming escrow release",
+    "description": "Update the escrow template, then upgrade each enumerated existing escrow and migrate legacy layouts. Recheck live inventory and ownership before execution.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0x71520D667f5ab45F68c4E8455FfA1F9a7F792eAc",
+      "value": "0",
+      "data": "0xe01c9d59000000000000000000000000af8240504a08738f4c717302aba5da8c00611f23"
+    },
+    {
+      "to": "0xA80C83Ab9E945bDCbf594692ee935ccb1c0EedC6",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000af8240504a08738f4c717302aba5da8c00611f23"
+    },
+    {
+      "to": "0x9dE64B5FbB248BAa919F6852BF27BA67C2336120",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000af8240504a08738f4c717302aba5da8c00611f23"
+    },
+    {
+      "to": "0x9fa78dAAE2b1ef3909a647AE883e1DC5981bAf64",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000af8240504a08738f4c717302aba5da8c00611f23"
+    },
+    {
+      "to": "0xbD19E88a5534216AB9da242bd201575a1008F385",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000af8240504a08738f4c717302aba5da8c00611f23"
+    },
+    {
+      "to": "0xE27a99b53D96dcD1280AC60337A44DBe13aB2138",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000af8240504a08738f4c717302aba5da8c00611f23"
+    },
+    {
+      "to": "0x70F21A2DFbBaD29B90dAa20861e5318E0e7A40FF",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000af8240504a08738f4c717302aba5da8c00611f23"
+    }
+  ]
+}

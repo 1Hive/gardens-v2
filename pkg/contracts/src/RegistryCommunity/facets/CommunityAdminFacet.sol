@@ -236,6 +236,8 @@ contract CommunityAdminFacet is CommunityBaseFacet {
 
     function _queueGuardedParams(CommunityParams memory params) internal {
         PendingCommunityParams storage pending = CommunityPendingParamsStorage.layout().pending;
+        // The default zero value is intentional before conditional assignment.
+        // slither-disable-next-line uninitialized-local
         bool changed;
 
         if (params.registerStakeAmount != registerStakeAmount) {

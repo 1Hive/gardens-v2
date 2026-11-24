@@ -230,6 +230,18 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         vm.stopPrank();
     }
 
+    function test_security_proxyIsInitializedAtomicallyAndCannotBeClaimed() public {
+        assertEq(safeArbitrator.proxyOwner(), factoryOwner);
+        assertEq(safeArbitrator.arbitrationCost(""), ARBITRATION_FEE);
+
+        vm.prank(challenger);
+        vm.expectRevert();
+        safeArbitrator.initialize(0, challenger);
+
+        assertEq(safeArbitrator.proxyOwner(), factoryOwner);
+        assertEq(safeArbitrator.arbitrationCost(""), ARBITRATION_FEE);
+    }
+
     function testSetArbitrationFee() public {
         vm.startPrank(factoryOwner);
         uint256 newFee = 0.02 ether;

@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "chainId": "1",
+  "createdAt": 1795491177354,
+  "meta": {
+    "name": "ethereum streaming escrow release",
+    "description": "Update the escrow template, then upgrade each enumerated existing escrow and migrate legacy layouts. Recheck live inventory and ownership before execution.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0x87ad877E190a18fA4Da4F4CaBFd5C137353f5f57",
+      "value": "0",
+      "data": "0xe01c9d590000000000000000000000003f0a53ae8a49bf44626d92249dd5b9ce28efe722"
+    }
+  ]
+}

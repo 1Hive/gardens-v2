@@ -769,6 +769,32 @@ contract CVStrategyCoverageTest is Test {
         assertEq(address(local.sybilScorer()), address(0));
     }
 
+    function test_initialize_rejectsInvalidDecayButAcceptsBoundary() public {
+        CVStrategyHarness local = new CVStrategyHarness();
+        MockAlloWithPool localAllo = new MockAlloWithPool();
+        MockCollateralVault template = new MockCollateralVault();
+        localAllo.setPoolToken(1, address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
+        local.setAllo(address(localAllo));
+        local.setCollateralVaultTemplateRaw(address(template));
+
+        CVStrategyInitializeParamsV0_3 memory params;
+        params.registryCommunity = address(registryCommunity);
+        params.proposalType = ProposalType.Funding;
+        params.pointSystem = PointSystem.Unlimited;
+        params.pointConfig = PointSystemConfig(100);
+        params.cvParams = CVParams(1, 2, ConvictionsUtils.D, 4);
+
+        vm.prank(address(localAllo));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.InvalidDecay.selector, ConvictionsUtils.D));
+        local.initialize(1, abi.encode(params));
+
+        params.cvParams.decay = ConvictionsUtils.D - 1;
+        vm.prank(address(localAllo));
+        local.initialize(1, abi.encode(params));
+        (,, uint256 storedDecay,) = local.cvParams();
+        assertEq(storedDecay, ConvictionsUtils.D - 1);
+    }
+
     function test_initialize_reverts_when_arbitrator_not_registered() public {
         CVStrategyHarness local = new CVStrategyHarness();
         MockAlloWithPool localAllo = new MockAlloWithPool();

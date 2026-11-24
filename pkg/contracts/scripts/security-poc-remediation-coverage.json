@@ -1,0 +1,62 @@
+[
+  {
+    "finding": "F01",
+    "tests": [
+      "pkg/contracts/test/StreamingSolvency.t.sol::test_underfundedPoolCapsBothLegsAndKeepsRunway",
+      "pkg/contracts/test/StreamingSolvency.t.sol::test_fullyFundedPoolKeepsConvictionRate"
+    ]
+  },
+  {
+    "finding": "F02",
+    "tests": [
+      "apps/web/components/MarkdownWrapper.test.ts::removes active HTML and unsafe links from untrusted markdown",
+      "apps/web/components/MarkdownWrapper.test.ts::preserves ordinary markdown and safe links"
+    ]
+  },
+  {
+    "finding": "F03",
+    "tests": [
+      "pkg/contracts/test/RegistryCommunity.t.sol::test_initialize_recoversOccupiedAlloProfileId",
+      "pkg/contracts/test/RegistryCommunity.t.sol::test_initialize_success_sets_fields"
+    ]
+  },
+  {
+    "finding": "F04",
+    "tests": [
+      "pkg/contracts/test/StreamingEscrow.t.sol::test_security_favorableRulingDefersUnfundedRestartAndRetriesAfterFunding",
+      "pkg/contracts/test/StreamingEscrow.t.sol::test_security_favorableRulingRestartsFundedFlowAndPropagatesOtherFailures"
+    ]
+  },
+  {
+    "finding": "F05",
+    "tests": [
+      "pkg/contracts/test/CVStrategy.t.sol::test_initialize_rejectsInvalidDecayButAcceptsBoundary",
+      "pkg/contracts/test/CVAdminFacet.t.sol::test_setPoolParams_rejectsInvalidDecayAndCanRepairExistingPool"
+    ]
+  },
+  {
+    "finding": "F06",
+    "tests": [
+      "pkg/contracts/test/CVSyncPowerFacet.t.sol::test_security_syncRemovesFullPeakEvenWhenCommunityCacheIsStale"
+    ]
+  },
+  {
+    "finding": "F07",
+    "tests": [
+      "pkg/contracts/test/CVPowerFacet.t.sol::test_security_decreasePowerAfterPriorClampDoesNotBrickUnstake"
+    ]
+  },
+  {
+    "finding": "F08",
+    "tests": [
+      "pkg/contracts/test/PowerAndConvictionUtils.t.sol::test_convictionsUtils_largeStakeAvoidsIntermediateOverflow",
+      "pkg/contracts/test/PowerAndConvictionUtils.t.sol::testFuzz_convictionsUtils_matchesOldFormulaWhenOldFormulaFits"
+    ]
+  },
+  {
+    "finding": "F09",
+    "tests": [
+      "pkg/contracts/test/no-coverage/SecurityPoC.t.sol::test_F09_DeployCVInitializesArbitratorProxyBeforeExposure"
+    ]
+  }
+]

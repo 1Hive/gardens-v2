@@ -15,7 +15,7 @@
     "test": "forge test -vvv",
     "test:force": "forge test -vvv --force",
     "test:fork-healthcheck": "forge test --match-path 'pkg/contracts/test/fork/ForkLifecycleHealthcheck.t.sol' -vvv",
-    "test:security": "forge test --match-path 'pkg/contracts/test/no-coverage/SecurityPoC.t.sol' -vvv",
+    "test:security": "node scripts/check-security-poc-coverage.mjs && forge test --no-match-path 'pkg/contracts/test/fork/*' --summary",
     "format": "forge fmt",
     "coverage": "node scripts/run-coverage.mjs",
     "sync:abis": "bash scripts/sync-abis.sh",

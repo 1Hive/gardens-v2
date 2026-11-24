@@ -57,9 +57,9 @@
     },
     "1242879|@graphprotocol/client-urql>@graphql-mesh/urql-exchange>@graphql-mesh/runtime>@envelop/extended-validation>@graphql-tools/utils": {
       "decision": "ignore",
-      "madeAt": 1795389119544,
+      "madeAt": 1795469954342,
       "reason": "Revalidated 2026-11-22 on a clean frozen-lockfile installation: every installed affected copy (10.11.0 and 11.0.0, CJS and ESM) passes the prototype-pollution and GraphQL 16 compatibility regressions in check-graphql-security.mjs. The installed 10.11.0 and 11.0.0 packages carry the upstream mergeIncrementalResult and mergeDeep security backports in pnpm.patchedDependencies (CJS and ESM). audit:check first runs check-graphql-security.mjs against every installed affected copy and fails if the backport is absent or unsafe. The sanitized npm audit cannot model pnpm patches. A blanket utils 12 override breaks the GraphQL 16 variable API used by the current Mesh executor/delegate; retire this decision after a coordinated compatible upgrade. See patches/README.md.",
-      "expiresAt": 1797981119544
+      "expiresAt": 1798061954342
     },
     "1243857|@wagmi/core>@wagmi/connectors>@walletconnect/ethereum-provider>@walletconnect/sign-client>@walletconnect/core>@walletconnect/utils>query-string>decode-uri-component": {
       "decision": "ignore",

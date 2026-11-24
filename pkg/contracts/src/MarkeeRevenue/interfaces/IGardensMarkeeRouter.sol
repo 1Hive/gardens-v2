@@ -49,6 +49,10 @@ interface IGardensMarkeeRouter {
 
     function communityIntegration(bytes32 communityKey) external view returns (CommunityIntegration memory integration);
 
+    /// @notice Owner-only, one-time migration of the documented Gnosis pilot
+    /// board's future beneficiary stream to a preconfigured generic vault.
+    function migrateGnosisPilotBeneficiary(address newVault, address genericRouter) external;
+
     function streamingLeaderboardFactory() external view returns (address factory);
 
     function setStreamingLeaderboardFactory(address newFactory) external;

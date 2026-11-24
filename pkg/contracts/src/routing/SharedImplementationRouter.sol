@@ -100,8 +100,12 @@ abstract contract SharedImplementationRouter is ProxyOwnableUpgrader, IDiamondLo
 
     function _cuts() internal view returns (IDiamondCut.FacetCut[] memory cuts) {
         if (_isStrategy()) {
+            // Only the selected return value is needed at this call site.
+            // slither-disable-next-line unused-return
             (cuts,,) = IRegistryFactory(routingFactory).getStrategyFacets();
         } else {
+            // Only the selected return value is needed at this call site.
+            // slither-disable-next-line unused-return
             (cuts,,) = IRegistryFactory(routingFactory).getCommunityFacets();
         }
     }

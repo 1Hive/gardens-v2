@@ -12,11 +12,16 @@ import {ISafe} from "../../interfaces/ISafe.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {
+    ISuperfluid, ISuperfluidToken, ISuperfluidGovernance, SuperfluidGovernanceConfigs
+} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 
 interface IStreamingEscrowSync {
     function syncOutflow() external;
     function depositAmount() external view returns (uint256);
     function drainToStrategy() external;
+    function outflowDeposit() external view returns (uint256);
+    function disputed() external view returns (bool);
 }
 
 /**
@@ -27,6 +32,17 @@ interface IStreamingEscrowSync {
  */
 contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
     using SuperTokenV1Library for ISuperToken;
+    struct SolvencyConfig {
+        uint256 liquidationPeriod;
+        uint256 minimumDeposit;
+    }
+
+    struct EscrowReserve {
+        address escrow;
+        uint128 units;
+        uint256 capital;
+        bool disputed;
+    }
 
     /*|--------------------------------------------|*/
     /*|              ERRORS                        |*/
@@ -92,8 +108,25 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         uint128 streamingUnitBudget = _streamingUnitBudget(requestedFlowRate);
         _updateProposalUnits(poolAmount, shouldStartStream, totalEligibleConviction, streamingUnitBudget);
 
+        // Reserve the GDA deposit, one liquidation period of runway, and the
+        // deposits needed by every active beneficiary outflow. A fresh escrow
+        // must be funded before the GDA update invokes its SuperApp callback.
+        uint256 solventFlowRate = _highestSolventRate(requestedFlowRate);
+        if (solventFlowRate != requestedFlowRate) {
+            _updateProposalUnits(
+                poolAmount, solventFlowRate != 0, totalEligibleConviction, _streamingUnitBudget(solventFlowRate)
+            );
+        }
+
         int96 currentFlowRate = superfluidToken.getGDAFlowRate(address(this), superfluidGDA);
-        int96 actualFlowRate = superfluidToken.distributeFlow(superfluidGDA, _toInt96StreamingRate(requestedFlowRate));
+        // A decrease releases the old GDA deposit before funding escrow deltas.
+        if (currentFlowRate > _toInt96StreamingRate(solventFlowRate)) {
+            // The second call below supplies the final rate used for accounting.
+            // slither-disable-next-line unused-return
+            superfluidToken.distributeFlow(superfluidGDA, _toInt96StreamingRate(solventFlowRate));
+        }
+        _topUpEscrowsForRate(solventFlowRate);
+        int96 actualFlowRate = superfluidToken.distributeFlow(superfluidGDA, _toInt96StreamingRate(solventFlowRate));
         if (currentFlowRate != actualFlowRate) {
             didMeaningfulWork = true;
             emit StreamRateUpdated(address(superfluidGDA), actualFlowRate > 0 ? uint256(uint96(actualFlowRate)) : 0);
@@ -263,11 +296,15 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
 
         // Check balance of unwrapped tokens
         uint256 unwrappedBalance = IERC20(poolToken).balanceOf(address(this));
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
         if (unwrappedBalance == 0) {
             return;
         }
 
         uint256 upgradeAmount = _toSuperTokenAmount(unwrappedBalance, poolToken, superfluidToken);
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
         if (upgradeAmount == 0) {
             return;
         }
@@ -298,10 +335,14 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
 
         // Check if there's a supertoken balance available for streaming
         uint256 superTokenBalance = superfluidToken.balanceOf(address(this));
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
         if (superTokenBalance == 0) {
             return false;
         }
 
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
         if (streamingRatePerSecond == 0 || maxConviction == 0 || totalEligibleConviction == 0) {
             return false;
         }
@@ -349,11 +390,15 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         pure
         returns (uint128)
     {
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
         if (unitBudget == 0 || convictionValue == 0 || totalEligibleConviction == 0) {
             return 0;
         }
 
         uint256 units = Math.mulDiv(convictionValue, unitBudget, totalEligibleConviction);
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
         if (units == 0) {
             units = 1;
         }
@@ -366,6 +411,8 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
     }
 
     function _topUpEscrowDepositIfNeeded(address escrow) internal returns (bool) {
+        // The default zero value is intentional before conditional assignment.
+        // slither-disable-next-line uninitialized-local
         uint256 requiredDeposit;
         try IStreamingEscrowSync(escrow).depositAmount() returns (uint256 amount) {
             requiredDeposit = amount;
@@ -381,12 +428,17 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
         uint256 targetDeposit = requiredDeposit + Math.ceilDiv(requiredDeposit * 50, 10_000);
 
         uint256 escrowBalance = superfluidToken.balanceOf(escrow);
+        try IStreamingEscrowSync(escrow).outflowDeposit() returns (uint256 lockedDeposit) {
+            escrowBalance += lockedDeposit;
+        } catch {}
         if (escrowBalance >= targetDeposit) {
             return false;
         }
 
         uint256 missingDeposit = targetDeposit - escrowBalance;
         uint256 strategyBalance = superfluidToken.balanceOf(address(this));
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
         if (strategyBalance == 0) {
             return false;
         }
@@ -399,6 +451,147 @@ contract CVStreamingFacet is CVStrategyBaseFacet, CVStreamingBase {
             return true;
         }
         return false;
+    }
+
+    function _solvencyConfig() internal view returns (SolvencyConfig memory config) {
+        ISuperfluid host = ISuperfluid(superfluidToken.getHost());
+        ISuperfluidGovernance governance = ISuperfluidGovernance(host.getGovernance());
+        uint256 pppConfig = governance.getConfigAsUint256(
+            host, ISuperfluidToken(address(superfluidToken)), SuperfluidGovernanceConfigs.CFAV1_PPP_CONFIG_KEY
+        );
+        // Only the selected return value is needed at this call site.
+        // slither-disable-next-line unused-return
+        (config.liquidationPeriod,) = SuperfluidGovernanceConfigs.decodePPPConfig(pppConfig);
+        config.minimumDeposit = governance.getConfigAsUint256(
+            host, ISuperfluidToken(address(superfluidToken)), SuperfluidGovernanceConfigs.SUPERTOKEN_MINIMUM_DEPOSIT_KEY
+        );
+    }
+
+    function _depositForRate(uint256 flowRate, SolvencyConfig memory config) internal pure returns (uint256) {
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
+        if (flowRate == 0) return 0;
+        uint256 rawDeposit = flowRate * config.liquidationPeriod;
+        if (rawDeposit > uint256(uint96(type(int96).max))) return type(uint256).max;
+        // CFA clips deposits upward to 2^32; GDA uses the unrounded amount.
+        // The CFA amount therefore safely bounds the deposit on either leg.
+        uint256 clippedDeposit = Math.ceilDiv(rawDeposit, uint256(1) << 32) << 32;
+        return clippedDeposit > config.minimumDeposit ? clippedDeposit : config.minimumDeposit;
+    }
+
+    function _bufferedDeposit(uint256 deposit) internal pure returns (uint256) {
+        return deposit + Math.ceilDiv(deposit * 50, 10_000);
+    }
+
+    function _memberRateAt(uint256 flowRate, address escrow) internal view returns (uint256) {
+        uint128 units = superfluidGDA.getUnits(escrow);
+        uint128 totalUnits = superfluidGDA.getTotalUnits();
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
+        if (flowRate == 0 || units == 0 || totalUnits == 0) return 0;
+        return Math.ceilDiv(flowRate * uint256(units), uint256(totalUnits));
+    }
+
+    function _escrowCapital(address escrow) internal view returns (uint256 capital) {
+        capital = superfluidToken.balanceOf(escrow);
+        try IStreamingEscrowSync(escrow).outflowDeposit() returns (uint256 lockedDeposit) {
+            capital += lockedDeposit;
+        } catch {}
+    }
+
+    function _isDisputedEscrow(address escrow) internal view returns (bool) {
+        try IStreamingEscrowSync(escrow).disputed() returns (bool isDisputed) {
+            return isDisputed;
+        } catch {
+            return false;
+        }
+    }
+
+    function _reserveSnapshot() internal view returns (EscrowReserve[] memory reserves) {
+        uint256[] storage openProposalIds = openStreamingProposalIds;
+        reserves = new EscrowReserve[](openProposalIds.length);
+        for (uint256 i = 0; i < openProposalIds.length; i++) {
+            address escrow = streamingEscrow(openProposalIds[i]);
+            if (escrow == address(0) || CVStreamingStorage.layout().stoppedEscrows[escrow]) continue;
+            reserves[i] = EscrowReserve({
+                escrow: escrow,
+                units: superfluidGDA.getUnits(escrow),
+                capital: _escrowCapital(escrow),
+                disputed: _isDisputedEscrow(escrow)
+            });
+        }
+    }
+
+    function _requiredCapitalAtRate(
+        uint256 flowRate,
+        SolvencyConfig memory config,
+        EscrowReserve[] memory reserves,
+        uint256 totalUnits
+    ) internal pure returns (uint256 requiredCapital) {
+        uint256 gdaDeposit = _depositForRate(flowRate, config);
+        // The maximum value is an explicit overflow sentinel.
+        // slither-disable-next-line incorrect-equality
+        if (gdaDeposit == type(uint256).max) return type(uint256).max;
+        // An additional GDA deposit is kept liquid as a one-liquidation-period
+        // runway. Rebalance must still run before that runway is consumed.
+        requiredCapital = _bufferedDeposit(gdaDeposit) + gdaDeposit;
+        for (uint256 i = 0; i < reserves.length; i++) {
+            EscrowReserve memory reserve = reserves[i];
+            if (reserve.escrow == address(0) || reserve.disputed || reserve.units == 0 || totalUnits == 0) continue;
+            uint256 memberRate = Math.ceilDiv(flowRate * uint256(reserve.units), totalUnits);
+            // Exact equality is intentional for this zero-value guard.
+            // slither-disable-next-line incorrect-equality
+            if (memberRate == 0) continue;
+            uint256 memberDeposit = _depositForRate(memberRate, config);
+            // The maximum value is an explicit overflow sentinel.
+            // slither-disable-next-line incorrect-equality
+            if (memberDeposit == type(uint256).max) return type(uint256).max;
+            uint256 target = _bufferedDeposit(memberDeposit);
+            if (target > reserve.capital) requiredCapital += target - reserve.capital;
+        }
+    }
+
+    function _highestSolventRate(uint256 requestedFlowRate) internal view returns (uint256) {
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
+        if (requestedFlowRate == 0) return 0;
+        // Only the selected return value is needed at this call site.
+        // slither-disable-next-line unused-return
+        (,, uint256 oldGdaDeposit) = superfluidToken.getGDAFlowInfo(address(this), superfluidGDA);
+        uint256 capital = superfluidToken.balanceOf(address(this)) + oldGdaDeposit;
+        SolvencyConfig memory config = _solvencyConfig();
+        EscrowReserve[] memory reserves = _reserveSnapshot();
+        uint256 totalUnits = superfluidGDA.getTotalUnits();
+        if (_requiredCapitalAtRate(requestedFlowRate, config, reserves, totalUnits) <= capital) return requestedFlowRate;
+
+        uint256 low = 0;
+        uint256 high = requestedFlowRate;
+        while (low + 1 < high) {
+            uint256 mid = low + (high - low) / 2;
+            if (_requiredCapitalAtRate(mid, config, reserves, totalUnits) <= capital) low = mid;
+            else high = mid;
+        }
+        return low;
+    }
+
+    function _topUpEscrowsForRate(uint256 flowRate) internal {
+        SolvencyConfig memory config = _solvencyConfig();
+        uint256[] storage openProposalIds = openStreamingProposalIds;
+        for (uint256 i = 0; i < openProposalIds.length; i++) {
+            address escrow = streamingEscrow(openProposalIds[i]);
+            if (escrow == address(0) || CVStreamingStorage.layout().stoppedEscrows[escrow] || _isDisputedEscrow(escrow)) {
+                continue;
+            }
+            uint256 memberRate = _memberRateAt(flowRate, escrow);
+            // Exact equality is intentional for this zero-value guard.
+            // slither-disable-next-line incorrect-equality
+            if (memberRate == 0) continue;
+            uint256 target = _bufferedDeposit(_depositForRate(memberRate, config));
+            uint256 capital = _escrowCapital(escrow);
+            if (target > capital && !superfluidToken.transfer(escrow, target - capital)) {
+                revert SuperTokenTransferFailed(escrow, target - capital);
+            }
+        }
     }
 
     function _rebalanceWhenDisabled() internal returns (bool) {

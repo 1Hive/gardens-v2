@@ -96,11 +96,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         );
         registryFactory = RegistryFactory(address(factoryProxy));
 
-        ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
-            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
-        );
-
-        safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
+        safeArbitrator = deploySafeArbitrator();
 
         RegistryCommunityInitializeParams memory params;
 
@@ -255,6 +251,14 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         vm.stopBroadcast();
 
         create_community();
+    }
+
+    /// @dev Shared by the deployment and its regression test so the owner binding is exercised.
+    function deploySafeArbitrator() public returns (IArbitrator) {
+        ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
+            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether, pool_admin())
+        );
+        return SafeArbitrator(payable(address(arbitratorProxy)));
     }
 
     function _getPointConfig() internal pure returns (PointSystemConfig memory) {

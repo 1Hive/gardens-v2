@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "chainId": "137",
+  "createdAt": 1795465618074,
+  "meta": {
+    "name": "polygon streaming escrow release",
+    "description": "Update the escrow template, then upgrade each enumerated existing escrow and migrate legacy layouts. Recheck live inventory and ownership before execution.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0x856a184C5547A0945F66D0583d4C223813bE1651",
+      "value": "0",
+      "data": "0xe01c9d59000000000000000000000000d144b1ebdfc2c443a7ab1b11123814856c8d35d4"
+    }
+  ]
+}

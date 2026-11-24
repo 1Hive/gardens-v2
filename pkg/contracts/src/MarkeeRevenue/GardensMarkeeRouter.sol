@@ -14,6 +14,25 @@ import {IBridgeAdapter, BridgeRequest} from "./interfaces/IBridgeAdapter.sol";
 import {IRegistryCommunitySafe} from "./interfaces/IRegistryCommunitySafe.sol";
 import {IStreamingLeaderboardFactory} from "./interfaces/IStreamingLeaderboardFactory.sol";
 
+interface IPilotLeaderboard {
+    function beneficiaryAddress() external view returns (address);
+    function setBeneficiaryAddress(address beneficiary) external;
+}
+
+interface IPilotGenericVault {
+    function router() external view returns (address);
+    function communityKey() external view returns (bytes32);
+}
+
+interface IPilotGenericRouter {
+    function communities(bytes32 key)
+        external
+        view
+        returns (bytes32 platformId, bytes32 communityId, uint256 destinationChainId, address vault);
+    function receivers(uint256 chainId) external view returns (address);
+    function bridgeAdapters(uint256 chainId, bytes32 protocol) external view returns (address);
+}
+
 /// @notice Singleton Gardens router, one per deployed network. Deploys and
 /// tracks one deterministic `CommunityRevenueVault` per opted-in community,
 /// and is the only caller authorized to release vault revenue — either paid
@@ -67,6 +86,13 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
     );
     event RevenueSwept(bytes32 indexed communityKey, address indexed destination, uint256 amount, bool bridged);
     event BridgeTransferStarted(bytes32 indexed communityKey, bytes32 indexed transferId);
+    event PilotBeneficiaryMigrated(
+        bytes32 indexed legacyKey,
+        address indexed leaderboard,
+        address indexed oldVault,
+        address newVault,
+        address genericRouter
+    );
 
     error NotKeeper();
     error ZeroAddress();
@@ -81,6 +107,7 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
     error GasCostExceedsRevenue(uint256 gasCost, uint256 revenue);
     error KeeperReimbursementFailed();
     error RevenueTransferFailed();
+    error InvalidPilotMigration();
 
     modifier onlyKeeper() {
         if (!keepers[msg.sender]) {
@@ -187,6 +214,46 @@ contract GardensMarkeeRouter is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable
         returns (CommunityIntegration memory integration)
     {
         return _communityIntegrations[communityKey];
+    }
+
+    /// @notice One-time, owner-controlled migration of the documented Gnosis
+    /// pilot's live beneficiary stream. The legacy vault stays claimable here;
+    /// this only redirects future accrual after the generic route is ready.
+    function migrateGnosisPilotBeneficiary(address newVault, address genericRouter)
+        external
+        override
+        onlyOwner
+        nonReentrant
+    {
+        address community = 0xE2396fe2169ca026962971d3B2E373Ba925B6257;
+        address board = 0x5B9eF23a155Fd97d29fa463af824cFA53C4FAA11;
+        bytes32 legacyKey = CommunityKeyLib.communityKey(100, community);
+        CommunityIntegration memory integration = _communityIntegrations[legacyKey];
+        if (
+            integration.leaderboard != board || integration.vault == address(0) || newVault.code.length == 0
+                || genericRouter.code.length == 0 || IPilotLeaderboard(board).beneficiaryAddress() != integration.vault
+        ) revert InvalidPilotMigration();
+        _assertReadyPilotRoute(community, newVault, genericRouter);
+        IPilotLeaderboard(board).setBeneficiaryAddress(newVault);
+        if (IPilotLeaderboard(board).beneficiaryAddress() != newVault) revert InvalidPilotMigration();
+        emit PilotBeneficiaryMigrated(legacyKey, board, integration.vault, newVault, genericRouter);
+    }
+
+    function _assertReadyPilotRoute(address community, address newVault, address genericRouter) internal view {
+        bytes32 platformId = keccak256("gardens");
+        bytes32 communityId = bytes32(uint256(uint160(community)));
+        bytes32 key = keccak256(abi.encode(platformId, uint256(100), communityId));
+        (bytes32 registeredPlatform, bytes32 registeredCommunity, uint256 registeredChain, address registeredVault) =
+            IPilotGenericRouter(genericRouter).communities(key);
+        if (
+            registeredPlatform != platformId || registeredCommunity != communityId || registeredChain != 100
+                || registeredVault != newVault || IPilotGenericVault(newVault).router() != genericRouter
+                || IPilotGenericVault(newVault).communityKey() != key
+                || IPilotGenericRouter(genericRouter).receivers(100) == address(0)
+                || IPilotGenericRouter(genericRouter).bridgeAdapters(100, keccak256("across")) == address(0)
+        ) {
+            revert InvalidPilotMigration();
+        }
     }
 
     /// @inheritdoc IGardensMarkeeRouter

@@ -292,6 +292,7 @@ contract CVSyncPowerFacetTest is Test {
     function test_syncPower_decreasesActivatedPoints() public {
         _authorizeSyncCaller();
         community.setCachedPower(member, 100);
+        community.setActivated(member, true);
         registry.setLivePower(member, 60);
         facet.setTotalPointsActivated(100);
         // Member has no proposals staked, so unused power > decrease
@@ -326,9 +327,32 @@ contract CVSyncPowerFacetTest is Test {
         assertEq(facet.totalPointsActivated(), 125);
     }
 
+    function test_security_syncRemovesFullPeakEvenWhenCommunityCacheIsStale() public {
+        _authorizeSyncCaller();
+        community.setCachedPower(member, 100);
+        community.setActivated(member, true);
+        registry.setLivePower(member, 200);
+        facet.setTotalPointsActivatedDirect(100);
+
+        vm.prank(syncCaller);
+        facet.syncPower(member);
+        assertEq(facet.totalPointsActivated(), 200);
+
+        // Community cache remains 100 while the strategy baseline is 200.
+        registry.setLivePower(member, 0);
+        vm.prank(syncCaller);
+        facet.syncPower(member);
+        assertEq(facet.totalPointsActivated(), 0);
+
+        vm.prank(syncCaller);
+        facet.syncPower(member);
+        assertEq(facet.totalPointsActivated(), 0, "repeated sync must be idempotent");
+    }
+
     function test_syncPower_doesNotReapplyDecreaseOnRepeatedCalls() public {
         _authorizeSyncCaller();
         community.setCachedPower(member, 100);
+        community.setActivated(member, true);
         registry.setLivePower(member, 80);
         facet.setTotalPointsActivated(100);
         facet.setVoterStake(member, 0);
@@ -346,6 +370,7 @@ contract CVSyncPowerFacetTest is Test {
     function test_syncPower_decreaseRebalancesProposals() public {
         _authorizeSyncCaller();
         community.setCachedPower(member, 100);
+        community.setActivated(member, true);
         registry.setLivePower(member, 0); // Full revocation
         facet.setTotalPointsActivated(100);
         facet.setTotalStaked(80);
@@ -368,6 +393,7 @@ contract CVSyncPowerFacetTest is Test {
     function test_syncPower_decreaseRebalancesProposalsPartially() public {
         _authorizeSyncCaller();
         community.setCachedPower(member, 100);
+        community.setActivated(member, true);
         registry.setLivePower(member, 60); // decrease by 40
         facet.setTotalPointsActivated(100);
         facet.setTotalStaked(80);
@@ -396,6 +422,7 @@ contract CVSyncPowerFacetTest is Test {
     function test_syncPower_decreaseRebalancesProposals_exactResidualSettlement() public {
         _authorizeSyncCaller();
         community.setCachedPower(member, 100);
+        community.setActivated(member, true);
         registry.setLivePower(member, 59); // decrease by 41
         facet.setTotalPointsActivated(100);
         facet.setTotalStaked(80);
@@ -421,6 +448,7 @@ contract CVSyncPowerFacetTest is Test {
     function test_syncPower_decreaseSkipsZeroStakeAndBreaksAfterReductionComplete() public {
         _authorizeSyncCaller();
         community.setCachedPower(member, 50);
+        community.setActivated(member, true);
         registry.setLivePower(member, 0); // decrease by 50
         facet.setTotalPointsActivated(50);
         facet.setTotalStaked(50);

@@ -1,0 +1,110 @@
+{
+  "version": "1.0",
+  "chainId": "42220",
+  "createdAt": 1795465662891,
+  "meta": {
+    "name": "celo streaming escrow release",
+    "description": "Update the escrow template, then upgrade each enumerated existing escrow and migrate legacy layouts. Recheck live inventory and ownership before execution.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xA2e7637A6Ffd7576b7352ec7A34b9EE38E7E7E6C",
+      "value": "0",
+      "data": "0xe01c9d59000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0x1262490185E17C953bDfBB55B0E0aACD5857fe31",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0xFbc240b61FA7e15e22A2e7D26D3De599d3AE8570",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0x90788483C63fec9398527C16Fa4C1a85dC6325f2",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0xb315BB3a09a35499BC0af486cbE60786ca2A8Ad5",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0x032aF14586aDFe35771466143AA15AeB7108Bd84",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0x1DCd81fF63D68812831d72eFcaaa979E5Bb3a724",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0x4dAAf2834FBFb1dEE5044523f9194e51719b4055",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0x02123Ccf28A32DDbfb8264302428792d9F8591a3",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0x5f39Df532D9C5d3CCcF80B58Cf7238dFB8A45bf0",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0xA03A86808B9fC69742c2154DDF8766f9ED4934f3",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0x047beA9559d3192b94e73703B61E61cd8d98304D",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0x8c5DF294011726347A12A12F8a8EE4282051ec1A",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0xD9BD9449D3281d68a0127d25Ef0F2F1A0990d1f4",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0x914a108FA91dc1ecBE5267EDE29a7bBf314A4241",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0x6dB30eaAa2245d17f92B9218f057690fE41dC821",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0x65c73BFcAF515089938c042feaE18538635b97a3",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0x403BbB3823Aea853E53c32A3702d775E981de8Ad",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    },
+    {
+      "to": "0xC89E64bd51fC063117244c99F4d7D05246c4edde",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000767275548a0571e0f223e3f8f05cd6e6e22d75c5"
+    }
+  ]
+}

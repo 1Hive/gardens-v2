@@ -41,6 +41,9 @@ contract StreamingEscrow is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, Su
     error MigrationNotRequired();
 
     event OutflowRestartFailed(address indexed receiver, int96 requestedFlowRate, bytes reason);
+    event OutflowRestartDeferred(
+        address indexed receiver, int96 requestedFlowRate, uint256 requiredDeposit, uint256 availableBalance
+    );
 
     /*|--------------------------------------------|*/
     /*|              STORAGE                       |*/
@@ -55,6 +58,8 @@ contract StreamingEscrow is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, Su
     address public beneficiary;
     bool public disputed;
     uint8 public storageSchemaVersion;
+    // This reserved gap is distinct from private gaps in inherited contracts.
+    // slither-disable-next-line shadowing-state
     uint256[45] private __gap;
 
     // Legacy layout slots from pre-ReentrancyGuardUpgradeable deployment:
@@ -201,13 +206,35 @@ contract StreamingEscrow is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, Su
         if (_disputed) {
             _setOutflow(0, beneficiary);
         } else {
-            _setOutflow(_currentGDAFlowRate(), beneficiary);
+            int96 desiredRate = _currentGDAFlowRate();
+            uint256 requiredDeposit = desiredRate > 0 ? depositAmount() : 0;
+            uint256 availableBalance = superToken.balanceOf(address(this));
+            if (availableBalance < requiredDeposit) {
+                // The ruling takes effect now. Anyone can call syncOutflow()
+                // after the strategy tops up the escrow to restart the stream.
+                disputed = false;
+                emit OutflowRestartDeferred(beneficiary, desiredRate, requiredDeposit, availableBalance);
+                return;
+            }
+            _setOutflow(desiredRate, beneficiary);
         }
         disputed = _disputed;
     }
 
     function syncOutflow() public nonReentrant {
-        bool outflowApplied = _setOutflow(disputed ? int96(0) : _currentGDAFlowRate(), beneficiary);
+        int96 desiredRate = disputed ? int96(0) : _currentGDAFlowRate();
+        if (desiredRate > 0) {
+            uint256 requiredDeposit = depositAmount();
+            uint256 availableBalance = superToken.balanceOf(address(this));
+            // Only the selected return value is needed at this call site.
+            // slither-disable-next-line unused-return
+            (,, uint256 existingDeposit,) = superToken.getCFAFlowInfo(address(this), beneficiary);
+            if (availableBalance + existingDeposit < requiredDeposit) {
+                emit OutflowRestartDeferred(beneficiary, desiredRate, requiredDeposit, availableBalance);
+                return;
+            }
+        }
+        bool outflowApplied = _setOutflow(desiredRate, beneficiary);
         if (!disputed && outflowApplied) {
             _drainExcessToBeneficiary();
         }
@@ -257,6 +284,14 @@ contract StreamingEscrow is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, Su
             return 0;
         }
         return requiredDeposit + Math.ceilDiv(requiredDeposit * DEPOSIT_BUFFER_BPS, BPS_DENOMINATOR);
+    }
+
+    /// @notice Deposit already locked by the beneficiary outflow.
+    function outflowDeposit() external view returns (uint256 deposit) {
+        if (beneficiary == address(0)) return 0;
+        // Only the selected return value is needed at this call site.
+        // slither-disable-next-line unused-return
+        (,, deposit,) = superToken.getCFAFlowInfo(address(this), beneficiary);
     }
 
     /*|--------------------------------------------|*/

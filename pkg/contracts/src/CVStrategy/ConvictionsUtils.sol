@@ -30,7 +30,18 @@ library ConvictionsUtils {
         //        @audit-issue why that _pow require that need be less than TWO_128? why dont use 256?
         //        @audit-ok they use 2^128 as the container for the result of the _pow function
         uint256 atTWO_128 = _pow((_decay << 128) / D, t);
-        return (((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - _decay))) + TWO_127) >> 128;
+        uint256 numeratorFactor = D * (TWO_128 - atTWO_128);
+        uint256 denominator = D - _decay;
+        uint256 scaledDenominator = denominator * TWO_128;
+
+        // Split both products at the 128-bit boundary. The remainder of the
+        // second term is still calculated after division by (D - decay), as
+        // in the original expression, preserving its rounding exactly.
+        uint256 wholeLast = Math.mulDiv(atTWO_128, _lastConv, TWO_128);
+        uint256 remainderLast = mulmod(atTWO_128, _lastConv, TWO_128);
+        uint256 wholeStake = Math.mulDiv(_oldAmount, numeratorFactor, scaledDenominator);
+        uint256 remainderStake = mulmod(_oldAmount, numeratorFactor, scaledDenominator) / denominator;
+        return wholeLast + wholeStake + ((remainderLast + remainderStake + TWO_127) >> 128);
     }
 
     /**
@@ -76,7 +87,7 @@ library ConvictionsUtils {
     }
 
     function getMaxConviction(uint256 amount, uint256 _decay) public pure returns (uint256) {
-        return ((amount * D) / (D - _decay));
+        return Math.mulDiv(amount, D, D - _decay);
     }
 
     /**

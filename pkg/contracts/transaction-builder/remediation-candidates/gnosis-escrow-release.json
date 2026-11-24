@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "chainId": "100",
+  "createdAt": 1795465632008,
+  "meta": {
+    "name": "gnosis streaming escrow release",
+    "description": "Update the escrow template, then upgrade each enumerated existing escrow and migrate legacy layouts. Recheck live inventory and ownership before execution.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0x7472b2197b38233A97d0134d62cCD38aa4b93112",
+      "value": "0",
+      "data": "0xe01c9d590000000000000000000000007ede90744814fce18b7b2c3f27a3f2358e598bda"
+    }
+  ]
+}

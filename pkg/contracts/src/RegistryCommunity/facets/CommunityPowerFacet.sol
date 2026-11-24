@@ -95,6 +95,8 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         onlyStrategyAddress(msg.sender, _strategy);
 
         if (memberActivatedInStrategies[_member][_strategy]) {
+            // The default zero value is intentional before conditional assignment.
+            // slither-disable-next-line uninitialized-local
             bool isListed;
             for (uint256 i = 0; i < strategiesByMember[_member].length; i++) {
                 if (strategiesByMember[_member][i] == _strategy) {
@@ -135,6 +137,8 @@ contract CommunityPowerFacet is CommunityBaseFacet {
         memberPowerInStrategy[_member][_strategy] = pointsToIncrease; // can be all zero
         memberActivatedInStrategies[_member][_strategy] = true;
 
+        // The default zero value is intentional before conditional assignment.
+        // slither-disable-next-line uninitialized-local
         bool alreadyListed;
         for (uint256 i = 0; i < strategiesByMember[_member].length; i++) {
             if (strategiesByMember[_member][i] == _strategy) {

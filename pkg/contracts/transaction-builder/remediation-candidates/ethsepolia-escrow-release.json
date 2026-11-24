@@ -1,0 +1,115 @@
+{
+  "version": "1.0",
+  "chainId": "11155111",
+  "createdAt": 1795465584179,
+  "meta": {
+    "name": "ethsepolia streaming escrow release",
+    "description": "Update the escrow template, then upgrade each enumerated existing escrow and migrate legacy layouts. Recheck live inventory and ownership before execution.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xE807E419DC8aF791f68e8469C35aE09e3603ecf8",
+      "value": "0",
+      "data": "0xe01c9d59000000000000000000000000cf064314e92d3874b4736782021dca8b5048b2b7"
+    },
+    {
+      "to": "0xA95788D936d76Be7894f13338eC403ACa71B851F",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000cf064314e92d3874b4736782021dca8b5048b2b7"
+    },
+    {
+      "to": "0xA95788D936d76Be7894f13338eC403ACa71B851F",
+      "value": "0",
+      "data": "0x0dee46b5"
+    },
+    {
+      "to": "0xfd10704745386cFA049498fdEb2913E792Cf7887",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000cf064314e92d3874b4736782021dca8b5048b2b7"
+    },
+    {
+      "to": "0xfd10704745386cFA049498fdEb2913E792Cf7887",
+      "value": "0",
+      "data": "0x0dee46b5"
+    },
+    {
+      "to": "0xAa9997C8BBbBF4c2E554FF292bF9817cd28557D5",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000cf064314e92d3874b4736782021dca8b5048b2b7"
+    },
+    {
+      "to": "0xAa9997C8BBbBF4c2E554FF292bF9817cd28557D5",
+      "value": "0",
+      "data": "0x0dee46b5"
+    },
+    {
+      "to": "0x960e36C8BF159417335CbC02dd372Ca405280993",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000cf064314e92d3874b4736782021dca8b5048b2b7"
+    },
+    {
+      "to": "0x960e36C8BF159417335CbC02dd372Ca405280993",
+      "value": "0",
+      "data": "0x0dee46b5"
+    },
+    {
+      "to": "0x1E90b672755B992626ADa0B4B651fE07491AD45C",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000cf064314e92d3874b4736782021dca8b5048b2b7"
+    },
+    {
+      "to": "0x1E90b672755B992626ADa0B4B651fE07491AD45C",
+      "value": "0",
+      "data": "0x0dee46b5"
+    },
+    {
+      "to": "0x7Fbb15b2d89F514b5afC0e22c35a90152f61Edf0",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000cf064314e92d3874b4736782021dca8b5048b2b7"
+    },
+    {
+      "to": "0x7Fbb15b2d89F514b5afC0e22c35a90152f61Edf0",
+      "value": "0",
+      "data": "0x0dee46b5"
+    },
+    {
+      "to": "0x2a68a28a121e28b2d86Af4E5bEc636E89833171f",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000cf064314e92d3874b4736782021dca8b5048b2b7"
+    },
+    {
+      "to": "0x2a68a28a121e28b2d86Af4E5bEc636E89833171f",
+      "value": "0",
+      "data": "0x0dee46b5"
+    },
+    {
+      "to": "0x44E3aBCF4D06f2620B23D0b82373B386B82bF1fB",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000cf064314e92d3874b4736782021dca8b5048b2b7"
+    },
+    {
+      "to": "0x44E3aBCF4D06f2620B23D0b82373B386B82bF1fB",
+      "value": "0",
+      "data": "0x0dee46b5"
+    },
+    {
+      "to": "0x2b40802638A843eD7fD71e4645A6719e81524e4e",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000cf064314e92d3874b4736782021dca8b5048b2b7"
+    },
+    {
+      "to": "0x2b40802638A843eD7fD71e4645A6719e81524e4e",
+      "value": "0",
+      "data": "0x0dee46b5"
+    },
+    {
+      "to": "0xe3f6B655Bb7Bafb4ba59bDe4079910D908266c55",
+      "value": "0",
+      "data": "0x3659cfe6000000000000000000000000cf064314e92d3874b4736782021dca8b5048b2b7"
+    }
+  ]
+}

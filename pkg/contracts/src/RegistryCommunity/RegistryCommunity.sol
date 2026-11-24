@@ -209,6 +209,8 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
     /// @dev Deprecated: this should be set in the registry factory and fetched during initialization
     bytes internal strategyInitCalldata;
 
+    // This reserved gap is distinct from private gaps in inherited contracts.
+    // slither-disable-next-line shadowing-state
     uint256[46] private __gap;
 
     /*|--------------------------------------------|*/
@@ -341,8 +343,30 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
 
         address[] memory pool_initialMembers;
 
-        profileId =
-            registry.createProfile(params._nonce, communityName, params._metadata, address(this), new address[](0));
+        // Preserve the usual profile ID. If an outsider occupied the predictable
+        // (nonce, community address) pair, select a new nonce in this same
+        // transaction so the new community still owns its Allo profile.
+        uint256 profileNonce = params._nonce;
+        while (true) {
+            try registry.createProfile(profileNonce, communityName, params._metadata, address(this), new address[](0))
+            returns (bytes32 createdProfileId) {
+                profileId = createdProfileId;
+                break;
+            } catch (bytes memory reason) {
+                bytes4 selector;
+                if (reason.length >= 4) {
+                    assembly { selector := mload(add(reason, 32)) }
+                }
+                if (selector != bytes4(keccak256("NONCE_NOT_AVAILABLE()"))) {
+                    assembly { revert(add(reason, 32), mload(reason)) }
+                }
+                if (profileNonce == params._nonce) {
+                    profileNonce = uint256(keccak256(abi.encodePacked(params._nonce, address(this), block.prevrandao, gasleft())));
+                } else {
+                    unchecked { ++profileNonce; }
+                }
+            }
+        }
 
         strategyTemplate = _strategyTemplate;
         collateralVaultTemplate = _collateralVaultTemplate;

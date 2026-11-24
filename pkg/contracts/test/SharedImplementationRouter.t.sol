@@ -14,6 +14,9 @@ import {IERC165} from "../src/diamonds/interfaces/IERC165.sol";
 import {IERC173} from "../src/diamonds/interfaces/IERC173.sol";
 import {IArbitrable} from "../src/interfaces/IArbitrable.sol";
 import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
+import {CVStrategyBaseFacet} from "../src/CVStrategy/CVStrategyBaseFacet.sol";
+import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
+import {PauseFacetBase} from "../src/pausing/PauseFacetBase.sol";
 import {RegistryCommunity, RegistryCommunityInitializeParams} from "../src/RegistryCommunity/RegistryCommunity.sol";
 import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -89,6 +92,12 @@ contract RoutedFacetV2 is RoutedFacetV1 {
     function doubledValue() external view returns (uint256) { return this.value() * 2; }
 }
 
+contract RawOwnerPauseFacet is CVStrategyBaseFacet, PauseFacetBase {
+    function _pauseOwner() internal view override returns (address) {
+        return proxyOwner();
+    }
+}
+
 contract SharedImplementationRouterTest is Test {
     RegistryFactory factory;
     CVStrategyRouter strategyRouter;
@@ -151,6 +160,43 @@ contract SharedImplementationRouterTest is Test {
         factory.setStrategyImplementation(address(coreV2));
         assertEq(RoutedCoreV2(strategyProxy).version(), 2);
         assertEq(RoutedCoreV2(anotherStrategy).version(), 2);
+    }
+
+    function test_nextStrategyPauseFacetReleaseResolvesOwnerOnExistingProxy() public {
+        ProxyOwner sharedOwner = ProxyOwner(address(new ERC1967Proxy(
+            address(new ProxyOwner()), abi.encodeCall(ProxyOwner.initialize, (address(this)))
+        )));
+        address existing = address(new ERC1967Proxy(
+            address(strategyRouter), abi.encodeWithSelector(ProxyOwnableUpgrader.initialize.selector, address(sharedOwner))
+        ));
+        MockPauseController controller = new MockPauseController();
+        RawOwnerPauseFacet oldPauseFacet = new RawOwnerPauseFacet();
+        CVPauseFacet newPauseFacet = new CVPauseFacet();
+
+        factory.setStrategyRelease(_pauseCuts(address(oldPauseFacet)), factory.strategyImplementation());
+        RoutedFacetV1(existing).setValue(19);
+        vm.expectRevert(abi.encodeWithSelector(
+            PauseFacetBase.NotOwner.selector, address(this), address(sharedOwner)
+        ));
+        CVPauseFacet(existing).setPauseController(address(controller));
+
+        factory.setStrategyRelease(_pauseCuts(address(newPauseFacet)), factory.strategyImplementation());
+        assertEq(factory.strategyFacet(PauseFacetBase.setPauseController.selector), address(newPauseFacet));
+        assertEq(IDiamondLoupe(existing).facetAddress(PauseFacetBase.setPauseController.selector), address(newPauseFacet));
+        assertEq(ProxyOwnableUpgrader(existing).owner(), address(this));
+        assertEq(RoutedFacetV1(existing).value(), 19);
+
+        CVPauseFacet(existing).setPauseController(address(controller));
+        assertEq(CVPauseFacet(existing).pauseController(), address(controller));
+        vm.prank(address(0xBEEF));
+        vm.expectRevert(abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(0xBEEF), address(this)));
+        CVPauseFacet(existing).setPauseController(address(controller));
+
+        address createdAfterRelease = address(new ERC1967Proxy(
+            address(strategyRouter), abi.encodeWithSelector(ProxyOwnableUpgrader.initialize.selector, address(this))
+        ));
+        CVPauseFacet(createdAfterRelease).setPauseController(address(controller));
+        assertEq(CVPauseFacet(createdAfterRelease).pauseController(), address(controller));
     }
 
     function test_factoryRejectsSwappedRouterFamilies() public {
@@ -578,6 +624,17 @@ contract SharedImplementationRouterTest is Test {
         cuts = new IDiamond.FacetCut[](1);
         cuts[0] = IDiamond.FacetCut({
             facetAddress: facet, action: IDiamond.FacetCutAction.Auto, functionSelectors: selectors
+        });
+    }
+
+    function _pauseCuts(address pauseFacet) internal view returns (IDiamond.FacetCut[] memory cuts) {
+        cuts = new IDiamond.FacetCut[](2);
+        cuts[0] = _cuts(address(facetV1), false)[0];
+        bytes4[] memory pauseSelectors = new bytes4[](2);
+        pauseSelectors[0] = PauseFacetBase.setPauseController.selector;
+        pauseSelectors[1] = PauseFacetBase.pauseController.selector;
+        cuts[1] = IDiamond.FacetCut({
+            facetAddress: pauseFacet, action: IDiamond.FacetCutAction.Auto, functionSelectors: pauseSelectors
         });
     }
 }

@@ -42,6 +42,8 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     mapping(address => bool) public canonicalProtopians;
     mapping(address => address) public protopianDelegatedFrom;
 
+    // This reserved gap is distinct from private gaps in inherited contracts.
+    // slither-disable-next-line shadowing-state
     uint256[38] private __gap;
 
     // Shared routing is opt-in. Existing proxies keep their local diamond until migrated.

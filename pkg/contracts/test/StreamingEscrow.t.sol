@@ -571,6 +571,39 @@ contract StreamingEscrowTest is Test {
         assertEq(host.lastAgreement(), address(cfa));
     }
 
+    function test_security_favorableRulingDefersUnfundedRestartAndRetriesAfterFunding() public {
+        pool.setMemberFlowRate(address(escrow), 77);
+        forwarder.setDeposit(100);
+        escrow.setDisputed(true);
+
+        uint256 priorFlowCalls = host.callAgreementCount();
+        escrow.setDisputed(false);
+        assertFalse(escrow.disputed(), "favorable ruling takes effect immediately");
+        assertEq(host.callAgreementCount(), priorFlowCalls, "unfunded flow must not restart");
+
+        token.mint(address(escrow), 100);
+        vm.prank(other);
+        escrow.syncOutflow();
+        assertEq(host.callAgreementCount(), priorFlowCalls + 1, "funded retry restores the beneficiary stream");
+    }
+
+    function test_security_favorableRulingRestartsFundedFlowAndPropagatesOtherFailures() public {
+        pool.setMemberFlowRate(address(escrow), 77);
+        forwarder.setDeposit(100);
+        token.mint(address(escrow), 100);
+        escrow.setDisputed(true);
+        uint256 beforeRestart = host.callAgreementCount();
+        escrow.setDisputed(false);
+        assertEq(host.callAgreementCount(), beforeRestart + 1);
+        assertFalse(escrow.disputed());
+
+        escrow.setDisputed(true);
+        host.setRevertAtCall(host.callAgreementCount() + 1);
+        vm.expectRevert();
+        escrow.setDisputed(false);
+        assertTrue(escrow.disputed(), "unrelated flow failure must not finalize the ruling");
+    }
+
     function test_setDisputed_same_value_is_noop() public {
         uint256 start = host.callAgreementCount();
 

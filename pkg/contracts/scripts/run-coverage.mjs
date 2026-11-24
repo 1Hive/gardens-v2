@@ -177,11 +177,18 @@ const supportFiles = allTestFiles.filter(
 // DiamondUpgrade imports this test contract as a shared fixture, even though
 // its own tests are excluded from coverage execution.
 const importedTestSupport = path.join(testDir, "CVStrategyTest.t.sol");
+// The real Superfluid framework test triggers a Yul stack exception in vendored
+// code when instrumented. It remains in the normal Foundry and Security PoC suites.
+const uninstrumentableTests = new Set(["StreamingSolvency.t.sol"]);
 const testFiles = allTestFiles
   .filter((file) => file.endsWith(".t.sol"))
   .filter((file) => {
     const relative = path.relative(testDir, file).split(path.sep);
-    return !relative.includes("fork") && !relative.includes("no-coverage");
+    return (
+      !relative.includes("fork") &&
+      !relative.includes("no-coverage") &&
+      !uninstrumentableTests.has(path.basename(file))
+    );
   })
   .sort();
 

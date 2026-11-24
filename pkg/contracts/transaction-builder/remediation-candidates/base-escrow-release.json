@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "chainId": "8453",
+  "createdAt": 1795465643065,
+  "meta": {
+    "name": "base streaming escrow release",
+    "description": "Update the escrow template, then upgrade each enumerated existing escrow and migrate legacy layouts. Recheck live inventory and ownership before execution.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0x3B3333665DE09494C2491171c06A6A161F319032",
+      "value": "0",
+      "data": "0xe01c9d590000000000000000000000001e8345a673907cc6771bba7e1463bf9546373548"
+    },
+    {
+      "to": "0x8688103495d889BD2aF36d90B61453BB5E6E5f1d",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000001e8345a673907cc6771bba7e1463bf9546373548"
+    },
+    {
+      "to": "0x6Ec67251E961703f000A5B6cd123e3e8256c650C",
+      "value": "0",
+      "data": "0x3659cfe60000000000000000000000001e8345a673907cc6771bba7e1463bf9546373548"
+    }
+  ]
+}

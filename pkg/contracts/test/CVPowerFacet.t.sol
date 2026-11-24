@@ -322,6 +322,19 @@ contract CVPowerFacetTest is Test {
         assertEq(facet.totalStaked(), 5);
     }
 
+    function test_security_decreasePowerAfterPriorClampDoesNotBrickUnstake() public {
+        registry.setActivated(member, true);
+        registry.setMemberPower(member, 100);
+        registry.setMemberStaked(member, 100);
+        facet.setTotalPointsActivatedDirect(0); // Prior deactivation clamped the aggregate.
+
+        vm.prank(address(registry));
+        uint256 removed = facet.decreasePower(member, 40);
+
+        assertEq(removed, 40);
+        assertEq(facet.totalPointsActivated(), 0);
+    }
+
     function test_deactivatePoints_updates_totals() public {
         registry.setMemberPower(member, 4);
         registry.setActivated(member, true);

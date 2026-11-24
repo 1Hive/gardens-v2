@@ -58,9 +58,11 @@ abstract contract StrategyDiamondConfiguratorBase {
             functionSelectors: allocationSelectors
         });
 
-        bytes4[] memory disputeSelectors = new bytes4[](2);
+        bytes4[] memory disputeSelectors = new bytes4[](4);
         disputeSelectors[0] = CVDisputeFacet.disputeProposal.selector;
         disputeSelectors[1] = CVDisputeFacet.rule.selector;
+        disputeSelectors[2] = CVDisputeFacet.claimCollateral.selector;
+        disputeSelectors[3] = CVDisputeFacet.pendingCollateralClaim.selector;
         cuts[2] = IDiamond.FacetCut({
             facetAddress: address(_disputeFacet),
             action: IDiamond.FacetCutAction.Auto,

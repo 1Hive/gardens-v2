@@ -62,8 +62,8 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
 
     // slither-disable-next-line unprotected-upgrade
     function initialize(uint256 _arbitrationFee, address _owner) public initializer {
-        super.initialize(_owner);
         __Ownable_init();
+        super.initialize(_owner);
         arbitrationFee = _arbitrationFee;
         emit SafeArbitratorInitialized(_arbitrationFee);
     }

@@ -482,6 +482,8 @@ abstract contract CVStrategyBaseFacet {
             return;
         }
 
+        // The default zero value is intentional before conditional assignment.
+        // slither-disable-next-line uninitialized-local
         uint256 count;
         for (uint256 i = 1; i <= proposalCounter; i++) {
             Proposal storage proposal = proposals[i];
@@ -546,6 +548,8 @@ abstract contract CVStrategyBaseFacet {
      */
     function _calculateAndSetConviction(Proposal storage _proposal, uint256 _oldStaked) internal {
         (uint256 conviction, uint256 blockNumber) = _checkBlockAndCalculateConviction(_proposal, _oldStaked);
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
         if (conviction == 0 && blockNumber == 0) {
             return;
         }
@@ -627,6 +631,8 @@ abstract contract CVStrategyBaseFacet {
         if (_proposal.blockLast > blockNumber) {
             revert BlockNumberRegression(_proposal.blockLast, blockNumber);
         }
+        // This guard must match the exact block already processed.
+        // slither-disable-next-line incorrect-equality
         if (_proposal.blockLast == blockNumber) {
             return (0, 0); // Conviction already stored
         }
@@ -657,6 +663,8 @@ abstract contract CVStrategyBaseFacet {
         uint256 i = 0;
         while (i < memberProposals.length) {
             uint256 proposalId = memberProposals[i];
+            // Exact equality is intentional for this zero-value guard.
+            // slither-disable-next-line incorrect-equality
             if (proposals[proposalId].voterStakedPoints[_member] == 0) {
                 memberProposals[i] = memberProposals[memberProposals.length - 1];
                 memberProposals.pop();
