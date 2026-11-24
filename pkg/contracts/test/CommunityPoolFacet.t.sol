@@ -10,6 +10,11 @@ import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
 import {FAllo} from "../src/interfaces/FAllo.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {MockPauseController} from "./helpers/PauseHelpers.sol";
+import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
+import {CVStrategy} from "../src/CVStrategy/CVStrategy.sol";
+import {CVStrategyRouter} from "../src/routing/SharedImplementationRouter.sol";
+import {CVPauseFacet} from "../src/CVStrategy/facets/CVPauseFacet.sol";
 
 contract MockAlloPool {
     uint256 public nextPoolId = 1;
@@ -117,6 +122,10 @@ contract MockStrategyTemplate {
         lastPauseController = controller;
     }
 
+    function pauseController() external view returns (address) {
+        return lastPauseController;
+    }
+
     function diamondCut(IDiamondCut.FacetCut[] calldata cuts, address initAddr, bytes calldata initCalldata) external {
         delete lastCuts;
         for (uint256 i = 0; i < cuts.length; i++) {
@@ -180,6 +189,7 @@ contract CommunityPoolFacetTest is Test {
     MockAlloPool internal allo;
     MockRegistryFactoryPause internal registryFactory;
     MockStrategyTemplate internal strategyTemplate;
+    MockPauseController internal controller;
 
     address internal owner = makeAddr("owner");
 
@@ -194,11 +204,13 @@ contract CommunityPoolFacetTest is Test {
         allo = new MockAlloPool();
         registryFactory = new MockRegistryFactoryPause();
         strategyTemplate = new MockStrategyTemplate();
+        controller = new MockPauseController();
 
         facet.setAllo(address(allo));
         facet.setRegistryFactory(address(registryFactory));
         facet.setStrategyTemplate(address(strategyTemplate));
         registryFactory.setStrategyTemplate(address(strategyTemplate));
+        registryFactory.setPauseController(address(controller));
         facet.setCollateralVaultTemplate(address(0xBEEF));
         facet.setProfileId(bytes32(uint256(1)));
     }
@@ -274,7 +286,7 @@ contract CommunityPoolFacetTest is Test {
 
         registryFactory.setStrategyFacets(cuts, address(0xCAFE), "init");
 
-        registryFactory.setPauseController(address(0xD00D));
+        registryFactory.setPauseController(address(controller));
 
         CVStrategyInitializeParamsV0_3 memory params = _baseParams();
         Metadata memory metadata = Metadata({protocol: 1, pointer: "meta"});
@@ -282,8 +294,50 @@ contract CommunityPoolFacetTest is Test {
         (, address strategy) = facet.createPool(address(0xABCD), params, metadata);
 
         MockStrategyTemplate proxy = MockStrategyTemplate(strategy);
-        assertEq(proxy.lastPauseController(), address(0xD00D));
+        assertEq(proxy.lastPauseController(), address(controller));
         assertEq(proxy.lastInit(), address(0xCAFE));
         assertEq(proxy.lastOwner(), facet.proxyOwner());
+    }
+
+    function test_createPool_requires_pause_controller() public {
+        registryFactory.setPauseController(address(0));
+        vm.expectRevert(CommunityPoolFacet.PauseControllerNotConfigured.selector);
+        facet.createPool(address(0), _baseParams(), Metadata({protocol: 1, pointer: "meta"}));
+    }
+
+    function test_custom_strategy_requires_matching_pause_controller() public {
+        MockStrategyTemplate custom = new MockStrategyTemplate();
+        Metadata memory metadata = Metadata({protocol: 1, pointer: "meta"});
+        vm.expectRevert(CommunityPoolFacet.PauseControllerNotConfigured.selector);
+        facet.createPool(address(custom), address(0), _baseParams(), metadata);
+
+        custom.setPauseController(address(controller));
+        (, address strategy) = facet.createPool(address(custom), address(0), _baseParams(), metadata);
+        assertEq(strategy, address(custom));
+    }
+
+    function test_createPool_with_shared_strategy_router() public {
+        CVStrategy core = new CVStrategy();
+        RegistryFactory factoryImpl = new RegistryFactory();
+        RegistryFactory sharedFactory = RegistryFactory(payable(address(new ERC1967Proxy(
+            address(factoryImpl),
+            abi.encodeCall(RegistryFactory.initialize, (address(this), address(this), address(strategyTemplate), address(core), address(0xBEEF)))
+        ))));
+        CVStrategyRouter router = new CVStrategyRouter(address(sharedFactory));
+        CVPauseFacet pauseFacet = new CVPauseFacet();
+        bytes4[] memory selectors = new bytes4[](2);
+        selectors[0] = bytes4(keccak256("setPauseController(address)"));
+        selectors[1] = bytes4(keccak256("pauseController()"));
+        IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
+        cuts[0] = IDiamond.FacetCut({facetAddress: address(pauseFacet), action: IDiamond.FacetCutAction.Auto, functionSelectors: selectors});
+        sharedFactory.setStrategyFacets(cuts, address(0), "");
+        sharedFactory.setStrategyImplementation(address(core));
+        sharedFactory.setStrategyTemplate(address(router));
+        sharedFactory.setGlobalPauseController(address(controller));
+        facet.setRegistryFactory(address(sharedFactory));
+
+        (, address strategy) = facet.createPool(address(0), _baseParams(), Metadata({protocol: 1, pointer: "meta"}));
+        assertEq(CVStrategyRouter(payable(strategy)).routingFactory(), address(sharedFactory));
+        assertEq(address(CVStrategy(payable(strategy)).proxyOwner()), facet.proxyOwner());
     }
 }

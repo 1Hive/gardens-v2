@@ -1080,7 +1080,10 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
             || selector == bytes4(keccak256("pauseFacet()")) || selector == bytes4(keccak256("pauseController()"))
             || selector == bytes4(keccak256("isPaused()")) || selector == bytes4(keccak256("isPaused(bytes4)"))
             || selector == bytes4(keccak256("pausedUntil()"))
-            || selector == bytes4(keccak256("pausedSelectorUntil(bytes4)"));
+            || selector == bytes4(keccak256("pausedSelectorUntil(bytes4)"))
+            || selector == bytes4(keccak256("rule(uint256,uint256)"))
+            || selector == bytes4(keccak256("deactivatePoints()"))
+            || selector == bytes4(keccak256("deactivatePoints(address)"));
     }
 
     // Sig: 0x1f931c1c

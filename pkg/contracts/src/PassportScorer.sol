@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.19;
 
-import {ProxyOwnableUpgrader} from "./ProxyOwnableUpgrader.sol";
+import {ControlledPauseUpgradeable} from "./pausing/ControlledPauseUpgradeable.sol";
 import {ISybilScorer, Strategy} from "./ISybilScorer.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
@@ -20,7 +20,7 @@ interface IScorerCommunityCouncil {
 }
 
 /// @custom:oz-upgrades-from PassportScorer
-contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
+contract PassportScorer is ISybilScorer, ControlledPauseUpgradeable {
     address public listManager;
 
     mapping(address => uint256) public userScores;
@@ -126,7 +126,7 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
     /// @notice Add a userScore to the list
     /// @param _user address of the user to add
     /// @param _score score to assign to the user
-    function addUserScore(address _user, uint256 _score) external onlyAuthorized {
+    function addUserScore(address _user, uint256 _score) external onlyAuthorized whenNotPaused {
         _revertZeroAddress(_user);
         userScores[_user] = _score;
         userScoreUpdatedAt[_user] = block.timestamp;
@@ -158,6 +158,7 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
         external
         override
         onlyCouncilOrAuthorized(_strategy)
+        whenNotPaused
     {
         _revertZeroAddress(_strategy);
         _revertZeroAddress(_councilSafe);
@@ -178,7 +179,7 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
 
     /// @notice Activate a strategy
     /// @param _strategy address of the strategy to activate
-    function activateStrategy(address _strategy) external onlyCouncilOrAuthorized(_strategy) {
+    function activateStrategy(address _strategy) external onlyCouncilOrAuthorized(_strategy) whenNotPaused {
         _revertZeroAddress(_strategy);
         strategies[_strategy].active = true;
         emit StrategyActivated(_strategy);
@@ -197,6 +198,7 @@ contract PassportScorer is ISybilScorer, ProxyOwnableUpgrader {
     /// @param _user address of the user to check
     /// @param _strategy address of the strategy to check
     function canExecuteAction(address _user, address _strategy) external view override returns (bool) {
+        if (isPaused(msg.sig)) return false;
         uint256 userScore = userScores[_user];
         Strategy memory strategy = strategies[_strategy];
 

@@ -6,14 +6,22 @@ import {ProxyOwner} from "../src/ProxyOwner.sol";
 
 interface IPauseFacet {
     function setPauseController(address controller) external;
+    function pauseController() external view returns (address);
 }
 
 contract DeployGlobalPauseControllerProd is BaseMultiChain {
     using stdJson for string;
+    uint256 private constant MAX_TRANSACTIONS_PER_BATCH = 20;
+
+    error PauseControllerReadFailed(address target);
 
     struct JsonWriter {
         string path;
         bool hasEntries;
+        uint256 count;
+        uint256 batch;
+        address safeOwner;
+        string networkJson;
     }
 
     function runCurrentNetwork(string memory networkJson) public override {
@@ -23,44 +31,65 @@ contract DeployGlobalPauseControllerProd is BaseMultiChain {
         }
 
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
-        address safeOwner = ProxyOwner(proxyOwner).owner();
+        address safeOwner = ProxyOwner(proxyOwner).mainOwner();
 
-        JsonWriter memory writer = _initPayloadWriter(safeOwner, networkJson);
+        JsonWriter memory writer = _initPayloadWriter(safeOwner, networkJson, 1);
 
         address[] memory registryCommunityProxies =
             networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
         for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-            writer = _appendTransaction(
-                writer,
-                _createTransactionJson(
-                    registryCommunityProxies[i],
-                    abi.encodeWithSelector(IPauseFacet.setPauseController.selector, pauseController)
-                )
-            );
+            writer = _appendIfNeeded(writer, registryCommunityProxies[i], pauseController);
         }
 
         address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
         for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-            writer = _appendTransaction(
-                writer,
-                _createTransactionJson(
-                    cvStrategyProxies[i],
-                    abi.encodeWithSelector(IPauseFacet.setPauseController.selector, pauseController)
-                )
-            );
+            writer = _appendIfNeeded(writer, cvStrategyProxies[i], pauseController);
         }
+
+        writer =
+            _appendIfNeeded(writer, networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER")), pauseController);
+        writer =
+            _appendIfNeeded(writer, networkJson.readAddress(getKeyNetwork(".ENVS.GOOD_DOLLAR_SYBIL")), pauseController);
+        writer = _appendIfNeeded(writer, networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR")), pauseController);
+        writer = _appendIfNeeded(
+            writer, networkJson.readAddress(getKeyNetwork(".ENVS.STREAMING_ESCROW_FACTORY")), pauseController
+        );
 
         _finalizePayloadWriter(writer);
     }
 
-    function _initPayloadWriter(address safeOwner, string memory networkJson)
+    function _appendIfNeeded(JsonWriter memory writer, address target, address controller)
+        internal
+        returns (JsonWriter memory)
+    {
+        if (target == address(0)) return writer;
+        try IPauseFacet(target).pauseController() returns (address current) {
+            if (current == controller) return writer;
+        } catch {
+            revert PauseControllerReadFailed(target);
+        }
+        return _appendTransaction(
+            writer,
+            _createTransactionJson(target, abi.encodeWithSelector(IPauseFacet.setPauseController.selector, controller))
+        );
+    }
+
+    function _initPayloadWriter(address safeOwner, string memory networkJson, uint256 batch)
         internal
         returns (JsonWriter memory writer)
     {
         vm.createDir("transaction-builder", true);
         writer.path = string.concat(
-            vm.projectRoot(), "/pkg/contracts/transaction-builder/", CURRENT_NETWORK, "-pause-controller.json"
+            vm.projectRoot(),
+            "/pkg/contracts/transaction-builder/",
+            CURRENT_NETWORK,
+            "-pause-controller",
+            batch == 1 ? "" : string.concat("-", vm.toString(batch)),
+            ".json"
         );
+        writer.safeOwner = safeOwner;
+        writer.networkJson = networkJson;
+        writer.batch = batch;
         string memory payloadHeader = string.concat(
             "{",
             '"version":"1.0",',
@@ -92,9 +121,14 @@ contract DeployGlobalPauseControllerProd is BaseMultiChain {
         internal
         returns (JsonWriter memory)
     {
+        if (writer.count == MAX_TRANSACTIONS_PER_BATCH) {
+            _finalizePayloadWriter(writer);
+            writer = _initPayloadWriter(writer.safeOwner, writer.networkJson, writer.batch + 1);
+        }
         string memory entry = writer.hasEntries ? string.concat(",", transactionJson) : transactionJson;
         vm.writeLine(writer.path, entry);
         writer.hasEntries = true;
+        writer.count++;
         return writer;
     }
 

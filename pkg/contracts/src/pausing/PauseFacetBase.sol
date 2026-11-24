@@ -4,9 +4,11 @@ pragma solidity ^0.8.19;
 import {IPauseController} from "../interfaces/IPauseController.sol";
 import {LibPauseStorage} from "./LibPauseStorage.sol";
 import {LibDiamond} from "../diamonds/libraries/LibDiamond.sol";
+import {PauseOwnerLib} from "./PauseOwnerLib.sol";
 
 abstract contract PauseFacetBase {
     error PauseControllerNotSet();
+    error InvalidPauseController(address controller);
     error NotOwner(address caller, address owner);
 
     event PauseControllerUpdated(address indexed controller);
@@ -15,6 +17,7 @@ abstract contract PauseFacetBase {
     // Sig: 0x1add1a0d
     function setPauseController(address controller) external {
         _enforceOwnerAndRegisterPauseFacet();
+        if (controller == address(0) || controller.code.length == 0) revert InvalidPauseController(controller);
         LibPauseStorage.layout().pauseController = controller;
         emit PauseControllerUpdated(controller);
     }
@@ -121,10 +124,11 @@ abstract contract PauseFacetBase {
 
     function _enforceOwner() internal view {
         address currentOwner = _pauseOwner();
-        if (msg.sender != currentOwner) {
+        if (msg.sender != currentOwner && !PauseOwnerLib.isMainOwner(_pauseDirectOwner(), msg.sender)) {
             revert NotOwner(msg.sender, currentOwner);
         }
     }
 
     function _pauseOwner() internal view virtual returns (address);
+    function _pauseDirectOwner() internal view virtual returns (address);
 }

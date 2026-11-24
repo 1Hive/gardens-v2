@@ -15,4 +15,8 @@ contract CVPauseFacet is CVStrategyBaseFacet, PauseFacetBase {
         address directOwner = proxyOwner();
         return msg.sender == directOwner ? directOwner : effectiveOwner();
     }
+
+    function _pauseDirectOwner() internal view override returns (address) {
+        return proxyOwner();
+    }
 }

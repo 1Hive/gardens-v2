@@ -8,6 +8,8 @@ import {ISafe} from "../interfaces/ISafe.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 import {IDiamondCut} from "../diamonds/interfaces/IDiamondCut.sol";
 import {IDiamond} from "../diamonds/interfaces/IDiamond.sol";
+import {IPauseController} from "../interfaces/IPauseController.sol";
+import {PauseOwnerLib} from "../pausing/PauseOwnerLib.sol";
 
 struct CommunityInfo {
     uint256 fee;
@@ -85,6 +87,8 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     error UnauthorizedProtopianDelegation(address caller, address holder);
     error ProtopianHolderRequired(address holder);
     error ProtopianDelegateUnavailable(address delegate);
+    error PauseControllerNotConfigured();
+    error FactoryPaused(address controller);
     error InvalidRoutingTarget(address target);
     error DuplicateRoutingSelector(bytes4 selector);
     error UnsupportedRoutingCut();
@@ -246,10 +250,24 @@ contract RegistryFactory is ProxyOwnableUpgrader {
         emit StreamingEscrowFactorySet(factory);
     }
 
-    function setGlobalPauseController(address controller) external virtual onlyOwner {
-        _revertZeroAddress(controller);
+    function setGlobalPauseController(address controller) external virtual {
+        address currentOwner = owner();
+        if (msg.sender != currentOwner && !PauseOwnerLib.isMainOwner(proxyOwner(), msg.sender)) {
+            revert CallerNotOwner(msg.sender, currentOwner);
+        }
+        if (controller == address(0) || controller.code.length == 0) revert PauseControllerNotConfigured();
         globalPauseController = controller;
         emit GlobalPauseControllerSet(controller);
+    }
+
+    function isPaused() public view returns (bool) {
+        address controller = globalPauseController;
+        return controller != address(0) && IPauseController(controller).isPaused(address(this));
+    }
+
+    function isPaused(bytes4 selector) public view returns (bool) {
+        address controller = globalPauseController;
+        return controller != address(0) && IPauseController(controller).isPaused(address(this), selector);
     }
 
     function setAuthorizedWallet(address wallet, bool authorized) external virtual onlyOwner {
@@ -371,6 +389,9 @@ contract RegistryFactory is ProxyOwnableUpgrader {
     {
         require(communityFacetCuts.length > 0, "Community facets not set");
         require(strategyFacetCuts.length > 0, "Strategy facets not set");
+        address controller = globalPauseController;
+        if (controller == address(0)) revert PauseControllerNotConfigured();
+        if (isPaused(msg.sig)) revert FactoryPaused(controller);
         return _createRegistry(params);
     }
 

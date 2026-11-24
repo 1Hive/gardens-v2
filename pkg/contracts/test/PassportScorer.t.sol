@@ -3,7 +3,10 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 import "../src/PassportScorer.sol";
+import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {MockPauseController} from "./helpers/PauseHelpers.sol";
+import {ControlledPauseUpgradeable} from "../src/pausing/ControlledPauseUpgradeable.sol";
 
 contract MockStrategyMinimal {
     address public registryCommunity;
@@ -75,6 +78,40 @@ contract PassportScorerTest is Test {
         uint256 storedScore = passportScorer.userScores(user);
         assertEq(storedScore, passportScore);
         assertEq(passportScorer.userScoreUpdatedAt(user), 100);
+    }
+
+    function test_pause_denies_eligibility_but_allows_score_removal() public {
+        MockPauseController controller = new MockPauseController();
+        vm.prank(owner);
+        passportScorer.setPauseController(address(controller));
+
+        vm.prank(listManager);
+        passportScorer.addUserScore(user, passportScore);
+        assertTrue(passportScorer.canExecuteAction(user, strategy));
+
+        controller.setGlobalPaused(true);
+        assertFalse(passportScorer.canExecuteAction(user, strategy));
+        vm.prank(listManager);
+        vm.expectRevert(abi.encodeWithSelector(ControlledPauseUpgradeable.ContractPaused.selector, address(controller)));
+        passportScorer.addUserScore(user, passportScore);
+
+        vm.prank(listManager);
+        passportScorer.removeUser(user);
+        assertEq(passportScorer.userScores(user), 0);
+    }
+
+    function test_selector_pause_denies_eligibility() public {
+        MockPauseController controller = new MockPauseController();
+        vm.prank(owner);
+        passportScorer.setPauseController(address(controller));
+
+        vm.prank(listManager);
+        passportScorer.addUserScore(user, passportScore);
+        controller.setSelectorPaused(ISybilScorer.canExecuteAction.selector, true);
+
+        assertFalse(passportScorer.canExecuteAction(user, strategy));
+        vm.prank(listManager);
+        passportScorer.removeUser(user);
     }
 
     function testAddUserScore_zeroAddressReverts() public {

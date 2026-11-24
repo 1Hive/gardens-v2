@@ -11,6 +11,8 @@ import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/I
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/gdav1/ISuperfluidPool.sol";
 import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {MockPauseController} from "./helpers/PauseHelpers.sol";
+import {ControlledPauseUpgradeable} from "../src/pausing/ControlledPauseUpgradeable.sol";
 
 contract MockGDA {}
 
@@ -109,6 +111,23 @@ contract StreamingEscrowFactoryTest is Test {
         assertEq(StreamingEscrow(escrow).strategy(), address(this));
         assertEq(StreamingEscrow(escrow).beneficiary(), beneficiary);
         assertEq(StreamingEscrow(escrow).owner(), address(this));
+    }
+
+    function test_pause_blocks_new_escrows_but_allows_configuration() public {
+        MockPauseController controller = new MockPauseController();
+        factory.setPauseController(address(controller));
+        controller.setGlobalPaused(true);
+
+        vm.expectRevert(abi.encodeWithSelector(ControlledPauseUpgradeable.ContractPaused.selector, address(controller)));
+        factory.deployEscrow(ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, address(this));
+
+        factory.setEscrowImplementation(address(escrowImpl));
+        controller.setGlobalPaused(false);
+        assertTrue(
+            factory.deployEscrow(
+                    ISuperToken(address(token)), ISuperfluidPool(address(pool)), beneficiary, address(this)
+                ) != address(0)
+        );
     }
 
     function test_deployEscrow_continues_when_superApp_registration_fails() public {

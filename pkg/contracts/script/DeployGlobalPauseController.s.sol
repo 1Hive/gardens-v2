@@ -37,13 +37,13 @@ contract DeployGlobalPauseController is BaseMultiChain {
         address controller, address expectedProxyOwner, address actualProxyOwner
     );
     error PauseControllerConfiguredOwnerMismatch(address controller, address expectedOwner, address actualOwner);
+    error PauseControllerUnsupported(address target);
 
     function runCurrentNetwork(string memory networkJson) public override {
         bool deployOnly = vm.envOr("DEPLOY_ONLY", false);
         address proxyOwner = networkJson.readAddress(getKeyNetwork(".ENVS.PROXY_OWNER"));
         address owner = networkJson.readAddress(getKeyNetwork(".ENVS.SENDER"));
         address controller = _readAddressOrZero(".ENVS.PAUSE_CONTROLLER");
-        bool pauseControllerAlreadySet = controller != address(0);
         address controllerImplementation = address(new GlobalPauseController());
 
         if (controller == address(0)) {
@@ -82,20 +82,21 @@ contract DeployGlobalPauseController is BaseMultiChain {
             return;
         }
 
-        if (!pauseControllerAlreadySet) {
-            address[] memory registryCommunityProxies =
-                networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
-            for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
-                _setPauseController(registryCommunityProxies[i], controller);
-            }
-
-            address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
-            for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
-                _setPauseController(cvStrategyProxies[i], controller);
-            }
-        } else {
-            console2.log("Pause controller already set in config; skipping community and strategy rewiring");
+        address[] memory registryCommunityProxies =
+            networkJson.readAddressArray(getKeyNetwork(".PROXIES.REGISTRY_COMMUNITIES"));
+        for (uint256 i = 0; i < registryCommunityProxies.length; i++) {
+            _setPauseController(registryCommunityProxies[i], controller);
         }
+
+        address[] memory cvStrategyProxies = networkJson.readAddressArray(getKeyNetwork(".PROXIES.CV_STRATEGIES"));
+        for (uint256 i = 0; i < cvStrategyProxies.length; i++) {
+            _setPauseController(cvStrategyProxies[i], controller);
+        }
+
+        _setPauseController(networkJson.readAddress(getKeyNetwork(".ENVS.PASSPORT_SCORER")), controller);
+        _setPauseController(networkJson.readAddress(getKeyNetwork(".ENVS.GOOD_DOLLAR_SYBIL")), controller);
+        _setPauseController(networkJson.readAddress(getKeyNetwork(".ENVS.ARBITRATOR")), controller);
+        _setPauseController(networkJson.readAddress(getKeyNetwork(".ENVS.STREAMING_ESCROW_FACTORY")), controller);
 
         address registryFactoryProxy = networkJson.readAddress(getKeyNetwork(".PROXIES.REGISTRY_FACTORY"));
         _setFactoryPauseController(registryFactoryProxy, controller);
@@ -103,8 +104,7 @@ contract DeployGlobalPauseController is BaseMultiChain {
 
     function _setPauseController(address target, address controller) internal {
         if (!_supportsPauseController(target)) {
-            console2.log("Skipping target without pause facet", target);
-            return;
+            revert PauseControllerUnsupported(target);
         }
 
         IPauseFacet pauseFacet = IPauseFacet(target);
