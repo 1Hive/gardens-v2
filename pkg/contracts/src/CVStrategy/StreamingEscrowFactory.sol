@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
+import {ControlledPauseUpgradeable} from "../pausing/ControlledPauseUpgradeable.sol";
 import {
     ISuperfluid,
     SuperAppDefinitions
@@ -17,7 +17,7 @@ import {StreamingEscrow} from "./StreamingEscrow.sol";
  * @title StreamingEscrowFactory
  * @notice Factory that deploys and registers StreamingEscrow SuperApps via registerApp.
  */
-contract StreamingEscrowFactory is ProxyOwnableUpgrader {
+contract StreamingEscrowFactory is ControlledPauseUpgradeable {
     error UnauthorizedCaller(address sender, address strategy); // 0x6e154f1f
     error InvalidAddress(); // 0x9f1f3e28
 
@@ -41,7 +41,7 @@ contract StreamingEscrowFactory is ProxyOwnableUpgrader {
             revert InvalidAddress();
         }
 
-        ProxyOwnableUpgrader.initialize(_owner);
+        super.initialize(_owner);
 
         host = _host;
         escrowImplementation = _escrowImplementation;
@@ -49,6 +49,7 @@ contract StreamingEscrowFactory is ProxyOwnableUpgrader {
 
     function deployEscrow(ISuperToken superToken, ISuperfluidPool pool, address beneficiary, address strategy)
         external
+        whenNotPaused
         returns (address escrow)
     {
         if (strategy == address(0)) {

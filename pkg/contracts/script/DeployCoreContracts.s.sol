@@ -180,10 +180,16 @@ contract DeployCoreContracts is BaseMultiChain {
                 deployed.streamingEscrowImplementation
             ) = _deployStreamingEscrowFactory(superfluidHost);
             registryFactory.setStreamingEscrowFactory(deployed.streamingEscrowFactory);
+            StreamingEscrowFactory(payable(deployed.streamingEscrowFactory))
+                .setPauseController(deployed.pauseController);
 
             (deployed.passportScorer, deployed.passportScorerImplementation) = _deployPassportScorer();
             (deployed.goodDollarSybil, deployed.goodDollarSybilImplementation) = _deployGoodDollarSybil();
             (deployed.safeArbitrator, deployed.safeArbitratorImplementation) = _deploySafeArbitrator();
+
+            PassportScorer(payable(deployed.passportScorer)).setPauseController(deployed.pauseController);
+            GoodDollarSybil(payable(deployed.goodDollarSybil)).setPauseController(deployed.pauseController);
+            SafeArbitrator(payable(deployed.safeArbitrator)).setPauseController(deployed.pauseController);
 
             registryFactory.registerContract(deployed.safeArbitrator);
             registryFactory.registerContract(deployed.passportScorer);

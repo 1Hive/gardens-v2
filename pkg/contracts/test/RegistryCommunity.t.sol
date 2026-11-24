@@ -37,6 +37,8 @@ import {GlobalPauseController} from "../src/pausing/GlobalPauseController.sol";
 
 contract DummyCommunityFacet {
     function dummy() external {}
+
+    function unregisterMember() external {}
 }
 
 contract AddStrategyFacet {
@@ -1140,6 +1142,15 @@ contract RegistryCommunityTest is Test {
         vm.prank(owner);
         community.diamondCut(_facetCutsForPause(address(pauseFacet)), address(0), "");
 
+        IDiamond.FacetCut[] memory exitCut = new IDiamond.FacetCut[](1);
+        bytes4[] memory exitSelector = new bytes4[](1);
+        exitSelector[0] = DummyCommunityFacet.unregisterMember.selector;
+        exitCut[0] = IDiamond.FacetCut({
+            facetAddress: address(dummyFacet), action: IDiamond.FacetCutAction.Add, functionSelectors: exitSelector
+        });
+        vm.prank(owner);
+        community.diamondCut(exitCut, address(0), "");
+
         vm.prank(owner);
         CommunityPauseFacet(address(community)).setPauseController(address(controller));
 
@@ -1151,6 +1162,8 @@ contract RegistryCommunityTest is Test {
 
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.CommunityPaused.selector, address(controller)));
         DummyCommunityFacet(address(community)).dummy();
+
+        community.unregisterMember();
 
         vm.prank(owner);
         CommunityPauseFacet(address(community)).pause(1);

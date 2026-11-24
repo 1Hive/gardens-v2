@@ -37,6 +37,7 @@ import {CVStrategyHelpers} from "../CVStrategyHelpers.sol";
 import {SafeSetup} from "../shared/SafeSetup.sol";
 import {StrategyDiamondConfigurator} from "../helpers/StrategyDiamondConfigurator.sol";
 import {CommunityDiamondConfigurator} from "../helpers/CommunityDiamondConfigurator.sol";
+import {MockPauseController} from "../helpers/PauseHelpers.sol";
 import {PowerManagementUtils} from "../../src/CVStrategy/PowerManagementUtils.sol";
 import {IVotingPowerRegistry} from "../../src/interfaces/IVotingPowerRegistry.sol";
 import {SquidGardensRevenueReceiver} from "../../src/MarkeeRevenue/SquidGardensRevenueReceiver.sol";
@@ -315,6 +316,7 @@ abstract contract PoCBase is Test, RegistrySetupFull, AlloSetup, CVStrategyHelpe
         registryFactory.setStrategyFacets(
             diamondConfig.getFacetCuts(), address(diamondConfig.diamondInit()), abi.encodeWithSignature("init()")
         );
+        registryFactory.setGlobalPauseController(address(new MockPauseController()));
         vm.stopPrank();
 
         RegistryCommunityInitializeParams memory p;

@@ -639,7 +639,10 @@ contract RegistryCommunity is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, 
             || selector == bytes4(keccak256("pauseFacet()")) || selector == bytes4(keccak256("pauseController()"))
             || selector == bytes4(keccak256("isPaused()")) || selector == bytes4(keccak256("isPaused(bytes4)"))
             || selector == bytes4(keccak256("pausedUntil()"))
-            || selector == bytes4(keccak256("pausedSelectorUntil(bytes4)"));
+            || selector == bytes4(keccak256("pausedSelectorUntil(bytes4)"))
+            || selector == bytes4(keccak256("unregisterMember()"))
+            || selector == bytes4(keccak256("deactivateMemberInStrategy(address,address)"))
+            || selector == bytes4(keccak256("getMemberPowerInStrategy(address,address)"));
     }
 
     // Sig: 0x1f931c1c

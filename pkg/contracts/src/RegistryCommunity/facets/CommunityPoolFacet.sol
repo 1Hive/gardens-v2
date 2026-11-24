@@ -29,6 +29,7 @@ struct RegistryCommunityInitializeParams {
 interface IPauseFacet {
     // Sig: 0x1add1a0d
     function setPauseController(address controller) external;
+    function pauseController() external view returns (address);
 }
 
 /**
@@ -49,6 +50,7 @@ contract CommunityPoolFacet is CommunityBaseFacet {
     /*|--------------------------------------------|*/
     error ValueCannotBeZero();
     error AllowlistTooBig(uint256 size);
+    error PauseControllerNotConfigured();
 
     /*|--------------------------------------------|*/
     /*|              FUNCTIONS                     |*/
@@ -98,9 +100,8 @@ contract CommunityPoolFacet is CommunityBaseFacet {
             }
         }
         address pauseController = IRegistryFactory(registryFactory).globalPauseController();
-        if (pauseController != address(0)) {
-            IPauseFacet(strategyProxy).setPauseController(pauseController);
-        }
+        if (pauseController == address(0)) revert PauseControllerNotConfigured();
+        IPauseFacet(strategyProxy).setPauseController(pauseController);
         CVStrategy(payable(strategyProxy)).transferOwnership(proxyOwner());
     }
 
@@ -111,6 +112,10 @@ contract CommunityPoolFacet is CommunityBaseFacet {
         CVStrategyInitializeParamsV0_3 memory _params,
         Metadata memory _metadata
     ) public returns (uint256 poolId, address strategy) {
+        address controller = IRegistryFactory(registryFactory).globalPauseController();
+        if (controller == address(0) || IPauseFacet(_strategy).pauseController() != controller) {
+            revert PauseControllerNotConfigured();
+        }
         address token = NATIVE;
         if (_token != address(0)) {
             token = _token;

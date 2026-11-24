@@ -14,4 +14,8 @@ contract CommunityPauseFacet is CommunityBaseFacet, PauseFacetBase {
     function _pauseOwner() internal view override returns (address) {
         return owner();
     }
+
+    function _pauseDirectOwner() internal view override returns (address) {
+        return proxyOwner();
+    }
 }

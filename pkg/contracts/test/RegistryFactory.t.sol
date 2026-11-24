@@ -10,6 +10,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {IDiamondCut} from "../src/diamonds/interfaces/IDiamondCut.sol";
 import {IDiamond} from "../src/diamonds/interfaces/IDiamond.sol";
+import {MockPauseController} from "./helpers/PauseHelpers.sol";
+import {ProxyOwner} from "../src/ProxyOwner.sol";
 
 contract RegistryFactoryHarness is RegistryFactory {
     function seedLegacyDelegation(address holder, address delegate, address recursiveDelegate) external {
@@ -61,6 +63,7 @@ contract RegistryFactoryTest is Test {
     address strategyTemplate;
     address collateralTemplate;
     MockSafe councilSafe;
+    MockPauseController pauseController;
 
     RegistryCommunityInitializeParams params;
 
@@ -69,6 +72,7 @@ contract RegistryFactoryTest is Test {
         strategyTemplate = address(0x1234);
         collateralTemplate = address(0x5678);
         councilSafe = new MockSafe(address(0xC0FFEE));
+        pauseController = new MockPauseController();
 
         factory = RegistryFactoryHarness(
             address(
@@ -94,6 +98,7 @@ contract RegistryFactoryTest is Test {
         vm.startPrank(owner);
         factory.setCommunityFacets(dummyCuts, address(0), "");
         factory.setStrategyFacets(dummyCuts, address(0), "");
+        factory.setGlobalPauseController(address(pauseController));
         vm.stopPrank();
 
         params._allo = address(this);
@@ -387,16 +392,51 @@ contract RegistryFactoryTest is Test {
     }
 
     function test_setGlobalPauseController_only_owner_and_non_zero() public {
+        MockPauseController nextController = new MockPauseController();
         vm.prank(owner);
-        factory.setGlobalPauseController(address(0xCAFE));
-        assertEq(factory.globalPauseController(), address(0xCAFE));
+        factory.setGlobalPauseController(address(nextController));
+        assertEq(factory.globalPauseController(), address(nextController));
 
         vm.prank(owner);
-        vm.expectRevert(RegistryFactory.AddressCannotBeZero.selector);
+        vm.expectRevert(RegistryFactory.PauseControllerNotConfigured.selector);
         factory.setGlobalPauseController(address(0));
+
+        vm.prank(owner);
+        vm.expectRevert(RegistryFactory.PauseControllerNotConfigured.selector);
+        factory.setGlobalPauseController(address(0xCAFE));
 
         vm.expectRevert();
         factory.setGlobalPauseController(address(0xBEEF));
+    }
+
+    function test_setGlobalPauseController_accepts_mainOwner_during_upgradeAccess() public {
+        ProxyOwner proxyOwner = ProxyOwner(
+            address(new ERC1967Proxy(address(new ProxyOwner()), abi.encodeCall(ProxyOwner.initialize, (owner))))
+        );
+        vm.prank(owner);
+        proxyOwner.grantUpgradeAccess(address(0xA11CE));
+        vm.prank(owner);
+        factory.transferOwnership(address(proxyOwner));
+
+        MockPauseController nextController = new MockPauseController();
+        vm.prank(owner);
+        factory.setGlobalPauseController(address(nextController));
+        assertEq(factory.globalPauseController(), address(nextController));
+    }
+
+    function test_createRegistry_revertsWhilePaused() public {
+        pauseController.setGlobalPaused(true);
+        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.FactoryPaused.selector, address(pauseController)));
+        factory.createRegistry(params);
+        pauseController.setGlobalPaused(false);
+        factory.createRegistry(params);
+    }
+
+    function test_createRegistry_revertsWhileSelectorPaused() public {
+        pauseController.setSelectorPaused(RegistryFactory.createRegistry.selector, true);
+        assertTrue(factory.isPaused(RegistryFactory.createRegistry.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.FactoryPaused.selector, address(pauseController)));
+        factory.createRegistry(params);
     }
 
     function test_setAuthorizedWallet_onlyOwner() public {

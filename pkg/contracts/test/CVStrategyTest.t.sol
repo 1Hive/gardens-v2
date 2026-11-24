@@ -26,6 +26,7 @@ import {RegistryCommunity, RegistryCommunityInitializeParams} from "../src/Regis
 
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
+import {MockPauseController} from "./helpers/PauseHelpers.sol";
 import {
     CVStrategy,
     ProposalType,
@@ -167,6 +168,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             address(diamondConfigurator.diamondInit()),
             abi.encodeCall(CVStrategyDiamondInit.init, ())
         );
+        registryFactory.setGlobalPauseController(address(new MockPauseController()));
 
         vm.stopPrank();
 

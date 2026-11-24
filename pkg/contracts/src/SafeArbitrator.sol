@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.19;
 
-import {ProxyOwnableUpgrader} from "./ProxyOwnableUpgrader.sol";
+import {ControlledPauseUpgradeable} from "./pausing/ControlledPauseUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
@@ -14,7 +14,7 @@ import {IArbitrator} from "./interfaces/IArbitrator.sol";
 
 /// @title Safe Arbitrator
 /// @dev This is an arbitrator middleware that will allow a safe to decide on the result of disputes.
-contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpgradeable {
+contract SafeArbitrator is IArbitrator, ControlledPauseUpgradeable, ReentrancyGuardUpgradeable {
     event ArbitrationFeeUpdated(uint256 _newArbitrationFee);
     event SafeRegistered(address indexed _arbitrable, address _safe);
     event SafeArbitratorInitialized(uint256 _arbitrationFee);
@@ -75,7 +75,7 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
         emit ArbitrationFeeUpdated(_arbitrationFee);
     }
 
-    function registerSafe(address _safe) external {
+    function registerSafe(address _safe) external whenNotPaused {
         arbitrableTribunalSafe[msg.sender] = _safe;
         emit SafeRegistered(msg.sender, _safe);
     }
@@ -86,6 +86,7 @@ contract SafeArbitrator is IArbitrator, ProxyOwnableUpgrader, ReentrancyGuardUpg
         payable
         override
         nonReentrant
+        whenNotPaused
         returns (uint256 disputeID)
     {
         if (msg.value < arbitrationCost(_extraData)) {

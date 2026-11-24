@@ -3,8 +3,11 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 import {GoodDollarSybil} from "../src/GoodDollarSybil.sol";
-import {Strategy} from "../src/ISybilScorer.sol";
+import {ISybilScorer, Strategy} from "../src/ISybilScorer.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {MockPauseController} from "./helpers/PauseHelpers.sol";
+import {ControlledPauseUpgradeable} from "../src/pausing/ControlledPauseUpgradeable.sol";
+import {ProxyOwner} from "../src/ProxyOwner.sol";
 
 contract MockStrategy {
     address public registryCommunityAddress;
@@ -53,6 +56,85 @@ contract GoodDollarSybilTest is Test {
         vm.prank(listManager);
         sybil.invalidateUser(stranger);
         assertFalse(sybil.userValidity(stranger));
+    }
+
+    function test_pause_denies_eligibility_but_allows_invalidation() public {
+        MockPauseController controller = new MockPauseController();
+        vm.prank(owner);
+        sybil.setPauseController(address(controller));
+
+        vm.prank(listManager);
+        sybil.validateUser(stranger);
+        assertTrue(sybil.canExecuteAction(stranger, address(0)));
+
+        controller.setGlobalPaused(true);
+        assertFalse(sybil.canExecuteAction(stranger, address(0)));
+        vm.prank(listManager);
+        vm.expectRevert(abi.encodeWithSelector(ControlledPauseUpgradeable.ContractPaused.selector, address(controller)));
+        sybil.validateUser(address(0x1234));
+
+        vm.prank(listManager);
+        sybil.invalidateUser(stranger);
+        assertFalse(sybil.userValidity(stranger));
+
+        controller.setGlobalPaused(false);
+        vm.prank(listManager);
+        sybil.validateUser(stranger);
+        assertTrue(sybil.canExecuteAction(stranger, address(0)));
+    }
+
+    function test_selector_pause_denies_eligibility() public {
+        MockPauseController controller = new MockPauseController();
+        vm.prank(owner);
+        sybil.setPauseController(address(controller));
+
+        vm.prank(listManager);
+        sybil.validateUser(stranger);
+        controller.setSelectorPaused(ISybilScorer.canExecuteAction.selector, true);
+
+        assertFalse(sybil.canExecuteAction(stranger, address(0)));
+        vm.prank(listManager);
+        sybil.invalidateUser(stranger);
+    }
+
+    function test_pause_controller_requires_owner_and_contract() public {
+        MockPauseController controller = new MockPauseController();
+        vm.expectRevert();
+        sybil.setPauseController(address(controller));
+        vm.prank(owner);
+        vm.expectRevert(abi.encodeWithSelector(ControlledPauseUpgradeable.InvalidPauseController.selector, address(0)));
+        sybil.setPauseController(address(0));
+        vm.prank(owner);
+        sybil.setPauseController(address(controller));
+        assertEq(sybil.pauseController(), address(controller));
+
+        vm.prank(owner);
+        sybil.pause(10);
+        assertTrue(sybil.isPaused());
+        vm.prank(owner);
+        sybil.unpause();
+        assertFalse(sybil.isPaused());
+    }
+
+    function test_pause_controller_accepts_mainOwner_during_upgradeAccess() public {
+        ProxyOwner proxyOwner = ProxyOwner(
+            address(new ERC1967Proxy(address(new ProxyOwner()), abi.encodeCall(ProxyOwner.initialize, (owner))))
+        );
+        vm.prank(owner);
+        proxyOwner.grantUpgradeAccess(address(0xA11CE));
+        vm.prank(owner);
+        sybil.transferOwnership(address(proxyOwner));
+
+        MockPauseController controller = new MockPauseController();
+        vm.prank(owner);
+        sybil.setPauseController(address(controller));
+        assertEq(sybil.pauseController(), address(controller));
+
+        vm.prank(owner);
+        sybil.pause(10);
+        assertTrue(sybil.isPaused());
+        vm.prank(owner);
+        sybil.unpause();
     }
 
     function test_validate_revertsZeroUser() public {

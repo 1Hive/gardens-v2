@@ -96,6 +96,10 @@ contract RawOwnerPauseFacet is CVStrategyBaseFacet, PauseFacetBase {
     function _pauseOwner() internal view override returns (address) {
         return proxyOwner();
     }
+
+    function _pauseDirectOwner() internal view override returns (address) {
+        return address(0);
+    }
 }
 
 contract SharedImplementationRouterTest is Test {

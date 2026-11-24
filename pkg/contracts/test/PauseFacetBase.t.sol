@@ -26,6 +26,10 @@ contract PauseFacetBaseHarness is PauseFacetBase {
     function _pauseOwner() internal view override returns (address) {
         return owner;
     }
+
+    function _pauseDirectOwner() internal view override returns (address) {
+        return owner;
+    }
 }
 
 contract CommunityPauseFacetHarness is CommunityPauseFacet {
@@ -84,6 +88,13 @@ contract PauseFacetBaseTest is Test {
 
         facet.setPauseController(address(controller));
         assertEq(facet.pauseController(), address(controller));
+    }
+
+    function test_setPauseController_rejects_zero_and_eoa() public {
+        vm.expectRevert(abi.encodeWithSelector(PauseFacetBase.InvalidPauseController.selector, address(0)));
+        facet.setPauseController(address(0));
+        vm.expectRevert(abi.encodeWithSelector(PauseFacetBase.InvalidPauseController.selector, address(0xCAFE)));
+        facet.setPauseController(address(0xCAFE));
     }
 
     function test_setPauseFacet_owner_updates() public {
@@ -203,7 +214,7 @@ contract PauseFacetBaseTest is Test {
         cv.setPauseController(address(controller));
     }
 
-    function test_cvPauseFacet_follows_proxyOwner_upgrade_access() public {
+    function test_cvPauseFacet_allows_mainOwner_and_upgrade_access() public {
         ProxyOwner ownerProxy = ProxyOwner(
             address(new ERC1967Proxy(address(new ProxyOwner()), abi.encodeCall(ProxyOwner.initialize, (address(this)))))
         );
@@ -217,12 +228,36 @@ contract PauseFacetBaseTest is Test {
         cv.setPauseController(address(controller));
         assertEq(cv.pauseController(), address(controller));
 
-        vm.expectRevert(abi.encodeWithSelector(PauseFacetBase.NotOwner.selector, address(this), upgradeWallet));
         cv.setPauseController(address(controller));
 
         vm.prank(upgradeWallet);
         ownerProxy.renounceUpgradeAccess();
         cv.setPauseController(address(controller));
+    }
+
+    function test_pauseFacets_accept_mainOwner_during_upgradeAccess() public {
+        address upgradeWallet = address(0xA11CE);
+        ProxyOwner proxyOwner = ProxyOwner(
+            address(new ERC1967Proxy(address(new ProxyOwner()), abi.encodeCall(ProxyOwner.initialize, (address(this)))))
+        );
+        proxyOwner.grantUpgradeAccess(upgradeWallet);
+
+        CVPauseFacetHarness cv = new CVPauseFacetHarness();
+        cv.setOwner(address(proxyOwner));
+        cv.setPauseController(address(controller));
+
+        CommunityPauseFacetHarness impl = new CommunityPauseFacetHarness();
+        CommunityPauseFacetHarness community = CommunityPauseFacetHarness(
+            payable(address(
+                    new ERC1967Proxy(address(impl), abi.encodeCall(impl.initializeHarness, (address(proxyOwner))))
+                ))
+        );
+        community.setPauseController(address(controller));
+
+        vm.prank(upgradeWallet);
+        cv.setPauseController(address(controller));
+        vm.prank(upgradeWallet);
+        community.setPauseController(address(controller));
     }
 
     function test_libPauseStorage_layout_roundtrip() public {

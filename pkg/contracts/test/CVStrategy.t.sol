@@ -55,6 +55,12 @@ contract CVStrategyStubFacet {
     function ping() external pure returns (uint256) {
         return 1;
     }
+
+    function rule(uint256, uint256) external {}
+
+    function deactivatePoints() external {}
+
+    function deactivatePoints(address) external {}
 }
 
 contract CVStrategyRevertFacet {
@@ -918,9 +924,12 @@ contract CVStrategyCoverageTest is Test {
         );
 
         IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
-        bytes4[] memory stubSelectors = new bytes4[](2);
+        bytes4[] memory stubSelectors = new bytes4[](5);
         stubSelectors[0] = CVStrategy.activatePoints.selector;
         stubSelectors[1] = CVStrategyStubFacet.ping.selector;
+        stubSelectors[2] = CVStrategyStubFacet.rule.selector;
+        stubSelectors[3] = bytes4(keccak256("deactivatePoints()"));
+        stubSelectors[4] = bytes4(keccak256("deactivatePoints(address)"));
         cuts[0] = IDiamond.FacetCut({
             facetAddress: address(facet), action: IDiamond.FacetCutAction.Add, functionSelectors: stubSelectors
         });
@@ -940,6 +949,10 @@ contract CVStrategyCoverageTest is Test {
 
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.StrategyPaused.selector, address(controller)));
         CVStrategyStubFacet(address(local)).ping();
+
+        local.rule(1, 1);
+        local.deactivatePoints();
+        local.deactivatePoints(address(this));
 
         vm.prank(ownerAddr);
         CVPauseFacet(address(local)).pause(1);

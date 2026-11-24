@@ -30,6 +30,7 @@ import {CVStrategyDiamondInit} from "../src/CVStrategy/CVStrategyDiamondInit.sol
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {CVDisputeFacet} from "../src/CVStrategy/facets/CVDisputeFacet.sol";
+import {MockPauseController} from "./helpers/PauseHelpers.sol";
 
 contract MockArbitrableRefundOrder is IArbitrable {
     bool public ruled;
@@ -162,6 +163,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
             address(diamondConfigurator.diamondInit()),
             abi.encodeCall(CVStrategyDiamondInit.init, ())
         );
+        factory.setGlobalPauseController(address(new MockPauseController()));
         factory.registerContract(address(safeArbitrator));
         vm.stopPrank();
         registryCommunity = RegistryCommunity(factory.createRegistry(params));

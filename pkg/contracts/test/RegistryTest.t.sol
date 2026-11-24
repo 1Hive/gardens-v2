@@ -21,6 +21,7 @@ import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {RegistryFactory} from "../src/RegistryFactory/RegistryFactory.sol";
+import {MockPauseController} from "./helpers/PauseHelpers.sol";
 import {
     CVStrategy,
     PointSystem,
@@ -67,6 +68,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     // Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
 
     RegistryFactory internal registryFactory;
+    MockPauseController internal pauseController;
     RegistryCommunity internal registryCommunity;
     RegistryCommunity internal nonKickableCommunity;
     StrategyDiamondConfigurator public diamondConfigurator;
@@ -151,6 +153,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             address(diamondConfigurator.diamondInit()),
             abi.encodeCall(CVStrategyDiamondInit.init, ())
         );
+        pauseController = new MockPauseController();
+        registryFactory.setGlobalPauseController(address(pauseController));
 
         registryFactory.registerContract(address(safeArbitrator));
 
@@ -289,6 +293,49 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         assertEq(registryCommunity.memberPowerInStrategy(gardenMember, address(strategy)), 0);
         vm.stopPrank();
         stopMeasuringGas();
+    }
+
+    function test_memberCanDeactivateAndExitWhileCommunityAndStrategyPaused() public {
+        vm.prank(address(councilSafe));
+        registryCommunity.addStrategy(address(strategy));
+
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        registryCommunity.stakeAndRegisterMember("");
+        strategy.activatePoints();
+        vm.stopPrank();
+
+        pauseController.setGlobalPaused(true);
+
+        vm.prank(gardenMember);
+        strategy.deactivatePoints();
+        assertFalse(registryCommunity.memberActivatedInStrategies(gardenMember, address(strategy)));
+
+        vm.prank(gardenMember);
+        registryCommunity.unregisterMember();
+        pauseController.setGlobalPaused(false);
+        assertFalse(registryCommunity.isMember(gardenMember));
+        assertEq(token.balanceOf(gardenMember), mintAmount - (STAKE_WITH_FEES - MINIMUM_STAKE));
+    }
+
+    function test_memberCanUnregisterWithActivePointsWhilePaused() public {
+        vm.prank(address(councilSafe));
+        registryCommunity.addStrategy(address(strategy));
+
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        registryCommunity.stakeAndRegisterMember("");
+        strategy.activatePoints();
+        vm.stopPrank();
+
+        pauseController.setGlobalPaused(true);
+        vm.prank(gardenMember);
+        registryCommunity.unregisterMember();
+
+        pauseController.setGlobalPaused(false);
+        assertFalse(registryCommunity.isMember(gardenMember));
+        assertEq(strategy.totalPointsActivated(), 0);
+        assertEq(token.balanceOf(gardenMember), mintAmount - (STAKE_WITH_FEES - MINIMUM_STAKE));
     }
 
     function test_setProtocolFee() public {
