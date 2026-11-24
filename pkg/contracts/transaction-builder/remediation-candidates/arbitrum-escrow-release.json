@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "chainId": "42161",
+  "createdAt": 1795491192057,
+  "meta": {
+    "name": "arbitrum streaming escrow release",
+    "description": "Update the escrow template, then upgrade each enumerated existing escrow and migrate legacy layouts. Recheck live inventory and ownership before execution.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0xbe52a852eAF824cd221AA55c3Ee054f6c8c712Df",
+      "value": "0",
+      "data": "0xe01c9d5900000000000000000000000056b0ce5666f8560e6ca51ba6a14acb5435a189a6"
+    },
+    {
+      "to": "0x482a77F998C8821714A9DED77805CA552f61EFef",
+      "value": "0",
+      "data": "0x3659cfe600000000000000000000000056b0ce5666f8560e6ca51ba6a14acb5435a189a6"
+    }
+  ]
+}

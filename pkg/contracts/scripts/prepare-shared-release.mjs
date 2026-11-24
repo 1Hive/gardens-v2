@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Read-only Safe payload generator for releases after the shared-router migration.
+// Read-only payload generator for releases after the shared-router migration.
 import { readFile, mkdir, readdir, writeFile } from 'node:fs/promises';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +9,7 @@ import { createPublicClient, encodeFunctionData, getAddress, http, isAddress, pa
 const implementationSlot = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
 const abi = parseAbi([
   'function owner() view returns (address)',
+  'function upgradeAccess() view returns (address)',
   'function routingFactory() view returns (address)',
   'function routesStrategies() view returns (bool)',
   'function proxiableUUID() view returns (bytes32)',
@@ -32,14 +33,16 @@ const abi = parseAbi([
 const { values } = parseArgs({ options: {
   network: { type: 'string' }, rpc: { type: 'string' }, family: { type: 'string' },
   implementation: { type: 'string' }, facet: { type: 'string', multiple: true },
+  selector: { type: 'string', multiple: true },
   migration: { type: 'string', multiple: true },
   router: { type: 'string' }, 'batch-size': { type: 'string', default: '10' },
-  out: { type: 'string' }, safe: { type: 'string' }, 'expected-owner': { type: 'string' },
+  out: { type: 'string' }, safe: { type: 'string' }, executor: { type: 'string' },
+  'expected-owner': { type: 'string' },
   'storage-reviewed': { type: 'boolean' }, help: { type: 'boolean' },
 } });
 
 if (values.help) {
-  process.stdout.write('Usage: node scripts/prepare-shared-release.mjs --network <name> --rpc <url> --family strategy|community --safe <effective-owner-safe> --out <file-or-directory> [--implementation <new-core> --storage-reviewed] [--facet <old-address>:<new-address> ...] [--migration <proxy>:<initializer-calldata> ...] [--router <new-router> --batch-size 10]\n');
+  process.stdout.write('Usage: node scripts/prepare-shared-release.mjs --network <name> --rpc <url> --family strategy|community (--executor <effective-owner-eoa> | --safe <effective-owner-safe>) --out <file-or-directory> [--implementation <new-core> --storage-reviewed] [--facet <old-address>:<new-address> ...] [--selector <new-facet-address>:<bytes4> ...] [--migration <proxy>:<initializer-calldata> ...] [--router <new-router> --batch-size 10]\n');
   process.exit(0);
 }
 
@@ -60,8 +63,9 @@ async function proxyImplementation(client, proxy) {
 }
 
 async function main() {
-  assert(values.network && values.rpc && values.family && values.out && values.safe,
-    'Missing required network, rpc, family, out or safe');
+  assert(values.network && values.rpc && values.family && values.out,
+    'Missing required network, rpc, family or out');
+  assert(Boolean(values.safe) !== Boolean(values.executor), 'Specify exactly one of --safe or --executor');
   assert(['strategy', 'community'].includes(values.family), 'Family must be strategy or community');
   const batchSize = Number(values['batch-size']);
   assert(Number.isSafeInteger(batchSize) && batchSize > 0 && batchSize <= 30, 'Batch size must be 1..30');
@@ -75,6 +79,20 @@ async function main() {
     assert(!replacements.has(oldAddress.toLowerCase()), `Duplicate facet replacement: ${oldAddress}`);
     replacements.set(oldAddress.toLowerCase(), newAddress);
   }
+  const selectorAdditions = new Map();
+  for (const entry of values.selector ?? []) {
+    const pair = entry.split(':');
+    assert(pair.length === 2, `Selector addition must be new-facet:bytes4: ${entry}`);
+    const newFacet = address(pair[0], 'new facet for selector');
+    const selector = pair[1].toLowerCase();
+    assert(/^0x[0-9a-f]{8}$/.test(selector), `Invalid selector: ${pair[1]}`);
+    assert([...replacements.values()].some((candidate) => same(candidate, newFacet)),
+      `Selector target is not a facet replacement: ${newFacet}`);
+    const additions = selectorAdditions.get(newFacet.toLowerCase()) ?? new Set();
+    assert(!additions.has(selector), `Duplicate selector addition: ${selector}`);
+    additions.add(selector);
+    selectorAdditions.set(newFacet.toLowerCase(), additions);
+  }
   assert(values.implementation || replacements.size || values.router || values.migration?.length,
     'Specify a new implementation, facet replacement, migration, and/or router');
   assert((!values.implementation && !values.router && !values.migration?.length) || values['storage-reviewed'],
@@ -86,14 +104,26 @@ async function main() {
   const client = createPublicClient({ transport: http(values.rpc) });
   assert(await client.getChainId() === network.chainId, 'RPC chain ID does not match networks.json');
   const factory = address(network.PROXIES.REGISTRY_FACTORY, 'factory');
-  const safe = address(values.safe, 'Safe');
+  const isSafe = Boolean(values.safe);
+  const executor = address(values.safe ?? values.executor, isSafe ? 'Safe' : 'executor');
   if (values['expected-owner']) {
-    assert(same(address(values['expected-owner'], 'expected owner'), safe),
-      'Safe must be the factory effective owner to execute this payload');
+    assert(same(address(values['expected-owner'], 'expected owner'), executor),
+      'Executor must be the factory effective owner to execute this payload');
   }
-  await codeAt(client, safe, 'Safe');
-  assert((await client.readContract({ address: safe, abi, functionName: 'getThreshold' })) > 0n,
-    'Safe threshold is zero');
+  if (isSafe) {
+    await codeAt(client, executor, 'Safe');
+    assert((await client.readContract({ address: executor, abi, functionName: 'getThreshold' })) > 0n,
+      'Safe threshold is zero');
+  } else {
+    const executorCode = await client.getCode({ address: executor });
+    assert(!executorCode || executorCode === '0x', '--executor must be an EOA');
+    const proxyOwner = address(network.ENVS.PROXY_OWNER, 'ProxyOwner');
+    await codeAt(client, proxyOwner, 'ProxyOwner');
+    assert(same(await client.readContract({ address: proxyOwner, abi, functionName: 'upgradeAccess' }), executor),
+      'ProxyOwner upgradeAccess differs from --executor');
+    assert(same(await client.readContract({ address: proxyOwner, abi, functionName: 'owner' }), executor),
+      'ProxyOwner effective owner differs from --executor');
+  }
   await codeAt(client, factory, 'Factory');
   const strategy = values.family === 'strategy';
   const templateName = strategy ? 'strategyTemplate' : 'registryCommunityTemplate';
@@ -102,8 +132,8 @@ async function main() {
   const releaseName = strategy ? 'setStrategyRelease' : 'setCommunityRelease';
   const proxies = strategy ? network.PROXIES.CV_STRATEGIES : network.PROXIES.REGISTRY_COMMUNITIES;
   assert(Array.isArray(proxies), 'Missing proxy inventory in networks.json');
-  assert(same(await client.readContract({ address: factory, abi, functionName: 'owner' }), safe),
-    'Factory effective owner differs from --safe');
+  assert(same(await client.readContract({ address: factory, abi, functionName: 'owner' }), executor),
+    'Factory effective owner differs from selected executor');
   const router = await client.readContract({ address: factory, abi, functionName: templateName });
   await codeAt(client, router, 'Router template');
   assert(same(await client.readContract({ address: router, abi, functionName: 'routingFactory' }), factory),
@@ -132,8 +162,8 @@ async function main() {
     assert(same(await proxyImplementation(client, proxy), router),
       `Proxy ${proxy} is not routed through the current factory template`);
     if (values.router || migrations.has(proxy.toLowerCase())) {
-      assert(same(await client.readContract({ address: proxy, abi, functionName: 'owner' }), safe),
-        `Proxy ${proxy} effective owner differs from --safe`);
+      assert(same(await client.readContract({ address: proxy, abi, functionName: 'owner' }), executor),
+        `Proxy ${proxy} effective owner differs from selected executor`);
     }
   }
   for (const proxy of migrations.keys()) {
@@ -178,11 +208,24 @@ async function main() {
     assert(used.has(oldFacet), `Old facet is absent from the current release: ${oldFacet}`);
     await codeAt(client, newFacet, 'New facet');
   }
+  const existingSelectors = new Set(currentCuts.flatMap((cut) => cut.functionSelectors.map((selector) => selector.toLowerCase())));
+  for (const [newFacet, additions] of selectorAdditions) {
+    const target = cuts.find((cut) => same(cut.facetAddress, newFacet));
+    assert(target, `No cut uses selector target ${newFacet}`);
+    for (const selector of additions) {
+      assert(!existingSelectors.has(selector), `Selector is already routed: ${selector}`);
+      target.functionSelectors = [...target.functionSelectors, selector];
+      existingSelectors.add(selector);
+    }
+  }
   const payload = (name, transactions) => ({
     version: '1.0', chainId: String(network.chainId), createdAt: Date.now(),
     meta: { name: `${network.name} ${values.family} ${name}`,
-      description: 'Review storage compatibility, linked libraries, proxy inventory, and simulate before Safe submission.',
-      txBuilderVersion: '1.18.0', createdFromSafeAddress: safe, createdFromOwnerAddress: '', checksum: '' },
+      description: isSafe
+        ? 'Review storage compatibility, linked libraries, proxy inventory, and simulate before Safe submission.'
+        : 'Review storage compatibility, linked libraries, proxy inventory, and simulate before direct owner execution; this is not a Safe proposal.',
+      txBuilderVersion: '1.18.0', createdFromSafeAddress: isSafe ? executor : '',
+      createdFromOwnerAddress: isSafe ? '' : executor, checksum: '' },
     transactions,
   });
   const transaction = (to, functionName, args) => ({
@@ -226,12 +269,12 @@ async function main() {
       `${JSON.stringify(payload(name, transactions), null, 2)}\n`);
   }
   await writeFile(join(output, `${network.name}-${values.family}-manifest.json`),
-    `${JSON.stringify({ chainId: network.chainId, safe, factory, family: values.family,
+    `${JSON.stringify({ chainId: network.chainId, executor, executorMode: isSafe ? 'safe' : 'direct-owner', factory, family: values.family,
       oldRouter: router, newRouter: nextRouter, oldImplementation: currentImplementation,
       newImplementation: nextImplementation, proxies: proxies.length, migrations: migrations.size,
       stages: stages.map(([name, transactions]) => ({ name, transactions: transactions.length })),
     }, null, 2)}\n`);
-  process.stdout.write(`Prepared ${stages.length} ordered ${values.family} Safe payloads in ${output}; checked ${proxies.length} configured proxies. Reconcile inventory with live creation events.\n`);
+  process.stdout.write(`Prepared ${stages.length} ordered ${values.family} ${isSafe ? 'Safe' : 'direct-owner'} payloads in ${output}; checked ${proxies.length} configured proxies. Reconcile inventory with live creation events.\n`);
 }
 
 main().catch((error) => {

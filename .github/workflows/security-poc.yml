@@ -58,5 +58,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run Passport relay regression tests
-        run: pnpm --dir apps/web exec vitest run 'app/api/passport-oracle/write-score/[chain]/route.test.ts'
+      - name: Run web Security PoC regressions
+        run: pnpm --dir apps/web exec vitest run 'app/api/passport-oracle/write-score/[chain]/route.test.ts' components/MarkdownWrapper.test.ts

@@ -7,7 +7,10 @@ beside their contract fixtures or in
 `forge test --no-match-path 'pkg/contracts/test/fork/*'` from the repository
 root for the contract suite and `pnpm --filter web test:unit` for the web suite.
 The Security PoC workflow runs the contract suite and the accepted Passport
-relay's web regression on each relevant PR. Fork checks require chain RPC
+relay and markdown security web regressions on each relevant PR. The
+`test:security` package command checks this mapping and runs the complete
+non-fork contract suite, including the focused private remediation tests.
+Fork checks require chain RPC
 variables. A duplicate advisory shares the
 original finding's test; it does not
 need a second test for the same root cause.

@@ -106,8 +106,12 @@ library LibDiamond {
         enforceHasContractCode(_facetAddress, "LibDiamondCut: Auto facet has no code");
 
         bytes4[] memory addSelectors = new bytes4[](_functionSelectors.length);
+        // The default zero value is intentional before conditional assignment.
+        // slither-disable-next-line uninitialized-local
         uint256 addCount;
         bytes4[] memory replaceSelectors = new bytes4[](_functionSelectors.length);
+        // The default zero value is intentional before conditional assignment.
+        // slither-disable-next-line uninitialized-local
         uint256 replaceCount;
 
         for (uint256 selectorIndex; selectorIndex < _functionSelectors.length; selectorIndex++) {

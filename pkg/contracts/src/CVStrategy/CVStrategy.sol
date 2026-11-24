@@ -109,6 +109,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
     error SuperfluidPoolCreationFailed();
     error MigrationBatchSizeCannotBeZero();
     error StrategyRoutingFactoryMismatch(address routerFactory, address communityFactory);
+    error InvalidDecay(uint256 decay);
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -239,6 +240,8 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
             if (routerFactory != communityFactory) {
                 revert StrategyRoutingFactoryMismatch(routerFactory, communityFactory);
             }
+            // Only the selected return value is needed at this call site.
+            // slither-disable-next-line unused-return
             (, address facetInit, bytes memory facetInitCalldata) = IRegistryFactory(routerFactory).getStrategyFacets();
             LibDiamond.initializeDiamondCut(facetInit, facetInitCalldata);
         }
@@ -381,6 +384,7 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
         }
         if (!(ip.cvParams.decay == 0 && ip.cvParams.weight == 0 && ip.cvParams.maxRatio == 0
                     && ip.cvParams.minThresholdPoints == 0)) {
+            if (ip.cvParams.decay >= ConvictionsUtils.D) revert InvalidDecay(ip.cvParams.decay);
             cvParams = ip.cvParams;
             emit CVParamsUpdated(ip.cvParams);
         }
@@ -726,6 +730,8 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
      */
     function _calculateAndSetConviction(Proposal storage _proposal, uint256 _oldStaked) internal {
         (uint256 conviction, uint256 blockNumber) = _checkBlockAndCalculateConviction(_proposal, _oldStaked);
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
         if (conviction == 0 && blockNumber == 0) {
             return;
         }
@@ -786,6 +792,8 @@ contract CVStrategy is BaseStrategyUpgradeable, IArbitrable, ERC165, CVStreaming
 
         blockNumber = block.number;
         assert(_proposal.blockLast <= blockNumber);
+        // This guard must match the exact block already processed.
+        // slither-disable-next-line incorrect-equality
         if (_proposal.blockLast == blockNumber) {
             return (0, 0); // Conviction already stored
         }

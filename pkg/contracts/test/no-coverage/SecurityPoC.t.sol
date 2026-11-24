@@ -32,6 +32,7 @@ import {ConvictionsUtils} from "../../src/CVStrategy/ConvictionsUtils.sol";
 import {CVProposalFacet} from "../../src/CVStrategy/facets/CVProposalFacet.sol";
 import {CVAllocationFacet} from "../../src/CVStrategy/facets/CVAllocationFacet.sol";
 import {GV2ERC20} from "../../script/GV2ERC20.sol";
+import {DeployCV} from "../../script/DeployCV.s.sol";
 import {CVStrategyHelpers} from "../CVStrategyHelpers.sol";
 import {SafeSetup} from "../shared/SafeSetup.sol";
 import {StrategyDiamondConfigurator} from "../helpers/StrategyDiamondConfigurator.sol";
@@ -2658,5 +2659,23 @@ contract PoC_GHSA_C6C6_RecursiveProtopianDelegation is Test {
 
         factory.setProtopianAddress(holders, false);
         assertFalse(factory.isProtopianAddress(delegate), "canonical revocation must remove delegated authority");
+    }
+}
+
+// F09: the actual DeployCV deployment path must initialize the proxy owner atomically.
+contract PoC_F09_ArbitratorDeploymentOwner is Test {
+    function test_F09_DeployCVInitializesArbitratorProxyBeforeExposure() public {
+        DeployCV deployment = new DeployCV();
+        SafeArbitrator arbitrator = SafeArbitrator(payable(address(deployment.deploySafeArbitrator())));
+        address intendedOwner = deployment.pool_admin();
+        address attacker = makeAddr("arbitrator-attacker");
+
+        assertEq(arbitrator.proxyOwner(), intendedOwner);
+        assertEq(arbitrator.arbitrationCost(""), 2 ether);
+
+        vm.prank(attacker);
+        vm.expectRevert();
+        arbitrator.initialize(0, attacker);
+        assertEq(arbitrator.proxyOwner(), intendedOwner);
     }
 }

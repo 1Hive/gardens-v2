@@ -13,6 +13,7 @@ const network = JSON.parse(await readFile(join(root, 'config/networks.json'), 'u
   .networks.find((entry) => entry.name === 'opsepolia');
 const factory = getAddress(network.PROXIES.REGISTRY_FACTORY);
 const safe = getAddress('0x1000000000000000000000000000000000000001');
+const deployer = getAddress('0x1000000000000000000000000000000000000009');
 const oldRouter = getAddress('0x1000000000000000000000000000000000000002');
 const newRouter = getAddress('0x1000000000000000000000000000000000000003');
 const oldCore = getAddress('0x1000000000000000000000000000000000000004');
@@ -23,6 +24,7 @@ const communityRouter = getAddress('0x1000000000000000000000000000000000000008')
 const slot = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
 const abi = parseAbi([
   'function owner() view returns (address)',
+  'function upgradeAccess() view returns (address)',
   'function getThreshold() view returns (uint256)',
   'function strategyTemplate() view returns (address)',
   'function registryCommunityTemplate() view returns (address)',
@@ -44,6 +46,8 @@ const abi = parseAbi([
 const selectors = new Map(abi.filter((entry) => entry.type === 'function')
   .map((entry) => [toFunctionSelector(entry), entry.name]));
 let proxyOwner = safe;
+let factoryOwner = safe;
+let grantedAccess = deployer;
 const server = createServer(async (request, response) => {
   const chunks = [];
   for await (const chunk of request) chunks.push(chunk);
@@ -51,7 +55,7 @@ const server = createServer(async (request, response) => {
   const { method, params = [] } = input;
   let result;
   if (method === 'eth_chainId') result = `0x${network.chainId.toString(16)}`;
-  else if (method === 'eth_getCode') result = '0x6000';
+  else if (method === 'eth_getCode') result = getAddress(params[0]) === deployer ? '0x' : '0x6000';
   else if (method === 'eth_getStorageAt') {
     const proxy = getAddress(params[0]);
     const router = network.PROXIES.REGISTRY_COMMUNITIES.some((item) => item.toLowerCase() === proxy.toLowerCase())
@@ -65,7 +69,8 @@ const server = createServer(async (request, response) => {
     const target = getAddress(call.to);
     let value;
     switch (name) {
-      case 'owner': value = target.toLowerCase() === factory.toLowerCase() ? safe : proxyOwner; break;
+      case 'owner': value = target.toLowerCase() === factory.toLowerCase() ? factoryOwner : proxyOwner; break;
+      case 'upgradeAccess': value = grantedAccess; break;
       case 'getThreshold': value = 2n; break;
       case 'strategyTemplate': value = oldRouter; break;
       case 'registryCommunityTemplate': value = communityRouter; break;
@@ -91,10 +96,12 @@ await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const rpc = `http://127.0.0.1:${server.address().port}`;
 const temp = await mkdtemp(join(tmpdir(), 'shared-release-'));
 const script = join(root, 'scripts/prepare-shared-release.mjs');
-const common = ['--network', network.name, '--rpc', rpc, '--safe', safe];
-const run = (args) => new Promise((resolve, reject) => {
+const common = ['--network', network.name, '--rpc', rpc];
+const run = (args, mode = 'safe') => new Promise((resolve, reject) => {
   const family = args.includes('--family') ? [] : ['--family', 'strategy'];
-  const child = spawn(process.execPath, [script, ...common, ...family, ...args]);
+  const executor = mode === 'safe' ? ['--safe', safe]
+    : ['--executor', mode === 'contract' ? safe : deployer];
+  const child = spawn(process.execPath, [script, ...common, ...executor, ...family, ...args]);
   let stderr = '';
   child.stderr.on('data', (chunk) => { stderr += chunk; });
   child.on('error', reject);
@@ -104,7 +111,8 @@ const run = (args) => new Promise((resolve, reject) => {
 try {
   const oneFile = join(temp, 'release.json');
   const one = await run(['--out', oneFile, '--implementation', newCore, '--storage-reviewed',
-    '--facet', `${oldFacet}:${newFacet}`]);
+    '--facet', `${oldFacet}:${newFacet}`,
+    '--selector', `${newFacet}:0x0e8daf2f`, '--selector', `${newFacet}:0xf4a95471`]);
   assert.equal(one.status, 0, one.stderr);
   const onePayload = JSON.parse(await readFile(oneFile, 'utf8'));
   assert.equal(onePayload.meta.createdFromSafeAddress, safe);
@@ -112,7 +120,13 @@ try {
   const release = decodeFunctionData({ abi, data: onePayload.transactions[0].data });
   assert.equal(release.functionName, 'setStrategyRelease');
   assert.equal(release.args[0][0].facetAddress, newFacet);
+  assert.deepEqual(release.args[0][0].functionSelectors,
+    ['0x12345678', '0x0e8daf2f', '0xf4a95471']);
   assert.equal(release.args[1], newCore);
+  const duplicateSelector = await run(['--out', join(temp, 'duplicate-selector.json'),
+    '--facet', `${oldFacet}:${newFacet}`, '--selector', `${newFacet}:0x12345678`]);
+  assert.notEqual(duplicateSelector.status, 0);
+  assert.match(duplicateSelector.stderr, /already routed/);
 
   const communityFile = join(temp, 'community.json');
   const community = await run(['--family', 'community', '--out', communityFile,
@@ -160,8 +174,49 @@ try {
   proxyOwner = oldRouter;
   const rejected = await run(['--out', join(temp, 'invalid'), '--router', newRouter, '--storage-reviewed']);
   assert.notEqual(rejected.status, 0);
-  assert.match(rejected.stderr, /effective owner differs from --safe/);
-  process.stdout.write('Shared release Safe payload tests passed\n');
+  assert.match(rejected.stderr, /effective owner differs from selected executor/);
+
+  factoryOwner = deployer;
+  proxyOwner = deployer;
+  const directFile = join(temp, 'direct-release.json');
+  const direct = await run(['--out', directFile, '--facet', `${oldFacet}:${newFacet}`], 'deployer');
+  assert.equal(direct.status, 0, direct.stderr);
+  const directPayload = JSON.parse(await readFile(directFile, 'utf8'));
+  assert.equal(directPayload.meta.createdFromOwnerAddress, deployer);
+  assert.equal(directPayload.meta.createdFromSafeAddress, '');
+  assert.equal(decodeFunctionData({ abi, data: directPayload.transactions[0].data }).functionName,
+    'setStrategyRelease');
+  const directDir = join(temp, 'direct-router');
+  const directRouter = await run(['--out', directDir, '--router', newRouter, '--storage-reviewed'], 'deployer');
+  assert.equal(directRouter.status, 0, directRouter.stderr);
+  const directFiles = (await readdir(directDir)).filter((file) => file.endsWith('.json') && !file.endsWith('manifest.json'));
+  const directPayloads = await Promise.all(directFiles.map(async (file) => JSON.parse(await readFile(join(directDir, file), 'utf8'))));
+  assert(directPayloads.every((item) => item.meta.createdFromOwnerAddress === deployer
+    && item.meta.createdFromSafeAddress === ''));
+  grantedAccess = safe;
+  const revoked = await run(['--out', join(temp, 'revoked.json'),
+    '--facet', `${oldFacet}:${newFacet}`], 'deployer');
+  assert.notEqual(revoked.status, 0);
+  assert.match(revoked.stderr, /ProxyOwner upgradeAccess differs from --executor/);
+  grantedAccess = deployer;
+  proxyOwner = safe;
+  const unresolved = await run(['--out', join(temp, 'unresolved.json'),
+    '--facet', `${oldFacet}:${newFacet}`], 'deployer');
+  assert.notEqual(unresolved.status, 0);
+  assert.match(unresolved.stderr, /ProxyOwner effective owner differs from --executor/);
+  proxyOwner = deployer;
+  const wrongPath = await run(['--out', join(temp, 'wrong-owner.json'), '--facet', `${oldFacet}:${newFacet}`]);
+  assert.notEqual(wrongPath.status, 0);
+  assert.match(wrongPath.stderr, /Factory effective owner differs from selected executor/);
+  const bothPaths = await run(['--out', join(temp, 'both.json'), '--executor', deployer,
+    '--facet', `${oldFacet}:${newFacet}`]);
+  assert.notEqual(bothPaths.status, 0);
+  assert.match(bothPaths.stderr, /Specify exactly one of --safe or --executor/);
+  const contractExecutor = await run(['--out', join(temp, 'contract-executor.json'),
+    '--facet', `${oldFacet}:${newFacet}`], 'contract');
+  assert.notEqual(contractExecutor.status, 0);
+  assert.match(contractExecutor.stderr, /--executor must be an EOA/);
+  process.stdout.write('Shared release Safe and direct-owner payload tests passed\n');
 } finally {
   await rm(temp, { recursive: true, force: true });
   server.close();

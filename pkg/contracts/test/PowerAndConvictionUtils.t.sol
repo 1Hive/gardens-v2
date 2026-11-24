@@ -145,6 +145,31 @@ contract PowerAndConvictionUtilsTest is Test {
         ConvictionsUtils.calculateConviction(1, 1, 1, ConvictionsUtils.D);
     }
 
+    function test_convictionsUtils_largeStakeAvoidsIntermediateOverflow() public pure {
+        uint256 amount = type(uint256).max / ConvictionsUtils.D + 1;
+        uint256 conviction = ConvictionsUtils.calculateConviction(1, 0, amount, 9_000_000);
+        assertGt(conviction, 0);
+        assertEq(ConvictionsUtils.getMaxConviction(amount, 0), amount);
+    }
+
+    function testFuzz_convictionsUtils_matchesOldFormulaWhenOldFormulaFits(
+        uint96 amountSeed,
+        uint96 lastSeed,
+        uint8 timeSeed,
+        uint32 decaySeed
+    ) public pure {
+        uint256 amount = uint256(amountSeed);
+        uint256 last = uint256(lastSeed);
+        uint256 timePassed = uint256(timeSeed);
+        uint256 decay = bound(uint256(decaySeed), 0, ConvictionsUtils.D - 1);
+        uint256 atTWO_128 = ConvictionsUtils._pow((decay << 128) / ConvictionsUtils.D, timePassed);
+        uint256 legacy = ((atTWO_128 * last)
+            + ((amount * ConvictionsUtils.D * ((uint256(1) << 128) - atTWO_128)) / (ConvictionsUtils.D - decay))
+            + (uint256(1) << 127)) >> 128;
+        assertEq(ConvictionsUtils.calculateConviction(timePassed, last, amount, decay), legacy);
+        assertEq(ConvictionsUtils.getMaxConviction(amount, decay), amount * ConvictionsUtils.D / (ConvictionsUtils.D - decay));
+    }
+
     function test_convictionsUtils_weightedAverage_timeWeightsIncrease() public pure {
         uint256 weighted = ConvictionsUtils.weightedAverage(100, 200, 10, 9_000_000);
 

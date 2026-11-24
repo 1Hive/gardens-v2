@@ -72,9 +72,17 @@ jobs:
         run: pnpm --dir pkg/contracts run coverage
 
       - name: Upload coverage reports to Codecov
+        if: github.repository == '1Hive/gardens-v2'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: pkg/contracts/lcov.info
           disable_search: true
           fail_ci_if_error: true
+
+      - name: Preserve private coverage report
+        if: github.repository != '1Hive/gardens-v2'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: pkg/contracts/lcov.info

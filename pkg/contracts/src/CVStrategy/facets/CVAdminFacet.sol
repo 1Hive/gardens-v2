@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import {CVStrategyBaseFacet} from "../CVStrategyBaseFacet.sol";
 import {CVStreamingBase} from "../CVStreamingStorage.sol";
+import {ConvictionsUtils} from "../ConvictionsUtils.sol";
 import {IArbitrator} from "../../interfaces/IArbitrator.sol";
 import {IVotingPowerRegistry} from "../../interfaces/IVotingPowerRegistry.sol";
 import {IRegistryFactory} from "../../IRegistryFactory.sol";
@@ -39,6 +40,7 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
     error ApproveFailed(address token, address spender, uint256 amount);
     error StreamingRateOverflow(uint256 streamingRatePerSecond);
     error SuperfluidPoolCreationFailed();
+    error InvalidDecay(uint256 decay);
 
     /*|--------------------------------------------|*/
     /*|              EVENTS                        |*/
@@ -291,6 +293,7 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
 
         if (!(_cvParams.decay == 0 && _cvParams.weight == 0 && _cvParams.maxRatio == 0
                     && _cvParams.minThresholdPoints == 0)) {
+            if (_cvParams.decay >= ConvictionsUtils.D) revert InvalidDecay(_cvParams.decay);
             cvParams = _cvParams;
             emit CVParamsUpdated(_cvParams);
         }
@@ -318,6 +321,8 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
         if (address(previousToken) == address(0) || address(previousToken) == address(nextToken)) return;
 
         uint256 previousBalance = previousToken.balanceOf(address(this));
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
         if (previousBalance == 0) {
             return;
         }
@@ -327,11 +332,15 @@ contract CVAdminFacet is CVStrategyBaseFacet, CVStreamingBase {
         address poolToken = allo.getPool(poolId).token;
 
         uint256 unwrappedBalance = IERC20(poolToken).balanceOf(address(this));
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
         if (unwrappedBalance == 0) {
             return;
         }
 
         uint256 upgradeAmount = _toSuperTokenAmount(unwrappedBalance, poolToken, nextToken);
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
         if (upgradeAmount == 0) {
             return;
         }

@@ -147,14 +147,25 @@ contract AllStubsFacet {
 
 contract MockRegistry {
     bytes32 public lastProfileId;
+    address public lastOwner;
+    uint256 public lastNonce;
+    string public lastMetadataPointer;
+    mapping(bytes32 => bool) public occupied;
 
-    function createProfile(uint256 nonce, string memory name, Metadata memory, address owner, address[] memory)
+    function createProfile(uint256 nonce, string memory, Metadata memory metadata, address owner, address[] memory)
         external
         returns (bytes32)
     {
-        lastProfileId = keccak256(abi.encodePacked(nonce, name, owner));
+        lastProfileId = keccak256(abi.encodePacked(nonce, owner));
+        if (occupied[lastProfileId]) revert NONCE_NOT_AVAILABLE();
+        occupied[lastProfileId] = true;
+        lastOwner = owner;
+        lastNonce = nonce;
+        lastMetadataPointer = metadata.pointer;
         return lastProfileId;
     }
+
+    error NONCE_NOT_AVAILABLE();
 }
 
 contract MockAllo is FAllo {
@@ -520,8 +531,38 @@ contract RegistryCommunityTest is Test {
         assertEq(community.communityName(), params._communityName);
         assertEq(community.covenantIpfsHash(), params.covenantIpfsHash);
         assertEq(community.profileId(), registry.lastProfileId());
+        assertEq(community.profileId(), keccak256(abi.encodePacked(params._nonce, address(community))));
         assertEq(community.strategyTemplate(), address(0x1111));
         assertEq(community.collateralVaultTemplate(), address(0x2222));
+    }
+
+    function test_initialize_recoversOccupiedAlloProfileId() public {
+        DummyCommunityFacet facet = new DummyCommunityFacet();
+        MockAllo allo = new MockAllo();
+        MockRegistry registry = new MockRegistry();
+        allo.setRegistry(address(registry));
+
+        RegistryCommunityInitializeParams memory params = _defaultParams(address(allo));
+        params._registryFactory = address(_deployFactoryWithFacets(_facetCuts(address(facet)), _facetCuts(address(facet)), address(0)));
+        RegistryCommunity implementation = new RegistryCommunity();
+        bytes memory initData = abi.encodeWithSelector(
+            RegistryCommunity.initialize.selector, params, address(0x1111), address(0x2222), owner
+        );
+        bytes32 salt = keccak256("occupied-allo-profile-regression");
+        address predicted = vm.computeCreate2Address(
+            salt,
+            keccak256(abi.encodePacked(type(ERC1967Proxy).creationCode, abi.encode(address(implementation), initData))),
+            address(this)
+        );
+        bytes32 occupiedId = registry.createProfile(params._nonce, params._communityName, params._metadata, predicted, new address[](0));
+
+        RegistryCommunity community = RegistryCommunity(payable(address(new ERC1967Proxy{salt: salt}(address(implementation), initData))));
+        assertEq(address(community), predicted);
+
+        assertTrue(community.profileId() != occupiedId, "collision must select a new profile ID");
+        assertEq(registry.lastProfileId(), community.profileId());
+        assertEq(registry.lastOwner(), address(community));
+        assertEq(registry.lastMetadataPointer(), params._metadata.pointer);
     }
 
     function test_initialize_sets_pause_controller_when_factory_contract() public {

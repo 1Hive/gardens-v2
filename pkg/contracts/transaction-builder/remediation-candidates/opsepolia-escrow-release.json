@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "chainId": "11155420",
+  "createdAt": 1795465596142,
+  "meta": {
+    "name": "opsepolia streaming escrow release",
+    "description": "Update the escrow template, then upgrade each enumerated existing escrow and migrate legacy layouts. Recheck live inventory and ownership before execution.",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "",
+    "createdFromOwnerAddress": "0x00BcC26E792E393217bA895f5e85AE628FC994E9",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0x4d3CD8c4289251C696b99aeF4B8e30c03F0e1aa0",
+      "value": "0",
+      "data": "0xe01c9d59000000000000000000000000862ac7d64f64eb79236ddb81fa3a40487bff056a"
+    }
+  ]
+}

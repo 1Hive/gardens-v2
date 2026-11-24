@@ -36,11 +36,23 @@ contract MockGDAAgreement {
     }
 }
 
+contract ZeroDepositGovernance {
+    function getConfigAsUint256(address, address, bytes32) external pure returns (uint256) {
+        return 0;
+    }
+}
+
 contract MockHost {
     address public gda;
+    address public governance;
 
     constructor(address _gda) {
         gda = _gda;
+        governance = address(new ZeroDepositGovernance());
+    }
+
+    function getGovernance() external view returns (address) {
+        return governance;
     }
 
     function getAgreementClass(bytes32 agreementType) external view returns (address) {
@@ -221,6 +233,10 @@ contract MockSuperfluidPool {
 
     function getTotalUnits() external view returns (uint128) {
         return totalUnits;
+    }
+
+    function getUnits(address member) external view returns (uint128) {
+        return memberUnits[member];
     }
 
     function setUpdateShouldSucceed(bool value) external {

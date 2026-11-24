@@ -25,6 +25,8 @@ contract CommunityDeliveryVault is ReentrancyGuard {
 
     function deliver() external nonReentrant returns (uint256 amount) {
         amount = token.balanceOf(address(this));
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
         if (amount == 0) return 0;
         address safe = IRegistryCommunitySafe(registryCommunity).councilSafe();
         if (safe == address(0) || safe == address(this)) revert InvalidConfiguration();

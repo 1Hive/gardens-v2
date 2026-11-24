@@ -90,6 +90,8 @@ contract NFTPowerRegistry is IVotingPowerRegistry {
     {
         for (uint256 i = 0; i < powerSources.length; i++) {
             NFTPowerSource storage source = powerSources[i];
+            // The default zero value is intentional before conditional assignment.
+            // slither-disable-next-line uninitialized-local
             uint256 balance;
 
             if (source.nftType == NFTType.ERC721) {

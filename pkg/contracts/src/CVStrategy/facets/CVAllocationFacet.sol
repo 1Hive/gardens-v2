@@ -119,6 +119,8 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
             totalVoterStakePct[_sender] = newTotalVotingSupport;
         }
 
+        // The default empty memory array is allocated on first proposal.
+        // slither-disable-next-line uninitialized-local
         uint256[] memory proposalsIds;
         for (uint256 i = 0; i < pv.length; i++) {
             uint256 proposalId = pv[i].proposalId;
@@ -212,6 +214,8 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
         }
 
         uint256 poolAmount = getPoolAmount();
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
         if (poolAmount == 0 && proposals[proposalId].requestedAmount > 0) {
             revert PoolIsEmpty(poolAmount);
         }
@@ -252,6 +256,8 @@ contract CVAllocationFacet is CVStrategyBaseFacet {
 
         uint256 convictionLast = updateProposalConviction(proposalId);
 
+        // The default zero value is intentional before conditional assignment.
+        // slither-disable-next-line uninitialized-local
         uint256 threshold;
         if (proposals[proposalId].requestedAmount > 0) {
             threshold = ConvictionsUtils.calculateThreshold(

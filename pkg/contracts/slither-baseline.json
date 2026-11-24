@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "slitherVersion": "0.10.3",
+  "baseCommit": "effbc553903306a785306000e567f057bc3303ce",
+  "review": "After comment-only triage, 47 intentional patterns are suppressed at their exact source lines: zero and sentinel guards, default-initialized locals, private inherited storage gaps, and unused tuple fields. The 11 remaining reentrancy reports stay visible and baselined pending separate call-path review. This baseline gates new findings; it does not certify the remaining reports as safe.",
+  "findings": {
+    "0b2bbfda26d3d83273df8571ab79860d691db6c0ec1740a5eb13f68d7fbeb3fe": 1,
+    "1dac527fd2f18bc953c671155278a5dc51fc9aa37074b0cadf9cf4b054aab9d9": 1,
+    "4437bb8cdf116723b188650a1f8ccf6380f47391c0fcb45866f1278ac1552abf": 1,
+    "530c937c2b994674992dbf206e7eede11e0a93aa560e2263714e82d310ae1a69": 1,
+    "5a174e9226bc224dc6bed6763fdc2c1ac2725b1152f18e88be958bfadfc2e2fb": 1,
+    "79c6f3d74912cec36039a1863ed3dbe0cda5cef329f0048f9a9a9a176f01a525": 1,
+    "8dc259b2c173ca85bb81d68c99b24eb44d82457f3e789d96170621dfe86bac86": 1,
+    "937f910e59dd265bf12dfb3fe4e4a70dac5f22f3ed89fbab1a620c5b252e3889": 1,
+    "9b51c08124ad022d49c3ab57539167da2ad00d2b2b8aa4ccd4af73bba00039ee": 1,
+    "d0223c55e76d3301b52313d6530b97183dd0f87f45cb6db6e559dd263ce4b4a4": 1,
+    "d5af80271d4d5ad0be13f539e7804c58515157fc1b3e19594abf02c9bcb2ac70": 1
+  }
+}

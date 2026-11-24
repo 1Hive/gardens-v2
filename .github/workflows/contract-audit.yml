@@ -8,10 +8,14 @@ on:
       - dev
     paths:
       - pkg/contracts/src/**/*.sol
+      - pkg/contracts/scripts/check-slither-baseline.mjs
+      - pkg/contracts/slither-baseline.json
       - .github/workflows/contract-audit.yml
   pull_request:
     paths:
       - pkg/contracts/src/**/*.sol
+      - pkg/contracts/scripts/check-slither-baseline.mjs
+      - pkg/contracts/slither-baseline.json
       - .github/workflows/contract-audit.yml
 
 jobs:
@@ -43,26 +47,38 @@ jobs:
       - name: Install Slither
         run: python -m pip install --upgrade pip slither-analyzer==0.10.3
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Run Slither
         id: slither
-        continue-on-error: true
         run: |
-          set +e
           slither . \
             --sarif results.sarif \
             --foundry-out-directory=pkg/contracts/out \
             --exclude-dependencies \
             --exclude-low \
             --exclude-informational \
-            --exclude-optimization
-          status=$?
-          if [ -f results.sarif ]; then
-            echo "sarif=results.sarif" >> "$GITHUB_OUTPUT"
-          fi
-          exit $status
+            --exclude-optimization \
+            --fail-none
+          test -s results.sarif
+          echo "sarif=results.sarif" >> "$GITHUB_OUTPUT"
+
+      - name: Reject unreviewed Slither findings
+        run: node pkg/contracts/scripts/check-slither-baseline.mjs results.sarif
 
       - name: Upload SARIF file
-        if: always() && steps.slither.outputs.sarif != ''
+        if: always() && steps.slither.outputs.sarif != '' && github.repository == '1Hive/gardens-v2'
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ steps.slither.outputs.sarif }}
+
+      # The private remediation mirror cannot publish code-scanning results.
+      - name: Preserve SARIF for private review
+        if: always() && steps.slither.outputs.sarif != '' && github.repository != '1Hive/gardens-v2'
+        uses: actions/upload-artifact@v4
+        with:
+          name: slither-sarif
+          path: ${{ steps.slither.outputs.sarif }}

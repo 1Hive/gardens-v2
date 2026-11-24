@@ -208,15 +208,31 @@ tasks:
             --community-pool-facet "${COMMUNITY_POOL_FACET}" \
             --batch-size "${BATCH_SIZE:-10}" --out "${OUT}"
   prepare-shared-release:
-    desc: Prepare Safe payloads for an already-routed strategy or community release, including optional router upgrades
+    desc: Prepare direct-owner or Safe payloads for an already-routed strategy or community release
     cmds:
       - cmd: |
           : "${NETWORK:?set NETWORK}"
           : "${RPC_URL:?set RPC_URL}"
           : "${FAMILY:?set FAMILY to strategy or community}"
-          : "${SAFE_ADDRESS:?set SAFE_ADDRESS to the factory effective owner Safe}"
           : "${OUT:?set OUT to a JSON file, or a directory for router upgrades or state migrations}"
-          set -- --network "${NETWORK}" --rpc "${RPC_URL}" --family "${FAMILY}" --safe "${SAFE_ADDRESS}" --out "${OUT}" --batch-size "${BATCH_SIZE:-10}"
+          if [ -n "${SAFE_ADDRESS:-}" ]; then
+            executor_flag="--safe"
+            executor_address="${SAFE_ADDRESS}"
+          else
+            : "${PK_DEPLOYER_PW:?set PK_DEPLOYER_PW to derive the PK_DEPLOYER address}"
+            : "${HOME:?set HOME}"
+            if [ ! -f "${HOME}/.foundry/keystores/PK_DEPLOYER" ]; then
+              echo "missing Foundry keystore PK_DEPLOYER" >&2
+              exit 1
+            fi
+            executor_flag="--executor"
+            password_file="$(mktemp)"
+            chmod 600 "${password_file}"
+            trap 'shred -u "${password_file}"' EXIT
+            printf '%s' "${PK_DEPLOYER_PW}" > "${password_file}"
+            executor_address="$(cast wallet address --account PK_DEPLOYER --password-file "${password_file}")"
+          fi
+          set -- --network "${NETWORK}" --rpc "${RPC_URL}" --family "${FAMILY}" "${executor_flag}" "${executor_address}" --out "${OUT}" --batch-size "${BATCH_SIZE:-10}"
           if [ -n "${NEW_ROUTER:-}" ]; then
             set -- "$@" --router "${NEW_ROUTER}"
           fi
@@ -229,6 +245,9 @@ tasks:
           fi
           for replacement in ${FACET_REPLACEMENTS:-}; do
             set -- "$@" --facet "${replacement}"
+          done
+          for addition in ${SELECTOR_ADDITIONS:-}; do
+            set -- "$@" --selector "${addition}"
           done
           for migration in ${MIGRATIONS:-}; do
             set -- "$@" --migration "${migration}"
@@ -245,7 +264,7 @@ tasks:
           : "${SHARED_TARGET_MODE:?set SHARED_TARGET_MODE to migration or release}"
           if [ "${SHARED_TARGET_MODE}" = "release" ]; then : "${SHARED_TARGET_FAMILY:?set SHARED_TARGET_FAMILY}"; fi
           expected_chain="$(jq -r --arg network "${NETWORK}" '.networks[] | select(.name == $network) | .chainId' config/networks.json)"
-          library="$(jq -r --arg network "${NETWORK}" '.networks[] | select(.name == $network) | .IMPLEMENTATIONS.CV_UTIL_LIB' config/networks.json)"
+          library="${CANDIDATE_CV_UTIL_LIB:-$(jq -r --arg network "${NETWORK}" '.networks[] | select(.name == $network) | .IMPLEMENTATIONS.CV_UTIL_LIB' config/networks.json)}"
           : "${expected_chain:?unknown NETWORK}"
           : "${library:?CV_UTIL_LIB missing from network config}"
           [ "$(cast chain-id --rpc-url "${RPC_URL}")" = "${expected_chain}" ] || { echo "RPC chain ID does not match NETWORK" >&2; exit 1; }
@@ -260,6 +279,33 @@ tasks:
             --sig "run(string)" "${NETWORK}" --ffi --via-ir \
             --libraries "pkg/contracts/src/CVStrategy/ConvictionsUtils.sol:ConvictionsUtils:${library}" \
             --gas-estimate-multiplier "${SHARED_GAS_ESTIMATE_MULTIPLIER:-130}" \
+            --slow --broadcast -vvv
+  deploy-remediation-facet:
+    desc: Deploy one inactive facet candidate linked to the chain-local candidate ConvictionsUtils
+    cmds:
+      - cmd: |
+          set -eu
+          : "${NETWORK:?set NETWORK}"
+          : "${RPC_URL:?set RPC_URL}"
+          : "${PK_DEPLOYER_PW:?set PK_DEPLOYER_PW}"
+          : "${REFRESH_FACET_KEY:?set REFRESH_FACET_KEY to a .FACETS key}"
+          : "${CANDIDATE_CV_UTIL_LIB:?set the deployed candidate library}"
+          configured_facet="$(jq -r --arg network "${NETWORK}" --arg key "${REFRESH_FACET_KEY#.FACETS.}" '.networks[] | select(.name == $network) | .FACETS[$key] // empty' config/networks.json)"
+          : "${configured_facet:?unknown REFRESH_FACET_KEY for NETWORK}"
+          expected_chain="$(jq -r --arg network "${NETWORK}" '.networks[] | select(.name == $network) | .chainId' config/networks.json)"
+          : "${expected_chain:?unknown NETWORK}"
+          [ "$(cast chain-id --rpc-url "${RPC_URL}")" = "${expected_chain}" ] || { echo "RPC chain ID does not match NETWORK" >&2; exit 1; }
+          [ "$(cast code "${CANDIDATE_CV_UTIL_LIB}" --rpc-url "${RPC_URL}")" != "0x" ] || { echo "candidate CV_UTIL_LIB has no code" >&2; exit 1; }
+          password_file="$(mktemp)"
+          chmod 600 "${password_file}"
+          trap 'shred -u "${password_file}"' EXIT
+          printf '%s' "${PK_DEPLOYER_PW}" > "${password_file}"
+          DEPLOYER_ADDRESS="$(cast wallet address --account PK_DEPLOYER --password-file "${password_file}")"
+          SKIP_NETWORK_WRITES=true ETH_PASSWORD= DEPLOYER_ADDRESS="${DEPLOYER_ADDRESS}" forge script script/RefreshFacetSnapshots.s.sol:RefreshFacetSnapshots \
+            --rpc-url "${RPC_URL}" --account PK_DEPLOYER --password-file "${password_file}" \
+            --sig "run(string)" "${NETWORK}" --ffi \
+            --libraries "pkg/contracts/src/CVStrategy/ConvictionsUtils.sol:ConvictionsUtils:${CANDIDATE_CV_UTIL_LIB}" \
+            --gas-estimate-multiplier "${REMEDIATION_GAS_ESTIMATE_MULTIPLIER:-130}" \
             --slow --broadcast -vvv
   verify-storage-quick:
     desc: Verify storage quick

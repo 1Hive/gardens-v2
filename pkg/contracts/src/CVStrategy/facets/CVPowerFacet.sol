@@ -102,7 +102,9 @@ contract CVPowerFacet is CVStrategyBaseFacet {
             }
             _pruneVoterProposals(_member);
         }
-        _checkpointTotalPointsActivated(totalPointsActivated - pointsToDecrease);
+        if (registryCommunity.memberActivatedInStrategies(_member, address(this))) {
+            _decreaseTotalPointsActivated(pointsToDecrease);
+        }
 
         CVSyncPowerStorage.Layout storage syncLayout = CVSyncPowerStorage.layout();
         syncLayout.syncedPower[_member] = currentPower;
@@ -149,6 +151,8 @@ contract CVPowerFacet is CVStrategyBaseFacet {
     }
 
     function _deactivatePointsFromRegistry(address _member) internal {
+        // The default zero value is intentional before conditional assignment.
+        // slither-disable-next-line uninitialized-local
         uint256 points;
         if (registryCommunity.memberActivatedInStrategies(_member, address(this))) {
             points = votingPowerRegistry.getMemberPowerInStrategy(_member, address(this));

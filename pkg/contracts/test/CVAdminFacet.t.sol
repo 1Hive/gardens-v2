@@ -455,6 +455,29 @@ contract CVAdminFacetTest is Test {
         registry.setRegistryFactory(address(factoryAllowlist));
     }
 
+    function test_setPoolParams_rejectsInvalidDecayAndCanRepairExistingPool() public {
+        CVParams memory invalid = CVParams({maxRatio: 1, weight: 2, decay: 10_000_000, minThresholdPoints: 4});
+        facet.setCvParams(invalid); // Simulate a pool initialized before the validation upgrade.
+
+        ArbitrableConfig memory unchanged;
+        address[] memory none = new address[](0);
+        vm.prank(councilSafe);
+        vm.expectRevert(abi.encodeWithSelector(CVAdminFacet.InvalidDecay.selector, invalid.decay));
+        facet.setPoolParams(unchanged, invalid, 0, none, none, address(0));
+
+        CVParams memory repaired = CVParams({maxRatio: 1, weight: 2, decay: 9_999_999, minThresholdPoints: 4});
+        vm.prank(councilSafe);
+        facet.setPoolParams(unchanged, repaired, 0, none, none, address(0));
+        (,, uint256 storedDecay,) = facet.cvParams();
+        assertEq(storedDecay, repaired.decay);
+
+        // The all-zero struct remains the documented no-change sentinel.
+        vm.prank(councilSafe);
+        facet.setPoolParams(unchanged, CVParams(0, 0, 0, 0), 0, none, none, address(0));
+        (,, storedDecay,) = facet.cvParams();
+        assertEq(storedDecay, repaired.decay);
+    }
+
     function test_setPoolParams_updates_allowlist_and_configs() public {
         factoryAllowlist.setAllowed(address(arbitrator), true);
         address[] memory add = new address[](1);

@@ -456,6 +456,8 @@ contract HypercertSignalPool is BaseStrategyUpgradeable {
     /// @param _hypercertId The hypercert to update
     function _updateConviction(uint256 _hypercertId) internal {
         uint256 timePassed = block.number - blockLast[_hypercertId];
+        // Exact equality is intentional for this zero-value guard.
+        // slither-disable-next-line incorrect-equality
         if (timePassed == 0) return;
 
         uint256 newConviction = ConvictionsUtils.calculateConviction(

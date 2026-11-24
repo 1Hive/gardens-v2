@@ -1,6 +1,7 @@
 "use client";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 import remarkGfm from "remark-gfm";
+import { markdownRehypePlugins, markdownUrlTransform } from "./markdownSecurity";
 import { useTheme } from "@/providers/ThemeProvider";
 
 type Props = { source: string | null | undefined };
@@ -13,6 +14,8 @@ export default function MarkdownWrapper({ source }: Props) {
       <MarkdownEditor.Markdown
         source={normalized}
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={markdownRehypePlugins}
+        urlTransform={markdownUrlTransform}
         disableCopy
       />
     </div>
